@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { createRef } from 'react';
 import CasualtySlider from './casualtySlider';
 import Card from 'react-bootstrap/Card';
 import ScenarioDetails from './scenarioDetails';
@@ -14,6 +14,7 @@ class Test extends React.Component {
         this.state = {
             fileContent: null,
         };
+        this.columnRef = createRef();
     }
 
     decisionMakers = [
@@ -80,6 +81,8 @@ class Test extends React.Component {
             .catch((error) => {
                 console.error('Error fetching file:', error);
             });
+            const columnHeight = this.columnRef.current.clientHeight;
+            this.setState({ columnHeight });
     }
 
     parseDoc() {
@@ -124,22 +127,22 @@ class Test extends React.Component {
         const doc = this.parseDoc()
         const dashInfo = this.parseDash(doc)
         const tables = this.parseTables(doc)
-        
+        console.log(this.state.columnHeight)
         return (
             <div>
                 <ScenarioDetails />
                 <Container fluid>
-                    <Row>
-                        <Col xs={12} md={6}>
-                            <Card className="my-2 flex-grow-1">
+                    <Row className="my-2">
+                        <Col ref={this.columnRef}>
+                            <Card className="flex-grow-1">
                                 <DecisionMakerDetails decisionMaker={this.decisionMakers[0]} dashInfo={dashInfo} />
                             </Card>
-                            <Card className="my-2 flex-grow-1">
+                            <Card className="flex-grow-1">
                                 <DecisionMakerDetails decisionMaker={this.decisionMakers[1]} dashInfo={dashInfo} />
                             </Card>
                         </Col>
-                        <Col xs={12} md={6} className="my-2">
-                            <CasualtySlider tables={tables}/>
+                        <Col>
+                            <CasualtySlider tables={tables} height={this.state.columnHeight}/>
                         </Col>
                     </Row>
                 </Container>

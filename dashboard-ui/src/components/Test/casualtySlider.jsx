@@ -47,7 +47,7 @@ class CasualtySlider extends React.Component {
     getCasualtyArray(tables) {
         let casualties = []
 
-        {tables.map((table, index) => {
+        tables.map((table) => {
             const name = table.firstChild.innerText
             const url = table.lastChild.firstChild.firstChild.firstChild.src
             const salt = table.lastChild.childNodes[1].firstChild.innerText
@@ -55,20 +55,19 @@ class CasualtySlider extends React.Component {
             const correctTag = table.lastChild.lastChild.childNodes[1].innerText
             console.log(tagApplied)
             casualties.push(new Casualty(name, url, salt, tagApplied, correctTag))
-        })}
+        })
         return casualties
     }
 
     render = () => {
-        const imageStyle = {
-            height: '50vh', 
-            objectFit: 'cover', 
-        };
         
         const tables = this.props.tables
-        console.log(tables)
         const casualties = this.getCasualtyArray(tables)
-
+        
+        const imageStyle = {
+            height: `${this.props.height}px`, 
+            objectFit: 'cover', 
+        };
         return (
             <div>
                 <Carousel interval={null}>

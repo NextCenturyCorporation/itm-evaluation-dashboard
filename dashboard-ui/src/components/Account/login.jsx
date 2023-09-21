@@ -133,7 +133,7 @@ class LoginApp extends React.Component {
                             <div className="d-flex justify-content-center login-header-text">Dashboard</div>
                         </div>
 
-                        <Tabs className='p-1'>
+                        <Tabs className='p-1' defaultActiveKey={1}>
                             <Tab eventKey={0} title="Create Account">
                                 <div>
                                     <div className="sign-in-instructions">
