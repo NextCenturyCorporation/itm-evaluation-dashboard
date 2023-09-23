@@ -53,7 +53,6 @@ class CasualtySlider extends React.Component {
             const salt = table.lastChild.childNodes[1].firstChild.innerText
             const tagApplied = table.lastChild.lastChild.firstChild.innerText
             const correctTag = table.lastChild.lastChild.childNodes[1].innerText
-            console.log(tagApplied)
             casualties.push(new Casualty(name, url, salt, tagApplied, correctTag))
         })
         return casualties

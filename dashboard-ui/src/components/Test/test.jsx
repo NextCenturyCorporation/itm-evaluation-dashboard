@@ -96,7 +96,9 @@ class Test extends React.Component {
                     "S_A_L_T_WAVED",
                     "S_A_L_T_WALK",
                     "S_A_L_T_WALK_IF_CAN",
-                    "S_A_L_T_WAVE_IF_CAN"
+                    "S_A_L_T_WAVE_IF_CAN",
+                    "TOOL_APPLIED",
+                    ""
                 ];
                 return !excludedActionTypes.includes(row.actionType);
             });

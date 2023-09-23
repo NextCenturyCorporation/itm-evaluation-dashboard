@@ -6,7 +6,6 @@ class DecisionMakerDetails extends React.Component {
 
     render = () => {
         const decisionMaker = this.props.decisionMaker; 
-        console.log(decisionMaker)
         return (
             <Tabs className="p-1">
                 <Tab eventKey="0" title="Action List" className="p-4">
