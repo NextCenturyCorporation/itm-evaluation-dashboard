@@ -26,7 +26,7 @@ class CasualtySlider extends React.Component {
     renderCasualtyDetails() {
         if (this.state.selectedCasualty) {
             const { name, url, salt, tagApplied, correctTag } = this.state.selectedCasualty;
-            
+
             return (
                 <div>
                     <Card>
@@ -44,7 +44,7 @@ class CasualtySlider extends React.Component {
         }
     }
 
-    getCasualtyArray(tables) {
+    getCasualtyArray(tables, decisionMaker) {
         let casualties = []
 
         tables.map((table) => {
@@ -53,25 +53,46 @@ class CasualtySlider extends React.Component {
             const salt = table.lastChild.childNodes[1].firstChild.innerText
             const tagApplied = table.lastChild.lastChild.firstChild.innerText
             const correctTag = table.lastChild.lastChild.childNodes[1].innerText
-            casualties.push(new Casualty(name, url, salt, tagApplied, correctTag))
+
+            const matchingDecisions = decisionMaker.filter((decision) => {
+                return decision.actionData.some((entry) => {
+                    return entry === name
+                }
+                );
+            });
+
+            const casualty = new Casualty(name, url, salt, tagApplied, correctTag);
+
+            // If matching decisions are found, add them to the casualty's actionsOnCasualty array
+            if (matchingDecisions.length > 0) {
+                matchingDecisions.forEach((matchingDecision) => {
+                    casualty.actionsOnCasualty.push(matchingDecision);
+                });
+            }
+
+            casualties.push(casualty)
         })
+
+
         return casualties
     }
 
     render = () => {
-        
+
         const tables = this.props.tables
-        const casualties = this.getCasualtyArray(tables)
-        
+        const decisionMaker = this.props.decisionMaker
+        const casualties = this.getCasualtyArray(tables, decisionMaker)
+
+
         const imageStyle = {
-            height: `${this.props.height}px`, 
-            objectFit: 'cover', 
+            height: `${this.props.height}px`,
+            objectFit: 'cover',
         };
         return (
             <div>
                 <Carousel interval={null}>
                     {casualties.map((casualty, index) => (
-                    
+
                         <Carousel.Item key={index}>
                             <img
                                 className="d-block w-100"
@@ -110,13 +131,14 @@ class CasualtySlider extends React.Component {
 }
 
 class Casualty {
-        
+
     constructor(name, imgURL, salt, tagApplied, correctTag) {
         this.name = name;
         this.imgURL = imgURL
         this.salt = salt
         this.tagApplied = tagApplied
         this.correctTag = correctTag
+        this.actionsOnCasualty = []
     }
 }
 

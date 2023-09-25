@@ -43,7 +43,6 @@ class DecisionList extends React.Component {
 
     render = () => {
         const decisions = this.props.decisions;
-        console.log(decisions);
 
         const visibleDecisionsCount = 5;
         const decisionHeight = 50;

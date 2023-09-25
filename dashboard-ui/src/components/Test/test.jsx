@@ -29,7 +29,6 @@ class Test extends React.Component {
             .then((csvData) => {
                 // Parse the CSV data into an array or object as needed
                 const parsedData = this.parseCSV(csvData);
-                console.log(parsedData)
                 // Set the parsed data in the component's state or use it as needed
                 this.setState({ csvFileContent: parsedData, isLoading: false }, () => {
                     const columnHeight = this.columnRef.current.clientHeight;
@@ -152,7 +151,7 @@ class Test extends React.Component {
 
         return (
             <div>
-                <ScenarioDetails />
+                <ScenarioDetails tables={tables}/>
                 <Container fluid>
                     <Row className="my-2">
                         {isLoading ? (
@@ -169,7 +168,7 @@ class Test extends React.Component {
                             </Col>
                         )}
                         <Col>
-                            <CasualtySlider tables={tables} height={this.state.columnHeight} />
+                            <CasualtySlider tables={tables} height={this.state.columnHeight} decisionMaker={csvFileContent}/>
                         </Col>
                     </Row>
                 </Container>
