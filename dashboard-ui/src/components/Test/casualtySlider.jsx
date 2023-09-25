@@ -21,7 +21,6 @@ class CasualtySlider extends React.Component {
             showModal: true,
             selectedCasualty: casualty,
         });
-        console.log(casualty.actionsOnCasualty)
     };
 
     // Method to close the modal
@@ -41,7 +40,7 @@ class CasualtySlider extends React.Component {
 
     renderCasualtyDetails() {
         if (this.state.selectedCasualty) {
-            const { name, salt, tagApplied, correctTag, actionsOnCasualty } = this.state.selectedCasualty;
+            const casualty = this.state.selectedCasualty;
 
             const visibleDecisionsCount = 5;
             const decisionHeight = 50;
@@ -53,13 +52,16 @@ class CasualtySlider extends React.Component {
                 <div>
                     <Card>
                         <Card.Body>
-                            <Card.Title>Name: {name}</Card.Title>
+                            <Card.Title>Name: {casualty.name}</Card.Title>
                             <Tabs>
                                 <Tab eventKey="0" title="Casualty Description">
                                     <ListGroup variant="flush">
-                                        <ListGroup.Item>{salt}</ListGroup.Item>
-                                        <ListGroup.Item>{tagApplied}</ListGroup.Item>
-                                        <ListGroup.Item>{correctTag}</ListGroup.Item>
+                                        <ListGroup.Item>{casualty.salt}</ListGroup.Item>
+                                        <ListGroup.Item>{casualty.sort}</ListGroup.Item>
+                                        <ListGroup.Item>{casualty.pulse}</ListGroup.Item>
+                                        <ListGroup.Item>{casualty.breath}</ListGroup.Item>
+                                        <ListGroup.Item>{casualty.hearing}</ListGroup.Item>
+                                        <ListGroup.Item>{casualty.mood}</ListGroup.Item>
                                     </ListGroup>
                                 </Tab>
                                 <Tab eventKey="1" title="Decision Maker 1 Actions">
@@ -80,11 +82,18 @@ class CasualtySlider extends React.Component {
         let casualties = []
 
         tables.map((table) => {
-            const name = table.firstChild.innerText
             const url = table.lastChild.firstChild.firstChild.firstChild.src
-            const salt = table.lastChild.childNodes[1].firstChild.innerText
-            const tagApplied = table.lastChild.lastChild.firstChild.innerText
-            const correctTag = table.lastChild.lastChild.childNodes[1].innerText
+            const name = table.firstChild.innerText
+            const children = table.childNodes[1].childNodes[1].childNodes
+
+            const salt = this.formatDivData(children[0].textContent)
+            const sort = this.formatDivData(children[1].textContent)
+            const pulse = this.formatDivData(children[2].textContent)
+            const breath = this.formatDivData(children[3].textContent)
+            const hearing = this.formatDivData(children[4].textContent)
+            const mood = this.formatDivData(children[5].textContent)
+
+
 
             const matchingDecisions = decisionMaker.filter((decision) => {
                 return decision.actionData.some((entry) => {
@@ -93,7 +102,7 @@ class CasualtySlider extends React.Component {
                 );
             });
 
-            const casualty = new Casualty(name, url, salt, tagApplied, correctTag);
+            const casualty = new Casualty(name, url, salt, sort, pulse, breath, hearing, mood);
 
             // If matching decisions are found, add them to the casualty's actionsOnCasualty array
             if (matchingDecisions.length > 0) {
@@ -109,12 +118,23 @@ class CasualtySlider extends React.Component {
         return casualties
     }
 
+    formatDivData(data) {
+        const words = data.split(' ');
+
+        const formattedWords = words.map(word => {
+            const cleanedWord = word.replace(/;/g, '');
+            return cleanedWord.charAt(0).toUpperCase() + cleanedWord.slice(1).toLowerCase();
+        });
+
+        return formattedWords[0] + ": " + formattedWords[2]
+    }
+
     render = () => {
 
         const tables = this.props.tables
         const decisionMaker = this.props.decisionMaker
         const casualties = this.getCasualtyArray(tables, decisionMaker)
-
+        console.log(tables)
 
         const imageStyle = {
             height: `${this.props.height}px`,
@@ -164,12 +184,15 @@ class CasualtySlider extends React.Component {
 }
 
 class Casualty {
-    constructor(name, imgURL, salt, tagApplied, correctTag) {
-        this.name = name;
+    constructor(name, imgURL, salt, sort, pulse, breath, hearing, mood) {
+        this.name = name
         this.imgURL = imgURL
         this.salt = salt
-        this.tagApplied = tagApplied
-        this.correctTag = correctTag
+        this.sort = sort
+        this.pulse = pulse
+        this.breath = breath
+        this.hearing = hearing
+        this.mood = mood
         this.actionsOnCasualty = []
     }
 }
