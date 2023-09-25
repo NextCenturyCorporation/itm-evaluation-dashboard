@@ -15,8 +15,8 @@ class ScenarioDetails extends React.Component {
                     <Accordion.Header>Scenario Details: Jungle Triage</Accordion.Header>
                     <Accordion.Body>
                         <p><strong>Number of Patients:</strong> {numPatients}</p>
-                        <p><strong>Evac Spots:</strong> ? spot(s)</p>
-                        {/*<p><strong>Patients: </strong></p>*/}
+                        {/*<p><strong>Evac Spots:</strong> ? spot(s)</p>*/}
+                        <p><strong>Patients: </strong></p>
                         <Accordion>
                             {casualties.map((patient, index) => (
                                 <Accordion.Item key={index} eventKey={index}>
