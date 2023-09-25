@@ -1,6 +1,7 @@
 import React from 'react';
 import { ListGroup, Card, Carousel, Modal, Tabs, Tab, Accordion } from 'react-bootstrap';
 import DecisionList from './decisionList';
+import { getCasualtyArray } from './htmlUtility';
 class CasualtySlider extends React.Component {
 
     state = {
@@ -55,14 +56,7 @@ class CasualtySlider extends React.Component {
                             <Card.Title>Name: {casualty.name}</Card.Title>
                             <Tabs>
                                 <Tab eventKey="0" title="Casualty Description">
-                                    <ListGroup variant="flush">
-                                        <ListGroup.Item>{casualty.salt}</ListGroup.Item>
-                                        <ListGroup.Item>{casualty.sort}</ListGroup.Item>
-                                        <ListGroup.Item>{casualty.pulse}</ListGroup.Item>
-                                        <ListGroup.Item>{casualty.breath}</ListGroup.Item>
-                                        <ListGroup.Item>{casualty.hearing}</ListGroup.Item>
-                                        <ListGroup.Item>{casualty.mood}</ListGroup.Item>
-                                    </ListGroup>
+                                    {renderPatientInfo(casualty)}
                                 </Tab>
                                 <Tab eventKey="1" title="Decision Maker 1 Actions">
                                     <DecisionList decisions={this.state.selectedCasualty.actionsOnCasualty} />
@@ -78,62 +72,12 @@ class CasualtySlider extends React.Component {
         }
     }
 
-    getCasualtyArray(tables, decisionMaker) {
-        let casualties = []
-
-        tables.map((table) => {
-            const url = table.lastChild.firstChild.firstChild.firstChild.src
-            const name = table.firstChild.innerText
-            const children = table.childNodes[1].childNodes[1].childNodes
-
-            const salt = this.formatDivData(children[0].textContent)
-            const sort = this.formatDivData(children[1].textContent)
-            const pulse = this.formatDivData(children[2].textContent)
-            const breath = this.formatDivData(children[3].textContent)
-            const hearing = this.formatDivData(children[4].textContent)
-            const mood = this.formatDivData(children[5].textContent)
-
-
-
-            const matchingDecisions = decisionMaker.filter((decision) => {
-                return decision.actionData.some((entry) => {
-                    return entry === name
-                }
-                );
-            });
-
-            const casualty = new Casualty(name, url, salt, sort, pulse, breath, hearing, mood);
-
-            // If matching decisions are found, add them to the casualty's actionsOnCasualty array
-            if (matchingDecisions.length > 0) {
-                matchingDecisions.forEach((matchingDecision) => {
-                    casualty.actionsOnCasualty.push(matchingDecision);
-                });
-            }
-
-            casualties.push(casualty)
-        })
-
-
-        return casualties
-    }
-
-    formatDivData(data) {
-        const words = data.split(' ');
-
-        const formattedWords = words.map(word => {
-            const cleanedWord = word.replace(/;/g, '');
-            return cleanedWord.charAt(0).toUpperCase() + cleanedWord.slice(1).toLowerCase();
-        });
-
-        return formattedWords[0] + ": " + formattedWords[2]
-    }
-
     render = () => {
 
         const tables = this.props.tables
         const decisionMaker = this.props.decisionMaker
-        const casualties = this.getCasualtyArray(tables, decisionMaker)
+        const casualties = getCasualtyArray(tables, decisionMaker)
+        //const casualties = this.getCasualtyArray(tables, decisionMaker)
         console.log(tables)
 
         const imageStyle = {
@@ -183,7 +127,7 @@ class CasualtySlider extends React.Component {
     }
 }
 
-class Casualty {
+export class Casualty {
     constructor(name, imgURL, salt, sort, pulse, breath, hearing, mood) {
         this.name = name
         this.imgURL = imgURL
@@ -195,6 +139,19 @@ class Casualty {
         this.mood = mood
         this.actionsOnCasualty = []
     }
+}
+
+export const renderPatientInfo = (casualty) => {
+    return (
+        <ListGroup variant="flush">
+            <ListGroup.Item>{casualty.salt}</ListGroup.Item>
+            <ListGroup.Item>{casualty.sort}</ListGroup.Item>
+            <ListGroup.Item>{casualty.pulse}</ListGroup.Item>
+            <ListGroup.Item>{casualty.breath}</ListGroup.Item>
+            <ListGroup.Item>{casualty.hearing}</ListGroup.Item>
+            <ListGroup.Item>{casualty.mood}</ListGroup.Item>
+        </ListGroup>
+    )
 }
 
 export default CasualtySlider;
