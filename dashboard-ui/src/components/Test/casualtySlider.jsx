@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListGroup, Card, Carousel, Modal } from 'react-bootstrap';
+import { ListGroup, Card, Carousel, Modal, Tabs, Tab, Accordion } from 'react-bootstrap';
 class CasualtySlider extends React.Component {
 
     state = {
@@ -13,6 +13,7 @@ class CasualtySlider extends React.Component {
             showModal: true,
             selectedCasualty: casualty,
         });
+        console.log(casualty.actionsOnCasualty)
     };
 
     // Method to close the modal
@@ -23,20 +24,83 @@ class CasualtySlider extends React.Component {
         });
     };
 
+    formattedActionType(actionType) {
+        return actionType
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    }
+
+    renderDecision = (decision) => {
+        switch (decision.actionType) {
+            case "PULSE_TAKEN":
+                return (
+                    <div>
+                        <p>TimeStamp: {decision.time}</p>
+                        <p>Patient: {decision.actionData[1]}</p>
+                        <p>Pulse Reading: {decision.actionData[0]}</p>
+                    </div>
+                );
+            case "INJURY_TREATED":
+                return (
+                    <div>
+                        <p>TimeStamp: {decision.time}</p>
+                        <p>Patient: {decision.actionData[1]}</p>
+                        <p>Injury: {decision.actionData[0]}</p>
+                        <p>Treatment: {decision.actionData[2]}</p>
+                    </div>
+                )
+            case "TAG_APPLIED":
+                return (
+                    <div>
+                        <p>TimeStamp: {decision.time}</p>
+                        <p>Patient: {decision.actionData[0]}</p>
+                        <p>Tag: {decision.actionData[1]}</p>
+                    </div>
+                )
+        }
+    }
+
     renderCasualtyDetails() {
         if (this.state.selectedCasualty) {
-            const { name, url, salt, tagApplied, correctTag } = this.state.selectedCasualty;
+            const { name, salt, tagApplied, correctTag, actionsOnCasualty } = this.state.selectedCasualty;
+
+            const visibleDecisionsCount = 5;
+            const decisionHeight = 50;
+
+            // total height of accordion maxes out at count * height of each 
+            const accordionHeight = `${visibleDecisionsCount * decisionHeight}px`;
 
             return (
                 <div>
                     <Card>
                         <Card.Body>
                             <Card.Title>Name: {name}</Card.Title>
-                            <ListGroup variant="flush">
-                                <ListGroup.Item>{salt}</ListGroup.Item>
-                                <ListGroup.Item>{tagApplied}</ListGroup.Item>
-                                <ListGroup.Item>{correctTag}</ListGroup.Item>
-                            </ListGroup>
+                            <Tabs>
+                                <Tab eventKey="0" title="Casualty Description">
+                                    <ListGroup variant="flush">
+                                        <ListGroup.Item>{salt}</ListGroup.Item>
+                                        <ListGroup.Item>{tagApplied}</ListGroup.Item>
+                                        <ListGroup.Item>{correctTag}</ListGroup.Item>
+                                    </ListGroup>
+                                </Tab>
+                                <Tab eventKey="1" title="Decision Maker 1 Actions">
+                                    <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+                                        {actionsOnCasualty.map((decision, index) => (
+                                             <Accordion.Item key={index} eventKey={index}>
+                                             <Accordion.Header>{this.formattedActionType(decision.actionType)}</Accordion.Header>
+                                             <Accordion.Body>
+                                                 {/* Render the content of each decision here */}
+                                                 {this.renderDecision(decision)}
+                                             </Accordion.Body>
+                                         </Accordion.Item>
+                                        ))}
+                                    </Accordion>
+                                </Tab>
+                                <Tab eventKey="2" title="Decision Maker 2 Actions">
+                                    <p>ADM</p>
+                                </Tab>
+                            </Tabs>
                         </Card.Body>
                     </Card>
                 </div>
@@ -88,6 +152,7 @@ class CasualtySlider extends React.Component {
             height: `${this.props.height}px`,
             objectFit: 'cover',
         };
+
         return (
             <div>
                 <Carousel interval={null}>
@@ -112,11 +177,11 @@ class CasualtySlider extends React.Component {
                         </Carousel.Item>
                     ))}
                 </Carousel>
-                <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
+                <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="lg">
                     <Modal.Header closeButton>
                         <Modal.Title>Casualty Details</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>
+                    <Modal.Body className="modal-dialog-scrollable">
                         {this.renderCasualtyDetails()}
                     </Modal.Body>
                     <Modal.Footer>
