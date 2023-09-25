@@ -7,6 +7,13 @@ class CasualtySlider extends React.Component {
         selectedCasualty: null,
     };
 
+    tagMappings = {
+        "red" : "Immediate",
+        "gray" : "Expectant",
+        "green" : "Minimal",
+        "yellow" : "Delayed"
+    }
+
     // Method to handle clicking on an image
     handleCasualtyClick = (casualty) => {
         this.setState({
@@ -55,7 +62,7 @@ class CasualtySlider extends React.Component {
                     <div>
                         <p>TimeStamp: {decision.time}</p>
                         <p>Patient: {decision.actionData[0]}</p>
-                        <p>Tag: {decision.actionData[1]}</p>
+                        <p>Tag: {this.tagMappings[decision.actionData[1]]}</p>
                     </div>
                 )
         }

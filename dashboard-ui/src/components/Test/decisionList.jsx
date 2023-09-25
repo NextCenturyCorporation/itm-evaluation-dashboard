@@ -1,5 +1,4 @@
 import React from 'react';
-import { ListGroup } from 'react-bootstrap';
 import Accordion from 'react-bootstrap/Accordion';
 
 class DecisionList extends React.Component {
@@ -9,6 +8,13 @@ class DecisionList extends React.Component {
             .split('_')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
             .join(' ');
+    }
+
+    tagMappings = {
+        "red" : "Immediate",
+        "gray" : "Expectant",
+        "green" : "Minimal",
+        "yellow" : "Delayed"
     }
 
     renderDecision = (decision) => {
@@ -35,7 +41,7 @@ class DecisionList extends React.Component {
                     <div>
                         <p>TimeStamp: {decision.time}</p>
                         <p>Patient: {decision.actionData[0]}</p>
-                        <p>Tag: {decision.actionData[1]}</p>
+                        <p>Tag: {this.tagMappings[decision.actionData[1]]}</p>
                     </div>
                 )
         }
