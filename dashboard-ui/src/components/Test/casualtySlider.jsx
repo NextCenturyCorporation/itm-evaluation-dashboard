@@ -1,5 +1,6 @@
 import React from 'react';
 import { ListGroup, Card, Carousel, Modal, Tabs, Tab, Accordion } from 'react-bootstrap';
+import DecisionList from './decisionList';
 class CasualtySlider extends React.Component {
 
     state = {
@@ -8,10 +9,10 @@ class CasualtySlider extends React.Component {
     };
 
     tagMappings = {
-        "red" : "Immediate",
-        "gray" : "Expectant",
-        "green" : "Minimal",
-        "yellow" : "Delayed"
+        "red": "Immediate",
+        "gray": "Expectant",
+        "green": "Minimal",
+        "yellow": "Delayed"
     }
 
     // Method to handle clicking on an image
@@ -38,36 +39,6 @@ class CasualtySlider extends React.Component {
             .join(' ');
     }
 
-    renderDecision = (decision) => {
-        switch (decision.actionType) {
-            case "PULSE_TAKEN":
-                return (
-                    <div>
-                        <p>TimeStamp: {decision.time}</p>
-                        <p>Patient: {decision.actionData[1]}</p>
-                        <p>Pulse Reading: {decision.actionData[0]}</p>
-                    </div>
-                );
-            case "INJURY_TREATED":
-                return (
-                    <div>
-                        <p>TimeStamp: {decision.time}</p>
-                        <p>Patient: {decision.actionData[1]}</p>
-                        <p>Injury: {decision.actionData[0]}</p>
-                        <p>Treatment: {decision.actionData[2]}</p>
-                    </div>
-                )
-            case "TAG_APPLIED":
-                return (
-                    <div>
-                        <p>TimeStamp: {decision.time}</p>
-                        <p>Patient: {decision.actionData[0]}</p>
-                        <p>Tag: {this.tagMappings[decision.actionData[1]]}</p>
-                    </div>
-                )
-        }
-    }
-
     renderCasualtyDetails() {
         if (this.state.selectedCasualty) {
             const { name, salt, tagApplied, correctTag, actionsOnCasualty } = this.state.selectedCasualty;
@@ -92,17 +63,7 @@ class CasualtySlider extends React.Component {
                                     </ListGroup>
                                 </Tab>
                                 <Tab eventKey="1" title="Decision Maker 1 Actions">
-                                    <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-                                        {actionsOnCasualty.map((decision, index) => (
-                                             <Accordion.Item key={index} eventKey={index}>
-                                             <Accordion.Header>{this.formattedActionType(decision.actionType)}</Accordion.Header>
-                                             <Accordion.Body>
-                                                 {/* Render the content of each decision here */}
-                                                 {this.renderDecision(decision)}
-                                             </Accordion.Body>
-                                         </Accordion.Item>
-                                        ))}
-                                    </Accordion>
+                                    <DecisionList decisions={this.state.selectedCasualty.actionsOnCasualty} />
                                 </Tab>
                                 <Tab eventKey="2" title="Decision Maker 2 Actions">
                                     <p>ADM</p>
@@ -203,7 +164,6 @@ class CasualtySlider extends React.Component {
 }
 
 class Casualty {
-
     constructor(name, imgURL, salt, tagApplied, correctTag) {
         this.name = name;
         this.imgURL = imgURL
