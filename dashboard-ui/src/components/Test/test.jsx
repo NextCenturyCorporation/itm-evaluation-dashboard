@@ -159,6 +159,16 @@ class Test extends React.Component {
         return tableArray
     }
 
+    filterActions(history) {
+        const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe"];
+        
+        const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
+        
+        return filteredHistory;
+      }
+      
+
+
     render() {
         const doc = this.parseDoc()
         const dashInfo = this.parseDash(doc)
@@ -172,37 +182,41 @@ class Test extends React.Component {
                     <Query query={test_by_adm_and_scenario} variables={{ "scenarioID": this.state.scenario, "admName": this.state.adm }}>
                         {
                             ({ loading, error, data }) => {
-                                console.log(data)
-                                return(
-                                <div>
-                                    <ScenarioDetails tables={tables} />
-                                    <Container fluid>
-                                        <Row className="my-2">
-                                            {isLoading ? (
-                                                // Render a loading indicator or message
-                                                <div>Loading CSV data...</div>
-                                            ) : (
-                                                <>
-                                                <Col>
-                                                    <Card className="flex-grow-1">
-                                                        <DecisionMakerDetails decisionMaker={csvFileContent} casualties={casualties} dashInfo={dashInfo} id="1" />
-                                                    </Card>
-                                                </Col>
-                                                <Col>
-                                                    <Card className="flex-grow-1">
-                                                        <DecisionMakerDetails decisionMaker={csvFileContent} dashInfo={dashInfo} id="2" />
-                                                    </Card>
-                                                </Col>
-                                                </>
-                                            )}
-                                            {/*
+                                if (loading) return <div>Loading ...</div>
+                                if (error) return <div>Error</div>
+                                const admHistory = this.filterActions(data.getTestByADMandScenario.history)
+                                console.log(admHistory)
+
+                                return (
+                                    <div>
+                                        <ScenarioDetails tables={tables} />
+                                        <Container fluid>
+                                            <Row className="my-2">
+                                                {isLoading ? (
+                                                    // Render a loading indicator or message
+                                                    <div>Loading CSV data...</div>
+                                                ) : (
+                                                    <>
+                                                        <Col>
+                                                            <Card className="flex-grow-1">
+                                                                <DecisionMakerDetails decisionMaker={csvFileContent} isHuman={true} casualties={casualties} dashInfo={dashInfo} id="1" />
+                                                            </Card>
+                                                        </Col>
+                                                        <Col>
+                                                            <Card className="flex-grow-1">
+                                                                <DecisionMakerDetails decisionMaker={admHistory} isHuman={false} dashInfo={dashInfo} id="2" />
+                                                            </Card>
+                                                        </Col>
+                                                    </>
+                                                )}
+                                                {/*
                                             <Col>
                                                 <CasualtySlider tables={tables} decisionMaker={csvFileContent} />
                                             </Col>*/}
-                                        </Row>
+                                            </Row>
 
-                                    </Container>
-                                </div>)
+                                        </Container>
+                                    </div>)
                             }
                         }
                     </Query>

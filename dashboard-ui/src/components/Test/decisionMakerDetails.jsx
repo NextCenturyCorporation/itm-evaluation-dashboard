@@ -10,7 +10,7 @@ class DecisionMakerDetails extends React.Component {
             <Tabs className="p-1">
                 <Tab eventKey="0" title="Action List" className="p-4">
                     <h3>Decision Maker {this.props.id}</h3>
-                    <DecisionList decisions={decisionMaker} casualties={this.props.casualties}/>
+                    <DecisionList decisions={decisionMaker} isHuman={this.props.isHuman} casualties={this.props.casualties}/>
                 </Tab>
                 <Tab eventKey="1" title="General Scenario Stats" className="p-4">
                     <h3>Decision Maker {this.props.id}</h3>
