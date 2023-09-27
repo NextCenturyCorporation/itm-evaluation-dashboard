@@ -1,4 +1,5 @@
 import React from 'react';
+import { ListGroup } from 'react-bootstrap';
 import Accordion from 'react-bootstrap/Accordion';
 
 class DecisionList extends React.Component {
@@ -11,10 +12,10 @@ class DecisionList extends React.Component {
     }
 
     tagMappings = {
-        "red" : "Immediate",
-        "gray" : "Expectant",
-        "green" : "Minimal",
-        "yellow" : "Delayed"
+        "red": "Immediate",
+        "gray": "Expectant",
+        "green": "Minimal",
+        "yellow": "Delayed"
     }
 
     renderDecision = (decision) => {
@@ -22,35 +23,68 @@ class DecisionList extends React.Component {
             case "PULSE_TAKEN":
                 return (
                     <div>
-                        <p>TimeStamp: {decision.time}</p>
-                        <p>Patient: {decision.actionData[1]}</p>
-                        <p>Pulse Reading: {decision.actionData[0]}</p>
+                        <ListGroup.Item>TimeStamp: {decision.time}</ListGroup.Item>
+                        <ListGroup.Item>Patient: {decision.actionData[1]}</ListGroup.Item>
+                        <ListGroup.Item>Pulse Reading: {decision.actionData[0]}</ListGroup.Item>
                     </div>
                 );
             case "INJURY_TREATED":
                 return (
                     <div>
-                        <p>TimeStamp: {decision.time}</p>
-                        <p>Patient: {decision.actionData[1]}</p>
-                        <p>Injury: {decision.actionData[0]}</p>
-                        <p>Treatment: {decision.actionData[2]}</p>
+                        <ListGroup.Item>TimeStamp: {decision.time}</ListGroup.Item>
+                        <ListGroup.Item>Patient: {decision.actionData[1]}</ListGroup.Item>
+                        <ListGroup.Item>Injury: {decision.actionData[0]}</ListGroup.Item>
+                        <ListGroup.Item>Treatment: {decision.actionData[2]}</ListGroup.Item>
                     </div>
                 )
             case "TAG_APPLIED":
                 return (
                     <div>
-                        <p>TimeStamp: {decision.time}</p>
-                        <p>Patient: {decision.actionData[0]}</p>
-                        <p>Tag: {this.tagMappings[decision.actionData[1]]}</p>
+                        <ListGroup.Item>TimeStamp: {decision.time}</ListGroup.Item>
+                        <ListGroup.Item>Patient: {decision.actionData[0]}</ListGroup.Item>
+                        <ListGroup.Item>Tag: {this.tagMappings[decision.actionData[1]]}</ListGroup.Item>
                     </div>
                 )
         }
     }
 
-    render = () => {
-        const decisions = this.props.decisions;
+    imageToDecisionMapping(decisions, casualties) {
+        
+        if (!casualties || casualties.length === 0) {
+            return decisions; 
+        }
+        
+        const casualtyMap = new Map();
+        casualties.forEach(casualty => {
+            casualtyMap.set(casualty.name, casualty);
+        });
+    
+        
+        const updatedDecisions = decisions.map(decision => {
+            
+            const matchingCasualtyName = decision.actionData.find(name => casualtyMap.has(name));
+    
+            if (matchingCasualtyName) {
+                const matchingCasualty = casualtyMap.get(matchingCasualtyName);
+               
+                return {
+                    ...decision,
+                    imgURL: matchingCasualty.imgURL,
+                };
+            }
+    
+            
+            return decision;
+        });
+        return updatedDecisions;
+    }
+    
+    
 
-        const visibleDecisionsCount = 5;
+    render = () => {
+        const decisions = this.imageToDecisionMapping(this.props.decisions, this.props.casualties);
+        
+        const visibleDecisionsCount = 10;
         const decisionHeight = 50;
 
         // total height of accordion maxes out at count * height of each 
@@ -58,19 +92,34 @@ class DecisionList extends React.Component {
 
         return (
             <div>
-                <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-                    {decisions.map((decision, index) => (
-                        <Accordion.Item key={index} eventKey={index}>
-                            <Accordion.Header>{this.formattedActionType(decision.actionType)}</Accordion.Header>
-                            <Accordion.Body>
-                                {/* Render the content of each decision here */}
-                                {this.renderDecision(decision)}
-                            </Accordion.Body>
-                        </Accordion.Item>
-                    ))}
-                </Accordion>
+              <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+                {decisions.map((decision, index) => (
+                  <Accordion.Item key={index} eventKey={index}>
+                    <Accordion.Header>{this.formattedActionType(decision.actionType)}</Accordion.Header>
+                    <Accordion.Body>
+                      <div className="row">
+                        <div className="col">
+                          <ListGroup variant="flush">
+                            {this.renderDecision(decision)}
+                          </ListGroup>
+                        </div>
+                        {decision.imgURL && (
+                          <div className="col">
+                            <img
+                              src={decision.imgURL}
+                              alt="casualty"
+                              className="img-fluid"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </Accordion.Body>
+                  </Accordion.Item>
+                ))}
+              </Accordion>
             </div>
-        );
+          );
+          
     }
 }
 

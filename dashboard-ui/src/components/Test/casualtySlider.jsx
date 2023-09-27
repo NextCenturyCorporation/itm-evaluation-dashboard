@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListGroup, Card, Carousel, Modal, Tabs, Tab, Accordion } from 'react-bootstrap';
+import { ListGroup, Card, Carousel, Modal, Tabs, Tab } from 'react-bootstrap';
 import DecisionList from './decisionList';
 import { getCasualtyArray } from './htmlUtility';
 class CasualtySlider extends React.Component {
@@ -32,22 +32,9 @@ class CasualtySlider extends React.Component {
         });
     };
 
-    formattedActionType(actionType) {
-        return actionType
-            .split('_')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(' ');
-    }
-
     renderCasualtyDetails() {
         if (this.state.selectedCasualty) {
             const casualty = this.state.selectedCasualty;
-
-            const visibleDecisionsCount = 5;
-            const decisionHeight = 50;
-
-            // total height of accordion maxes out at count * height of each 
-            const accordionHeight = `${visibleDecisionsCount * decisionHeight}px`;
 
             return (
                 <div>
@@ -77,11 +64,9 @@ class CasualtySlider extends React.Component {
         const tables = this.props.tables
         const decisionMaker = this.props.decisionMaker
         const casualties = getCasualtyArray(tables, decisionMaker)
-        //const casualties = this.getCasualtyArray(tables, decisionMaker)
-        console.log(tables)
 
         const imageStyle = {
-            height: `${this.props.height}px`,
+            height: '400px',
             objectFit: 'cover',
         };
 

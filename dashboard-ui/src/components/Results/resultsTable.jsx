@@ -200,7 +200,6 @@ class ResultsTable extends React.Component {
                                 ({ loading, error, data }) => {
                                     if (loading) return <div>Loading ...</div> 
                                     if (error) return <div>Error</div>
-
                                     const testData = data[getTestByADMandScenarioName];
 
                                     return (

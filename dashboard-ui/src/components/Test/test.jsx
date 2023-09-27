@@ -6,7 +6,25 @@ import DecisionMakerDetails from './decisionMakerDetails';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { Query } from 'react-apollo';
+import gql from 'graphql-tag';
+import { getCasualtyArray } from './htmlUtility';
+const getScenarioNamesQueryName = "getScenarioNames";
+const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
+const getTestByADMandScenarioName = "getTestByADMandScenario";
 
+const scenario_names_aggregation = gql`
+    query getScenarioNames{
+        getScenarioNames
+    }`;
+const performer_adm_by_scenario = gql`
+    query getPerformerADMsForScenario($scenarioID: ID){
+        getPerformerADMsForScenario(scenarioID: $scenarioID)
+    }`;
+const test_by_adm_and_scenario = gql`
+    query getTestByADMandScenario($scenarioID: ID, $admName: ID){
+        getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
+    }`;
 class Test extends React.Component {
 
     constructor(props) {
@@ -14,9 +32,10 @@ class Test extends React.Component {
         this.state = {
             htmlFileContent: null,
             csvFileContent: null,
-            isLoading: true
+            isLoading: true,
+            adm: "TAD",
+            scenario: "soartech-september-demo-scenario-1"
         };
-        this.columnRef = createRef();
     }
 
     componentDidMount() {
@@ -30,10 +49,7 @@ class Test extends React.Component {
                 // Parse the CSV data into an array or object as needed
                 const parsedData = this.parseCSV(csvData);
                 // Set the parsed data in the component's state or use it as needed
-                this.setState({ csvFileContent: parsedData, isLoading: false }, () => {
-                    const columnHeight = this.columnRef.current.clientHeight;
-                    this.setState({ columnHeight });
-                });
+                this.setState({ csvFileContent: parsedData, isLoading: false });
             })
             .catch((error) => {
                 console.error('Error fetching CSV file:', error);
@@ -68,7 +84,7 @@ class Test extends React.Component {
                 // Condense the remaining columns into an "actionData" array
                 rowData.actionData = values.slice(headers.length);
 
-                // Adding a unique identifier as a key (optional)
+                // Adding a unique identifier as a key
                 rowData.key = `row_${lineIndex}`;
 
                 return rowData;
@@ -147,31 +163,50 @@ class Test extends React.Component {
         const doc = this.parseDoc()
         const dashInfo = this.parseDash(doc)
         const tables = this.parseTables(doc)
+        const casualties = getCasualtyArray(tables)
         const { isLoading, csvFileContent } = this.state
 
         return (
             <div>
-                <ScenarioDetails tables={tables}/>
-                <Container fluid>
-                    <Row className="my-2">
-                        {isLoading ? (
-                            // Render a loading indicator or message
-                            <div>Loading CSV data...</div>
-                        ) : (
-                            <Col ref={this.columnRef}>
-                                <Card className="flex-grow-1">
-                                    <DecisionMakerDetails decisionMaker={csvFileContent} dashInfo={dashInfo} id="1" />
-                                </Card>
-                                <Card className="flex-grow-1 mt-1">
-                                    <DecisionMakerDetails decisionMaker={csvFileContent} dashInfo={dashInfo} id="2" />
-                                </Card>
-                            </Col>
-                        )}
-                        <Col>
-                            <CasualtySlider tables={tables} height={this.state.columnHeight} decisionMaker={csvFileContent}/>
-                        </Col>
-                    </Row>
-                </Container>
+                {(this.state.scenario !== "" && this.state.adm !== "") &&
+                    <Query query={test_by_adm_and_scenario} variables={{ "scenarioID": this.state.scenario, "admName": this.state.adm }}>
+                        {
+                            ({ loading, error, data }) => {
+                                console.log(data)
+                                return(
+                                <div>
+                                    <ScenarioDetails tables={tables} />
+                                    <Container fluid>
+                                        <Row className="my-2">
+                                            {isLoading ? (
+                                                // Render a loading indicator or message
+                                                <div>Loading CSV data...</div>
+                                            ) : (
+                                                <>
+                                                <Col>
+                                                    <Card className="flex-grow-1">
+                                                        <DecisionMakerDetails decisionMaker={csvFileContent} casualties={casualties} dashInfo={dashInfo} id="1" />
+                                                    </Card>
+                                                </Col>
+                                                <Col>
+                                                    <Card className="flex-grow-1">
+                                                        <DecisionMakerDetails decisionMaker={csvFileContent} dashInfo={dashInfo} id="2" />
+                                                    </Card>
+                                                </Col>
+                                                </>
+                                            )}
+                                            {/*
+                                            <Col>
+                                                <CasualtySlider tables={tables} decisionMaker={csvFileContent} />
+                                            </Col>*/}
+                                        </Row>
+
+                                    </Container>
+                                </div>)
+                            }
+                        }
+                    </Query>
+                }
             </div>
         );
     }
