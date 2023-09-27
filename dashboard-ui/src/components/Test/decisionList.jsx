@@ -18,6 +18,18 @@ class DecisionList extends React.Component {
         "yellow": "Delayed"
     }
 
+    commandMap = {
+        "Tag Casualty" : "Tag Applied",
+        "Apply Treatment" : "Injury Treated",
+        "Check All Vitals" : "Check All Vitals"
+    }
+
+    nameMappings = {
+        "MarineC" : "Military Mike Jungle Combat_3_2 Root",
+        "MarineA" : "Military Mike Jungle Burned_0 Root",
+        "Intelligence Officer" : "Intelligence Officer Burned_Gary_1 Root"
+    }
+
     renderDecisionCSV = (decision) => {
         switch (decision.actionType) {
             case "PULSE_TAKEN":
@@ -50,14 +62,14 @@ class DecisionList extends React.Component {
             case "Tag Casualty":
                 return (
                     <div>
-                        <ListGroup.Item>Pateint: {decision.parameters["Casualty ID"]}</ListGroup.Item>
+                        <ListGroup.Item>Pateint: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Tag: {this.formattedActionType(decision.parameters["Tag"])}</ListGroup.Item>
                     </div>
                 )
             case "Check All Vitals":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {decision.parameters["Casualty ID"]}</ListGroup.Item>
+                        <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Breathing: {this.formattedActionType(decision.response["breathing"])}</ListGroup.Item>
                         <ListGroup.Item>Conscious: {decision.response["conscious"] ? `Yes` : `No`}</ListGroup.Item>
                         <ListGroup.Item>HRPMin: {decision.response["hrpmin"]}</ListGroup.Item>
@@ -67,7 +79,7 @@ class DecisionList extends React.Component {
             case "Apply Treatment":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {decision.parameters["Casualty ID"]}</ListGroup.Item>
+                        <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Treatment: {this.formattedActionType(decision.parameters["Parameters"]["treatment"])}</ListGroup.Item>
                         <ListGroup.Item>Breathing: {this.formattedActionType(decision.parameters["Parameters"]["location"])}</ListGroup.Item>
                     </div>
@@ -105,14 +117,6 @@ class DecisionList extends React.Component {
         });
         return updatedDecisions;
     }
-
-    commandMap = {
-        "Tag Casualty" : "Tag Applied",
-        "Apply Treatment" : "Injury Treated",
-        "Check All Vitals" : "Check All Vitals"
-    }
-    
-    
 
     render = () => {
         const visibleDecisionsCount = 10;
