@@ -8,12 +8,15 @@ class ScenarioDetails extends React.Component {
         const scenario = this.props.tables
         const numPatients = scenario.length
         const casualties = getCasualtyArray(scenario)
+        const description = this.props.description
 
         return (
             <Accordion>
                 <Accordion.Item eventKey="0">
-                    <Accordion.Header>Scenario Details: Jungle Triage</Accordion.Header>
+                    <Accordion.Header>Scenario Details: {this.props.scenarioID}</Accordion.Header>
                     <Accordion.Body>
+                        <p><strong>Scenario Description:</strong></p>
+                        <p>{description}</p>
                         <p><strong>Number of Patients:</strong> {numPatients}</p>
                         {/*<p><strong>Evac Spots:</strong> ? spot(s)</p>*/}
                         <p><strong>Patients: </strong></p>

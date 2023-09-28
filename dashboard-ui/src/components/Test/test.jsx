@@ -189,11 +189,10 @@ class Test extends React.Component {
 
                                 return (
                                     <div>
-                                        <ScenarioDetails tables={tables} />
+                                        <ScenarioDetails tables={tables} description={admHistory[0].response.unstructured} scenarioID={this.state.scenario}/>
                                         <Container fluid>
                                             <Row className="my-2">
                                                 {isLoading ? (
-                                                    // Render a loading indicator or message
                                                     <div>Loading CSV data...</div>
                                                 ) : (
                                                     <>
