@@ -87,7 +87,7 @@ class DecisionList extends React.Component {
         }
     }
 
-    imageToDecisionMapping(decisions, casualties) {
+    humanImageToDecisionMapping(decisions, casualties) {
         
         if (!casualties || casualties.length === 0) {
             return decisions; 
@@ -118,6 +118,24 @@ class DecisionList extends React.Component {
         return updatedDecisions;
     }
 
+    admImageToDecisionMapping(decisions) {
+      decisions.forEach(decision => {
+        switch (decision.parameters["Casualty ID"]) {
+          case "Intelligence Officer":
+            decision.imgURL = "gary.png";
+            break;
+          case "MarineC":
+            decision.imgURL = "mikeAmp.png";
+            break;
+          case "MarineA":
+            decision.imgURL = "mikeBurn.png";
+            break;
+        }
+      });
+      return decisions;
+    }
+    
+
     render = () => {
         const visibleDecisionsCount = 10;
         const decisionHeight = 50;
@@ -127,8 +145,10 @@ class DecisionList extends React.Component {
         let decisions = this.props.decisions
 
         if (this.props.isHuman){
-            decisions = this.imageToDecisionMapping(decisions, this.props.casualties);
-        } 
+            decisions = this.humanImageToDecisionMapping(decisions, this.props.casualties);
+        } else {
+          decisions = this.admImageToDecisionMapping(decisions)
+        }
         
 
         return (
