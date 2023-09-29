@@ -41,25 +41,21 @@ class Test extends React.Component {
                             }
                         return (*/}
                 <div>
-                    {/*<ScenarioDetails casualtyList={casualties} description={admHistory[0].response.unstructured} scenarioID={this.state.scenario} />*/}
+                    <ScenarioDetails />
                     <Container fluid>
-
                         <Row className="my-2">
-
                             <>
                                 <Col>
                                     <Card className="flex-grow-1">
                                         <DecisionMakerDetails />
                                     </Card>
                                 </Col>
-
                                 <Col>
                                     <Card className="flex-grow-1">
                                         <DecisionMakerDetails />
                                     </Card>
                                 </Col>
                             </>
-
                             {/*
                                             <Col>
                                                 <CasualtySlider tables={tables} decisionMaker={csvFileContent} />

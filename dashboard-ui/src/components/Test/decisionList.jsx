@@ -9,7 +9,10 @@ class DecisionList extends React.Component {
     this.state = {
       htmlFileContent: null,
       csvFileContent: null,
-      isLoading: true
+      isLoading: true,
+      doc: null,
+      casualtyArray: null,
+      decisions: null
     };
   }
 
@@ -185,7 +188,7 @@ class DecisionList extends React.Component {
 
   fetchData() {
     if (this.props.decisionMaker && this.props.isHuman) {
-     
+
 
       const csvFilePath = process.env.PUBLIC_URL + `/jungleExampleData/${this.props.decisionMaker}.csv`;
       const htmlFilePath = process.env.PUBLIC_URL + `/jungleExampleData/${this.props.decisionMaker === "human1" ? "jungle1" : "jungle2"}.html`;
@@ -206,6 +209,7 @@ class DecisionList extends React.Component {
         .then((response) => response.text())
         .then((data) => {
           this.setState({ htmlFileContent: data });
+          this.parseDoc()
         })
         .catch((error) => {
           console.error('Error fetching file:', error);
@@ -273,14 +277,23 @@ class DecisionList extends React.Component {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlFileContent, 'text/html')
 
-    return doc
+    this.setState({ doc: doc })
+    this.parseTables(doc)
   }
 
   parseTables(doc) {
     const tableTags = doc.getElementsByTagName('tbody')
-    const tableArray = Array.from(tableTags)
+    let tableArray = Array.from(tableTags)
+    tableArray = this.filterOutCasualties(getCasualtyArray(tableArray))
 
-    return tableArray
+    this.setState({ casualtyArray: tableArray})
+    this.parseDecisions()
+  }
+
+  parseDecisions() {
+      let decisions = this.humanImageToDecisionMapping(this.state.csvFileContent, this.state.casualtyArray);
+      decisions = this.filterDecisions(decisions)
+      this.setState({decisions: decisions})
   }
 
   filterActions(history) {
@@ -292,7 +305,7 @@ class DecisionList extends React.Component {
   }
 
   // temporary filtering out bbn scenario and marine that ADM does not interact with
-  filterOut(casualties) {
+  filterOutCasualties(casualties) {
     // Names to be filtered out
     const filteredNames = [
       "Asian Bob_4 Root",
@@ -306,84 +319,87 @@ class DecisionList extends React.Component {
     return filteredCasualties;
   }
 
+  filterDecisions(decisions) {
+    // filter out decisions that involve bbn scenario 
+    const filteredNames = [
+      "Asian Bob_4 Root",
+      "Military Mike Jungle Combat_1_5 Root",
+      "Military Mike Jungle Scout_1_3 Root"
+    ];
 
+    const filteredDecisions = decisions.filter((decision) => {
+      return !decision.actionData.some((name) =>
+        filteredNames.includes(name)
+      );
+    });
+
+    return filteredDecisions;
+  }
 
   render = () => {
-    const doc = this.parseDoc()
-    const tables = this.parseTables(doc)
-    const casualties = this.filterOut(getCasualtyArray(tables))
-    const { isLoading, csvFileContent } = this.state
+    const { isLoading } = this.state
     const visibleDecisionsCount = 10;
     const decisionHeight = 50;
 
     // total height of accordion maxes out at count * height of each 
     const accordionHeight = `${visibleDecisionsCount * decisionHeight}px`;
-    let decisions = null
-    if (this.props.isHuman) {
-      decisions = this.humanImageToDecisionMapping(csvFileContent, casualties);
-      //decisions = this.filterDecisions(decisions)
-    } else {
-      decisions = this.admImageToDecisionMapping(decisions)
-    }
-
-
 
     return (
       <div>
         <h3>{this.props.title}</h3>
-        {(this.props.decisionMaker && !isLoading) ? (
+        {(this.state.decisions && !isLoading) ? (
           <>
-          <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-            {decisions.map((decision, index) => (
-              <Accordion.Item key={index} eventKey={index}>
-                {this.props.isHuman ? (
-                  <>
-                    <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
-                    <Accordion.Body>
-                      <div className="row">
-                        <div className="col">
-                          <ListGroup variant="flush">
-                            {this.renderDecisionCSV(decision)}
-                          </ListGroup>
-                        </div>
-                        {decision.imgURL && (
+            <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+              {this.state.decisions.map((decision, index) => (
+                <Accordion.Item key={index} eventKey={index}>
+                  {this.props.isHuman ? (
+                    <>
+                      <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
+                      <Accordion.Body>
+                        <div className="row">
                           <div className="col">
-                            <img
-                              src={decision.imgURL}
-                              alt="casualty"
-                              className="img-fluid"
-                            />
+                            <ListGroup variant="flush">
+                              {this.renderDecisionCSV(decision)}
+                            </ListGroup>
                           </div>
-                        )}
-                      </div>
-                    </Accordion.Body>
-                  </>
-                ) :
-                  <>
-                    <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
-                    <Accordion.Body>
-                      <div className="row">
-                        <div className="col">
-                          <ListGroup variant="flush">
-                            {this.renderDecisionADM(decision)}
-                          </ListGroup>
+                          {decision.imgURL && (
+                            <div className="col">
+                              <img
+                                src={decision.imgURL}
+                                alt="casualty"
+                                className="img-fluid"
+                              />
+                            </div>
+                          )}
                         </div>
-                        {decision.imgURL && (
+                      </Accordion.Body>
+                    </>
+                  ) :
+                    <>
+                      <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
+                      <Accordion.Body>
+                        <div className="row">
                           <div className="col">
-                            <img
-                              src={decision.imgURL}
-                              alt="casualty"
-                              className="img-fluid"
-                            />
+                            <ListGroup variant="flush">
+                              {this.renderDecisionADM(decision)}
+                            </ListGroup>
                           </div>
-                        )}
-                      </div>
-                    </Accordion.Body>
-                  </>
-                }
-              </Accordion.Item>
-            ))}
-          </Accordion>
+                          {decision.imgURL && (
+                            <div className="col">
+                              <img
+                                src={decision.imgURL}
+                                alt="casualty"
+                                className="img-fluid"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </Accordion.Body>
+                    </>
+                  }
+                </Accordion.Item>
+              ))}
+            </Accordion>
           </>
         ) : (
           <p></p>

@@ -13,7 +13,6 @@ class DecisionMakerDash extends React.Component {
     componentDidUpdate(prevProps) {
         if (this.props.decisionMaker !== prevProps.decisionMaker) {
             this.fetchData(this.props.decisionMaker);
-            this.parseDoc()
         }
     }
 
@@ -39,7 +38,7 @@ class DecisionMakerDash extends React.Component {
         const { htmlFileContent } = this.state;
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlFileContent, 'text/html')
-        console.log(doc)
+        
         this.setState({ doc: doc })
         this.parseDash(doc)
     }
