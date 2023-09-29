@@ -182,6 +182,7 @@ class DecisionList extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.decisionMaker !== prevProps.decisionMaker) {
+      this.setState({decisions: []})
       this.fetchData(this.props.decisionMaker);
     }
   }
