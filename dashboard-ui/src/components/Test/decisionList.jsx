@@ -1,8 +1,17 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 import Accordion from 'react-bootstrap/Accordion';
-
+import { getCasualtyArray } from './htmlUtility';
 class DecisionList extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      htmlFileContent: null,
+      csvFileContent: null,
+      isLoading: true
+    };
+  }
 
   formattedActionType(actionType) {
     return actionType
@@ -45,7 +54,7 @@ class DecisionList extends React.Component {
       return "Fast Pulse";
     } else {
       return "No Pulse";
-    } 
+    }
   }
 
 
@@ -100,7 +109,7 @@ class DecisionList extends React.Component {
         return (
           <div>
             <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
-            {/*
+            {/* omitted data for now, adm gets all vital information not just pulse
             <ListGroup.Item>Breathing: {this.formattedActionType(decision.response["breathing"])}</ListGroup.Item>
             <ListGroup.Item>Conscious: {decision.response["conscious"] ? `Yes` : `No`}</ListGroup.Item>
             */}
@@ -120,7 +129,7 @@ class DecisionList extends React.Component {
   }
 
   humanImageToDecisionMapping(decisions, casualties) {
-
+    // map the proper image to a human decision
     if (!casualties || casualties.length === 0) {
       return decisions;
     }
@@ -151,6 +160,7 @@ class DecisionList extends React.Component {
   }
 
   admImageToDecisionMapping(decisions) {
+    // map the proper image to a adm decision 
     decisions.forEach(decision => {
       switch (decision.parameters["Casualty ID"]) {
         case "Intelligence Officer":
@@ -167,92 +177,218 @@ class DecisionList extends React.Component {
     return decisions;
   }
 
-  // temporary since human have two scenarios and adm has one
-  filterDecisions(humanDecisions) {
+  componentDidUpdate(prevProps) {
+    if (this.props.decisionMaker !== prevProps.decisionMaker) {
+      this.fetchData(this.props.decisionMaker);
+    }
+  }
+
+  fetchData() {
+    if (this.props.decisionMaker && this.props.isHuman) {
+     
+
+      const csvFilePath = process.env.PUBLIC_URL + `/jungleExampleData/${this.props.decisionMaker}.csv`;
+      const htmlFilePath = process.env.PUBLIC_URL + `/jungleExampleData/${this.props.decisionMaker === "human1" ? "jungle1" : "jungle2"}.html`;
+
+      // grab csv file
+      fetch(csvFilePath)
+        .then((response) => response.text())
+        .then((csvData) => {
+          const parsedData = this.parseCSV(csvData);
+          this.setState({ csvFileContent: parsedData, isLoading: false });
+        })
+        .catch((error) => {
+          console.error('Error fetching CSV file:', error);
+        });
+
+      // grab html file
+      fetch(htmlFilePath)
+        .then((response) => response.text())
+        .then((data) => {
+          this.setState({ htmlFileContent: data });
+        })
+        .catch((error) => {
+          console.error('Error fetching file:', error);
+        });
+    }
+  }
+
+
+  parseCSV(csvData) {
+    const dataLines = csvData.split('\n');
+    const headers = ["actionType", "ms", "time", "fileID", "v"];
+
+    return dataLines
+      .map((line, lineIndex) => {
+        const values = line.split(',');
+        const rowData = {};
+
+        headers.forEach((header, index) => {
+          rowData[header] = values[index];
+        });
+
+        // Condense the remaining columns into an "actionData" array
+        rowData.actionData = values.slice(headers.length);
+
+        // Adding a unique identifier as a key
+        rowData.key = `row_${lineIndex}`;
+
+        return rowData;
+      })
+      .filter(row => {
+        const excludedActionTypes = [
+          "PLAYER_LOCATION",
+          "VOICE_CAPTURE",
+          "VOICE_COMMAND",
+          "PATIENT_DEMOTED",
+          "SESSION_START",
+          "PATIENT_RECORD",
+          "INJURY_RECORD",
+          "TELEPORT",
+          "PATIENT_ENGAGED",
+          "PLAYER_GAZE",
+          "BAG_ACCESS",
+          "TOOL_HOVER",
+          "TOOL_SELECTED",
+          "TOOL_DISCARDED",
+          "TAG_SELECTED",
+          "BAG_CLOSED",
+          "SESSION_END",
+          "S_A_L_T_WAVED",
+          "S_A_L_T_WALK",
+          "S_A_L_T_WALK_IF_CAN",
+          "S_A_L_T_WAVE_IF_CAN",
+          "TOOL_APPLIED",
+          "TAG_DISCARDED",
+          ""
+        ];
+        return !excludedActionTypes.includes(row.actionType);
+      });
+  }
+
+
+
+  parseDoc() {
+    const { htmlFileContent } = this.state;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlFileContent, 'text/html')
+
+    return doc
+  }
+
+  parseTables(doc) {
+    const tableTags = doc.getElementsByTagName('tbody')
+    const tableArray = Array.from(tableTags)
+
+    return tableArray
+  }
+
+  filterActions(history) {
+    const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe"];
+
+    const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
+
+    return filteredHistory;
+  }
+
+  // temporary filtering out bbn scenario and marine that ADM does not interact with
+  filterOut(casualties) {
+    // Names to be filtered out
     const filteredNames = [
       "Asian Bob_4 Root",
       "Military Mike Jungle Combat_1_5 Root",
       "Military Mike Jungle Scout_1_3 Root"
     ];
 
-    const filteredDecisions = humanDecisions.filter(decision => {
-      return !decision.actionData.some(action => filteredNames.includes(action));
-    });
+    // Filter the casualties array based on the names
+    const filteredCasualties = casualties.filter(casualty => !filteredNames.includes(casualty.name));
 
-    return filteredDecisions;
+    return filteredCasualties;
   }
 
 
 
   render = () => {
+    const doc = this.parseDoc()
+    const tables = this.parseTables(doc)
+    const casualties = this.filterOut(getCasualtyArray(tables))
+    const { isLoading, csvFileContent } = this.state
     const visibleDecisionsCount = 10;
     const decisionHeight = 50;
 
     // total height of accordion maxes out at count * height of each 
     const accordionHeight = `${visibleDecisionsCount * decisionHeight}px`;
-    let decisions = this.props.decisions
-
+    let decisions = null
     if (this.props.isHuman) {
-      decisions = this.humanImageToDecisionMapping(decisions, this.props.casualties);
-      decisions = this.filterDecisions(decisions)
+      decisions = this.humanImageToDecisionMapping(csvFileContent, casualties);
+      //decisions = this.filterDecisions(decisions)
     } else {
       decisions = this.admImageToDecisionMapping(decisions)
     }
 
 
+
     return (
       <div>
-        <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-          {decisions.map((decision, index) => (
-            <Accordion.Item key={index} eventKey={index}>
-              {this.props.isHuman ? (
-                <>
-                  <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
-                  <Accordion.Body>
-                    <div className="row">
-                      <div className="col">
-                        <ListGroup variant="flush">
-                          {this.renderDecisionCSV(decision)}
-                        </ListGroup>
-                      </div>
-                      {decision.imgURL && (
+        <h3>{this.props.title}</h3>
+        {(this.props.decisionMaker && !isLoading) ? (
+          <>
+          <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+            {decisions.map((decision, index) => (
+              <Accordion.Item key={index} eventKey={index}>
+                {this.props.isHuman ? (
+                  <>
+                    <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
+                    <Accordion.Body>
+                      <div className="row">
                         <div className="col">
-                          <img
-                            src={decision.imgURL}
-                            alt="casualty"
-                            className="img-fluid"
-                          />
+                          <ListGroup variant="flush">
+                            {this.renderDecisionCSV(decision)}
+                          </ListGroup>
                         </div>
-                      )}
-                    </div>
-                  </Accordion.Body>
-                </>
-              ) :
-                <>
-                  <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
-                  <Accordion.Body>
-                    <div className="row">
-                      <div className="col">
-                        <ListGroup variant="flush">
-                          {this.renderDecisionADM(decision)}
-                        </ListGroup>
+                        {decision.imgURL && (
+                          <div className="col">
+                            <img
+                              src={decision.imgURL}
+                              alt="casualty"
+                              className="img-fluid"
+                            />
+                          </div>
+                        )}
                       </div>
-                      {decision.imgURL && (
+                    </Accordion.Body>
+                  </>
+                ) :
+                  <>
+                    <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
+                    <Accordion.Body>
+                      <div className="row">
                         <div className="col">
-                          <img
-                            src={decision.imgURL}
-                            alt="casualty"
-                            className="img-fluid"
-                          />
+                          <ListGroup variant="flush">
+                            {this.renderDecisionADM(decision)}
+                          </ListGroup>
                         </div>
-                      )}
-                    </div>
-                  </Accordion.Body>
-                </>
-              }
-            </Accordion.Item>
-          ))}
-        </Accordion>
+                        {decision.imgURL && (
+                          <div className="col">
+                            <img
+                              src={decision.imgURL}
+                              alt="casualty"
+                              className="img-fluid"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </Accordion.Body>
+                  </>
+                }
+              </Accordion.Item>
+            ))}
+          </Accordion>
+          </>
+        ) : (
+          <p></p>
+        )
+        }
       </div>
     );
   }
