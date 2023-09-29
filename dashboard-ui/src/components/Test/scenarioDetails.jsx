@@ -1,13 +1,12 @@
 import React from 'react';
-import { Accordion, ListGroup } from 'react-bootstrap';
+import { Accordion } from 'react-bootstrap';
 import { getCasualtyArray } from './htmlUtility';
 import { renderPatientInfo } from './casualtySlider';
 class ScenarioDetails extends React.Component {    
-    
+
     render = () => {
-        const scenario = this.props.tables
-        const numPatients = scenario.length
-        const casualties = getCasualtyArray(scenario)
+        const casualties = this.props.casualtyList
+        const numPatients = casualties.length
         const description = this.props.description
 
         return (

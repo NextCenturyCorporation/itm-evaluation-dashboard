@@ -161,19 +161,32 @@ class Test extends React.Component {
 
     filterActions(history) {
         const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe"];
-        
-        const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
-        
-        return filteredHistory;
-      }
-      
 
+        const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
+
+        return filteredHistory;
+    }
+
+    // temporary filtering out bbn scenario and marine that ADM does not interact with
+    filterOut(casualties) {
+        // Names to be filtered out
+        const filteredNames = [
+            "Asian Bob_4 Root",
+            "Military Mike Jungle Combat_1_5 Root",
+            "Military Mike Jungle Scout_1_3 Root"
+        ];
+    
+        // Filter the casualties array based on the names
+        const filteredCasualties = casualties.filter(casualty => !filteredNames.includes(casualty.name));
+    
+        return filteredCasualties;
+    }
 
     render() {
         const doc = this.parseDoc()
         const dashInfo = this.parseDash(doc)
         const tables = this.parseTables(doc)
-        const casualties = getCasualtyArray(tables)
+        const casualties = this.filterOut(getCasualtyArray(tables))
         const { isLoading, csvFileContent } = this.state
 
         return (
@@ -184,13 +197,14 @@ class Test extends React.Component {
                             ({ loading, error, data }) => {
                                 if (loading) return <div>Loading ...</div>
                                 if (error) return <div>Error</div>
+
                                 const admHistory = this.filterActions(data.getTestByADMandScenario.history)
-                                console.log(admHistory)
 
                                 return (
                                     <div>
-                                        <ScenarioDetails tables={tables} description={admHistory[0].response.unstructured} scenarioID={this.state.scenario}/>
+                                        <ScenarioDetails casualtyList={casualties} description={admHistory[0].response.unstructured} scenarioID={this.state.scenario} />
                                         <Container fluid>
+
                                             <Row className="my-2">
                                                 {isLoading ? (
                                                     <div>Loading CSV data...</div>
@@ -215,6 +229,7 @@ class Test extends React.Component {
                                             </Row>
 
                                         </Container>
+
                                     </div>)
                             }
                         }
