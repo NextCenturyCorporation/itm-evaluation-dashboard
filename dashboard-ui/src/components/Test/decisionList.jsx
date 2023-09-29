@@ -410,4 +410,10 @@ class DecisionList extends React.Component {
   }
 }
 
+export const nameMappings = {
+  "MarineC": "Military Mike Jungle Combat_3_2 Root",
+  "MarineA": "Military Mike Jungle Burned_0 Root",
+  "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root"
+}
+
 export default DecisionList;

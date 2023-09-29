@@ -1,26 +1,13 @@
 import React from 'react';
-import { Accordion } from 'react-bootstrap';
-import { renderPatientInfo } from './casualtySlider';
+import { Accordion, ListGroup } from 'react-bootstrap';
+import { nameMappings } from './decisionList';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
-const scenarioQuery = gql`
-query ExampleQuery($scenarioId: ID) {
-    getScenario(scenarioId: $scenarioId) {
-      state {
-        unstructured
-        casualties {
-          injuries {
-            name
-            severity
-            location
-          }
-          id
-        }
-      }
-    }
-  }
-  `
+const test_by_adm_and_scenario = gql`
+    query getTestByADMandScenario($scenarioID: ID, $admName: ID){
+        getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
+    }`;
 class ScenarioDetails extends React.Component {
 
     constructor(props) {
@@ -30,36 +17,48 @@ class ScenarioDetails extends React.Component {
         };
     }
 
+    renderPatientInfo(patient) {
+        return (
+            <ListGroup variant="flush">
+                {patient.injuries.map((injury, index) => (
+                    <ListGroup.Item key={index}>Injury: {injury.name} ({injury.location})</ListGroup.Item>
+                ))}
+
+            </ListGroup>
+        )
+    }
+
     render = () => {
         return (
             <Accordion>
-                <Query query={scenarioQuery} variables={{ "scenarioID": this.state.scenarioId }}>
+                <Query query={test_by_adm_and_scenario}>
                     {
                         ({ loading, error, data }) => {
                             if (loading) return <div>Loading ...</div>
                             if (error) return <div>Error</div>
-                            console.log(data)
+                            const response = data.getTestByADMandScenario.history[1].response
+                            const state = response.state
+                            console.log(state)
 
                             return (
                                 <Accordion.Item eventKey="0">
-                                    <Accordion.Header>Scenario Details: {this.state.scenarioId}</Accordion.Header>
+                                    <Accordion.Header>Scenario Details: {response.id}</Accordion.Header>
                                     <Accordion.Body>
                                         <p><strong>Scenario Description:</strong></p>
-                                        {/*<p>{description}</p>
-                                        <p><strong>Number of Patients:</strong> {numPatients}</p>
+                                        <p>{state.unstructured}</p>
+                                        <p><strong>Number of Patients:</strong> {state.casualties.length}</p>
                                         {/*<p><strong>Evac Spots:</strong> ? spot(s)</p>*/}
-                                        {/*<p><strong>Patients: </strong></p>
+                                        <p><strong>Patients: </strong></p>
                                         <Accordion>
-                                            {casualties.map((patient, index) => (
+                                            {state.casualties.map((patient, index) => (
                                                 <Accordion.Item key={index} eventKey={index}>
-                                                    <Accordion.Header>{patient.name}</Accordion.Header>
+                                                    <Accordion.Header>{nameMappings[patient.id]}</Accordion.Header>
                                                     <Accordion.Body>
-                                                        {renderPatientInfo(patient)}
+                                                        {this.renderPatientInfo(patient)}
                                                     </Accordion.Body>
                                                 </Accordion.Item>
                                             ))}
                                         </Accordion>
-                    */}
                                     </Accordion.Body>
                                 </Accordion.Item>
                             )
