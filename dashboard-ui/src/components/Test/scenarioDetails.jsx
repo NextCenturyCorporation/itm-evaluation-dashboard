@@ -1,6 +1,5 @@
 import React from 'react';
 import { Accordion } from 'react-bootstrap';
-import { getCasualtyArray } from './htmlUtility';
 import { renderPatientInfo } from './casualtySlider';
 class ScenarioDetails extends React.Component {    
 

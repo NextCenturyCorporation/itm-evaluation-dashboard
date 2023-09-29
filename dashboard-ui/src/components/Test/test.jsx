@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React from 'react';
 import CasualtySlider from './casualtySlider';
 import Card from 'react-bootstrap/Card';
 import ScenarioDetails from './scenarioDetails';
@@ -197,8 +197,9 @@ class Test extends React.Component {
                             ({ loading, error, data }) => {
                                 if (loading) return <div>Loading ...</div>
                                 if (error) return <div>Error</div>
-
+                                console.log(data.getTestByADMandScenario.history)
                                 const admHistory = this.filterActions(data.getTestByADMandScenario.history)
+                                console.log(admHistory)
 
                                 return (
                                     <div>

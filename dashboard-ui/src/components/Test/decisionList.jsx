@@ -18,10 +18,16 @@ class DecisionList extends React.Component {
     "yellow": "Delayed"
   }
 
-  commandMap = {
+  admCommandMap = {
     "Tag Casualty": "Tag Applied",
     "Apply Treatment": "Injury Treated",
-    "Check All Vitals": "Check All Vitals"
+    "Check All Vitals": "Check Vitals"
+  }
+
+  humanActionMap = {
+    "Pulse Taken": "Check Vitals",
+    "Tag Applied": "Tag Applied",
+    "Injury Treated": "Injury Treated"
   }
 
   nameMappings = {
@@ -30,13 +36,37 @@ class DecisionList extends React.Component {
     "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root"
   }
 
+  admPulseMapping(hrpmin) {
+    if (hrpmin > 0 && hrpmin <= 50) {
+      return "Faint Pulse";
+    } else if (hrpmin > 50 && hrpmin <= 100) {
+      return "Normal Pulse";
+    } else if (hrpmin > 100) {
+      return "Fast Pulse";
+    } else {
+      return "No Pulse";
+    } 
+  }
+
+
+  humanPulseReading(pulse) {
+    switch (pulse) {
+      case "pulse_fast":
+        return "Fast Pulse"
+      case "pulse_normal":
+        return "Normal Pulse"
+      case "pulse_faint":
+        return "Faint Pulse"
+    }
+  }
+
   renderDecisionCSV = (decision) => {
     switch (decision.actionType) {
       case "PULSE_TAKEN":
         return (
           <div>
             <ListGroup.Item>Patient: {decision.actionData[1]}</ListGroup.Item>
-            <ListGroup.Item>Pulse Reading: {decision.actionData[0]}</ListGroup.Item>
+            <ListGroup.Item>Pulse Reading: {this.humanPulseReading(decision.actionData[0])}</ListGroup.Item>
           </div>
         );
       case "INJURY_TREATED":
@@ -70,10 +100,12 @@ class DecisionList extends React.Component {
         return (
           <div>
             <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+            {/*
             <ListGroup.Item>Breathing: {this.formattedActionType(decision.response["breathing"])}</ListGroup.Item>
             <ListGroup.Item>Conscious: {decision.response["conscious"] ? `Yes` : `No`}</ListGroup.Item>
-            <ListGroup.Item>HRPMin: {decision.response["hrpmin"]}</ListGroup.Item>
-            <ListGroup.Item>Mental Status: {this.formattedActionType(decision.response["mental_status"])}</ListGroup.Item>
+            */}
+            <ListGroup.Item>Pulse Reading: {this.admPulseMapping(parseInt(decision.response["hrpmin"]))}</ListGroup.Item>
+            {/*<ListGroup.Item>Mental Status: {this.formattedActionType(decision.response["mental_status"])}</ListGroup.Item>*/}
           </div>
         )
       case "Apply Treatment":
@@ -138,17 +170,17 @@ class DecisionList extends React.Component {
   // temporary since human have two scenarios and adm has one
   filterDecisions(humanDecisions) {
     const filteredNames = [
-        "Asian Bob_4 Root",
-        "Military Mike Jungle Combat_1_5 Root",
-        "Military Mike Jungle Scout_1_3 Root"
+      "Asian Bob_4 Root",
+      "Military Mike Jungle Combat_1_5 Root",
+      "Military Mike Jungle Scout_1_3 Root"
     ];
 
     const filteredDecisions = humanDecisions.filter(decision => {
-        return !decision.actionData.some(action => filteredNames.includes(action));
+      return !decision.actionData.some(action => filteredNames.includes(action));
     });
 
     return filteredDecisions;
-}
+  }
 
 
 
@@ -175,7 +207,7 @@ class DecisionList extends React.Component {
             <Accordion.Item key={index} eventKey={index}>
               {this.props.isHuman ? (
                 <>
-                  <Accordion.Header>{this.formattedActionType(decision.actionType)}</Accordion.Header>
+                  <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
                   <Accordion.Body>
                     <div className="row">
                       <div className="col">
@@ -197,7 +229,7 @@ class DecisionList extends React.Component {
                 </>
               ) :
                 <>
-                  <Accordion.Header>{this.commandMap[decision.command]}</Accordion.Header>
+                  <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
                   <Accordion.Body>
                     <div className="row">
                       <div className="col">
