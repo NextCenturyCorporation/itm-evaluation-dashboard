@@ -410,10 +410,10 @@ class DecisionList extends React.Component {
               ({ loading, error, data }) => {
                 if (loading) return <div>Loading ...</div>
                 if (error) return <div>Error</div>
-                this.setState({decisions: this.admImageToDecisionMapping(this.filterActions(data.getTestByADMandScenario.history))})
+                const decisions = this.admImageToDecisionMapping(this.filterActions(data.getTestByADMandScenario.history))
                 return (
                   <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-                    {this.state.decisions.map((decision, index) => (
+                    {decisions.map((decision, index) => (
                       <Accordion.Item key={index} eventKey={index}>
                         <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
                         <Accordion.Body>
