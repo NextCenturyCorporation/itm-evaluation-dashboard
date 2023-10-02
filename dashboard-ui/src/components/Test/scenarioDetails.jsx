@@ -38,7 +38,6 @@ class ScenarioDetails extends React.Component {
                             if (error) return <div>Error</div>
                             const response = data.getTestByADMandScenario.history[1].response
                             const state = response.state
-                            console.log(state)
 
                             return (
                                 <Accordion.Item eventKey="0">

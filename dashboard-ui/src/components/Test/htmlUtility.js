@@ -35,6 +35,7 @@ export const getCasualtyArray = (tables, decisionMaker) => {
         }
 
         casualties.push(casualty)
+        return casualty
     })
 
 

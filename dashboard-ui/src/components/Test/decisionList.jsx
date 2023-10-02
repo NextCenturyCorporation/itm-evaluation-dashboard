@@ -2,6 +2,25 @@ import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 import Accordion from 'react-bootstrap/Accordion';
 import { getCasualtyArray } from './htmlUtility';
+import { Query } from 'react-apollo';
+import gql from 'graphql-tag';
+
+    const getScenarioNamesQueryName = "getScenarioNames";
+const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
+const getTestByADMandScenarioName = "getTestByADMandScenario";
+
+const scenario_names_aggregation = gql`
+    query getScenarioNames{
+        getScenarioNames
+    }`;
+const performer_adm_by_scenario = gql`
+    query getPerformerADMsForScenario($scenarioID: ID){
+        getPerformerADMsForScenario(scenarioID: $scenarioID)
+    }`;
+const test_by_adm_and_scenario = gql`
+    query getTestByADMandScenario($scenarioID: ID, $admName: ID){
+        getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
+    }`;
 class DecisionList extends React.Component {
 
   constructor(props) {
@@ -12,7 +31,8 @@ class DecisionList extends React.Component {
       isLoading: true,
       doc: null,
       casualtyArray: null,
-      decisions: null
+      decisions: null,
+      scenario: "soartech-september-demo-scenario-1"
     };
   }
 
@@ -69,6 +89,8 @@ class DecisionList extends React.Component {
         return "Normal Pulse"
       case "pulse_faint":
         return "Faint Pulse"
+      default:
+        return "unknown"
     }
   }
 
@@ -96,6 +118,8 @@ class DecisionList extends React.Component {
             <ListGroup.Item>Tag: {this.tagMappings[decision.actionData[1]]}</ListGroup.Item>
           </div>
         )
+      default:
+        return (<p>unrecognized action</p>)
     }
   }
 
@@ -182,7 +206,7 @@ class DecisionList extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.decisionMaker !== prevProps.decisionMaker) {
-      this.setState({decisions: []})
+      this.setState({ decisions: [] })
       this.fetchData(this.props.decisionMaker);
     }
   }
@@ -287,14 +311,14 @@ class DecisionList extends React.Component {
     let tableArray = Array.from(tableTags)
     tableArray = this.filterOutCasualties(getCasualtyArray(tableArray))
 
-    this.setState({ casualtyArray: tableArray})
+    this.setState({ casualtyArray: tableArray })
     this.parseDecisions()
   }
 
   parseDecisions() {
-      let decisions = this.humanImageToDecisionMapping(this.state.csvFileContent, this.state.casualtyArray);
-      decisions = this.filterDecisions(decisions)
-      this.setState({decisions: decisions})
+    let decisions = this.humanImageToDecisionMapping(this.state.csvFileContent, this.state.casualtyArray);
+    decisions = this.filterDecisions(decisions)
+    this.setState({ decisions: decisions })
   }
 
   filterActions(history) {
@@ -348,56 +372,30 @@ class DecisionList extends React.Component {
     return (
       <div>
         <h3>{this.props.title}</h3>
-        {(this.state.decisions && !isLoading) ? (
+        {(this.state.decisions && this.props.isHuman && !isLoading) ? (
           <>
             <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
               {this.state.decisions.map((decision, index) => (
                 <Accordion.Item key={index} eventKey={index}>
-                  {this.props.isHuman ? (
-                    <>
-                      <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
-                      <Accordion.Body>
-                        <div className="row">
-                          <div className="col">
-                            <ListGroup variant="flush">
-                              {this.renderDecisionCSV(decision)}
-                            </ListGroup>
-                          </div>
-                          {decision.imgURL && (
-                            <div className="col">
-                              <img
-                                src={decision.imgURL}
-                                alt="casualty"
-                                className="img-fluid"
-                              />
-                            </div>
-                          )}
+                  <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
+                  <Accordion.Body>
+                    <div className="row">
+                      <div className="col">
+                        <ListGroup variant="flush">
+                          {this.renderDecisionCSV(decision)}
+                        </ListGroup>
+                      </div>
+                      {decision.imgURL && (
+                        <div className="col">
+                          <img
+                            src={decision.imgURL}
+                            alt="casualty"
+                            className="img-fluid"
+                          />
                         </div>
-                      </Accordion.Body>
-                    </>
-                  ) :
-                    <>
-                      <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
-                      <Accordion.Body>
-                        <div className="row">
-                          <div className="col">
-                            <ListGroup variant="flush">
-                              {this.renderDecisionADM(decision)}
-                            </ListGroup>
-                          </div>
-                          {decision.imgURL && (
-                            <div className="col">
-                              <img
-                                src={decision.imgURL}
-                                alt="casualty"
-                                className="img-fluid"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </Accordion.Body>
-                    </>
-                  }
+                      )}
+                    </div>
+                  </Accordion.Body>
                 </Accordion.Item>
               ))}
             </Accordion>
@@ -406,6 +404,46 @@ class DecisionList extends React.Component {
           <p></p>
         )
         }
+        {(this.state.decisions && !this.props.isHuman) ? (
+          <Query query={test_by_adm_and_scenario} variables={{ "scenarioID": this.state.scenario, "admName": (this.props.decisionMaker === "Paralax" ? "TAD" : "") }}>
+            {
+              ({ loading, error, data }) => {
+                if (loading) return <div>Loading ...</div>
+                if (error) return <div>Error</div>
+                this.setState({decisions: this.admImageToDecisionMapping(this.filterActions(data.getTestByADMandScenario.history))})
+                return (
+                  <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+                    {this.state.decisions.map((decision, index) => (
+                      <Accordion.Item key={index} eventKey={index}>
+                        <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
+                        <Accordion.Body>
+                          <div className="row">
+                            <div className="col">
+                              <ListGroup variant="flush">
+                                {this.renderDecisionADM(decision)}
+                              </ListGroup>
+                            </div>
+                            {decision.imgURL && (
+                              <div className="col">
+                                <img
+                                  src={decision.imgURL}
+                                  alt="casualty"
+                                  className="img-fluid"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </Accordion.Body>
+                      </Accordion.Item>
+                    ))}
+                  </Accordion>
+                );
+              }
+            }
+          </Query>
+        ) : (
+          <p></p>
+        )}
       </div>
     );
   }
