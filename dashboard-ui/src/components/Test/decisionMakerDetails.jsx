@@ -50,7 +50,7 @@ class DecisionMakerDetails extends React.Component {
                             <Dropdown.Menu>
                                 <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Human 1")}>Human 1</Dropdown.Item>
                                 <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Human 2")}>Human 2</Dropdown.Item>
-                                <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Kitware")}>Kitware</Dropdown.Item>
+                                <Dropdown.Item disabled={true} onClick={() => this.handleDecisionMakerSelect("Kitware")}>Kitware</Dropdown.Item>
                                 <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Paralax")}>Paralax</Dropdown.Item>
                             </Dropdown.Menu>
                         </Dropdown>
