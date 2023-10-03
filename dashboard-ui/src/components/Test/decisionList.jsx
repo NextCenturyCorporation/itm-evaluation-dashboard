@@ -67,14 +67,6 @@ class DecisionList extends React.Component {
     "Injury Treated": "Injury Treated"
   }
 
-  nameMappings = {
-    "MarineC": "Military Mike Jungle Combat_3_2 Root",
-    "MarineA": "Military Mike Jungle Burned_0 Root",
-    "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root",
-    "Mike": "Military Mike Jungle Scout_1_3 Root",
-    "Civilian": "Asian Bob_4 Root"
-  }
-
   admPulseMapping(hrpmin) {
     if (hrpmin > 0 && hrpmin <= 50) {
       return "Faint Pulse";
@@ -135,14 +127,14 @@ class DecisionList extends React.Component {
       case "Tag Casualty":
         return (
           <div>
-            <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+            <ListGroup.Item>Patient: {nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
             <ListGroup.Item>Tag: {this.formattedActionType(decision.parameters["Tag"])}</ListGroup.Item>
           </div>
         )
       case "Check All Vitals":
         return (
           <div>
-            <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+            <ListGroup.Item>Patient: {nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
             {/* omitted data for now, adm gets all vital information not just pulse
             <ListGroup.Item>Breathing: {this.formattedActionType(decision.response["breathing"])}</ListGroup.Item>
             <ListGroup.Item>Conscious: {decision.response["conscious"] ? `Yes` : `No`}</ListGroup.Item>
@@ -154,7 +146,7 @@ class DecisionList extends React.Component {
       case "Apply Treatment":
         return (
           <div>
-            <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+            <ListGroup.Item>Patient: {nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
             <ListGroup.Item>Treatment: {this.formattedActionType(decision.parameters["Parameters"]["treatment"])}</ListGroup.Item>
             <ListGroup.Item>Breathing: {this.formattedActionType(decision.parameters["Parameters"]["location"])}</ListGroup.Item>
           </div>
@@ -162,7 +154,7 @@ class DecisionList extends React.Component {
       case "Move to EVAC":
         return (
           <div>
-            <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+            <ListGroup.Item>Patient: {nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
           </div>
         )
     }
@@ -510,7 +502,9 @@ class DecisionList extends React.Component {
 export const nameMappings = {
   "MarineC": "Military Mike Jungle Combat_3_2 Root",
   "MarineA": "Military Mike Jungle Burned_0 Root",
-  "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root"
+  "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root",
+  "Mike": "Military Mike Jungle Scout_1_3 Root",
+  "Civilian": "Asian Bob_4 Root"
 }
 
 export default DecisionList;

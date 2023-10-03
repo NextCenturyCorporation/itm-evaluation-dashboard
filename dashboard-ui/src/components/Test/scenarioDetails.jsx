@@ -23,10 +23,9 @@ class ScenarioDetails extends React.Component {
     renderPatientInfo(patient) {
         return (
             <ListGroup variant="flush">
-                {patient.injuries.map((injury, index) => (
-                    <ListGroup.Item key={index}>Injury: {injury.name} ({injury.location})</ListGroup.Item>
-                ))}
-
+                <ListGroup.Item>Age: {patient.demographics.age}</ListGroup.Item>
+                <ListGroup.Item>Sex: {patient.demographics.sex}</ListGroup.Item>
+                <ListGroup.Item>Rank: {patient.demographics.rank}</ListGroup.Item>
             </ListGroup>
         )
     }
@@ -45,14 +44,20 @@ class ScenarioDetails extends React.Component {
         return (
             <Accordion>
                 { (this.props.selectedScenario && this.state.scenarioId) ? (
-                <Query query={test_by_adm_and_scenario}>
+                <Query query={myQuery}>
                     {
                         ({ loading, error, data }) => {
                             if (loading) return <div>Loading ...</div>
                             if (error) return <div>Error</div>
                             
-                            const response = data.getTestByADMandScenario.history[1].response
-                            const state = response.state
+                            let response = {}
+                            let state = {}
+                            if (this.state.scenarioId === "soartech-september-demo-scenario-1") {
+                                response = data.getAllHistory[0].history[1].response
+                                state = response.state
+                            } else {
+                                state = data.getAllHistory[1].history[1].response
+                            }
                             
                             return (
                                 <Accordion.Item eventKey="0">
