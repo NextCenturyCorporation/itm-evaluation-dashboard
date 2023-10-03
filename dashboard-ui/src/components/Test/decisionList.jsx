@@ -21,6 +21,10 @@ const test_by_adm_and_scenario = gql`
     query getTestByADMandScenario($scenarioID: ID, $admName: ID){
         getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
     }`;
+
+    const myQuery = gql`query ExampleQuery {
+      getAllHistory
+    }`
 class DecisionList extends React.Component {
 
   constructor(props) {
@@ -392,7 +396,7 @@ class DecisionList extends React.Component {
   }
 
   filterDecisionsADM(history) {
-    const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe"];
+    const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe", "Request SITREP"];
 
     const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
 
@@ -443,12 +447,18 @@ class DecisionList extends React.Component {
         )
         }
         {(this.state.decisions && this.props.decisionMaker && !this.props.isHuman) ? (
-          <Query query={test_by_adm_and_scenario} variables={{ "scenarioID": this.state.scenario, "admName": (this.props.decisionMaker === "Paralax" ? "TAD" : "ALIGN") }}>
+          <Query query={myQuery} /*variables={{ "scenarioID": this.state.scenario, "admName": (this.props.decisionMaker === "Paralax" ? "TAD" : "ALIGN") }}*/>
             {
               ({ loading, error, data }) => {
                 if (loading) return <div>Loading ...</div>
                 if (error) return <div>Error</div>
-                const decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getTestByADMandScenario.history))
+                console.log(data)
+                let decisions = []
+                if (this.props.selectedScenario === "Soartech") {
+                  decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getAllHistory[0].history))
+                } else {
+                  decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getAllHistory[1].history))
+                }
                 return (
                   <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
                     {decisions.map((decision, index) => (
