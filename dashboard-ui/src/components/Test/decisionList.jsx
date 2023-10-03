@@ -308,7 +308,12 @@ class DecisionList extends React.Component {
   parseTables(doc) {
     const tableTags = doc.getElementsByTagName('tbody')
     let tableArray = Array.from(tableTags)
-    tableArray = this.filterOutCasualties(getCasualtyArray(tableArray))
+    if (this.props.selectedScenario === "Soartech") {
+      // have to filter out different actions from simulator based on scenario
+      tableArray = this.filterOutCasualtiesForSoarTech(getCasualtyArray(tableArray))
+    } else {
+      tableArray = this.filterOutCasualtiesForBBN(getCasualtyArray(tableArray))
+    }
 
     this.setState({ casualtyArray: tableArray })
     this.parseDecisions()
@@ -316,20 +321,16 @@ class DecisionList extends React.Component {
 
   parseDecisions() {
     let decisions = this.humanImageToDecisionMapping(this.state.csvFileContent, this.state.casualtyArray);
-    decisions = this.filterDecisions(decisions)
+    if (this.props.selectedScenario === "Soartech") {
+      decisions = this.filterDecisionsSoarTech(decisions)
+    } else {
+      decisions = this.filterDecisionsBBN(decisions)
+    }
     this.setState({ decisions: decisions })
   }
 
-  filterActions(history) {
-    const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe"];
-
-    const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
-
-    return filteredHistory;
-  }
-
   // temporary filtering out bbn scenario and marine that ADM does not interact with
-  filterOutCasualties(casualties) {
+  filterOutCasualtiesForSoarTech(casualties) {
     // Names to be filtered out
     const filteredNames = [
       "Asian Bob_4 Root",
@@ -343,7 +344,21 @@ class DecisionList extends React.Component {
     return filteredCasualties;
   }
 
-  filterDecisions(decisions) {
+  filterOutCasualtiesForBBN(casualties) {
+    // Names to be kept
+    const filteredNames = [
+      "Asian Bob_4 Root",
+      "Military Mike Jungle Scout_1_3 Root"
+    ];
+  
+    // Filter the casualties array based on the names
+    const filteredCasualties = casualties.filter(casualty => filteredNames.includes(casualty.name));
+  
+    return filteredCasualties;
+  }
+  
+
+  filterDecisionsSoarTech(decisions) {
     // filter out decisions that involve bbn scenario 
     const filteredNames = [
       "Asian Bob_4 Root",
@@ -358,6 +373,30 @@ class DecisionList extends React.Component {
     });
 
     return filteredDecisions;
+  }
+
+  filterDecisionsBBN(decisions) {
+    // filter out decisions that involve bbn scenario 
+    const filteredNames = [
+      "Asian Bob_4 Root",
+      "Military Mike Jungle Scout_1_3 Root"
+    ];
+
+    const filteredDecisions = decisions.filter((decision) => {
+      return decision.actionData.some((name) =>
+        filteredNames.includes(name)
+      );
+    });
+
+    return filteredDecisions;
+  }
+
+  filterDecisionsADM(history) {
+    const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe"];
+
+    const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
+
+    return filteredHistory;
   }
 
   render = () => {
@@ -409,7 +448,7 @@ class DecisionList extends React.Component {
               ({ loading, error, data }) => {
                 if (loading) return <div>Loading ...</div>
                 if (error) return <div>Error</div>
-                const decisions = this.admImageToDecisionMapping(this.filterActions(data.getTestByADMandScenario.history))
+                const decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getTestByADMandScenario.history))
                 return (
                   <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
                     {decisions.map((decision, index) => (
