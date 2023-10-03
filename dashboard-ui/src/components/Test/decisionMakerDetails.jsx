@@ -45,9 +45,10 @@ class DecisionMakerDetails extends React.Component {
                             <Tab eventKey="0" title="Action List" className="p-4">
                                 <DecisionList title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} selectedScenario={this.props.selectedScenario}/>
                             </Tab>
+                            {/* commenting out the scenario stats until I am parse the adm data to match the same format
                             <Tab eventKey="1" title="General Scenario Stats" className="p-4">
                                 <DecisionMakerDash title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} selectedScenario={this.props.selectedScenario}/>
-                            </Tab>
+                            </Tab>*/}
                         </Tabs>
                         <Dropdown className="px-2 pb-2">
                             <Dropdown.Toggle variant="primary" id="dropdown-basic" disabled={!this.props.selectedScenario}>

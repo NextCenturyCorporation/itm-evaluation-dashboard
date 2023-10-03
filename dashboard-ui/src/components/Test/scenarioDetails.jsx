@@ -8,6 +8,9 @@ const test_by_adm_and_scenario = gql`
     query getTestByADMandScenario($scenarioID: ID, $admName: ID){
         getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
     }`;
+const myQuery = gql`query ExampleQuery {
+    getAllHistory
+  }`
 class ScenarioDetails extends React.Component {
 
     constructor(props) {
@@ -33,7 +36,7 @@ class ScenarioDetails extends React.Component {
             if (this.props.selectedScenario === "Soartech") {
                 this.setState({ scenarioId: "soartech-september-demo-scenario-1" })
             } else {
-                // TODO: set scenarioId to "adept-september-demo-scenario-1" when that works
+                this.setState({scenarioId: "adept-september-demo-scenario-1"})
             }
         }
     }
@@ -47,9 +50,10 @@ class ScenarioDetails extends React.Component {
                         ({ loading, error, data }) => {
                             if (loading) return <div>Loading ...</div>
                             if (error) return <div>Error</div>
+                            
                             const response = data.getTestByADMandScenario.history[1].response
                             const state = response.state
-
+                            
                             return (
                                 <Accordion.Item eventKey="0">
                                     <Accordion.Header>Scenario Details: {this.state.scenarioId}</Accordion.Header>
@@ -57,7 +61,6 @@ class ScenarioDetails extends React.Component {
                                         <p><strong>Scenario Description:</strong></p>
                                         <p>{state.unstructured}</p>
                                         <p><strong>Number of Patients:</strong> {state.casualties.length}</p>
-                                        {/*<p><strong>Evac Spots:</strong> ? spot(s)</p>*/}
                                         <p><strong>Patients: </strong></p>
                                         <Accordion>
                                             {state.casualties.map((patient, index) => (
