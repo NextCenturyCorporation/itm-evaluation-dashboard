@@ -57,7 +57,8 @@ class DecisionList extends React.Component {
   admCommandMap = {
     "Tag Casualty": "Tag Applied",
     "Apply Treatment": "Injury Treated",
-    "Check All Vitals": "Check Vitals"
+    "Check All Vitals": "Check Vitals",
+    "Move to EVAC": "Move to Evac"
   }
 
   humanActionMap = {
@@ -69,7 +70,9 @@ class DecisionList extends React.Component {
   nameMappings = {
     "MarineC": "Military Mike Jungle Combat_3_2 Root",
     "MarineA": "Military Mike Jungle Burned_0 Root",
-    "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root"
+    "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root",
+    "Mike": "Military Mike Jungle Scout_1_3 Root",
+    "Civilian": "Asian Bob_4 Root"
   }
 
   admPulseMapping(hrpmin) {
@@ -132,7 +135,7 @@ class DecisionList extends React.Component {
       case "Tag Casualty":
         return (
           <div>
-            <ListGroup.Item>Pateint: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+            <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
             <ListGroup.Item>Tag: {this.formattedActionType(decision.parameters["Tag"])}</ListGroup.Item>
           </div>
         )
@@ -154,6 +157,12 @@ class DecisionList extends React.Component {
             <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
             <ListGroup.Item>Treatment: {this.formattedActionType(decision.parameters["Parameters"]["treatment"])}</ListGroup.Item>
             <ListGroup.Item>Breathing: {this.formattedActionType(decision.parameters["Parameters"]["location"])}</ListGroup.Item>
+          </div>
+        )
+      case "Move to EVAC":
+        return (
+          <div>
+            <ListGroup.Item>Patient: {this.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
           </div>
         )
     }
@@ -452,13 +461,14 @@ class DecisionList extends React.Component {
               ({ loading, error, data }) => {
                 if (loading) return <div>Loading ...</div>
                 if (error) return <div>Error</div>
-                console.log(data)
+                
                 let decisions = []
                 if (this.props.selectedScenario === "Soartech") {
                   decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getAllHistory[0].history))
                 } else {
                   decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getAllHistory[1].history))
                 }
+                
                 return (
                   <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
                     {decisions.map((decision, index) => (
