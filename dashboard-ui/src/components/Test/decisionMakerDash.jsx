@@ -12,6 +12,7 @@ class DecisionMakerDash extends React.Component {
 
     componentDidUpdate(prevProps) {
         if (this.props.decisionMaker !== prevProps.decisionMaker) {
+            this.setState({dashInfo: null})
             this.fetchData(this.props.decisionMaker);
         }
     }

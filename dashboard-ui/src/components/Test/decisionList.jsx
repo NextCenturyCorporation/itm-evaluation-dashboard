@@ -5,7 +5,7 @@ import { getCasualtyArray } from './htmlUtility';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
-    const getScenarioNamesQueryName = "getScenarioNames";
+const getScenarioNamesQueryName = "getScenarioNames";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
 const getTestByADMandScenarioName = "getTestByADMandScenario";
 

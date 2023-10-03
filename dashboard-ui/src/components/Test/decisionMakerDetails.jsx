@@ -37,14 +37,14 @@ class DecisionMakerDetails extends React.Component {
                     <Col>
                         <Tabs className="pt-1 px-1">
                             <Tab eventKey="0" title="Action List" className="p-4">
-                                <DecisionList title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} />
+                                <DecisionList title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} scenario={this.props.selectedScenario}/>
                             </Tab>
                             <Tab eventKey="1" title="General Scenario Stats" className="p-4">
-                                <DecisionMakerDash title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman}/>
+                                <DecisionMakerDash title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} scenario={this.props.selectedScenario}/>
                             </Tab>
                         </Tabs>
                         <Dropdown className="px-2 pb-2">
-                            <Dropdown.Toggle variant="primary" id="dropdown-basic">
+                            <Dropdown.Toggle variant="primary" id="dropdown-basic" disabled={!this.props.selectedScenario}>
                                 {this.state.dropdownLabel}
                             </Dropdown.Toggle>
                             <Dropdown.Menu>

@@ -13,7 +13,7 @@ class ScenarioDetails extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            scenarioId: "soartech-september-demo-scenario-1"
+            scenarioId: ""
         };
     }
 
@@ -28,9 +28,20 @@ class ScenarioDetails extends React.Component {
         )
     }
 
+    componentDidUpdate(prevProps) {
+        if (this.props.selectedScenario !== prevProps.selectedScenario) {
+            if (this.props.selectedScenario === "Soartech") {
+                this.setState({ scenarioId: "soartech-september-demo-scenario-1" })
+            } else {
+                // TODO: set scenarioId to "adept-september-demo-scenario-1" when that works
+            }
+        }
+    }
+
     render = () => {
         return (
             <Accordion>
+                { (this.props.selectedScenario && this.state.scenarioId) ? (
                 <Query query={test_by_adm_and_scenario}>
                     {
                         ({ loading, error, data }) => {
@@ -41,7 +52,7 @@ class ScenarioDetails extends React.Component {
 
                             return (
                                 <Accordion.Item eventKey="0">
-                                    <Accordion.Header>Scenario Details: {response.id}</Accordion.Header>
+                                    <Accordion.Header>Scenario Details: {this.state.scenarioId}</Accordion.Header>
                                     <Accordion.Body>
                                         <p><strong>Scenario Description:</strong></p>
                                         <p>{state.unstructured}</p>
@@ -64,6 +75,10 @@ class ScenarioDetails extends React.Component {
                         }
                     }
                 </Query>
+                ) : (
+                    <Accordion.Header>Scenario Details: {this.state.scenarioId}</Accordion.Header>
+                )
+                }
             </Accordion>
         )
     }
