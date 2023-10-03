@@ -10,7 +10,7 @@ class DecisionMakerDetails extends React.Component {
         this.state = {
             dropdownLabel: "Choose Decision Maker",
             decisionMaker: "",
-            isHuman: true
+            isHuman: false
         };
     }
 
@@ -30,6 +30,12 @@ class DecisionMakerDetails extends React.Component {
         });
     };
 
+    componentDidUpdate(prevProps) {
+        if (this.props.selectedScenario !== prevProps.selectedScenario) {
+            this.setState({dropdownLabel: "Choose Decision Maker", decisionMaker: "", isHuman: false})
+        }
+    }
+
     render = () => {
         return (
             <>
@@ -37,10 +43,10 @@ class DecisionMakerDetails extends React.Component {
                     <Col>
                         <Tabs className="pt-1 px-1">
                             <Tab eventKey="0" title="Action List" className="p-4">
-                                <DecisionList title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} scenario={this.props.selectedScenario}/>
+                                <DecisionList title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} selectedScenario={this.props.selectedScenario}/>
                             </Tab>
                             <Tab eventKey="1" title="General Scenario Stats" className="p-4">
-                                <DecisionMakerDash title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} scenario={this.props.selectedScenario}/>
+                                <DecisionMakerDash title={this.state.dropdownLabel} decisionMaker={this.state.decisionMaker} isHuman={this.state.isHuman} selectedScenario={this.props.selectedScenario}/>
                             </Tab>
                         </Tabs>
                         <Dropdown className="px-2 pb-2">

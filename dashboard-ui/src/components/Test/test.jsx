@@ -17,25 +17,23 @@ class Test extends React.Component {
 
     handleScenarioChange = (e) => {
         const selectedScenario = e.target.value;
-        this.setState({ selectedScenario }, () => {
-            console.log(this.state.selectedScenario);
-        });
+        this.setState({ selectedScenario })
     }
 
     render() {
         return (
             <div>
-                <ScenarioDetails selectedScenario={this.state.selectedScenario}/>
+                <ScenarioDetails selectedScenario={this.state.selectedScenario} />
                 <Container fluid>
                     <Row className="my-2">
                         <Col>
                             <Card className="flex-grow-1">
-                                <DecisionMakerDetails selectedScenario={this.state.selectedScenario}/>
+                                <DecisionMakerDetails selectedScenario={this.state.selectedScenario} />
                             </Card>
                         </Col>
                         <Col>
                             <Card className="flex-grow-1">
-                                <DecisionMakerDetails selectedScenario={this.state.selectedScenario}/>
+                                <DecisionMakerDetails selectedScenario={this.state.selectedScenario} />
                             </Card>
                         </Col>
                         {/*

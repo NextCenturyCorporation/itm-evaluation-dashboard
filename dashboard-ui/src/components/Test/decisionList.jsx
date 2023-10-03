@@ -214,7 +214,6 @@ class DecisionList extends React.Component {
   fetchData() {
     if (this.props.decisionMaker && this.props.isHuman) {
 
-
       const csvFilePath = process.env.PUBLIC_URL + `/jungleExampleData/${this.props.decisionMaker}.csv`;
       const htmlFilePath = process.env.PUBLIC_URL + `/jungleExampleData/${this.props.decisionMaker === "human1" ? "jungle1" : "jungle2"}.html`;
 
@@ -372,7 +371,7 @@ class DecisionList extends React.Component {
     return (
       <div>
         <h3>{this.props.title}</h3>
-        {(this.state.decisions && this.props.isHuman && !isLoading) ? (
+        {(this.state.decisions && this.props.decisionMaker && this.props.isHuman && !isLoading) ? (
           <>
             <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
               {this.state.decisions.map((decision, index) => (
@@ -404,7 +403,7 @@ class DecisionList extends React.Component {
           <p></p>
         )
         }
-        {(this.state.decisions && !this.props.isHuman) ? (
+        {(this.state.decisions && this.props.decisionMaker && !this.props.isHuman) ? (
           <Query query={test_by_adm_and_scenario} variables={{ "scenarioID": this.state.scenario, "admName": (this.props.decisionMaker === "Paralax" ? "TAD" : "ALIGN") }}>
             {
               ({ loading, error, data }) => {
