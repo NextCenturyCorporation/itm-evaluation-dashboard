@@ -13,7 +13,7 @@ const scenario_names_aggregation = gql`
 class HomePage extends React.Component {
 
     getHeaderLabel(id, name) {
-        if(id.indexOf("ADEPT1") > -1 ) {
+        if(id.toLowerCase().indexOf("adept") > -1 ) {
             return ("BBN: " + id + " " + name);
         } else {
             return ("Soartech: " + id + " " + name);

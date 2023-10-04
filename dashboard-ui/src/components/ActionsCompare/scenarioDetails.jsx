@@ -58,26 +58,29 @@ class ScenarioDetails extends React.Component {
                             } else {
                                 state = data.getAllHistory[1].history[1].response
                             }
+                            console.log(data, state);
                             
                             return (
                                 <Accordion.Item eventKey="0">
                                     <Accordion.Header>Scenario Details: {this.state.scenarioId}</Accordion.Header>
-                                    <Accordion.Body>
-                                        <p><strong>Scenario Description:</strong></p>
-                                        <p>{state.unstructured}</p>
-                                        <p><strong>Number of Patients:</strong> {state.casualties.length}</p>
-                                        <p><strong>Patients: </strong></p>
-                                        <Accordion>
-                                            {state.casualties.map((patient, index) => (
-                                                <Accordion.Item key={index} eventKey={index}>
-                                                    <Accordion.Header>{nameMappings[patient.id]}</Accordion.Header>
-                                                    <Accordion.Body>
-                                                        {this.renderPatientInfo(patient)}
-                                                    </Accordion.Body>
-                                                </Accordion.Item>
-                                            ))}
-                                        </Accordion>
-                                    </Accordion.Body>
+                                    {state.casualties && 
+                                        <Accordion.Body>
+                                            <p><strong>Scenario Description:</strong></p>
+                                            <p>{state.unstructured}</p>
+                                            <p><strong>Number of Patients:</strong> {state.casualties.length}</p>
+                                            <p><strong>Patients: </strong></p>
+                                            <Accordion>
+                                                {state.casualties.map((patient, index) => (
+                                                    <Accordion.Item key={index} eventKey={index}>
+                                                        <Accordion.Header>{nameMappings[patient.id]}</Accordion.Header>
+                                                        <Accordion.Body>
+                                                            {this.renderPatientInfo(patient)}
+                                                        </Accordion.Body>
+                                                    </Accordion.Item>
+                                                ))}
+                                            </Accordion>
+                                        </Accordion.Body>
+                                    }
                                 </Accordion.Item>
                             )
                         }

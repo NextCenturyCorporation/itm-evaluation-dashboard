@@ -20,55 +20,7 @@ const scenario_names_aggregation = gql`
     }`;
 const GET_ITM_SCENARIO = gql`
     query getScenario($scenarioId: ID) {
-        getScenario(scenarioId: $scenarioId) {
-            id
-            name
-            state {
-                mission {
-                    unstructured
-                    mission_type
-                }
-                environment {
-                    unstructured
-                    aidDelay
-                    weather
-                    location
-                    visibility
-                    noise_ambient
-                    noise_peak
-                }
-                threat_state {
-                    unstructured
-                    threats
-                }
-                supplies {
-                    type
-                    quantity
-                }
-                casualties {
-                    name
-                    unstructured
-                    injuries {
-                        location
-                        name
-                        severity
-                    }
-                    mental_status
-                    demographics {
-                        age
-                        sex
-                        rank
-                    }
-                    vitals {
-                        hrpmin
-                        mm_hg
-                        rr
-                        sp_o2
-                        pain
-                    }
-                }
-            }
-        }
+        getScenario(scenarioId: $scenarioId) 
     }`;
 
 class ScenarioPage extends React.Component {
@@ -87,7 +39,7 @@ class ScenarioPage extends React.Component {
     }
 
     formatScenarioString(id) {
-        if(id.indexOf("ADEPT1") > -1 ) {
+        if(id.toLowerCase().indexOf("adept") > -1 ) {
             return ("BBN: " + id);
         } else {
             return ("Soartech: " + id);

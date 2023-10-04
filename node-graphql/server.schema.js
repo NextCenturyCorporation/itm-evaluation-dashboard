@@ -155,7 +155,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
     getAllHistoryByID(historyId: ID): JSON
-    getScenario(scenarioId: ID): Scenario
+    getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
     getPerformerADMsForScenario(scenarioID: ID): JSON
     getTestByADMandScenario(scenarioID: ID, admName: ID): JSON

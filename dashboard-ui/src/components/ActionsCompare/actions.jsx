@@ -7,7 +7,7 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
-class Test extends React.Component {
+class Actions extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -52,4 +52,4 @@ class Test extends React.Component {
     }
 }
 
-export default Test;
+export default Actions;

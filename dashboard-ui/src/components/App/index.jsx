@@ -3,7 +3,7 @@ import queryString from 'query-string';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
-import Test from '../Test/test';
+import Actions from '../ActionsCompare/actions';
 import {Router, Switch, Route, Link} from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -41,6 +41,10 @@ function Results() {
 
 function Scenarios() {
     return <ScenarioPage/>;
+}
+
+function ActionsCompare() {
+    return <Actions/>;
 }
 
 function Login({newState, userLoginHandler, updateHandler}) {
@@ -134,6 +138,9 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link-home" to="/scenarios">Scenarios</Link>
                                 </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link-home" to="/actionsCompare">Actions Compare</Link>
+                                </li>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
@@ -183,8 +190,8 @@ export class App extends React.Component {
                         <Route path="/admin">
                             <Admin newState={this.state} userLoginHandler={this.userLoginHandler}/>
                         </Route>
-                        <Route path ="/test">
-                            <Test/>
+                        <Route path ="/actionsCompare">
+                            <ActionsCompare/>
                         </Route>
                     </Switch>
 

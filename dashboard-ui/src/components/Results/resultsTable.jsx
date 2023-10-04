@@ -53,7 +53,7 @@ class ResultsTable extends React.Component {
     }
 
     formatScenarioString(id) {
-        if(id.indexOf("ADEPT1") > -1 ) {
+        if(id.toLowerCase().indexOf("adept") > -1 ) {
             return ("BBN: " + id);
         } else {
             return ("Soartech: " + id);
