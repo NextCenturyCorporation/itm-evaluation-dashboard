@@ -64,7 +64,8 @@ class DecisionList extends React.Component {
   humanActionMap = {
     "Pulse Taken": "Check Vitals",
     "Tag Applied": "Tag Applied",
-    "Injury Treated": "Injury Treated"
+    "Injury Treated": "Injury Treated",
+    "Move To Evac": "Move To Evac"
   }
 
   admPulseMapping(hrpmin) {
@@ -115,6 +116,12 @@ class DecisionList extends React.Component {
           <div>
             <ListGroup.Item>Patient: {decision.actionData[0]}</ListGroup.Item>
             <ListGroup.Item>Tag: {this.tagMappings[decision.actionData[1]]}</ListGroup.Item>
+          </div>
+        )
+      case "MOVE_TO_EVAC":
+        return (
+          <div>
+            <ListGroup.Item>Patient: {decision.actionData[0]}</ListGroup.Item>
           </div>
         )
       default:
@@ -226,7 +233,13 @@ class DecisionList extends React.Component {
       fetch(csvFilePath)
         .then((response) => response.text())
         .then((csvData) => {
-          const parsedData = this.parseCSV(csvData);
+          let parsedData = this.parseCSV(csvData);
+          if (this.props.decisionMaker === "human1") {
+            parsedData.push({actionType: "MOVE_TO_EVAC", actionData: ["Asian Bob_4 Root"] })
+          } else {
+            parsedData.push({actionType: "MOVE_TO_EVAC", actionData: ["Military Mike Jungle Scout_1_3 Root"] })
+          }
+          
           this.setState({ csvFileContent: parsedData, isLoading: false });
         })
         .catch((error) => {

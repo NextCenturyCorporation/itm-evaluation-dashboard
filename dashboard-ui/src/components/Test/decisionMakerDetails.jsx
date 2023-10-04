@@ -38,7 +38,6 @@ class DecisionMakerDetails extends React.Component {
 
     render = () => {
         return (
-            <>
                 <Row>
                     <Col>
                         <Tabs className="pt-1 px-1">
@@ -63,7 +62,6 @@ class DecisionMakerDetails extends React.Component {
                         </Dropdown>
                     </Col>
                 </Row>
-            </>
         )
     }
 }
