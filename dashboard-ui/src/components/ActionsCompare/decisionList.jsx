@@ -152,7 +152,7 @@ class DecisionList extends React.Component {
           <div>
             <ListGroup.Item>Patient: {nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
             <ListGroup.Item>Treatment: {this.formattedActionType(decision.parameters["Parameters"]["treatment"])}</ListGroup.Item>
-            <ListGroup.Item>Breathing: {this.formattedActionType(decision.parameters["Parameters"]["location"])}</ListGroup.Item>
+            <ListGroup.Item>Location: {this.formattedActionType(decision.parameters["Parameters"]["location"])}</ListGroup.Item>
           </div>
         )
       case "Move to EVAC":
@@ -212,7 +212,7 @@ class DecisionList extends React.Component {
           decision.imgURL = "mikeEvac.png"
           break;
         case "Civilian":
-          decision.imgURL = "asianBob.png"
+          decision.imgURL = "civilianBob.png"
           break;
       }
     });
@@ -244,7 +244,7 @@ class DecisionList extends React.Component {
           let parsedData = this.parseCSV(csvData);
 
           if (this.props.decisionMaker === "human1") {
-            parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Asian Bob_4 Root"] })
+            parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Civilian Bob_4 Root"] })
           } else {
             parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Military Mike Jungle Scout_1_3 Root"] })
           }
@@ -374,7 +374,7 @@ class DecisionList extends React.Component {
   filterOutCasualtiesForBBN(casualties) {
     // Names to be kept
     const filteredNames = [
-      "Asian Bob_4 Root",
+      "Civilian Bob_4 Root",
       "Military Mike Jungle Scout_1_3 Root"
     ];
 
@@ -388,7 +388,7 @@ class DecisionList extends React.Component {
   filterDecisionsSoarTech(decisions) {
     // filter out decisions that involve bbn scenario 
     const filteredNames = [
-      "Asian Bob_4 Root",
+      "Civilian Bob_4 Root",
       "Military Mike Jungle Combat_1_5 Root",
       "Military Mike Jungle Scout_1_3 Root"
     ];
@@ -405,7 +405,7 @@ class DecisionList extends React.Component {
   filterDecisionsBBN(decisions) {
     // filter out decisions that involve bbn scenario 
     const filteredNames = [
-      "Asian Bob_4 Root",
+      "Civilian Bob_4 Root",
       "Military Mike Jungle Scout_1_3 Root"
     ];
 
@@ -521,7 +521,7 @@ export const nameMappings = {
   "MarineA": "Military Mike Jungle Burned_0 Root",
   "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root",
   "Mike": "Military Mike Jungle Scout_1_3 Root",
-  "Civilian": "Asian Bob_4 Root"
+  "Civilian": "Civilian Bob_4 Root"
 }
 
 export default DecisionList;
