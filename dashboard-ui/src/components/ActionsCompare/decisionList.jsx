@@ -208,6 +208,12 @@ class DecisionList extends React.Component {
         case "MarineA":
           decision.imgURL = "mikeBurn.png";
           break;
+        case "Mike":
+          decision.imgURL = "mikeEvac.png"
+          break;
+        case "Civilian":
+          decision.imgURL = "asianBob.png"
+          break;
       }
     });
     return decisions;
@@ -468,12 +474,8 @@ class DecisionList extends React.Component {
               if (loading) return <div>Loading ...</div>;
               if (error) return <div>Error</div>;
               let decisions = []
+              decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getTestByADMandScenario.history))
               console.log(data)
-              console.log(this.props.selectedScenario)
-              console.log(this.props.decisionMaker)
-              decisions = this.filterDecisionsADM(data.getTestByADMandScenario.history);
-              decisions = this.admImageToDecisionMapping(decisions)
-
               return (
                 <div>
                 {this.state.decisions && (
