@@ -77,7 +77,7 @@ class ScenarioDetails extends React.Component {
                                                 <Accordion>
                                                     {state.casualties.map((patient, index) => (
                                                         <Accordion.Item key={index} eventKey={index}>
-                                                            <Accordion.Header>{nameMappings[patient.id]}</Accordion.Header>
+                                                            <Accordion.Header>{nameMappings[patient.id] || patient.id}</Accordion.Header>
                                                             <Accordion.Body>
                                                                 {this.renderPatientInfo(patient)}
                                                             </Accordion.Body>

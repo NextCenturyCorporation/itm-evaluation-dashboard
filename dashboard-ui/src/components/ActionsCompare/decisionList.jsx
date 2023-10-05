@@ -21,10 +21,6 @@ const test_by_adm_and_scenario = gql`
     query getTestByADMandScenario($scenarioID: ID, $admName: ID){
         getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
     }`;
-
-    const myQuery = gql`query ExampleQuery {
-      getAllHistory
-    }`
 class DecisionList extends React.Component {
 
   constructor(props) {
@@ -36,7 +32,8 @@ class DecisionList extends React.Component {
       doc: null,
       casualtyArray: null,
       decisions: null,
-      scenario: "soartech-september-demo-scenario-1"
+      scenario: "",
+      decisionMaker: null
     };
   }
 
@@ -217,9 +214,14 @@ class DecisionList extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
+    console.log(this.props.selectedScenario)
     if (this.props.decisionMaker !== prevProps.decisionMaker) {
       this.setState({ decisions: [] })
+      this.setState({ decisionMaker: this.props.decisionMaker})
       this.fetchData(this.props.decisionMaker);
+    }
+    if (this.props.selectedScenario != prevProps.selectedScenario) {
+      this.setState({ scenario: this.props.selectedScenario})
     }
   }
 
@@ -234,12 +236,13 @@ class DecisionList extends React.Component {
         .then((response) => response.text())
         .then((csvData) => {
           let parsedData = this.parseCSV(csvData);
+
           if (this.props.decisionMaker === "human1") {
-            parsedData.push({actionType: "MOVE_TO_EVAC", actionData: ["Asian Bob_4 Root"] })
+            parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Asian Bob_4 Root"] })
           } else {
-            parsedData.push({actionType: "MOVE_TO_EVAC", actionData: ["Military Mike Jungle Scout_1_3 Root"] })
+            parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Military Mike Jungle Scout_1_3 Root"] })
           }
-          
+
           this.setState({ csvFileContent: parsedData, isLoading: false });
         })
         .catch((error) => {
@@ -326,10 +329,10 @@ class DecisionList extends React.Component {
   parseTables(doc) {
     const tableTags = doc.getElementsByTagName('tbody')
     let tableArray = Array.from(tableTags)
-    if (this.props.selectedScenario === "Soartech") {
+    if (this.props.selectedScenario === "st-september-2023-mvp2") {
       // have to filter out different actions from simulator based on scenario
       tableArray = this.filterOutCasualtiesForSoarTech(getCasualtyArray(tableArray))
-    } else {
+    } else if (this.props.selectedScenario === "adept-september-demo-scenario-1"){
       tableArray = this.filterOutCasualtiesForBBN(getCasualtyArray(tableArray))
     }
 
@@ -339,9 +342,9 @@ class DecisionList extends React.Component {
 
   parseDecisions() {
     let decisions = this.humanImageToDecisionMapping(this.state.csvFileContent, this.state.casualtyArray);
-    if (this.props.selectedScenario === "Soartech") {
+    if (this.props.selectedScenario === "st-september-2023-mvp2") {
       decisions = this.filterDecisionsSoarTech(decisions)
-    } else {
+    } else if (this.props.selectedScenario === "adept-september-demo-scenario-1"){
       decisions = this.filterDecisionsBBN(decisions)
     }
     this.setState({ decisions: decisions })
@@ -368,13 +371,13 @@ class DecisionList extends React.Component {
       "Asian Bob_4 Root",
       "Military Mike Jungle Scout_1_3 Root"
     ];
-  
+
     // Filter the casualties array based on the names
     const filteredCasualties = casualties.filter(casualty => filteredNames.includes(casualty.name));
-  
+
     return filteredCasualties;
   }
-  
+
 
   filterDecisionsSoarTech(decisions) {
     // filter out decisions that involve bbn scenario 
@@ -410,7 +413,10 @@ class DecisionList extends React.Component {
   }
 
   filterDecisionsADM(history) {
-    const valuesToFilter = ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", "Respond to TA1 Probe", "Request SITREP"];
+    const valuesToFilter = 
+    ["Start Session", "Start Scenario", "Get Scenario State", "Take Action", 
+      "Respond to TA1 Probe", "Request SITREP", "TA1 Alignment Target Session ID", "TA1 Alignment Target Data", 
+      "TA1 Probe Response Alignment", "TA1 Session Alignment"];
 
     const filteredHistory = history.filter(entry => !valuesToFilter.includes(entry.command));
 
@@ -418,98 +424,94 @@ class DecisionList extends React.Component {
   }
 
   render = () => {
-    const { isLoading } = this.state
+    const { isLoading } = this.state;
     const visibleDecisionsCount = 10;
     const decisionHeight = 50;
 
-    // total height of accordion maxes out at count * height of each 
+    // total height of accordion maxes out at count * height of each
     const accordionHeight = `${visibleDecisionsCount * decisionHeight}px`;
 
     return (
       <div>
         <h3>{this.props.title}</h3>
-        {(this.state.decisions && this.props.decisionMaker && this.props.isHuman && !isLoading) ? (
-          <>
-            <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-              {this.state.decisions.map((decision, index) => (
-                <Accordion.Item key={index} eventKey={index}>
-                  <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
-                  <Accordion.Body>
-                    <div className="row">
-                      <div className="col">
-                        <ListGroup variant="flush">
-                          {this.renderDecisionCSV(decision)}
-                        </ListGroup>
-                      </div>
-                      {decision.imgURL && (
-                        <div className="col">
-                          <img
-                            src={decision.imgURL}
-                            alt="casualty"
-                            className="img-fluid"
-                          />
-                        </div>
-                      )}
+        {this.state.decisions && this.props.decisionMaker && this.props.isHuman && !isLoading && (
+          <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+            {this.state.decisions.map((decision, index) => (
+              <Accordion.Item key={index} eventKey={index}>
+                <Accordion.Header>{this.humanActionMap[this.formattedActionType(decision.actionType)]}</Accordion.Header>
+                <Accordion.Body>
+                  <div className="row">
+                    <div className="col">
+                      <ListGroup variant="flush">
+                        {this.renderDecisionCSV(decision)}
+                      </ListGroup>
                     </div>
-                  </Accordion.Body>
-                </Accordion.Item>
-              ))}
-            </Accordion>
-          </>
-        ) : (
-          <p></p>
-        )
-        }
-        {(this.state.decisions && this.props.decisionMaker && !this.props.isHuman) ? (
-          <Query query={myQuery} /*variables={{ "scenarioID": this.state.scenario, "admName": (this.props.decisionMaker === "Paralax" ? "TAD" : "ALIGN") }}*/>
-            {
-              ({ loading, error, data }) => {
-                if (loading) return <div>Loading ...</div>
-                if (error) return <div>Error</div>
-                
-                let decisions = []
-                if (this.props.selectedScenario === "Soartech") {
-                  decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getAllHistory[0].history))
-                } else {
-                  decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getAllHistory[1].history))
-                }
-                
-                return (
-                  <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-                    {decisions.map((decision, index) => (
-                      <Accordion.Item key={index} eventKey={index}>
-                        <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
-                        <Accordion.Body>
-                          <div className="row">
-                            <div className="col">
-                              <ListGroup variant="flush">
-                                {this.renderDecisionADM(decision)}
-                              </ListGroup>
-                            </div>
-                            {decision.imgURL && (
-                              <div className="col">
-                                <img
-                                  src={decision.imgURL}
-                                  alt="casualty"
-                                  className="img-fluid"
-                                />
-                              </div>
-                            )}
+                    {decision.imgURL && (
+                      <div className="col">
+                        <img
+                          src={decision.imgURL}
+                          alt="casualty"
+                          className="img-fluid"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </Accordion.Body>
+              </Accordion.Item>
+            ))}
+          </Accordion>
+        )}
+
+        {this.props.selectedScenario && this.props.decisionMaker && this.state.decisionMaker && !this.props.isHuman && (
+          <Query query={test_by_adm_and_scenario} variables={{"scenarioId": this.props.selectedScenario, "admName": this.props.decisionMaker}}>
+            {({ loading, error, data }) => {
+              if (loading) return <div>Loading ...</div>;
+              if (error) return <div>Error</div>;
+              let decisions = []
+              console.log(data)
+              console.log(this.props.selectedScenario)
+              console.log(this.props.decisionMaker)
+              decisions = this.filterDecisionsADM(data.getTestByADMandScenario.history);
+              decisions = this.admImageToDecisionMapping(decisions)
+
+              return (
+                <div>
+                {this.state.decisions && (
+                <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+                  {decisions.map((decision, index) => (
+                    <Accordion.Item key={index} eventKey={index}>
+                      <Accordion.Header>{this.admCommandMap[decision.command]}</Accordion.Header>
+                      <Accordion.Body>
+                        <div className="row">
+                          <div className="col">
+                            <ListGroup variant="flush">
+                              {this.renderDecisionADM(decision)}
+                            </ListGroup>
                           </div>
-                        </Accordion.Body>
-                      </Accordion.Item>
-                    ))}
-                  </Accordion>
-                );
-              }
-            }
+                          {decision.imgURL && (
+                            <div className="col">
+                              <img
+                                src={decision.imgURL}
+                                alt="casualty"
+                                className="img-fluid"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  ))}
+                </Accordion>
+              )}
+              </div>
+              );
+            }}
           </Query>
-        ) : (
-          <p></p>
         )}
       </div>
     );
-  }
+  };
+
 }
 
 export const nameMappings = {
