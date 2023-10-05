@@ -2,6 +2,14 @@ import React from "react";
 import DecisionList from "./decisionList";
 import DecisionMakerDash from "./decisionMakerDash";
 import { Tabs, Tab, Dropdown, Row, Col } from 'react-bootstrap';
+import { Query } from 'react-apollo';
+import gql from 'graphql-tag';
+
+const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
+const performer_adm_by_scenario = gql`
+    query getPerformerADMsForScenario($scenarioID: ID){
+        getPerformerADMsForScenario(scenarioID: $scenarioID)
+    }`;
 
 class DecisionMakerDetails extends React.Component {
 
@@ -36,6 +44,16 @@ class DecisionMakerDetails extends React.Component {
         }
     }
 
+    formatADMString(peformerADMString) {
+        if(peformerADMString.indexOf("ALIGN") > -1 ) {
+            return ("Kitware: " + peformerADMString);
+        } else if (peformerADMString.indexOf("TAD") > -1){
+            return ("Parallax: " + peformerADMString);
+        } else {
+            return peformerADMString;
+        }
+    }
+
     render = () => {
         return (
                 <Row>
@@ -53,12 +71,34 @@ class DecisionMakerDetails extends React.Component {
                             <Dropdown.Toggle variant="primary" id="dropdown-basic" disabled={!this.props.selectedScenario}>
                                 {this.state.dropdownLabel}
                             </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Human 1")}>Human 1</Dropdown.Item>
-                                <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Human 2")}>Human 2</Dropdown.Item>
-                                <Dropdown.Item disabled={true} onClick={() => this.handleDecisionMakerSelect("ALIGN-ADM")}>ALIGN</Dropdown.Item>
-                                <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("TAD")}>TAD</Dropdown.Item>
-                            </Dropdown.Menu>
+                            <Query query={performer_adm_by_scenario} variables={{"scenarioID": this.props.selectedScenario}}>
+                                {
+                                    ({ loading, error, data }) => {
+                                        if (loading) return <div>Loading ...</div> 
+                                        if (error) return <div>Error</div>
+
+                                        const performerADMOptions = data[getPerformerADMByScenarioName];
+                                        let performerADMArray = [];
+                                        for(let i=0; i < performerADMOptions.length; i++) {
+                                            performerADMArray.push({
+                                                "value": performerADMOptions[i],
+                                                "name": performerADMOptions[i]
+                                            });
+                                        }
+                                        performerADMArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+                                        return (
+                                            <Dropdown.Menu>
+                                                <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Human 1")}>Human 1</Dropdown.Item>
+                                                <Dropdown.Item onClick={() => this.handleDecisionMakerSelect("Human 2")}>Human 2</Dropdown.Item>
+                                                {performerADMArray.map((item,key) =>
+                                                    <Dropdown.Item key={"performeradm_" + key} onClick={() => this.handleDecisionMakerSelect(item.value)}>{this.formatADMString(item.value)}</Dropdown.Item>
+                                                )}
+                                            </Dropdown.Menu>
+                                        )
+                                    }
+                                }
+                            </Query>
                         </Dropdown>
                     </Col>
                 </Row>

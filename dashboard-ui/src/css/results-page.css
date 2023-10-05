@@ -8,7 +8,7 @@
     background-color: #F8F8F8;
 }
 
-.nav-section {
+.nav-section, .nav-section-compare {
     border: 1px solid transparent;
     margin-left: 5px;
     border-radius: 8px;
@@ -42,6 +42,10 @@ nav.MuiList-root.nav-list {
     position: relative;
     overflow: auto;
     max-height: 200px;
+}
+
+.nav-section-compare nav.MuiList-root.nav-list {
+    max-height: 300px;
 }
 
 nav.MuiList-root.nav-list.MuiList-padding {

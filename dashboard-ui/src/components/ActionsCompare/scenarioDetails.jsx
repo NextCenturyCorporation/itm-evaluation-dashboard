@@ -13,7 +13,7 @@ class ScenarioDetails extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            scenarioId: ""
+            scenarioId: this.props.selectedScenario
         };
     }
 
@@ -54,7 +54,7 @@ class ScenarioDetails extends React.Component {
 
     render = () => {
         return (
-            <Accordion>
+            <Accordion defaultActiveKey="0">
                 {(this.props.selectedScenario && this.state.scenarioId) ? (
                     <Query query={getScenarioQuery} variables={{ "scenarioId": this.props.selectedScenario }}>
                         {
