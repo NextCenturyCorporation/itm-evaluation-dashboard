@@ -463,7 +463,7 @@ class DecisionList extends React.Component {
         )}
 
         {this.props.selectedScenario && this.props.decisionMaker && this.state.decisionMaker && !this.props.isHuman && (
-          <Query query={test_by_adm_and_scenario} variables={{"scenarioId": this.props.selectedScenario, "admName": this.props.decisionMaker}}>
+          <Query query={test_by_adm_and_scenario} variables={{"scenarioID": this.props.selectedScenario, "admName": this.props.decisionMaker}}>
             {({ loading, error, data }) => {
               if (loading) return <div>Loading ...</div>;
               if (error) return <div>Error</div>;
