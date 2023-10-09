@@ -3,7 +3,14 @@ import { accountsPassword } from '../../services/accountsService';
 import { withRouter } from 'react-router-dom';
 import $ from 'jquery';
 import brandImage from '../../img/logo.png';
-import { Tabs, Tab } from 'react-bootstrap'
+import { Tabs, Tab } from 'react-bootstrap';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+ToastContainer.configure({
+    autoClose: 5000, // Duration of the toast message in milliseconds
+    position: toast.POSITION.TOP_CENTER, // Position of the toast message
+  });
 class LoginApp extends React.Component {
 
     constructor(props) {
@@ -48,7 +55,6 @@ class LoginApp extends React.Component {
     }
 
     login = async () => {
-        console.log("login hit")
         $("#sign-in-feedback").removeClass("feedback-display");
         try {
             let results;
@@ -74,6 +80,10 @@ class LoginApp extends React.Component {
             $("#sign-in-feedback").addClass("feedback-display");
             this.setState({ error: err.message });
             console.log(err.message)
+            
+            /*toast.error(err.message, {
+                position: toast.POSITION.TOP_CENTER,
+            });*/
         }
     }
 
@@ -129,9 +139,12 @@ class LoginApp extends React.Component {
                 <div className="row justify-content-center align-items-center h-100 center-container">
                     <div className="col col-md-4 login-container">
                         <div className="login-header-logo">
-                            <div className="d-flex justify-content-center"><img src={brandImage} alt="" /></div>
+                            <div className="d-flex justify-content-center">
+                                <img src={brandImage} alt=""/>
+                            </div>
                             <div className="d-flex justify-content-center login-header-text">Dashboard</div>
                         </div>
+
 
                         <Tabs className='p-1' defaultActiveKey={1}>
                             <Tab eventKey={0} title="Create Account">
@@ -222,6 +235,7 @@ class LoginApp extends React.Component {
                         </Tabs>
                     </div>
                 </div>
+                 <ToastContainer />
             </div>
         );
     }

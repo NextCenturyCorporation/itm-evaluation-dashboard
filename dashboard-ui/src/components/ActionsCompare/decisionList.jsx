@@ -179,13 +179,19 @@ class DecisionList extends React.Component {
     const updatedDecisions = decisions.map(decision => {
 
       const matchingCasualtyName = decision.actionData.find(name => casualtyMap.has(name));
+      const updatedActionData = decision.actionData.map(name => {
+        if (name === "Asian Bob_4 Root") {
+          return "Civilian Bob_4 Root";
+        }
+        return name;
+      });
 
       if (matchingCasualtyName) {
         const matchingCasualty = casualtyMap.get(matchingCasualtyName);
-
         return {
           ...decision,
           imgURL: matchingCasualty.imgURL,
+          actionData: updatedActionData
         };
       }
 
@@ -220,7 +226,6 @@ class DecisionList extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log(this.props.selectedScenario)
     if (this.props.decisionMaker !== prevProps.decisionMaker) {
       this.setState({ decisions: [] })
       this.setState({ decisionMaker: this.props.decisionMaker})
@@ -244,7 +249,7 @@ class DecisionList extends React.Component {
           let parsedData = this.parseCSV(csvData);
 
           if (this.props.decisionMaker === "human1") {
-            parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Civilian Bob_4 Root"] })
+            parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Asian Bob_4 Root"] })
           } else {
             parsedData.push({ actionType: "MOVE_TO_EVAC", actionData: ["Military Mike Jungle Scout_1_3 Root"] })
           }
@@ -360,7 +365,7 @@ class DecisionList extends React.Component {
   filterOutCasualtiesForSoarTech(casualties) {
     // Names to be filtered out
     const filteredNames = [
-      "Asian Bob_4 Root",
+      "Civilian Bob_4 Root",
       "Military Mike Jungle Combat_1_5 Root",
       "Military Mike Jungle Scout_1_3 Root"
     ];
@@ -374,7 +379,7 @@ class DecisionList extends React.Component {
   filterOutCasualtiesForBBN(casualties) {
     // Names to be kept
     const filteredNames = [
-      "Civilian Bob_4 Root",
+      "Asian Bob_4 Root",
       "Military Mike Jungle Scout_1_3 Root"
     ];
 
@@ -475,7 +480,6 @@ class DecisionList extends React.Component {
               if (error) return <div>Error</div>;
               let decisions = []
               decisions = this.admImageToDecisionMapping(this.filterDecisionsADM(data.getTestByADMandScenario.history))
-              console.log(data)
               return (
                 <div>
                 {this.state.decisions && (
