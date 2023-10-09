@@ -16,7 +16,8 @@ class LoginApp extends React.Component {
             createPassword: "",
             createEmail: "",
             forgotEmail: "",
-            loginFailed: false
+            loginFailed: false,
+            createAccountFailed: false
         };
 
         this.login = this.login.bind(this);
@@ -43,7 +44,6 @@ class LoginApp extends React.Component {
             this.props.userLoginHandler(results.user);
         } catch (err) {
             $("#create-account-feedback").addClass("feedback-display");
-
             this.setState({ error: err.message });
         }
     }
@@ -74,7 +74,7 @@ class LoginApp extends React.Component {
             $("#sign-in-feedback").addClass("feedback-display");
             this.setState({ error: err.message, loginFailed: true });
             console.log(err.message)
-            
+
         }
     }
 
@@ -131,7 +131,7 @@ class LoginApp extends React.Component {
                     <div className="col col-md-4 login-container">
                         <div className="login-header-logo">
                             <div className="d-flex justify-content-center">
-                                <img src={brandImage} alt=""/>
+                                <img src={brandImage} alt="" />
                             </div>
                             <div className="d-flex justify-content-center login-header-text">Dashboard</div>
                         </div>
@@ -183,6 +183,19 @@ class LoginApp extends React.Component {
                                                 <input className="form-control form-control-lg" placeholder="Password" type="password" id="password" value={this.state.password} onChange={this.onChangePassword} />
                                             </div>
                                             <div className="form-group">
+                                                {this.state.loginFailed && (
+                                                    <div className="custom-toast">
+                                                        <span>Login failed. Please check your credentials.</span>
+                                                        <button
+                                                            className="close-button"
+                                                            onClick={() => this.setState({ loginFailed: false })}
+                                                        >
+                                                            <strong>x</strong>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="form-group">
                                                 <div className="forgot-password">
                                                     <a className="" id="forgot-pass-tab" href="#forgot" onClick={this.forgotPasswordLink}>Forgot Password?</a>
                                                 </div>
@@ -226,17 +239,7 @@ class LoginApp extends React.Component {
                         </Tabs>
                     </div>
                 </div>
-                {this.state.loginFailed && (
-                <div className="custom-toast">
-                    <span>Login failed. Please check your credentials.</span>
-                    <button
-                        className="close-button"
-                        onClick={() => this.setState({ loginFailed: false })}
-                    >
-                       <strong>x</strong> 
-                    </button>
-                </div>
-            )}
+
             </div>
         );
     }
