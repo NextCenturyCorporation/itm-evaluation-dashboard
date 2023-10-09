@@ -31,6 +31,27 @@ body {
     display: none;
 }
 
+.custom-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #ff5555;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+
 .login-user .dropdown-toggle {
     display: flex;
     align-items: center;

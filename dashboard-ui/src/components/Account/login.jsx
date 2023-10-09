@@ -4,13 +4,6 @@ import { withRouter } from 'react-router-dom';
 import $ from 'jquery';
 import brandImage from '../../img/logo.png';
 import { Tabs, Tab } from 'react-bootstrap';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-ToastContainer.configure({
-    autoClose: 5000, // Duration of the toast message in milliseconds
-    position: toast.POSITION.TOP_CENTER, // Position of the toast message
-  });
 class LoginApp extends React.Component {
 
     constructor(props) {
@@ -22,7 +15,8 @@ class LoginApp extends React.Component {
             createUserName: "",
             createPassword: "",
             createEmail: "",
-            forgotEmail: ""
+            forgotEmail: "",
+            loginFailed: false
         };
 
         this.login = this.login.bind(this);
@@ -78,12 +72,9 @@ class LoginApp extends React.Component {
             this.props.userLoginHandler(results.user);
         } catch (err) {
             $("#sign-in-feedback").addClass("feedback-display");
-            this.setState({ error: err.message });
+            this.setState({ error: err.message, loginFailed: true });
             console.log(err.message)
             
-            /*toast.error(err.message, {
-                position: toast.POSITION.TOP_CENTER,
-            });*/
         }
     }
 
@@ -235,7 +226,17 @@ class LoginApp extends React.Component {
                         </Tabs>
                     </div>
                 </div>
-                 <ToastContainer />
+                {this.state.loginFailed && (
+                <div className="custom-toast">
+                    <span>Login failed. Please check your credentials.</span>
+                    <button
+                        className="close-button"
+                        onClick={() => this.setState({ loginFailed: false })}
+                    >
+                       <strong>x</strong> 
+                    </button>
+                </div>
+            )}
             </div>
         );
     }
