@@ -27,6 +27,7 @@ class LoginApp extends React.Component {
     createAccount = async () => {
         $("#create-account-feedback").removeClass("feedback-display");
         try {
+
             let results = await accountsPassword.createUser({
                 username: this.state.createUserName,
                 password: this.state.createPassword,
@@ -44,9 +45,11 @@ class LoginApp extends React.Component {
             this.props.userLoginHandler(results.user);
         } catch (err) {
             $("#create-account-feedback").addClass("feedback-display");
-            this.setState({ error: err.message });
+            this.setState({ error: err.message, createAccountFailed: true });
         }
     }
+
+
 
     login = async () => {
         $("#sign-in-feedback").removeClass("feedback-display");
@@ -73,8 +76,6 @@ class LoginApp extends React.Component {
         } catch (err) {
             $("#sign-in-feedback").addClass("feedback-display");
             this.setState({ error: err.message, loginFailed: true });
-            console.log(err.message)
-
         }
     }
 
@@ -124,6 +125,17 @@ class LoginApp extends React.Component {
         $("#forgot-password-pane").removeClass("display-none");
     };
 
+    loginErrorMappings = {
+        "GraphQL error: Unrecognized options for login request": "Please enter your username and password.",
+        "GraphQL error: Invalid credentials": "Login failed. Please check your credentials."
+    }
+
+    createAccountErrorMappings = {
+        "GraphQL error: Unrecognized options for login request": "Email, username, and password are required.",
+        "GraphQL error: Username or Email is required": "Email, username, and password are required.",
+        "GraphQL error: Invalid credentials": "Email or username already in use."
+    }
+
     render() {
         return (
             <div className="container-fluid vertical-height-100">
@@ -157,6 +169,17 @@ class LoginApp extends React.Component {
                                             <div className="input-login-header">Password</div>
                                             <input className="form-control form-control-lg" placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
                                         </div>
+                                        {this.state.createAccountFailed && (
+                                            <div className="custom-toast">
+                                                <span>{this.createAccountErrorMappings[this.state.error] ?? this.state.error}</span>
+                                                <button
+                                                    className="close-button"
+                                                    onClick={() => this.setState({ createAccountFailed: false })}
+                                                >
+                                                    <strong>x</strong>
+                                                </button>
+                                            </div>
+                                        )}
                                         <div className="form-group">
                                             <button className="btn btn-primary btn-lg btn-block" onClick={this.createAccount} type="button">Create Account</button>
                                         </div>
@@ -185,7 +208,7 @@ class LoginApp extends React.Component {
                                             <div className="form-group">
                                                 {this.state.loginFailed && (
                                                     <div className="custom-toast">
-                                                        <span>Login failed. Please check your credentials.</span>
+                                                        <span>{this.loginErrorMappings[this.state.error] ?? this.state.error}</span>
                                                         <button
                                                             className="close-button"
                                                             onClick={() => this.setState({ loginFailed: false })}
