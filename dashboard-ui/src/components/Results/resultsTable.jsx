@@ -9,7 +9,7 @@ import AlignmentScoreBox from './alignmentScore';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-
+import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
@@ -166,10 +166,10 @@ class ResultsTable extends React.Component {
 
                                             const performerADMOptions = data[getPerformerADMByScenarioName];
                                             let performerADMArray = [];
-                                            for(let i=0; i < performerADMOptions.length; i++) {
+                                            for(const element of performerADMOptions) {
                                                 performerADMArray.push({
-                                                    "value": performerADMOptions[i],
-                                                    "name": performerADMOptions[i]
+                                                    "value": element,
+                                                    "name": element
                                                 });
                                             }
                                             performerADMArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
@@ -208,7 +208,7 @@ class ResultsTable extends React.Component {
                                             <>
                                                 <AlignmentScoreBox performer={this.formatADMString(this.state.adm)} data={testData} scenario={this.state.scenario}/>
                                                 <div className='paper-container'>
-                                                    <TableContainer style={{ maxHeight: '70vh' }}>
+                                                    <TableContainer className="TableContainer">
                                                         <Table stickyHeader aria-label="simple table">
                                                             <TableHead>
                                                                 <TableRow>

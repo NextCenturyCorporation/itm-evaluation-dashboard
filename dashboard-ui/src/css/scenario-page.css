@@ -1,0 +1,8 @@
+.TableContainer {
+    max-height: 70vh;
+  }
+  
+  /* TableHead */
+  .TableHead {
+    background-color: #f4f4f4;
+  }

@@ -8,7 +8,7 @@ import TableContainer from "@material-ui/core/TableContainer";
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-
+import '../../css/scenario-page.css';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
@@ -32,14 +32,14 @@ class ScenarioPage extends React.Component {
         }
     }
 
-    setScenario(target){
+    setScenario(target) {
         this.setState({
             scenario: target
         });
     }
 
     formatScenarioString(id) {
-        if(id.toLowerCase().indexOf("adept") > -1 ) {
+        if (id.toLowerCase().indexOf("adept") > -1) {
             return ("BBN: " + id);
         } else {
             return ("Soartech: " + id);
@@ -65,7 +65,7 @@ class ScenarioPage extends React.Component {
     }
 
     renderNestedTable(data) {
-        return(
+        return (
             <Table size="small">
                 <TableBody>
                     {Object.entries(data).map(([key, value], i) => (
@@ -90,59 +90,60 @@ class ScenarioPage extends React.Component {
                         </div>
                         <div className="nav-menu">
                             <Query query={scenario_names_aggregation}>
-                            {
-                                ({ loading, error, data }) => {
-                                    if (loading) return <div>Loading ...</div> 
-                                    if (error) return <div>Error</div>
+                                {
+                                    ({ loading, error, data }) => {
+                                        if (loading) return <div>Loading ...</div>
+                                        if (error) return <div>Error</div>
 
-                                    const scenarioNameOptions = data[getScenarioNamesQueryName];
-                                    let scenariosArray = [];
-                                    for(const element of scenarioNameOptions) {
-                                        scenariosArray.push({
-                                            "value": element._id.id, 
-                                            "name": element._id.name
-                                        });
+                                        const scenarioNameOptions = data[getScenarioNamesQueryName];
+                                        let scenariosArray = [];
+                                        for (const element of scenarioNameOptions) {
+                                            scenariosArray.push({
+                                                "value": element._id.id,
+                                                "name": element._id.name
+                                            });
+                                        }
+                                        scenariosArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+                                        return (
+                                            <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
+                                                {scenariosArray.map((item, key) =>
+                                                    <ListItem className="nav-list-item" id={"scenario_" + key} key={"scenario_" + key}
+                                                        button
+                                                        selected={this.state.scenario === item.value}
+                                                        onClick={() => this.setScenario(item.value)}>
+                                                        <ListItemText primary={this.formatScenarioString(item.value)} />
+                                                    </ListItem>
+                                                )}
+                                            </List>
+                                        )
                                     }
-                                    scenariosArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-                                    return (
-                                        <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
-                                            {scenariosArray.map((item,key) =>
-                                                <ListItem className="nav-list-item" id={"scenario_" + key} key={"scenario_" + key}
-                                                    button
-                                                    selected={this.state.scenario === item.value}
-                                                    onClick={() => this.setScenario(item.value)}>
-                                                    <ListItemText primary={this.formatScenarioString(item.value)} />
-                                                </ListItem>
-                                            )}
-                                        </List>
-                                    )
                                 }
-                            }
                             </Query>
                         </div>
                     </div>
                     <div className="test-overview-area">
                         {(this.state.scenario !== "") &&
-                            <Query query={GET_ITM_SCENARIO} variables={{"scenarioId": this.state.scenario}}>
-                            {
-                                ({ loading, error, data }) => {
-                                    if (loading) return <div>Loading ...</div> 
-                                    if (error) return <div>Error</div>
+                            <Query query={GET_ITM_SCENARIO} variables={{ "scenarioId": this.state.scenario }}>
+                                {
+                                    ({ loading, error, data }) => {
+                                        if (loading) return <div>Loading ...</div>
+                                        if (error) return <div>Error</div>
 
-                                    const scenarioData = data[getScenarioName];
+                                        const scenarioData = data[getScenarioName];
 
-                                    return (
-                                        <>
-                                            <TableContainer style={{ maxHeight: '70vh' }}>
+                                        return (
+                                            <TableContainer className="TableContainer">
                                                 <Table stickyHeader aria-label="simple table">
-                                                    <TableHead>
+                                                    <TableHead className="TableHead">
                                                         <TableRow>
-                                                            <TableCell className="tableCell main">Scenario: {this.formatScenarioString(this.state.scenario)}</TableCell>
+                                                            <TableCell className="tableCell main">
+                                                                Scenario: {this.formatScenarioString(this.state.scenario)}
+                                                            </TableCell>
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
-                                                        <TableRow style={{ backgroundColor: '#f4f4f4'}}>
+                                                        <TableRow className="TableHead">
                                                             <TableCell className="tableCell main">
                                                                 {this.renderNestedItems(scenarioData)}
                                                             </TableCell>
@@ -150,10 +151,9 @@ class ScenarioPage extends React.Component {
                                                     </TableBody>
                                                 </Table>
                                             </TableContainer>
-                                        </>
-                                    )
+                                        );
+                                    }
                                 }
-                            }
                             </Query>
                         }
                     </div>
