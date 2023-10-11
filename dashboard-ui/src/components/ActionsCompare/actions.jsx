@@ -27,7 +27,6 @@ class Actions extends React.Component {
     }
 
     handleScenarioChange(target) {
-        //const selectedScenario = e.target.value;
         this.setState({ selectedScenario: target })
     }
 

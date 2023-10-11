@@ -1,5 +1,5 @@
 import React from 'react';
-import { Accordion, ListGroup } from 'react-bootstrap';
+import { Accordion, ListGroup, Card } from 'react-bootstrap';
 import { nameMappings } from './decisionList';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
@@ -18,6 +18,7 @@ class ScenarioDetails extends React.Component {
     }
 
     renderPatientInfo(patient) {
+        console.log(patient)
         return (
             <div className="row">
                 <div className="col-md-6">
@@ -35,7 +36,7 @@ class ScenarioDetails extends React.Component {
                             <ListGroup.Item key={index}>
                                 <strong>Name:</strong> {injury.name}<br />
                                 <strong>Location:</strong> {injury.location}<br />
-                                <strong>Severity:</strong> {injury.severity}
+                                <strong>Severity:</strong> {injury.severity ?? "unknown"}
                             </ListGroup.Item>
                         ))}
                     </ListGroup>
@@ -43,8 +44,8 @@ class ScenarioDetails extends React.Component {
             </div>
         );
     }
-    
-    
+
+
 
     componentDidUpdate(prevProps) {
         if (this.props.selectedScenario !== prevProps.selectedScenario) {
@@ -54,8 +55,8 @@ class ScenarioDetails extends React.Component {
 
     render = () => {
         return (
-            <Accordion defaultActiveKey="0">
-                {(this.props.selectedScenario && this.state.scenarioId) ? (
+            <Card>
+                {(this.props.selectedScenario && this.state.scenarioId) && (
                     <Query query={getScenarioQuery} variables={{ "scenarioId": this.props.selectedScenario }}>
                         {
                             ({ loading, error, data }) => {
@@ -64,12 +65,11 @@ class ScenarioDetails extends React.Component {
 
                                 const state = data.getScenario.state
                                 const scenario = data.getScenario
-                                
                                 return (
-                                    <Accordion.Item eventKey="0">
-                                        <Accordion.Header>Scenario Details: {scenario.id}: {scenario.name}</Accordion.Header>
+                                    <>
+                                        <Card.Header>{scenario.id}: {scenario.name}</Card.Header>
                                         {state.casualties &&
-                                            <Accordion.Body>
+                                            <Card.Body>
                                                 <p><strong>Scenario Description:</strong></p>
                                                 <p>{state.unstructured}</p>
                                                 <p><strong>Number of Patients:</strong> {state.casualties.length}</p>
@@ -84,18 +84,16 @@ class ScenarioDetails extends React.Component {
                                                         </Accordion.Item>
                                                     ))}
                                                 </Accordion>
-                                            </Accordion.Body>
+                                            </Card.Body>
                                         }
-                                    </Accordion.Item>
+                                    </>
                                 )
                             }
                         }
                     </Query>
-                ) : (
-                    <Accordion.Header>Scenario Details: {this.state.scenarioId}</Accordion.Header>
                 )
                 }
-            </Accordion>
+            </Card>
         )
     }
 
