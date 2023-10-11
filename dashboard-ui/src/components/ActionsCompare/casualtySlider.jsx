@@ -1,7 +1,7 @@
 import React from 'react';
 import { ListGroup, Card, Carousel, Modal, Tabs, Tab } from 'react-bootstrap';
 import DecisionList from './decisionList';
-import { getCasualtyArray } from './htmlUtility';
+import { getCasualtyArray } from './utility';
 class CasualtySlider extends React.Component {
 
     state = {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Accordion, ListGroup, Card } from 'react-bootstrap';
-import { nameMappings } from './decisionList';
+import { nameMappings } from './utility';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
@@ -18,7 +18,6 @@ class ScenarioDetails extends React.Component {
     }
 
     renderPatientInfo(patient) {
-        console.log(patient)
         return (
             <div className="row">
                 <div className="col-md-6">

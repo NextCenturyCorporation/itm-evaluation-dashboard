@@ -52,3 +52,40 @@ export const formatDivData = (data) => {
 
     return formattedWords[0] + ": " + formattedWords[2]
 }
+
+export const tagMappings = {
+    "red": "Immediate",
+    "gray": "Expectant",
+    "green": "Minimal",
+    "yellow": "Delayed"
+  }
+
+export const admCommandMap = {
+    "Tag Casualty": "Tag Applied",
+    "Apply Treatment": "Injury Treated",
+    "Check All Vitals": "Check Vitals",
+    "Move to EVAC": "Move to Evac"
+  }
+
+export const humanActionMap = {
+    "Pulse Taken": "Check Vitals",
+    "Tag Applied": "Tag Applied",
+    "Injury Treated": "Injury Treated",
+    "Move To Evac": "Move To Evac"
+  }
+
+
+export const nameMappings = {
+    "MarineC": "Military Mike Jungle Combat_3_2 Root",
+    "MarineA": "Military Mike Jungle Burned_0 Root",
+    "Intelligence Officer": "Intelligence Officer Burned_Gary_1 Root",
+    "Mike": "Military Mike Jungle Scout_1_3 Root",
+    "Civilian": "Civilian Bob_4 Root"
+  }
+
+  export const formattedActionType = (actionType)=> {
+    return actionType
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}
