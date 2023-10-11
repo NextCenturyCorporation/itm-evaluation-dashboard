@@ -61,10 +61,6 @@ class ScoreChart extends React.Component {
 
     constructor(props) {
         super(props);
-
-        this.state = { 
-            style: {fontFamily: "Lato", textAlign: "center"}
-        }
     }
 
     render() {
@@ -95,9 +91,8 @@ class ScoreChart extends React.Component {
                     }));
 
                     mappedArray.sort((a, b) => (a.performer > b.performer) ? -1 : 1);
-
                     return (
-                        <div style={this.state.styles} className="flex-chart-center">
+                        <div className="flex-chart-center">
                             <div className="results-chart-container">
                                 <MyResponsiveBar mappedArray={mappedArray}/>
                             </div>
