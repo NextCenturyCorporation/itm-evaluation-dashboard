@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:wght@300;400;700');
+@import url("https://use.fontawesome.com/releases/v5.6.3/css/all.css");
+@import "navbar.css";
+@import "home.css";
+@import "results-page.css";
+
+body {
+    font: 14px "Century Gothic", Futura, sans-serif;
+}
+
+.header {
+    font: 18px "Century Gothic", Futura, sans-serif;
+    display: flex; 
+    flex-direction: row;
+    height: 60px;
+    background-color: rgba(40, 90, 90, 1); /* 33, 33, 33, 1); */
+    color: rgba(200, 200, 200, 1);
+    margin-bottom: 12px;
+}
+
+.dropdown-menu {         
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+body {
+    background-color: #F8F8F8 !important;
+}
+
+.display-none {
+    display: none;
+}
+
+.custom-toast {
+    display: flex;
+    flex-direction: row;
+    align-items: center; 
+    background-color: #ff5555;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px;
+    max-width: 400px;
+    margin: 5px 0px 5px 0px;
+}
+
+.custom-toast span {
+    flex: 1; 
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
+
+.custom-toast button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px; 
+}
+.close-button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+
+.login-user .dropdown-toggle {
+    display: flex;
+    align-items: center;
+}
+  
+.login-user .nav-login-icon {
+    margin-right: 8px;
+}
+
+.login-user-content {
+    display: flex;
+    align-items: center;
+}
+
+.login-user {
+    position: absolute;
+    right: 0;
+    top:0;
+    padding-top: 10px;
+  }
+
+  .login-header-logo img {
+    max-width: 200px; /* Adjust the maximum width as per your design */
+    max-height: 100px; /* Adjust the maximum height as per your design */
+    width: auto;
+    height: auto;
+  }
+
+.email-text {
+    font-size: 17px;
+}
+
+.MuiTableCell-root {
+    vertical-align: baseline;
+}
+
+.tableCell {
+    vertical-align: baseline!important;
+}
+
+.tableCell.main {
+    border-bottom: 1px solid #000;
+    border-top: 1px solid #000;
+    border: 1px solid #000;
+}
+
+.center-div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 8vh;
+}
+
+.MuiFormControl-root.home-table {
+    min-width: 250px;
+}
+
+.MuiTable-root {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.MuiTableHead-root {
+    background-color: #3f51b5;
+    color: #0368ff;
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+    color: #0368ff;
+}
+
+.MuiTableCell-root {
+    padding: 16px;
+    border-bottom: 1px solid #ddd;
+}
+
+.paper-container {
+    width: 90%;
+    margin: 0 auto;
+}
+
+.scoreBox {
+    border: 1px solid #000;
+    border-radius: 0px;
+    padding: 8px;
+    background-color: #f5f5f5;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    margin-bottom: 10px;
+    min-width: 800px;
+}
+
+.score-chart-container {
+    width: 65%;
+    margin: 0 auto;
+    height: 400px;
+}
+
+.ta1-row {
+    background-color: #e1e1e1;
+}
+
+.itm-footer {
+    bottom: 0;
+    left: 0;
+    right: 0; 
+    text-align: center;
+    background-color: #F8F8F8;
+    padding-bottom: 15px;
+}
+
+.itm-footer div{
+    text-align: center;
+    font-size: 10px;
+}
+
+.translucent-background {
+    background-color: rgba(0, 0, 0, 0.7); /* Background with opacity */
+    padding: 5px 10px; /* Padding for text */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Cursor indicating clickability */
+}
+
+.casualty-slider {
+    position: relative;
+    bottom: 5%;
+    width: 45%;
+    height: 35%; 
+    left: 50%;
+    transform: translateX(-50%);
+  }
