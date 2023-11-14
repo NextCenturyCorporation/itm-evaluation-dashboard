@@ -17,31 +17,31 @@ class Decision extends React.Component {
 
     renderDecisionHuman = (decision) => {
         const renderedItems = [];
-    
+
         const formatKey = (key) => {
             // Convert camelCase to readable format (e.g., "actionType" to "Action Type")
             return key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase());
         }
-    
+
         for (const [key, value] of Object.entries(decision)) {
-            // only makes sense to say if successful or not if it is a treatment
-            if (key === 'succesfulTreatement' && decision.actionType !== 'Treatment') {
-                continue; 
+            // only makes sense to say if successful or not if it is a treatment. dont show imgURL
+            if (key === "imgURL" || (key === 'succesfulTreatement' && decision.actionType !== 'Treatment')) {
+                continue;
             }
-            
+
             let displayValue = value;
 
             // successful treatment 
             if (typeof value === 'boolean') {
                 displayValue = value ? 'Yes' : 'No';
             }
-    
+
             if (value !== "" && !(Array.isArray(value) && value.length === 0)) {
                 const formattedKey = formatKey(key);
                 renderedItems.push(<ListGroup.Item key={key}>{formattedKey}: {displayValue}</ListGroup.Item>);
             }
         }
-    
+
         if (renderedItems.length > 0) {
             return <div>{renderedItems}</div>;
         } else {
@@ -84,21 +84,22 @@ class Decision extends React.Component {
     }
 
     render = () => {
+        const decision = this.props.decision
         return (
             <div className="row">
                 <div className="col">
                     <ListGroup variant="flush">
                         {this.props.isHuman ? (
-                            this.renderDecisionHuman(this.props.decision)
+                            this.renderDecisionHuman(decision)
                         ) : (
-                            this.renderDecisionADM(this.props.decision)
+                            this.renderDecisionADM(decision)
                         )}
                     </ListGroup>
                 </div>
                 {this.props.decision.imgURL && (
                     <div className="col">
                         <img
-                            src={this.props.decision.imgURL}
+                            src={`data:image/jpeg;base64,${decision.imgURL}`}
                             alt="casualty"
                             className="img-fluid"
                         />

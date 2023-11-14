@@ -15,7 +15,6 @@ class DecisionList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      jsonFileContent: null,
       isLoading: true,
       decisions: null,
       scenario: "",
@@ -24,20 +23,34 @@ class DecisionList extends React.Component {
   }
 
   humanImageToDecisionMapping(decisions) {
-    let result = []
-    for (let decision of decisions) {
-      const pathToImg = process.env.PUBLIC_URL + `/newExample/${decision.casualty}.json`;
-      fetch(pathToImg)
+    // to avoid using fetch for every decision, one fetch per casualty
+    const uniqueCasualties = Array.from(new Set(decisions.map((decision) => decision.casualty)));
+    const result = [];
+
+    const fetchPromises = uniqueCasualties.map((casualty) => {
+      const pathToImg = process.env.PUBLIC_URL + `/newExample/${casualty}.json`;
+
+      return fetch(pathToImg)
         .then((response) => response.text())
         .then((imgData) => {
-          const image = JSON.parse(imgData)
-          decision.imgURL = image.bytes
-          result.push(decision)
+          const image = JSON.parse(imgData);
+          const associatedDecisions = decisions.filter((decision) => decision.casualty === casualty);
+          associatedDecisions.forEach((associatedDecision) => {
+            associatedDecision.imgURL = image.bytes;
+            result.push(associatedDecision);
+          })
         })
         .catch((error) => console.error('Fetch error:', error));
-    }
-    return result
+    });
+
+    // updating state before the promises resolve causes render issues
+    Promise.all(fetchPromises)
+      .then(() => {
+        this.setState({ decisions: result, isLoading: false });
+      });
   }
+
+
 
   admImageToDecisionMapping(decisions) {
     // map the proper image to a adm decision 
@@ -83,7 +96,7 @@ class DecisionList extends React.Component {
         .then((response) => response.text())
         .then((jsonData) => {
           const data = JSON.parse(jsonData)
-          this.setState({ jsonFileContent: data, decisions: data.actionList, isLoading: false });
+          this.humanImageToDecisionMapping(data.actionList)
         })
         .catch((error) => {
           console.error('Error fetching json file:', error);
