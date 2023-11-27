@@ -174,6 +174,7 @@ const typeDefs = gql`
     getAllTriageCategories: [TriageCategory]
     getSupply(id: ID): Supplies
     getAllSupplies: [Supplies]
+    getAllHumanRuns: [JSON]
   }
 
   type Mutation {
@@ -249,6 +250,9 @@ const resolvers = {
       },
       getAllSupplies: async (obj, args, context, infow) => {
           return await dashboardDB.db.collection('medicalSupplies').find().toArray().then(result => { return result; });
+      },
+      getAllHumanRuns: async (obj, args, context, infow) => {
+        return await dashboardDB.db.collection('humanRuns').find().toArray().then(result => { return result; });
       }
     },
     Mutation: {

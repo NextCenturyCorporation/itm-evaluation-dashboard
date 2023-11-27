@@ -4,6 +4,7 @@ import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
 import Actions from '../ActionsCompare/actions';
+import Survey from '../Survery/survery';
 import {Router, Switch, Route, Link} from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -46,6 +47,7 @@ function Scenarios() {
 function ActionsCompare() {
     return <Actions/>;
 }
+
 
 function Login({newState, userLoginHandler, updateHandler}) {
     if(newState.currentUser !== null) {

@@ -14,7 +14,7 @@ class Decision extends React.Component {
             return "No Pulse";
         }
     }
-
+    
     renderDecisionHuman = (decision) => {
         const renderedItems = [];
 
@@ -25,7 +25,7 @@ class Decision extends React.Component {
 
         for (const [key, value] of Object.entries(decision)) {
             // only makes sense to say if successful or not if it is a treatment. dont show imgURL
-            if (key === "imgURL" || (key === 'succesfulTreatement' && decision.actionType !== 'Treatment')) {
+            if (key === "imgBytes" || (key === 'succesfulTreatement' && decision.actionType !== 'Treatment')) {
                 continue;
             }
 
@@ -36,12 +36,13 @@ class Decision extends React.Component {
                 displayValue = value ? 'Yes' : 'No';
             }
 
+
             if (value !== "" && !(Array.isArray(value) && value.length === 0)) {
                 const formattedKey = formatKey(key);
                 renderedItems.push(<ListGroup.Item key={key}>{formattedKey}: {displayValue}</ListGroup.Item>);
             }
         }
-
+        console.log(decision.imgBytes)
         if (renderedItems.length > 0) {
             return <div>{renderedItems}</div>;
         } else {
@@ -55,21 +56,21 @@ class Decision extends React.Component {
             case "Tag Casualty":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Tag: {utility.formattedActionType(decision.parameters["Tag"])}</ListGroup.Item>
                     </div>
                 )
             case "Check All Vitals":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Pulse Reading: {this.admPulseMapping(parseInt(decision.response["hrpmin"]))}</ListGroup.Item>
                     </div>
                 )
             case "Apply Treatment":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Treatment: {utility.formattedActionType(decision.parameters["Parameters"]["treatment"])}</ListGroup.Item>
                         <ListGroup.Item>Location: {utility.formattedActionType(decision.parameters["Parameters"]["location"])}</ListGroup.Item>
                     </div>
@@ -77,7 +78,7 @@ class Decision extends React.Component {
             case "Move to EVAC":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                     </div>
                 )
         }
@@ -96,15 +97,23 @@ class Decision extends React.Component {
                         )}
                     </ListGroup>
                 </div>
-                {this.props.decision.imgURL && (
+                {(this.props.decision.imgURL && this.props.isHuman) ? (
                     <div className="col">
                         <img
-                            src={`data:image/jpeg;base64,${decision.imgURL}`}
+                            src={`data:image/jpeg;base64,${decision.imgBytes}`}
                             alt="casualty"
                             className="img-fluid"
                         />
                     </div>
-                )}
+                ) :
+                <div className="col">
+                        <img
+                            src={decision.imgURL}
+                            alt="casualty"
+                            className="img-fluid"
+                        />
+                    </div>
+                }
             </div>
         );
     }

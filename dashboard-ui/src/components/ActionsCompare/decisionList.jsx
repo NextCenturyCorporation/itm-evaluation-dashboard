@@ -4,53 +4,42 @@ import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 import * as utility from './utility'
 import Decision from './decision';
-import { Casualty } from './casualtySlider';
 
 const test_by_adm_and_scenario = gql`
     query getTestByADMandScenario($scenarioID: ID, $admName: ID){
         getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
     }`;
+
+const GET_ALL_HUMAN_RUNS = gql`
+    query GetAllHumanRuns {
+      getAllHumanRuns
+    }`;
+
 class DecisionList extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
       isLoading: true,
-      decisions: null,
       scenario: "",
       decisionMaker: null
     };
   }
 
-  humanImageToDecisionMapping(decisions) {
-    // to avoid using fetch for every decision, one fetch per casualty
-    const uniqueCasualties = Array.from(new Set(decisions.map((decision) => decision.casualty)));
-    const result = [];
-
-    const fetchPromises = uniqueCasualties.map((casualty) => {
-      const pathToImg = process.env.PUBLIC_URL + `/newExample/${casualty}.json`;
-
-      return fetch(pathToImg)
-        .then((response) => response.text())
-        .then((imgData) => {
-          const image = JSON.parse(imgData);
-          const associatedDecisions = decisions.filter((decision) => decision.casualty === casualty);
-          associatedDecisions.forEach((associatedDecision) => {
-            associatedDecision.imgURL = image.bytes;
-            result.push(associatedDecision);
-          })
-        })
-        .catch((error) => console.error('Fetch error:', error));
+  humanImageToDecisionMapping(decisions, images) {
+    // match the images to the corresponding decisions 
+    decisions.forEach((decision) => {
+      const matchingImage = images.find((image) => image.name === decision.casualty);
+      
+      if (matchingImage) {
+        decision.imgBytes = matchingImage.bytes;
+      } else {
+        console.log("Error finding matching image for decision " + decision.actionType)
+      }
     });
 
-    // updating state before the promises resolve causes render issues
-    Promise.all(fetchPromises)
-      .then(() => {
-        this.setState({ decisions: result, isLoading: false });
-      });
+    return decisions
   }
-
-
 
   admImageToDecisionMapping(decisions) {
     // map the proper image to a adm decision 
@@ -78,29 +67,10 @@ class DecisionList extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.decisionMaker !== prevProps.decisionMaker) {
-      this.setState({ decisions: null, decisionMaker: this.props.decisionMaker })
-      this.fetchData(this.props.decisionMaker);
+      this.setState({ decisionMaker: this.props.decisionMaker })
     }
     if (this.props.selectedScenario != prevProps.selectedScenario) {
       this.setState({ scenario: this.props.selectedScenario })
-    }
-  }
-
-  fetchData() {
-    if (this.props.decisionMaker && this.props.isHuman) {
-
-      const jsonFilePath = process.env.PUBLIC_URL + `/newExample/newJsonExample.json`;
-
-      // grab json file
-      fetch(jsonFilePath)
-        .then((response) => response.text())
-        .then((jsonData) => {
-          const data = JSON.parse(jsonData)
-          this.humanImageToDecisionMapping(data.actionList)
-        })
-        .catch((error) => {
-          console.error('Error fetching json file:', error);
-        });
     }
   }
 
@@ -150,7 +120,7 @@ class DecisionList extends React.Component {
 
   render = () => {
     const { isLoading } = this.state;
-    const visibleDecisionsCount = 10;
+    const visibleDecisionsCount = 12;
     const decisionHeight = 50;
 
     // total height of accordion maxes out at count * height of each
@@ -159,17 +129,29 @@ class DecisionList extends React.Component {
     return (
       <div>
         <h3>{this.props.title}</h3>
-        {this.state.decisions && this.props.decisionMaker && this.props.isHuman && !isLoading && (
-          <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
-            {this.state.decisions.map((decision, index) => (
-              <Accordion.Item key={index} eventKey={index}>
-                <Accordion.Header>{decision.actionType}</Accordion.Header>
-                <Accordion.Body>
-                  <Decision isHuman={true} decision={decision}></Decision>
-                </Accordion.Body>
-              </Accordion.Item>
-            ))}
-          </Accordion>
+        {this.state.decisionMaker && this.props.isHuman && (
+          <Query query={GET_ALL_HUMAN_RUNS}>
+            {({ loading, error, data }) => {
+              if (loading) return <div>loading</div>;
+              if (error) return <div>Error: {error.message}</div>;
+
+              const humanRun = data.getAllHumanRuns[0];
+              const decisions = this.humanImageToDecisionMapping(humanRun.actionList, data.getAllHumanRuns.slice(1))
+              
+              return (
+                <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
+                  {decisions.map((decision, index) => (
+                    <Accordion.Item key={index} eventKey={index}>
+                      <Accordion.Header>{decision.actionType === "Pulse" ? "Check Vitals" : decision.actionType}</Accordion.Header>
+                      <Accordion.Body>
+                        <Decision isHuman={true} decision={decision}></Decision>
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  ))}
+                </Accordion>
+              )
+            }}
+          </Query>
         )}
 
         {this.props.selectedScenario && this.props.decisionMaker && this.state.decisionMaker && !this.props.isHuman && (
