@@ -14,7 +14,7 @@ class Decision extends React.Component {
             return "No Pulse";
         }
     }
-    
+
     renderDecisionHuman = (decision) => {
         const renderedItems = [];
 
@@ -24,7 +24,7 @@ class Decision extends React.Component {
         }
 
         for (const [key, value] of Object.entries(decision)) {
-            // only makes sense to say if successful or not if it is a treatment. dont show imgURL
+            // only makes sense to say if successful or not if it is a treatment. dont show imgBytes
             if (key === "imgBytes" || (key === 'succesfulTreatement' && decision.actionType !== 'Treatment')) {
                 continue;
             }
@@ -42,7 +42,7 @@ class Decision extends React.Component {
                 renderedItems.push(<ListGroup.Item key={key}>{formattedKey}: {displayValue}</ListGroup.Item>);
             }
         }
-        
+
         if (renderedItems.length > 0) {
             return <div>{renderedItems}</div>;
         } else {
@@ -86,7 +86,7 @@ class Decision extends React.Component {
 
     render = () => {
         const decision = this.props.decision
-       
+
         return (
             <div className="row">
                 <div className="col">
@@ -98,7 +98,7 @@ class Decision extends React.Component {
                         )}
                     </ListGroup>
                 </div>
-                {(this.props.decision.imgBytes && this.props.isHuman) ? (
+                {(this.props.decision.imgBytes && this.props.isHuman) && (
                     <div className="col">
                         <img
                             src={`data:image/jpeg;base64,${decision.imgBytes}`}
@@ -106,14 +106,16 @@ class Decision extends React.Component {
                             className="img-fluid"
                         />
                     </div>
-                ) :
-                <div className="col">
+                )}
+                {this.props.decision.imgURL && !this.props.isHuman && (
+                    <div className="col">
                         <img
                             src={decision.imgURL}
                             alt="casualty"
                             className="img-fluid"
                         />
                     </div>
+                )
                 }
             </div>
         );

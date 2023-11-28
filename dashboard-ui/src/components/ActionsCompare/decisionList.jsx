@@ -20,7 +20,6 @@ class DecisionList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true,
       scenario: "",
       decisionMaker: null
     };
@@ -30,7 +29,7 @@ class DecisionList extends React.Component {
     // match the images to the corresponding decisions 
     decisions.forEach((decision) => {
       const matchingImage = images.find((image) => image.name === decision.casualty);
-      
+
       if (matchingImage) {
         decision.imgBytes = matchingImage.bytes;
       } else {
@@ -76,34 +75,29 @@ class DecisionList extends React.Component {
 
   filterDecisionsSoarTech(decisions) {
     // filter out decisions that involve bbn scenario 
-    const filteredNames = [
-      "Civilian Bob_4 Root",
-      "Military Mike Jungle Combat_1_5 Root",
-      "Military Mike Jungle Scout_1_3 Root"
+    const relevantCasualties = [
+      "Marine with Leg Amputation",
+      "Intelligence Officer",
+      "Marine Burned with Neck Puncture"
     ];
 
-    const filteredDecisions = decisions.filter((decision) => {
-      return !decision.actionData.some((name) =>
-        filteredNames.includes(name)
-      );
-    });
+    const filteredDecisions = decisions.filter((decision) =>
+      relevantCasualties.includes(decision.casualty)
+    );
 
     return filteredDecisions;
   }
 
   filterDecisionsBBN(decisions) {
-    // filter out decisions that involve bbn scenario 
-    const filteredNames = [
-      "Civilian Bob_4 Root",
-      "Military Mike Jungle Scout_1_3 Root"
-    ];
+    // limit human data to the bbn scenario 
+    const relevantCasualties = [
+      "Marine with Internal Bleeding",
+      "Local Civilian with Internal Bleeding"
+    ]
 
-    const filteredDecisions = decisions.filter((decision) => {
-      return decision.actionData.some((name) =>
-        filteredNames.includes(name)
-      );
-    });
-
+    const filteredDecisions = decisions.filter((decision) =>
+      relevantCasualties.includes(decision.casualty)
+    );
     return filteredDecisions;
   }
 
@@ -119,7 +113,6 @@ class DecisionList extends React.Component {
   }
 
   render = () => {
-    const { isLoading } = this.state;
     const visibleDecisionsCount = 12;
     const decisionHeight = 50;
 
