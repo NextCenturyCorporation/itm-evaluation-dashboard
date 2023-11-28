@@ -175,6 +175,7 @@ const typeDefs = gql`
     getSupply(id: ID): Supplies
     getAllSupplies: [Supplies]
     getAllHumanRuns: [JSON]
+    getAllImages: [JSON]
   }
 
   type Mutation {
@@ -183,116 +184,119 @@ const typeDefs = gql`
 `;
 
 const resolvers = {
-    Query: {
-      getHistory: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('test').findOne(args).then(result => { return result; });
-      },
-      getAllHistory: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
-      },
-      getAllHistoryByID: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('test').find({"history.response.id": args.historyId}).toArray().then(result => { return result; });
-      },
-      getScenario: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('scenarios').findOne({"id" :args["scenarioId"]}).then(result => { return result; });
-      },
-      getScenarioNames: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('scenarios').aggregate([{$group: {_id: {"id": '$id', "name": '$name'}}}])
-          .toArray().then(result => {return result});
-      },
-      getPerformerADMsForScenario: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('test').distinct("history.parameters.ADM Name", {"history.response.id": args["scenarioID"]}).then(result => {return result});
-      },
-      getTestByADMandScenario: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('test').findOne({"history.parameters.ADM Name": args["admName"], "history.response.id": args["scenarioID"]}).then(result => {return result});
-      },
-      getAllScenarios: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('scenarios').find().toArray().then(result => { return result; });
-      },
-      getScenarioState: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('scenarioStates').findOne(args).then(result => { return result; });
-      },
-      getAllScenarioStates: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('scenarioStates').find().toArray().then(result => { return result; });
-      },
-      getProbe: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('probes').findOne(args).then(result => { return result; });
-      },
-      getAllProbes: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('probes').find().toArray().then(result => { return result; });
-      },
-      getPatient: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('patients').findOne(args).then(result => { return result; });
-      },
-      getAllPatients: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('patients').find().toArray().then(result => { return result; });
-      },
-      getInjury: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('injuries').findOne(args).then(result => { return result; });
-      },
-      getAllInjuries: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('injuries').find().toArray().then(result => { return result; });
-      },
-      getVitals: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('vitals').findOne(args).then(result => { return result; });
-      },
-      getAllVitals: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('vitals').find().toArray().then(result => { return result; });
-      },
-      getTriageCategory: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('triageCategories').findOne(args).then(result => { return result; });
-      },
-      getAllTriageCategories: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('triageCategories').find().toArray().then(result => { return result; });
-      },
-      getSupply: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('medicalSupplies').findOne(args).then(result => { return result; });
-      },
-      getAllSupplies: async (obj, args, context, infow) => {
-          return await dashboardDB.db.collection('medicalSupplies').find().toArray().then(result => { return result; });
-      },
-      getAllHumanRuns: async (obj, args, context, infow) => {
-        return await dashboardDB.db.collection('humanRuns').find().toArray().then(result => { return result; });
+  Query: {
+    getHistory: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('test').findOne(args).then(result => { return result; });
+    },
+    getAllHistory: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
+    },
+    getAllHistoryByID: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
+    },
+    getScenario: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('scenarios').findOne({ "id": args["scenarioId"] }).then(result => { return result; });
+    },
+    getScenarioNames: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('scenarios').aggregate([{ $group: { _id: { "id": '$id', "name": '$name' } } }])
+        .toArray().then(result => { return result });
+    },
+    getPerformerADMsForScenario: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('test').distinct("history.parameters.ADM Name", { "history.response.id": args["scenarioID"] }).then(result => { return result });
+    },
+    getTestByADMandScenario: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('test').findOne({ "history.parameters.ADM Name": args["admName"], "history.response.id": args["scenarioID"] }).then(result => { return result });
+    },
+    getAllScenarios: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('scenarios').find().toArray().then(result => { return result; });
+    },
+    getScenarioState: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('scenarioStates').findOne(args).then(result => { return result; });
+    },
+    getAllScenarioStates: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('scenarioStates').find().toArray().then(result => { return result; });
+    },
+    getProbe: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('probes').findOne(args).then(result => { return result; });
+    },
+    getAllProbes: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('probes').find().toArray().then(result => { return result; });
+    },
+    getPatient: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('patients').findOne(args).then(result => { return result; });
+    },
+    getAllPatients: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('patients').find().toArray().then(result => { return result; });
+    },
+    getInjury: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('injuries').findOne(args).then(result => { return result; });
+    },
+    getAllInjuries: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('injuries').find().toArray().then(result => { return result; });
+    },
+    getVitals: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('vitals').findOne(args).then(result => { return result; });
+    },
+    getAllVitals: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('vitals').find().toArray().then(result => { return result; });
+    },
+    getTriageCategory: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('triageCategories').findOne(args).then(result => { return result; });
+    },
+    getAllTriageCategories: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('triageCategories').find().toArray().then(result => { return result; });
+    },
+    getSupply: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('medicalSupplies').findOne(args).then(result => { return result; });
+    },
+    getAllSupplies: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('medicalSupplies').find().toArray().then(result => { return result; });
+    },
+    getAllHumanRuns: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('humanRuns').find({ "runId": { $exists: true } }).toArray().then(result => { return result; });
+    },
+    getAllImages: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
+    }
+  },
+  Mutation: {
+    updateAdminUser: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "admin": args["isAdmin"] } }
+      );
+    }
+  },
+  StringOrFloat: new GraphQLScalarType({
+    name: "StringOrFloat",
+    description: "A String or a Float union type",
+    serialize(value) {
+      if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") {
+        throw new Error("Value must be either a String, Boolean, or an Int");
       }
-    },
-    Mutation: {
-        updateAdminUser: async(obj, args, context, infow) => { 
-            return await dashboardDB.db.collection('users').update(
-                {"username": args["username"]}, 
-                {$set: {"admin": args["isAdmin"]}}
-            );
-        }
-    },
-    StringOrFloat: new GraphQLScalarType({
-        name: "StringOrFloat",
-        description: "A String or a Float union type",
-        serialize(value) {
-          if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") {
-            throw new Error("Value must be either a String, Boolean, or an Int");
-          }
-    
-          return value;
-        },
-        parseValue(value) {
-          if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") {
-            throw new Error("Value must be either a String, Boolean, or an Int");
-          }
 
-          return value;
-        },
-        parseLiteral(ast) {
-          switch (ast.kind) {
-            case Kind.FLOAT: return parseFloat(ast.value);
-            case Kind.STRING: return ast.value;
-            case Kind.BOOLEAN: return ast.value;
-            default:
-              throw new Error("Value must be either a String, Boolean, or a Float");
-          }
-        }
-    })
+      return value;
+    },
+    parseValue(value) {
+      if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") {
+        throw new Error("Value must be either a String, Boolean, or an Int");
+      }
+
+      return value;
+    },
+    parseLiteral(ast) {
+      switch (ast.kind) {
+        case Kind.FLOAT: return parseFloat(ast.value);
+        case Kind.STRING: return ast.value;
+        case Kind.BOOLEAN: return ast.value;
+        default:
+          throw new Error("Value must be either a String, Boolean, or a Float");
+      }
+    }
+  })
 };
 
 module.exports = {
-    typeDefs,
-    resolvers
+  typeDefs,
+  resolvers
 };

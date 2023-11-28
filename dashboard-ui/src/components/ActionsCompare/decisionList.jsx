@@ -13,7 +13,13 @@ const test_by_adm_and_scenario = gql`
 const GET_ALL_HUMAN_RUNS = gql`
     query GetAllHumanRuns {
       getAllHumanRuns
+      getAllImages
     }`;
+
+const GET_ALL_IMAGES = gql`
+  query GetAllHumanRuns {
+    getAllImages
+  }`;
 
 class DecisionList extends React.Component {
 
@@ -129,8 +135,9 @@ class DecisionList extends React.Component {
               if (error) return <div>Error: {error.message}</div>;
 
               const humanRun = data.getAllHumanRuns[0];
-              const decisions = this.humanImageToDecisionMapping(humanRun.actionList, data.getAllHumanRuns.slice(1))
-              
+              const images = data.getAllImages;
+              const decisions = this.humanImageToDecisionMapping(humanRun.actionList, images)
+
               return (
                 <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}>
                   {decisions.map((decision, index) => (
