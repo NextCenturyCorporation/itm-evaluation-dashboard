@@ -16,11 +16,6 @@ const GET_ALL_HUMAN_RUNS = gql`
       getAllImages
     }`;
 
-const GET_ALL_IMAGES = gql`
-  query GetAllHumanRuns {
-    getAllImages
-  }`;
-
 class DecisionList extends React.Component {
 
   constructor(props) {

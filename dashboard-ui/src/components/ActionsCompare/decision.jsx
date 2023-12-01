@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListGroup } from 'react-bootstrap';
+import { ListGroup, ListGroupItem } from 'react-bootstrap';
 import * as utility from './utility'
 class Decision extends React.Component {
 
@@ -79,6 +79,12 @@ class Decision extends React.Component {
                 return (
                     <div>
                         <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                    </div>
+                )
+            default:
+                return (
+                    <div>
+                        <ListGroup.Item>Unrecoginzed action type</ListGroup.Item>
                     </div>
                 )
         }
