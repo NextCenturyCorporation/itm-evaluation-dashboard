@@ -4,6 +4,7 @@ import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
 import Actions from '../ActionsCompare/actions';
+import SurveyPage from '../Survey/survey';
 import {Router, Switch, Route, Link} from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -45,6 +46,10 @@ function Scenarios() {
 
 function ActionsCompare() {
     return <Actions/>;
+}
+
+function Survey() {
+    return <SurveyPage/>
 }
 
 
@@ -142,6 +147,9 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link-home" to="/actionsCompare">Actions Compare</Link>
                                 </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link-home" to="/survey">Survey</Link>
+                                </li>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
@@ -193,6 +201,9 @@ export class App extends React.Component {
                         </Route>
                         <Route path ="/actionsCompare">
                             <ActionsCompare/>
+                        </Route>
+                        <Route path ="/survey">
+                            <Survey/>
                         </Route>
                     </Switch>
 
