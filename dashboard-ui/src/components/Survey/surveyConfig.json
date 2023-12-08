@@ -1,30 +1,271 @@
 {
+    "title": "ITM Delegation Survey",
     "logoPosition": "right",
     "pages": [
-        {
-            "name": "page1",
-            "elements": [
-                {
-                    "type": "text",
-                    "name": "question1",
-                    "title": "What is your name?",
-                    "requiredIf": "{question1} empty"
-                }
-            ]
-        },
-        {
-            "name": "page2",
-            "elements": [
-                {
-                    "type": "text",
-                    "name": "question2",
-                    "title": "What is your last name"
-                },
-                {
-                    "type": "boolean",
-                    "name": "question3"
-                }
-            ]
-        }
+     {
+      "name": "page1",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Please indicate your team",
+        "title": "Please indicate your team",
+        "choices": [
+         "Parallax",
+         "Kitware",
+         "BBN",
+         "Soartech",
+         "TA3",
+         "TA4"
+        ],
+        "showOtherItem": true,
+        "otherText": "Other (specify)"
+       }
+      ]
+     },
+     {
+      "name": "page2",
+      "elements": [
+       {
+        "type": "html",
+        "name": "question2",
+        "title": "This survey will present the decision-making styles of medical personnel during a military triage situation. We will present a scenario followed by how a medical decision-maker (DM) carried out assessment and treatment for that situation. Each DM vignette is then followed by a few questions to assess how you perceived the DM's decision-making style and the way the information was presented. The survey should take about 15-30 minutes to complete. Thank you for your participation.",
+        "html": "This survey will present the decision-making styles of medical personnel during a military triage situation. <br><br>We will present a scenario followed by how a medical decision-maker (DM) carried out assessment and treatment for that situation. Each DM vignette is then followed by a few questions to assess how you perceived the DM's decision-making style and the way the information was presented. <br><br>The survey should take about 15-30 minutes to complete. Thank you for your participation.&nbsp;<br>"
+       }
+      ]
+     },
+     {
+      "name": "page3",
+      "elements": [
+       {
+        "type": "html",
+        "name": "question3",
+        "title": "Scenario Setting The medical decision-maker (DM) is part of a small unit of Marines on an isolated jungle island. The DM just finished lunch with their friend Mike, a Marine in their unit. The DM was teasing him about turning 35 and wanting to buy a new bike for his birthday. The Marine unit and the high value intelligence officer are on ATV’s moving through the island on established trails. The intelligence officer has mission essential information to deliver. Mission Requirements The mission focus is to retrieve a high value intelligence officer and bring them safely back to off-island transport. This mission is of critical importance and needs to be completed. Casualty Event The ATVs run over an IED and everyone is thrown from the vehicles into the jungle. The DM and three Marines with only basic first aid training are uninjured. The unit is now trying to regroup in the jungle.",
+        "html": "<strong>Scenario Setting</strong><br>\nThe medical decision-maker (DM) is part of a small unit of Marines on an isolated jungle island. The DM just finished lunch with their friend Mike, a Marine in their unit. The DM was teasing him about turning 35 and wanting to buy a new bike for his birthday. The Marine unit and the high value intelligence officer are on ATV’s moving through the island on established trails. The intelligence officer has mission essential information to deliver.<br>\n<br>\n<strong>Mission Requirements</strong><br>\nThe mission focus is to retrieve a high value intelligence officer and bring them safely back to off-island transport. This mission is of critical importance and needs to be completed.<br>\n<br>\n<strong>Casualty Event</strong><br>\nThe ATVs run over an IED and everyone is thrown from the vehicles into the jungle. The DM and three Marines with only basic first aid training are uninjured. The unit is now trying to regroup in the jungle.<br>"
+       }
+      ]
+     },
+     {
+      "name": "page4",
+      "elements": [
+       {
+        "type": "html",
+        "name": "question4",
+        "html": "<strong>The DM encounters two scenes in a jungle environment</strong><br>\n<br>\n<strong>Scene 1</strong><br>\nPatients A, B, and C are equidistant from starting point of the DM, in a more open area. From this point on, the DM has freedom to assess and treat any of the three visible patients.\n<div style=\"margin-left: 40px;\"><br>\n<strong><u>Patient A </u></strong><br>\n<strong>Demographics:</strong> 22 YO Marine<br>\n<strong>Injury:</strong> Burns of overall extremities and the majority of the torso and face, with peppered dirt and shrapnel on all extremities (BSA covers 90% of his body) and puncture wound left neck.&nbsp;<br>\n<br>\n<strong data-renderer-mark=\"true\"><u>Patient B (Intelligence Officer)</u></strong><br>\n<strong>Demographics: </strong>40 YO Intelligence officer<br>\n<strong>Injury: </strong>Initial injuries show 2nd and 3rd degree burns of the left half of his body (BSA is 50%), with peppered dirt and shrapnel over the same area<br>\n<br>\n<strong data-renderer-mark=\"true\"><u>Patient C</u></strong><br>\n<strong>Demographics:</strong> 26 YO Marine<br>\n<strong>Injury: </strong>Immediate partial amputation of RLE</div>\n<br>\n<strong>Scene 2</strong><br>\nAfter completing triage in the first scene, the DM is transported to a new location where Patients D &amp; E are visible and equidistant from the DM. Transport can only take one patient and DM has to decide which patient should be evacuated first.&nbsp;\n<div style=\"margin-left: 40px;\"><br>\n<strong data-renderer-mark=\"true\"><u>Patient D (Mike)</u></strong><br>\n<strong>Demographics</strong>: 34 YO Marine<br>\n<strong>Injury:</strong> Internal bleeding<br>\n<br>\n<u><strong data-renderer-mark=\"true\">Patient E (Civilian)</strong></u><br>\n<strong>Demographics: </strong>Civilian male 30-40YO<br>\n<strong>Injury:</strong> Internal bleeding</div>"
+       }
+      ]
+     },
+     {
+      "name": "page5",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "How many patients are there for each scene?",
+        "title": "How many patients are there for each scene?",
+        "choices": [
+         "Scene 1: two patients, Scene 2: two patients",
+         "Scene 1: three patients, Scene 2: two patients",
+         "Scene 1: three patients, Scene 2: three patients"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page6",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "What is the name of the DMs friend?",
+        "title": "What is the name of the DMs friend?",
+        "choices": [
+         "Gary",
+         "Steve",
+         "Mike"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page7",
+      "elements": [
+       {
+        "type": "ranking",
+        "name": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "choices": [
+         "Narrative Text",
+         "Structured List Text",
+         "Text with Pictures"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page8",
+      "elements": [
+       {
+        "type": "comment",
+        "name": "Why did you choose the ranking chosen in the previous question?",
+        "title": "Why did you choose the ranking chosen in the previous question?"
+       }
+      ]
+     },
+     {
+      "name": "page9",
+      "elements": [
+       {
+        "type": "comment",
+        "name": "What did you like about the (text, structure list, text + pic) presentation style?",
+        "title": "What did you like about the (text, structure list, text + pic) presentation style?"
+       }
+      ]
+     },
+     {
+      "name": "page10",
+      "elements": [
+       {
+        "type": "comment",
+        "name": "What didn’t you like about the (text, structure list, text + pic) presentation style?",
+        "title": "What didn’t you like about the (text, structure list, text + pic) presentation style?"
+       }
+      ]
+     },
+     {
+      "name": "page11",
+      "elements": [
+       {
+        "type": "comment",
+        "name": "What features would you add to the (text, structure text, text + pic) format?",
+        "title": "What features would you add to the (text, structure text, text + pic) format?"
+       }
+      ]
+     },
+     {
+      "name": "page12",
+      "elements": [
+       {
+        "type": "comment",
+        "name": "Is there any additional or other information you would have liked to see to better understand the DM’s decision-making style?",
+        "title": "Is there any additional or other information you would have liked to see to better understand the DM’s decision-making style?"
+       }
+      ]
+     },
+     {
+      "name": "page13",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "I am a computer gaming enthusiast",
+        "title": "I am a computer gaming enthusiast",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page14",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "I consider myself a seasoned first responder",
+        "title": "I consider myself a seasoned first responder",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page15",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "I have completed the SALT Triage Certificate Training Course",
+        "title": "I have completed the SALT Triage Certificate Training Course",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page16",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
+        "title": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page17",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "I have completed disaster response training provided by the United States Military",
+        "title": "I have completed disaster response training provided by the United States Military",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "page18",
+      "elements": [
+       {
+        "type": "text",
+        "name": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today. (Please enter a whole number).",
+        "title": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today. (Please enter a whole number).",
+        "inputType": "number"
+       }
+      ]
+     },
+     {
+      "name": "page19",
+      "elements": [
+       {
+        "type": "checkbox",
+        "name": "What is your current role (choose all that apply):",
+        "title": "What is your current role (choose all that apply):",
+        "choices": [
+         "M-3 medical student",
+         "M-4 medical student",
+         "EM resident",
+         "EM/IM resident",
+         "EM faculty",
+         "Emergency medical technician",
+         "Paramedic",
+         "Military Background (Branch, level of training, Active/Retired, etc)"
+        ],
+        "showOtherItem": true,
+        "otherText": "Other (specify)"
+       }
+      ]
+     }
     ]
-}
+   }

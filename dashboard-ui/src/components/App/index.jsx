@@ -48,8 +48,8 @@ function ActionsCompare() {
     return <Actions/>;
 }
 
-function Survey() {
-    return <SurveyPage/>
+function Survey(currentUser) {
+    return <SurveyPage currentUser={currentUser}/>
 }
 
 
@@ -203,7 +203,7 @@ export class App extends React.Component {
                             <ActionsCompare/>
                         </Route>
                         <Route path ="/survey">
-                            <Survey/>
+                            <Survey currentUser={this.state.currentUser}/>
                         </Route>
                     </Switch>
 
