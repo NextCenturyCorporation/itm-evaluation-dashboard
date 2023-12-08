@@ -239,8 +239,8 @@
       "elements": [
        {
         "type": "text",
-        "name": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today. (Please enter a whole number).",
-        "title": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today. (Please enter a whole number).",
+        "name": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
+        "title": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
         "inputType": "number"
        }
       ]
