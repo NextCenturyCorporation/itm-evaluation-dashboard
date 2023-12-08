@@ -65,20 +65,24 @@ class SurveyPage extends React.Component {
             }
         }
 
-        const jsonString = JSON.stringify(surveyData, null, 2);
+        let shouldDownload = window.confirm("Would you like to download the survey results?")
 
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(new Blob([jsonString], { type: 'application/json' }));
-        downloadLink.download = 'survey_results.json';
+        if (shouldDownload) {
+            const jsonString = JSON.stringify(surveyData, null, 2);
 
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(new Blob([jsonString], { type: 'application/json' }));
+            downloadLink.download = 'survey_results.json';
+
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
     }
 
     render() {
         return (
-            <Survey model={this.survey}/>
+            <Survey model={this.survey} />
         )
     }
 }
