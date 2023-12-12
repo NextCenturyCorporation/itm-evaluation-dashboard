@@ -27,6 +27,8 @@ class SurveyPage extends React.Component {
 
         this.survey.onAfterRenderQuestion.add(this.onAfterRenderQuestion);
         this.survey.onComplete.add(this.onSurveyComplete);
+
+        this.uploadButtonRef = React.createRef();
     }
 
     onAfterRenderQuestion = (sender, options) => {
@@ -86,7 +88,11 @@ class SurveyPage extends React.Component {
             downloadLink.click();
             document.body.removeChild(downloadLink);
             
-            this.setState({uploadData: true})
+            this.setState({ uploadData: true }, () => {
+                if (this.uploadButtonRef.current) {
+                    this.uploadButtonRef.current.click();
+                }
+            });
         }
     }
 
@@ -98,11 +104,12 @@ class SurveyPage extends React.Component {
                     <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
                         {(uploadSurveyResults, { data }) => (
                             <div>
-                                <button onClick = {(e) => {
+                                <button ref={this.uploadButtonRef} onClick = {(e) => {
                                     e.preventDefault();
                                     uploadSurveyResults({
                                         variables: { results: JSON.parse(this.surveyData)}
                                     })
+                                    this.setState({uploadData: false})
                                 }}>Upload Results</button>
                             </div>
                             )}
