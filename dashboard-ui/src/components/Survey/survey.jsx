@@ -6,11 +6,10 @@ import surveyConfig from './surveyConfig.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 
-
 const UPLOAD_SURVEY_RESULTS = gql`
-    mutation UploadSurveyResults($results: JSON) {
-        uploadSurveyResults(results: $results)
-    }`;
+  mutation UploadSurveyResults($results: JSON) {
+    uploadSurveyResults(results: $results)
+  }`;
 
 class SurveyPage extends React.Component {
 
@@ -22,80 +21,78 @@ class SurveyPage extends React.Component {
         };
 
         this.survey = new Model(surveyConfig);
-        this.questionStartTimes = {};
+        this.pageStartTimes = {};
         this.surveyData = {};
 
-        this.survey.onAfterRenderQuestion.add(this.onAfterRenderQuestion);
+        this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
 
         this.uploadButtonRef = React.createRef();
     }
 
-    onAfterRenderQuestion = (sender, options) => {
-        const questionName = options.question.name;
+    onAfterRenderPage = (sender, options) => {
+        const pageName = options.page.name;
 
-        if (Object.keys(this.questionStartTimes).length > 0) {
-            const previousQuestionName = Object.keys(this.questionStartTimes).pop();
-            const endTime = new Date();
-            const startTime = this.questionStartTimes[previousQuestionName];
-            const timeSpentInSeconds = (endTime - startTime) / 1000;
-
-            // update time spent for the previous question
-            this.surveyData[previousQuestionName] = {}
-            this.surveyData[previousQuestionName].timeSpentOnQuestion = timeSpentInSeconds;
+        if (Object.keys(this.pageStartTimes).length > 0) {
+            this.timerHelper()
         }
 
-        this.questionStartTimes[questionName] = new Date();
+        this.pageStartTimes[pageName] = new Date();
+    }
+
+    timerHelper() {
+        const previousPageName = Object.keys(this.pageStartTimes).pop();
+        const endTime = new Date();
+        const startTime = this.pageStartTimes[previousPageName];
+        const timeSpentInSeconds = (endTime - startTime) / 1000;
+
+        // update time spent for the previous page
+        this.surveyData[previousPageName] = {}
+        this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
+        this.surveyData[previousPageName].questions = this.getPageQuestions(previousPageName);
+    }
+
+    getPageQuestions = (pageName) => {
+        const page = this.survey.getPageByName(pageName);
+        if (page) {
+            return page.questions.map(question => question.name);
+        }
+        return [];
     }
 
     onSurveyComplete = (survey) => {
-        // capture the completion time for the last question
-        const lastQuestionName = Object.keys(this.questionStartTimes).pop();
-        const endTime = new Date();
-        const startTime = this.questionStartTimes[lastQuestionName];
-        const timeSpentInSeconds = (endTime - startTime) / 1000;
+        // capture time spent on last page
+        this.timerHelper()
+        // Iterate through each page in the survey
+        for (const pageName in this.pageStartTimes) {
+            if (this.pageStartTimes.hasOwnProperty(pageName)) {
+                // Initialize page data with time tracking
+                this.surveyData[pageName] = {
+                    timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
+                    questions: {}
+                };
 
-        // update time spent for the last question
-        this.surveyData[lastQuestionName] = {};
-        this.surveyData[lastQuestionName].timeSpentOnQuestion = timeSpentInSeconds;
+                // Get the questions for the page
+                const pageQuestions = this.getPageQuestions(pageName);
 
-        this.surveyData.user = this.props.currentUser;
-
-        this.surveyData.timeComplete = endTime.toString()
-
-        // Iterate through each question in survey.valuesHash
-        for (const questionName in survey.valuesHash) {
-            if (survey.valuesHash.hasOwnProperty(questionName)) {
-                const questionValue = survey.valuesHash[questionName];
-
-                if (this.surveyData.hasOwnProperty(questionName)) {
-                    // combine the survey data with the question value
-                    this.surveyData[questionName].response = questionValue;
-                } else {
-                    this.surveyData[questionName] = { response: questionValue };
-                }
+                // Iterate through each question and structure it as an object
+                pageQuestions.forEach(questionName => {
+                    const questionValue = survey.valuesHash[questionName];
+                    this.surveyData[pageName].questions[questionName] = {
+                        response: questionValue
+                    };
+                });
             }
         }
 
-        let shouldDownload = window.confirm("Would you like to download the survey results?")
+        this.surveyData.user = this.props.currentUser;
+        this.surveyData.timeComplete = new Date().toString();
 
-        if (shouldDownload) {
-            this.surveyData = JSON.stringify(this.surveyData, null, 2);
-
-            const downloadLink = document.createElement('a');
-            downloadLink.href = URL.createObjectURL(new Blob([this.surveyData], { type: 'application/json' }));
-            downloadLink.download = 'survey_results.json';
-
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            
-            this.setState({ uploadData: true }, () => {
-                if (this.uploadButtonRef.current) {
-                    this.uploadButtonRef.current.click();
-                }
-            });
-        }
+        this.setState({ uploadData: true }, () => {
+            if (this.uploadButtonRef.current) {
+                this.uploadButtonRef.current.click();
+            }
+        });
     }
 
     render() {
@@ -106,15 +103,15 @@ class SurveyPage extends React.Component {
                     <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
                         {(uploadSurveyResults, { data }) => (
                             <div>
-                                <button ref={this.uploadButtonRef} onClick = {(e) => {
+                                <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
                                     uploadSurveyResults({
-                                        variables: { results: JSON.parse(this.surveyData)}
+                                        variables: { results: this.surveyData }
                                     })
-                                    this.setState({uploadData: false})
+                                    this.setState({ uploadData: false })
                                 }}>Upload Results</button>
                             </div>
-                            )}
+                        )}
                     </Mutation>
                 )
                 }
