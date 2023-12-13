@@ -27,7 +27,7 @@
       "elements": [
        {
         "type": "html",
-        "name": "question2",
+        "name": "Survey Intro",
         "title": "This survey will present the decision-making styles of medical personnel during a military triage situation. We will present a scenario followed by how a medical decision-maker (DM) carried out assessment and treatment for that situation. Each DM vignette is then followed by a few questions to assess how you perceived the DM's decision-making style and the way the information was presented. The survey should take about 15-30 minutes to complete. Thank you for your participation.",
         "html": "This survey will present the decision-making styles of medical personnel during a military triage situation. <br><br>We will present a scenario followed by how a medical decision-maker (DM) carried out assessment and treatment for that situation. Each DM vignette is then followed by a few questions to assess how you perceived the DM's decision-making style and the way the information was presented. <br><br>The survey should take about 15-30 minutes to complete. Thank you for your participation.&nbsp;<br>"
        }
@@ -38,7 +38,7 @@
       "elements": [
        {
         "type": "html",
-        "name": "question3",
+        "name": "Scenario Intro",
         "title": "Scenario Setting The medical decision-maker (DM) is part of a small unit of Marines on an isolated jungle island. The DM just finished lunch with their friend Mike, a Marine in their unit. The DM was teasing him about turning 35 and wanting to buy a new bike for his birthday. The Marine unit and the high value intelligence officer are on ATV’s moving through the island on established trails. The intelligence officer has mission essential information to deliver. Mission Requirements The mission focus is to retrieve a high value intelligence officer and bring them safely back to off-island transport. This mission is of critical importance and needs to be completed. Casualty Event The ATVs run over an IED and everyone is thrown from the vehicles into the jungle. The DM and three Marines with only basic first aid training are uninjured. The unit is now trying to regroup in the jungle.",
         "html": "<strong>Scenario Setting</strong><br>\nThe medical decision-maker (DM) is part of a small unit of Marines on an isolated jungle island. The DM just finished lunch with their friend Mike, a Marine in their unit. The DM was teasing him about turning 35 and wanting to buy a new bike for his birthday. The Marine unit and the high value intelligence officer are on ATV’s moving through the island on established trails. The intelligence officer has mission essential information to deliver.<br>\n<br>\n<strong>Mission Requirements</strong><br>\nThe mission focus is to retrieve a high value intelligence officer and bring them safely back to off-island transport. This mission is of critical importance and needs to be completed.<br>\n<br>\n<strong>Casualty Event</strong><br>\nThe ATVs run over an IED and everyone is thrown from the vehicles into the jungle. The DM and three Marines with only basic first aid training are uninjured. The unit is now trying to regroup in the jungle.<br>"
        }
@@ -49,7 +49,7 @@
       "elements": [
        {
         "type": "html",
-        "name": "question4",
+        "name": "DM Intro",
         "html": "<strong>The DM encounters two scenes in a jungle environment</strong><br>\n<br>\n<strong>Scene 1</strong><br>\nPatients A, B, and C are equidistant from starting point of the DM, in a more open area. From this point on, the DM has freedom to assess and treat any of the three visible patients.\n<div style=\"margin-left: 40px;\"><br>\n<strong><u>Patient A </u></strong><br>\n<strong>Demographics:</strong> 22 YO Marine<br>\n<strong>Injury:</strong> Burns of overall extremities and the majority of the torso and face, with peppered dirt and shrapnel on all extremities (BSA covers 90% of his body) and puncture wound left neck.&nbsp;<br>\n<br>\n<strong data-renderer-mark=\"true\"><u>Patient B (Intelligence Officer)</u></strong><br>\n<strong>Demographics: </strong>40 YO Intelligence officer<br>\n<strong>Injury: </strong>Initial injuries show 2nd and 3rd degree burns of the left half of his body (BSA is 50%), with peppered dirt and shrapnel over the same area<br>\n<br>\n<strong data-renderer-mark=\"true\"><u>Patient C</u></strong><br>\n<strong>Demographics:</strong> 26 YO Marine<br>\n<strong>Injury: </strong>Immediate partial amputation of RLE</div>\n<br>\n<strong>Scene 2</strong><br>\nAfter completing triage in the first scene, the DM is transported to a new location where Patients D &amp; E are visible and equidistant from the DM. Transport can only take one patient and DM has to decide which patient should be evacuated first.&nbsp;\n<div style=\"margin-left: 40px;\"><br>\n<strong data-renderer-mark=\"true\"><u>Patient D (Mike)</u></strong><br>\n<strong>Demographics</strong>: 34 YO Marine<br>\n<strong>Injury:</strong> Internal bleeding<br>\n<br>\n<u><strong data-renderer-mark=\"true\">Patient E (Civilian)</strong></u><br>\n<strong>Demographics: </strong>Civilian male 30-40YO<br>\n<strong>Injury:</strong> Internal bleeding</div>"
        }
       ]
