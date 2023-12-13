@@ -61,6 +61,8 @@ class SurveyPage extends React.Component {
 
         this.surveyData.user = this.props.currentUser;
 
+        this.surveyData.timeComplete = endTime.toString()
+
         // Iterate through each question in survey.valuesHash
         for (const questionName in survey.valuesHash) {
             if (survey.valuesHash.hasOwnProperty(questionName)) {
