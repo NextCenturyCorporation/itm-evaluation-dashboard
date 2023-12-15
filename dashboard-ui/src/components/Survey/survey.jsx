@@ -15,20 +15,84 @@ class SurveyPage extends React.Component {
 
     constructor(props) {
         super(props);
-
-        this.state = {
-            uploadData: false
-        };
-
+        this.state = { uploadData: false };
+        this.initializeSurvey();
         this.survey = new Model(surveyConfig);
         this.pageStartTimes = {};
         this.surveyData = {};
-
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
-
         this.uploadButtonRef = React.createRef();
     }
+
+    shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    configureSurveyPages(groupedDMs, comparisonPages) {
+        const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
+        surveyConfig.pages = surveyConfig.pages.filter(page => page.name !== "Post-Scenario Measures");
+
+        const groupedPages = [];
+        const ungroupedPages = [];
+        surveyConfig.pages.forEach(page => {
+            let isComparisonPage = Object.values(comparisonPages).includes(page.name);
+            let isGroupedPage = false;
+
+            if (!isComparisonPage) {
+                groupedDMs.forEach(group => {
+                    if (group.some(dm => page.name.includes(dm))) {
+                        isGroupedPage = true;
+                    }
+                });
+
+                if (isGroupedPage) {
+                    groupedPages.push(page);
+                } else {
+                    ungroupedPages.push(page);
+                }
+            }
+        });
+
+        const shuffledGroupedPages = [];
+        groupedDMs.forEach(group => {
+            let groupPages = [];
+            group.forEach(dm => {
+                groupPages.push(...groupedPages.filter(page => page.name.includes(dm)));
+            });
+
+            const comparisonPageName = comparisonPages[group.join('')];
+            const comparisonPage = surveyConfig.pages.find(page => page.name === comparisonPageName);
+            if (comparisonPage) {
+                groupPages.push(comparisonPage);
+            }
+
+            shuffledGroupedPages.push(...groupPages);
+        });
+
+        surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
+    }
+
+    initializeSurvey() {
+        const groupedDMs = [
+            ['November', 'Kilo'],
+            ['Echo', 'Hotel'],
+            ['Lima', 'Sierra']
+        ];
+        const comparisonPages = {
+            'NovemberKilo': 'November vs Kilo',
+            'EchoHotel': 'Echo vs Hotel',
+            'LimaSierra': 'Lima vs Sierra'
+        };
+
+        this.shuffle(groupedDMs);
+        this.configureSurveyPages(groupedDMs, comparisonPages);
+    }
+
 
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
@@ -109,7 +173,7 @@ class SurveyPage extends React.Component {
                                         variables: { results: this.surveyData }
                                     })
                                     this.setState({ uploadData: false })
-                                }}>Upload Results</button>
+                                }}></button>
                             </div>
                         )}
                     </Mutation>
