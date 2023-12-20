@@ -410,19 +410,15 @@
         "title": "Indicate the choice that best reflects your opinion:",
         "choices": [
          {
-          "value": "Narrative Text",
           "text": "I preferred the decision-making style of DM Kilo"
          },
          {
-          "value": "Structured List Text",
           "text": "I preferred the decision-making style of DM November"
          },
          {
-          "value": "Text with Pictures",
           "text": "I liked the decision-making styles of both DMs"
          },
          {
-          "value": "Item 1",
           "text": "I did not like the decision-making styles of either DM"
          }
         ]
@@ -802,19 +798,15 @@
         "title": "Indicate the choice that best reflects your opinion:",
         "choices": [
          {
-          "value": "Narrative Text",
           "text": "I preferred the decision-making style of DM Hotel"
          },
          {
-          "value": "Structured List Text",
           "text": "I preferred the decision-making style of DM Echo"
          },
          {
-          "value": "Text with Pictures",
           "text": "I liked the decision-making styles of both DMs"
          },
          {
-          "value": "Item 1",
           "text": "I did not like the decision-making styles of either DM"
          }
         ]
@@ -1176,19 +1168,15 @@
         "title": "Indicate the choice that best reflects your opinion:",
         "choices": [
          {
-          "value": "Narrative Text",
           "text": "I preferred the decision-making style of DM Sierra"
          },
          {
-          "value": "Structured List Text",
           "text": "I preferred the decision-making style of DM Lima"
          },
          {
-          "value": "Text with Pictures",
           "text": "I liked the decision-making styles of both DMs"
          },
          {
-          "value": "Item 1",
           "text": "I did not like the decision-making styles of either DM"
          }
         ]
