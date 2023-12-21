@@ -28,7 +28,7 @@ bash graphql_dashboard_ui.sh
 # Populate MongoDB with Backup
 When you build the dashboard-mongo container for the first time, it will be empty. Follow these steps to populate it:
 
-1. Navigate to AWS and download backup.tar.gz from s3 bucket
+1. Navigate to AWS and download backup.tar.gz from s3 bucket (dashboard-assets/mongodb-backups)
 2. Uncompress the file
 ```
 tar -xzvf backup.tar.gz
