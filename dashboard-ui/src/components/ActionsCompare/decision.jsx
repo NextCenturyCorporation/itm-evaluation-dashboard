@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListGroup } from 'react-bootstrap';
+import { ListGroup, ListGroupItem } from 'react-bootstrap';
 import * as utility from './utility'
 class Decision extends React.Component {
 
@@ -15,52 +15,39 @@ class Decision extends React.Component {
         }
     }
 
-
-    humanPulseReading(pulse) {
-        switch (pulse) {
-            case "pulse_fast":
-                return "Fast Pulse"
-            case "pulse_normal":
-                return "Normal Pulse"
-            case "pulse_faint":
-                return "Faint Pulse"
-            default:
-                return "unknown"
-        }
-    }
-
     renderDecisionHuman = (decision) => {
-        switch (decision.actionType) {
-            case "PULSE_TAKEN":
-                return (
-                    <div>
-                        <ListGroup.Item>Patient: {decision.actionData[1]}</ListGroup.Item>
-                        <ListGroup.Item>Pulse Reading: {this.humanPulseReading(decision.actionData[0])}</ListGroup.Item>
-                    </div>
-                );
-            case "INJURY_TREATED":
-                return (
-                    <div>
-                        <ListGroup.Item>Patient: {decision.actionData[1]}</ListGroup.Item>
-                        <ListGroup.Item>Injury: {decision.actionData[0]}</ListGroup.Item>
-                        <ListGroup.Item>Treatment: {decision.actionData[2]}</ListGroup.Item>
-                    </div>
-                )
-            case "TAG_APPLIED":
-                return (
-                    <div>
-                        <ListGroup.Item>Patient: {decision.actionData[0]}</ListGroup.Item>
-                        <ListGroup.Item>Tag: {utility.tagMappings[decision.actionData[1]]}</ListGroup.Item>
-                    </div>
-                )
-            case "MOVE_TO_EVAC":
-                return (
-                    <div>
-                        <ListGroup.Item>Patient: {decision.actionData[0]}</ListGroup.Item>
-                    </div>
-                )
-            default:
-                return (<p>unrecognized action</p>)
+        const renderedItems = [];
+
+        const formatKey = (key) => {
+            // Convert camelCase to readable format (e.g., "actionType" to "Action Type")
+            return key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        for (const [key, value] of Object.entries(decision)) {
+            // only makes sense to say if successful or not if it is a treatment. dont show imgBytes
+            if (key === "imgBytes" || (key === 'succesfulTreatement' && decision.actionType !== 'Treatment')) {
+                continue;
+            }
+
+            let displayValue = value;
+
+            // successful treatment 
+            if (typeof value === 'boolean') {
+                displayValue = value ? 'Yes' : 'No';
+            }
+
+
+            if (value !== "" && !(Array.isArray(value) && value.length === 0)) {
+                const formattedKey = formatKey(key);
+                renderedItems.push(<ListGroup.Item key={key}>{formattedKey}: {displayValue}</ListGroup.Item>);
+            }
+        }
+
+        if (renderedItems.length > 0) {
+            return <div>{renderedItems}</div>;
+        } else {
+            // no information to show
+            return <p></p>;
         }
     }
 
@@ -69,26 +56,21 @@ class Decision extends React.Component {
             case "Tag Casualty":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Tag: {utility.formattedActionType(decision.parameters["Tag"])}</ListGroup.Item>
                     </div>
                 )
             case "Check All Vitals":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
-                        {/* omitted data for now, adm gets all vital information not just pulse
-                        <ListGroup.Item>Breathing: {this.formattedActionType(decision.response["breathing"])}</ListGroup.Item>
-                        <ListGroup.Item>Conscious: {decision.response["conscious"] ? `Yes` : `No`}</ListGroup.Item>
-                        */}
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Pulse Reading: {this.admPulseMapping(parseInt(decision.response["hrpmin"]))}</ListGroup.Item>
-                        {/*<ListGroup.Item>Mental Status: {this.formattedActionType(decision.response["mental_status"])}</ListGroup.Item>*/}
                     </div>
                 )
             case "Apply Treatment":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
                         <ListGroup.Item>Treatment: {utility.formattedActionType(decision.parameters["Parameters"]["treatment"])}</ListGroup.Item>
                         <ListGroup.Item>Location: {utility.formattedActionType(decision.parameters["Parameters"]["location"])}</ListGroup.Item>
                     </div>
@@ -96,33 +78,51 @@ class Decision extends React.Component {
             case "Move to EVAC":
                 return (
                     <div>
-                        <ListGroup.Item>Patient: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                        <ListGroup.Item>Casualty: {utility.nameMappings[decision.parameters["Casualty ID"]]}</ListGroup.Item>
+                    </div>
+                )
+            default:
+                return (
+                    <div>
+                        <ListGroup.Item>Unrecoginzed action type</ListGroup.Item>
                     </div>
                 )
         }
     }
 
     render = () => {
+        const decision = this.props.decision
+
         return (
             <div className="row">
                 <div className="col">
                     <ListGroup variant="flush">
                         {this.props.isHuman ? (
-                            this.renderDecisionHuman(this.props.decision)
+                            this.renderDecisionHuman(decision)
                         ) : (
-                            this.renderDecisionADM(this.props.decision)
+                            this.renderDecisionADM(decision)
                         )}
                     </ListGroup>
                 </div>
-                {this.props.decision.imgURL && (
+                {(this.props.decision.imgBytes && this.props.isHuman) && (
                     <div className="col">
                         <img
-                            src={this.props.decision.imgURL}
+                            src={`data:image/jpeg;base64,${decision.imgBytes}`}
                             alt="casualty"
                             className="img-fluid"
                         />
                     </div>
                 )}
+                {this.props.decision.imgURL && !this.props.isHuman && (
+                    <div className="col">
+                        <img
+                            src={decision.imgURL}
+                            alt="casualty"
+                            className="img-fluid"
+                        />
+                    </div>
+                )
+                }
             </div>
         );
     }

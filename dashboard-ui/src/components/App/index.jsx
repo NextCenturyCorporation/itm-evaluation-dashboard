@@ -47,6 +47,7 @@ function ActionsCompare() {
     return <Actions/>;
 }
 
+
 function Login({newState, userLoginHandler, updateHandler}) {
     if(newState.currentUser !== null) {
         return <Home newState={newState}/>;
