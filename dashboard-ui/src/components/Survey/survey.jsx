@@ -26,6 +26,7 @@ class SurveyPage extends React.Component {
     }
 
     shuffle(array) {
+        // randomize the list
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
@@ -34,7 +35,14 @@ class SurveyPage extends React.Component {
     }
 
     configureSurveyPages(groupedDMs, comparisonPages) {
+        /*
+        * There are three groups of decision makers, each group has two decision makers
+        * The order in which the groups gets presented is randomized
+        * The order of the decision makers within the groups is randomized
+        */
+
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
+        //filter out last page of survey to insert later
         surveyConfig.pages = surveyConfig.pages.filter(page => page.name !== "Post-Scenario Measures");
 
         const groupedPages = [];
@@ -95,8 +103,9 @@ class SurveyPage extends React.Component {
 
 
     onAfterRenderPage = (sender, options) => {
+        // time spent on each page 
         const pageName = options.page.name;
-
+        
         if (Object.keys(this.pageStartTimes).length > 0) {
             this.timerHelper()
         }
@@ -117,6 +126,7 @@ class SurveyPage extends React.Component {
     }
 
     getPageQuestions = (pageName) => {
+        // return all of the questions on a page
         const page = this.survey.getPageByName(pageName);
         if (page) {
             return page.questions.map(question => question.name);
@@ -127,19 +137,16 @@ class SurveyPage extends React.Component {
     onSurveyComplete = (survey) => {
         // capture time spent on last page
         this.timerHelper()
-        // Iterate through each page in the survey
+        // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
             if (this.pageStartTimes.hasOwnProperty(pageName)) {
-                // Initialize page data with time tracking
                 this.surveyData[pageName] = {
                     timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
                     questions: {}
                 };
 
-                // Get the questions for the page
                 const pageQuestions = this.getPageQuestions(pageName);
 
-                // Iterate through each question and structure it as an object
                 pageQuestions.forEach(questionName => {
                     const questionValue = survey.valuesHash[questionName];
                     this.surveyData[pageName].questions[questionName] = {
@@ -149,9 +156,11 @@ class SurveyPage extends React.Component {
             }
         }
 
+        // attach user data to results
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
 
+        // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
