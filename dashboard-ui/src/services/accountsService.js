@@ -28,6 +28,7 @@ const accountsGraphQL = new GraphQLClient({
         verified
       }
       username
+      team
       admin
     }
   `,
