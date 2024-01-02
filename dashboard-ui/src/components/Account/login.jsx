@@ -4,6 +4,7 @@ import { withRouter } from 'react-router-dom';
 import $ from 'jquery';
 import brandImage from '../../img/logo.png';
 import { Tabs, Tab } from 'react-bootstrap';
+import Form from 'react-bootstrap/Form';
 class LoginApp extends React.Component {
 
     constructor(props) {
@@ -17,7 +18,8 @@ class LoginApp extends React.Component {
             createEmail: "",
             forgotEmail: "",
             loginFailed: false,
-            createAccountFailed: false
+            createAccountFailed: false,
+            selectedTeam: ""
         };
 
         this.login = this.login.bind(this);
@@ -31,7 +33,8 @@ class LoginApp extends React.Component {
             let results = await accountsPassword.createUser({
                 username: this.state.createUserName,
                 password: this.state.createPassword,
-                email: this.state.createEmail
+                email: this.state.createEmail,
+                team: this.state.selectedTeam
             });
 
             results = await accountsPassword.login({
@@ -115,6 +118,10 @@ class LoginApp extends React.Component {
         this.setState({ forgotEmail: target.value });
     }
 
+    onChangeSelectedTeam = ({target}) => {
+        this.setState({selectedTeam: target.value});
+    }
+
     showSignIn = (evt) => {
         $("#sign-in-pane").removeClass("display-none");
         $("#forgot-password-pane").addClass("display-none");
@@ -135,6 +142,7 @@ class LoginApp extends React.Component {
         "GraphQL error: Username or Email is required": "Email, username, and password are required.",
         "GraphQL error: Invalid credentials": "Email or username already in use."
     }
+
 
     render() {
         return (
@@ -169,18 +177,31 @@ class LoginApp extends React.Component {
                                             <div className="input-login-header">Password</div>
                                             <input className="form-control form-control-lg" placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
                                         </div>
+                                        <div className="form-group my-1">
+                                            <Form.Select onChange={this.onChangeSelectedTeam}>
+                                                <option>Please indicate your team</option>
+                                                <option value="parallax">Parallax</option>
+                                                <option value="kitware">Kitware</option>
+                                                <option value="bbn">BBN</option>
+                                                <option value="soartech">SoarTech</option>
+                                                <option value="ta3">TA3</option>
+                                                <option value="ta4">TA4</option>
+                                            </Form.Select>
+                                        </div>
                                         {this.state.createAccountFailed && (
                                             <div className="custom-toast">
                                                 <span>{this.createAccountErrorMappings[this.state.error] ?? this.state.error}</span>
                                                 <button
                                                     className="close-button"
-                                                    onClick={() => this.setState({ createAccountFailed: false })}
+                                                    onClick={() => {
+                                                        this.setState({ createAccountFailed: false })
+                                                        console.log(this.state.error.message)}}
                                                 >
                                                     <strong>x</strong>
                                                 </button>
                                             </div>
                                         )}
-                                        <div className="form-group">
+                                        <div className="form-group my-2">
                                             <button className="btn btn-primary btn-lg btn-block" onClick={this.createAccount} type="button">Create Account</button>
                                         </div>
                                         <div className="invalid-feedback" id="create-account-feedback">
@@ -223,7 +244,7 @@ class LoginApp extends React.Component {
                                                     <a className="" id="forgot-pass-tab" href="#forgot" onClick={this.forgotPasswordLink}>Forgot Password?</a>
                                                 </div>
                                             </div>
-                                            <div className="form-group">
+                                            <div className="form-group my-2">
                                                 <button className="btn btn-primary btn-lg btn-block" onClick={this.login} type="button">Sign In</button>
                                             </div>
                                             <div className="invalid-feedback" id="sign-in-feedback">
