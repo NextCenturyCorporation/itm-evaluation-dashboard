@@ -39,15 +39,12 @@ body {
     color: #fff;
     border-radius: 5px;
     padding: 10px;
-    max-width: 400px;
     margin: 5px 0px 5px 0px;
 }
 
 .custom-toast span {
     flex: 1; 
     white-space: nowrap; 
-    overflow: hidden;
-    text-overflow: ellipsis; 
 }
 
 .custom-toast button {
