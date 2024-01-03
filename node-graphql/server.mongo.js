@@ -32,7 +32,18 @@ const connection = mongoose.connect('mongodb://dashboard-mongo:27017/dashboard',
 
 const dashboardDB = new Mongo(mongoose.connection);
 
-const accountsPassword = new AccountsPassword({});
+const accountsPassword = new AccountsPassword({
+  // This option is called when a new user create an account
+  // The user returned will be inserted into the database
+  validateNewUser: async (user) => {
+    if (!user.team) {
+      throw new Error('team name is required');
+    }
+    console.log(user)
+    // We specify all the fields that can be inserted in the database
+    return user;
+  },
+});
 
 const accountsServer = new AccountsServer(
   {

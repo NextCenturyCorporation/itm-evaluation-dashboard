@@ -13,10 +13,12 @@ const typeDefs = gql`
 
   extend input CreateUserInput {
     admin: Boolean
+    team: String
   }
 
   extend type User {
     admin: Boolean
+    team: String
   }
 
   type Player {

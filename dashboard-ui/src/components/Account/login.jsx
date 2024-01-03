@@ -29,7 +29,6 @@ class LoginApp extends React.Component {
     createAccount = async () => {
         $("#create-account-feedback").removeClass("feedback-display");
         try {
-
             let results = await accountsPassword.createUser({
                 username: this.state.createUserName,
                 password: this.state.createPassword,
@@ -43,6 +42,10 @@ class LoginApp extends React.Component {
                     email: this.state.createEmail,
                 }
             });
+
+            console.log(results)
+            results.user.team = this.state.selectedTeam
+            console.log(results)
 
             this.props.history.push('/');
             this.props.userLoginHandler(results.user);
