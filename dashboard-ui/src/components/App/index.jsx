@@ -6,14 +6,14 @@ import ScenarioPage from '../ScenarioPage/scenarioPage';
 import Actions from '../ActionsCompare/actions';
 import SurveyPage from '../Survey/survey';
 import SurveyResultsPage from '../SurveyResults/SurveyResults';
-import {Router, Switch, Route, Link} from 'react-router-dom';
+import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
-import {accountsClient, accountsGraphQL} from '../../services/accountsService';
+import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
-import {createBrowserHistory} from 'history';
+import { createBrowserHistory } from 'history';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -30,61 +30,71 @@ import userImage from '../../img/account_icon.png';
 
 const history = createBrowserHistory();
 
-function Home({newState}) {
-    if(newState.currentUser == null) {
+function Home({ newState }) {
+    if (newState.currentUser == null) {
         history.push('/login');
     }
-    return <HomePage/>;
+    return <HomePage />;
 }
 
 function Results() {
-    return <ResultsPage/>;
+    return <ResultsPage />;
 }
 
 function Scenarios() {
-    return <ScenarioPage/>;
+    return <ScenarioPage />;
 }
 
 function ActionsCompare() {
-    return <Actions/>;
+    return <Actions />;
 }
 
 function Survey(currentUser) {
-    return <SurveyPage currentUser={currentUser}/>
-}
-
-function SurveyResults() {
-    return <SurveyResultsPage/>
-}
-
-
-function Login({newState, userLoginHandler, updateHandler}) {
-    if(newState.currentUser !== null) {
-        return <Home newState={newState}/>;
-    } else {
-        return <LoginApp userLoginHandler={userLoginHandler}/>;
-    }
-}
-
-function MyAccount({newState, userLoginHandler}) {
-    if(newState.currentUser == null) {
+    const user = currentUser.currentUser
+    if (user == null) {
         history.push("/login");
     }
 
-    return <MyAccountPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler}/>
+    // Do not let users who aren't delegators somehow go to the survey page
+    if (user !== null && user.delegator === true) {
+        return <SurveyPage currentUser={currentUser} />
+    } else {
+        return <HomePage/>
+    }
 }
 
-function Admin({newState, userLoginHandler}) {
-    if(newState.currentUser == null) {
+function SurveyResults() {
+    return <SurveyResultsPage />
+}
+
+
+function Login({ newState, userLoginHandler, updateHandler }) {
+    if (newState.currentUser !== null) {
+        return <Home newState={newState} />;
+    } else {
+        return <LoginApp userLoginHandler={userLoginHandler} />;
+    }
+}
+
+function MyAccount({ newState, userLoginHandler }) {
+    if (newState.currentUser == null) {
+        history.push("/login");
+    }
+
+    return <MyAccountPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
+}
+
+function Admin({ newState, userLoginHandler }) {
+    if (newState.currentUser == null) {
         history.push("/login");
     }
 
     // Do not let users who aren't admins somehow go to the admin page
-    if(newState.currentUser !== null && newState.currentUser.admin === true) {
-        return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler}/>
+    if (newState.currentUser !== null && newState.currentUser.admin === true) {
+        return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
     } else {
-        return <Home newState={newState}/>;
-    } 
+        return <Home newState={newState} />;
+    }
 }
 
 export class App extends React.Component {
@@ -94,7 +104,7 @@ export class App extends React.Component {
 
         this.state = queryString.parse(window.location.search);
         this.state.currentUser = null;
-    
+
         this.logout = this.logout.bind(this);
         this.userLoginHandler = this.userLoginHandler.bind(this);
     }
@@ -103,26 +113,26 @@ export class App extends React.Component {
         //refresh the session to get a new accessToken if expired
         const tokens = await accountsClient.refreshSession();
 
-        if(window.location.href.indexOf("reset-password") > -1) {
+        if (window.location.href.indexOf("reset-password") > -1) {
             return;
         }
 
         if (!tokens) {
-          history.push('/login');
-          return;
+            history.push('/login');
+            return;
         }
 
         const user = await accountsGraphQL.getUser(
-          tokens ? tokens.accessToken : ''
+            tokens ? tokens.accessToken : ''
         );
 
-        this.setState({ currentUser: user});
+        this.setState({ currentUser: user });
     }
 
     async logout() {
         await accountsClient.logout();
         history.push('/login');
-        this.setState({currentUser: null});
+        this.setState({ currentUser: null });
     }
 
     userLoginHandler(userObject) {
@@ -130,14 +140,14 @@ export class App extends React.Component {
     }
 
     render() {
-        const {currentUser} = this.state;
+        const { currentUser } = this.state;x
         return (
             <Router history={history}>
                 <div className="itm-app">
-                    {currentUser && 
+                    {currentUser &&
                         <nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
                             <a className="navbar-brand" href="/">
-                                <img className="nav-brand-itm" src={brandImage} alt=""/>ITM
+                                <img className="nav-brand-itm" src={brandImage} alt="" />ITM
                             </a>
                             <ul className="navbar-nav custom-nav">
                                 <li className="nav-item">
@@ -152,34 +162,38 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link-home" to="/actionsCompare">Actions Compare</Link>
                                 </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link-home" to="/survey">Survey</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link-home" to="/surveyResults">Survey Results</Link>
-                                </li>
+                                {currentUser?.delegator &&
+                                    <>
+                                        <li className="nav-item">
+                                            <Link className="nav-link-home" to="/survey">Survey</Link>
+                                        </li>
+                                        <li className="nav-item">
+                                            <Link className="nav-link-home" to="/surveyResults">Survey Results</Link>
+                                        </li>
+                                    </>
+                                }
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
                                     <div className="login-user-content">
-                                        <img className="nav-login-icon" src={userImage} alt=""/>
+                                        <img className="nav-login-icon" src={userImage} alt="" />
                                         <NavDropdown
-                                        title={currentUser.emails[0].address}
-                                        id="basic-nav-dropdown"
-                                        show={this.state.menuIsOpened}
-                                        onToggle={this.handleToggle}
+                                            title={currentUser.emails[0].address}
+                                            id="basic-nav-dropdown"
+                                            show={this.state.menuIsOpened}
+                                            onToggle={this.handleToggle}
                                         >
-                                        <Link className="dropdown-item" to="/myaccount" onClick={this.handleToggle}>
-                                            My Account
-                                        </Link>
-                                        {this.state.currentUser.admin === true && (
-                                            <Link className="dropdown-item" to="/admin" onClick={this.handleToggle}>
-                                            Administrator
+                                            <Link className="dropdown-item" to="/myaccount" onClick={this.handleToggle}>
+                                                My Account
                                             </Link>
-                                        )}
-                                        <Link className="dropdown-item" to={{}} onClick={this.logout}>
-                                            Logout
-                                        </Link>
+                                            {this.state.currentUser.admin === true && (
+                                                <Link className="dropdown-item" to="/admin" onClick={this.handleToggle}>
+                                                    Administrator
+                                                </Link>
+                                            )}
+                                            <Link className="dropdown-item" to={{}} onClick={this.logout}>
+                                                Logout
+                                            </Link>
                                         </NavDropdown>
                                     </div>
                                 </li>
@@ -189,32 +203,32 @@ export class App extends React.Component {
 
                     <Switch>
                         <Route exact path="/">
-                            <Home newState={this.state}/>
+                            <Home newState={this.state} />
                         </Route>
                         <Route exact path="/results">
-                            <Results/>
+                            <Results />
                         </Route>
                         <Route exact path="/scenarios">
-                            <Scenarios/>
+                            <Scenarios />
                         </Route>
                         <Route path="/login">
-                            <Login newState={this.state} userLoginHandler={this.userLoginHandler}/>
+                            <Login newState={this.state} userLoginHandler={this.userLoginHandler} />
                         </Route>
-                        <Route path="/reset-password/:token" component={ResetPassPage}/>
+                        <Route path="/reset-password/:token" component={ResetPassPage} />
                         <Route path="/myaccount">
-                            <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler}/>
+                            <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
                         </Route>
                         <Route path="/admin">
-                            <Admin newState={this.state} userLoginHandler={this.userLoginHandler}/>
+                            <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
                         </Route>
-                        <Route path ="/actionsCompare">
-                            <ActionsCompare/>
+                        <Route path="/actionsCompare">
+                            <ActionsCompare />
                         </Route>
-                        <Route path ="/survey">
-                            <Survey currentUser={this.state.currentUser}/>
+                        <Route path="/survey">
+                            <Survey currentUser={this.state.currentUser} />
                         </Route>
-                        <Route path ="/surveyResults">
-                            <SurveyResults/>
+                        <Route path="/surveyResults">
+                            <SurveyResults />
                         </Route>
                     </Switch>
 
