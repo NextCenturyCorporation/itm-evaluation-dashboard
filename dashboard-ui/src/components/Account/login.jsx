@@ -3,8 +3,9 @@ import { accountsPassword } from '../../services/accountsService';
 import { withRouter } from 'react-router-dom';
 import $ from 'jquery';
 import brandImage from '../../img/logo.png';
-import { Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab, FormControl } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
+import { Checkbox, FormControlLabel } from '@material-ui/core';
 class LoginApp extends React.Component {
 
     constructor(props) {
@@ -19,7 +20,8 @@ class LoginApp extends React.Component {
             forgotEmail: "",
             loginFailed: false,
             createAccountFailed: false,
-            selectedTeam: ""
+            selectedTeam: "",
+            delegator: false
         };
 
         this.login = this.login.bind(this);
@@ -33,7 +35,8 @@ class LoginApp extends React.Component {
                 username: this.state.createUserName,
                 password: this.state.createPassword,
                 email: this.state.createEmail,
-                team: this.state.selectedTeam
+                team: this.state.selectedTeam,
+                delegator: this.state.delegator
             });
 
             results = await accountsPassword.login({
@@ -43,10 +46,6 @@ class LoginApp extends React.Component {
                 }
             });
 
-            console.log(results)
-            results.user.team = this.state.selectedTeam
-            console.log(results)
-
             this.props.history.push('/');
             this.props.userLoginHandler(results.user);
         } catch (err) {
@@ -54,6 +53,7 @@ class LoginApp extends React.Component {
             this.setState({ error: err.message, createAccountFailed: true });
         }
     }
+
 
 
 
@@ -121,8 +121,12 @@ class LoginApp extends React.Component {
         this.setState({ forgotEmail: target.value });
     }
 
-    onChangeSelectedTeam = ({target}) => {
-        this.setState({selectedTeam: target.value});
+    onChangeSelectedTeam = ({ target }) => {
+        this.setState({ selectedTeam: target.value });
+    }
+
+    onChangeDelegator = ({ target }) => {
+        this.setState({ delegator: target.checked })
     }
 
     showSignIn = (evt) => {
@@ -180,7 +184,7 @@ class LoginApp extends React.Component {
                                             <div className="input-login-header">Password</div>
                                             <input className="form-control form-control-lg" placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
                                         </div>
-                                        <div className="form-group my-1">
+                                        <div className="form-group my-2">
                                             <Form.Select onChange={this.onChangeSelectedTeam}>
                                                 <option>Please indicate your team</option>
                                                 <option value="parallax">Parallax</option>
@@ -189,7 +193,20 @@ class LoginApp extends React.Component {
                                                 <option value="soartech">SoarTech</option>
                                                 <option value="ta3">TA3</option>
                                                 <option value="ta4">TA4</option>
+                                                <option value="other">Other</option>
                                             </Form.Select>
+                                        </div>
+                                        <div className="form-group my-2">
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        color="primary"
+                                                        checked={this.state.delegator}
+                                                        onChange={this.onChangeDelegator}
+                                                    />
+                                                }
+                                                label="I am a delegator"
+                                            />
                                         </div>
                                         {this.state.createAccountFailed && (
                                             <div className="custom-toast">
@@ -198,7 +215,8 @@ class LoginApp extends React.Component {
                                                     className="close-button"
                                                     onClick={() => {
                                                         this.setState({ createAccountFailed: false })
-                                                        console.log(this.state.error.message)}}
+                                                        console.log(this.state.error.message)
+                                                    }}
                                                 >
                                                     <strong>x</strong>
                                                 </button>
@@ -291,5 +309,6 @@ class LoginApp extends React.Component {
         );
     }
 }
+
 
 export default withRouter(LoginApp);

@@ -39,8 +39,11 @@ const accountsPassword = new AccountsPassword({
     if (!user.team) {
       throw new Error('team name is required');
     }
+    if (!user.delegator) {
+      throw new Error('delegator status is required')
+    }
     console.log(user)
-    // We specify all the fields that can be inserted in the database
+    
     return user;
   },
 });
