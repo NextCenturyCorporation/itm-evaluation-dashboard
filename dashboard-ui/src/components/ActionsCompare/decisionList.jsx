@@ -69,7 +69,7 @@ class DecisionList extends React.Component {
     if (this.props.decisionMaker !== prevProps.decisionMaker) {
       this.setState({ decisionMaker: this.props.decisionMaker })
     }
-    if (this.props.selectedScenario != prevProps.selectedScenario) {
+    if (this.props.selectedScenario !== prevProps.selectedScenario) {
       this.setState({ scenario: this.props.selectedScenario })
     }
   }

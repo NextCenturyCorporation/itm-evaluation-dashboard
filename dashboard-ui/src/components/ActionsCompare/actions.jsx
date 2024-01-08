@@ -1,6 +1,5 @@
 import React from 'react';
-//import CasualtySlider from './casualtySlider';
-import { Card, Form } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import ScenarioDetails from './scenarioDetails';
 import DecisionMakerDetails from './decisionMakerDetails';
 import Container from 'react-bootstrap/Container';
@@ -89,10 +88,6 @@ class Actions extends React.Component {
                                             <DecisionMakerDetails selectedScenario={this.state.selectedScenario} />
                                         </Card>
                                     </Col>
-                                    {/*
-                                    <Col>
-                                        <CasualtySlider tables={tables} decisionMaker={csvFileContent} />
-                                    </Col>*/}
                                 </Row>
                             </Container>
                         </>

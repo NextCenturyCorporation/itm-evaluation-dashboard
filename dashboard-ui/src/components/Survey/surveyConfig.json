@@ -1,0 +1,1348 @@
+{
+    "title": "ITM Delegation Survey",
+    "logoPosition": "right",
+    "completedHtml": "<h3>Thank you for completing the survey</h3>",
+    "pages": [
+     {
+      "name": "Team",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Please indicate your team",
+        "title": "Please indicate your team",
+        "choices": [
+         "Parallax",
+         "Kitware",
+         "BBN",
+         "Soartech",
+         "TA3",
+         "TA4"
+        ],
+        "showOtherItem": true,
+        "otherText": "Other (specify)"
+       }
+      ]
+     },
+     {
+      "name": "Survey Introduction",
+      "elements": [
+       {
+        "type": "html",
+        "name": "Survey Intro",
+        "title": "This survey will present the decision-making styles of medical personnel during a military triage situation. We will present a scenario followed by how a medical decision-maker (DM) carried out assessment and treatment for that situation. Each DM vignette is then followed by a few questions to assess how you perceived the DM's decision-making style and the way the information was presented. The survey should take about 15-30 minutes to complete. Thank you for your participation.",
+        "html": "This survey will present the decision-making styles of medical personnel during a military triage situation. <br><br>We will present a scenario followed by how a medical decision-maker (DM) carried out assessment and treatment for that situation. Each DM vignette is then followed by a few questions to assess how you perceived the DM's decision-making style and the way the information was presented. <br><br>The survey should take about 15-30 minutes to complete. Thank you for your participation.&nbsp;<br>"
+       }
+      ]
+     },
+     {
+      "name": "Scenario Introduction",
+      "elements": [
+       {
+        "type": "html",
+        "name": "Scenario Intro",
+        "title": "Scenario Setting The medical decision-maker (DM) is part of a small unit of Marines on an isolated jungle island. The DM just finished lunch with their friend Mike, a Marine in their unit. The DM was teasing him about turning 35 and wanting to buy a new bike for his birthday. The Marine unit and the high value intelligence officer are on ATV’s moving through the island on established trails. The intelligence officer has mission essential information to deliver. Mission Requirements The mission focus is to retrieve a high value intelligence officer and bring them safely back to off-island transport. This mission is of critical importance and needs to be completed. Casualty Event The ATVs run over an IED and everyone is thrown from the vehicles into the jungle. The DM and three Marines with only basic first aid training are uninjured. The unit is now trying to regroup in the jungle.",
+        "html": "<strong>Scenario Setting</strong><br>\nThe medical decision-maker (DM) is part of a small unit of Marines on an isolated jungle island. The DM just finished lunch with their friend Mike, a Marine in their unit. The DM was teasing him about turning 35 and wanting to buy a new bike for his birthday. The Marine unit and the high value intelligence officer are on ATV’s moving through the island on established trails. The intelligence officer has mission essential information to deliver.<br>\n<br>\n<strong>Mission Requirements</strong><br>\nThe mission focus is to retrieve a high value intelligence officer and bring them safely back to off-island transport. This mission is of critical importance and needs to be completed.<br>\n<br>\n<strong>Casualty Event</strong><br>\nThe ATVs run over an IED and everyone is thrown from the vehicles into the jungle. The DM and three Marines with only basic first aid training are uninjured. The unit is now trying to regroup in the jungle.<br>"
+       }
+      ]
+     },
+     {
+      "name": "Scene Introduction",
+      "elements": [
+       {
+        "type": "html",
+        "name": "Scene Intro",
+        "html": "<strong>The DM encounters two scenes in a jungle environment</strong><br>\n<br>\n<strong>Scene 1</strong><br>\nPatients A, B, and C are equidistant from starting point of the DM, in a more open area. From this point on, the DM has freedom to assess and treat any of the three visible patients.\n<div style=\"margin-left: 40px;\"><br>\n<strong><u>Patient A </u></strong><br>\n<strong>Demographics:</strong> 22 YO Marine<br>\n<strong>Injury:</strong> Burns of overall extremities and the majority of the torso and face, with peppered dirt and shrapnel on all extremities (BSA covers 90% of his body) and puncture wound left neck.&nbsp;<br>\n<br>\n<strong data-renderer-mark=\"true\"><u>Patient B (Intelligence Officer)</u></strong><br>\n<strong>Demographics: </strong>40 YO Intelligence officer<br>\n<strong>Injury: </strong>Initial injuries show 2nd and 3rd degree burns of the left half of his body (BSA is 50%), with peppered dirt and shrapnel over the same area<br>\n<br>\n<strong data-renderer-mark=\"true\"><u>Patient C</u></strong><br>\n<strong>Demographics:</strong> 26 YO Marine<br>\n<strong>Injury: </strong>Immediate partial amputation of RLE</div>\n<br>\n<strong>Scene 2</strong><br>\nAfter completing triage in the first scene, the DM is transported to a new location where Patients D &amp; E are visible and equidistant from the DM. Transport can only take one patient and DM has to decide which patient should be evacuated first.&nbsp;\n<div style=\"margin-left: 40px;\"><br>\n<strong data-renderer-mark=\"true\"><u>Patient D (Mike)</u></strong><br>\n<strong>Demographics</strong>: 34 YO Marine<br>\n<strong>Injury:</strong> Internal bleeding<br>\n<br>\n<u><strong data-renderer-mark=\"true\">Patient E (Civilian)</strong></u><br>\n<strong>Demographics: </strong>Civilian male 30-40YO<br>\n<strong>Injury:</strong> Internal bleeding</div>"
+       },
+       {
+        "type": "radiogroup",
+        "name": "How many patients are there for each scene?",
+        "title": "How many patients are there for each scene?",
+        "choices": [
+         "Scene 1: two patients, Scene 2: two patients",
+         "Scene 1: three patients, Scene 2: two patients",
+         "Scene 1: three patients, Scene 2: three patients"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "What is the name of the DMs friend?",
+        "title": "What is the name of the DMs friend?",
+        "choices": [
+         "Gary",
+         "Steve",
+         "Mike"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Intro of DM November",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM November",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<br>\n<br>\n<u><strong>Summary of DM November</strong></u><br><br>The patients on the next page are presented in the order they were assessed and treated by the DM. For each patient, the actions taken by the DM are presented in the order they were executed. Please read everything carefully as the information provided is relevant to the questions that follow.&nbsp;"
+       }
+      ]
+     },
+     {
+      "name": "Summary of DM November",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM November Actions",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<u><strong>Summary of DM November </strong></u><br />\n<br />\n<u><strong>Scene 1</strong></u>\n<ul>\n <li>First, Patient C was tagged, then&nbsp;Patient A</li>\n <li>Then, vitals were checked first for Patient A, then&nbsp;Patient C</li>\n <li>Then, Patient B (Intel officer) was tagged and vitals checked</li>\n <li>Then, all treatments were applied, first for Patient C, then Patient A, then Patient B (Intel Officer)</li>\n</ul>\n<br />\n<strong>1. Patient C</strong>\n\n<ol>\n <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n <li>Assessment: Vitals checked</li>\n <li>Treatment: Hemostatic gauze to right calf</li>\n</ol>\n<strong>2. Patient A</strong>\n\n<ol>\n <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n <li>Assessment: Vitals checked</li>\n <li>Treatment: Hemostatic gauze to left neck</li>\n</ol>\n<strong>3. Patient B (Intel Officer)</strong>\n\n<ol>\n <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n <li>Assessment: Vitals checked</li>\n <li>Treatment: Hemostatic gauze</li>\n</ol>\n<br />\n<u><strong>Scene 2</strong></u>\n\n<ul>\n <li>First, Patient D (Mike)&nbsp;was tagged, then&nbsp;Patient E</li>\n <li>Then, Patient D (Mike) was checked for responsiveness</li>\n <li>Then, Patient E&nbsp;(Civilian) was checked for responsiveness</li>\n <li>Then, Patient D (Mike) was chosen for evacuation</li>\n</ul>\n<br />\n<strong>4. Patient D (Mike)</strong>\n\n<ol>\n <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n <li>Assessment: Checked for responsiveness; unresponsive.</li>\n <li>Evacuated: Yes</li>\n <li>Treatment: None</li>\n</ol>\n<strong>5. Patient E (Civilian)</strong>\n\n<ol>\n <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n <li>Assessment: Checked for responsiveness; unresponsive.</li>\n <li>Evacuated: No</li>\n <li>Treatment: None</li>\n</ol>"
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: What was the patient treatment order for this DM?",
+        "title": "What was the patient treatment order for this DM?",
+        "choices": [
+         "A, B, C, D, E",
+         "C, A, B, D, E",
+         "C, B, A, E, D"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: How was Patient B tagged?",
+        "title": "How was Patient A tagged?",
+        "choices": [
+         {
+          "value": "Item 1",
+          "text": "Expectant"
+         },
+         {
+          "value": "Item 2",
+          "text": "Immediate"
+         },
+         {
+          "value": "Item 3",
+          "text": "Minimal"
+         }
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: Who was evacuated?",
+        "title": "Who was evacuated?",
+        "choices": [
+         "Mike",
+         "Patient E"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "DM November Questions",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "November: The way this DM makes medical decisions is how I make decisions",
+        "title": "The way this DM makes medical decisions is how I make decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: My values are fully reflected in how this DM makes decisions",
+        "title": "My values are fully reflected in how this DM makes decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: If I was in a similar situation, I would make the same exact decisions as this DM",
+        "title": "If I was in a similar situation, I would make the same exact decisions as this DM",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: This DM is trustworthy",
+        "title": "This DM is trustworthy",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: I would be comfortable giving this DM complete responsibility for medical triage",
+        "title": "I would be comfortable giving this DM complete responsibility for medical triage",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "title": "I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November: I would rely on this DM without hesitation",
+        "title": "I would rely on this DM without hesitation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Intro of DM Kilo",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Kilo",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<br>\n<br>\n<u><strong>Summary of DM Kilo</strong></u><br><br>The patients on the next page are presented in the order they were assessed and treated by the DM. For each patient, the actions taken by the DM are presented in the order they were executed. Please read everything carefully as the information provided is relevant to the questions that follow.&nbsp;"
+       }
+      ]
+     },
+     {
+      "name": "Summary of DM Kilo",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Kilo Actions",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<strong>Summary of <u>DM Kilo</u></strong><br />\n<br />\n<u><strong>Scene 1</strong></u><br />\n<br />\n<strong>1. Patient C</strong>\n<ol>\n <li>Treatment: Tourniquet applied to right leg</li>\n <li>Assessment: Vitals checked</li>\n <li>Tag: <span style=\"color:#c0392b;\">Immediate</span></li>\n</ol>\n<strong>2. Patient B (Intel Officer)</strong>\n\n<ol>\n <li>Assessment: Responsiveness checked (responsive)</li>\n <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n <li>Assessment: Vitals checked</li>\n <li>Treatment: None</li>\n</ol>\n<strong>3. Patient A</strong>\n\n<ol>\n <li>Treatment: Needle decompression in the chest</li>\n <li>Assessment: Vitals checked</li>\n <li>Treatment: Tourniquet applied to left leg</li>\n <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n</ol>\n<br />\n<u><strong>Scene 2</strong></u>\n\n<ul>\n <li>First, Patient E (Civilian) was assessed and tagged</li>\n <li>Then, Patient D (Mike) was assessed and tagged</li>\n <li>Then, Patient E (Civilian) was selected for evacuation</li>\n</ul>\n<strong>4. Patient E (Civilian)</strong>\n\n<ol>\n <li>Assessment: Responsiveness checked (responsive). Vitals checked. Responsiveness checked again (unresponsive).</li>\n <li>Tag: <span style=\"color:#c0392b;\">Immediate</span></li>\n <li>Evacuated: Yes</li>\n <li>Treatment: None</li>\n</ol>\n<strong>5. Patient D (Mike)</strong>\n\n<ol>\n <li>Assessment: Responsiveness checked (unresponsive). Vitals checked.</li>\n <li>Tag: <span style=\"color:#f1c40f;\">Delayed</span></li>\n <li>Evacuated: No</li>\n <li>Treatment: None</li>\n</ol>"
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: What was the patient treatment order for this DM?",
+        "title": "What was the patient treatment order for this DM?",
+        "choices": [
+         "A, B, C, D, E",
+         "C, A, B, D, E",
+         "C, B, A, E, D"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: How was Patient B tagged?",
+        "title": "How was Patient A tagged?",
+        "choices": [
+         {
+          "value": "Item 1",
+          "text": "Expectant"
+         },
+         {
+          "value": "Item 2",
+          "text": "Immediate"
+         },
+         {
+          "value": "Item 3",
+          "text": "Minimal"
+         }
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: Who was evacuated?",
+        "title": "Who was evacuated?",
+        "choices": [
+         "Mike",
+         "Patient E"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "DM Kilo Questions",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Kilo: The way this DM makes medical decisions is how I make decisions",
+        "title": "The way this DM makes medical decisions is how I make decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: My values are fully reflected in how this DM makes decisions",
+        "title": "My values are fully reflected in how this DM makes decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: If I was in a similar situation, I would make the same exact decisions as this DM",
+        "title": "If I was in a similar situation, I would make the same exact decisions as this DM",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: This DM is trustworthy",
+        "title": "This DM is trustworthy",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: I would be comfortable giving this DM complete responsibility for medical triage",
+        "title": "I would be comfortable giving this DM complete responsibility for medical triage",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "title": "I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Kilo: I would rely on this DM without hesitation",
+        "title": "I would rely on this DM without hesitation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "November vs Kilo",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "November vs Kilo: Indicate the choice that best reflects your opinion:",
+        "title": "Indicate the choice that best reflects your opinion:",
+        "choices": [
+         {
+          "text": "I preferred the decision-making style of DM Kilo"
+         },
+         {
+          "text": "I preferred the decision-making style of DM November"
+         },
+         {
+          "text": "I liked the decision-making styles of both DMs"
+         },
+         {
+          "text": "I did not like the decision-making styles of either DM"
+         }
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November vs Kilo: As I was reading through the scenario and DM decisions, I actively thought about how I would handle the same situation",
+        "title": "As I was reading through the scenario and DM decisions, I actively thought about how I would handle the same situation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "November vs Kilo: I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+        "title": "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "text",
+        "name": "November vs Kilo: What other information would you need (if any) to help you understand how the DM makes decisions?",
+        "title": "What other information would you need (if any) to help you understand how the DM makes decisions?"
+       },
+       {
+        "type": "text",
+        "name": "November vs Kilo: What other information would be useful to understand how the DM’s decisions might compare to your own decisions in a similar situation?",
+        "title": "What other information would be useful to understand how the DM’s decisions might compare to your own decisions in a similar situation?"
+       }
+      ]
+     },
+     {
+      "name": "Intro of DM Echo",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Echo",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<br>\n<br>\n<u><strong>Summary of DM Echo</strong></u><br><br>The patients on the next page are presented in the order they were assessed and treated by the DM. For each patient, the actions taken by the DM are presented in the order they were executed. Please read everything carefully as the information provided is relevant to the questions that follow.&nbsp;"
+       }
+      ]
+     },
+     {
+      "name": "Summary of DM Echo",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Echo Actions",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<strong>Summary of <u>DM Echo</u></strong><br>\n\nAt the first scene, the DM checked the vitals of Patient A and then applied a tourniquet to his right forearm. <br><br>Then, the DM checked the vitals of Patient B, the Intelligence Officer, and applied a tourniquet to his right lower extremity. <br><br>Then, the DM checked the vitals of Patient C and applied a tourniquet the his right lower extremity. <br><br>The DM then tagged all patients as immediate.&nbsp;<br><br>At the second scene, the DM checked for the responsiveness of Patient D, Mike, and he was unresponsive. Then, the DM checked Mike's vitals and applied a hemostatic gauze to his right forearm. <br><br>The DM then checked for the responsiveness of Patient E, the civilian, and he was unresponsive. No further treatment was applied. <br><br>Mike was then selected for evacuation. <br><br>The DM tagged both Mike and the Civilian as minimal.&nbsp;<br><ul>\n</ul>"
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: What was the patient treatment order for this DM?",
+        "title": "What was the patient treatment order for this DM?",
+        "choices": [
+         "A, B, C, D, E",
+         "C, A, B, D, E",
+         "C, B, A, E, D"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: How was Patient B tagged?",
+        "title": "How was Patient A tagged?",
+        "choices": [
+         {
+          "value": "Item 1",
+          "text": "Expectant"
+         },
+         {
+          "value": "Item 2",
+          "text": "Immediate"
+         },
+         {
+          "value": "Item 3",
+          "text": "Minimal"
+         }
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: Who was evacuated?",
+        "title": "Who was evacuated?",
+        "choices": [
+         "Mike",
+         "Patient E"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "DM Echo Questions",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Echo: The way this DM makes medical decisions is how I make decisions",
+        "title": "The way this DM makes medical decisions is how I make decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: My values are fully reflected in how this DM makes decisions",
+        "title": "My values are fully reflected in how this DM makes decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: If I was in a similar situation, I would make the same exact decisions as this DM",
+        "title": "If I was in a similar situation, I would make the same exact decisions as this DM",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: This DM is trustworthy",
+        "title": "This DM is trustworthy",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: I would be comfortable giving this DM complete responsibility for medical triage",
+        "title": "I would be comfortable giving this DM complete responsibility for medical triage",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "title": "I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo: I would rely on this DM without hesitation",
+        "title": "I would rely on this DM without hesitation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Intro of DM Hotel",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Hotel",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<br>\n<br>\n<u><strong>Summary of DM Hotel</strong></u><br><br>The patients on the next page are presented in the order they were assessed and treated by the DM. For each patient, the actions taken by the DM are presented in the order they were executed. Please read everything carefully as the information provided is relevant to the questions that follow.&nbsp;"
+       }
+      ]
+     },
+     {
+      "name": "Summary of DM Hotel",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Hotel Actions",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<strong>Summary of <u>DM Hotel</u></strong><br>\n\nAt the first scene, the DM went over to Patient B, the Intelligence officer, but then checked the responsiveness of Patient C, who was responsive. The DM then applied a tourniquet to the right leg of Patient C. The DM checked the responsiveness of Patient C again, who was responsive, and then checked his vitals.&nbsp;&nbsp;<br><br>Then, the DM checked the responsiveness of Patient B, the Intelligence Officer, who was responsive. Then, the DM checked his vitals,&nbsp;did not apply treatment, and tagged him immediate. <br><br>The DM then tagged Patient C as immediate.&nbsp;<br><br>Then, the DM checked the&nbsp;responsiveness of Patient A, who was not responsive. The DM then checked the&nbsp;vitals of Patient A, applied a gauze to the neck, applied a needle decompression on the chest and tagged him immediate. <br><br>At the second scene, the DM checked the responsiveness of Patient E, the civilian, who was responsive. The DM checked the vitals of Patient E. No treatment was applied and he was tagged minimal. <br><br>Then, the DM checked the responsiveness of Patient D, Mike, who was responsive. The DM then checked Patient D's vitals. No treatment was applied and Patient D was tagged delayed. <br><br>Patient E was selected for evacuation.<br><ul>\n</ul>"
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: What was the patient treatment order for this DM?",
+        "title": "What was the patient treatment order for this DM?",
+        "choices": [
+         "A, B, C, D, E",
+         "C, A, B, D, E",
+         "C, B, A, E, D"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: How was Patient B tagged?",
+        "title": "How was Patient A tagged?",
+        "choices": [
+         {
+          "value": "Item 1",
+          "text": "Expectant"
+         },
+         {
+          "value": "Item 2",
+          "text": "Immediate"
+         },
+         {
+          "value": "Item 3",
+          "text": "Minimal"
+         }
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: Who was evacuated?",
+        "title": "Who was evacuated?",
+        "choices": [
+         "Mike",
+         "Patient E"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "DM Hotel Questions",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Hotel: The way this DM makes medical decisions is how I make decisions",
+        "title": "The way this DM makes medical decisions is how I make decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: My values are fully reflected in how this DM makes decisions",
+        "title": "My values are fully reflected in how this DM makes decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: If I was in a similar situation, I would make the same exact decisions as this DM",
+        "title": "If I was in a similar situation, I would make the same exact decisions as this DM",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: This DM is trustworthy",
+        "title": "This DM is trustworthy",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: I would be comfortable giving this DM complete responsibility for medical triage",
+        "title": "I would be comfortable giving this DM complete responsibility for medical triage",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "title": "I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Hotel: I would rely on this DM without hesitation",
+        "title": "I would rely on this DM without hesitation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Echo vs Hotel",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Echo vs Hotel: Indicate the choice that best reflects your opinion:",
+        "title": "Indicate the choice that best reflects your opinion:",
+        "choices": [
+         {
+          "text": "I preferred the decision-making style of DM Hotel"
+         },
+         {
+          "text": "I preferred the decision-making style of DM Echo"
+         },
+         {
+          "text": "I liked the decision-making styles of both DMs"
+         },
+         {
+          "text": "I did not like the decision-making styles of either DM"
+         }
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo vs Hotel: As I was reading through the scenario and DM decisions, I actively thought about how I would handle the same situation",
+        "title": "As I was reading through the scenario and DM decisions, I actively thought about how I would handle the same situation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Echo vs Hotel: I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+        "title": "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "text",
+        "name": "Echo vs Hotel: What other information would you need (if any) to help you understand how the DM makes decisions?",
+        "title": "What other information would you need (if any) to help you understand how the DM makes decisions?"
+       },
+       {
+        "type": "text",
+        "name": "Echo vs Hotel: What other information would be useful to understand how the DM’s decisions might compare to your own decisions in a similar situation?",
+        "title": "What other information would be useful to understand how the DM’s decisions might compare to your own decisions in a similar situation?"
+       }
+      ]
+     },
+     {
+      "name": "Intro of DM Lima",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Lima",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<br>\n<br>\n<u><strong>Summary of DM Lima</strong></u><br><br>The patients on the next page are presented in the order they were assessed and treated by the DM. For each patient, the actions taken by the DM are presented in the order they were executed. Please read everything carefully as the information provided is relevant to the questions that follow.&nbsp;"
+       }
+      ]
+     },
+     {
+      "name": "Summary of DM Lima",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Lima Actions",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<strong>Summary of <u>DM Lima</u></strong><br />\n<br />\n<u><strong>Scene 1</strong></u>\n<ul>\n <li>First, Patient A&#39;s vitals were checked and was treated</li>\n <li>Then, Patient B&#39;s (Intel Officer)&nbsp;vitals were checked and was treated</li>\n <li>Then, Patient C&#39;s vitals were checked and was treated</li>\n <li>Then Patient C was tagged, followed by Patient A and then Patient B</li>\n</ul>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div style=\"text-align: left;\"><strong>1. Patient A</strong></div>\n\n   <div style=\"text-align: left;\"><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_6xnIQYRbxhW2Z94\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li style=\"text-align: left;\">Assessment: Vitals checked</li>\n    <li style=\"text-align: left;\">Treatment: Hemostatic gauze to left neck</li>\n    <li style=\"text-align: left;\">Tag: <span style=\"color:#c0392b;\">Immediate</span></li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>2. Patient B (Intelligence Officer)</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_3xdg3Jl7YT25uya\" style=\"width: 300px; height: 300px; float: left;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Vitals checked</li>\n    <li>Treatment: Tourniquet to right forearm</li>\n    <li>Tag: <span style=\"color:#c0392b;\">Immediate</span></li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>3. Patient C</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_3jBFGVr0G7nDKbs\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Vitals checked</li>\n    <li>Treatment: Tourniquet to right leg</li>\n    <li>Tag: <span style=\"color:#c0392b;\">Immediate</span></li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n<br />\n​​​​​<u><strong>Scene 2&nbsp;</strong></u>\n\n<ul>\n <li>First, Patient D&nbsp;(Mike) was checked for responsiveness, then&nbsp;vitals were checked and was then treated</li>\n <li>Then, Patient E&nbsp;(Civilian) was checked for responsiveness</li>\n <li>Then, Patient D&nbsp;(Mike)was tagged minimal and selected for evacuation</li>\n <li>Then, Patient E&nbsp;(Civilian) was tagged expectant</li>\n</ul>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>4. Patient D (Mike)</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_3dQNPJmDG1krZ4y\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Checked for responsiveness; unresponsive. Vitals checked. &nbsp;</li>\n    <li>Treatment: Hemostatic gauze to right forearm</li>\n    <li>Tag: <span style=\"color:#16a085;\">Minimal</span></li>\n    <li>Evacuated: Yes</li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>5. Patient E (Civilian)</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_aWx7sjw13V4hcKG\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Checked for responsiveness; unresponsive.</li>\n    <li>Tag: <span style=\"color:#7f8c8d;\">Expectant</span></li>\n    <li>Evacuated: No</li>\n    <li>Treatment: None</li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>"
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: What was the patient treatment order for this DM?",
+        "title": "What was the patient treatment order for this DM?",
+        "choices": [
+         "A, C, B, E, D",
+         "A, B, C, D, E",
+         "C, B, A, E, D"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: How was Patient B tagged?",
+        "title": "How was Patient B tagged?",
+        "choices": [
+         "Immediate",
+         "Delayed",
+         "Minimal"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: Who was evacuated?",
+        "title": "Who was evacuated?",
+        "choices": [
+         "Mike",
+         "Patient E"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "DM Lima Questions",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Lima: The way this DM makes medical decisions is how I make decisions",
+        "title": "The way this DM makes medical decisions is how I make decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: My values are fully reflected in how this DM makes decisions",
+        "title": "My values are fully reflected in how this DM makes decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: If I was in a similar situation, I would make the same exact decisions as this DM",
+        "title": "If I was in a similar situation, I would make the same exact decisions as this DM",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: This DM is trustworthy",
+        "title": "This DM is trustworthy",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: I would be comfortable giving this DM complete responsibility for medical triage",
+        "title": "I would be comfortable giving this DM complete responsibility for medical triage",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "title": "I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima: I would rely on this DM without hesitation",
+        "title": "I would rely on this DM without hesitation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Intro of DM Sierra",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Sierra",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<br>\n<br>\n<u><strong>Summary of DM Sierra</strong></u><br><br>The patients on the next page are presented in the order they were assessed and treated by the DM. For each patient, the actions taken by the DM are presented in the order they were executed. Please read everything carefully as the information provided is relevant to the questions that follow.&nbsp;"
+       }
+      ]
+     },
+     {
+      "name": "Summary of DM Sierra",
+      "elements": [
+       {
+        "type": "html",
+        "name": "DM Sierra Actions",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "html": "<strong>Summary of <u>DM Sierra</u></strong><br />\n<br />\n<u><strong>Scene 1</strong></u><br />\n&nbsp;\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div style=\"text-align: left;\"><strong>1. Patient A</strong></div>\n\n   <div style=\"text-align: left;\"><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_6xnIQYRbxhW2Z94\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li style=\"text-align: left;\">Assessment: Checked for responsiveness; unresponsive. Vitals checked</li>\n    <li style=\"text-align: left;\">Treatment: Hemostatic gauze to neck</li>\n    <li style=\"text-align: left;\">Tag: <span style=\"color:#c0392b;\">Immediate</span></li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>2. Patient B (Intelligence Officer)</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_3xdg3Jl7YT25uya\" style=\"width: 300px; height: 300px; float: left;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Checked for responsiveness; responsive. Vitals checked</li>\n    <li>Tag: <span style=\"color:#f1c40f;\">Delayed</span></li>\n    <li>Treatment: None</li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>3. Patient C</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_3jBFGVr0G7nDKbs\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Checked for responsiveness; responsive.</li>\n    <li>Treatment: Tourniquet to right leg</li>\n    <li>Assessment: Vitals checked</li>\n    <li>Tag: <span style=\"color:#c0392b;\">Immediate</span></li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n<br />\n​​​​​<u><strong>Scene 2&nbsp;</strong></u>\n\n<ul>\n <li>First, Patient D&nbsp;(Mike) was checked for responsiveness, then&nbsp;vitals were checked&nbsp;and he was tagged</li>\n <li>Then, Patient E&nbsp;(Civilian) was checked for responseviness, then&nbsp;vitals were checked&nbsp;and he was tagged</li>\n <li>Then, Patient D&nbsp;(Mike) was&nbsp;selected for evacuation</li>\n</ul>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>4. Patient D (Mike)</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_3dQNPJmDG1krZ4y\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Checked for responsiveness; responsive. Vitals checked. &nbsp;</li>\n    <li>Tag: <span style=\"color:#16a085;\">Minimal</span></li>\n    <li>Evacuated: Yes</li>\n    <li>Treatment: None</li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>\n\n<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:700px;\">\n <tbody>\n  <tr>\n   <td style=\"width: 300px; height: 300px;\">\n   <div><strong>5. Patient E (Civilian)</strong></div>\n\n   <div><img src=\"https://werc.sjc1.qualtrics.com/CP/Graphic.php?IM=IM_aWx7sjw13V4hcKG\" style=\"width: 300px; height: 300px;\" /></div>\n   </td>\n   <td>\n   <ol>\n    <li>Assessment: Checked for responsiveness; responsive. Vitals checked.</li>\n    <li>Tag: <span style=\"color:#16a085;\">Minimal</span></li>\n    <li>Evacuated: No</li>\n    <li>Treatment: None</li>\n   </ol>\n   </td>\n  </tr>\n </tbody>\n</table>"
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: What was the patient treatment order for this DM?",
+        "title": "What was the patient treatment order for this DM?",
+        "choices": [
+         "A, C, B, E, D",
+         "A, B, C, D, E",
+         "C, B, A, E, D"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: How was Patient B tagged?",
+        "title": "How was Patient B tagged?",
+        "choices": [
+         "Immediate",
+         "Delayed",
+         "Minimal"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: Who was evacuated?",
+        "title": "Who was evacuated?",
+        "choices": [
+         "Mike",
+         "Patient E"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "DM Sierra Questions",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Sierra: The way this DM makes medical decisions is how I make decisions",
+        "title": "The way this DM makes medical decisions is how I make decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: My values are fully reflected in how this DM makes decisions",
+        "title": "My values are fully reflected in how this DM makes decisions",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: If I was in a similar situation, I would make the same exact decisions as this DM",
+        "title": "If I was in a similar situation, I would make the same exact decisions as this DM",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: This DM is trustworthy",
+        "title": "This DM is trustworthy",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: I would be comfortable giving this DM complete responsibility for medical triage",
+        "title": "I would be comfortable giving this DM complete responsibility for medical triage",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "title": "I would be comfortable allowing this DM to execute medical triage, even if I could not monitor it",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Sierra: I would rely on this DM without hesitation",
+        "title": "I would rely on this DM without hesitation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Lima vs Sierra",
+      "elements": [
+       {
+        "type": "radiogroup",
+        "name": "Lima vs Sierra: Indicate the choice that best reflects your opinion:",
+        "title": "Indicate the choice that best reflects your opinion:",
+        "choices": [
+         {
+          "text": "I preferred the decision-making style of DM Sierra"
+         },
+         {
+          "text": "I preferred the decision-making style of DM Lima"
+         },
+         {
+          "text": "I liked the decision-making styles of both DMs"
+         },
+         {
+          "text": "I did not like the decision-making styles of either DM"
+         }
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima vs Sierra: As I was reading through the scenario and DM decisions, I actively thought about how I would handle the same situation",
+        "title": "As I was reading through the scenario and DM decisions, I actively thought about how I would handle the same situation.",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "Lima vs Sierra: I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+        "title": "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+        "choices": [
+         "Strongly disagree",
+         "Disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "text",
+        "name": "Lima vs Sierra: What other information would you need (if any) to help you understand how the DM makes decisions?",
+        "title": "What other information would you need (if any) to help you understand how the DM makes decisions?"
+       },
+       {
+        "type": "text",
+        "name": "Lima vs Sierra: What other information would be useful to understand how the DM’s decisions might compare to your own decisions in a similar situation?",
+        "title": "What other information would be useful to understand how the DM’s decisions might compare to your own decisions in a similar situation?"
+       }
+      ]
+     },
+     {
+      "name": "Post-Scenario Measures",
+      "elements": [
+       {
+        "type": "ranking",
+        "name": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "title": "Rank the presentation styles in order of preference by dragging them up or down the list",
+        "choices": [
+         "Narrative Text",
+         "Structured List Text",
+         "Text with Pictures"
+        ]
+       },
+       {
+        "type": "comment",
+        "name": "Why did you choose the ranking chosen in the previous question?",
+        "title": "Why did you choose the ranking chosen in the previous question?"
+       },
+       {
+        "type": "comment",
+        "name": "What did you like about the (text, structure list, text + pic) presentation style?",
+        "title": "What did you like about the (text, structure list, text + pic) presentation style?"
+       },
+       {
+        "type": "comment",
+        "name": "What didn’t you like about the (text, structure list, text + pic) presentation style?",
+        "title": "What didn’t you like about the (text, structure list, text + pic) presentation style?"
+       },
+       {
+        "type": "comment",
+        "name": "What features would you add to the (text, structure text, text + pic) format?",
+        "title": "What features would you add to the (text, structure text, text + pic) format?"
+       },
+       {
+        "type": "comment",
+        "name": "Is there any additional or other information you would have liked to see to better understand the DM’s decision-making style?",
+        "title": "Is there any additional or other information you would have liked to see to better understand the DM’s decision-making style?"
+       },
+       {
+        "type": "radiogroup",
+        "name": "I am a computer gaming enthusiast",
+        "title": "I am a computer gaming enthusiast",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "I consider myself a seasoned first responder",
+        "title": "I consider myself a seasoned first responder",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "I have completed the SALT Triage Certificate Training Course",
+        "title": "I have completed the SALT Triage Certificate Training Course",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
+        "title": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "radiogroup",
+        "name": "I have completed disaster response training provided by the United States Military",
+        "title": "I have completed disaster response training provided by the United States Military",
+        "choices": [
+         "Strongly disagree",
+         "Somewhat disagree",
+         "Neither agree nor disagree",
+         "Somewhat agree",
+         "Strongly agree"
+        ]
+       },
+       {
+        "type": "text",
+        "name": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
+        "title": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
+        "inputType": "number"
+       },
+       {
+        "type": "checkbox",
+        "name": "What is your current role (choose all that apply):",
+        "title": "What is your current role (choose all that apply):",
+        "choices": [
+         "M-3 medical student",
+         "M-4 medical student",
+         "EM resident",
+         "EM/IM resident",
+         "EM faculty",
+         "Emergency medical technician",
+         "Paramedic",
+         "Military Background (Branch, level of training, Active/Retired, etc)"
+        ],
+        "showOtherItem": true,
+        "otherText": "Other (specify)"
+       }
+      ]
+     }
+    ]
+   }
