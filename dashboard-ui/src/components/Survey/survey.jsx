@@ -3,6 +3,7 @@ import 'survey-core/defaultV2.min.css'
 import { Model } from 'survey-core'
 import { Survey } from "survey-react-ui"
 import surveyConfig from './surveyConfig.json';
+import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 
@@ -18,6 +19,7 @@ class SurveyPage extends React.Component {
         this.state = { uploadData: false };
         this.initializeSurvey();
         this.survey = new Model(surveyConfig);
+        this.survey.applyTheme(surveyTheme)
         this.pageStartTimes = {};
         this.surveyData = {};
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
