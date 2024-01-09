@@ -58,6 +58,9 @@ const vizPanelOptions = {
 export default function SurveyResultsPage() {
     const [survey, setSurvey] = useState(null);
     const [vizPanel, setVizPanel] = useState(null);
+    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS);
+
+    console.log(data.getAllSurveyResults[0])
     if (!survey) {
         const survey = new Model(surveyJson);
         setSurvey(survey);

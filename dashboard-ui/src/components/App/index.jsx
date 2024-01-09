@@ -140,7 +140,7 @@ export class App extends React.Component {
     }
 
     render() {
-        const { currentUser } = this.state;x
+        const { currentUser } = this.state;
         return (
             <Router history={history}>
                 <div className="itm-app">
