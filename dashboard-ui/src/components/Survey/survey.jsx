@@ -90,12 +90,10 @@ class SurveyPage extends React.Component {
     initializeSurvey() {
         const groupedDMs = [
             ['November', 'Kilo'],
-            ['Echo', 'Hotel'],
             ['Lima', 'Sierra']
         ];
         const comparisonPages = {
             'NovemberKilo': 'November vs Kilo',
-            'EchoHotel': 'Echo vs Hotel',
             'LimaSierra': 'Lima vs Sierra'
         };
 
