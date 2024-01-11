@@ -385,15 +385,22 @@
       "name": "November vs Kilo",
       "elements": [
        {
-        "type": "radiogroup",
-        "name": "November vs Kilo: Indicate the choice that best reflects your opinion:",
-        "title": "Indicate the choice that best reflects your opinion:",
-        "choices": [
-         "I preferred the decision-making style of DM Kilo",
-         "I preferred the decision-making style of DM November",
-         "I liked the decision-making styles of both DMs",
-         "I did not like the decision-making styles of either DM"
-        ]
+        "type": "panel",
+        "name": "question1",
+        "elements": [
+         {
+          "type": "radiogroup",
+          "name": "November vs Kilo: Indicate the choice that best reflects your opinion:",
+          "title": "Indicate the choice that best reflects your opinion:",
+          "choices": [
+           "I preferred the decision-making style of DM Kilo",
+           "I preferred the decision-making style of DM November",
+           "I liked the decision-making styles of both DMs",
+           "I did not like the decision-making styles of either DM"
+          ]
+         }
+        ],
+        "title": "You may click on the decision maker to refer back to their actions"
        },
        {
         "type": "radiogroup",
@@ -747,15 +754,22 @@
       "name": "Lima vs Sierra",
       "elements": [
        {
-        "type": "radiogroup",
-        "name": "Lima vs Sierra: Indicate the choice that best reflects your opinion:",
-        "title": "Indicate the choice that best reflects your opinion:",
-        "choices": [
-         "I preferred the decision-making style of DM Sierra",
-         "I preferred the decision-making style of DM Lima",
-         "I liked the decision-making styles of both DMs",
-         "I did not like the decision-making styles of either DM"
-        ]
+        "type": "panel",
+        "name": "question3",
+        "elements": [
+         {
+          "type": "radiogroup",
+          "name": "Lima vs Sierra: Indicate the choice that best reflects your opinion:",
+          "title": "Indicate the choice that best reflects your opinion:",
+          "choices": [
+           "I preferred the decision-making style of DM Sierra",
+           "I preferred the decision-making style of DM Lima",
+           "I liked the decision-making styles of both DMs",
+           "I did not like the decision-making styles of either DM"
+          ]
+         }
+        ],
+        "title": "Indicate the choice that best reflects your opinion:"
        },
        {
         "type": "radiogroup",
@@ -918,6 +932,11 @@
         "otherText": "Other (specify)"
        }
       ]
+     }
+    ],
+    "triggers": [
+     {
+      "type": "runexpression"
      }
     ]
    }
