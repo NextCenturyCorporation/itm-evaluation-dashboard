@@ -4,10 +4,10 @@ import { Model } from 'survey-core'
 import { Survey } from "survey-react-ui"
 import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
-import { Modal } from 'react-bootstrap'
 import ActionModal from "./actionModal";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
+import { StaticTemplate } from "./staticTemplate";
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults($results: JSON) {
