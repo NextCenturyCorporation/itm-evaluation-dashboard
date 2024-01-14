@@ -7,10 +7,10 @@
             "name": "template test",
             "elements": [
                 {
-                    "title": "DM Name",
+                    "title": "DM: Medic-2",
                     "name": "DM Name Actions",
                     "type": "static-template",
-                    "dmName": "DM Name Passed From Json",
+                    "dmName": "DM: Medic-2",
                     "actions": [
                         {
                             "action": "Chooses to evacuate Patient A",
@@ -42,6 +42,13 @@
                     "situation": [
                         "Three critical patients",
                         "Only one can be evacuated"
+                    ],
+                    "patients": [
+                        {
+                            "name": "Patient A",
+                            "imgUrl": "insertUrlHere",
+                            "description": " Leaning against a wall, obvious penetrating abdominal wound with tissue exposed, inability to move or ambulate, voice responsive."
+                        }
                     ]
                 }
             ]

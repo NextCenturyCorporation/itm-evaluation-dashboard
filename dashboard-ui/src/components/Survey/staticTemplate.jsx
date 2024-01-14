@@ -49,6 +49,14 @@ export class StaticTemplateModel extends Question {
   set situation(situation) {
     this.setPropertyValue("situation", situation)
   }
+
+  get patients() {
+    return this.getPropertyValue("patients")
+  }
+
+  set patients(patients) {
+    this.setPropertyValue("patients", patients)
+  }
 }
 
 // Add question type metadata for further serialization into JSON
@@ -73,6 +81,10 @@ Serializer.addClass(
   {
     name: "situation",
     defualt: []
+  },
+  {
+    name: "patients",
+    default: []
   }
   ],
   function () {
@@ -109,6 +121,9 @@ export class StaticTemplate extends SurveyQuestionElementBase {
   get situation() {
     return this.question.situation
   }
+  get patients() {
+    return this.question.patients
+  }
 
   // Support the read-only and design modes
   get style() {
@@ -133,7 +148,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               <Card.Header>Supplies / Resources</Card.Header>
               <Card.Body>
                 {this.supplies.map((supplies, _index) => (
-                  <Card.Text>
+                  <Card.Text key={supplies.type}>
                     {supplies.quantity ? supplies.quantity : ""} {supplies.type}
                   </Card.Text>
                 ))}
@@ -153,12 +168,34 @@ export class StaticTemplate extends SurveyQuestionElementBase {
                 ))}
               </Card.Body>
             </Card>
-            <Card>
-              <Card.Header>Patient A</Card.Header>
+            {this.patients.map((patient, _index) => (
+              <Card>
+              <Card.Header>
+                <Row noGutters={true}>
+                  <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
+                    {/* Header for the image */}
+                    <div style={{ padding: '0.75rem 1.25rem' }}>{patient.name}</div>
+                  </Col>
+                  <Col xs={6} md={8}>
+                    {/* Header for the description */}
+                    <div style={{ padding: '0.75rem 1.25rem' }}>Description</div>
+                  </Col>
+                </Row>
+              </Card.Header>
               <Card.Body>
-                <Card.Text>Leaning against a wall, obvious penetrating abdominal wound with tissue exposed, inability to move or ambulate, voice responsive.</Card.Text>
+                <Row noGutters={true}>
+                  <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6', paddingRight: '1.25rem' }}>
+                    <img src={patient.imgUrl} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
+                  </Col>
+                  <Col xs={6} md={8} style={{ paddingLeft: '1.25rem' }}>
+                    <Card.Text>
+                      {patient.description}
+                    </Card.Text>
+                  </Col>
+                </Row>
               </Card.Body>
             </Card>
+            ))}
           </Col>
         </Row>
       </div>);
