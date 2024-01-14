@@ -99,10 +99,7 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 
 // A class that renders questions of the new type in the UI
 export class StaticTemplate extends SurveyQuestionElementBase {
-  constructor(props) {
-    super(props);
 
-  }
   get question() {
     return this.questionBase;
   }
@@ -132,6 +129,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
   }
 
   renderElement() {
+    const cardStyle = { maxHeight: '500px', overflowY: 'scroll' };
     return (
       <div style={this.style}>
         <Row>
@@ -139,16 +137,16 @@ export class StaticTemplate extends SurveyQuestionElementBase {
             <Card className="mb-3">
               <Card.Header>Situation</Card.Header>
               <Card.Body>
-                {this.situation.map((detail, _index) => (
-                  <Card.Text>{detail}</Card.Text>
+                {this.situation.map((detail, index) => (
+                  <Card.Text key={index}>{detail}</Card.Text>
                 ))}
               </Card.Body>
             </Card>
             <Card>
               <Card.Header>Supplies / Resources</Card.Header>
               <Card.Body>
-                {this.supplies.map((supplies, _index) => (
-                  <Card.Text key={supplies.type}>
+                {this.supplies.map((supplies, index) => (
+                  <Card.Text key={index}>
                     {supplies.quantity ? supplies.quantity : ""} {supplies.type}
                   </Card.Text>
                 ))}
@@ -168,16 +166,15 @@ export class StaticTemplate extends SurveyQuestionElementBase {
                 ))}
               </Card.Body>
             </Card>
-            {this.patients.map((patient, _index) => (
-              <Card>
+            <div style={cardStyle}>
+            {this.patients.map((patient, index) => (
+              <Card key={index}>
               <Card.Header>
                 <Row noGutters={true}>
                   <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
-                    {/* Header for the image */}
                     <div style={{ padding: '0.75rem 1.25rem' }}>{patient.name}</div>
                   </Col>
                   <Col xs={6} md={8}>
-                    {/* Header for the description */}
                     <div style={{ padding: '0.75rem 1.25rem' }}>Description</div>
                   </Col>
                 </Row>
@@ -196,6 +193,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               </Card.Body>
             </Card>
             ))}
+            </div>
           </Col>
         </Row>
       </div>);
