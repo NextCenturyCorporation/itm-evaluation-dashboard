@@ -185,7 +185,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               <Card.Body>
                 <Row noGutters={true}>
                   <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6', paddingRight: '1.25rem' }}>
-                    <img src={patient.imgUrl} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
+                    <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
                   </Col>
                   <Col xs={6} md={8} style={{ paddingLeft: '1.25rem' }}>
                     <Card.Text>
