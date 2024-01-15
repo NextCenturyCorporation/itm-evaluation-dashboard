@@ -33,6 +33,6 @@
 }
 
 .vitals-list-group {
-  max-height: 250px; 
-  overflow-y: auto; 
+  max-height: 150px;
+  overflow-y: auto;
 }

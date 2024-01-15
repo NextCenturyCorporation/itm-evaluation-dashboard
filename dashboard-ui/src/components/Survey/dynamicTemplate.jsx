@@ -56,6 +56,21 @@ export class DynamicTemplateModel extends Question {
     set patients(patients) {
         this.setPropertyValue("patients", patients)
     }
+
+    get decision() {
+        return this.getPropertyValue("decision")
+    }
+
+    set decision(decision) {
+        this.setPropertyValue("decision", decision)
+    }
+    get explanation() {
+        return this.getPropertyValue("explanation")
+    }
+
+    set explanation(explanation) {
+        this.setPropertyValue("explanation", explanation)
+    }
 }
 
 // Add question type metadata for further serialization into JSON
@@ -81,6 +96,14 @@ Serializer.addClass(
         {
             name: "patients",
             default: []
+        },
+        {
+            name: "decision",
+            defualt: ""
+        },
+        {
+            name: "explanation",
+            defualt: ""
         }
     ],
     function () {
@@ -140,8 +163,8 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         }));
     }
 
-    toggleAccordionItem = (actionIndex) => {
-        this.logUserAction("toggleAccordion", `Action Index: ${actionIndex}`);
+    toggleAccordionItem = () => {
+        this.logUserAction("toggleAccordion", `Actions Expanded`);
     }
 
     get question() {
@@ -162,6 +185,12 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     get patients() {
         return this.question.patients
     }
+    get decision() {
+        return this.question.decision
+    }
+    get explanation(){
+        return this.question.explanation
+    }
 
     // Support the read-only and design modes
     get style() {
@@ -170,7 +199,6 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     renderElement() {
-        console.log(this.state.userActions)
         const cardContainerStyle = {
             maxHeight: '500px',
             overflowX: 'auto',
@@ -180,8 +208,8 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
 
         const patientCardStyle = {
             display: 'inline-block',
-            minWidth: '33%',
-            maxWidth: '33%',
+            minWidth: '40%',
+            maxWidth: '40%',
             marginRight: '0.33%',
         };
 
@@ -195,6 +223,16 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             padding: '5px',
             cursor: 'pointer',
             transition: 'transform 0.5s ease-in-out'
+        };
+
+        const vitalsColStyle = {
+            overflowY: 'auto'     // Scrollbar for overflowing content
+        };
+
+        const rowStyle = {
+            display: 'flex',
+            alignItems: 'start', 
+            overflow: 'hidden'
         };
 
         // button for each patient
@@ -219,17 +257,16 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                         <Card.Header>
                             <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
                         </Card.Header>
-                        <Row className="g-0">
+                        <Row className="g-0" style={rowStyle}>
                             <Col md={8} className="pe-md-2 position-relative">
-                                <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: 'auto' }} />
+                                <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: 'auto' }}></img>
                                 <ZoomInIcon style={magnifyingGlassStyle} className="magnifying-glass-icon" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} /> 
                             </Col>
-                            <Col md={4} className="pe-md-2 my-1">
-                                <strong>Vitals:</strong>
+                            <Col md={4} className="pe-md-2 my-1" style={vitalsColStyle}>
                                 <ListGroup className="vitals-list-group">
                                     {patient.vitals?.map((vital, vitalIndex) => (
                                         <ListGroup.Item key={vitalIndex}>
-                                            {vital.name}: {vital.value}
+                                            <strong>{vital.name}:</strong> {vital.value}
                                         </ListGroup.Item>
                                     ))}
                                 </ListGroup>
@@ -242,6 +279,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             }
         });
 
+        console.log(this.actions)
         return (
             <div style={this.style}>
                 <Row>
@@ -267,16 +305,20 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                     </Col>
                     <Col md={10}>
                         <Card className="mb-3">
-                            <Card.Header>Decision: Who should be evacuated?</Card.Header>
+                            <Card.Header>Decision: {this.decision}</Card.Header>
                             <Card.Body>
-                                <Card.Subtitle className="mb-2"><strong>{this.dmName}</strong></Card.Subtitle>
                                 <Accordion>
-                                    {this.actions.map((action, index) => (
-                                        <Accordion.Item key={index} eventKey={index} onClick={() => this.toggleAccordionItem(action.action)}>
-                                            <Accordion.Header>{action.action}</Accordion.Header>
-                                            <Accordion.Body><strong>Explanation:</strong> {action.explanation}</Accordion.Body>
-                                        </Accordion.Item>
-                                    ))}
+                                    <Accordion.Item eventKey={0} onClick={() => this.toggleAccordionItem()}>
+                                        <Accordion.Header><strong>{`${this.dmName} actions`}</strong></Accordion.Header>
+                                        <Accordion.Body>
+                                        <ListGroup>
+                                        {this.actions.map((action, index) => (
+                                            <ListGroup.Item key={index}>{action}</ListGroup.Item>
+                                        ))}
+                                        </ListGroup>
+                                        <div className="my-2"><strong>Explanation:</strong> {this.explanation}</div>
+                                        </Accordion.Body>
+                                    </Accordion.Item>
                                 </Accordion>
                             </Card.Body>
                         </Card>
