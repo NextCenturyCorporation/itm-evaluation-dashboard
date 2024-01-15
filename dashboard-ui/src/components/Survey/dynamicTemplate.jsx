@@ -2,7 +2,9 @@ import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
 import { Accordion, Card, Row, Col, Button, ListGroup } from "react-bootstrap";
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import './template.css'
+
 const CUSTOM_TYPE = "dynamic-template";
 
 export class DynamicTemplateModel extends Question {
@@ -90,8 +92,12 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 export class DynamicTemplate extends SurveyQuestionElementBase {
     constructor(props) {
         super(props);
+        const initialVisibility = {};
+        props.question.patients.forEach(patient => {
+            initialVisibility[patient.name] = true; // Set each patient's visibility to true
+        });
         this.state = {
-            visiblePatients: {}
+            visiblePatients: initialVisibility
         };
     }
 
@@ -153,12 +159,13 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 className="me-1"
             >
                 {patient.name}
+                {' '}
+                {this.state.visiblePatients[patient.name] && <CheckCircleIcon />} {/*icon when toggled*/}
             </Button>
         ));
 
-        // Filter and render patient cards based on visibility
         const patientCards = this.patients.map((patient, index) => {
-            // Only render the card if it's set to visible
+            // render card if toggled to visible
             if (this.state.visiblePatients[patient.name]) {
                 return (
                     <Card key={index} style={patientCardStyle}>
@@ -225,7 +232,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                 </Accordion>
                             </Card.Body>
                         </Card>
-                        <div style={{ marginBottom: '10px'}}>
+                        <div style={{ marginBottom: '10px' }}>
                             {patientButtons}
                         </div>
                         <div style={cardContainerStyle}>
