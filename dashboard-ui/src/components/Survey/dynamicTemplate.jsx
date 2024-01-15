@@ -167,10 +167,10 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
 
         const magnifyingGlassStyle = {
             position: 'absolute',
-            bottom: '10px',  // Adjust as necessary for positioning
-            left: '10px',    // Adjust as necessary for positioning
-            color: 'white',  // Set color to make the icon visible against your image
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Optional background for visibility
+            bottom: '10px', 
+            left: '10px',    
+            color: 'white',  
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             borderRadius: '50%',
             padding: '5px'
         };
