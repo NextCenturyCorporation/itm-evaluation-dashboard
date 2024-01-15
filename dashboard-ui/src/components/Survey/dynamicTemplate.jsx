@@ -1,8 +1,9 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
-import { Accordion, Card, Row, Col, Button, ListGroup } from "react-bootstrap";
+import { Accordion, Card, Row, Col, Button, ListGroup, Modal } from "react-bootstrap";
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import './template.css'
 
 const CUSTOM_TYPE = "dynamic-template";
@@ -97,8 +98,22 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             initialVisibility[patient.name] = true; // Set each patient's visibility to true
         });
         this.state = {
-            visiblePatients: initialVisibility
+            visiblePatients: initialVisibility,
+            userActions: [],
+            showImageModal: false,
+            activeImage: null,
+            activeTitle: "",
+            activeDescription: ""
         };
+    }
+
+    toggleImageModal = (imgUrl, title, description) => {
+        this.setState(prevState => ({
+            showModal: !prevState.showModal,
+            activeImage: imgUrl,
+            activeTitle: title,
+            activeDescription: description
+        }));
     }
 
     togglePatientVisibility(patientName) {
@@ -150,6 +165,16 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             marginRight: '0.33%',
         };
 
+        const magnifyingGlassStyle = {
+            position: 'absolute',
+            bottom: '10px',  // Adjust as necessary for positioning
+            left: '10px',    // Adjust as necessary for positioning
+            color: 'white',  // Set color to make the icon visible against your image
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Optional background for visibility
+            borderRadius: '50%',
+            padding: '5px'
+        };
+
         // button for each patient
         const patientButtons = this.patients.map((patient, index) => (
             <Button
@@ -160,7 +185,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             >
                 {patient.name}
                 {' '}
-                {this.state.visiblePatients[patient.name] && <CheckCircleIcon />} {/*icon when toggled*/}
+                {this.state.visiblePatients[patient.name] && <CheckCircleIcon />}
             </Button>
         ));
 
@@ -170,16 +195,17 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 return (
                     <Card key={index} style={patientCardStyle}>
                         <Card.Header>
-                            <div>{patient.name} - {patient.description}</div>
+                            <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
                         </Card.Header>
                         <Row className="g-0">
-                            <Col md={9} className="pe-md-2">
+                            <Col md={8} className="pe-md-2 position-relative">
                                 <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: 'auto' }} />
+                                <ZoomInIcon style={magnifyingGlassStyle} onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} /> 
                             </Col>
-                            <Col md={3} className="pe-md-2">
+                            <Col md={4} className="pe-md-2">
                                 <strong>Vitals:</strong>
                                 <ListGroup>
-                                    {patient.vitals && patient.vitals.map((vital, vitalIndex) => (
+                                    {patient.vitals?.map((vital, vitalIndex) => (
                                         <ListGroup.Item key={vitalIndex}>
                                             {vital.name}: {vital.value}
                                         </ListGroup.Item>
@@ -190,7 +216,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                     </Card>
                 );
             } else {
-                return null; // Do not render the card if not visible
+                return null; 
             }
         });
 
@@ -240,6 +266,15 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                         </div>
                     </Col>
                 </Row>
+                <Modal show={this.state.showModal} onHide={() => this.toggleImageModal()}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{this.state.activeTitle}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {this.state.activeDescription}
+                        <img src={`data:image/jpeg;base64,${this.state.activeImage}`} alt="Enlarged view" style={{ width: '100%' }} />
+                    </Modal.Body>
+                </Modal>
             </div>
         );
     }

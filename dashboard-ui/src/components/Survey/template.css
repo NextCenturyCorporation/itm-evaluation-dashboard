@@ -9,8 +9,26 @@
   white-space: normal;
 }
 
+.card-text {
+  font-weight: normal;
+  font-size: 10px;
+}
+
+.list-group {
+  font-size: 10px;
+}
+
 .accordion-body {
   white-space: normal;
   word-break: break-word;
 }
 
+.magnifyingGlassStyle {
+  position: 'absolute';
+  bottom: '10px';
+  left: '10px';    
+  color: 'white';  
+  background-color: 'rgba(0, 0, 0, 0.5)'; 
+  border-radius: '50%';
+  padding: '5px';
+};
