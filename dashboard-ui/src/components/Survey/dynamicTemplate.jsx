@@ -88,6 +88,21 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 
 // A class that renders questions of the new type in the UI
 export class DynamicTemplate extends SurveyQuestionElementBase {
+    constructor(props) {
+        super(props);
+        this.state = {
+            visiblePatients: {}
+        };
+    }
+
+    togglePatientVisibility(patientName) {
+        this.setState(prevState => ({
+            visiblePatients: {
+                ...prevState.visiblePatients,
+                [patientName]: !prevState.visiblePatients[patientName]
+            }
+        }));
+    }
 
     get question() {
         return this.questionBase;
@@ -129,6 +144,49 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             marginRight: '0.33%',
         };
 
+        // button for each patient
+        const patientButtons = this.patients.map((patient, index) => (
+            <Button
+                key={index}
+                variant={this.state.visiblePatients[patient.name] ? "primary" : "secondary"}
+                onClick={() => this.togglePatientVisibility(patient.name)}
+                className="me-1"
+            >
+                {patient.name}
+            </Button>
+        ));
+
+        // Filter and render patient cards based on visibility
+        const patientCards = this.patients.map((patient, index) => {
+            // Only render the card if it's set to visible
+            if (this.state.visiblePatients[patient.name]) {
+                return (
+                    <Card key={index} style={patientCardStyle}>
+                        <Card.Header>
+                            <div>{patient.name} - {patient.description}</div>
+                        </Card.Header>
+                        <Row className="g-0">
+                            <Col md={9} className="pe-md-2">
+                                <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: 'auto' }} />
+                            </Col>
+                            <Col md={3} className="pe-md-2">
+                                <strong>Vitals:</strong>
+                                <ListGroup>
+                                    {patient.vitals && patient.vitals.map((vital, vitalIndex) => (
+                                        <ListGroup.Item key={vitalIndex}>
+                                            {vital.name}: {vital.value}
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            </Col>
+                        </Row>
+                    </Card>
+                );
+            } else {
+                return null; // Do not render the card if not visible
+            }
+        });
+
         return (
             <div style={this.style}>
                 <Row>
@@ -167,29 +225,11 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                 </Accordion>
                             </Card.Body>
                         </Card>
+                        <div style={{ marginBottom: '10px'}}>
+                            {patientButtons}
+                        </div>
                         <div style={cardContainerStyle}>
-                            {this.patients.map((patient, index) => (
-                                <Card key={index} style={patientCardStyle}>
-                                    <Card.Header>
-                                        <div>{patient.name} - {patient.description}</div>
-                                    </Card.Header>
-                                    <Row>
-                                        <Col md={9}>
-                                            <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
-                                        </Col>
-                                        <Col md={3}>
-                                            <strong>Vitals</strong>
-                                            <ListGroup varient="flush">
-                                                {patient.vitals && patient.vitals.map((vital, vitalIndex) => (
-                                                    <ListGroup.Item key={vitalIndex}>
-                                                        {vital.name}: {vital.value}
-                                                    </ListGroup.Item>
-                                                ))}
-                                            </ListGroup>
-                                        </Col>
-                                    </Row>
-                                </Card>
-                            ))}
+                            {patientCards}
                         </div>
                     </Col>
                 </Row>
