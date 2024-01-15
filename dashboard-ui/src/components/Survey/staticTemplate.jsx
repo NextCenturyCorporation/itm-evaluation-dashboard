@@ -10,6 +10,10 @@ export class StaticTemplateModel extends Question {
     return CUSTOM_TYPE;
   }
 
+  setValueCore(newValue) {
+    super.setValueCore(newValue);
+}
+
   get dmName() {
     return this.getPropertyValue("dmName")
   }
@@ -89,6 +93,10 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 // A class that renders questions of the new type in the UI
 export class StaticTemplate extends SurveyQuestionElementBase {
 
+  constructor(props) {
+    super(props)
+    this.question.value = ""
+  }
   get question() {
     return this.questionBase;
   }

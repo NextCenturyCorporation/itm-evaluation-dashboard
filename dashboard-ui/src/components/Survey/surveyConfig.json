@@ -8,7 +8,7 @@
             "elements": [
                 {
                     "title": "DM: Medic-2",
-                    "name": "DM Name Actions",
+                    "name": "DM Dyanmic Actions",
                     "type": "dynamic-template",
                     "dmName": "DM: Medic-2",
                     "actions": [
@@ -146,7 +146,7 @@
             "elements": [
                 {
                     "title": "DM: Medic-2",
-                    "name": "DM Name Actions",
+                    "name": "DM Static Actions",
                     "type": "static-template",
                     "dmName": "DM: Medic-2",
                     "actions": [

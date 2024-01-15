@@ -13,6 +13,10 @@ export class DynamicTemplateModel extends Question {
         return CUSTOM_TYPE;
     }
 
+    setValueCore(newValue) {
+        super.setValueCore(newValue);
+    }
+
     get dmName() {
         return this.getPropertyValue("dmName")
     }
@@ -109,10 +113,12 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
 
     logUserAction = (actionType, detail) => {
         const timestamp = new Date().toString();
-        this.setState(prevState => ({
-            userActions: [...prevState.userActions, { actionType, detail, timestamp }]
-        }));
-    }
+        const newActions = [...this.state.userActions, { actionType, detail, timestamp }];
+    
+        this.setState({ userActions: newActions }, () => {
+            this.question.value = newActions;
+        });
+    }    
 
     toggleImageModal = (imgUrl, title, description) => {
         this.logUserAction("zoomInIconClick", `Image Title: ${title}`);
@@ -218,9 +224,9 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                 <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: 'auto' }} />
                                 <ZoomInIcon style={magnifyingGlassStyle} className="magnifying-glass-icon" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} /> 
                             </Col>
-                            <Col md={4} className="pe-md-2">
+                            <Col md={4} className="pe-md-2 my-1">
                                 <strong>Vitals:</strong>
-                                <ListGroup>
+                                <ListGroup className="vitals-list-group">
                                     {patient.vitals?.map((vital, vitalIndex) => (
                                         <ListGroup.Item key={vitalIndex}>
                                             {vital.name}: {vital.value}

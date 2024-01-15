@@ -25,8 +25,14 @@
 .accordion-body {
   white-space: normal;
   word-break: break-word;
+  font-size: 10px;
 }
 
 .magnifying-glass-icon:hover {
   transform: scale(1.5);
+}
+
+.vitals-list-group {
+  max-height: 250px; 
+  overflow-y: auto; 
 }

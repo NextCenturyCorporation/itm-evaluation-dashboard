@@ -193,6 +193,7 @@ class SurveyPage extends Component {
     }
 
     onSurveyComplete = (survey) => {
+        console.log(survey)
         // capture time spent on last page
         this.timerHelper()
         // iterate through each page in the survey
