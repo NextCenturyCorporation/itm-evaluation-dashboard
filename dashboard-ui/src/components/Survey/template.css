@@ -27,3 +27,6 @@
   word-break: break-word;
 }
 
+.magnifying-glass-icon:hover {
+  transform: scale(1.5);
+}

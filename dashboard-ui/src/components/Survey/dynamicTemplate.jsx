@@ -172,7 +172,9 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             color: 'white',  
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             borderRadius: '50%',
-            padding: '5px'
+            padding: '5px',
+            cursor: 'pointer',
+            transition: 'transform 0.5s ease-in-out'
         };
 
         // button for each patient
@@ -200,7 +202,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                         <Row className="g-0">
                             <Col md={8} className="pe-md-2 position-relative">
                                 <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: 'auto' }} />
-                                <ZoomInIcon style={magnifyingGlassStyle} onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} /> 
+                                <ZoomInIcon style={magnifyingGlassStyle} className="magnifying-glass-icon" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} /> 
                             </Col>
                             <Col md={4} className="pe-md-2">
                                 <strong>Vitals:</strong>
