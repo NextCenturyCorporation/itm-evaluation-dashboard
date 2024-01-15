@@ -1,21 +1,13 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
-import { Accordion, Card, Row, Col } from "react-bootstrap";
-import './staticTemplate.css'
+import { Card, Row, Col } from "react-bootstrap";
+import './template.css'
 const CUSTOM_TYPE = "static-template";
 
 export class StaticTemplateModel extends Question {
   getType() {
     return CUSTOM_TYPE;
-  }
-
-  get templateHTML() {
-    return this.getPropertyValue("templateHTML")
-  }
-
-  set templateHTML(html) {
-    this.setPropertyValue("templateHTML", html)
   }
 
   get dmName() {
@@ -62,10 +54,7 @@ export class StaticTemplateModel extends Question {
 // Add question type metadata for further serialization into JSON
 Serializer.addClass(
   CUSTOM_TYPE,
-  [{
-    name: "templateHTML",
-    default: "<></>",
-  },
+  [
   {
     name: "dmName",
     default: ""
@@ -103,9 +92,6 @@ export class StaticTemplate extends SurveyQuestionElementBase {
   get question() {
     return this.questionBase;
   }
-  get html() {
-    return this.question.templateHTML;
-  }
   get dmName() {
     return this.question.dmName
   }
@@ -129,7 +115,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
   }
 
   renderElement() {
-    const cardStyle = { maxHeight: '500px', overflowY: 'scroll' };
+    const cardStyle = { maxHeight: '400px', overflowY: 'scroll' };
     return (
       <div style={this.style}>
         <Row>
@@ -158,11 +144,11 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               <Card.Header>Decision: Who should be evacuated?</Card.Header>
               <Card.Body>
                 <Card.Subtitle className="mb-2"><strong>{this.dmName}</strong></Card.Subtitle>
-                {this.actions.map((action, _index) => (
-                  <>
+                {this.actions.map((action, index) => (
+                  <div key={index}>
                     <Card.Text>{action.action}</Card.Text>
                     <Card.Text>{action.explanation}</Card.Text>
-                  </>
+                  </div>
                 ))}
               </Card.Body>
             </Card>
@@ -170,7 +156,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
             {this.patients.map((patient, index) => (
               <Card key={index}>
               <Card.Header>
-                <Row noGutters={true}>
+                <Row>
                   <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
                     <div style={{ padding: '0.75rem 1.25rem' }}>{patient.name}</div>
                   </Col>
@@ -180,7 +166,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
                 </Row>
               </Card.Header>
               <Card.Body>
-                <Row noGutters={true}>
+                <Row>
                   <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6', paddingRight: '1.25rem' }}>
                     <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
                   </Col>

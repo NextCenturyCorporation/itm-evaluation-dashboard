@@ -8,6 +8,7 @@ import ActionModal from "./actionModal";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { StaticTemplate } from "./staticTemplate";
+import { DynamicTemplate } from "./dynamicTemplate";
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults($results: JSON) {
@@ -123,6 +124,7 @@ class SurveyPage extends Component {
     }
 
     onAfterRenderQuestion = (sender, options) => {
+        console.log(options.question)
         if (options.question.name === "November vs Kilo: Indicate the choice that best reflects your opinion:") { // Replace with your specific question name
             this.createButtons("Kilo", "November", options, sender)
         } else if (options.question.name === "Lima vs Sierra: Indicate the choice that best reflects your opinion:") {
