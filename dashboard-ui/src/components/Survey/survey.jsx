@@ -113,6 +113,7 @@ class SurveyPage extends Component {
 
 
     onAfterRenderPage = (sender, options) => {
+        window.scrollTo(0,0)
         // time spent on each page 
         const pageName = options.page.name;
 
