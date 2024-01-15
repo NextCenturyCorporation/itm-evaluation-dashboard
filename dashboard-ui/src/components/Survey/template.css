@@ -1,18 +1,11 @@
 .card-header {
   background-color: #f7f7f7;
-  border-bottom: 1px solid #e7e7e7;
-  font-weight: bold; /* This will make the text bold */
+  font-weight: bold;
 }
 
 .card {
   margin-bottom: 1rem;
-}
-
-.card-body {
   overflow-wrap: break-word;
-}
-
-.card-text {
   white-space: normal;
 }
 
@@ -20,3 +13,4 @@
   white-space: normal;
   word-break: break-word;
 }
+

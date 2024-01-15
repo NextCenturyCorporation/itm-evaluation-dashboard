@@ -1,7 +1,7 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
-import { Accordion, Card, Row, Col } from "react-bootstrap";
+import { Accordion, Card, Row, Col, Button } from "react-bootstrap";
 import './template.css'
 const CUSTOM_TYPE = "dynamic-template";
 
@@ -115,11 +115,24 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     renderElement() {
-        const cardStyle = { maxHeight: '400px', overflowY: 'scroll' };
+        const cardContainerStyle = {
+            maxHeight: '400px',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            whiteSpace: 'nowrap'
+        };
+
+        const patientCardStyle = {
+            display: 'inline-block',
+            minWidth: '33%',
+            maxWidth: '33%',
+            marginRight: '0.33%',
+        };
+
         return (
             <div style={this.style}>
                 <Row>
-                    <Col md={6}>
+                    <Col md={2}>
                         <Card className="mb-3">
                             <Card.Header>Situation</Card.Header>
                             <Card.Body>
@@ -139,53 +152,42 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                             </Card.Body>
                         </Card>
                     </Col>
-                    <Col md={6}>
+                    <Col md={10}>
                         <Card className="mb-3">
                             <Card.Header>Decision: Who should be evacuated?</Card.Header>
                             <Card.Body>
                                 <Card.Subtitle className="mb-2"><strong>{this.dmName}</strong></Card.Subtitle>
                                 <Accordion>
                                     {this.actions.map((action, index) => (
-
                                         <Accordion.Item key={index} eventKey={index}>
                                             <Accordion.Header>{action.action}</Accordion.Header>
-                                            <Accordion.Body>{action.explanation}</Accordion.Body>
+                                            <Accordion.Body><strong>Explanation:</strong> {action.explanation}</Accordion.Body>
                                         </Accordion.Item>
                                     ))}
                                 </Accordion>
                             </Card.Body>
                         </Card>
-                        <div style={cardStyle}>
+                        <div style={cardContainerStyle}>
                             {this.patients.map((patient, index) => (
-                                <Card key={index}>
+                                <Card key={index} style={patientCardStyle}>
                                     <Card.Header>
-                                        <Row>
-                                            <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
-                                                <div style={{ padding: '0.75rem 1.25rem' }}>{patient.name}</div>
-                                            </Col>
-                                            <Col xs={6} md={8}>
-                                                <div style={{ padding: '0.75rem 1.25rem' }}>Description</div>
-                                            </Col>
-                                        </Row>
+                                        <div>{patient.name} - {patient.description}</div>
                                     </Card.Header>
-                                    <Card.Body>
-                                        <Row>
-                                            <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6', paddingRight: '1.25rem' }}>
-                                                <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
-                                            </Col>
-                                            <Col xs={6} md={8} style={{ paddingLeft: '1.25rem' }}>
-                                                <Card.Text>
-                                                    {patient.description}
-                                                </Card.Text>
-                                            </Col>
-                                        </Row>
-                                    </Card.Body>
+                                    <Row>
+                                        <Col>
+                                            <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
+                                        </Col>
+                                        <Col>
+                                            <div>vitals</div>
+                                        </Col>
+                                    </Row>
                                 </Card>
                             ))}
                         </div>
                     </Col>
                 </Row>
-            </div>);
+            </div>
+        );
     }
 }
 

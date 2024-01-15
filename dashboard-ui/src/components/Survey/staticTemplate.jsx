@@ -158,10 +158,10 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               <Card.Header>
                 <Row>
                   <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
-                    <div style={{ padding: '0.75rem 1.25rem' }}>{patient.name}</div>
+                    <div>{patient.name}</div>
                   </Col>
                   <Col xs={6} md={8}>
-                    <div style={{ padding: '0.75rem 1.25rem' }}>Description</div>
+                    <div>Description</div>
                   </Col>
                 </Row>
               </Card.Header>
