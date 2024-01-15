@@ -107,7 +107,15 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         };
     }
 
+    logUserAction = (actionType, detail) => {
+        const timestamp = new Date().toISOString();
+        this.setState(prevState => ({
+            userActions: [...prevState.userActions, { actionType, detail, timestamp }]
+        }));
+    }
+
     toggleImageModal = (imgUrl, title, description) => {
+        this.logUserAction("zoomInIconClick", `Image Title: ${title}`);
         this.setState(prevState => ({
             showModal: !prevState.showModal,
             activeImage: imgUrl,
@@ -117,12 +125,17 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     togglePatientVisibility(patientName) {
+        this.logUserAction("toggleButton", `Patient: ${patientName}`);
         this.setState(prevState => ({
             visiblePatients: {
                 ...prevState.visiblePatients,
                 [patientName]: !prevState.visiblePatients[patientName]
             }
         }));
+    }
+
+    toggleAccordionItem = (actionIndex) => {
+        this.logUserAction("toggleAccordion", `Action Index: ${actionIndex}`);
     }
 
     get question() {
@@ -151,6 +164,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     renderElement() {
+        console.log(this.state.userActions)
         const cardContainerStyle = {
             maxHeight: '500px',
             overflowX: 'auto',
@@ -252,7 +266,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                 <Card.Subtitle className="mb-2"><strong>{this.dmName}</strong></Card.Subtitle>
                                 <Accordion>
                                     {this.actions.map((action, index) => (
-                                        <Accordion.Item key={index} eventKey={index}>
+                                        <Accordion.Item key={index} eventKey={index} onClick={() => this.toggleAccordionItem(action.action)}>
                                             <Accordion.Header>{action.action}</Accordion.Header>
                                             <Accordion.Body><strong>Explanation:</strong> {action.explanation}</Accordion.Body>
                                         </Accordion.Item>
@@ -268,7 +282,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                         </div>
                     </Col>
                 </Row>
-                <Modal show={this.state.showModal} onHide={() => this.toggleImageModal()}>
+                <Modal show={this.state.showModal} onHide={() => this.toggleImageModal("", this.state.activeTitle, "")}>
                     <Modal.Header closeButton>
                         <Modal.Title>{this.state.activeTitle}</Modal.Title>
                     </Modal.Header>
