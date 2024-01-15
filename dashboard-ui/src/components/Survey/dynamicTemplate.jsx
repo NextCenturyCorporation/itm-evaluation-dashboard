@@ -1,7 +1,7 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
-import { Accordion, Card, Row, Col, Button } from "react-bootstrap";
+import { Accordion, Card, Row, Col, Button, ListGroup } from "react-bootstrap";
 import './template.css'
 const CUSTOM_TYPE = "dynamic-template";
 
@@ -116,7 +116,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
 
     renderElement() {
         const cardContainerStyle = {
-            maxHeight: '400px',
+            maxHeight: '500px',
             overflowX: 'auto',
             overflowY: 'hidden',
             whiteSpace: 'nowrap'
@@ -174,11 +174,18 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                         <div>{patient.name} - {patient.description}</div>
                                     </Card.Header>
                                     <Row>
-                                        <Col>
+                                        <Col md={9}>
                                             <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
                                         </Col>
-                                        <Col>
-                                            <div>vitals</div>
+                                        <Col md={3}>
+                                            <strong>Vitals</strong>
+                                            <ListGroup varient="flush">
+                                                {patient.vitals && patient.vitals.map((vital, vitalIndex) => (
+                                                    <ListGroup.Item key={vitalIndex}>
+                                                        {vital.name}: {vital.value}
+                                                    </ListGroup.Item>
+                                                ))}
+                                            </ListGroup>
                                         </Col>
                                     </Row>
                                 </Card>
