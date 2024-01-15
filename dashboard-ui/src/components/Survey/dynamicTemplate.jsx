@@ -108,7 +108,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     logUserAction = (actionType, detail) => {
-        const timestamp = new Date().toISOString();
+        const timestamp = new Date().toString();
         this.setState(prevState => ({
             userActions: [...prevState.userActions, { actionType, detail, timestamp }]
         }));
