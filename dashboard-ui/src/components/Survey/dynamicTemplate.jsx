@@ -121,11 +121,9 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     constructor(props) {
         super(props);
         const initialVisibility = {};
-        props.question.patients.forEach(patient => {
-            initialVisibility[patient.name] = true; // Set each patient's visibility to true
-        });
+        
         this.state = {
-            visiblePatients: initialVisibility,
+            visiblePatients: [],
             userActions: [],
             showImageModal: false,
             activeImage: null,
@@ -200,7 +198,6 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
 
     renderElement() {
         const cardContainerStyle = {
-            maxHeight: '500px',
             overflowX: 'auto',
             overflowY: 'hidden',
             whiteSpace: 'nowrap'
@@ -258,8 +255,8 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                             <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
                         </Card.Header>
                         <Row className="g-0" style={rowStyle}>
-                            <Col md={8} className="pe-md-2 position-relative">
-                                <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: 'auto' }}></img>
+                            <Col md={8} className="pe-md-2">
+                                <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: '100%' }}></img>
                                 <ZoomInIcon style={magnifyingGlassStyle} className="magnifying-glass-icon" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} /> 
                             </Col>
                             <Col md={4} className="pe-md-2 my-1" style={vitalsColStyle}>

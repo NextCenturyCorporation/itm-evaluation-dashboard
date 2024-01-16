@@ -47,11 +47,6 @@ class SurveyPage extends Component {
     }
 
     configureSurveyPages(groupedDMs, comparisonPages) {
-        /*
-        * There are three groups of decision makers, each group has two decision makers
-        * The order in which the groups gets presented is randomized
-        * The order of the decision makers within the groups is randomized
-        */
 
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
         //filter out last page of survey to insert later
@@ -99,16 +94,19 @@ class SurveyPage extends Component {
 
     initializeSurvey() {
         const groupedDMs = [
-            ['November', 'Kilo'],
-            ['Lima', 'Sierra']
+            ['Medic-77', 'Medic-88'],
+            ['Medic-99', 'Medic-101'],
+            ['Medic-33', 'Medic-44'],
+            ['Medic-55', 'Medic-66']
         ];
         const comparisonPages = {
-            'NovemberKilo': 'November vs Kilo',
-            'LimaSierra': 'Lima vs Sierra'
+            'Medic-77Medic-88': 'Medic-77 vs Medic-88',
+            'Medic-99Medic-101': 'Medic-99 vs Medic-101',
+            'Medic-33Medic-44': 'Medic-33 vs Medic-44',
+            'Medic-55Medic-66': 'Medic-55 vs Medic-66'
         };
 
-        this.shuffle(groupedDMs);
-        this.configureSurveyPages(groupedDMs, comparisonPages);
+        this.configureSurveyPages(this.shuffle(groupedDMs), comparisonPages);
     }
 
 

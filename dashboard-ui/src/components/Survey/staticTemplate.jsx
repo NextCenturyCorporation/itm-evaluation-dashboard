@@ -1,7 +1,7 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
-import { Card, Row, Col } from "react-bootstrap";
+import { Card, Row, Col, ListGroup } from "react-bootstrap";
 import './template.css'
 const CUSTOM_TYPE = "static-template";
 
@@ -53,6 +53,22 @@ export class StaticTemplateModel extends Question {
   set patients(patients) {
     this.setPropertyValue("patients", patients)
   }
+
+  get decision() {
+    return this.getPropertyValue("decision")
+  }
+
+  set decision(decision) {
+    this.setPropertyValue("decision", decision)
+  }
+
+  get explanation() {
+    return this.getPropertyValue("explanation")
+  }
+
+  set explanation(explanation) {
+    this.setPropertyValue("explanation", explanation)
+  }
 }
 
 // Add question type metadata for further serialization into JSON
@@ -78,6 +94,14 @@ Serializer.addClass(
   {
     name: "patients",
     default: []
+  },
+  {
+    name: "decision",
+    default: ""
+  },
+  {
+    name: "explanation",
+    default: ""
   }
   ],
   function () {
@@ -115,6 +139,12 @@ export class StaticTemplate extends SurveyQuestionElementBase {
   get patients() {
     return this.question.patients
   }
+  get decision() {
+    return this.question.decision
+  }
+  get explanation() {
+    return this.question.explanation
+  }
 
   // Support the read-only and design modes
   get style() {
@@ -149,15 +179,15 @@ export class StaticTemplate extends SurveyQuestionElementBase {
           </Col>
           <Col md={6}>
             <Card className="mb-3">
-              <Card.Header>Decision: Who should be evacuated?</Card.Header>
+              <Card.Header>Decision: {this.decision}</Card.Header>
               <Card.Body>
                 <Card.Subtitle className="mb-2"><strong>{this.dmName}</strong></Card.Subtitle>
+                <ListGroup>
                 {this.actions.map((action, index) => (
-                  <div key={index}>
-                    <Card.Text>{action.action}</Card.Text>
-                    <Card.Text>{action.explanation}</Card.Text>
-                  </div>
+                    <ListGroup.Item key={index}>{action}</ListGroup.Item>
                 ))}
+                </ListGroup>
+                <Card.Text className="my-2"><strong>Explanation: </strong>{this.explanation}</Card.Text>
               </Card.Body>
             </Card>
             <div style={cardStyle}>
@@ -182,6 +212,14 @@ export class StaticTemplate extends SurveyQuestionElementBase {
                     <Card.Text>
                       {patient.description}
                     </Card.Text>
+                    <strong>Vitals</strong>
+                    <ListGroup>
+                      {patient.vitals?.map((vital, vitalIndex) => (
+                        <ListGroup.Item key={vitalIndex}>
+                          {vital.name}: {vital.value}
+                        </ListGroup.Item>
+                      ))}
+                    </ListGroup>
                   </Col>
                 </Row>
               </Card.Body>
