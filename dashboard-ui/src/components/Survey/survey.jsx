@@ -111,8 +111,11 @@ class SurveyPage extends Component {
 
 
     onAfterRenderPage = (sender, options) => {
-        window.scrollTo(0,0)
-        // time spent on each page 
+        // setTimeout makes the scroll work consistently. spotty without... idk why
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 25);
+        
         const pageName = options.page.name;
 
         if (Object.keys(this.pageStartTimes).length > 0) {
