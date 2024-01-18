@@ -24,7 +24,8 @@ class SurveyPage extends Component {
             showModal: false,
             modalTitle: "",
             modalHTML: "",
-            startTime: null
+            startTime: null,
+            firstPageCompleted: false
         };
 
         this.initializeSurvey();
@@ -128,7 +129,6 @@ class SurveyPage extends Component {
     }
 
     onAfterRenderQuestion = (sender, options) => {
-        console.log(options.question)
         if (options.question.name === "November vs Kilo: Indicate the choice that best reflects your opinion:") { // Replace with your specific question name
             this.createButtons("Kilo", "November", options, sender)
         } else if (options.question.name === "Lima vs Sierra: Indicate the choice that best reflects your opinion:") {
@@ -137,8 +137,11 @@ class SurveyPage extends Component {
     };
 
     onCurrentPageChanged = (sender, options) => {
-        if (sender.currentPageNo === 1 && sender.prevPageNo === 0 && !this.state.startTime) {
-            this.setState({ startTime: new Date().toString() });
+        if (sender.isFirstPage === false && !this.state.firstPageCompleted) {
+            this.setState({ 
+                firstPageCompleted: true,
+                startTime: new Date().toString()
+            });
         }
     }
 
@@ -203,7 +206,6 @@ class SurveyPage extends Component {
     }
 
     onSurveyComplete = (survey) => {
-        console.log(survey)
         // capture time spent on last page
         this.timerHelper()
         // iterate through each page in the survey

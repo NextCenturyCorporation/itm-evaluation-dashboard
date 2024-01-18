@@ -276,7 +276,6 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             }
         });
 
-        console.log(this.actions)
         return (
             <div style={this.style}>
                 <Row>
