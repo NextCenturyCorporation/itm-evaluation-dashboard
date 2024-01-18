@@ -11,7 +11,7 @@
 
 .card-text {
   font-weight: normal;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .list-group {
@@ -19,13 +19,13 @@
 }
 
 .modal-body {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .accordion-body {
   white-space: normal;
   word-break: break-word;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .magnifying-glass-icon:hover {
