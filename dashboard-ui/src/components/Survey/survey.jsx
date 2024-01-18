@@ -23,8 +23,10 @@ class SurveyPage extends Component {
             uploadData: false,
             showModal: false,
             modalTitle: "",
-            modalHTML: ""
+            modalHTML: "",
+            startTime: null
         };
+
         this.initializeSurvey();
         this.survey = new Model(surveyConfig);
         this.survey.applyTheme(surveyTheme)
@@ -32,9 +34,9 @@ class SurveyPage extends Component {
         this.surveyData = {};
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onAfterRenderQuestion.add(this.onAfterRenderQuestion);
+        this.survey.onCurrentPageChanged.add(this.onCurrentPageChanged);
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
-
     }
 
     shuffle(array) {
@@ -134,6 +136,12 @@ class SurveyPage extends Component {
         }
     };
 
+    onCurrentPageChanged = (sender, options) => {
+        if (sender.currentPageNo === 1 && sender.prevPageNo === 0 && !this.state.startTime) {
+            this.setState({ startTime: new Date().toString() });
+        }
+    }
+
     createButtons(fName, sName, options, sender) {
         let questionElement = options.htmlElement;
 
@@ -220,6 +228,7 @@ class SurveyPage extends Component {
         // attach user data to results
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
+        this.surveyData.startTime = this.state.startTime
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
