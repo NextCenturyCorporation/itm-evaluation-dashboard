@@ -50,7 +50,7 @@ class SurveyPage extends Component {
     }
 
     configureSurveyPages(groupedDMs, comparisonPages) {
-
+        //randomization scheme
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
         //filter out last page of survey to insert later
         surveyConfig.pages = surveyConfig.pages.filter(page => page.name !== "Post-Scenario Measures");
@@ -143,6 +143,8 @@ class SurveyPage extends Component {
                 startTime: new Date().toString()
             });
         }
+
+        this.uploadData(sender)
     }
 
     createButtons(fName, sName, options, sender) {
@@ -205,8 +207,8 @@ class SurveyPage extends Component {
         return [];
     }
 
-    onSurveyComplete = (survey) => {
-        // capture time spent on last page
+    uploadData(survey) {
+        console.log(survey)
         this.timerHelper()
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
@@ -231,6 +233,7 @@ class SurveyPage extends Component {
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
         this.surveyData.startTime = this.state.startTime
+        console.log(this.surveyData)
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -238,6 +241,10 @@ class SurveyPage extends Component {
                 this.uploadButtonRef.current.click();
             }
         });
+    }
+
+    onSurveyComplete(survey) {
+        this.uploadData(survey)
     }
 
     render() {
