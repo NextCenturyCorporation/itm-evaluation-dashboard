@@ -36,11 +36,12 @@ class SurveyPage extends Component {
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onAfterRenderQuestion.add(this.onAfterRenderQuestion);
         this.survey.onCurrentPageChanged.add(this.onCurrentPageChanged);
+        this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
     }
 
-    shuffle(array) {
+    shuffle = (array) => {
         // randomize the list
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -49,7 +50,7 @@ class SurveyPage extends Component {
         return array;
     }
 
-    configureSurveyPages(groupedDMs, comparisonPages) {
+    configureSurveyPages = (groupedDMs, comparisonPages) => {
         //randomization scheme
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
         //filter out last page of survey to insert later
@@ -95,7 +96,7 @@ class SurveyPage extends Component {
         surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
     }
 
-    initializeSurvey() {
+    initializeSurvey = () => {
         const groupedDMs = [
             ['Medic-77', 'Medic-88'],
             ['Medic-99', 'Medic-101'],
@@ -114,11 +115,18 @@ class SurveyPage extends Component {
 
 
     onAfterRenderPage = (sender, options) => {
-        // setTimeout makes the scroll work consistently. spotty without... idk why
+        // setTimeout makes the scroll work consistently
         setTimeout(() => {
             window.scrollTo(0, 0);
         }, 25);
-        
+
+        if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+            this.setState({
+                firstPageCompleted: true,
+                startTime: new Date().toString()
+            });
+        }
+
         const pageName = options.page.name;
 
         if (Object.keys(this.pageStartTimes).length > 0) {
@@ -136,18 +144,7 @@ class SurveyPage extends Component {
         }
     };
 
-    onCurrentPageChanged = (sender, options) => {
-        if (sender.isFirstPage === false && !this.state.firstPageCompleted) {
-            this.setState({ 
-                firstPageCompleted: true,
-                startTime: new Date().toString()
-            });
-        }
-
-        this.uploadData(sender)
-    }
-
-    createButtons(fName, sName, options, sender) {
+    createButtons = (fName, sName, options, sender) => {
         let questionElement = options.htmlElement;
 
         // Create a container for buttons
@@ -175,7 +172,7 @@ class SurveyPage extends Component {
         questionElement.appendChild(buttonContainer);
     }
 
-    matchButtonToActions(name, sender) {
+    matchButtonToActions = (name, sender) => {
         const targetPageName = "DM " + name + " Actions"
         const targetQuestion = sender.getQuestionByName(targetPageName)
         return targetQuestion.html
@@ -186,7 +183,7 @@ class SurveyPage extends Component {
         this.setState({ showModal: false });
     };
 
-    timerHelper() {
+    timerHelper = () => {
         const previousPageName = Object.keys(this.pageStartTimes).pop();
         const endTime = new Date();
         const startTime = this.pageStartTimes[previousPageName];
@@ -207,8 +204,7 @@ class SurveyPage extends Component {
         return [];
     }
 
-    uploadData(survey) {
-        console.log(survey)
+    uploadSurveyData = (survey) => {
         this.timerHelper()
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
@@ -233,7 +229,6 @@ class SurveyPage extends Component {
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
         this.surveyData.startTime = this.state.startTime
-        console.log(this.surveyData)
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -243,8 +238,14 @@ class SurveyPage extends Component {
         });
     }
 
-    onSurveyComplete(survey) {
-        this.uploadData(survey)
+    onSurveyComplete = (survey) => {
+        // final upload
+        this.uploadSurveyData(survey)
+    }
+
+    onValueChanged = (sender, options) => {
+        // upload data as it is received
+        this.uploadSurveyData(sender)
     }
 
     render() {
@@ -257,6 +258,7 @@ class SurveyPage extends Component {
                             <div>
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
+                                    console.log(this.surveyData)
                                     uploadSurveyResults({
                                         variables: { results: this.surveyData }
                                     })
