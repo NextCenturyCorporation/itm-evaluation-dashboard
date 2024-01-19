@@ -11,8 +11,8 @@ import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
 
 const UPLOAD_SURVEY_RESULTS = gql`
-  mutation UploadSurveyResults($results: JSON) {
-    uploadSurveyResults(results: $results)
+  mutation UploadSurveyResults( $userId: String, $results: JSON) {
+    uploadSurveyResults(userId: $userId, results: $results)
   }`;
 
 class SurveyPage extends Component {
@@ -258,9 +258,9 @@ class SurveyPage extends Component {
                             <div>
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
-                                    console.log(this.surveyData)
+                                    console.log(this.props.currentUser.id)
                                     uploadSurveyResults({
-                                        variables: { results: this.surveyData }
+                                        variables: { userId: this.props.currentUser.id, results: this.surveyData }
                                     })
                                     this.setState({ uploadData: false })
                                 }}></button>
