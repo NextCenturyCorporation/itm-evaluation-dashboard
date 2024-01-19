@@ -180,7 +180,7 @@ const typeDefs = gql`
 
   type Mutation {
     updateAdminUser(username: String, isAdmin: Boolean): JSON
-    uploadSurveyResults(userId: String, results: JSON): JSON
+    uploadSurveyResults(surveyId: String, results: JSON): JSON
   }
 `;
 
@@ -268,7 +268,7 @@ const resolvers = {
       );
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {
-      const filter = { userId: args.userId}
+      const filter = { surveyId: args.surveyId}
       const update = { $set: {results: args.results}}
       const options = { upsert: true}
 

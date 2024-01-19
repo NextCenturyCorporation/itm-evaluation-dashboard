@@ -9,10 +9,11 @@ import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
+import { getUID, shuffle } from './util'
 
 const UPLOAD_SURVEY_RESULTS = gql`
-  mutation UploadSurveyResults( $userId: String, $results: JSON) {
-    uploadSurveyResults(userId: $userId, results: $results)
+  mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
+    uploadSurveyResults(surveyId: $surveyId, results: $results)
   }`;
 
 class SurveyPage extends Component {
@@ -25,7 +26,8 @@ class SurveyPage extends Component {
             modalTitle: "",
             modalHTML: "",
             startTime: null,
-            firstPageCompleted: false
+            firstPageCompleted: false,
+            surveyId: null
         };
 
         this.initializeSurvey();
@@ -35,19 +37,9 @@ class SurveyPage extends Component {
         this.surveyData = {};
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onAfterRenderQuestion.add(this.onAfterRenderQuestion);
-        this.survey.onCurrentPageChanged.add(this.onCurrentPageChanged);
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
-    }
-
-    shuffle = (array) => {
-        // randomize the list
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
     }
 
     configureSurveyPages = (groupedDMs, comparisonPages) => {
@@ -110,7 +102,7 @@ class SurveyPage extends Component {
             'Medic-55Medic-66': 'Medic-55 vs Medic-66'
         };
 
-        this.configureSurveyPages(this.shuffle(groupedDMs), comparisonPages);
+        this.configureSurveyPages(shuffle(groupedDMs), comparisonPages);
     }
 
 
@@ -244,10 +236,15 @@ class SurveyPage extends Component {
     }
 
     onValueChanged = (sender, options) => {
-        // upload data as it is received
-        this.uploadSurveyData(sender)
+        if (!this.state.surveyId) {
+            this.setState({ surveyId: getUID()}, () => {
+                this.uploadSurveyData(sender)
+            })
+        } else {
+            this.uploadSurveyData(sender)
+        }
     }
-
+    
     render() {
         return (
             <>
@@ -258,9 +255,8 @@ class SurveyPage extends Component {
                             <div>
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
-                                    console.log(this.props.currentUser.id)
                                     uploadSurveyResults({
-                                        variables: { userId: this.props.currentUser.id, results: this.surveyData }
+                                        variables: { surveyId: this.state.surveyId, results: this.surveyData }
                                     })
                                     this.setState({ uploadData: false })
                                 }}></button>
