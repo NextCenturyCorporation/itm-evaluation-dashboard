@@ -27,7 +27,8 @@ class SurveyPage extends Component {
             modalHTML: "",
             startTime: null,
             firstPageCompleted: false,
-            surveyId: null
+            surveyId: null,
+            surveyVersion: surveyConfig.version
         };
 
         this.initializeSurvey();
@@ -221,6 +222,7 @@ class SurveyPage extends Component {
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
         this.surveyData.startTime = this.state.startTime
+        this.surveyData.surveyVersion = this.state.surveyVersion
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
