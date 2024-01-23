@@ -1,7 +1,9 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
-import { Card, Row, Col, ListGroup } from "react-bootstrap";
+import { Card, Row, Col, ListGroup} from "react-bootstrap";
+import SituationModal from "./situationModal";
+import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import './template.css'
 const CUSTOM_TYPE = "static-template";
 
@@ -12,7 +14,7 @@ export class StaticTemplateModel extends Question {
 
   setValueCore(newValue) {
     super.setValueCore(newValue);
-}
+  }
 
   get dmName() {
     return this.getPropertyValue("dmName")
@@ -75,34 +77,34 @@ export class StaticTemplateModel extends Question {
 Serializer.addClass(
   CUSTOM_TYPE,
   [
-  {
-    name: "dmName",
-    default: ""
-  },
-  {
-    name: "actions",
-    default: []
-  },
-  {
-    name: "supplies",
-    default: []
-  },
-  {
-    name: "situation",
-    defualt: []
-  },
-  {
-    name: "patients",
-    default: []
-  },
-  {
-    name: "decision",
-    default: ""
-  },
-  {
-    name: "explanation",
-    default: ""
-  }
+    {
+      name: "dmName",
+      default: ""
+    },
+    {
+      name: "actions",
+      default: []
+    },
+    {
+      name: "supplies",
+      default: []
+    },
+    {
+      name: "situation",
+      defualt: []
+    },
+    {
+      name: "patients",
+      default: []
+    },
+    {
+      name: "decision",
+      default: ""
+    },
+    {
+      name: "explanation",
+      default: ""
+    }
   ],
   function () {
     return new StaticTemplateModel("");
@@ -120,6 +122,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
   constructor(props) {
     super(props)
     this.question.value = ""
+    this.state = { showModal: true }
   }
   get question() {
     return this.questionBase;
@@ -152,14 +155,31 @@ export class StaticTemplate extends SurveyQuestionElementBase {
       this.question.isDesignMode ? { pointerEvents: "none" } : undefined;
   }
 
+  handleCloseModal = () => {
+    this.setState({ showModal: false });
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 25);
+  };
+
+  handleShowModal = () => {
+    this.setState({ showModal: true});
+  }
+
   renderElement() {
     const cardStyle = { maxHeight: '400px', overflowY: 'scroll' };
     return (
       <div style={this.style}>
+        {this.state.showModal &&
+          <SituationModal
+            show={this.state.showModal}
+            handleClose={this.handleCloseModal}
+            situation={this.situation} />
+        }
         <Row>
           <Col md={6}>
             <Card className="mb-3">
-              <Card.Header>Situation</Card.Header>
+              <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={this.handleShowModal}/></Card.Header>
               <Card.Body>
                 {this.situation.map((detail, index) => (
                   <Card.Text key={index}>{detail}</Card.Text>
@@ -183,48 +203,48 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               <Card.Body>
                 <Card.Subtitle className="mb-2"><strong>{this.dmName}</strong></Card.Subtitle>
                 <ListGroup>
-                {this.actions.map((action, index) => (
+                  {this.actions.map((action, index) => (
                     <ListGroup.Item key={index}>{action}</ListGroup.Item>
-                ))}
+                  ))}
                 </ListGroup>
                 <Card.Text className="my-2"><strong>Explanation: </strong>{this.explanation}</Card.Text>
               </Card.Body>
             </Card>
             <div style={cardStyle}>
-            {this.patients.map((patient, index) => (
-              <Card key={index}>
-              <Card.Header>
-                <Row>
-                  <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
-                    <div>{patient.name}</div>
-                  </Col>
-                  <Col xs={6} md={8}>
-                    <div>Description</div>
-                  </Col>
-                </Row>
-              </Card.Header>
-              <Card.Body>
-                <Row>
-                  <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6', paddingRight: '1.25rem' }}>
-                    <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
-                  </Col>
-                  <Col xs={6} md={8} style={{ paddingLeft: '1.25rem' }}>
-                    <Card.Text>
-                      {patient.description}
-                    </Card.Text>
-                    <strong>Vitals</strong>
-                    <ListGroup>
-                      {patient.vitals?.map((vital, vitalIndex) => (
-                        <ListGroup.Item key={vitalIndex}>
-                          {vital.name}: {vital.value}
-                        </ListGroup.Item>
-                      ))}
-                    </ListGroup>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
-            ))}
+              {this.patients.map((patient, index) => (
+                <Card key={index}>
+                  <Card.Header>
+                    <Row>
+                      <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
+                        <div>{patient.name}</div>
+                      </Col>
+                      <Col xs={6} md={8}>
+                        <div>Description</div>
+                      </Col>
+                    </Row>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6', paddingRight: '1.25rem' }}>
+                        <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt="Patient A" style={{ width: '100%', height: 'auto' }} />
+                      </Col>
+                      <Col xs={6} md={8} style={{ paddingLeft: '1.25rem' }}>
+                        <Card.Text>
+                          {patient.description}
+                        </Card.Text>
+                        <strong>Vitals</strong>
+                        <ListGroup>
+                          {patient.vitals?.map((vital, vitalIndex) => (
+                            <ListGroup.Item key={vitalIndex}>
+                              {vital.name}: {vital.value}
+                            </ListGroup.Item>
+                          ))}
+                        </ListGroup>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              ))}
             </div>
           </Col>
         </Row>

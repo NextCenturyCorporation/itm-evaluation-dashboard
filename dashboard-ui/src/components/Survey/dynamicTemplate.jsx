@@ -4,6 +4,7 @@ import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui
 import { Accordion, Card, Row, Col, Button, ListGroup, Modal } from "react-bootstrap";
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
+import SituationModal from "./situationModal";
 import './template.css'
 
 const CUSTOM_TYPE = "dynamic-template";
@@ -121,11 +122,12 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     constructor(props) {
         super(props);
         const initialVisibility = {};
-        
+
         this.state = {
             visiblePatients: [],
             userActions: [],
-            showImageModal: false,
+            showPatientModal: false,
+            showSituationModal: true,
             activeImage: null,
             activeTitle: "",
             activeDescription: ""
@@ -135,16 +137,16 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     logUserAction = (actionType, detail) => {
         const timestamp = new Date().toString();
         const newActions = [...this.state.userActions, { actionType, detail, timestamp }];
-    
+
         this.setState({ userActions: newActions }, () => {
             this.question.value = newActions;
         });
-    }    
+    }
 
     toggleImageModal = (imgUrl, title, description) => {
         this.logUserAction("zoomInIconClick", `Image Title: ${title}`);
         this.setState(prevState => ({
-            showModal: !prevState.showModal,
+            showPatientModal: !prevState.showPatientModal,
             activeImage: imgUrl,
             activeTitle: title,
             activeDescription: description
@@ -186,7 +188,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     get decision() {
         return this.question.decision
     }
-    get explanation(){
+    get explanation() {
         return this.question.explanation
     }
 
@@ -194,6 +196,17 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     get style() {
         return this.question.getPropertyValue("readOnly") ||
             this.question.isDesignMode ? { pointerEvents: "none" } : undefined;
+    }
+
+    handleCloseSitatuionModal = () => {
+        this.setState({ showSituationModal: false });
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 25);
+    };
+
+    handleShowSituationModal = () => {
+        this.setState({ showSituationModal: true });
     }
 
     renderElement() {
@@ -212,9 +225,9 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
 
         const magnifyingGlassStyle = {
             position: 'absolute',
-            bottom: '10px', 
-            left: '10px',    
-            color: 'white',  
+            bottom: '10px',
+            left: '10px',
+            color: 'white',
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             borderRadius: '50%',
             padding: '5px',
@@ -228,7 +241,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
 
         const rowStyle = {
             display: 'flex',
-            alignItems: 'start', 
+            alignItems: 'start',
             overflow: 'hidden'
         };
 
@@ -257,7 +270,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                         <Row className="g-0" style={rowStyle}>
                             <Col md={8} className="pe-md-2">
                                 <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: '100%' }}></img>
-                                <ZoomInIcon style={magnifyingGlassStyle} className="magnifying-glass-icon" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} /> 
+                                <ZoomInIcon style={magnifyingGlassStyle} className="magnifying-glass-icon" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
                             </Col>
                             <Col md={4} className="pe-md-2 my-1" style={vitalsColStyle}>
                                 <ListGroup className="vitals-list-group">
@@ -272,16 +285,22 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                     </Card>
                 );
             } else {
-                return null; 
+                return null;
             }
         });
 
         return (
             <div style={this.style}>
+                {this.state.showSituationModal &&
+                    <SituationModal
+                        show={this.state.showSituationModal}
+                        handleClose={this.handleCloseSituationModal}
+                        situation={this.situation} />
+                }
                 <Row>
                     <Col md={2}>
                         <Card className="mb-3">
-                            <Card.Header>Situation</Card.Header>
+                            <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={this.handleShowSituationModal} /></Card.Header>
                             <Card.Body>
                                 {this.situation.map((detail, index) => (
                                     <Card.Text key={index}>{detail}</Card.Text>
@@ -307,12 +326,12 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                     <Accordion.Item eventKey={0} onClick={() => this.toggleAccordionItem()}>
                                         <Accordion.Header><strong>{`${this.dmName} actions`}</strong></Accordion.Header>
                                         <Accordion.Body>
-                                        <ListGroup>
-                                        {this.actions.map((action, index) => (
-                                            <ListGroup.Item key={index}>{action}</ListGroup.Item>
-                                        ))}
-                                        </ListGroup>
-                                        <div className="my-2"><strong>Explanation:</strong> {this.explanation}</div>
+                                            <ListGroup>
+                                                {this.actions.map((action, index) => (
+                                                    <ListGroup.Item key={index}>{action}</ListGroup.Item>
+                                                ))}
+                                            </ListGroup>
+                                            <div className="my-2"><strong>Explanation:</strong> {this.explanation}</div>
                                         </Accordion.Body>
                                     </Accordion.Item>
                                 </Accordion>
