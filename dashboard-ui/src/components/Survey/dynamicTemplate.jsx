@@ -198,7 +198,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             this.question.isDesignMode ? { pointerEvents: "none" } : undefined;
     }
 
-    handleCloseSitatuionModal = () => {
+    handleCloseSituationModal = () => {
         this.setState({ showSituationModal: false });
         setTimeout(() => {
             window.scrollTo(0, 0);
