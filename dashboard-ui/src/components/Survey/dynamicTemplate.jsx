@@ -345,7 +345,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                         </div>
                     </Col>
                 </Row>
-                <Modal show={this.state.showModal} onHide={() => this.toggleImageModal("", this.state.activeTitle, "")}>
+                <Modal show={this.state.showPatientModal} onHide={() => this.toggleImageModal("", this.state.activeTitle, "")}>
                     <Modal.Header closeButton>
                         <Modal.Title>{this.state.activeTitle}</Modal.Title>
                     </Modal.Header>
