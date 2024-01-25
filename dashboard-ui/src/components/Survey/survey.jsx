@@ -43,7 +43,15 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
     }
 
-    configureSurveyPages = (groupedDMs, comparisonPages) => {
+    configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment) => {
+        // set pages to dynamic or static
+        Object.entries(templateAssignment).forEach(([key, value]) => {
+            const matchingPage = surveyConfig.pages.find(page => page.name === key);
+            if (matchingPage) {
+                matchingPage.elements[0].type = value + "-template";
+            }
+        });
+
         //randomization scheme
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
         //filter out last page of survey to insert later
@@ -90,12 +98,23 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
-        const groupedDMs = [
+        let groupedDMs = [
             ['Medic-77', 'Medic-88'],
             ['Medic-99', 'Medic-101'],
             ['Medic-33', 'Medic-44'],
             ['Medic-55', 'Medic-66']
         ];
+
+        groupedDMs = shuffle(groupedDMs)
+
+        let templateAssignment = {};
+        groupedDMs.forEach((group, index) => {
+            templateAssignment[group[0]] = index % 2 === 0 ? 'static' : 'dynamic';
+            templateAssignment[group[1]] = index % 2 === 0 ? 'static' : 'dynamic';
+        });
+
+        groupedDMs = shuffle(groupedDMs)
+
         const comparisonPages = {
             'Medic-77Medic-88': 'Medic-77 vs Medic-88',
             'Medic-99Medic-101': 'Medic-99 vs Medic-101',
@@ -103,7 +122,7 @@ class SurveyPage extends Component {
             'Medic-55Medic-66': 'Medic-55 vs Medic-66'
         };
 
-        this.configureSurveyPages(shuffle(groupedDMs), comparisonPages);
+        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment);
     }
 
 
@@ -128,14 +147,6 @@ class SurveyPage extends Component {
 
         this.pageStartTimes[pageName] = new Date();
     }
-
-    onAfterRenderQuestion = (sender, options) => {
-        if (options.question.name === "November vs Kilo: Indicate the choice that best reflects your opinion:") { // Replace with your specific question name
-            this.createButtons("Kilo", "November", options, sender)
-        } else if (options.question.name === "Lima vs Sierra: Indicate the choice that best reflects your opinion:") {
-            this.createButtons("Lima", "Sierra", options, sender)
-        }
-    };
 
     createButtons = (fName, sName, options, sender) => {
         let questionElement = options.htmlElement;
@@ -239,14 +250,14 @@ class SurveyPage extends Component {
 
     onValueChanged = (sender, options) => {
         if (!this.state.surveyId) {
-            this.setState({ surveyId: getUID()}, () => {
+            this.setState({ surveyId: getUID() }, () => {
                 this.uploadSurveyData(sender)
             })
         } else {
             this.uploadSurveyData(sender)
         }
     }
-    
+
     render() {
         return (
             <>
