@@ -9,12 +9,19 @@ services:
     image: dashboard-ui
     volumes:
       - ../dashboard-ui/public/configs/dev/config.js:/usr/src/app/src/services/config.js
-    ports: 
+      - ../dashboard-ui/public:/usr/src//app/public
+      - ../dashboard-ui/src:/usr/src//app/src
+      - ../dashboard-ui/package.json:/usr/src//app/package.json
+    ports:
       - 3000:3000
     depends_on:
       - dashboard-server
     networks:
       - dashboard-net
+    environment:
+      - WATCHPACK_POLLING=true
+      - FAST_REFRESH=false
+      - WDS_SOCKET_PORT=0
   dashboard-server:
     container_name: dashboard-graphql
     image: dashboard-graphql
