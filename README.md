@@ -8,6 +8,9 @@ docker build --tag dashboard-graphql node-graphql/.
 docker build --tag dashboard-ui dashboard-ui/.
 
 cd docker_setup
+docker-compose -f docker-compose-dev.yml up -d
+
+- On Production use this command:
 docker-compose up -d
 ```
 
@@ -35,5 +38,5 @@ tar -xzvf backup.tar.gz
 ```
 3. Import data into MongoDB
 ```
-mongorestore --uri="mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27017/?authSource=dashboard" backup 
+mongorestore --uri="mongodb://simplemongousername:simplemongopassword@localhost:27017/?authSource=dashboard" backup 
 ```
