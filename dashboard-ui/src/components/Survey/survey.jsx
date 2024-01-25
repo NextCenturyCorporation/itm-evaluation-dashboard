@@ -4,7 +4,6 @@ import { Model } from 'survey-core'
 import { Survey } from "survey-react-ui"
 import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
-import ActionModal from "./actionModal";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { StaticTemplate } from "./staticTemplate";
@@ -22,9 +21,6 @@ class SurveyPage extends Component {
         super(props);
         this.state = {
             uploadData: false,
-            showModal: false,
-            modalTitle: "",
-            modalHTML: "",
             startTime: null,
             firstPageCompleted: false,
             surveyId: null,
@@ -44,10 +40,10 @@ class SurveyPage extends Component {
 
     configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment) => {
         // set pages to dynamic or static
-        Object.entries(templateAssignment).forEach(([key, value]) => {
-            const matchingPage = surveyConfig.pages.find(page => page.name === key);
-            if (matchingPage) {
-                matchingPage.elements[0].type = value + "-template";
+        Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
+            const page = surveyConfig.pages.find(page => page.name === pageName);
+            if (page) {
+                page.elements[0].type = `${templateType}-template`;
             }
         });
 
@@ -131,6 +127,7 @@ class SurveyPage extends Component {
             window.scrollTo(0, 0);
         }, 25);
 
+        // record start time after first page completed
         if (!sender.isFirstPage && !this.state.firstPageCompleted) {
             this.setState({
                 firstPageCompleted: true,
@@ -147,45 +144,6 @@ class SurveyPage extends Component {
         this.pageStartTimes[pageName] = new Date();
     }
 
-    createButtons = (fName, sName, options, sender) => {
-        let questionElement = options.htmlElement;
-
-        // Create a container for buttons
-        let buttonContainer = document.createElement("div");
-        buttonContainer.style.display = "flex";
-
-        // Create the first button
-        let button1 = document.createElement("button");
-        button1.textContent = "DM " + fName;
-        button1.style.marginRight = "10px"; // Add some margin to separate the buttons
-        let fHTML = this.matchButtonToActions(fName, sender)
-        button1.onclick = () => this.setState({ modalHTML: fHTML, modalTitle: "DM " + fName, showModal: true });
-
-        // Create the second button
-        let button2 = document.createElement("button");
-        button2.textContent = "DM " + sName;
-        const sHTML = this.matchButtonToActions(sName, sender)
-        button2.onclick = () => this.setState({ modalHTML: sHTML, modalTitle: "DM " + sName, showModal: true });
-
-        // Append buttons to the container
-        buttonContainer.appendChild(button1);
-        buttonContainer.appendChild(button2);
-
-        // Append the container to the question element
-        questionElement.appendChild(buttonContainer);
-    }
-
-    matchButtonToActions = (name, sender) => {
-        const targetPageName = "DM " + name + " Actions"
-        const targetQuestion = sender.getQuestionByName(targetPageName)
-        return targetQuestion.html
-    }
-
-
-    handleCloseModal = () => {
-        this.setState({ showModal: false });
-    };
-
     timerHelper = () => {
         const previousPageName = Object.keys(this.pageStartTimes).pop();
         const endTime = new Date();
@@ -199,13 +157,11 @@ class SurveyPage extends Component {
     }
 
     getPageQuestions = (pageName) => {
-        // return all of the questions on a page
+        // returns every question on the page
         const page = this.survey.getPageByName(pageName);
-        if (page) {
-            return page.questions.map(question => question.name);
-        }
-        return [];
-    }
+        return page ? page.questions.map(question => question.name) : [];
+    };
+    
 
     uploadSurveyData = (survey) => {
         this.timerHelper()
@@ -248,6 +204,7 @@ class SurveyPage extends Component {
     }
 
     onValueChanged = (sender, options) => {
+        // ensures partial data will be saved if someone needs to step away from the survey
         if (!this.state.surveyId) {
             this.setState({ surveyId: getUID() }, () => {
                 this.uploadSurveyData(sender)
@@ -277,14 +234,6 @@ class SurveyPage extends Component {
                     </Mutation>
                 )
                 }
-                {this.state.showModal && (
-                    <ActionModal
-                        show={this.state.showModal}
-                        title={this.state.modalTitle}
-                        body={this.state.modalHTML}
-                        handleClose={this.handleCloseModal}
-                    />
-                )}
             </>
         )
     }
