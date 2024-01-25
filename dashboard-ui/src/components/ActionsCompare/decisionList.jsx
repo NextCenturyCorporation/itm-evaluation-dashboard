@@ -60,6 +60,8 @@ class DecisionList extends React.Component {
         case "Civilian":
           decision.imgURL = "civilianBob.png"
           break;
+        default:
+          console.error("Error: No image in place for casualty id " + decision.parameters["Casualty ID"]);
       }
     });
     return decisions;

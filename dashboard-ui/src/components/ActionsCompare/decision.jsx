@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListGroup, ListGroupItem } from 'react-bootstrap';
+import { ListGroup } from 'react-bootstrap';
 import * as utility from './utility'
 class Decision extends React.Component {
 

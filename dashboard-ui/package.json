@@ -43,6 +43,7 @@
         "react-switch": "^6.0.0",
         "react-textarea-autosize": "^7.1.2",
         "rxjs": "^6.6.3",
+        "survey-analytics": "^1.9.122",
         "survey-core": "^1.9.123",
         "survey-react-ui": "^1.9.123",
         "typescript": "^3.6.4"
