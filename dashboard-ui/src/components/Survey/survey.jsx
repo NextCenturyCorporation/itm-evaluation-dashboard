@@ -37,7 +37,6 @@ class SurveyPage extends Component {
         this.pageStartTimes = {};
         this.surveyData = {};
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
-        this.survey.onAfterRenderQuestion.add(this.onAfterRenderQuestion);
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
