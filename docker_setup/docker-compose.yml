@@ -4,6 +4,21 @@ networks:
   dashboard-net:
 
 services:
+  nginx:
+    image: nginx:latest
+    container_name: dashboard-nginx
+    volumes:
+      - ./resources/nginx.conf:/etc/nginx/nginx.conf
+      - ./ServerCertificate.crt:/certs/ServerCertificate.crt
+      - ./darpaitm.key:/certs/darpaitm.key  
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - dashboard-net
+    depends_on:
+      - dashboard-ui
+      - dashboard-server
   dashboard-ui:
     container_name: dashboard-ui
     image: dashboard-ui
