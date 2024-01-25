@@ -38,5 +38,5 @@ tar -xzvf backup.tar.gz
 ```
 3. Import data into MongoDB
 ```
-mongorestore --uri="mongodb://simplemongousername:simplemongopassword@localhost:27017/?authSource=dashboard" backup 
+mongorestore --uri="mongodb://<username>:<userpassword>@localhost:27017/?authSource=dashboard" backup 
 ```
