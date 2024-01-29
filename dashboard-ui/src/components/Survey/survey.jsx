@@ -4,6 +4,8 @@ import { Model } from 'survey-core'
 import { Survey } from "survey-react-ui"
 import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
+import { StaticTemplate } from "./staticTemplate";
+import { DynamicTemplate } from "./dynamicTemplate";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { StaticTemplate } from "./staticTemplate";
@@ -162,8 +164,12 @@ class SurveyPage extends Component {
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
             if (this.pageStartTimes.hasOwnProperty(pageName)) {
+                const page = this.survey.getPageByName(pageName)?.jsonObj;
                 this.surveyData[pageName] = {
                     timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
+                    scenarioIndex: page?.scenarioIndex,
+                    pageType: page?.pageType,
+                    pageName: page?.name,
                     questions: {}
                 };
 
