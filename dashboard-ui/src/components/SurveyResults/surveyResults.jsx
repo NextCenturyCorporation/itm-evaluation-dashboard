@@ -5,27 +5,31 @@ import { VisualizationPanel } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
+import surveyConfig from '../Survey/surveyConfig.json';
 
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
         getAllSurveyResults
     }`;
 
-const surveyChoiceScale = [
-    { value: 5, text: "Strongly agree" },
-    { value: 4, text: "Agree" },
-    { value: 3, text: "Neither agree nor disagree" },
-    { value: 2, text: "Disagree" },
-    { value: 1, text: "Strongly disagree" }
-];
-
-function responseToNumber(response) {
-    for (const x of surveyChoiceScale) {
-        if (response === x.text) {
-            return x.value;
+function getQuestionAnswerSets(pageName) {
+    const pagesFound = surveyConfig.pages.filter((page) => page.name == pageName);
+    if (pagesFound.length > 0) {
+        const page = pagesFound[0];
+        const surveyJson = { elements: [] };
+        for (const el of page.elements) {
+            if (el.type == 'radiogroup') {
+                surveyJson.elements.push({
+                    name: el.name,
+                    title: el.name,
+                    type: "radiogroup",
+                    choices: el.choices
+                });
+            }
         }
+        return surveyJson;
     }
-    return 0;
+    return {};
 }
 
 const vizPanelOptions = {
@@ -56,15 +60,15 @@ function ScenarioGroup({ scenario, data }) {
     return (<div className='scenario-group'>
         <h2 className='scenario-header'>Scenario {scenario}</h2>
         <div className='singletons'>
-            {singles?.map((singleton) => { return <SingletonGraphs key={singleton[0].pageName} data={singleton}></SingletonGraphs> })}
+            {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton}></SingleGraph> })}
         </div>
         <div className='comparisons'>
-            {comparisons?.map((comparison) => { return <ComparisonGraphs key={comparison[0].pageName} data={comparison}></ComparisonGraphs> })}
+            {comparisons?.map((comparison) => { return <SingleGraph key={comparison[0].pageName} data={comparison}></SingleGraph> })}
         </div>
     </div>);
 }
 
-function SingletonGraphs({ data }) {
+function SingleGraph({ data }) {
     const [survey, setSurvey] = React.useState(null);
     const [vizPanel, setVizPanel] = React.useState(null);
     const [pageName, setPageName] = React.useState('Unknown Set');
@@ -75,24 +79,12 @@ function SingletonGraphs({ data }) {
 
             setPageName(data[0].pageName + ": Survey Results");
             // create a survey config based off of answers in the survey data
-            const surveyJson = { elements: [] };
-            const questionsCaptured = [];
+            const surveyJson = getQuestionAnswerSets(data[0].pageName);
             const curResults = [];
             for (const entry of data) {
                 const entryResults = {};
                 for (const q of Object.keys(entry.questions)) {
-                    if (entry.questions[q].response) {
-                        if (!questionsCaptured.includes(q)) {
-                            surveyJson.elements.push({
-                                name: q,
-                                title: q,
-                                type: "radiogroup",
-                                choices: surveyChoiceScale
-                            });
-                            questionsCaptured.push(q);
-                        }
-                        entryResults[q] = responseToNumber(entry.questions[q].response);
-                    }
+                    entryResults[q] = entry.questions[q].response;
                 }
                 curResults.push(entryResults);
             }
@@ -128,68 +120,6 @@ function SingletonGraphs({ data }) {
     </div>);
 }
 
-function ComparisonGraphs({ data }) {
-    const [survey, setSurvey] = React.useState(null);
-    const [vizPanel, setVizPanel] = React.useState(null);
-    const [pageName, setPageName] = React.useState('Unknown Set');
-    const [surveyResults, setSurveyResults] = React.useState([]);
-
-    React.useEffect(() => {
-        if (data.length > 0) {
-
-            setPageName(data[0].pageName + ": Survey Results");
-            // create a survey config based off of answers in the survey data
-            const surveyJson = { elements: [] };
-            const questionsCaptured = [];
-            const curResults = [];
-            for (const entry of data) {
-                console.log(entry);
-                const entryResults = {};
-                for (const q of Object.keys(entry.questions)) {
-                    if (entry.questions[q].response) {
-                        if (!questionsCaptured.includes(q)) {
-                            surveyJson.elements.push({
-                                name: q,
-                                title: q,
-                                type: "radiogroup",
-                                choices: surveyChoiceScale
-                            });
-                            questionsCaptured.push(q);
-                        }
-                        entryResults[q] = responseToNumber(entry.questions[q].response);
-                    }
-                }
-                curResults.push(entryResults);
-            }
-            setSurveyResults([...curResults]);
-            const survey = new Model(surveyJson);
-            setSurvey(survey);
-        }
-    }, [data]);
-
-    if (!vizPanel && !!survey) {
-        const vizPanel = new VisualizationPanel(
-            survey.getAllQuestions(),
-            surveyResults,
-            vizPanelOptions
-        );
-        vizPanel.showToolbar = false;
-        setVizPanel(vizPanel);
-    }
-
-    React.useEffect(() => {
-        if (vizPanel) {
-            vizPanel.render("viz_" + pageName);
-            return () => {
-                document.getElementById("viz_" + pageName).innerHTML = "";
-            }
-        }
-    }, [vizPanel]);
-    return (<>
-        <h3 className="page-name">{pageName}</h3>
-        <div id={"viz_" + pageName} />
-    </>);
-}
 
 export function SurveyResults() {
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS);
