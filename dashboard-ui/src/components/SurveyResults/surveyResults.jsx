@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { VisualizationPanel } from 'survey-analytics';
+import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
@@ -13,17 +13,21 @@ const GET_SURVEY_RESULTS = gql`
     }`;
 
 function getQuestionAnswerSets(pageName) {
-    const pagesFound = surveyConfig.pages.filter((page) => page.name == pageName);
+    const pagesFound = surveyConfig.pages.filter((page) => page.name === pageName);
     if (pagesFound.length > 0) {
         const page = pagesFound[0];
         const surveyJson = { elements: [] };
         for (const el of page.elements) {
-            if (el.type == 'radiogroup') {
+            let override = false;
+            if (el.type === 'radiogroup') {
+                if (el.name.includes("Given the information provided")) {
+                    override = true;
+                }
                 surveyJson.elements.push({
                     name: el.name,
-                    title: el.name,
+                    title: override ? "Given the information provided, I would prefer" : el.name,
                     type: "radiogroup",
-                    choices: el.choices
+                    choices: override ? el.choices.map((choice) => choice.substr(15)) : el.choices
                 });
             }
         }
@@ -84,7 +88,11 @@ function SingleGraph({ data }) {
             for (const entry of data) {
                 const entryResults = {};
                 for (const q of Object.keys(entry.questions)) {
-                    entryResults[q] = entry.questions[q].response;
+                    if (entry.questions[q].response?.includes("to delegate")) {
+                        entryResults[q] = entry.questions[q].response.substr(15);
+                    } else {
+                        entryResults[q] = entry.questions[q].response;
+                    }
                 }
                 curResults.push(entryResults);
             }
@@ -101,6 +109,7 @@ function SingleGraph({ data }) {
             vizPanelOptions
         );
         vizPanel.showToolbar = false;
+        VisualizerBase.customColors = ["green", "lightgreen", "lightblue", "orange", "red"];
         setVizPanel(vizPanel);
     }
 
