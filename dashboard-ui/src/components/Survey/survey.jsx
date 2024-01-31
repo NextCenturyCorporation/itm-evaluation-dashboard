@@ -99,6 +99,7 @@ class SurveyPage extends Component {
         // also randomizes static or dynamic presentation style (Will always be two pairs for each)
         let groupedDMs = shuffle(surveyConfig.groupedDMs)
 
+        /* COMMENTING OUT RANDOMIZATION OF STATIC OR DYNAMIC FOR 2-2 SESSION
         let templateAssignment = {};
         groupedDMs.forEach((group, index) => {
             templateAssignment[group[0]] = index % 2 === 0 ? 'static' : 'dynamic';
@@ -106,6 +107,7 @@ class SurveyPage extends Component {
         });
 
         groupedDMs = shuffle(groupedDMs)
+        */
 
         const comparisonPages = surveyConfig.comparisonPages
 
