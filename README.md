@@ -8,21 +8,38 @@ docker build --tag dashboard-graphql node-graphql/.
 docker build --tag dashboard-ui dashboard-ui/.
 
 cd docker_setup
+docker-compose -f docker-compose-dev.yml up -d
+
+- On Production use this command:
 docker-compose up -d
 ```
 
 # Helpful Script to Rebuild UI
 
 To rebuild only the dashboard-ui after making edits in that directory, from the base `itm_dashboard` directory run:
+
+For Production
 ```
-bash dahsboard_ui.sh
+bash startup-scripts/dashboard_ui.sh
+```
+
+For Development
+```
+bash starup-scripts/dev_dashboard_ui.sh
 ```
 
 # Helpful Script to Rebuild Graphql and UI
 
 If you made changes to the node-graphql then from the base `itm_dashboard` directory run:
+
+For Production
 ```
-bash graphql_dashboard_ui.sh
+bash startup-scripts/graphql_dashboard_ui.sh
+```
+
+For Development
+```
+bash starup-scripts/dev_graphql_dashboard_ui.sh
 ```
 
 # Populate MongoDB with Backup
