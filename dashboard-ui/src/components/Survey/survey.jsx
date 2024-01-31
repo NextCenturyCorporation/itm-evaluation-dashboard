@@ -24,7 +24,8 @@ class SurveyPage extends Component {
             startTime: null,
             firstPageCompleted: false,
             surveyId: null,
-            surveyVersion: surveyConfig.version
+            surveyVersion: surveyConfig.version,
+            iPad: false
         };
 
         this.initializeSurvey();
@@ -90,17 +91,13 @@ class SurveyPage extends Component {
         });
 
         surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
+        console.log(surveyConfig.pages)
     }
 
     initializeSurvey = () => {
-        let groupedDMs = [
-            ['Medic-77', 'Medic-88'],
-            ['Medic-99', 'Medic-101'],
-            ['Medic-33', 'Medic-44'],
-            ['Medic-55', 'Medic-66']
-        ];
-
-        groupedDMs = shuffle(groupedDMs)
+        // randomizes order of the pairs of DM's for comparison
+        // also randomizes static or dynamic presentation style (Will always be two pairs for each)
+        let groupedDMs = shuffle(surveyConfig.groupedDMs)
 
         let templateAssignment = {};
         groupedDMs.forEach((group, index) => {
@@ -110,12 +107,7 @@ class SurveyPage extends Component {
 
         groupedDMs = shuffle(groupedDMs)
 
-        const comparisonPages = {
-            'Medic-77Medic-88': 'Medic-77 vs Medic-88',
-            'Medic-99Medic-101': 'Medic-99 vs Medic-101',
-            'Medic-33Medic-44': 'Medic-33 vs Medic-44',
-            'Medic-55Medic-66': 'Medic-55 vs Medic-66'
-        };
+        const comparisonPages = surveyConfig.comparisonPages
 
         this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment);
     }
@@ -211,6 +203,20 @@ class SurveyPage extends Component {
             })
         } else {
             this.uploadSurveyData(sender)
+        }
+    }
+
+    componentDidMount() {
+        this.detectiPad();
+    }
+
+    detectiPad = () => {
+        const isiPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
+        if (isiPad) {
+            this.setState({iPad: true})
+            console.log("iPad detected");
+        } else {
+            console.log("not iPad");
         }
     }
 
