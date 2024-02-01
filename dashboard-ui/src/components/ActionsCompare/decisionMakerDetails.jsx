@@ -1,6 +1,5 @@
 import React from "react";
 import DecisionList from "./decisionList";
-import DecisionMakerDash from "./decisionMakerDash";
 import { Tabs, Tab, Dropdown, Row, Col } from 'react-bootstrap';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';

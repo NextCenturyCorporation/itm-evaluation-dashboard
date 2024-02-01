@@ -59,10 +59,6 @@ const MyResponsiveBar = ({mappedArray}) => {
 
 class ScoreChart extends React.Component {
 
-    constructor(props) {
-        super(props);
-    }
-
     render() {
         return (
             <Query query={get_all_history_by_id} variables={{"historyId": this.props.testid}}>
@@ -74,7 +70,7 @@ class ScoreChart extends React.Component {
                     const chartData = data[GET_HISTORIES_BY_ID];
 
                     let newScores = {};
-                    const scores = chartData.map((item) => {
+                    chartData.map((item) => {
                         const performer = item.history[0].parameters["ADM Name"];
                         const prevPerformerData = newScores[performer] || { total: 0, count: 0 };
                         newScores[performer] = {

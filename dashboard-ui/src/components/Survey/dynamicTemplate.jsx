@@ -121,7 +121,6 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 export class DynamicTemplate extends SurveyQuestionElementBase {
     constructor(props) {
         super(props);
-        const initialVisibility = {};
 
         this.state = {
             visiblePatients: [],

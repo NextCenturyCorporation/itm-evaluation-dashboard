@@ -175,7 +175,8 @@ const typeDefs = gql`
     getSupply(id: ID): Supplies
     getAllSupplies: [Supplies]
     getAllHumanRuns: [JSON]
-    getAllImages: [JSON]
+    getAllImages: [JSON],
+    getAllSurveyResults: [JSON]
   }
 
   type Mutation {
@@ -258,6 +259,9 @@ const resolvers = {
     },
     getAllImages: async (obj, args, context, infow) => {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
+    },
+    getAllSurveyResults: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('surveyResults').find().toArray().then(result => { return result; });
     }
   },
   Mutation: {
