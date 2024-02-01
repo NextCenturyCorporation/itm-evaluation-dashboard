@@ -1,6 +1,6 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
-import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
+import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Accordion, Card, Row, Col, Button, ListGroup, Modal } from "react-bootstrap";
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';

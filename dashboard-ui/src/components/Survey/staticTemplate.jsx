@@ -1,6 +1,6 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
-import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
+import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Card, Row, Col, ListGroup} from "react-bootstrap";
 import SituationModal from "./situationModal";
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
