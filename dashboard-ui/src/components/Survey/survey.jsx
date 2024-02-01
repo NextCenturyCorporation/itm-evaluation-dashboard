@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Component } from "react";
 import 'survey-core/defaultV2.min.css'
 import { Model } from 'survey-core'
 import { Survey } from "survey-react-ui"
@@ -6,43 +6,50 @@ import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
+import { StaticTemplate } from "./staticTemplate";
+import { DynamicTemplate } from "./dynamicTemplate";
+import { getUID, shuffle } from './util'
 
 const UPLOAD_SURVEY_RESULTS = gql`
-  mutation UploadSurveyResults($results: JSON) {
-    uploadSurveyResults(results: $results)
+  mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
+    uploadSurveyResults(surveyId: $surveyId, results: $results)
   }`;
 
-class SurveyPage extends React.Component {
+class SurveyPage extends Component {
 
     constructor(props) {
         super(props);
-        this.state = { uploadData: false };
+        this.state = {
+            uploadData: false,
+            startTime: null,
+            firstPageCompleted: false,
+            surveyId: null,
+            surveyVersion: surveyConfig.version,
+            iPad: false
+        };
+
         this.initializeSurvey();
         this.survey = new Model(surveyConfig);
         this.survey.applyTheme(surveyTheme)
         this.pageStartTimes = {};
         this.surveyData = {};
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
+        this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
     }
 
-    shuffle(array) {
-        // randomize the list
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
+    configureSurveyPages = (groupedDMs, comparisonPages) => {
+        // set pages to dynamic or static
+        /* commenting out randomization of dynamic or static for 2-2
+        Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
+            const page = surveyConfig.pages.find(page => page.name === pageName);
+            if (page) {
+                page.elements[0].type = `${templateType}-template`;
+            }
+        });*/
 
-    configureSurveyPages(groupedDMs, comparisonPages) {
-        /*
-        * There are three groups of decision makers, each group has two decision makers
-        * The order in which the groups gets presented is randomized
-        * The order of the decision makers within the groups is randomized
-        */
-
+        //randomization scheme
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
         //filter out last page of survey to insert later
         surveyConfig.pages = surveyConfig.pages.filter(page => page.name !== "Post-Scenario Measures");
@@ -87,27 +94,43 @@ class SurveyPage extends React.Component {
         surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
     }
 
-    initializeSurvey() {
-        const groupedDMs = [
-            ['November', 'Kilo'],
-            ['Echo', 'Hotel'],
-            ['Lima', 'Sierra']
-        ];
-        const comparisonPages = {
-            'NovemberKilo': 'November vs Kilo',
-            'EchoHotel': 'Echo vs Hotel',
-            'LimaSierra': 'Lima vs Sierra'
-        };
+    initializeSurvey = () => {
+        // randomizes order of the pairs of DM's for comparison
+        // also randomizes static or dynamic presentation style (Will always be two pairs for each)
+        let groupedDMs = shuffle(surveyConfig.groupedDMs)
 
-        this.shuffle(groupedDMs);
+        /* COMMENTING OUT RANDOMIZATION OF STATIC OR DYNAMIC FOR 2-2 SESSION
+        let templateAssignment = {};
+        groupedDMs.forEach((group, index) => {
+            templateAssignment[group[0]] = index % 2 === 0 ? 'static' : 'dynamic';
+            templateAssignment[group[1]] = index % 2 === 0 ? 'static' : 'dynamic';
+        });
+
+        groupedDMs = shuffle(groupedDMs)
+        */
+
+        const comparisonPages = surveyConfig.comparisonPages
+
         this.configureSurveyPages(groupedDMs, comparisonPages);
     }
 
 
     onAfterRenderPage = (sender, options) => {
-        // time spent on each page 
+        // setTimeout makes the scroll work consistently
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 25);
+
+        // record start time after first page completed
+        if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+            this.setState({
+                firstPageCompleted: true,
+                startTime: new Date().toString()
+            });
+        }
+
         const pageName = options.page.name;
-        
+
         if (Object.keys(this.pageStartTimes).length > 0) {
             this.timerHelper()
         }
@@ -115,7 +138,7 @@ class SurveyPage extends React.Component {
         this.pageStartTimes[pageName] = new Date();
     }
 
-    timerHelper() {
+    timerHelper = () => {
         const previousPageName = Object.keys(this.pageStartTimes).pop();
         const endTime = new Date();
         const startTime = this.pageStartTimes[previousPageName];
@@ -128,16 +151,13 @@ class SurveyPage extends React.Component {
     }
 
     getPageQuestions = (pageName) => {
-        // return all of the questions on a page
+        // returns every question on the page
         const page = this.survey.getPageByName(pageName);
-        if (page) {
-            return page.questions.map(question => question.name);
-        }
-        return [];
-    }
+        return page ? page.questions.map(question => question.name) : [];
+    };
 
-    onSurveyComplete = (survey) => {
-        // capture time spent on last page
+
+    uploadSurveyData = (survey) => {
         this.timerHelper()
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
@@ -150,7 +170,13 @@ class SurveyPage extends React.Component {
                 const pageQuestions = this.getPageQuestions(pageName);
 
                 pageQuestions.forEach(questionName => {
-                    const questionValue = survey.valuesHash[questionName];
+                    let questionValue;
+                    if (survey.valuesHash[questionName + "-Comment"]) {
+                        // edge case for "Other" response
+                        questionValue = survey.valuesHash[questionName + "-Comment"]
+                    } else {
+                        questionValue = survey.valuesHash[questionName];
+                    }
                     this.surveyData[pageName].questions[questionName] = {
                         response: questionValue
                     };
@@ -161,6 +187,8 @@ class SurveyPage extends React.Component {
         // attach user data to results
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
+        this.surveyData.startTime = this.state.startTime
+        this.surveyData.surveyVersion = this.state.surveyVersion
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -168,6 +196,33 @@ class SurveyPage extends React.Component {
                 this.uploadButtonRef.current.click();
             }
         });
+    }
+
+    onSurveyComplete = (survey) => {
+        // final upload
+        this.uploadSurveyData(survey);
+    }
+
+    onValueChanged = (sender, options) => {
+        // ensures partial data will be saved if someone needs to step away from the survey
+        if (!this.state.surveyId) {
+            this.setState({ surveyId: getUID() }, () => {
+                this.uploadSurveyData(sender);
+            })
+        } else {
+            this.uploadSurveyData(sender);
+        }
+    }
+
+    componentDidMount() {
+        this.detectiPad();
+    }
+
+    detectiPad = () => {
+        const isiPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
+        if (isiPad) {
+            this.setState({ iPad: true });
+        }
     }
 
     render() {
@@ -181,9 +236,9 @@ class SurveyPage extends React.Component {
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
                                     uploadSurveyResults({
-                                        variables: { results: this.surveyData }
-                                    })
-                                    this.setState({ uploadData: false })
+                                        variables: { surveyId: this.state.surveyId, results: this.surveyData }
+                                    });
+                                    this.setState({ uploadData: false });
                                 }}></button>
                             </div>
                         )}

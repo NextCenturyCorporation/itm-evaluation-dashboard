@@ -49,7 +49,7 @@ function ActionsCompare() {
 }
 
 function Survey(currentUser) {
-    return <SurveyPage currentUser={currentUser} />
+    return <SurveyPage currentUser={currentUser?.currentUser} />
 }
 
 

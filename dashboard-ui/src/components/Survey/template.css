@@ -1,0 +1,39 @@
+.card-header {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
+
+.card {
+  margin-bottom: 1rem;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.card-text {
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.list-group {
+  font-size: 10px;
+}
+
+.modal-body {
+  font-size: 12px;
+}
+
+.accordion-body {
+  white-space: normal;
+  word-break: break-word;
+  font-size: 12px;
+}
+
+.magnifying-glass-icon:hover {
+  transform: scale(1.5);
+  cursor: 'pointer'
+}
+
+.vitals-list-group {
+  max-height: 150px;
+  overflow-y: auto;
+}
