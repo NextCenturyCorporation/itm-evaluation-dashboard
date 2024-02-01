@@ -182,7 +182,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={this.handleShowModal}/></Card.Header>
               <Card.Body>
                 {this.situation.map((detail, index) => (
-                  <Card.Text key={index}>{detail}</Card.Text>
+                  <Card.Text key={"detail-"+index}>{detail}</Card.Text>
                 ))}
               </Card.Body>
             </Card>
@@ -190,7 +190,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
               <Card.Header>Supplies / Resources</Card.Header>
               <Card.Body>
                 {this.supplies.map((supplies, index) => (
-                  <Card.Text key={index}>
+                  <Card.Text key={supplies.type}>
                     {supplies.quantity ? supplies.quantity : ""} {supplies.type}
                   </Card.Text>
                 ))}
@@ -204,7 +204,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
                 <Card.Subtitle className="mb-2"><strong>{this.dmName}</strong></Card.Subtitle>
                 <ListGroup>
                   {this.actions.map((action, index) => (
-                    <ListGroup.Item key={index}>{action}</ListGroup.Item>
+                    <ListGroup.Item key={"action-"+index}>{action}</ListGroup.Item>
                   ))}
                 </ListGroup>
                 <Card.Text className="my-2"><strong>Explanation: </strong>{this.explanation}</Card.Text>
@@ -212,7 +212,7 @@ export class StaticTemplate extends SurveyQuestionElementBase {
             </Card>
             <div style={cardStyle}>
               {this.patients.map((patient, index) => (
-                <Card key={index}>
+                <Card key={patient.name}>
                   <Card.Header>
                     <Row>
                       <Col xs={6} md={4} style={{ borderRight: '1px solid #dee2e6' }}>
@@ -251,7 +251,6 @@ export class StaticTemplate extends SurveyQuestionElementBase {
       </div>);
   }
 }
-
 // Register `StaticTemplate` as a class that renders `static-template` questions 
 ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
   return React.createElement(StaticTemplate, props);

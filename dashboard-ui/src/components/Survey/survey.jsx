@@ -155,7 +155,7 @@ class SurveyPage extends Component {
         const page = this.survey.getPageByName(pageName);
         return page ? page.questions.map(question => question.name) : [];
     };
-    
+
 
     uploadSurveyData = (survey) => {
         this.timerHelper()
@@ -170,7 +170,13 @@ class SurveyPage extends Component {
                 const pageQuestions = this.getPageQuestions(pageName);
 
                 pageQuestions.forEach(questionName => {
-                    const questionValue = survey.valuesHash[questionName];
+                    let questionValue;
+                    if (survey.valuesHash[questionName + "-Comment"]) {
+                        // edge case for "Other" response
+                        questionValue = survey.valuesHash[questionName + "-Comment"]
+                    } else {
+                        questionValue = survey.valuesHash[questionName];
+                    }
                     this.surveyData[pageName].questions[questionName] = {
                         response: questionValue
                     };
@@ -194,17 +200,17 @@ class SurveyPage extends Component {
 
     onSurveyComplete = (survey) => {
         // final upload
-        this.uploadSurveyData(survey)
+        this.uploadSurveyData(survey);
     }
 
     onValueChanged = (sender, options) => {
         // ensures partial data will be saved if someone needs to step away from the survey
         if (!this.state.surveyId) {
             this.setState({ surveyId: getUID() }, () => {
-                this.uploadSurveyData(sender)
+                this.uploadSurveyData(sender);
             })
         } else {
-            this.uploadSurveyData(sender)
+            this.uploadSurveyData(sender);
         }
     }
 
@@ -215,8 +221,8 @@ class SurveyPage extends Component {
     detectiPad = () => {
         const isiPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
         if (isiPad) {
-            this.setState({iPad: true})  
-        } 
+            this.setState({ iPad: true });
+        }
     }
 
     render() {
@@ -231,8 +237,8 @@ class SurveyPage extends Component {
                                     e.preventDefault();
                                     uploadSurveyResults({
                                         variables: { surveyId: this.state.surveyId, results: this.surveyData }
-                                    })
-                                    this.setState({ uploadData: false })
+                                    });
+                                    this.setState({ uploadData: false });
                                 }}></button>
                             </div>
                         )}

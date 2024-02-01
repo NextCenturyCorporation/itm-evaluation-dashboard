@@ -248,7 +248,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         // button for each patient
         const patientButtons = this.patients.map((patient, index) => (
             <Button
-                key={index}
+                key={patient.name}
                 variant={this.state.visiblePatients[patient.name] ? "primary" : "secondary"}
                 onClick={() => this.togglePatientVisibility(patient.name)}
                 className="me-1"
@@ -263,7 +263,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             // render card if toggled to visible
             if (this.state.visiblePatients[patient.name]) {
                 return (
-                    <Card key={index} style={patientCardStyle}>
+                    <Card key={patient.name} style={patientCardStyle}>
                         <Card.Header>
                             <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
                         </Card.Header>
@@ -275,7 +275,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                             <Col md={4} className="pe-md-2 my-1" style={vitalsColStyle}>
                                 <ListGroup className="vitals-list-group">
                                     {patient.vitals?.map((vital, vitalIndex) => (
-                                        <ListGroup.Item key={vitalIndex}>
+                                        <ListGroup.Item key={vital.name}>
                                             <strong>{vital.name}:</strong> {vital.value}
                                         </ListGroup.Item>
                                     ))}
@@ -303,7 +303,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                             <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={this.handleShowSituationModal} /></Card.Header>
                             <Card.Body>
                                 {this.situation.map((detail, index) => (
-                                    <Card.Text key={index}>{detail}</Card.Text>
+                                    <Card.Text key={"detail-"+index}>{detail}</Card.Text>
                                 ))}
                             </Card.Body>
                         </Card>
@@ -311,7 +311,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                             <Card.Header>Supplies / Resources</Card.Header>
                             <Card.Body>
                                 {this.supplies.map((supplies, index) => (
-                                    <Card.Text key={index}>
+                                    <Card.Text key={supplies.type}>
                                         {supplies.quantity ? supplies.quantity : ""} {supplies.type}
                                     </Card.Text>
                                 ))}
@@ -328,7 +328,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                         <Accordion.Body>
                                             <ListGroup>
                                                 {this.actions.map((action, index) => (
-                                                    <ListGroup.Item key={index}>{action}</ListGroup.Item>
+                                                    <ListGroup.Item key={"action-"+index}>{action}</ListGroup.Item>
                                                 ))}
                                             </ListGroup>
                                             <div className="my-2"><strong>Explanation:</strong> {this.explanation}</div>
