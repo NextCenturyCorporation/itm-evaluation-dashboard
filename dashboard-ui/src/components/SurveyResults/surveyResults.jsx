@@ -6,9 +6,9 @@ import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
 import surveyConfig from '../Survey/surveyConfig.json';
-import { Modal } from "react-bootstrap";
+import { Modal } from "@mui/material";
 import { ResultsTable } from './resultsTable';
-
+import CloseIcon from '@material-ui/icons/Close';
 
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
@@ -183,6 +183,10 @@ export function SurveyResults() {
         }
     }
 
+    const closeModal = () => {
+        setShowTable(false);
+    }
+
 
     return (<>
         {loading && <p>Loading</p>}
@@ -197,11 +201,11 @@ export function SurveyResults() {
                 </section>
             </div>
             {selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData}></ScenarioGroup>}
-            <Modal className='table-modal' show={showTable} onHide={() => setShowTable(false)}>
-                <Modal.Header closeButton />
-                <Modal.Body>
+            <Modal className='table-modal' open={showTable} onClose={closeModal}>
+                <div className='modal-body'>
+                    <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                     <ResultsTable data={data.getAllSurveyResults} />
-                </Modal.Body>
+                </div>
             </Modal>
         </>}
     </>);

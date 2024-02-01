@@ -1,5 +1,5 @@
 .resultTableSection {
-    max-height: 80vh;
+    max-height: 75vh;
     border: 2px solid black;
     border-radius: 8px;
     margin: 12px;
@@ -31,6 +31,7 @@ thead {
     position: sticky;
     top: 0;
     border-collapse: separate;
+    z-index: 1;
 }
 
 td {

@@ -87,6 +87,7 @@
     margin-left: 8px;
     text-decoration: underline;
 }
+
 .selection-header {
     display: flex;
     flex-direction: row;
@@ -107,23 +108,40 @@
     background-color: darkgrey;
     color: white;
 }
-.table-modal {
-    width: 100%;
+.table-modal>.modal-body {
+    background-color: white;
+    margin: 20px 14px auto 14px;
+    width: calc(100% - 28px);
+    height: fit-content;
+    padding: 12px;
+    border: 2px solid black;
+    border-radius: 12px;
 }
 
-.modal {
-    --bs-modal-width: 100%;
-}
-
-.modal-content {
+.table-modal .modal-content {
     min-height: 60vh;
+    height: fit-content;
 }
 
-.modal-content td,
-.modal-content th {
+.table-modal td,
+.table-modal th {
     font-size: 14px;
 }
 
-.modal-content button {
+.table-modal button {
     font-size: 16px;
+}
+.close-icon {
+    padding: 10px 4px;
+    border-radius: 100%;
+}
+
+.close-icon:hover {
+    cursor: pointer;
+    background-color: rgb(220, 219, 219);
+}
+
+.close-icon:active {
+    cursor: pointer;
+    background-color: rgb(195, 193, 193);
 }
