@@ -6,6 +6,9 @@ import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
 import surveyConfig from '../Survey/surveyConfig.json';
+import { Modal } from "react-bootstrap";
+import { ResultsTable } from './resultsTable';
+
 
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
@@ -135,6 +138,7 @@ export function SurveyResults() {
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState(-1);
     const [resultData, setResultData] = React.useState(null);
+    const [showTable, setShowTable] = React.useState(false);
 
     React.useEffect(() => {
         if (data) {
@@ -185,7 +189,7 @@ export function SurveyResults() {
         {error && <p>Error</p>}
         {data && <>
             <div className="selection-box">
-                <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}<a href='/survey-results/table'><button className='navigateBtn'>View Tabulated Data</button></a></div>
+                <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}<button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button></div>
                 <section className="button-section">
                     {scenarioIndices?.map((index) => {
                         return <button key={"scenario_btn_" + index} disabled={index === selectedScenario} onClick={() => setSelectedScenario(index)} className="selection-btn">Scenario {index}</button>
@@ -193,6 +197,12 @@ export function SurveyResults() {
                 </section>
             </div>
             {selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData}></ScenarioGroup>}
+            <Modal className='table-modal' show={showTable} onHide={() => setShowTable(false)}>
+                <Modal.Header closeButton />
+                <Modal.Body>
+                    <ResultsTable data={data.getAllSurveyResults} />
+                </Modal.Body>
+            </Modal>
         </>}
     </>);
 }

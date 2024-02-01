@@ -27,7 +27,6 @@ import 'react-dual-listbox/lib/react-dual-listbox.css';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
-import { ResultsTable } from '../SurveyResults/resultsTable';
 
 const history = createBrowserHistory();
 
@@ -209,9 +208,6 @@ export class App extends React.Component {
                             </Route>
                             <Route path="/survey">
                                 <Survey currentUser={this.state.currentUser} />
-                            </Route>
-                            <Route path="/survey-results/table">
-                                <ResultsTable />
                             </Route>
                             <Route path="/survey-results">
                                 <SurveyResults />

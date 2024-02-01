@@ -2,17 +2,10 @@ import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './resultsTable.css';
-import { useQuery } from '@apollo/react-hooks';
-import gql from "graphql-tag";
-import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 
 /* A list of names that are not pages to record in the excel sheet */
 const NON_PAGES = ['user', 'surveyVersion', 'startTime', 'timeComplete', 'Participant ID'];
 
-const GET_SURVEY_RESULTS = gql`
-    query GetSurveyResults{
-        getAllSurveyResults
-    }`;
 
 function formatTime(seconds) {
     seconds = Math.round(seconds);
@@ -23,8 +16,7 @@ function formatTime(seconds) {
     return `${minutes}:${formatted_seconds}`
 }
 
-export function ResultsTable() {
-    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS);
+export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
     const [headers, setHeaders] = React.useState(['Participant Id', 'Username', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation']);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -33,11 +25,9 @@ export function ResultsTable() {
     React.useEffect(() => {
         // every time data updates, we need to go through and get all the participant data, 
         // putting it in an object
-        if (data) {
-            console.log(data)
             const allObjs = [];
             const allHeaders = [...headers];
-            for (let entry of data.getAllSurveyResults) {
+        for (let entry of data) {
                 entry = entry.results;
                 const entryObj = {};
                 entryObj['Participant Id'] = entry?.user?.id;
@@ -86,8 +76,7 @@ export function ResultsTable() {
                 allObjs.push(entryObj);
             }
             setFormattedData(allObjs);
-            setHeaders(allHeaders);
-        }
+        setHeaders(allHeaders);
     }, [data]);
     const exportToExcel = async () => {
         const ws = XLSX.utils.json_to_sheet(formattedData);
@@ -99,13 +88,8 @@ export function ResultsTable() {
     }
 
     return (<>
-        {loading && <p>Loading</p>}
-        {error && <p>Error</p>}
         {data && <><section className='tableHeader'>
-            <div className="back-header">
-                <a href="/survey-results" className="back-icon"><ArrowBackIosIcon /></a>
-                <h2>Tabulated Survey Results</h2>
-            </div>
+            <h2>Tabulated Survey Results</h2>
             <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
         </section>
             <div className='resultTableSection'>
