@@ -41,12 +41,13 @@ class SurveyPage extends Component {
 
     configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment) => {
         // set pages to dynamic or static
+        /* commenting out randomization of dynamic or static for 2-2
         Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
             const page = surveyConfig.pages.find(page => page.name === pageName);
             if (page) {
                 page.elements[0].type = `${templateType}-template`;
             }
-        });
+        });*/
 
         //randomization scheme
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
