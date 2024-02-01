@@ -193,7 +193,6 @@ export function SurveyResults() {
                 </section>
             </div>
             {selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData}></ScenarioGroup>}
-
         </>}
     </>);
 }
