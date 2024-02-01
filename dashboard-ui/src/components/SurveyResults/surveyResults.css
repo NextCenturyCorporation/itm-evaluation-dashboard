@@ -1,0 +1,89 @@
+.selection-btn {
+    background-color: transparent;
+    border: 2px solid black;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: auto 8px;
+}
+
+.selection-btn:disabled {
+    background-color: rgb(142, 142, 142);
+    border: 2px solid rgb(73, 73, 73);
+    color: white;
+}
+
+.selection-btn:hover:enabled {
+    cursor: pointer;
+    background-color: rgb(224, 224, 224);
+}
+
+.selection-btn:active:enabled {
+    background-color: rgb(199, 199, 199);
+}
+
+.button-section {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.selection-box {
+    padding: 12px 8px 12px 24px;
+    border-bottom: 1px solid black;
+    margin-bottom: 12px;
+    position: sticky;
+    top: 0;
+    background-color: #F8F8F8;
+    z-index: 1;
+}
+
+.scenario-group {
+    border: 1px solid black;
+}
+
+.singletons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.singletons>* {
+    width: 50%;
+    border-right: 1px solid black;
+    padding: 8px;
+}
+
+.singletons>*:last-child {
+    border-right: none;
+}
+
+.scenario-header {
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid black;
+}
+
+.sa-question-layouted {
+    width: 100%;
+}
+
+.sa-toolbar {
+    display: none;
+}
+
+.sa-visualizer__toolbar {
+    display: none;
+}
+
+.sa-visualizer__footer {
+    display: none;
+}
+
+.modebar-container {
+    display: none;
+}
+
+.page-name {
+    margin-left: 8px;
+    text-decoration: underline;
+}
