@@ -358,8 +358,3 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         );
     }
 }
-
-// Register `DynamicTemplace` as a class that renders `dynamic-template` questions 
-ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
-    return React.createElement(DynamicTemplate, props);
-});

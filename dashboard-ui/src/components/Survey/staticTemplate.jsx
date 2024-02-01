@@ -251,7 +251,3 @@ export class StaticTemplate extends SurveyQuestionElementBase {
       </div>);
   }
 }
-// Register `StaticTemplate` as a class that renders `static-template` questions 
-ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
-  return React.createElement(StaticTemplate, props);
-});

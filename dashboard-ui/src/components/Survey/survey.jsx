@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import 'survey-core/defaultV2.min.css'
 import { Model } from 'survey-core'
-import { Survey } from "survey-react-ui"
+import { Survey, ReactQuestionFactory } from "survey-react-ui"
 import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
@@ -251,3 +251,11 @@ class SurveyPage extends Component {
 }
 
 export default SurveyPage;
+
+ReactQuestionFactory.Instance.registerQuestion("dynamic-template", (props) => {
+    return React.createElement(DynamicTemplate, props);
+});
+
+ReactQuestionFactory.Instance.registerQuestion("static-template", (props) => {
+    return React.createElement(StaticTemplate, props);
+});
