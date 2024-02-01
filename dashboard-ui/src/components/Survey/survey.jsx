@@ -39,7 +39,7 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
     }
 
-    configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment) => {
+    configureSurveyPages = (groupedDMs, comparisonPages) => {
         // set pages to dynamic or static
         /* commenting out randomization of dynamic or static for 2-2
         Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
@@ -92,7 +92,6 @@ class SurveyPage extends Component {
         });
 
         surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
-        console.log(surveyConfig.pages)
     }
 
     initializeSurvey = () => {
@@ -112,7 +111,7 @@ class SurveyPage extends Component {
 
         const comparisonPages = surveyConfig.comparisonPages
 
-        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment);
+        this.configureSurveyPages(groupedDMs, comparisonPages);
     }
 
 
@@ -216,11 +215,8 @@ class SurveyPage extends Component {
     detectiPad = () => {
         const isiPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
         if (isiPad) {
-            this.setState({iPad: true})
-            console.log("iPad detected");
-        } else {
-            console.log("not iPad");
-        }
+            this.setState({iPad: true})  
+        } 
     }
 
     render() {
