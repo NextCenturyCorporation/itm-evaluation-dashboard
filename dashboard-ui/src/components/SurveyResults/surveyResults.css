@@ -87,3 +87,23 @@
     margin-left: 8px;
     text-decoration: underline;
 }
+.selection-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.navigateBtn {
+    border-radius: 4px;
+}
+
+.navigateBtn:hover {
+    cursor: pointer;
+    background-color: rgb(204, 204, 204);
+}
+
+.navigateBtn:active {
+    cursor: pointer;
+    background-color: darkgrey;
+    color: white;
+}

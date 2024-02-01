@@ -76,10 +76,16 @@ tr:nth-child(2n+1) td {
     margin-right: 8px;
     padding-left: 8px;
     justify-content: center;
+    border-radius: 100%;
 }
 
 .back-icon:hover {
-    background-color: grey;
+    background-color: rgb(177, 177, 177);
+        cursor: pointer;
+    }
+    
+    .back-icon:active {
+        background-color: rgb(147, 147, 147);
     cursor: pointer;
 }
 

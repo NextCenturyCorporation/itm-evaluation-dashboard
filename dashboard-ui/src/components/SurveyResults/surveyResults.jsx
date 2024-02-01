@@ -185,7 +185,7 @@ export function SurveyResults() {
         {error && <p>Error</p>}
         {data && <>
             <div className="selection-box">
-                {scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}
+                <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}<a href='/survey-results/table'><button className='navigateBtn'>View Tabulated Data</button></a></div>
                 <section className="button-section">
                     {scenarioIndices?.map((index) => {
                         return <button key={"scenario_btn_" + index} disabled={index === selectedScenario} onClick={() => setSelectedScenario(index)} className="selection-btn">Scenario {index}</button>
