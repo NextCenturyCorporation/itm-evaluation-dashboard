@@ -143,7 +143,7 @@ export function SurveyResults() {
                 if (result.results) {
                     for (const x of Object.keys(result.results)) {
                         const res = result.results[x];
-                        if (res.scenarioIndex === selectedScenario) {
+                        if (res?.scenarioIndex === selectedScenario) {
                             // TODO: prep data to send to surveyGroup
                             const indexBy = res.pageType + '_' + res.pageName;
                             if (Object.keys(separatedData).includes(indexBy)) {
@@ -165,7 +165,7 @@ export function SurveyResults() {
         for (const result of data.getAllSurveyResults) {
             if (result.results) {
                 for (const x of Object.keys(result.results)) {
-                    if (result.results[x].scenarioIndex) {
+                    if (result.results[x]?.scenarioIndex) {
                         indices.push(result.results[x].scenarioIndex);
                     }
                 }
