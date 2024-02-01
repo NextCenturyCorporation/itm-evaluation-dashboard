@@ -25,57 +25,57 @@ export function ResultsTable({ data }) {
     React.useEffect(() => {
         // every time data updates, we need to go through and get all the participant data, 
         // putting it in an object
-            const allObjs = [];
-            const allHeaders = [...headers];
+        const allObjs = [];
+        const allHeaders = [...headers];
         for (let entry of data) {
-                entry = entry.results;
-                const entryObj = {};
-                entryObj['Participant Id'] = entry?.user?.id;
-                entryObj['Username'] = entry?.user?.username;
-                entryObj['Survey Version'] = entry?.surveyVersion;
-                entryObj['Start Time'] = new Date(entry?.startTime)?.toLocaleString();
-                entryObj['End Time'] = new Date(entry?.timeComplete)?.toLocaleString();
-                const timeDifSeconds = (new Date(entry?.timeComplete).getTime() - new Date(entry?.startTime).getTime()) / 1000;
-                entryObj['Total Time'] = formatTime(timeDifSeconds);
-                entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response.includes('NOT')).toString();
-                for (const page of Object.keys(entry)) {
-                    if (!NON_PAGES.includes(page) && typeof (entry[page]) === 'object') {
-                        // get all keys from the page and name them nicely within the excel
-                        for (const key of Object.keys(entry[page])) {
-                            if (key === 'timeSpentOnPage') {
-                                const header_name = page + ' - Time Taken (mm:ss)';
-                                if (!allHeaders.includes(header_name)) {
-                                    allHeaders.push(header_name);
-                                }
-                                entryObj[header_name] = formatTime(entry[page][key]);
+            entry = entry.results;
+            const entryObj = {};
+            entryObj['Participant Id'] = entry?.user?.id;
+            entryObj['Username'] = entry?.user?.username;
+            entryObj['Survey Version'] = entry?.surveyVersion;
+            entryObj['Start Time'] = new Date(entry?.startTime)?.toLocaleString();
+            entryObj['End Time'] = new Date(entry?.timeComplete)?.toLocaleString();
+            const timeDifSeconds = (new Date(entry?.timeComplete).getTime() - new Date(entry?.startTime).getTime()) / 1000;
+            entryObj['Total Time'] = formatTime(timeDifSeconds);
+            entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response.includes('NOT')).toString();
+            for (const page of Object.keys(entry)) {
+                if (!NON_PAGES.includes(page) && typeof (entry[page]) === 'object') {
+                    // get all keys from the page and name them nicely within the excel
+                    for (const key of Object.keys(entry[page])) {
+                        if (key === 'timeSpentOnPage') {
+                            const header_name = page + ' - Time Taken (mm:ss)';
+                            if (!allHeaders.includes(header_name)) {
+                                allHeaders.push(header_name);
                             }
-                            if (key === 'questions') {
-                                for (const q of Object.keys(entry[page]['questions'])) {
-                                    const header_name = q.replace('The information about the situation and the medical decisions were presented in an understandable, easy-to-use format', 'Understandable Format')
-                                        .replace('Rate your confidence about the delegation decision indicated in the previous question', 'Delegation Confidence')
-                                        .replace('I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)', 'Completed Disaster Response Training')
-                                        .replace('How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)', 'Disaster Drill Count')
-                                        .replace('I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs', 'I had enough information to answer these questions');
-                                    if (typeof (entry[page][key][q].response) === 'string') {
-                                        entryObj[header_name] = entry[page][key][q].response;
-                                        if (!allHeaders.includes(header_name)) {
-                                            allHeaders.push(header_name);
-                                        }
+                            entryObj[header_name] = formatTime(entry[page][key]);
+                        }
+                        if (key === 'questions') {
+                            for (const q of Object.keys(entry[page]['questions'])) {
+                                const header_name = q.replace('The information about the situation and the medical decisions were presented in an understandable, easy-to-use format', 'Understandable Format')
+                                    .replace('Rate your confidence about the delegation decision indicated in the previous question', 'Delegation Confidence')
+                                    .replace('I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)', 'Completed Disaster Response Training')
+                                    .replace('How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)', 'Disaster Drill Count')
+                                    .replace('I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs', 'I had enough information to answer these questions');
+                                if (typeof (entry[page][key][q].response) === 'string') {
+                                    entryObj[header_name] = entry[page][key][q].response;
+                                    if (!allHeaders.includes(header_name)) {
+                                        allHeaders.push(header_name);
                                     }
-                                    else if (entry[page][key][q].response && typeof (entry[page][key][q].response) !== 'object') {
-                                        if (!allHeaders.includes(header_name)) {
-                                            allHeaders.push(header_name);
-                                        }
-                                        entryObj[header_name] = entry[page][key][q].response.toString();
+                                }
+                                else if (entry[page][key][q].response && typeof (entry[page][key][q].response) !== 'object') {
+                                    if (!allHeaders.includes(header_name)) {
+                                        allHeaders.push(header_name);
                                     }
+                                    entryObj[header_name] = entry[page][key][q].response.toString();
                                 }
                             }
                         }
                     }
                 }
-                allObjs.push(entryObj);
             }
-            setFormattedData(allObjs);
+            allObjs.push(entryObj);
+        }
+        setFormattedData(allObjs);
         setHeaders(allHeaders);
     }, [data]);
     const exportToExcel = async () => {
