@@ -95,6 +95,13 @@ export function ResultsTable({ data }) {
                 allObjs.push(entryObj);
             }
         }
+        for (let obj of allObjs) {
+            for (const header of allHeaders) {
+                if (!(header in obj)) {
+                    obj[header] = '-';
+                }
+            }
+        }
         setFormattedData(allObjs);
         setHeaders(allHeaders);
         setVersions(tmpVersion);
