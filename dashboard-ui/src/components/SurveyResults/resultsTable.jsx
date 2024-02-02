@@ -2,6 +2,12 @@ import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './resultsTable.css';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import ListItemText from '@mui/material/ListItemText';
+import Select from '@mui/material/Select';
+import Checkbox from '@mui/material/Checkbox';
 
 /* A list of names that are not pages to record in the excel sheet */
 const NON_PAGES = ['user', 'surveyVersion', 'startTime', 'timeComplete', 'Participant ID'];
@@ -18,6 +24,9 @@ function formatTime(seconds) {
 
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
+    const [filterBySurveyVersion, setVersionOption] = React.useState(['All']);
+    const [versions, setVersions] = React.useState(['All']);
+    const [selectAll, setSelectAll] = React.useState(true);
     const [headers, setHeaders] = React.useState(['Participant Id', 'Username', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation']);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
@@ -27,12 +36,21 @@ export function ResultsTable({ data }) {
         // putting it in an object
         const allObjs = [];
         const allHeaders = [...headers];
+        const tmpVersion = ['All'];
         for (let entry of data) {
             entry = entry.results;
             const entryObj = {};
+            let addToTable = true;
+            const version = entry?.surveyVersion
+            if (!filterBySurveyVersion.includes(version) && !selectAll) {
+                addToTable = false;
+            }
             entryObj['Participant Id'] = entry?.user?.id;
             entryObj['Username'] = entry?.user?.username;
-            entryObj['Survey Version'] = entry?.surveyVersion;
+            entryObj['Survey Version'] = version;
+            if (version && !tmpVersion.includes(version)) {
+                tmpVersion.push(version);
+            }
             entryObj['Start Time'] = new Date(entry?.startTime)?.toLocaleString();
             entryObj['End Time'] = new Date(entry?.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry?.timeComplete).getTime() - new Date(entry?.startTime).getTime()) / 1000;
@@ -73,11 +91,16 @@ export function ResultsTable({ data }) {
                     }
                 }
             }
-            allObjs.push(entryObj);
+            if (addToTable) {
+                allObjs.push(entryObj);
+            }
         }
         setFormattedData(allObjs);
         setHeaders(allHeaders);
-    }, [data]);
+        setVersions(tmpVersion);
+    }, [data, filterBySurveyVersion]);
+
+
     const exportToExcel = async () => {
         const ws = XLSX.utils.json_to_sheet(formattedData);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
@@ -85,12 +108,54 @@ export function ResultsTable({ data }) {
         const data = new Blob([excelBuffer], { type: fileType });
         // TODO: make survey name easier to modify
         FileSaver.saveAs(data, 'survey_data' + fileExtension);
-    }
+    };
+
+    const updateVersions = (selected) => {
+        if (selected.target.value.includes('All') && !selectAll) {
+            setSelectAll(true);
+            setVersionOption([...versions]);
+        } else {
+            setVersionOption([...selected.target.value]);
+        }
+    };
+
+    const clickedVersion = () => {
+        if (selectAll) {
+            setSelectAll(false);
+        }
+    };
+
+    React.useEffect(() => {
+        if (!selectAll) {
+            setVersionOption(filterBySurveyVersion.filter((x) => x !== 'All'));
+        } else {
+            setVersionOption([...versions]);
+        }
+    }, [selectAll]);
 
     return (<>
         {data && <><section className='tableHeader'>
             <h2>Tabulated Survey Results</h2>
+            <div className="option-section">
+                <FormControl className='version-select'>
+                    <InputLabel>Survey Version</InputLabel>
+                    <Select
+                        multiple
+                        value={filterBySurveyVersion}
+                        label="Survey Version"
+                        renderValue={(selected) => selectAll ? 'All' : selected.join(', ')}
+                        onChange={updateVersions}
+                    >
+                        {versions.map((v) => {
+                            return <MenuItem onClick={clickedVersion} key={v} value={v}>
+                                <Checkbox checked={filterBySurveyVersion.indexOf(v) > -1 || selectAll} />
+                                <ListItemText primary={v} />
+                            </MenuItem>;
+                        })}
+                    </Select>
+                </FormControl>
             <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+            </div>
         </section>
             <div className='resultTableSection'>
                 <table>
