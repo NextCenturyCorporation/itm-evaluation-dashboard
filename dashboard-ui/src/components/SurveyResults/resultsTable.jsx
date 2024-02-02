@@ -106,8 +106,7 @@ export function ResultsTable({ data }) {
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        // TODO: make survey name easier to modify
-        FileSaver.saveAs(data, 'survey_data' + fileExtension);
+        FileSaver.saveAs(data, 'survey_data_v' + filterBySurveyVersion.join('_v') + fileExtension);
     };
 
     const updateVersions = (selected) => {
