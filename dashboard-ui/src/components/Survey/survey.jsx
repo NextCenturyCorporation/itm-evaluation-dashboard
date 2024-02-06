@@ -39,15 +39,14 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
     }
 
-    configureSurveyPages = (groupedDMs, comparisonPages) => {
+    configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment) => {
         // set pages to dynamic or static
-        /* commenting out randomization of dynamic or static for 2-2
         Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
             const page = surveyConfig.pages.find(page => page.name === pageName);
             if (page) {
                 page.elements[0].type = `${templateType}-template`;
             }
-        });*/
+        });
 
         //randomization scheme
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
@@ -99,7 +98,6 @@ class SurveyPage extends Component {
         // also randomizes static or dynamic presentation style (Will always be two pairs for each)
         let groupedDMs = shuffle(surveyConfig.groupedDMs)
 
-        /* COMMENTING OUT RANDOMIZATION OF STATIC OR DYNAMIC FOR 2-2 SESSION
         let templateAssignment = {};
         groupedDMs.forEach((group, index) => {
             templateAssignment[group[0]] = index % 2 === 0 ? 'static' : 'dynamic';
@@ -107,11 +105,10 @@ class SurveyPage extends Component {
         });
 
         groupedDMs = shuffle(groupedDMs)
-        */
 
         const comparisonPages = surveyConfig.comparisonPages
 
-        this.configureSurveyPages(groupedDMs, comparisonPages);
+        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment);
     }
 
 

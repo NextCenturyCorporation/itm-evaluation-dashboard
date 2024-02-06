@@ -209,40 +209,6 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     renderElement() {
-        const cardContainerStyle = {
-            overflowX: 'auto',
-            overflowY: 'hidden',
-            whiteSpace: 'nowrap'
-        };
-
-        const patientCardStyle = {
-            display: 'inline-block',
-            minWidth: '40%',
-            maxWidth: '40%',
-            marginRight: '0.33%',
-        };
-
-        const magnifyingGlassStyle = {
-            position: 'absolute',
-            bottom: '10px',
-            left: '10px',
-            color: 'white',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            borderRadius: '50%',
-            padding: '5px',
-            cursor: 'pointer',
-            transition: 'transform 0.5s ease-in-out'
-        };
-
-        const vitalsColStyle = {
-            overflowY: 'auto'     // Scrollbar for overflowing content
-        };
-
-        const rowStyle = {
-            display: 'flex',
-            alignItems: 'start',
-            overflow: 'hidden'
-        };
 
         // button for each patient
         const patientButtons = this.patients.map((patient, index) => (
@@ -262,17 +228,19 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             // render card if toggled to visible
             if (this.state.visiblePatients[patient.name]) {
                 return (
-                    <Card key={patient.name} style={patientCardStyle}>
+                    <Card key={patient.name} className="patient-card" style={{display: 'inline-block'}}>
                         <Card.Header>
                             <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
                         </Card.Header>
-                        <Row className="g-0" style={rowStyle}>
-                            <Col md={8} className="pe-md-2">
-                                <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} style={{ width: '100%', height: '100%' }}></img>
-                                <ZoomInIcon style={magnifyingGlassStyle} className="magnifying-glass-icon" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
+                        <Row className="g-0">
+                            <Col md={8} className="mr-4">
+                                <div style={{ position: 'relative'}}>
+                                    <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
+                                    <ZoomInIcon className="magnifying-glass" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
+                                </div>
                             </Col>
-                            <Col md={4} className="pe-md-2 my-1" style={vitalsColStyle}>
-                                <ListGroup className="vitals-list-group">
+                            <Col md={4}>
+                                <ListGroup className="ms-1 vitals-list-group">
                                     {patient.vitals?.map((vital, vitalIndex) => (
                                         <ListGroup.Item key={vital.name}>
                                             <strong>{vital.name}:</strong> {vital.value}
@@ -289,7 +257,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         });
 
         return (
-            <div style={this.style}>
+            <div>
                 {this.state.showSituationModal &&
                     <SituationModal
                         show={this.state.showSituationModal}
@@ -302,7 +270,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                             <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={this.handleShowSituationModal} /></Card.Header>
                             <Card.Body>
                                 {this.situation.map((detail, index) => (
-                                    <Card.Text key={"detail-"+index}>{detail}</Card.Text>
+                                    <Card.Text key={"detail-" + index}>{detail}</Card.Text>
                                 ))}
                             </Card.Body>
                         </Card>
@@ -327,7 +295,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                         <Accordion.Body>
                                             <ListGroup>
                                                 {this.actions.map((action, index) => (
-                                                    <ListGroup.Item key={"action-"+index}>{action}</ListGroup.Item>
+                                                    <ListGroup.Item key={"action-" + index}>{action}</ListGroup.Item>
                                                 ))}
                                             </ListGroup>
                                             <div className="my-2"><strong>Explanation:</strong> {this.explanation}</div>
@@ -339,7 +307,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                         <div style={{ marginBottom: '10px' }}>
                             {patientButtons}
                         </div>
-                        <div style={cardContainerStyle}>
+                        <div className="card-container">
                             {patientCards}
                         </div>
                     </Col>
