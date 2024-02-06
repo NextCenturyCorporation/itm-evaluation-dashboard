@@ -5,6 +5,7 @@ import { Accordion, Card, Row, Col, Button, ListGroup, Modal } from "react-boots
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import SituationModal from "./situationModal";
+import VitalsDropdown from "./vitalsDropdown";
 import './template.css'
 
 const CUSTOM_TYPE = "dynamic-template";
@@ -228,25 +229,19 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             // render card if toggled to visible
             if (this.state.visiblePatients[patient.name]) {
                 return (
-                    <Card key={patient.name} className="patient-card" style={{display: 'inline-block'}}>
+                    <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
                         <Card.Header>
                             <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
                         </Card.Header>
                         <Row className="g-0">
                             <Col md={8} className="mr-4">
-                                <div style={{ position: 'relative'}}>
+                                <div style={{ position: 'relative' }}>
                                     <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
                                     <ZoomInIcon className="magnifying-glass" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
                                 </div>
                             </Col>
                             <Col md={4}>
-                                <ListGroup className="ms-1 vitals-list-group">
-                                    {patient.vitals?.map((vital, vitalIndex) => (
-                                        <ListGroup.Item key={vital.name}>
-                                            <strong>{vital.name}:</strong> {vital.value}
-                                        </ListGroup.Item>
-                                    ))}
-                                </ListGroup>
+                                <VitalsDropdown vitals={patient.vitals}/>
                             </Col>
                         </Row>
                     </Card>
