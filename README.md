@@ -54,3 +54,52 @@ tar -xzvf backup.tar.gz
 ```
 mongorestore --uri="mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27017/?authSource=dashboard" backup 
 ```
+
+# Running Without Docker
+1. One time step: Install mongo locally [setup docs](https://www.mongodb.com/docs/manual/administration/install-community/)
+1. Once you have mongo installed, start the server with `mongod`
+1. In node-graphql/server.mongo.js, replace the code starting on line 23 what's below: 
+```
+const connection = mongoose.connect('mongodb://localhost:27017/dashboard', {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useCreateIndex: true,
+    })
+    .then(res => console.log( 'Database Connected' ))
+    .catch(err => console.log( err.message, err ));
+```
+**Do NOT commit this code!** There is probably a better way to set up mongo locally, but I'm not yet sure what it is
+1. Follow the instructions to populate mongodb with backup, but use 
+    ```
+    mongorestore --uri="mongodb://localhost:27017/" backup 
+    ```
+2. Use a node manager tool (such as [nvm](https://github.com/nvm-sh/nvm)) to install/use node version 12. ```nvm install 12``` or ```nvm use 12```
+3. Copy a required configuration file to the node directory
+    ```
+    cp dashboard-ui/public/configs/dev/graphql-config.js node-graphql/config.js
+    ```
+    **Do NOT commit this code!**
+4. Install graphql dependencies (instructions starting from project's root directory)
+    ```
+    cd node-graphql
+    npm i
+    ```
+5. Start graphql
+    ```
+    node server.accounts.js
+    ```
+6. Copy a required configuration file to the node directory (instructions starting from project's root directory)
+    ```
+    cp dashboard-ui/public/configs/dev/config.js dashboard-ui/src/services/config.js
+    ```
+    **Do NOT commit this code!**
+7. Install dashboard dependencies (instructions starting from project's root directory) (this may take awhile)
+    ```
+    cd dashboard-ui
+    npm i
+    ```
+8. Start the dashboard
+    ```
+    npm start
+    ```
+9. Navigate to localhost:3000 and get started! (note: it may open automatically for you)
