@@ -103,3 +103,11 @@ const connection = mongoose.connect('mongodb://localhost:27017/dashboard', {
     npm start
     ```
 9. Navigate to localhost:3000 and get started! (note: it may open automatically for you)
+
+**Note:** 
+If you switch back to using docker after running locally, be sure that you do not have two conflicting mongo instances running on port 27017. You can shutdown the one running locally from inside mongo shell with
+```
+use admin
+
+db.shutdownServer()
+```
