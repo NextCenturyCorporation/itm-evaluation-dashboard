@@ -98,15 +98,21 @@ export function ResultsTable({ data }) {
                 allObjs.push(entryObj);
             }
         }
+        const found_headers = [];
         for (let obj of allObjs) {
             for (const header of allHeaders) {
                 if (!(header in obj)) {
                     obj[header] = '-';
+                } else {
+                    // only include headers that have at least one response
+                    if (!found_headers.includes(header)) {
+                        found_headers.push(header);
+                    }
                 }
             }
         }
         setFormattedData(allObjs);
-        setHeaders(allHeaders);
+        setHeaders(found_headers);
         setVersions(tmpVersion);
     }, [data, filterBySurveyVersion]);
 
