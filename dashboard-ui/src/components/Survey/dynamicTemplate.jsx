@@ -167,6 +167,10 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         this.logUserAction("toggleAccordion", `Actions Expanded`);
     }
 
+    toggleVitals = (patientName) => {
+        this.logUserAction("toggleVitals", `Patient: ${patientName}`)
+    }
+
     get question() {
         return this.questionBase;
     }
@@ -241,7 +245,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                 </div>
                             </Col>
                             <Col md={4}>
-                                <VitalsDropdown vitals={patient.vitals}/>
+                                <VitalsDropdown vitals={patient.vitals} onClick={this.toggleVitals(patient.name)}/>
                             </Col>
                         </Row>
                     </Card>
