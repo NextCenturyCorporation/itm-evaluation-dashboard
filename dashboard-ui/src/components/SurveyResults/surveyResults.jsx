@@ -144,18 +144,19 @@ export function SurveyResults() {
         if (data) {
             const separatedData = {};
             for (const result of data.getAllSurveyResults) {
+                let obj = result;
                 if (result.results) {
-                    for (const x of Object.keys(result.results)) {
-                        const res = result.results[x];
-                        if (res?.scenarioIndex === selectedScenario) {
-                            // TODO: prep data to send to surveyGroup
+                    obj = result.results;
+                }
+                for (const x of Object.keys(obj)) {
+                    const res = obj[x];
+                    if (res?.scenarioIndex === selectedScenario) {
                             const indexBy = res.pageType + '_' + res.pageName;
                             if (Object.keys(separatedData).includes(indexBy)) {
                                 separatedData[indexBy].push(res);
                             } else {
                                 separatedData[indexBy] = [res];
                             }
-                        }
                     }
                 }
             }

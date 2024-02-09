@@ -38,14 +38,17 @@ export function ResultsTable({ data }) {
         const allHeaders = [...headers];
         const tmpVersion = ['All'];
         for (let entry of data) {
-            entry = entry.results;
+            entry = entry.results ?? entry;
             const entryObj = {};
             let addToTable = true;
             const version = entry?.surveyVersion
             if (!filterBySurveyVersion.includes(version) && !selectAll) {
                 addToTable = false;
             }
-            entryObj['Participant Id'] = entry?.user?.id;
+            entryObj['Participant Id'] = entry?.user?.id ?? entry['Participant ID']?.questions['Participant ID']?.response;
+            if (!entryObj['Participant Id']) {
+                continue;
+            }
             entryObj['Username'] = entry?.user?.username;
             entryObj['Survey Version'] = version;
             if (version && !tmpVersion.includes(version)) {
