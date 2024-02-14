@@ -54,3 +54,8 @@ tar -xzvf backup.tar.gz
 ```
 mongorestore --uri="mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27017/?authSource=dashboard" backup 
 ```
+# Clean junk data from MongoDB
+Script for removing a lot of junk data that got into the production database from testing/outdated survey versions
+```
+mongo "mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27017/?authSource=dashboard" clean-mongo.js
+```
