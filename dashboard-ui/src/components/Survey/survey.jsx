@@ -39,7 +39,7 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
     }
 
-    configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment) => {
+    configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment, removedPages) => {
         // set pages to dynamic or static
         Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
             const page = surveyConfig.pages.find(page => page.name === pageName);
@@ -68,7 +68,7 @@ class SurveyPage extends Component {
 
                 if (isGroupedPage) {
                     groupedPages.push(page);
-                } else {
+                } else if (!removedPages.includes(page.name)) {
                     ungroupedPages.push(page);
                 }
             }
@@ -97,6 +97,14 @@ class SurveyPage extends Component {
         // randomizes order of the pairs of DM's for comparison
         // also randomizes static or dynamic presentation style (Will always be two pairs for each)
         let groupedDMs = shuffle(surveyConfig.groupedDMs)
+        // removes one of four scenarios after randomizing order
+        let removed = groupedDMs.pop()
+        // add comparison page name to list of removed pages
+        removed.push(removed[0] + " vs " + removed[1])
+
+        let comparisonPages = surveyConfig.comparisonPages
+        // remove the comparison page of removed scenario
+        delete comparisonPages[removed[0]+removed[1]]
 
         let templateAssignment = {};
         groupedDMs.forEach((group, index) => {
@@ -106,9 +114,7 @@ class SurveyPage extends Component {
 
         groupedDMs = shuffle(groupedDMs)
 
-        const comparisonPages = surveyConfig.comparisonPages
-
-        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment);
+        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment, removed);
     }
 
 
