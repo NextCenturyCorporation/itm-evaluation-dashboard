@@ -245,7 +245,9 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                                 </div>
                             </Col>
                             <Col md={4}>
-                                <VitalsDropdown vitals={patient.vitals} onClick={this.toggleVitals(patient.name)}/>
+                                <div onClick={() => this.toggleVitals(patient.name)}>
+                                    <VitalsDropdown vitals={patient.vitals} />
+                                </div>
                             </Col>
                         </Row>
                     </Card>
