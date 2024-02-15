@@ -39,16 +39,60 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
     }
 
+    initializeSurvey = () => {
+        const { groupedDMs, removed, comparisonPages, templateAssignment } = this.prepareSurveyInitialization();
+
+        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment, removed);
+    }
+
+    prepareSurveyInitialization = () => {
+        let groupedDMs = shuffle([...surveyConfig.groupedDMs]);
+        // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
+        let removed = groupedDMs.pop();
+        // comparison page name to be removed
+        removed.push(`${removed[0]} vs ${removed[1]}`);
+
+        let comparisonPages = { ...surveyConfig.comparisonPages };
+        delete comparisonPages[`${removed[0]}${removed[1]}`];
+
+        // assign static or dynamic to dm templates
+        let templateAssignment = this.assignTemplates(groupedDMs);
+
+        groupedDMs = shuffle(groupedDMs)
+
+        return { groupedDMs, removed, comparisonPages, templateAssignment };
+    }
+
+    assignTemplates = (groupedDMs) => {
+        // receives groupedDM's randomly ordered. assigns static or dynamic pres. style to them
+        let templateAssignment = {};
+        groupedDMs.forEach((group, index) => {
+            templateAssignment[group[0]] = index % 2 === 0 ? 'static' : 'dynamic';
+            templateAssignment[group[1]] = index % 2 === 0 ? 'static' : 'dynamic';
+        });
+        return templateAssignment;
+    }
+
     configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment, removedPages) => {
-        // set pages to dynamic or static
+        this.setPageTemplates(templateAssignment);
+        this.applyPageRandomization(groupedDMs, comparisonPages, removedPages);
+    }
+
+    setPageTemplates = (templateAssignment) => {
+        // changes values in surveyConfig so proper render of static or dynamic for given scenario
         Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
             const page = surveyConfig.pages.find(page => page.name === pageName);
             if (page) {
                 page.elements[0].type = `${templateType}-template`;
             }
         });
+    }
 
-        //randomization scheme
+    applyPageRandomization = (groupedDMs, comparisonPages, removedPages) => {
+        /*
+            Randomizes the order of the survey while keeping the groupings of scenarios and their
+            respective comparison pages intact. i.e 'Medic-33', 'Medic-44' then 'Medic-33 vs Medic-44'
+        */
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
         //filter out last page of survey to insert later
         surveyConfig.pages = surveyConfig.pages.filter(page => page.name !== "Post-Scenario Measures");
@@ -91,30 +135,7 @@ class SurveyPage extends Component {
         });
 
         surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
-    }
-
-    initializeSurvey = () => {
-        // randomizes order of the pairs of DM's for comparison
-        // also randomizes static or dynamic presentation style (Will always be two pairs for each)
-        let groupedDMs = shuffle(surveyConfig.groupedDMs)
-        // removes one of four scenarios after randomizing order
-        let removed = groupedDMs.pop()
-        // add comparison page name to list of removed pages
-        removed.push(removed[0] + " vs " + removed[1])
-
-        let comparisonPages = surveyConfig.comparisonPages
-        // remove the comparison page of removed scenario
-        delete comparisonPages[removed[0]+removed[1]]
-
-        let templateAssignment = {};
-        groupedDMs.forEach((group, index) => {
-            templateAssignment[group[0]] = index % 2 === 0 ? 'static' : 'dynamic';
-            templateAssignment[group[1]] = index % 2 === 0 ? 'static' : 'dynamic';
-        });
-
-        groupedDMs = shuffle(groupedDMs)
-
-        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment, removed);
+        console.log([...ungroupedPages, ...shuffledGroupedPages, postScenarioPage])
     }
 
 
