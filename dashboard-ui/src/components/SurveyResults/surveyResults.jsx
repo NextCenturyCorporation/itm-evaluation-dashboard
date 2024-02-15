@@ -6,6 +6,9 @@ import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
 import surveyConfig from '../Survey/surveyConfig.json';
+import { Modal } from "@mui/material";
+import { ResultsTable } from './resultsTable';
+import CloseIcon from '@material-ui/icons/Close';
 
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
@@ -135,23 +138,25 @@ export function SurveyResults() {
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState(-1);
     const [resultData, setResultData] = React.useState(null);
+    const [showTable, setShowTable] = React.useState(false);
 
     React.useEffect(() => {
         if (data) {
             const separatedData = {};
             for (const result of data.getAllSurveyResults) {
+                let obj = result;
                 if (result.results) {
-                    for (const x of Object.keys(result.results)) {
-                        const res = result.results[x];
-                        if (res?.scenarioIndex === selectedScenario) {
-                            // TODO: prep data to send to surveyGroup
+                    obj = result.results;
+                }
+                for (const x of Object.keys(obj)) {
+                    const res = obj[x];
+                    if (res?.scenarioIndex === selectedScenario) {
                             const indexBy = res.pageType + '_' + res.pageName;
                             if (Object.keys(separatedData).includes(indexBy)) {
                                 separatedData[indexBy].push(res);
                             } else {
                                 separatedData[indexBy] = [res];
                             }
-                        }
                     }
                 }
             }
@@ -179,13 +184,17 @@ export function SurveyResults() {
         }
     }
 
+    const closeModal = () => {
+        setShowTable(false);
+    }
+
 
     return (<>
         {loading && <p>Loading</p>}
         {error && <p>Error</p>}
         {data && <>
             <div className="selection-box">
-                {scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}
+                <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}<button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button></div>
                 <section className="button-section">
                     {scenarioIndices?.map((index) => {
                         return <button key={"scenario_btn_" + index} disabled={index === selectedScenario} onClick={() => setSelectedScenario(index)} className="selection-btn">Scenario {index}</button>
@@ -193,7 +202,12 @@ export function SurveyResults() {
                 </section>
             </div>
             {selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData}></ScenarioGroup>}
-
+            <Modal className='table-modal' open={showTable} onClose={closeModal}>
+                <div className='modal-body'>
+                    <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
+                    <ResultsTable data={data.getAllSurveyResults} />
+                </div>
+            </Modal>
         </>}
     </>);
 }

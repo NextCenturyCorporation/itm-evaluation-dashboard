@@ -1,0 +1,88 @@
+.resultTableSection {
+    max-height: 75vh;
+    border: 2px solid black;
+    border-radius: 8px;
+    margin: 12px;
+    overflow: auto;
+    position: relative;
+}
+
+table {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+th {
+    background-color: rgb(88, 88, 115);
+    color: white;
+    border: 1px solid black;
+    padding: 4px 8px 4px 12px;
+    min-width: 200px;
+    letter-spacing: 0.5px;
+    font-weight: 400;
+    border-bottom: 3px solid black;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    border-collapse: separate;
+    z-index: 1;
+}
+
+td {
+    min-width: 200px;
+    border: 1px solid grey;
+    padding: 4px 8px 4px 12px;
+}
+
+tr td:first-child,
+thead th:first-child {
+    position: sticky;
+    left: 0;
+    border-right: 3px solid black;
+}
+
+tr:nth-child(2n) td {
+    background-color: lightgrey;
+}
+
+tr:nth-child(2n+1) td {
+    background-color: white;
+}
+
+.tableHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 8px 12px 4px 12px;
+}
+
+.downloadBtn {
+    border-radius: 4px;
+}
+
+.downloadBtn:hover {
+    cursor: pointer;
+    background-color: rgb(204, 204, 204);
+}
+
+.downloadBtn:active {
+    cursor: pointer;
+    background-color: darkgrey;
+    color: white;
+}
+.option-section {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.version-select {
+    min-width: 150px !important;
+    margin-right: 8px !important;
+}

@@ -210,7 +210,7 @@ export class App extends React.Component {
                                 <Survey currentUser={this.state.currentUser} />
                             </Route>
                             <Route path="/survey-results">
-                                <SurveyResults currentUser={this.state.currentUser} />
+                                <SurveyResults />
                             </Route>
                         </Switch>
                     </div>
