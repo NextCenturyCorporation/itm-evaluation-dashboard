@@ -1,6 +1,6 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
-import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
+import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Card, Row, Col, ListGroup} from "react-bootstrap";
 import SituationModal from "./situationModal";
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
@@ -251,7 +251,3 @@ export class StaticTemplate extends SurveyQuestionElementBase {
       </div>);
   }
 }
-// Register `StaticTemplate` as a class that renders `static-template` questions 
-ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
-  return React.createElement(StaticTemplate, props);
-});

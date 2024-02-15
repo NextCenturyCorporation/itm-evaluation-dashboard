@@ -1,6 +1,6 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
-import { SurveyQuestionElementBase, ReactQuestionFactory } from "survey-react-ui";
+import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Accordion, Card, Row, Col, Button, ListGroup, Modal } from "react-bootstrap";
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
@@ -324,8 +324,3 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         );
     }
 }
-
-// Register `DynamicTemplace` as a class that renders `dynamic-template` questions 
-ReactQuestionFactory.Instance.registerQuestion(CUSTOM_TYPE, (props) => {
-    return React.createElement(DynamicTemplate, props);
-});
