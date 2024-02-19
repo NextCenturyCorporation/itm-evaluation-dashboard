@@ -9,7 +9,8 @@ const query = {
                     "jennifer.mcvay@caci.com",
                     "ewartdevisser@gmail.com",
                     "kaitlyn.sharo@caci.com",
-                    "derek.noppinger@caci.com"
+                    "derek.noppinger@caci.com",
+                    "darpaitm@gmail.com"
                 ]
             }
         },
@@ -22,6 +23,7 @@ const query = {
             "user.currentUser.emails.address": {
                 $in: [
                     "dereknop@gmail.com",
+                    "darpaitm@gmail.com",
                     "jennifer.mcvay@caci.com",
                     "ewartdevisser@gmail.com",
                     "kaitlyn.sharo@caci.com",
