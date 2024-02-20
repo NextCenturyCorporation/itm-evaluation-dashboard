@@ -6,19 +6,39 @@ import SituationModal from "./situationModal";
 import VitalsDropdown from "./vitalsDropdown";
 import './template.css';
 
-const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, explanation, showModal }) => {
+const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, explanation, showModal, updateActionLogs }) => {
     const [visiblePatients, setVisiblePatients] = useState({});
     const [showPatientModal, setShowPatientModal] = useState(false);
     const [activeImage, setActiveImage] = useState(null);
     const [activeTitle, setActiveTitle] = useState('');
     const [activeDescription, setActiveDescription] = useState('');
     const [showSituationModal, setShowSituationModal] = useState(showModal);
+    const [actionLogs, setActionLogs] = useState([]);
+    const [activeKey, setActiveKey] = useState(null);
+
+    // log actions
+    const logAction = (actionName) => {
+        const newLog = { actionName, timestamp: new Date().toISOString() };
+        setActionLogs(prevLogs => {
+            const updatedLogs = [...prevLogs, newLog];
+            if (updateActionLogs) {
+                updateActionLogs(updatedLogs);
+            }
+            return updatedLogs;
+        });
+    };
+
+    const handleAccordionSelect = (eventKey) => {
+        setActiveKey(eventKey);
+        logAction(`Accordion toggle: ${eventKey !== null ? "expanded" : "collapsed"} Medic Actions`);
+    };
 
     const togglePatientVisibility = (patientName) => {
         setVisiblePatients(prev => ({
             ...prev,
             [patientName]: !prev[patientName]
         }));
+        logAction(`Toggle patient visibility: ${patientName}`);
     };
 
     const toggleImageModal = (imgUrl, title, description) => {
@@ -26,6 +46,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
         setActiveTitle(title);
         setActiveDescription(description);
         setShowPatientModal(!showPatientModal);
+        logAction(`Toggle image modal: ${title}`);
     };
 
     const handleCloseSituationModal = () => {
@@ -33,8 +54,13 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
         setTimeout(() => {
             window.scrollTo(0, 0);
         }, 5);
+        logAction('Close situation modal');
     };
-    const handleShowSituationModal = () => setShowSituationModal(true);
+
+    const handleShowSituationModal = () => {
+        setShowSituationModal(true);
+        logAction('Show situation modal');
+    };
 
     const patientButtons = patients.map(patient => (
         <Button
@@ -106,7 +132,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                     <Card className="mb-3">
                         <Card.Header>Decision: {decision}</Card.Header>
                         <Card.Body>
-                            <Accordion>
+                            <Accordion onSelect={handleAccordionSelect} activeKey={activeKey}>
                                 <Accordion.Item eventKey={0}>
                                     <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
                                     <Accordion.Body>

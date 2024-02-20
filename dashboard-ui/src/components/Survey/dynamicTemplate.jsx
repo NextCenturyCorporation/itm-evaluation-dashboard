@@ -118,25 +118,9 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 export class DynamicTemplate extends SurveyQuestionElementBase {
     constructor(props) {
         super(props);
-
         this.state = {
-            visiblePatients: [],
             userActions: [],
-            showPatientModal: false,
-            showSituationModal: true,
-            activeImage: null,
-            activeTitle: "",
-            activeDescription: ""
         };
-    }
-
-    logUserAction = (actionType, detail) => {
-        const timestamp = new Date().toString();
-        const newActions = [...this.state.userActions, { actionType, detail, timestamp }];
-
-        this.setState({ userActions: newActions }, () => {
-            this.question.value = newActions;
-        });
     }
 
     get question() {
@@ -164,7 +148,14 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         return this.question.explanation
     }
 
+    updateActionLogs = (actionLogs) => {
+        this.setState({ userActions: actionLogs }, () => {
+            this.question.value = this.state.userActions;
+        });
+    }
+
     renderElement() {
+
         return (
             <Dynamic 
                 patients={this.patients} 
@@ -175,6 +166,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 actions={this.actions}
                 explanation={this.explanation}
                 showModal={true}
+                updateActionLogs={this.updateActionLogs}
             />
         )
     }
