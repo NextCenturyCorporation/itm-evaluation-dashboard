@@ -18,14 +18,12 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
 
     // log actions
     const logAction = (actionName) => {
-        const newLog = { actionName, timestamp: new Date().toISOString() };
-        setActionLogs(prevLogs => {
-            const updatedLogs = [...prevLogs, newLog];
-            if (updateActionLogs) {
-                updateActionLogs(updatedLogs);
-            }
-            return updatedLogs;
-        });
+        const newLog = { actionName, timestamp: new Date().toString() };
+        const updatedLogs = [...actionLogs, newLog];
+        if (updateActionLogs) {
+            updateActionLogs(updatedLogs);
+        }
+        setActionLogs(updatedLogs);
     };
 
     const handleAccordionSelect = (eventKey) => {

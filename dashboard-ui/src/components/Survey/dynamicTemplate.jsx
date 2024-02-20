@@ -121,6 +121,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         this.state = {
             userActions: [],
         };
+        this.updateActionLogs = this.updateActionLogs.bind(this)
     }
 
     get question() {
