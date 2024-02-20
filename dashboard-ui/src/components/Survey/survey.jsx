@@ -6,6 +6,7 @@ import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
 import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
+import { Omnibus } from "./omnibusTemplate";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { getUID, shuffle } from './util'
@@ -39,19 +40,55 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
     }
 
-    configureSurveyPages = (groupedDMs, comparisonPages, templateAssignment) => {
-        // set pages to dynamic or static
-        Object.entries(templateAssignment).forEach(([pageName, templateType]) => {
-            const page = surveyConfig.pages.find(page => page.name === pageName);
-            if (page) {
-                page.elements[0].type = `${templateType}-template`;
-            }
-        });
+    initializeSurvey = () => {
+        const { groupedDMs, removed, comparisonPages } = this.prepareSurveyInitialization();
+        this.configureSurveyPages(groupedDMs, comparisonPages, removed);
+    }
 
-        //randomization scheme
+    prepareSurveyInitialization = () => {
+        let groupedDMs = shuffle([...surveyConfig.groupedDMs]);
+        // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
+        let removed = groupedDMs.pop();
+        // comparison page name to be removed
+        removed.push(`${removed[0]} vs ${removed[1]}`);
+
+        let comparisonPages = { ...surveyConfig.comparisonPages };
+        delete comparisonPages[`${removed[0]}${removed[1]}`];
+
+        return { groupedDMs, removed, comparisonPages };
+    }
+
+    configureSurveyPages = (groupedDMs, comparisonPages, removedPages) => {
+        this.assignOmnibus(groupedDMs);
+        this.applyPageRandomization(groupedDMs, comparisonPages, removedPages);
+    }
+
+    assignOmnibus = (groupedDMs) => {
+        let firstOmnibus = surveyConfig.pages.find(page => page.name === "Omnibus: Medic-301")
+        let secondOmnibus = surveyConfig.pages.find(page => page.name === "Omnibus: Medic-502")
+
+        // which medics make up the omnibus pairing should be random (but obviously can't have two from same scenario)
+        groupedDMs.forEach(pairing => {
+            if (Math.random() < 0.5) {
+                firstOmnibus.elements[0].decisionMakers.push(pairing[0]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[1]);
+            } else {
+                firstOmnibus.elements[0].decisionMakers.push(pairing[1]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[0]);
+            }
+        })
+    }
+
+    applyPageRandomization = (groupedDMs, comparisonPages, removedPages) => {
+        /*
+            Randomizes the order of the survey while keeping the groupings of scenarios and their
+            respective comparison pages intact. i.e 'Medic-33', 'Medic-44' then 'Medic-33 vs Medic-44'
+        */
         const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
-        //filter out last page of survey to insert later
+        const omnibusPages = surveyConfig.pages.filter(page => page.name.includes("Omnibus"));
+        //filter out pages to be added after randomized portion
         surveyConfig.pages = surveyConfig.pages.filter(page => page.name !== "Post-Scenario Measures");
+        surveyConfig.pages = surveyConfig.pages.filter(page => !page.name.includes("Omnibus"));
 
         const groupedPages = [];
         const ungroupedPages = [];
@@ -68,7 +105,7 @@ class SurveyPage extends Component {
 
                 if (isGroupedPage) {
                     groupedPages.push(page);
-                } else {
+                } else if (!removedPages.includes(page.name)) {
                     ungroupedPages.push(page);
                 }
             }
@@ -90,27 +127,8 @@ class SurveyPage extends Component {
             shuffledGroupedPages.push(...groupPages);
         });
 
-        surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
+        surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
     }
-
-    initializeSurvey = () => {
-        // randomizes order of the pairs of DM's for comparison
-        // also randomizes static or dynamic presentation style (Will always be two pairs for each)
-        let groupedDMs = shuffle(surveyConfig.groupedDMs)
-
-        let templateAssignment = {};
-        groupedDMs.forEach((group, index) => {
-            templateAssignment[group[0]] = index % 2 === 0 ? 'static' : 'dynamic';
-            templateAssignment[group[1]] = index % 2 === 0 ? 'static' : 'dynamic';
-        });
-
-        groupedDMs = shuffle(groupedDMs)
-
-        const comparisonPages = surveyConfig.comparisonPages
-
-        this.configureSurveyPages(groupedDMs, comparisonPages, templateAssignment);
-    }
-
 
     onAfterRenderPage = (sender, options) => {
         // setTimeout makes the scroll work consistently
@@ -253,10 +271,14 @@ class SurveyPage extends Component {
 
 export default SurveyPage;
 
+ReactQuestionFactory.Instance.registerQuestion("static-template", (props) => {
+    return React.createElement(StaticTemplate, props);
+});
+
 ReactQuestionFactory.Instance.registerQuestion("dynamic-template", (props) => {
     return React.createElement(DynamicTemplate, props);
 });
 
-ReactQuestionFactory.Instance.registerQuestion("static-template", (props) => {
-    return React.createElement(StaticTemplate, props);
-});
+ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
+    return React.createElement(Omnibus, props)
+})
