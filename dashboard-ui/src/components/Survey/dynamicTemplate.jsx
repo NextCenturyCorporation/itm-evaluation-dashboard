@@ -1,12 +1,8 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import { Accordion, Card, Row, Col, Button, ListGroup, Modal } from "react-bootstrap";
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import ZoomInIcon from '@material-ui/icons/ZoomIn';
-import SituationModal from "./situationModal";
-import VitalsDropdown from "./vitalsDropdown";
 import './template.css'
+import Dynamic from "./dynamic";
 
 const CUSTOM_TYPE = "dynamic-template";
 
@@ -143,34 +139,6 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         });
     }
 
-    toggleImageModal = (imgUrl, title, description) => {
-        this.logUserAction("zoomInIconClick", `Image Title: ${title}`);
-        this.setState(prevState => ({
-            showPatientModal: !prevState.showPatientModal,
-            activeImage: imgUrl,
-            activeTitle: title,
-            activeDescription: description
-        }));
-    }
-
-    togglePatientVisibility(patientName) {
-        this.logUserAction("toggleButton", `Patient: ${patientName}`);
-        this.setState(prevState => ({
-            visiblePatients: {
-                ...prevState.visiblePatients,
-                [patientName]: !prevState.visiblePatients[patientName]
-            }
-        }));
-    }
-
-    toggleAccordionItem = () => {
-        this.logUserAction("toggleAccordion", `Actions Expanded`);
-    }
-
-    toggleVitals = (patientName) => {
-        this.logUserAction("toggleVitals", `Patient: ${patientName}`)
-    }
-
     get question() {
         return this.questionBase;
     }
@@ -196,133 +164,18 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         return this.question.explanation
     }
 
-    // Support the read-only and design modes
-    get style() {
-        return this.question.getPropertyValue("readOnly") ||
-            this.question.isDesignMode ? { pointerEvents: "none" } : undefined;
-    }
-
-    handleCloseSituationModal = () => {
-        this.setState({ showSituationModal: false });
-        setTimeout(() => {
-            window.scrollTo(0, 0);
-        }, 25);
-    };
-
-    handleShowSituationModal = () => {
-        this.setState({ showSituationModal: true });
-    }
-
     renderElement() {
-
-        // button for each patient
-        const patientButtons = this.patients.map((patient, index) => (
-            <Button
-                key={patient.name}
-                variant={this.state.visiblePatients[patient.name] ? "primary" : "secondary"}
-                onClick={() => this.togglePatientVisibility(patient.name)}
-                className="me-1"
-            >
-                {patient.name}
-                {' '}
-                {this.state.visiblePatients[patient.name] && <CheckCircleIcon />}
-            </Button>
-        ));
-
-        const patientCards = this.patients.map((patient, index) => {
-            // render card if toggled to visible
-            if (this.state.visiblePatients[patient.name]) {
-                return (
-                    <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
-                        <Card.Header>
-                            <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
-                        </Card.Header>
-                        <Row className="g-0">
-                            <Col md={8} className="mr-4">
-                                <div style={{ position: 'relative' }}>
-                                    <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
-                                    <ZoomInIcon className="magnifying-glass" onClick={() => this.toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
-                                </div>
-                            </Col>
-                            <Col md={4}>
-                                <div onClick={() => this.toggleVitals(patient.name)}>
-                                    <VitalsDropdown vitals={patient.vitals} />
-                                </div>
-                            </Col>
-                        </Row>
-                    </Card>
-                );
-            } else {
-                return null;
-            }
-        });
-
         return (
-            <div>
-                {this.state.showSituationModal &&
-                    <SituationModal
-                        show={this.state.showSituationModal}
-                        handleClose={this.handleCloseSituationModal}
-                        situation={this.situation} />
-                }
-                <Row>
-                    <Col md={2}>
-                        <Card className="mb-3">
-                            <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={this.handleShowSituationModal} /></Card.Header>
-                            <Card.Body>
-                                {this.situation.map((detail, index) => (
-                                    <Card.Text key={"detail-" + index}>{detail}</Card.Text>
-                                ))}
-                            </Card.Body>
-                        </Card>
-                        <Card>
-                            <Card.Header>Supplies / Resources</Card.Header>
-                            <Card.Body>
-                                {this.supplies.map((supplies, index) => (
-                                    <Card.Text key={supplies.type}>
-                                        {supplies.quantity ? supplies.quantity : ""} {supplies.type}
-                                    </Card.Text>
-                                ))}
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                    <Col md={10}>
-                        <Card className="mb-3">
-                            <Card.Header>Decision: {this.decision}</Card.Header>
-                            <Card.Body>
-                                <Accordion>
-                                    <Accordion.Item eventKey={0} onClick={() => this.toggleAccordionItem()}>
-                                        <Accordion.Header><strong>{`${this.dmName} actions`}</strong></Accordion.Header>
-                                        <Accordion.Body>
-                                            <ListGroup>
-                                                {this.actions.map((action, index) => (
-                                                    <ListGroup.Item key={"action-" + index}>{action}</ListGroup.Item>
-                                                ))}
-                                            </ListGroup>
-                                            <div className="my-2"><strong>Explanation:</strong> {this.explanation}</div>
-                                        </Accordion.Body>
-                                    </Accordion.Item>
-                                </Accordion>
-                            </Card.Body>
-                        </Card>
-                        <div style={{ marginBottom: '10px' }}>
-                            {patientButtons}
-                        </div>
-                        <div className="card-container">
-                            {patientCards}
-                        </div>
-                    </Col>
-                </Row>
-                <Modal show={this.state.showPatientModal} onHide={() => this.toggleImageModal("", this.state.activeTitle, "")}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>{this.state.activeTitle}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        {this.state.activeDescription}
-                        <img src={`data:image/jpeg;base64,${this.state.activeImage}`} alt="Enlarged view" style={{ width: '100%' }} />
-                    </Modal.Body>
-                </Modal>
-            </div>
-        );
+            <Dynamic 
+                patients={this.patients} 
+                situation={this.situation} 
+                supplies={this.supplies} 
+                decision={this.decision} 
+                dmName={this.dmName}
+                actions={this.actions}
+                explanation={this.explanation}
+                showModal={true}
+            />
+        )
     }
 }

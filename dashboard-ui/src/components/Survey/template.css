@@ -76,3 +76,11 @@
   align-items: start;
   overflow: hidden;
 }
+
+.accordion-button {
+  background-color: rgb(217, 216, 216) !important;
+}
+
+.accordion-button:not(.collapsed) {
+  color: #212529;
+}
