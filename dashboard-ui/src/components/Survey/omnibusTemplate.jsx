@@ -14,16 +14,22 @@ export class OmnibusModel extends Question {
         return CUSTOM_TYPE;
     }
 
-    setValueCore(newValue) {
-        super.setValueCore(newValue);
+    // return the decisionMakers as the question value
+    getValue() {
+        return this.decisionMakers;
+    }
+
+    setValue(newValue, locNotification) {
+        super.setValue(newValue, locNotification); 
+        this.decisionMakers = newValue; 
     }
 
     get decisionMakers() {
-        return this.getPropertyValue("decisionMakers")
+        return this.getPropertyValue("decisionMakers");
     }
 
     set decisionMakers(decisionMakers) {
-        this.setPropertyValue("decisionMakers", decisionMakers)
+        this.setPropertyValue("decisionMakers", decisionMakers);
     }
 }
 
@@ -74,6 +80,7 @@ export class Omnibus extends SurveyQuestionElementBase {
         let decisionMakers = this.decisionMakers;
         let relevantPages = temp.pages.filter(page => decisionMakers.includes(page.name));
         let dmDetails = relevantPages.map(page => page.elements[0]);
+        this.question.value = this.decisionMakers
 
         this.setState({ dmDetails });
     }
@@ -95,7 +102,7 @@ export class Omnibus extends SurveyQuestionElementBase {
                                 situation={dm.situation}
                                 supplies={dm.supplies}
                                 showModal={false}
-                        />
+                            />
                         </Accordion.Body>
                     </Accordion.Item>
                 ))}
