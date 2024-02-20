@@ -64,17 +64,17 @@ class SurveyPage extends Component {
     }
 
     assignOmnibus = (groupedDMs) => {
-        let omnibusA = surveyConfig.pages.find(page => page.name === "Omnibus: DM-A")
-        let omnibusB = surveyConfig.pages.find(page => page.name === "Omnibus: DM-B")
+        let firstOmnibus = surveyConfig.pages.find(page => page.name === "Omnibus: Medic-301")
+        let secondOmnibus = surveyConfig.pages.find(page => page.name === "Omnibus: Medic-502")
 
         // which medics make up the omnibus pairing should be random (but obviously can't have two from same scenario)
         groupedDMs.forEach(pairing => {
             if (Math.random() < 0.5) {
-                omnibusA.elements[0].decisionMakers.push(pairing[0]);
-                omnibusB.elements[0].decisionMakers.push(pairing[1]);
+                firstOmnibus.elements[0].decisionMakers.push(pairing[0]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[1]);
             } else {
-                omnibusA.elements[0].decisionMakers.push(pairing[1]);
-                omnibusB.elements[0].decisionMakers.push(pairing[0]);
+                firstOmnibus.elements[0].decisionMakers.push(pairing[1]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[0]);
             }
         })
     }
