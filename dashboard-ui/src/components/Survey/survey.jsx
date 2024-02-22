@@ -29,9 +29,13 @@ class SurveyPage extends Component {
             iPad: false
         };
 
+        // clone surveyConfig, don't edit directly
+        this.surveyConfigClone = JSON.parse(JSON.stringify(surveyConfig));
         this.initializeSurvey();
-        this.survey = new Model(surveyConfig);
-        this.survey.applyTheme(surveyTheme)
+
+        this.survey = new Model(this.surveyConfigClone);
+        this.survey.applyTheme(surveyTheme);
+
         this.pageStartTimes = {};
         this.surveyData = {};
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
@@ -46,14 +50,14 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        let groupedDMs = shuffle([...surveyConfig.groupedDMs]);
+        let groupedDMs = shuffle(this.surveyConfigClone.groupedDMs);
         // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
         let removed = groupedDMs.pop();
         // comparison page name to be removed
         removed.push(`${removed[0]} vs ${removed[1]}`);
 
-        let comparisonPages = { ...surveyConfig.comparisonPages };
-        delete comparisonPages[`${removed[0]}${removed[1]}`];
+        delete this.surveyConfigClone.comparisonPages[`${removed[0]}${removed[1]}`];
+        let comparisonPages = this.surveyConfigClone.comparisonPages
 
         return { groupedDMs, removed, comparisonPages };
     }
@@ -64,8 +68,8 @@ class SurveyPage extends Component {
     }
 
     assignOmnibus = (groupedDMs) => {
-        let firstOmnibus = surveyConfig.pages.find(page => page.name === "Omnibus: Medic-301")
-        let secondOmnibus = surveyConfig.pages.find(page => page.name === "Omnibus: Medic-502")
+        let firstOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-301")
+        let secondOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-502")
 
         // which medics make up the omnibus pairing should be random (but obviously can't have two from same scenario)
         groupedDMs.forEach(pairing => {
@@ -84,15 +88,15 @@ class SurveyPage extends Component {
             Randomizes the order of the survey while keeping the groupings of scenarios and their
             respective comparison pages intact. i.e 'Medic-33', 'Medic-44' then 'Medic-33 vs Medic-44'
         */
-        const postScenarioPage = surveyConfig.pages.find(page => page.name === "Post-Scenario Measures");
-        const omnibusPages = surveyConfig.pages.filter(page => page.name.includes("Omnibus"));
+        const postScenarioPage = this.surveyConfigClone.pages.find(page => page.name === "Post-Scenario Measures");
+        const omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
         //filter out pages to be added after randomized portion
-        surveyConfig.pages = surveyConfig.pages.filter(page => page.name !== "Post-Scenario Measures");
-        surveyConfig.pages = surveyConfig.pages.filter(page => !page.name.includes("Omnibus"));
+        this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => page.name !== "Post-Scenario Measures");
+        this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => !page.name.includes("Omnibus"));
 
         const groupedPages = [];
         const ungroupedPages = [];
-        surveyConfig.pages.forEach(page => {
+        this.surveyConfigClone.pages.forEach(page => {
             let isComparisonPage = Object.values(comparisonPages).includes(page.name);
             let isGroupedPage = false;
 
@@ -119,7 +123,7 @@ class SurveyPage extends Component {
             });
 
             const comparisonPageName = comparisonPages[group.join('')];
-            const comparisonPage = surveyConfig.pages.find(page => page.name === comparisonPageName);
+            const comparisonPage = this.surveyConfigClone.pages.find(page => page.name === comparisonPageName);
             if (comparisonPage) {
                 groupPages.push(comparisonPage);
             }
@@ -127,7 +131,7 @@ class SurveyPage extends Component {
             shuffledGroupedPages.push(...groupPages);
         });
 
-        surveyConfig.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
+        this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
     }
 
     onAfterRenderPage = (sender, options) => {
@@ -245,6 +249,7 @@ class SurveyPage extends Component {
     }
 
     render() {
+        console.log(this.survey)
         return (
             <>
                 <Survey model={this.survey} />
