@@ -58,7 +58,7 @@ export function ResultsTable({ data }) {
             entryObj['End Time'] = new Date(entry?.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry?.timeComplete).getTime() - new Date(entry?.startTime).getTime()) / 1000;
             entryObj['Total Time'] = formatTime(timeDifSeconds);
-            entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response.includes('NOT')).toString();
+            entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response?.includes('NOT')).toString();
             for (const page of Object.keys(entry)) {
                 if (!NON_PAGES.includes(page) && typeof (entry[page]) === 'object') {
                     // get all keys from the page and name them nicely within the excel
