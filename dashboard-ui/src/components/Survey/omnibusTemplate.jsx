@@ -39,11 +39,6 @@ Serializer.addClass(
         {
             name: "decisionMakers",
             default: []
-        },
-        {
-            name: "nestedQuestion:dynamic-template",
-            default: null,
-            serializationProperty: "serializedNestedQuestion"
         }
     ],
     function () {
@@ -76,9 +71,10 @@ export class Omnibus extends SurveyQuestionElementBase {
     }
 
     componentDidMount() {
-        let temp = surveyConfig;
+        let config = this.question.survey.jsonObj;
         let decisionMakers = this.decisionMakers;
-        let relevantPages = temp.pages.filter(page => decisionMakers.includes(page.name));
+
+        let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
         let dmDetails = relevantPages.map(page => page.elements[0]);
         this.question.value = this.decisionMakers
 
