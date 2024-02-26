@@ -261,8 +261,12 @@ const resolvers = {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('surveyResults').find().toArray().then(result => { return result; });
+      // return all survey results except for those containing "test" in participant ID
+      return await dashboardDB.db.collection('surveyResults').find({
+        "results.Participant ID.questions.Participant ID.response": { $not: /test/i }
+      }).toArray().then(result => { return result; });
     }
+    
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, infow) => {
