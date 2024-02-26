@@ -249,7 +249,6 @@ class SurveyPage extends Component {
     }
 
     render() {
-        console.log(this.survey)
         return (
             <>
                 <Survey model={this.survey} />

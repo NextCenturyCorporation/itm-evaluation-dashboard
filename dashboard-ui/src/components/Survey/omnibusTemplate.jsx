@@ -73,7 +73,7 @@ export class Omnibus extends SurveyQuestionElementBase {
     componentDidMount() {
         let config = this.question.survey.jsonObj;
         let decisionMakers = this.decisionMakers;
-        console.log(decisionMakers)
+
         let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
         let dmDetails = relevantPages.map(page => page.elements[0]);
         this.question.value = this.decisionMakers
