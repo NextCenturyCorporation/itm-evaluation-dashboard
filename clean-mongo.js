@@ -32,7 +32,7 @@ const query = {
             }
         },
         { 
-            "Participant ID.questions.Participant ID.response": { 
+            "results.Participant ID.questions.Participant ID.response": { 
                 "$regex": /test/i 
             } 
         }
