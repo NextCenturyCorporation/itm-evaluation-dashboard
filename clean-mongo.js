@@ -10,7 +10,8 @@ const query = {
                     "ewartdevisser@gmail.com",
                     "kaitlyn.sharo@caci.com",
                     "derek.noppinger@caci.com",
-                    "darpaitm@gmail.com"
+                    "darpaitm@gmail.com",
+                    "brian.pippin@caci.com"
                 ]
             }
         },
@@ -27,7 +28,8 @@ const query = {
                     "jennifer.mcvay@caci.com",
                     "ewartdevisser@gmail.com",
                     "kaitlyn.sharo@caci.com",
-                    "derek.noppinger@caci.com"
+                    "derek.noppinger@caci.com",
+                    "brian.pippin@caci.com"
                 ]
             }
         },
