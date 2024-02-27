@@ -134,7 +134,10 @@ function SingleGraph({ data }) {
 
 
 export function SurveyResults() {
-    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS);
+    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
+        // only pulls from network, never cached
+        fetchPolicy: 'network-only', 
+      });
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState(-1);
     const [resultData, setResultData] = React.useState(null);
@@ -187,7 +190,6 @@ export function SurveyResults() {
     const closeModal = () => {
         setShowTable(false);
     }
-
 
     return (<>
         {loading && <p>Loading</p>}

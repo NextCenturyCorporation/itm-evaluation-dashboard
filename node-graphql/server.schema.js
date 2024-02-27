@@ -263,7 +263,8 @@ const resolvers = {
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
       return await dashboardDB.db.collection('surveyResults').find({
-        "results.Participant ID.questions.Participant ID.response": { $not: /test/i }
+        "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID.questions.Participant ID.response": {$not: /test/i}
       }).toArray().then(result => { return result; });
     }
     

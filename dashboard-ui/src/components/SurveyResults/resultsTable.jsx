@@ -45,7 +45,7 @@ export function ResultsTable({ data }) {
             if (!filterBySurveyVersion.includes(version) && !selectAll) {
                 addToTable = false;
             }
-            entryObj['Participant Id'] = entry?.user?.id ?? entry['Participant ID']?.questions['Participant ID']?.response;
+            entryObj['Participant Id'] = entry['Participant ID']?.questions['Participant ID']?.response;
             if (!entryObj['Participant Id']) {
                 continue;
             }
