@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import 'survey-core/defaultV2.min.css'
-import { Model } from 'survey-core'
+import 'survey-core/defaultV2.min.css';
+import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui"
 import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
@@ -9,7 +9,8 @@ import { DynamicTemplate } from "./dynamicTemplate";
 import { Omnibus } from "./omnibusTemplate";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import { getUID, shuffle } from './util'
+import { getUID, shuffle } from './util';
+import Bowser from "bowser";
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
@@ -26,7 +27,8 @@ class SurveyPage extends Component {
             firstPageCompleted: false,
             surveyId: null,
             surveyVersion: surveyConfig.version,
-            iPad: false
+            iPad: false,
+            browserInfo: null
         };
 
         // clone surveyConfig, don't edit directly
@@ -221,6 +223,7 @@ class SurveyPage extends Component {
         this.surveyData.timeComplete = new Date().toString();
         this.surveyData.startTime = this.state.startTime
         this.surveyData.surveyVersion = this.state.surveyVersion
+        this.surveyData.browserInfo = this.state.browserInfo
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -247,14 +250,17 @@ class SurveyPage extends Component {
     }
 
     componentDidMount() {
-        this.detectiPad();
+        this.detectUserInfo();
     }
 
-    detectiPad = () => {
+    detectUserInfo = () => {
         const isiPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
         if (isiPad) {
             this.setState({ iPad: true });
         }
+
+        const browserInfo = Bowser.parse(window.navigator.userAgent);
+        this.setState({ browserInfo });
     }
 
     render() {
