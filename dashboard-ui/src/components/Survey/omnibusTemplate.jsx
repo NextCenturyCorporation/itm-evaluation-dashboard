@@ -89,7 +89,7 @@ export class Omnibus extends SurveyQuestionElementBase {
             <Accordion alwaysOpen>
                 {dmDetails.map((dm, index) => (
                     <Accordion.Item eventKey={index.toString()} key={dm.name}>
-                        <Accordion.Header>{dm.name.split(":")[0]}</Accordion.Header>
+                        <Accordion.Header>Scenario</Accordion.Header>
                         <Accordion.Body>
                             <Dynamic
                                 actions={dm.actions}
