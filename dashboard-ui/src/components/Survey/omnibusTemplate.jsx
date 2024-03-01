@@ -3,7 +3,6 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Accordion } from "react-bootstrap";
 import Dynamic from "./dynamic";
-import surveyConfig from './surveyConfig.json';
 import './template.css'
 
 
@@ -73,10 +72,13 @@ export class Omnibus extends SurveyQuestionElementBase {
     componentDidMount() {
         let config = this.question.survey.jsonObj;
         let decisionMakers = this.decisionMakers;
-
+        // in case of duplicates somehow
+        decisionMakers = [...new Set(decisionMakers)];
         let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
         let dmDetails = relevantPages.map(page => page.elements[0]);
-        this.question.value = this.decisionMakers
+        //extra cleansing of any potential duplicates
+        dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
+        this.question.value = decisionMakers
 
         this.setState({ dmDetails });
     }
@@ -87,7 +89,7 @@ export class Omnibus extends SurveyQuestionElementBase {
             <Accordion alwaysOpen>
                 {dmDetails.map((dm, index) => (
                     <Accordion.Item eventKey={index.toString()} key={dm.name}>
-                        <Accordion.Header>{dm.name.split(":")[0]}</Accordion.Header>
+                        <Accordion.Header>Scenario</Accordion.Header>
                         <Accordion.Body>
                             <Dynamic
                                 actions={dm.actions}

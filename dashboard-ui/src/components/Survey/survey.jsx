@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import 'survey-core/defaultV2.min.css'
-import { Model } from 'survey-core'
+import 'survey-core/defaultV2.min.css';
+import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui"
 import surveyConfig from './surveyConfig.json';
 import surveyTheme from './surveyTheme.json';
@@ -9,7 +9,8 @@ import { DynamicTemplate } from "./dynamicTemplate";
 import { Omnibus } from "./omnibusTemplate";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import { getUID, shuffle } from './util'
+import { getUID, shuffle } from './util';
+import Bowser from "bowser";
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
@@ -26,7 +27,8 @@ class SurveyPage extends Component {
             firstPageCompleted: false,
             surveyId: null,
             surveyVersion: surveyConfig.version,
-            iPad: false
+            iPad: false,
+            browserInfo: null
         };
 
         // clone surveyConfig, don't edit directly
@@ -51,13 +53,19 @@ class SurveyPage extends Component {
 
     prepareSurveyInitialization = () => {
         let groupedDMs = shuffle(this.surveyConfigClone.groupedDMs);
-        // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
-        let removed = groupedDMs.pop();
-        // comparison page name to be removed
-        removed.push(`${removed[0]} vs ${removed[1]}`);
-
-        delete this.surveyConfigClone.comparisonPages[`${removed[0]}${removed[1]}`];
+        let removed = []
         let comparisonPages = this.surveyConfigClone.comparisonPages
+
+        // groupedDMs should always have four elements at this point, check anyways
+        if (groupedDMs.length > 3) {
+            // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
+            removed = groupedDMs.pop();
+            // comparison page name to be removed
+            removed.push(`${removed[0]} vs ${removed[1]}`);
+
+            delete this.surveyConfigClone.comparisonPages[`${removed[0]}${removed[1]}`];
+            comparisonPages = this.surveyConfigClone.comparisonPages
+        }
 
         return { groupedDMs, removed, comparisonPages };
     }
@@ -73,12 +81,15 @@ class SurveyPage extends Component {
 
         // which medics make up the omnibus pairing should be random (but obviously can't have two from same scenario)
         groupedDMs.forEach(pairing => {
-            if (Math.random() < 0.5) {
-                firstOmnibus.elements[0].decisionMakers.push(pairing[0]);
-                secondOmnibus.elements[0].decisionMakers.push(pairing[1]);
-            } else {
-                firstOmnibus.elements[0].decisionMakers.push(pairing[1]);
-                secondOmnibus.elements[0].decisionMakers.push(pairing[0]);
+            // there should only ever be three members in groupedDMs, but just in case
+            if (firstOmnibus.elements[0].decisionMakers.length < 3 && secondOmnibus.elements[0].decisionMakers.length < 3) {
+                if (Math.random() < 0.5) {
+                    firstOmnibus.elements[0].decisionMakers.push(pairing[0]);
+                    secondOmnibus.elements[0].decisionMakers.push(pairing[1]);
+                } else {
+                    firstOmnibus.elements[0].decisionMakers.push(pairing[1]);
+                    secondOmnibus.elements[0].decisionMakers.push(pairing[0]);
+                }
             }
         })
     }
@@ -212,6 +223,7 @@ class SurveyPage extends Component {
         this.surveyData.timeComplete = new Date().toString();
         this.surveyData.startTime = this.state.startTime
         this.surveyData.surveyVersion = this.state.surveyVersion
+        this.surveyData.browserInfo = this.state.browserInfo
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -238,14 +250,17 @@ class SurveyPage extends Component {
     }
 
     componentDidMount() {
-        this.detectiPad();
+        this.detectUserInfo();
     }
 
-    detectiPad = () => {
+    detectUserInfo = () => {
         const isiPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
         if (isiPad) {
             this.setState({ iPad: true });
         }
+
+        const browserInfo = Bowser.parse(window.navigator.userAgent);
+        this.setState({ browserInfo });
     }
 
     render() {
