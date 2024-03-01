@@ -12,6 +12,7 @@ import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
+import Nav from "react-bootstrap/Nav"
 import { createBrowserHistory } from 'history';
 
 // CSS and Image Stuff 
@@ -137,23 +138,33 @@ export class App extends React.Component {
                             </a>
                             <ul className="navbar-nav custom-nav">
                                 <li className="nav-item">
-                                    <Link className="nav-link-home" to="/">Home</Link>
+                                    <Link className="nav-link" to="/">Home</Link>
                                 </li>
                                 <li className="nav-item">
-                                    <Link className="nav-link-home" to="/results">Results</Link>
+                                    <Link className="nav-link" to="/results">Results</Link>
                                 </li>
                                 <li className="nav-item">
-                                    <Link className="nav-link-home" to="/scenarios">Scenarios</Link>
+                                    <Link className="nav-link" to="/scenarios">Scenarios</Link>
                                 </li>
                                 <li className="nav-item">
-                                    <Link className="nav-link-home" to="/actionsCompare">Actions Compare</Link>
+                                    <Link className="nav-link" to="/actionsCompare">Actions Compare</Link>
                                 </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link-home" to="/survey">Survey</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link-home" to="/survey-results">Survey Results</Link>
-                                </li>
+                                <NavDropdown title="Surveys">
+                                    <NavDropdown.Item>
+                                        <Link className="dropdown-item" to="/survey">Take Survey</Link>
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item>
+                                        <Link className="dropdown-item" to="/survey-results">Survey Results</Link>
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                                <NavDropdown title="Text Scenarios">
+                                    <NavDropdown.Item>
+                                        <Link className="dropdown-item" to="/text-based">Complete Text Scenarios</Link>
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item disabled>
+                                        <span className="dropdown-item" style={{opacity: 0.5}}>Text Scenario Results</span>
+                                    </NavDropdown.Item>
+                                </NavDropdown>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
