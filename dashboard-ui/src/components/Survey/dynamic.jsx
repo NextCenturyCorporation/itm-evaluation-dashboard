@@ -116,7 +116,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                         </Card.Body>
                     </Card>
                     <Card>
-                        <Card.Header>Supplies / Resources</Card.Header>
+                        <Card.Header>Constraints / Resources</Card.Header>
                         <Card.Body>
                             {supplies.map((supplies, index) => (
                                 <Card.Text key={supplies.type}>
