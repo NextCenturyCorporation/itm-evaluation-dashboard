@@ -87,7 +87,7 @@ export class Omnibus extends SurveyQuestionElementBase {
     renderElement() {
         const { dmDetails } = this.state;
         return (
-            <Accordion alwaysOpen>
+            <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3']}>
                 {dmDetails.map((dm, index) => (
                     <Accordion.Item eventKey={index.toString()} key={dm.name}>
                         <Accordion.Header>Scenario</Accordion.Header>
