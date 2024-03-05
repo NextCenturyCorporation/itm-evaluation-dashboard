@@ -182,6 +182,7 @@ const typeDefs = gql`
   type Mutation {
     updateAdminUser(username: String, isAdmin: Boolean): JSON
     uploadSurveyResults(surveyId: String, results: JSON): JSON
+    uploadScenarioResults(results: JSON): JSON
   }
 `;
 
@@ -277,6 +278,9 @@ const resolvers = {
       const options = { upsert: true}
 
       return await dashboardDB.db.collection('surveyResults').updateOne(filter, update, options)
+    },
+    uploadScenarioResults: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('userScenarioResults').insertOne(args)
     }
   },
   StringOrFloat: new GraphQLScalarType({
