@@ -6,6 +6,7 @@ import adeptConfig from './adeptConfig.json';
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
+import { Vitals } from './vitalsTemplate'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: JSON) {
@@ -67,4 +68,8 @@ class TextBasedScenariosPage extends Component {
     }
 }
 
-export default TextBasedScenariosPage
+export default TextBasedScenariosPage;
+
+ReactQuestionFactory.Instance.registerQuestion("vitals", (props) => {
+    return React.createElement(Vitals, props)
+})

@@ -3,12 +3,12 @@
     "logoPosition": "right",
     "pages": [
      {
-      "name": "Background for Omnibus DM's",
+      "name": "Urban Intro",
       "elements": [
        {
         "type": "html",
         "name": "question1",
-        "title": "Adept Urban ",
+        "title": "Adept Urban",
         "html": "<h4>ADEPT Ubran</h4>\n\n<br/>\nYou are the only medic on the scene after there was some kind of shooting between civilians. The local civilian hospital does not have significant surgical capabilities.\n\nYou do not have time to treat both patients, and both are likely to die without treatment. The civilian in black clothes has injuries that are definitely treatable, but the other civilian may die even if treated, due to the limited capabilities of the local hospital."
        }
       ]
@@ -17,9 +17,55 @@
       "name": "page1",
       "elements": [
        {
-        "type": "expression",
+        "type": "vitals",
+        "supplies": [
+            {"type": "Tourniquet", "reusable": true, "quantity": 4},
+            {"type": "Pressure bandage", "reusable": false, "quantity": 4},
+            {"type": "Hemostatic gauze", "reusable": false, "quantity": 4},
+            {"type": "Decompression Needle", "reusable": true, "quantity": 1},
+            {"type": "Nasopharyngeal airway", "reusable": true, "quantity": 1},
+            {"type": "Pulse Oximeter", "reusable": true, "quantity": 1},
+            {"type": "Pain Medications", "reusable": false, "quantity": 4},
+            {"type": "Splint", "reusable": true, "quantity": 4},
+            {"type": "Burn Dressing", "reusable": true, "quantity": 4}
+        ],
+        "patients": [
+            {
+                "name": "Patient 1",
+                "vitals": [
+                    {"type": "Concious", "value": false},
+                    {"type": "AVPU", "value": "Unresponsive"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Unresponsive"},
+                    {"type": "Breathing", "value": "Fast"},
+                    {"type": "Heart Rate", "value": "Fast"},
+                    {"type": "sp02", "value": 60}
+                ],
+                "injuries": [
+                    {"name": "puncture", "location": "Right shoulder", "severity": "extreme", "status": "visible" },
+                    {"name": "puncture", "location": "Right bicep", "severity": "moderate", "status": "visible"}
+                ]
+            },
+            {
+                "name": "Patient 2",
+                "vitals": [
+                    {"type": "Concious", "value": false},
+                    {"type": "AVPU", "value": "Unresponsive"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Unresponsive"},
+                    {"type": "Breathing", "value": "Slow"},
+                    {"type": "Heart Rate", "value": "Faint"},
+                    {"type": "sp02", "value": 30}
+                ],
+                "injuries": [
+                    {"name": "puncture", "location": "Right shoulder", "severity": "extreme", "status": "visible" },
+                    {"name": "puncture", "location": "Right bicep", "severity": "moderate", "status": "visible"},
+                    {"name": "puncture", "location": "Right chest", "severity": "moderate", "status": "visible"}
+                ]
+            }
+        ],
         "name": "Urban vitals",
-        "title": "INSERT VITALS"
+        "title": ""
        },
        {
         "type": "radiogroup",
@@ -407,5 +453,6 @@
       ]
      }
     ],
-    "showQuestionNumbers": "off"
+    "showQuestionNumbers": "off",
+    "widthMode": "responsive"
    }
