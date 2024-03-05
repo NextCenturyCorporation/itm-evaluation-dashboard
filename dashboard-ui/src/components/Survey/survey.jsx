@@ -47,8 +47,9 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
+        this.assignOmnibus(this.surveyConfigClone.soarTechDMs, this.surveyConfigClone.adeptDMs)
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
-        this.configureSurveyPages(groupedDMs, comparisonPages, removed);
+        this.applyPageRandomization(groupedDMs, comparisonPages, removed);
     }
 
     prepareSurveyInitialization = () => {
@@ -73,38 +74,38 @@ class SurveyPage extends Component {
             comparisonPages.push(group[0] + " vs " + group[1])
         })
 
-        
-        console.log(groupedDMs)
-        console.log(comparisonPages)
-        console.log(removed)
         return { groupedDMs, comparisonPages, removed};
     }
 
-    configureSurveyPages = (groupedDMs, comparisonPages, removed) => {
-        this.assignOmnibus(groupedDMs);
-        this.applyPageRandomization(groupedDMs, comparisonPages, removed);
-    }
+    assignOmnibus = (soarTechDMs, adeptDMs) => {
+        let medicA = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-A")
+        let medicB = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-B")
+        let medicC = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-C")
+        let medicD = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-D")
 
-    assignOmnibus = (groupedDMs) => {
-        let firstOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-A")
-        let secondOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-B")
-
-        // which medics make up the omnibus pairing should be random (but obviously can't have two from same scenario)
-        groupedDMs.forEach(pairing => {
-            // there should only ever be three members in groupedDMs, but just in case
-            if (firstOmnibus.elements[0].decisionMakers.length < 4 && secondOmnibus.elements[0].decisionMakers.length < 4) {
+        shuffle(soarTechDMs).forEach(pairing => {
+            if (medicA.elements[0].decisionMakers.length < 4 && medicB.elements[0].decisionMakers.length < 4) {
                 if (Math.random() < 0.5) {
-                    firstOmnibus.elements[0].decisionMakers.push(pairing[0]);
-                    secondOmnibus.elements[0].decisionMakers.push(pairing[1]);
+                    medicA.elements[0].decisionMakers.push(pairing[0]);
+                    medicB.elements[0].decisionMakers.push(pairing[1]);
                 } else {
-                    firstOmnibus.elements[0].decisionMakers.push(pairing[1]);
-                    secondOmnibus.elements[0].decisionMakers.push(pairing[0]);
+                    medicA.elements[0].decisionMakers.push(pairing[1]);
+                    medicB.elements[0].decisionMakers.push(pairing[0]);
                 }
             }
         })
 
-        console.log(firstOmnibus)
-        console.log(secondOmnibus)
+        shuffle(adeptDMs).forEach(pairing => {
+            if (medicC.elements[0].decisionMakers.length < 4 && medicD.elements[0].decisionMakers.length < 4) {
+                if (Math.random() < 0.5) {
+                    medicC.elements[0].decisionMakers.push(pairing[0]);
+                    medicD.elements[0].decisionMakers.push(pairing[1]);
+                } else {
+                    medicC.elements[0].decisionMakers.push(pairing[1]);
+                    medicD.elements[0].decisionMakers.push(pairing[0]);
+                }
+            }
+        })
     }
 
     applyPageRandomization = (groupedDMs, comparisonPages, removedPages) => {
