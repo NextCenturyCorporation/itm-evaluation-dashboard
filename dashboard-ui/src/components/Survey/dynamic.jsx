@@ -14,7 +14,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
     const [activeDescription, setActiveDescription] = useState('');
     const [showSituationModal, setShowSituationModal] = useState(showModal);
     const [actionLogs, setActionLogs] = useState([]);
-    const [activeKey, setActiveKey] = useState(null);
 
     // log actions
     const logAction = (actionName) => {
@@ -27,7 +26,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
     };
 
     const handleAccordionSelect = (eventKey) => {
-        setActiveKey(eventKey);
         logAction(`Accordion toggle: ${eventKey !== null ? "expanded" : "collapsed"} Medic Actions`);
     };
 
@@ -76,7 +74,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
             return (
                 <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
                     <Card.Header>
-                        <div>{patient.name} - <Card.Text>{patient.description}</Card.Text></div>
+                        <div>{patient.name} <Card.Text>{patient.description}</Card.Text></div>
                     </Card.Header>
                     <Row className="g-0">
                         <Col md={8} className="mr-4">
@@ -128,10 +126,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                 </Col>
                 <Col md={10}>
                     <Card className="mb-3">
-                        <Card.Header>Decision: {decision}</Card.Header>
+                        <Card.Header>Actions</Card.Header>
                         <Card.Body>
-                            <Accordion onSelect={handleAccordionSelect} activeKey={activeKey}>
-                                <Accordion.Item eventKey={0}>
+                            <Accordion onSelect={handleAccordionSelect} defaultActiveKey="0">
+                                <Accordion.Item eventKey="0">
                                     <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
                                     <Accordion.Body>
                                         <ListGroup>
