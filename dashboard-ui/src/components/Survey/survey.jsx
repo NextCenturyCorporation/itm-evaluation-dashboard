@@ -143,14 +143,14 @@ class SurveyPage extends Component {
                 groupPages.push(...groupedPages.filter(page => page.name.includes(dm)));
             });
 
-            const comparisonPageName = comparisonPages[group.join('')];
-            const comparisonPage = this.surveyConfigClone.pages.find(page => page.name === comparisonPageName);
+            const comparisonPage = this.surveyConfigClone.pages.find(page => page.name === group.join(' vs '));
             if (comparisonPage) {
                 groupPages.push(comparisonPage);
             }
 
             shuffledGroupedPages.push(...groupPages);
         });
+
 
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
     }
