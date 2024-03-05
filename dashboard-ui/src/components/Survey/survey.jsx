@@ -58,54 +58,50 @@ class SurveyPage extends Component {
         let adept = shuffle(this.surveyConfigClone.adeptDMs)
 
         // select two scenarios from each
-        let groupedDMs = shuffle((soarTech.slice(0,2)).concat(adept.slice(0,2)))
+        let groupedDMs = shuffle((soarTech.slice(0, 2)).concat(adept.slice(0, 2)))
         let removed = (soarTech.slice(2)).concat(adept.slice(2))
-        
+
         // keep track of pages to ignore in surveyConfig
         let removedComparisonPages = []
         removed.forEach(group => {
             removedComparisonPages.push(group[0] + " vs " + group[1])
         })
         removed = removed.flat().concat(removedComparisonPages)
-        
+
         // keep track of relevant comparison pages of selected scenarios
         let comparisonPages = []
         groupedDMs.forEach(group => {
             comparisonPages.push(group[0] + " vs " + group[1])
         })
 
-        return { groupedDMs, comparisonPages, removed};
+        return { groupedDMs, comparisonPages, removed };
     }
 
     assignOmnibus = (soarTechDMs, adeptDMs) => {
+        /*
+        * Medics A and C should have High attribute DMs from soartech and adept, respectively. 
+        * Medics B and D are the low sttribute DMs
+        */
+
         let medicA = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-A")
         let medicB = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-B")
         let medicC = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-C")
         let medicD = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-D")
 
-        shuffle(soarTechDMs).forEach(pairing => {
+        soarTechDMs.forEach(pairing => {
             if (medicA.elements[0].decisionMakers.length < 4 && medicB.elements[0].decisionMakers.length < 4) {
-                if (Math.random() < 0.5) {
-                    medicA.elements[0].decisionMakers.push(pairing[0]);
-                    medicB.elements[0].decisionMakers.push(pairing[1]);
-                } else {
-                    medicA.elements[0].decisionMakers.push(pairing[1]);
-                    medicB.elements[0].decisionMakers.push(pairing[0]);
-                }
+                medicA.elements[0].decisionMakers.push(pairing[0]);
+                medicB.elements[0].decisionMakers.push(pairing[1]);
             }
         })
 
-        shuffle(adeptDMs).forEach(pairing => {
+        adeptDMs.forEach(pairing => {
             if (medicC.elements[0].decisionMakers.length < 4 && medicD.elements[0].decisionMakers.length < 4) {
-                if (Math.random() < 0.5) {
-                    medicC.elements[0].decisionMakers.push(pairing[0]);
-                    medicD.elements[0].decisionMakers.push(pairing[1]);
-                } else {
-                    medicC.elements[0].decisionMakers.push(pairing[1]);
-                    medicD.elements[0].decisionMakers.push(pairing[0]);
-                }
+                medicC.elements[0].decisionMakers.push(pairing[0]);
+                medicD.elements[0].decisionMakers.push(pairing[1]);
             }
-        })
+        }
+        )
     }
 
     applyPageRandomization = (groupedDMs, comparisonPages, removedPages) => {
