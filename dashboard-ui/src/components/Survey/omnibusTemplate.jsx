@@ -3,6 +3,7 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Accordion } from "react-bootstrap";
 import Dynamic from "./dynamic";
+import surveyConfig from './surveyConfig.json';
 import './template.css'
 
 
@@ -70,7 +71,7 @@ export class Omnibus extends SurveyQuestionElementBase {
     }
 
     componentDidMount() {
-        let config = this.question.survey.jsonObj;
+        let config = surveyConfig
         let decisionMakers = this.decisionMakers;
         // in case of duplicates somehow
         decisionMakers = [...new Set(decisionMakers)];
@@ -86,7 +87,7 @@ export class Omnibus extends SurveyQuestionElementBase {
     renderElement() {
         const { dmDetails } = this.state;
         return (
-            <Accordion alwaysOpen>
+            <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3']}>
                 {dmDetails.map((dm, index) => (
                     <Accordion.Item eventKey={index.toString()} key={dm.name}>
                         <Accordion.Header>Scenario</Accordion.Header>
