@@ -2,7 +2,10 @@ import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core'
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
-import adeptConfig from './adeptConfig.json';
+import adeptJungleConfig from './adeptJungleConfig.json';
+import adeptSubConfig from './adeptSubConfig.json';
+import adeptDesertConfig from './adeptDesertConfig.json';
+import adeptUrbanConfig from './adeptUrbanConfig.json';
 import stUrbanConfig from './stUrbanConfig.json'
 import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
