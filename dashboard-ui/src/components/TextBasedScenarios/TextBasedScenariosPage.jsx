@@ -104,7 +104,7 @@ class TextBasedScenariosPage extends Component {
                 )}
                 {this.state.currentConfig && (
                     <>
-                        <div style={{ position: 'absolute', top: 0, left: 0, padding: '10px' }}>
+                        <div style={{ position: 'absolute', top: '70px', right: '10px', padding: '10px', 'z-index': '100' }}>
                             <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={this.exitSurveyConfirmation}>
                                 Exit Scenario
                             </Button>
