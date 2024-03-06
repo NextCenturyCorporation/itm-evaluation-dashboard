@@ -17,7 +17,7 @@
             "name": "page1",
             "elements": [
                 {
-                    "type": "vitals",
+                    "type": "adeptVitals",
                     "supplies": [
                         {
                             "type": "Tourniquet",
@@ -167,8 +167,8 @@
                             ]
                         }
                     ],
-                    "name": "Urban vitals1",
-                    "title": ""
+                    "name": "Urban vitals",
+                    "title": "Urban Vitals"
                 },
                 {
                     "type": "radiogroup",
@@ -186,7 +186,7 @@
             "name": "page2",
             "elements": [
                 {
-                    "type": "vitals",
+                    "type": "adeptVitals",
                     "supplies": [
                         {
                             "type": "Tourniquet",
@@ -336,7 +336,7 @@
                             ]
                         }
                     ],
-                    "name": "Urban vitals1",
+                    "name": "Urban vitals",
                     "title": ""
                 },
                 {
@@ -374,7 +374,7 @@
             "name": "page3",
             "elements": [
                 {
-                    "type": "vitals",
+                    "type": "adeptVitals",
                     "supplies": [
                         {
                             "type": "Tourniquet",
@@ -524,7 +524,7 @@
                             ]
                         }
                     ],
-                    "name": "Urban vitals1",
+                    "name": "Urban vitals",
                     "title": ""
                 },
                 {
@@ -643,7 +643,7 @@
                     "title": "“Sometimes I’m not even sure who our enemies and allies are around here. For example, that injured local soldier. Just a few months ago, he was fighting for the insurgency against us.”"
                 },
                 {
-                    "type": "vitals",
+                    "type": "adeptVitals",
                     "supplies": [
                         {
                             "type": "Tourniquet",
@@ -831,7 +831,7 @@
                     "html": "You decide to walk to the patients instead. A crewmate tells you:\n<br/>\n<br/>\n“It looks like the electrician’s mate did not secure power, the most basic and important safety step, before initiating the repair! The accident was due to his serious negligence. There’s no reason it had to happen and now two people are hurt. I’m sure this will be a serious black mark on his record.”\n<br/>\n<br/>\nAssessing the patients, you find that the Electrician’s mate and the other sailor are equally injured. They both need immediate treatment and are likely to survive if treated."
                 },
                 {
-                    "type": "vitals",
+                    "type": "adeptVitals",
                     "supplies": [
                         {
                             "type": "Tourniquet",
@@ -1052,7 +1052,7 @@
                     "html": "<h4>ADEPT Jungle</h4>\n<br/>\nYou are a medic on a security patrol. You encounter a serious accident potentially from an IED explosion. You were told that a civilian found what looked like it might be an IED, reported it to authorities, and then against our advice, went back and apparently triggered accidental detonation while taking a closer look. There are two civilian patients, one closer to what looks like the IED materials and one further away on a path. The patient who is closer to the IED materials seems to be more seriously injured."
                 },
                 {
-                    "type": "vitals",
+                    "type": "adeptVitals",
                     "supplies": [
                         {
                             "type": "Tourniquet",
@@ -1244,7 +1244,7 @@
                     "title": "“Don’t you think the other man has a much more urgent injury compared to the man you are treating? Shouldn’t you take care of the other man first?”\n\nYou see that the patient closer to the IED is now showing more visible signs of distress. He seems to have an immediate need for treatment."
                 },
                 {
-                    "type": "vitals",
+                    "type": "adeptVitals",
                     "supplies": [
                         {
                             "type": "Tourniquet",

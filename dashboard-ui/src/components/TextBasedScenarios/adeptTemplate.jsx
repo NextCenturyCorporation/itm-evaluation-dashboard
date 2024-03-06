@@ -4,9 +4,9 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 
 
-const CUSTOM_TYPE = "vitals";
+const CUSTOM_TYPE = "adeptVitals";
 
-export class VitalsModel extends Question {
+export class AdeptVitalsModel extends Question {
     getType() {
         return CUSTOM_TYPE;
     }
@@ -41,17 +41,17 @@ Serializer.addClass(
         }
     ],
     function () {
-        return new VitalsModel("");
+        return new AdeptVitalsModel("");
     },
     "question"
 );
 
 ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
-    return new VitalsModel(name);
+    return new AdeptVitalsModel(name);
 });
 
 
-export class Vitals extends SurveyQuestionElementBase {
+export class AdeptVitals extends SurveyQuestionElementBase {
 
     get question() {
         return this.questionBase;

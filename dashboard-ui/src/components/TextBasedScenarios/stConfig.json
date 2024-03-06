@@ -1,0 +1,678 @@
+{
+    "logoPosition": "right",
+    "title": "SoarTech Text Based Scenarios",
+    "pages": [
+        {
+            "name": "Urban Probe 1-1",
+            "elements": [
+                {
+                    "type": "expression",
+                    "name": "question1",
+                    "title": "Context:\nYour team is in one vehicle en route to a key leader engagement when a civilian car strikes your vehicle on the driver side at a crossroads. Both vehicles have damage, but your team is able to self-evacuate from the vehicle. Two of your team members have injuries and you do not know if there are other casualties in the other car. \n"
+                },
+                {
+                    "type": "stVitals",
+                    "name": "SoarTech Urban Vitals",
+                    "patients": [
+                        {
+                            "name": "Casualty U",
+                            "age": 23,
+                            "gender": "Male",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "UNK"
+                                }
+                            ],
+                            "injury": "Has an uncontrolled hemorrhage of the right lower arm from glass, severing an artery."
+                        },
+                        {
+                            "name": "Casualty V",
+                            "age": 26,
+                            "gender": "Female",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "UNK"
+                                }
+                            ],
+                            "injury": "Has a right partial below the knee leg amputation with severe bleeding"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "SoarTech Urban 1.1",
+                    "title": "What action do you take?",
+                    "choices": [
+                        "Search for more casualties",
+                        "Assess Casualty U first",
+                        "Assess Casualty V first",
+                        "Treat Casualty U",
+                        "Treat Casualty V"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Urban Probe 1-2",
+            "elements": [
+                {
+                    "type": "expression",
+                    "name": "Probe 1-2",
+                    "title": "Context:\nThere are no additional casualties at this time. You have conducted a preliminary visual assessment. You can take vitals at the risk of delaying time critical treatment.  \n\n"
+                },
+                {
+                    "type": "stVitals",
+                    "name": "SoarTech Urban Vitals",
+                    "patients": [
+                        {
+                            "name": "Casualty U",
+                            "age": 23,
+                            "gender": "Male",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "UNK"
+                                }
+                            ],
+                            "injury": "Has an uncontrolled hemorrhage of the right lower arm from glass, severing an artery."
+                        },
+                        {
+                            "name": "Casualty V",
+                            "age": 26,
+                            "gender": "Female",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "UNK"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "UNK"
+                                }
+                            ],
+                            "injury": "Has a right partial below the knee leg amputation with severe bleeding"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "SoarTech Urban 1-2",
+                    "title": "What is your plan of action?",
+                    "choices": [
+                        "Perform vitals assessment on Casualty U",
+                        "Perform vitals assessment on Casualty V",
+                        "Apply Pain Med/Aid Bag to Casualty U",
+                        " Apply Pain Med/Aid Bag to Casualty V"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Urban Probe 1-3",
+            "elements": [
+                {
+                    "type": "expression",
+                    "name": "Probe 1-3",
+                    "title": "Context:\nYou were able to get more vitals on both known casualties. You now only have one tourniquet. If you were to treat Casualty U first: \n"
+                },
+                {
+                    "type": "stVitals",
+                    "name": "SoarTech Urban Vitals",
+                    "patients": [
+                        {
+                            "name": "Casualty U",
+                            "age": 23,
+                            "gender": "Male",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "140"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "90"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "95%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "21"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "4"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "15"
+                                }
+                            ],
+                            "injury": "Has an uncontrolled hemorrhage of the right lower arm from glass, severing an artery."
+                        },
+                        {
+                            "name": "Casualty V",
+                            "age": 26,
+                            "gender": "Female",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "140"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "90"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "95%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "21"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "9"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "15"
+                                }
+                            ],
+                            "injury": "Has a right partial below the knee leg amputation with severe bleeding"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "SoarTech Urban 1-3",
+                    "title": "What action do you take?",
+                    "choices": [
+                        "Apply a tourniquet",
+                        "Apply hemostatic gauze",
+                        "Apply a pressure bandage",
+                        "Provide pain medication",
+                        "Do not treat"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Urban Probe 2-1",
+            "elements": [
+                {
+                    "type": "expression",
+                    "name": "Probe 2-1",
+                    "title": "Context:\nWhile you are treating Casualty U, both Casualty U and Casualty V are losing consciousness. You’re not sure if bleeding is controlled or you missed other injuries. You are the only medical provider and realize you cannot treat both casualties effectively. "
+                },
+                {
+                    "type": "stVitals",
+                    "name": "SoarTech Urban Vitals",
+                    "patients": [
+                        {
+                            "name": "Casualty U",
+                            "age": 23,
+                            "gender": "Male",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "70"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "85%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "27"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "2"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "13"
+                                }
+                            ],
+                            "injury": "Has an uncontrolled hemorrhage of the right lower arm from glass, severing an artery."
+                        },
+                        {
+                            "name": "Casualty V",
+                            "age": 26,
+                            "gender": "Female",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "70"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "85%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "27"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "2"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "13"
+                                }
+                            ],
+                            "injury": "Has a right partial below the knee leg amputation with severe bleeding"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "SoarTech Urban 2-1",
+                    "title": "What action do you take?",
+                    "choices": [
+                        "Stop treatment and assess Casualty V",
+                        "Continue to treat Casualty U",
+                        "Move to treat Casualty V",
+                        "Do not treat and search for help",
+                        "Call to find out if additional support is possible"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Urban Probe 2-2",
+            "elements": [
+                {
+                    "type": "expression",
+                    "name": "Probe 2-2",
+                    "title": "Context:\nBoth Casualty U and Casualty V are still unconscious and are having difficulty keeping their airway open. The local medical provider from a nearby village arrives but have no airway equipment and limited training.  \n"
+                },
+                {
+                    "type": "stVitals",
+                    "name": "SoarTech Urban Vitals",
+                    "patients": [
+                        {
+                            "name": "Casualty U",
+                            "age": 23,
+                            "gender": "Male",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "70"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "70%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "25"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "0"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "10"
+                                }
+                            ],
+                            "injury": "Has an uncontrolled hemorrhage of the right lower arm from glass, severing an artery."
+                        },
+                        {
+                            "name": "Casualty V",
+                            "age": 26,
+                            "gender": "Female",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "70"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "70%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "25"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "0"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "10"
+                                }
+                            ],
+                            "injury": "Has a right partial below the knee leg amputation with severe bleeding"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "SoarTech Urban 2-2",
+                    "title": "What is your plan of action?",
+                    "choices": [
+                        "Continue to treat Casualty U",
+                        "Move to treat Casualty V ",
+                        "Plan to treat both by alternating bag valve mask (BVM) "
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Urban Probe 2-3",
+            "elements": [
+                {
+                    "type": "expression",
+                    "name": "Probe 2-3",
+                    "title": "Context:\nYou decide the local medical provider is not helpful and are monitoring both casualties. Casualty U’s breathing and consciousness improves with NPA. Casualty V is still unconscious and stops breathing. You suspect Casualty V has lost too much blood.\n\n"
+                   },
+                {
+                    "type": "stVitals",
+                    "name": "SoarTech Urban Vitals",
+                    "patients": [
+                        {
+                            "name": "Casualty U",
+                            "age": 23,
+                            "gender": "Male",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "90"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "92%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "18"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "4"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "14"
+                                }
+                            ],
+                            "injury": "Has an uncontrolled hemorrhage of the right lower arm from glass, severing an artery."
+                        },
+                        {
+                            "name": "Casualty V",
+                            "age": 26,
+                            "gender": "Female",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "70"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "70%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "0"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "0"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "3"
+                                }
+                            ],
+                            "injury": "Has a right partial below the knee leg amputation with severe bleeding"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "SoarTech Urban 2-3",
+                    "title": "What action do you take for casualty V?",
+                    "choices": [
+                        "Perform an escharotomy (minor surgical kit)",
+                        "Provide burn dressing with pain control (Burn kit)",
+                        "Nasopharyngeal airway ",
+                        "Use Cricothyroidotomy Kit",
+                        "Use ET Intubation Equipment",
+                        "Administer a blood transfusion",
+                        "Check for a pulse",
+                        "Do not treat"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Urban Probe 2-4",
+            "elements": [
+                {
+                    "type": "expression",
+                    "name": "Probe 2-4",
+                    "title": "Context:\nBoth casualties have lost a lot of blood, and each casualty need two units of blood. You only have two units of blood to administer.\n"
+                   },
+                {
+                    "type": "stVitals",
+                    "name": "SoarTech Urban Vitals",
+                    "patients": [
+                        {
+                            "name": "Casualty U",
+                            "age": 23,
+                            "gender": "Male",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "90"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "92%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "18"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "4"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "14"
+                                }
+                            ],
+                            "injury": "Has an uncontrolled hemorrhage of the right lower arm from glass, severing an artery."
+                        },
+                        {
+                            "name": "Casualty V",
+                            "age": 26,
+                            "gender": "Female",
+                            "race": "White",
+                            "type": "Mil",
+                            "vitals": [
+                                {
+                                    "type": "HR/min",
+                                    "value": "150"
+                                },
+                                {
+                                    "type": "SBP",
+                                    "value": "90"
+                                },
+                                {
+                                    "type": "Sp02",
+                                    "value": "92%"
+                                },
+                                {
+                                    "type": "RR",
+                                    "value": "18"
+                                },
+                                {
+                                    "type": "Pain",
+                                    "value": "4"
+                                },
+                                {
+                                    "type": "GCS",
+                                    "value": "14"
+                                }
+                            ],
+                            "injury": "Has a right partial below the knee leg amputation with severe bleeding"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "SoarTech Urban 2-4",
+                    "title": "What action do you take for casualty V?",
+                    "choices": [
+                        "Give each casualty one unit of blood",
+                        "Give two units of blood to Casualty U",
+                        "Give two units of blood to Casualty V"
+                    ]
+                }
+            ]
+        }
+    ],
+    "showQuestionNumbers": "off",
+    "widthMode": "responsive"
+}

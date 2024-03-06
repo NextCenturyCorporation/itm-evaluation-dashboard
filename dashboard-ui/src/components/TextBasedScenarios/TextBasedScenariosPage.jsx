@@ -3,10 +3,12 @@ import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core'
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
 import adeptConfig from './adeptConfig.json';
+import stConfig from './stConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import { Vitals } from './vitalsTemplate'
+import { AdeptVitals } from './adeptTemplate'
+import { STVitals } from './stTemplate'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: JSON) {
@@ -70,6 +72,10 @@ class TextBasedScenariosPage extends Component {
 
 export default TextBasedScenariosPage;
 
-ReactQuestionFactory.Instance.registerQuestion("vitals", (props) => {
-    return React.createElement(Vitals, props)
+ReactQuestionFactory.Instance.registerQuestion("adeptVitals", (props) => {
+    return React.createElement(AdeptVitals, props)
+})
+
+ReactQuestionFactory.Instance.registerQuestion("stVitals", (props) => {
+    return React.createElement(STVitals, props)
 })
