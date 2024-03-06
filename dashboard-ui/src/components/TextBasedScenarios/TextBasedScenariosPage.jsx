@@ -24,7 +24,7 @@ class TextBasedScenariosPage extends Component {
             uploadData: false
         };
 
-        this.survey = new Model(adeptConfig);
+        this.survey = new Model(stConfig);
         this.survey.applyTheme(surveyTheme);
         this.survey.onComplete.add(this.onSurveyComplete);
         this.surveyData = {}
