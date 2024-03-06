@@ -6,6 +6,7 @@ import adeptConfig from './adeptConfig.json';
 import stUrbanConfig from './stUrbanConfig.json'
 import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
+import stSubConfig from './stSubConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
@@ -26,7 +27,7 @@ class TextBasedScenariosPage extends Component {
             uploadData: false
         };
 
-        this.survey = new Model(stJungleConfig);
+        this.survey = new Model(stSubConfig);
         this.survey.applyTheme(surveyTheme);
         this.survey.onComplete.add(this.onSurveyComplete);
         this.surveyData = {}
