@@ -1163,8 +1163,8 @@
                         "Search for more casualties",
                         "Assess Casualty W first",
                         "Assess Casualty X first",
-                        "Move to treat Casualty W",
-                        "Move to treat Casualty X"
+                        "Apply Decompression Needle to Casualty W",
+                        "Apply Splint to Casualty X"
                     ]
                 }
             ]
@@ -1258,8 +1258,8 @@
                     "choices": [
                         "Perform vitals assessment on Casualty W",
                         "Perform vitals assessment on Casualty X",
-                        "Move to treat Casualty W",
-                        "Move to treat Casualty X"
+                        "Apply Decompression Needle to Casualty W",
+                        "Apply Splint to Casualty X"
                     ]
                 }
             ]
