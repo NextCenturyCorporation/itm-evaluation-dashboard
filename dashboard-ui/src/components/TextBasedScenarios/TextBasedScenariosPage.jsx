@@ -121,8 +121,8 @@ class TextBasedScenariosPage extends Component {
                                     uploadSurveyResults({
                                         variables: { results: this.surveyData }
                                     });
-                                    // uploads data then sets config back to null so user can pick another scenario
-                                    this.setState({ uploadData: false, currentConfig: null });
+                                    // uploads data then sets 
+                                    this.setState({ uploadData: false });
                                 }}></button>
                             </div>
                         )}

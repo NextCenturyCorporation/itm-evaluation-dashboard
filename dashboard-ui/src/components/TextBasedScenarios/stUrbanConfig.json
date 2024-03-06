@@ -1,6 +1,7 @@
 {
     "logoPosition": "right",
     "title": "SoarTech Urban Scenario",
+    "completedHtml": "<h3>Thank you for completing the scenario</h3>",
     "pages": [
         {
             "name": "Urban Scenario",
@@ -97,7 +98,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 1.1",
+                    "name": "SoarTech Urban 1-1",
                     "title": "What action do you take?",
                     "choices": [
                         "Search for more casualties",

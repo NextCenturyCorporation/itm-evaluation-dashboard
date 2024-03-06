@@ -1,6 +1,7 @@
 {
     "title": "ADEPT Urban Scenario",
     "logoPosition": "right",
+    "completedHtml": "<h3>Thank you for completing the scenario</h3>",
     "pages": [
         {
             "name": "Urban Intro",
