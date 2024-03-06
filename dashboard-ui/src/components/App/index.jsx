@@ -217,7 +217,7 @@ export class App extends React.Component {
                             <Route path="/survey-results">
                                 <SurveyResults />
                             </Route>
-                            <Route path="/text-based-scenarios">
+                            <Route path="/text-based">
                                 <TextBased />
                             </Route>
                         </Switch>

@@ -11,6 +11,7 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import surveyTheme from './surveyTheme.json';
+import { Button } from 'react-bootstrap'
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
@@ -27,19 +28,17 @@ class TextBasedScenariosPage extends Component {
         super(props);
 
         this.state = {
+            currentConfig: null,
             uploadData: false
         };
 
-        this.survey = new Model(stSubConfig);
-        this.survey.applyTheme(surveyTheme);
-        this.survey.onComplete.add(this.onSurveyComplete);
         this.surveyData = {}
         this.uploadButtonRef = React.createRef();
     }
 
     uploadResults = (survey) => {
-        console.log(survey.valuesHash)
-        this.surveyData = survey.valuesHash
+        this.surveyData.response = survey.valuesHash
+        this.surveyData.scenario = survey.title
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
@@ -51,10 +50,68 @@ class TextBasedScenariosPage extends Component {
         this.uploadResults(survey)
     }
 
+    loadSurveyConfig = (config) => {
+        const survey = new Model(config);
+        survey.applyTheme(surveyTheme);
+        survey.onComplete.add(this.onSurveyComplete);
+        this.setState({ currentConfig: survey });
+    };
+
+    exitSurveyConfirmation = () => {
+        const isConfirmed = window.confirm('Are you sure you want to exit the scenario?');
+        if (isConfirmed) {
+            this.setState({ currentConfig: null });
+        }
+    }
+
+    renderScenarioButtons() {
+        const scenarios = [
+            { label: "Adept Urban", config: adeptUrbanConfig },
+            { label: "Adept Submarine", config: adeptSubConfig },
+            { label: "Adept Desert", config: adeptDesertConfig },
+            { label: "Adept Jungle", config: adeptJungleConfig },
+            { label: "SoarTech Urban", config: stUrbanConfig },
+            { label: "SoarTech Submarine", config: stSubConfig },
+            { label: "SoarTech Desert", config: stDesertConfig },
+            { label: "SoarTech Jungle", config: stJungleConfig }
+        ];
+
+        return scenarios.map((scenario, index) => (
+            <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} className="my-1 mx-2" key={scenario.label} onClick={() => this.loadSurveyConfig(scenario.config)}>
+                {scenario.label}
+            </Button>
+        ));
+    }
+
     render() {
+        const adeptScenarios = this.renderScenarioButtons().filter(button => button.props.children.includes('Adept'));
+        const soarTechScenarios = this.renderScenarioButtons().filter(button => button.props.children.includes('SoarTech'));
+
         return (
             <>
-                <Survey model={this.survey} />
+                {!this.state.currentConfig && (
+                    <div style={{ textAlign: 'center' }}>
+                        <h1>Choose a Scenario</h1>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {adeptScenarios}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {soarTechScenarios}
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {this.state.currentConfig && (
+                    <>
+                        <div style={{ position: 'absolute', top: 0, left: 0, padding: '10px' }}>
+                            <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={this.exitSurveyConfirmation}>
+                                Exit Scenario
+                            </Button>
+                        </div>
+                        <Survey model={this.state.currentConfig} />
+                    </>
+                )}
                 {this.state.uploadData && (
                     <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
                         {(uploadSurveyResults, { data }) => (
@@ -64,7 +121,8 @@ class TextBasedScenariosPage extends Component {
                                     uploadSurveyResults({
                                         variables: { results: this.surveyData }
                                     });
-                                    this.setState({ uploadData: false });
+                                    // uploads data then sets config back to null so user can pick another scenario
+                                    this.setState({ uploadData: false, currentConfig: null });
                                 }}></button>
                             </div>
                         )}
