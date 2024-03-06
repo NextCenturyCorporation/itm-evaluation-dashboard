@@ -3,7 +3,8 @@ import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core'
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
 import adeptConfig from './adeptConfig.json';
-import stConfig from './stConfig.json'
+import stUrbanConfig from './stUrbanConfig.json'
+import stDesertConfig from './stDesertConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
@@ -24,7 +25,7 @@ class TextBasedScenariosPage extends Component {
             uploadData: false
         };
 
-        this.survey = new Model(stConfig);
+        this.survey = new Model(stDesertConfig);
         this.survey.applyTheme(surveyTheme);
         this.survey.onComplete.add(this.onSurveyComplete);
         this.surveyData = {}

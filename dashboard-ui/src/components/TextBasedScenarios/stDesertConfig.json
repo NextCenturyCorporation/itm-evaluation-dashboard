@@ -1,29 +1,29 @@
 {
     "logoPosition": "right",
-    "title": "SoarTech Text Based Scenarios",
+    "title": "SoarTech Desert Scenario",
     "pages": [
         {
-            "name": "Uban Scenario",
+            "name": "Desert Scenario",
             "elements":[
                 {
                     "type": "html",
-                    "name": "Urban Intro",
-                    "html": "<h4>Situation</h4>\nYou are in a civil affairs element operating in a small urban environment in support of our US embassy. While not directly a threat, drug cartels operate in the area.\n<br/>\n<br/>\n<h4>Mission</h4>\nYour mission is to interact with local authorities to assess needs and possible US interventions in support of local development.\n<br/>\n<br/>\n<h4>Execution</h4>\nYou are to move in four-man teams for key leader engagements and assessment of infrastructure and human terrain. You are a medic on the detail. \n<br/>\n<br/>\n<h4>Admin & Logistics\n</h4>\nYou are operating out of a two-bedroom safehouse in a local city, four hours from the US embassy. You have one day of supplies of rations, medical supplies, and ammunition with you. Resupply will take 24 hours. Each individual has their own first aid kit. You have no information yet on local medical authorities and capabilities. You have a makeshift aid station in your safehouse designed to treat your teammates.\n<br/>\n<br/>\n<h4>Command & Signal\n</h4>\n<li>Rules of engagement (not fire unless fired upon) \n</li>\n<li>Medical rules of engagement (May treat, but not evacuate civilians – life, limb, or eyesight)  \n</li>\n<li>Treatment of enemy consistent with Geneva conventions (have to treat enemy like allies)\n</li>\n<li>You have a satellite phone\n</li>"
-                   }
+                    "name": "Desert Intro",
+                    "html": "<h4>Situation</h4>\nYou are in a civil affairs element operating in a desert environment in support of our US embassy. While not directly a threat, drug cartels operate in the area, and there are unmarked land mines from previous conflicts.\n\n<br/>\n<br/>\n<h4>Mission</h4>\nYour mission is to interact with local authorities to assess needs and possible US interventions in support of local development.\n\n<br/>\n<br/>\n<h4>Execution</h4>\nYou are to move in four-man teams for key leader engagements and assessment of infrastructure and human terrain. You are a medic on the detail. \n\n<br/>\n<br/>\n<h4>Admin & Logistics\n</h4>\nYou are operating out of a two-bedroom safehouse in a local village, four hours from the nearest city and the US embassy. You have a makeshift aid station in your safehouse designed to treat your teammates. You have one day of supplies of rations, medical supplies, and ammunition with you. Resupply will take 24 hours. Each individual has their own first aid kit. You have no information yet on local medical authorities and capabilities. \n\n<br/>\n<br/>\n<h4>Command & Signal\n</h4>\n<li>Rules of engagement (not fire unless fired upon) \n</li>\n<li>Medical rules of engagement (May treat, but not evacuate civilians – life, limb, or eyesight)  \n</li>\n<li>Treatment of enemy consistent with Geneva conventions (have to treat enemy like allies)\n</li>\n<li>You have a satellite phone\n</li>"
+                }
             ]
 
         },
         {
-            "name": "Urban Probe 1-1",
+            "name": "Desert Probe 1-1",
             "elements": [
                 {
                     "type": "expression",
-                    "name": "Propbe 1-1",
+                    "name": "Probe 1-1",
                     "title": "Context:\nYour team is in one vehicle en route to a key leader engagement when a civilian car strikes your vehicle on the driver side at a crossroads. Both vehicles have damage, but your team is able to self-evacuate from the vehicle. Two of your team members have injuries and you do not know if there are other casualties in the other car. \n"
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -97,7 +97,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 1.1",
+                    "name": "SoarTech Desert 1.1",
                     "title": "What action do you take?",
                     "choices": [
                         "Search for more casualties",
@@ -110,7 +110,7 @@
             ]
         },
         {
-            "name": "Urban Probe 1-2",
+            "name": "Desert Probe 1-2",
             "elements": [
                 {
                     "type": "expression",
@@ -119,7 +119,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -193,7 +193,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 1-2",
+                    "name": "SoarTech Desert 1-2",
                     "title": "What is your plan of action?",
                     "choices": [
                         "Perform vitals assessment on Casualty U",
@@ -205,7 +205,7 @@
             ]
         },
         {
-            "name": "Urban Probe 1-3",
+            "name": "Desert Probe 1-3",
             "elements": [
                 {
                     "type": "expression",
@@ -214,7 +214,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -288,7 +288,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 1-3",
+                    "name": "SoarTech Desert 1-3",
                     "title": "What action do you take?",
                     "choices": [
                         "Apply a tourniquet",
@@ -301,7 +301,7 @@
             ]
         },
         {
-            "name": "Urban Probe 2-1",
+            "name": "Desert Probe 2-1",
             "elements": [
                 {
                     "type": "expression",
@@ -310,7 +310,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -371,7 +371,7 @@
                                 },
                                 {
                                     "type": "Pain",
-                                    "value": "2"
+                                    "value": "4"
                                 },
                                 {
                                     "type": "GCS",
@@ -384,7 +384,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 2-1",
+                    "name": "SoarTech Desert 2-1",
                     "title": "What action do you take?",
                     "choices": [
                         "Stop treatment and assess Casualty V",
@@ -397,7 +397,7 @@
             ]
         },
         {
-            "name": "Urban Probe 2-2",
+            "name": "Desert Probe 2-2",
             "elements": [
                 {
                     "type": "expression",
@@ -406,7 +406,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -480,7 +480,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 2-2",
+                    "name": "SoarTech Desert 2-2",
                     "title": "What is your plan of action?",
                     "choices": [
                         "Continue to treat Casualty U",
@@ -491,7 +491,7 @@
             ]
         },
         {
-            "name": "Urban Probe 2-3",
+            "name": "Desert Probe 2-3",
             "elements": [
                 {
                     "type": "expression",
@@ -500,7 +500,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -574,14 +574,14 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 2-3",
+                    "name": "SoarTech Desert 2-3",
                     "title": "What action do you take for casualty V?",
                     "choices": [
-                        "Perform an escharotomy (minor surgical kit)",
-                        "Provide burn dressing with pain control (Burn kit)",
+                        "Apply a tourniquet",
+                        "Apply a pressure bandage",
                         "Nasopharyngeal airway ",
                         "Use Cricothyroidotomy Kit",
-                        "Use ET Intubation Equipment",
+                        "Apply a Splint",
                         "Administer a blood transfusion",
                         "Check for a pulse",
                         "Do not treat"
@@ -590,7 +590,7 @@
             ]
         },
         {
-            "name": "Urban Probe 2-4",
+            "name": "Desert Probe 2-4",
             "elements": [
                 {
                     "type": "expression",
@@ -599,7 +599,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -673,8 +673,8 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 2-4",
-                    "title": "What action do you take for casualty V?",
+                    "name": "SoarTech Desert 2-4",
+                    "title": "What action do you take?",
                     "choices": [
                         "Give each casualty one unit of blood",
                         "Give two units of blood to Casualty U",
@@ -684,7 +684,7 @@
             ]
         },
         {
-            "name": "Urban Probe 3-1",
+            "name": "Desert Probe 3-1",
             "elements": [
                 {
                     "type": "expression",
@@ -693,7 +693,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -767,18 +767,18 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 3-1",
+                    "name": "SoarTech Desert 3-1",
                     "title": "What action do you take?",
                     "choices": [
-                        "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
-                        "Hold casualties until you get updated info on the capabilities of the embassy",
+                        "Get info on local hospital's capabilities to manage the casualties",
+                        "Get info on the capabilities of the embassy to hold casualties until evacuation",
                         "Not assessing local capabilities for their value"
                     ]
                 }
             ]
         },
         {
-            "name": "Urban Probe 3-2",
+            "name": "Desert Probe 3-2",
             "elements": [
                 {
                     "type": "expression",
@@ -787,7 +787,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -861,7 +861,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 3-2",
+                    "name": "SoarTech Desert 3-2",
                     "title": "What action do you take?",
                     "choices": [
                         "Evacuate Casualty U to local hospital",
@@ -874,7 +874,7 @@
             ]
         },
         {
-            "name": "Urban Probe 4-1",
+            "name": "Desert Probe 4-1",
             "elements": [
                 {
                     "type": "expression",
@@ -883,7 +883,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -957,7 +957,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 4-1",
+                    "name": "SoarTech Desert 4-1",
                     "title": "What tag would you give casualty U?",
                     "choices": [
                         "Green",
@@ -969,7 +969,7 @@
             ]
         },
         {
-            "name": "Urban Probe 4-2",
+            "name": "Desert Probe 4-2",
             "elements": [
                 {
                     "type": "expression",
@@ -978,7 +978,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty U",
@@ -1052,7 +1052,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 4-2",
+                    "name": "SoarTech Desert 4-2",
                     "title": "What tag would you give casualty V?",
                     "choices": [
                         "Green",
@@ -1074,7 +1074,7 @@
             ]
         },
         {
-            "name": "Urban Probe 5-1",
+            "name": "Desert Probe 5-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1083,7 +1083,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1157,7 +1157,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 5-1",
+                    "name": "SoarTech Desert 5-1",
                     "title": "What action do you take?",
                     "choices": [
                         "Search for more casualties",
@@ -1170,7 +1170,7 @@
             ]
         },
         {
-            "name": "Urban Probe 5-2",
+            "name": "Desert Probe 5-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1179,7 +1179,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1253,7 +1253,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 5-2",
+                    "name": "SoarTech Desert 5-2",
                     "title": "What is your plan of action?",
                     "choices": [
                         "Perform vitals assessment on Casualty W",
@@ -1265,7 +1265,7 @@
             ]
         },
         {
-            "name": "Urban Probe 5-3",
+            "name": "Desert Probe 5-3",
             "elements": [
                 {
                     "type": "expression",
@@ -1274,7 +1274,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1348,7 +1348,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 5-3",
+                    "name": "SoarTech Desert 5-3",
                     "title": "What action do you take for Casualty W?",
                     "choices": [
                         "Insert a chest tube",
@@ -1362,7 +1362,7 @@
             ]
         },
         {
-            "name": "Urban Probe 6-1",
+            "name": "Desert Probe 6-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1371,7 +1371,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1445,7 +1445,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 6-1",
+                    "name": "SoarTech Desert 6-1",
                     "title": "What action do you take?",
                     "choices": [
                         "Get updated vital signs on Casualty W",
@@ -1459,7 +1459,7 @@
             ]
         },
         {
-            "name": "Urban Probe 6-2",
+            "name": "Desert Probe 6-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1468,7 +1468,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1542,7 +1542,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 6-2",
+                    "name": "SoarTech Desert 6-2",
                     "title": "What action do you take for Casualty X?",
                     "choices": [
                         "Apply a traction splint",
@@ -1558,7 +1558,7 @@
             ]
         },
         {
-            "name": "Urban Probe 7-1",
+            "name": "Desert Probe 7-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1567,7 +1567,7 @@
                 },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1641,27 +1641,27 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 7-1",
+                    "name": "SoarTech Desert 7-1",
                     "title": "What action do you take?",
                     "choices": [
-                        "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
-                        "Hold casualties to determine if they can be transported to safehouse",
+                        "Get info on local hospital's capabilities to manage the casualties",
+                        "Get info on the capabilities of the embassy to hold casualties until evacuation",
                         "Not assessing local capabilities for their value"
                     ]
                 }
             ]
         },
         {
-            "name": "Urban Probe 7-2",
+            "name": "Desert Probe 7-2",
             "elements": [
                 {
                     "type": "expression",
                     "name": "Probe 7-2",
-                    "title": "Context:\nYour vehicle is still functional and capable of transporting the casualties. You decide under medical rules of engagement that you will treat these casualties for life-threatening injuries. The local police arrive, but it will be some time before they can evacuate the casualties. The local hospital is possibly capable of treating these injuries and mentioned they can take one casualty.\n\n"
+                    "title": "Context:\nYour vehicle is still functional and capable of transporting the casualties. You decide under medical rules of engagement that you will treat these casualties for life-threatening injuries. For the foreseeable future, the only possible source of evacuation for these casualties is your vehicle. The local hospital is four hours away over treacherous terrain through drug cartel occupied areas. You call the hospital on your satellite phone, and they say they can only take one casualty.\n\n"
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1735,12 +1735,12 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 7-2",
+                    "name": "SoarTech Desert 7-2",
                     "title": "What action do you take?",
                     "choices": [
                         "Transport Casualty U to local hospital",
                         "Transport Casualty V to local hospital",
-                        "Transport both casualties to the local hospital despite hospital availability",
+                        "Transport both casualties to the local hospital",
                         "Transport Casualty U to the local safehouse",
                         "Transport Casualty V to the local safehouse",
                         "Keep both casualties at the local safehouse"
@@ -1749,7 +1749,7 @@
             ]
         },
         {
-            "name": "Urban Probe 8-1",
+            "name": "Desert Probe 8-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1758,7 +1758,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1832,7 +1832,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 8-1",
+                    "name": "SoarTech Desert 8-1",
                     "title": "What tag would you give Casualty W?",
                     "choices": [
                         "Green",
@@ -1844,7 +1844,7 @@
             ]
         },
         {
-            "name": "Urban Probe 8-2",
+            "name": "Desert Probe 8-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1853,7 +1853,7 @@
                    },
                 {
                     "type": "stVitals",
-                    "name": "SoarTech Urban Vitals",
+                    "name": "SoarTech Desert Vitals",
                     "patients": [
                         {
                             "name": "Casualty W",
@@ -1927,7 +1927,7 @@
                 },
                 {
                     "type": "radiogroup",
-                    "name": "SoarTech Urban 8-2",
+                    "name": "SoarTech Desert 8-2",
                     "title": "What tag would you give Casualty X?",
                     "choices": [
                         "Green",
