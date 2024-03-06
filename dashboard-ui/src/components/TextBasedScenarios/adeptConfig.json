@@ -936,8 +936,8 @@
                                     "status": "visible"
                                 },
                                 {
-                                    "name": "internal",
-                                    "location": "internal",
+                                    "name": "unknown injury",
+                                    "location": "Internal",
                                     "severity": "substantial",
                                     "status": "discoverable"
                                 }
@@ -989,8 +989,8 @@
                                     "status": "visible"
                                 },
                                 {
-                                    "name": "internal",
-                                    "location": "internal",
+                                    "name": "unknown injury",
+                                    "location": "Internal",
                                     "severity": "substantial",
                                     "status": "discoverable"
                                 }
