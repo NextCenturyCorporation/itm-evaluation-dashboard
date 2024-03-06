@@ -238,9 +238,52 @@
         "title": "“Sometimes I’m not even sure who our enemies and allies are around here. For example, that injured local soldier. Just a few months ago, he was fighting for the insurgency against us.”"
        },
        {
-        "type": "expression",
+        "type": "vitals",
+        "supplies": [
+            {"type": "Tourniquet", "reusable": true, "quantity": 4},
+            {"type": "Pressure bandage", "reusable": false, "quantity": 4},
+            {"type": "Hemostatic gauze", "reusable": false, "quantity": 4},
+            {"type": "Decompression Needle", "reusable": true, "quantity": 1},
+            {"type": "Nasopharyngeal airway", "reusable": true, "quantity": 1},
+            {"type": "Pulse Oximeter", "reusable": true, "quantity": 1},
+            {"type": "Pain Medications", "reusable": false, "quantity": 4},
+            {"type": "Splint", "reusable": true, "quantity": 4},
+            {"type": "Burn Dressing", "reusable": false, "quantity": 4}
+        ],
+        "patients": [
+            {
+                "name": "US Soldier",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Pain"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Agony"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Normal"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "broken bone", "location": "Right shoulder", "severity": "major", "status": "discoverable" }
+                ]
+            },
+            {
+                "name": "Local Soldier",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Pain"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Agony"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Normal"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "broken bone", "location": "Right shoulder", "severity": "major", "status": "discoverable" }
+                ]
+            }
+        ],
         "name": "Desert vitals",
-        "title": "INSERT  VITALS"
+        "title": ""
        },
        {
         "type": "radiogroup",
@@ -295,9 +338,58 @@
         "html": "You decide to walk to the patients instead. A crewmate tells you:\n<br/>\n<br/>\n“It looks like the electrician’s mate did not secure power, the most basic and important safety step, before initiating the repair! The accident was due to his serious negligence. There’s no reason it had to happen and now two people are hurt. I’m sure this will be a serious black mark on his record.”\n<br/>\n<br/>\nAssessing the patients, you find that the Electrician’s mate and the other sailor are equally injured. They both need immediate treatment and are likely to survive if treated."
        },
        {
-        "type": "expression",
+        "type": "vitals",
+        "supplies": [
+            {"type": "Tourniquet", "reusable": true, "quantity": 4},
+            {"type": "Pressure bandage", "reusable": false, "quantity": 4},
+            {"type": "Hemostatic gauze", "reusable": false, "quantity": 4},
+            {"type": "Decompression Needle", "reusable": true, "quantity": 1},
+            {"type": "Nasopharyngeal airway", "reusable": true, "quantity": 1},
+            {"type": "Pulse Oximeter", "reusable": true, "quantity": 1},
+            {"type": "Pain Medications", "reusable": false, "quantity": 4},
+            {"type": "Splint", "reusable": true, "quantity": 4},
+            {"type": "Burn Dressing", "reusable": false, "quantity": 10},
+            {"type": "Blood", "reusable": false, "quantity": 4},
+            {"type": "IV Bag", "reusable": false, "quantity": 4}
+        ],
+        "patients": [
+            {
+                "name": "Electrician's Mate",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Pain"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Confused"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Normal"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "ear bleed", "location": "Right face", "severity": "moderate", "status": "discoverable" },
+                    {"name": "burn", "location": "Right side", "severity": "major", "status": "visible" },
+                    {"name": "internal", "location": "internal", "severity": "substantial", "status": "discoverable" }
+                ]
+            },
+            {
+                "name": "Other Sailor",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Pain"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Confused"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Normal"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "ear bleed", "location": "Right face", "severity": "moderate", "status": "discoverable" },
+                    {"name": "burn", "location": "Right side", "severity": "major", "status": "visible" },
+                    {"name": "internal", "location": "internal", "severity": "substantial", "status": "discoverable" }
+                ]
+            }
+        ],
         "name": "Submarine vitals",
-        "title": "INSERT VITALS"
+        "title": ""
        },
        {
         "type": "radiogroup",
@@ -351,9 +443,56 @@
         "html": "<h4>ADEPT Jungle</h4>\n<br/>\nYou are a medic on a security patrol. You encounter a serious accident potentially from an IED explosion. You were told that a civilian found what looked like it might be an IED, reported it to authorities, and then against our advice, went back and apparently triggered accidental detonation while taking a closer look. There are two civilian patients, one closer to what looks like the IED materials and one further away on a path. The patient who is closer to the IED materials seems to be more seriously injured."
        },
        {
-        "type": "expression",
-        "name": "question11",
-        "title": "Insert Vitals"
+        "type": "vitals",
+        "supplies": [
+            {"type": "Tourniquet", "reusable": true, "quantity": 4},
+            {"type": "Pressure bandage", "reusable": false, "quantity": 4},
+            {"type": "Hemostatic gauze", "reusable": false, "quantity": 4},
+            {"type": "Decompression Needle", "reusable": true, "quantity": 1},
+            {"type": "Nasopharyngeal airway", "reusable": true, "quantity": 1},
+            {"type": "Pulse Oximeter", "reusable": true, "quantity": 1},
+            {"type": "Pain Medications", "reusable": false, "quantity": 4},
+            {"type": "Splint", "reusable": true, "quantity": 4},
+            {"type": "Burn Dressing", "reusable": false, "quantity": 10},
+            {"type": "Blood", "reusable": false, "quantity": 4},
+            {"type": "IV Bag", "reusable": false, "quantity": 4}
+        ],
+        "patients": [
+            {
+                "name": "Closer Civlian",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Voice"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Confused"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Fast"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "puncture", "location": "Right shoulder", "severity": "substantial", "status": "discoverable" },
+                    {"name": "burn", "location": "Right side", "severity": "major", "status": "discoverable" },
+                    {"name": "shrapnel", "location": "right calf", "severity": "moderate", "status": "discoverable" }
+                ]
+            },
+            {
+                "name": "Further Civilian",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Voice"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Confused"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Fast"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "broken bone", "location": "Right thigh", "severity": "major", "status": "discoverable" }
+                ]
+            }
+        ],
+        "name": "Jungle vitals",
+        "title": ""
        },
        {
         "type": "radiogroup",
@@ -390,9 +529,56 @@
         "title": "“Don’t you think the other man has a much more urgent injury compared to the man you are treating? Shouldn’t you take care of the other man first?”\n\nYou see that the patient closer to the IED is now showing more visible signs of distress. He seems to have an immediate need for treatment."
        },
        {
-        "type": "expression",
-        "name": "question13",
-        "title": "Insert Vitals"
+        "type": "vitals",
+        "supplies": [
+            {"type": "Tourniquet", "reusable": true, "quantity": 4},
+            {"type": "Pressure bandage", "reusable": false, "quantity": 4},
+            {"type": "Hemostatic gauze", "reusable": false, "quantity": 4},
+            {"type": "Decompression Needle", "reusable": true, "quantity": 1},
+            {"type": "Nasopharyngeal airway", "reusable": true, "quantity": 1},
+            {"type": "Pulse Oximeter", "reusable": true, "quantity": 1},
+            {"type": "Pain Medications", "reusable": false, "quantity": 4},
+            {"type": "Splint", "reusable": true, "quantity": 4},
+            {"type": "Burn Dressing", "reusable": false, "quantity": 10},
+            {"type": "Blood", "reusable": false, "quantity": 4},
+            {"type": "IV Bag", "reusable": false, "quantity": 4}
+        ],
+        "patients": [
+            {
+                "name": "Closer Civlian",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Voice"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Confused"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Fast"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "puncture", "location": "Right shoulder", "severity": "substantial", "status": "discoverable" },
+                    {"name": "burn", "location": "Right side", "severity": "major", "status": "discoverable" },
+                    {"name": "shrapnel", "location": "right calf", "severity": "moderate", "status": "discoverable" }
+                ]
+            },
+            {
+                "name": "Further Civilian",
+                "vitals": [
+                    {"type": "Concious", "value": true},
+                    {"type": "AVPU", "value": "Voice"},
+                    {"type": "Ambulatory", "value": false},
+                    {"type": "Mental Status", "value": "Confused"},
+                    {"type": "Breathing", "value": "Normal"},
+                    {"type": "Heart Rate", "value": "Fast"},
+                    {"type": "sp02", "value": 90}
+                ],
+                "injuries": [
+                    {"name": "broken bone", "location": "Right thigh", "severity": "major", "status": "discoverable" }
+                ]
+            }
+        ],
+        "name": "Jungle vitals",
+        "title": ""
        },
        {
         "type": "radiogroup",
