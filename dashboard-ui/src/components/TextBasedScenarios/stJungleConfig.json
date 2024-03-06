@@ -210,7 +210,7 @@
                 {
                     "type": "expression",
                     "name": "Probe 1-3",
-                    "title": "Context:\nYou were able to get more vitals on both known casualties. You now only have one tourniquet. If you were to treat Casualty U first: \n"
+                    "title": "Context:\nYou were able to get more vitals on both known casualties.  You only have one day's worth of supplies. If you were to treat Casualty U first: \n"
                 },
                 {
                     "type": "stVitals",
