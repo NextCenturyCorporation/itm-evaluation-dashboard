@@ -5,6 +5,7 @@ import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
 import Actions from '../ActionsCompare/actions';
 import SurveyPage from '../Survey/survey';
+import TextBasedScenariosPage from '../TextBasedScenarios/TextBasedScenariosPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -52,6 +53,10 @@ function ActionsCompare() {
 
 function Survey(currentUser) {
     return <SurveyPage currentUser={currentUser?.currentUser} />
+}
+
+function TextBased() {
+    return <TextBasedScenariosPage/>
 }
 
 
@@ -222,6 +227,9 @@ export class App extends React.Component {
                             </Route>
                             <Route path="/survey-results">
                                 <SurveyResults />
+                            </Route>
+                            <Route path="/text-based">
+                                <TextBased />
                             </Route>
                         </Switch>
                     </div>
