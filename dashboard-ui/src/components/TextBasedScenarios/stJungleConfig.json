@@ -2,6 +2,7 @@
     "logoPosition": "right",
     "title": "SoarTech Jungle Scenario",
     "completedHtml": "<h3>Thank you for completing the scenario</h3>",
+    "showPrevButton": false,
     "pages": [
         {
             "name": "Jungle Scenario",
@@ -100,6 +101,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 1-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Search other vehicle for more casualties",
                         "Assess Casualty U first",
@@ -196,6 +198,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 1-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Perform vitals assessment on Casualty U",
                         "Perform vitals assessment on Casualty V",
@@ -291,6 +294,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 1-3",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Perform an escharotomy",
                         "Provide IV pain control",
@@ -387,6 +391,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Stop treatment and assess Casualty V",
                         "Continue to treat Casualty U",
@@ -483,6 +488,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Continue to treat Casualty U",
                         "Move to treat Casualty V ",
@@ -577,6 +583,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-3",
                     "title": "What action do you take for casualty V?",
+                    "isRequired": true,
                     "choices": [
                         "Perform an escharotomy",
                         "Provide burn dressing with pain control",
@@ -674,6 +681,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-4",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Carefully divide the burn kit to cover the worst burns on each casualty",
                         "Give it to Casualty U",
@@ -768,6 +776,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 3-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties until you get updated info on the capabilities of the embassy",
@@ -862,6 +871,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 3-2",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Evacuate Casualty U to local hospital",
                         "Evacuate Casualty V to local hospital",
@@ -958,6 +968,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 4-1",
                     "title": "What tag would you give casualty U?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1053,6 +1064,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 4-2",
                     "title": "What tag would you give casualty V?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1158,6 +1170,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 5-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty W first",
@@ -1254,6 +1267,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 5-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Perform vitals assessment on Casualty W",
                         "Perform vitals assessment on Casualty X",
@@ -1349,6 +1363,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 5-3",
                     "title": "What action do you take for Casualty W?",
+                    "isRequired": true,
                     "choices": [
                         "Insert a chest tube",
                         "Perform a needle decompression",
@@ -1446,6 +1461,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 6-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
@@ -1543,6 +1559,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 6-2",
                     "title": "What action do you take for Casualty X?",
+                    "isRequired": true,
                     "choices": [
                         "Apply a traction splint",
                         "Give blood",
@@ -1642,6 +1659,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 7-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties to determine if they can be transported",
@@ -1736,6 +1754,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 7-2",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Transport Casualty U to local hospital",
                         "Transport Casualty V to local hospital",
@@ -1833,6 +1852,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 8-1",
                     "title": "What tag would you give Casualty W?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1928,6 +1948,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 8-2",
                     "title": "What tag would you give Casualty X?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",

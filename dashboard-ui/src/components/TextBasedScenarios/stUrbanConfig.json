@@ -2,6 +2,7 @@
     "logoPosition": "right",
     "title": "SoarTech Urban Scenario",
     "completedHtml": "<h3>Thank you for completing the scenario</h3>",
+    "showPrevButton": false,
     "pages": [
         {
             "name": "Urban Scenario",
@@ -100,6 +101,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 1-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty U first",
@@ -196,6 +198,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 1-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Perform vitals assessment on Casualty U",
                         "Perform vitals assessment on Casualty V",
@@ -291,6 +294,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 1-3",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Apply a tourniquet",
                         "Apply hemostatic gauze",
@@ -387,6 +391,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 2-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Stop treatment and assess Casualty V",
                         "Continue to treat Casualty U",
@@ -483,6 +488,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 2-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Continue to treat Casualty U",
                         "Move to treat Casualty V ",
@@ -577,6 +583,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 2-3",
                     "title": "What action do you take for casualty V?",
+                    "isRequired": true,
                     "choices": [
                         "Perform an escharotomy (minor surgical kit)",
                         "Provide burn dressing with pain control (Burn kit)",
@@ -676,6 +683,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 2-4",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Give each casualty one unit of blood",
                         "Give two units of blood to Casualty U",
@@ -770,6 +778,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 3-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties until you get updated info on the capabilities of the embassy",
@@ -864,6 +873,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 3-2",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Evacuate Casualty U to local hospital",
                         "Evacuate Casualty V to local hospital",
@@ -960,6 +970,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 4-1",
                     "title": "What tag would you give casualty U?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1055,6 +1066,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 4-2",
                     "title": "What tag would you give casualty V?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1160,6 +1172,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 5-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty W first",
@@ -1256,6 +1269,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 5-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Perform vitals assessment on Casualty W",
                         "Perform vitals assessment on Casualty X",
@@ -1351,6 +1365,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 5-3",
                     "title": "What action do you take for Casualty W?",
+                    "isRequired": true,
                     "choices": [
                         "Insert a chest tube",
                         "Perform a needle decompression",
@@ -1448,6 +1463,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 6-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
@@ -1545,6 +1561,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 6-2",
                     "title": "What action do you take for Casualty X?",
+                    "isRequired": true,
                     "choices": [
                         "Apply a traction splint",
                         "Give blood",
@@ -1644,6 +1661,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 7-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties to determine if they can be transported to safehouse",
@@ -1738,6 +1756,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 7-2",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Transport Casualty U to local hospital",
                         "Transport Casualty V to local hospital",
@@ -1835,6 +1854,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 8-1",
                     "title": "What tag would you give Casualty W?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1930,6 +1950,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Urban 8-2",
                     "title": "What tag would you give Casualty X?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",

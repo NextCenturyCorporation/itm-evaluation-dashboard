@@ -2,6 +2,7 @@
     "title": "ADEPT Jungle Scenario",
     "logoPosition": "right",
     "completedHtml": "<h3>Thank you for completing the scenario</h3>",
+    "showPrevButton": false,
     "pages": [
         {
             "name": "Jungle-1",
