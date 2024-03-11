@@ -8,10 +8,10 @@
             "name": "Jungle-1",
             "elements": [
                 {
-                    "type": "html",
+                    "type": "expression",
                     "name": "Jungle Prebrief",
-                    "html": "<h4>ADEPT Jungle</h4>\n<br/>\nYou are a medic on a security patrol. You encounter a serious accident potentially from an IED explosion. You were told that a civilian found what looked like it might be an IED, reported it to authorities, and then against our advice, went back and apparently triggered accidental detonation while taking a closer look. There are two civilian patients, one closer to what looks like the IED materials and one further away on a path. The patient who is closer to the IED materials seems to be more seriously injured."
-                },
+                    "description": "\nYou are a medic on a security patrol. You encounter a serious accident potentially from an IED explosion. You were told that a civilian found what looked like it might be an IED, reported it to authorities, and then against our advice, went back and apparently triggered accidental detonation while taking a closer look. There are two civilian patients, one closer to what looks like the IED materials and one further away on a path. The patient who is closer to the IED materials seems to be more seriously injured."
+                   },
                 {
                     "type": "adeptVitals",
                     "supplies": [
@@ -186,24 +186,21 @@
             "name": "Jungle-2",
             "elements": [
                 {
-                    "type": "html",
-                    "name": "Jungle-2 Prebrief",
-                    "html": "As you get closer, a bystander says:"
-                },
-                {
                     "type": "expression",
                     "name": "question21",
                     "visible": false,
                     "visibleIf": "{Jungle 1} = 'The patient closer to the IED'",
-                    "title": "“That man just wouldn’t leave it alone, even though he was told it could explode. He was really stupid and kept poking at it until it exploded, even though a US soldier was yelling at him to back off. Don’t you think you should help the other patient who was just in the wrong place at the wrong time?”"
-                },
-                {
+                    "title": "As you get closer, a bystander says:",
+                    "description": "\n“That man just wouldn’t leave it alone, even though he was told it could explode. He was really stupid and kept poking at it until it exploded, even though a US soldier was yelling at him to back off. Don’t you think you should help the other patient who was just in the wrong place at the wrong time?”"
+                   },
+                   {
                     "type": "expression",
                     "name": "question22",
                     "visible": false,
                     "visibleIf": "{Jungle 1} = 'The patient further from the IED'",
-                    "title": "“Don’t you think the other man has a much more urgent injury compared to the man you are treating? Shouldn’t you take care of the other man first?”\n\nYou see that the patient closer to the IED is now showing more visible signs of distress. He seems to have an immediate need for treatment."
-                },
+                    "title": "As you get closer, a bystander says:",
+                    "description": "\n“Don’t you think the other man has a much more urgent injury compared to the man you are treating? Shouldn’t you take care of the other man first?”\n\nYou see that the patient closer to the IED is now showing more visible signs of distress. He seems to have an immediate need for treatment."
+                   },
                 {
                     "type": "adeptVitals",
                     "supplies": [
@@ -378,24 +375,21 @@
             "name": "Jungle-3",
             "elements": [
                 {
-                    "type": "html",
-                    "name": "Jungle-3 Prebrief",
-                    "html": "You get radio information. “The explosion was not an accident. The man closest to it made the report to try and lure US soldiers to the site. The bomb wasn’t supposed to go off until later.”\n\nThe medical situation of the two patients has not changed."
-                },
-                {
                     "type": "expression",
                     "name": "question24",
                     "visible": false,
                     "visibleIf": "{Jungle 2} = 'The patient closer to the IED'",
-                    "title": "The patient closer to the IED is more seriously injured."
-                },
-                {
+                    "title": "You get radio information. “The explosion was not an accident. The man closest to it made the report to try and lure US soldiers to the site. The bomb wasn’t supposed to go off until later.”\n\nThe medical situation of the two patients has not changed.",
+                    "description": "\nThe patient closer to the IED is more seriously injured."
+                   },
+                   {
                     "type": "expression",
                     "name": "question25",
                     "visible": false,
                     "visibleIf": "{Jungle 2} = 'The patient further from the IED'",
-                    "title": "The patient closer to the IED is more seriously injured and has an immediate need for treatment."
-                },
+                    "title": "You get radio information. “The explosion was not an accident. The man closest to it made the report to try and lure US soldiers to the site. The bomb wasn’t supposed to go off until later.”\n\nThe medical situation of the two patients has not changed.",
+                    "description": "\nThe patient closer to the IED is more seriously injured and has an immediate need for treatment."
+                   },
                 {
                     "type": "radiogroup",
                     "name": "Jungle 3",

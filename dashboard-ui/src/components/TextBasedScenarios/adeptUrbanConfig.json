@@ -8,10 +8,10 @@
             "name": "Urban Intro",
             "elements": [
                 {
-                    "type": "html",
+                    "type": "expression",
                     "name": "Urban Prebrief",
                     "title": "Adept Urban",
-                    "html": "<h4>ADEPT Urban</h4>\n\n<br/>\nYou are the only medic on the scene after there was some kind of shooting between civilians. The local civilian hospital does not have significant surgical capabilities.\n\nYou do not have time to treat both patients, and both are likely to die without treatment. The civilian in black clothes has injuries that are definitely treatable, but the other civilian may die even if treated, due to the limited capabilities of the local hospital."
+                    "description": "\nYou are the only medic on the scene after there was some kind of shooting between civilians. The local civilian hospital does not have significant surgical capabilities.\n\nYou do not have time to treat both patients, and both are likely to die without treatment. The civilian in black clothes has injuries that are definitely treatable, but the other civilian may die even if treated, due to the limited capabilities of the local hospital."
                 }
             ]
         },
@@ -356,9 +356,9 @@
                     "title": "“I saw what happened. That other guy just started screaming and shot this guy, before getting shot by security. This poor guy might be beyond help now. It’s sad because he was just a victim here. But there’s just no place around here that could do the kind of surgery needed to save his life after an injury like that. Don’t you think you should try to help the other guy, since his injury is probably survivable if you can stop the bleeding?”"
                 },
                 {
-                    "type": "html",
+                    "type": "expression",
                     "name": "Urban-2 Prebrief",
-                    "html": "Your medical assessment is that you do not have time to treat both patients, and both are likely to die without treatment. The shooter has injuries that are definitely treatable, but the victim may die even if treated."
+                    "title": "Your medical assessment is that you do not have time to treat both patients, and both are likely to die without treatment. The shooter has injuries that are definitely treatable, but the victim may die even if treated."
                 },
                 {
                     "type": "radiogroup",
@@ -530,9 +530,9 @@
                     "title": ""
                 },
                 {
-                    "type": "html",
+                    "type": "expression",
                     "name": "Urban-3 Prebrief",
-                    "html": "Now imagine that you found out that there is a medical transport option that can take one patient to a hospital that is farther away with better surgical capabilities. Previously, you thought that the victim’s injuries may not be survivable due to the limited capabilities of the local hospital, but if they were transported to the better hospital, they could be saved. The shooter has injuries that are definitely survivable with treatment at the better hospital."
+                    "title": "Now imagine that you found out that there is a medical transport option that can take one patient to a hospital that is farther away with better surgical capabilities. Previously, you thought that the victim’s injuries may not be survivable due to the limited capabilities of the local hospital, but if they were transported to the better hospital, they could be saved. The shooter has injuries that are definitely survivable with treatment at the better hospital."
                 },
                 {
                     "type": "expression",

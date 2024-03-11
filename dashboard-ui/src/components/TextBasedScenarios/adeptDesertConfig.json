@@ -8,10 +8,10 @@
             "name": "Desert-1",
             "elements": [
                 {
-                    "type": "html",
+                    "type": "expression",
                     "name": "Desert Prebrief",
                     "title": "ADEPT Desert",
-                    "html": "<h4>ADEPT Desert</h4>\n\n<br/>\nYou are the medic on a helicopter en route to a remote location. It was reported that a US soldier and a local (host nation) soldier are both seriously injured. According to the report, the US soldier started a fight with another US soldier, and the local soldier tried to de-escalate. They were both seriously injured because in the struggle, they fell against a wall of a damaged building, and the wall collapsed on them.\n<br/>\n<br/>\nThe helicopter has one slot for a serious injury. The hospital you will take the patient to is a military facility that serves both US and indigenous forces. The patient who isn’t transported by helicopter will have to go by slower ground vehicle which could potentially aggravate their injury and risk adverse medical consequences."
+                    "description": "You are the medic on a helicopter en route to a remote location. It was reported that a US soldier and a local (host nation) soldier are both seriously injured. According to the report, the US soldier started a fight with another US soldier, and the local soldier tried to de-escalate. They were both seriously injured because in the struggle, they fell against a wall of a damaged building, and the wall collapsed on them.\n\nThe helicopter has one slot for a serious injury. The hospital you will take the patient to is a military facility that serves both US and indigenous forces. The patient who isn’t transported by helicopter will have to go by slower ground vehicle which could potentially aggravate their injury and risk adverse medical consequences."
                 },
                 {
                     "type": "radiogroup",
@@ -58,24 +58,21 @@
             "name": "Desert-3",
             "elements": [
                 {
-                    "type": "html",
-                    "name": "Desert-3 Prebrief",
-                    "html": "After you assess both patients, you determine that their injuries are similar. Both have injuries that are stable, but could be aggravated by a slow and bumpy evacuation by truck, so both would benefit from going by helicopter."
-                },
-                {
                     "type": "expression",
                     "name": "question15",
                     "visible": false,
                     "visibleIf": "{Desert 2} = 'The US soldier'",
-                    "title": "“The US soldier was out of control, if the local soldier hadn’t stopped him, he would have seriously injured his own unit leader.”"
-                },
-                {
+                    "title": "After you assess both patients, you determine that their injuries are similar. Both have injuries that are stable, but could be aggravated by a slow and bumpy evacuation by truck, so both would benefit from going by helicopter.",
+                    "description": "\n“The US soldier was out of control, if the local soldier hadn’t stopped him, he would have seriously injured his own unit leader.”"
+                   },
+                   {
                     "type": "expression",
                     "name": "question16",
                     "visible": false,
                     "visibleIf": "{Desert 2} = 'The local soldier'",
-                    "title": "“Sometimes I’m not even sure who our enemies and allies are around here. For example, that injured local soldier. Just a few months ago, he was fighting for the insurgency against us.”"
-                },
+                    "title": "After you assess both patients, you determine that their injuries are similar. Both have injuries that are stable, but could be aggravated by a slow and bumpy evacuation by truck, so both would benefit from going by helicopter.",
+                    "description": "\n“Sometimes I’m not even sure who our enemies and allies are around here. For example, that injured local soldier. Just a few months ago, he was fighting for the insurgency against us.”"
+                   },
                 {
                     "type": "adeptVitals",
                     "supplies": [
