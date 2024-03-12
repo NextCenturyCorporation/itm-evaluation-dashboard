@@ -5,7 +5,7 @@
     "showPrevButton": false,
     "pages": [
         {
-            "name": "Desert-1",
+            "name": "Adept Desert-1",
             "elements": [
                 {
                     "type": "expression",
@@ -26,7 +26,7 @@
             ]
         },
         {
-            "name": "Desert-2",
+            "name": "Adept Desert-2",
             "elements": [
                 {
                     "type": "expression",
@@ -55,7 +55,7 @@
             ]
         },
         {
-            "name": "Desert-3",
+            "name": "Adept Desert-3",
             "elements": [
                 {
                     "type": "expression",

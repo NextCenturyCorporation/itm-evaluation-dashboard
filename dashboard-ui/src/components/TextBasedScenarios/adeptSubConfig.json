@@ -5,7 +5,7 @@
     "showPrevButton": false,
     "pages": [
         {
-            "name": "Submarine-1",
+            "name": "Adept Submarine-1",
             "elements": [
                 {
                     "type": "expression",
@@ -25,7 +25,7 @@
             ]
         },
         {
-            "name": "Submarine-2",
+            "name": "Adept Submarine-2",
             "elements": [
                 {
                     "type": "expression",
@@ -216,7 +216,7 @@
             ]
         },
         {
-            "name": "Submarine-3",
+            "name": "Adept Submarine-3",
             "elements": [
                 {
                     "type": "expression",

@@ -5,7 +5,7 @@
     "showPrevButton": false,
     "pages": [
         {
-            "name": "Jungle-1",
+            "name": "Adept Jungle-1",
             "elements": [
                 {
                     "type": "expression",
@@ -183,7 +183,7 @@
             ]
         },
         {
-            "name": "Jungle-2",
+            "name": "Adept Jungle-2",
             "elements": [
                 {
                     "type": "expression",
@@ -372,7 +372,7 @@
             ]
         },
         {
-            "name": "Jungle-3",
+            "name": "Adept Jungle-3",
             "elements": [
                 {
                     "type": "expression",

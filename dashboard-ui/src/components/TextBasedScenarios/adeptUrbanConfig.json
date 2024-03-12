@@ -5,7 +5,7 @@
     "showPrevButton": false,
     "pages": [
         {
-            "name": "Urban Intro",
+            "name": "Adept Urban Intro",
             "elements": [
                 {
                     "type": "expression",
@@ -16,7 +16,7 @@
             ]
         },
         {
-            "name": "Urban-1",
+            "name": "Adept Urban-1",
             "elements": [
                 {
                     "type": "adeptVitals",
@@ -185,7 +185,7 @@
             ]
         },
         {
-            "name": "Urban-2",
+            "name": "Adept Urban-2",
             "elements": [
                 {
                     "type": "adeptVitals",
@@ -373,7 +373,7 @@
             ]
         },
         {
-            "name": "Urban-3",
+            "name": "Adept Urban-3",
             "elements": [
                 {
                     "type": "adeptVitals",
