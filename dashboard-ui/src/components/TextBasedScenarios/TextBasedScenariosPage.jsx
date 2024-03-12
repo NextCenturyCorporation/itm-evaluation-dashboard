@@ -85,12 +85,12 @@ class TextBasedScenariosPage extends Component {
             }
         }
 
+        let temp = 0
         for (const scenario of this.surveyDataByScenario) {
             scenario.participantID = this.state.participantID
             scenario.vrEnvCompleted = this.state.vrEnvCompleted
+            scenario.title = this.state.scenarios[temp++]
         }
-
-        console.log(this.surveyDataByScenario)
 
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
