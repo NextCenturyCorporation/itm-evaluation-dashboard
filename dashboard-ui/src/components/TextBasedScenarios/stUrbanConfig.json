@@ -5,7 +5,7 @@
     "showPrevButton": false,
     "pages": [
         {
-            "name": "Urban Scenario",
+            "name": "SoarTech Urban Scenario",
             "elements":[
                 {
                     "type": "html",

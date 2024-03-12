@@ -18,7 +18,7 @@ import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
-    mutation uploadScenarioResults($results: JSON) {
+    mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
 
@@ -34,9 +34,11 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: [],
             moderatorOrder: "",
             startTime: null,
+            scenarios: []
         };
 
         this.surveyData = {};
+        this.surveyDataByScenario = [];
         this.survey = null;
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
@@ -71,6 +73,25 @@ class TextBasedScenariosPage extends Component {
         this.surveyData.startTime = this.state.startTime
         this.surveyData.scenarioTitle = this.survey.title
 
+        for (const pageName in this.surveyData) {
+            const pageData = this.surveyData[pageName];
+
+            for (const scenario of this.state.scenarios) {
+                const scenarioIndex = this.state.scenarios.indexOf(scenario)
+                if (pageName.includes(scenario) || Object.values(pageData).some(value => value?.toString().includes(scenario))) {
+                    this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
+                    this.surveyDataByScenario[scenarioIndex][pageName] = pageData;
+                }
+            }
+        }
+
+        for (const scenario of this.surveyDataByScenario) {
+            scenario.participantID = this.state.participantID
+            scenario.vrEnvCompleted = this.state.vrEnvCompleted
+        }
+
+        console.log(this.surveyDataByScenario)
+
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
@@ -84,14 +105,12 @@ class TextBasedScenariosPage extends Component {
 
     loadSurveyConfig = (selectedScenarios, title) => {
         let config = selectedScenarios[0]
-        
+
         for (const scenario of selectedScenarios.slice(1)) {
             config.pages = (config.pages).concat(scenario.pages)
         }
 
         config.title = title
-
-        console.log(config)
 
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
@@ -144,32 +163,33 @@ class TextBasedScenariosPage extends Component {
         event.preventDefault()
         event.persist()
 
-        console.log(this.state)
-
         let selectedScenarios = []
         let title = ""
         switch (this.state.moderatorOrder) {
             case "1":
                 selectedScenarios = [stJungleConfig, adeptJungleConfig, adeptSubConfig, stSubConfig]
                 title = "ST Jungle, AD Jungle; AD Submarine, ST Submarine"
+                this.setState({ scenarios: ["SoarTech Jungle", "Adept Jungle", "Adept Submarine", "SoarTech Submarine"] })
                 break;
             case "2":
                 selectedScenarios = [adeptSubConfig, stSubConfig, stJungleConfig, adeptJungleConfig]
+                this.setState({ scenarios: ["Adept Submarine", "SoarTech Submarine", "SoarTech Jungle", "Adept Jungle"] })
                 title = "AD Submarine, ST Submarine;  ST Jungle, AD Jungle"
                 break;
             case "3":
                 selectedScenarios = [stDesertConfig, adeptDesertConfig, adeptUrbanConfig, stUrbanConfig]
+                this.setState({ scenarios: ["SoarTech Desert", "Adept Desert", "Adept Urban", "SoarTech Urban"] })
                 title = "ST Desert, AD Desert; AD Urban, ST Urban"
                 break;
             case "4":
                 selectedScenarios = [adeptUrbanConfig, stUrbanConfig, stDesertConfig, adeptDesertConfig]
+                this.setState({ scenarios: ["Adept Urban", "SoarTech Urban", "SoarTech Desert", "Adept Desert"] })
                 title = "AD Urban, ST Urban; ST Desert, AD Desert"
                 break;
             default:
                 console.log("invalid moderator order")
         }
 
-        console.log(selectedScenarios)
         this.loadSurveyConfig(selectedScenarios, title)
     }
 
@@ -177,7 +197,7 @@ class TextBasedScenariosPage extends Component {
         const name = e.target.name;
         const value = e.target.value;
 
-        this.setState({[name]: value});
+        this.setState({ [name]: value });
     };
 
     onFormMultiChange = (e) => {
@@ -185,10 +205,10 @@ class TextBasedScenariosPage extends Component {
         let value = [];
         for (let i = 0; i < options.length; i++) {
             if (options[i].selected) {
-              value.push(options[i].value);
+                value.push(options[i].value);
             }
-          }
-        this.setState({vrEnvCompleted: value})
+        }
+        this.setState({ vrEnvCompleted: value })
     }
 
     render() {
@@ -237,7 +257,7 @@ class TextBasedScenariosPage extends Component {
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
                                     uploadSurveyResults({
-                                        variables: { results: this.surveyData }
+                                        variables: { results: this.surveyDataByScenario }
                                     });
                                     // uploads data 
                                     this.setState({ uploadData: false });
