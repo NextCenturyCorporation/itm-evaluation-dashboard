@@ -52,5 +52,7 @@
             ]
         }
     ],
-    "showPrevButton": false
+    "showPrevButton": false,
+    "showQuestionNumbers": "off",
+    "widthMode": "responsive"
 }
