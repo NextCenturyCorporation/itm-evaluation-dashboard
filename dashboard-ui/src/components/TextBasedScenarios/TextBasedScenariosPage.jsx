@@ -29,16 +29,45 @@ class TextBasedScenariosPage extends Component {
 
         this.state = {
             currentConfig: null,
-            uploadData: false
+            uploadData: false,
+            startTime: null,
         };
 
-        this.surveyData = {}
+        this.surveyData = {};
+        this.survey = null;
+        this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
     }
 
+
     uploadResults = (survey) => {
-        this.surveyData.response = survey.valuesHash
-        this.surveyData.scenario = survey.title
+        this.timerHelper();
+
+        for (const pageName in this.pageStartTimes) {
+            if (this.pageStartTimes.hasOwnProperty(pageName)) {
+                const page = this.survey.getPageByName(pageName)?.jsonObj;
+                this.surveyData[pageName] = {
+                    timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
+                    pageName: page?.name,
+                    questions: {}
+                };
+
+                const pageQuestions = this.getPageQuestions(pageName);
+
+                pageQuestions.forEach(questionName => {
+                    let questionValue;
+                    questionValue = survey.valuesHash[questionName];
+                    this.surveyData[pageName].questions[questionName] = {
+                        response: questionValue
+                    };
+                });
+            }
+        }
+
+        this.surveyData.timeComplete = new Date().toString();
+        this.surveyData.startTime = this.state.startTime
+        this.surveyData.scenarioTitle = this.survey.title
+
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
@@ -47,14 +76,55 @@ class TextBasedScenariosPage extends Component {
     }
 
     onSurveyComplete = (survey) => {
-        this.uploadResults(survey)
+        this.uploadResults(survey);
     }
 
     loadSurveyConfig = (config) => {
-        const survey = new Model(config);
-        survey.applyTheme(surveyTheme);
-        survey.onComplete.add(this.onSurveyComplete);
-        this.setState({ currentConfig: survey });
+        this.survey = new Model(config);
+        this.survey.applyTheme(surveyTheme);
+
+        this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
+        this.survey.onComplete.add(this.onSurveyComplete);
+
+        // function for uploading data
+        this.survey.onComplete.add(this.onSurveyComplete);
+
+        this.setState({ currentConfig: this.survey });
+    };
+
+    onAfterRenderPage = (sender, options) => {
+        if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+            this.setState({
+                firstPageCompleted: true,
+                startTime: new Date().toString()
+            });
+        }
+
+        const pageName = options.page.name;
+
+        if (Object.keys(this.pageStartTimes).length > 0) {
+            this.timerHelper();
+        }
+
+        this.pageStartTimes[pageName] = new Date();
+    }
+
+    timerHelper = () => {
+        const previousPageName = Object.keys(this.pageStartTimes).pop();
+        const endTime = new Date();
+        const startTime = this.pageStartTimes[previousPageName];
+        const timeSpentInSeconds = (endTime - startTime) / 1000;
+
+        // update time spent for the previous page
+        this.surveyData[previousPageName] = {};
+        this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
+        this.surveyData[previousPageName].questions = this.getPageQuestions(previousPageName);
+    }
+
+    getPageQuestions = (pageName) => {
+        // returns every question on the page
+        const page = this.survey.getPageByName(pageName);
+        return page ? page.questions.map(question => question.name) : [];
     };
 
     exitSurveyConfirmation = () => {
@@ -104,7 +174,7 @@ class TextBasedScenariosPage extends Component {
                 )}
                 {this.state.currentConfig && (
                     <>
-                        <div style={{ position: 'absolute', top: '70px', right: '10px', padding: '10px', 'z-index': '100' }}>
+                        <div style={{ position: 'absolute', top: '70px', right: '10px', padding: '10px' }}>
                             <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={this.exitSurveyConfirmation}>
                                 Exit Scenario
                             </Button>
@@ -121,7 +191,7 @@ class TextBasedScenariosPage extends Component {
                                     uploadSurveyResults({
                                         variables: { results: this.surveyData }
                                     });
-                                    // uploads data then sets 
+                                    // uploads data 
                                     this.setState({ uploadData: false });
                                 }}></button>
                             </div>
