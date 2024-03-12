@@ -11,7 +11,8 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import surveyTheme from './surveyTheme.json';
-import { Button } from 'react-bootstrap'
+import introConfig from './introConfig.json'
+import { Button, Form } from 'react-bootstrap'
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
@@ -30,6 +31,9 @@ class TextBasedScenariosPage extends Component {
         this.state = {
             currentConfig: null,
             uploadData: false,
+            participantID: "",
+            vrEnvCompleted: [],
+            moderatorOrder: "",
             startTime: null,
         };
 
@@ -79,7 +83,17 @@ class TextBasedScenariosPage extends Component {
         this.uploadResults(survey);
     }
 
-    loadSurveyConfig = (config) => {
+    loadSurveyConfig = (selectedScenarios, title) => {
+        let config = selectedScenarios[0]
+        
+        for (const scenario of selectedScenarios.slice(1)) {
+            config.pages = (config.pages).concat(scenario.pages)
+        }
+
+        config.title = title
+
+        console.log(config)
+
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
 
@@ -127,60 +141,95 @@ class TextBasedScenariosPage extends Component {
         return page ? page.questions.map(question => question.name) : [];
     };
 
-    exitSurveyConfirmation = () => {
-        const isConfirmed = window.confirm('Are you sure you want to exit the scenario?');
-        if (isConfirmed) {
-            this.setState({ currentConfig: null });
+    handleSubmit = (event) => {
+        event.preventDefault()
+        event.persist()
+
+        console.log(this.state)
+
+        let selectedScenarios = []
+        let title = ""
+        switch (this.state.moderatorOrder) {
+            case "1":
+                selectedScenarios = [stJungleConfig, adeptJungleConfig, adeptSubConfig, stSubConfig]
+                title = "ST Jungle, AD Jungle; AD Submarine, ST Submarine"
+                break;
+            case "2":
+                selectedScenarios = [adeptSubConfig, stSubConfig, stJungleConfig, adeptJungleConfig]
+                title = "AD Submarine, ST Submarine;  ST Jungle, AD Jungle"
+                break;
+            case "3":
+                selectedScenarios = [stDesertConfig, adeptDesertConfig, adeptUrbanConfig, stUrbanConfig]
+                title = "ST Desert, AD Desert; AD Urban, ST Urban"
+                break;
+            case "4":
+                selectedScenarios = [adeptUrbanConfig, stUrbanConfig, stDesertConfig, adeptDesertConfig]
+                title = "AD Urban, ST Urban; ST Desert, AD Desert"
+                break;
+            default:
+                console.log("invalid moderator order")
         }
+
+        console.log(selectedScenarios)
+        this.loadSurveyConfig(selectedScenarios, title)
     }
 
-    renderScenarioButtons() {
-        const scenarios = [
-            { label: "Adept Urban", config: adeptUrbanConfig },
-            { label: "Adept Submarine", config: adeptSubConfig },
-            { label: "Adept Desert", config: adeptDesertConfig },
-            { label: "Adept Jungle", config: adeptJungleConfig },
-            { label: "SoarTech Urban", config: stUrbanConfig },
-            { label: "SoarTech Submarine", config: stSubConfig },
-            { label: "SoarTech Desert", config: stDesertConfig },
-            { label: "SoarTech Jungle", config: stJungleConfig }
-        ];
+    onFormChange = (e) => {
+        const name = e.target.name;
+        const value = e.target.value;
 
-        return scenarios.map((scenario, index) => (
-            <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} className="my-1 mx-2" key={scenario.label} onClick={() => this.loadSurveyConfig(scenario.config)}>
-                {scenario.label}
-            </Button>
-        ));
+        this.setState({[name]: value});
+    };
+
+    onFormMultiChange = (e) => {
+        const options = e.target.options;
+        let value = [];
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].selected) {
+              value.push(options[i].value);
+            }
+          }
+        this.setState({vrEnvCompleted: value})
     }
 
     render() {
-        const adeptScenarios = this.renderScenarioButtons().filter(button => button.props.children.includes('Adept'));
-        const soarTechScenarios = this.renderScenarioButtons().filter(button => button.props.children.includes('SoarTech'));
-
         return (
             <>
                 {!this.state.currentConfig && (
-                    <div style={{ textAlign: 'center' }}>
-                        <h1>Choose a Scenario</h1>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                {adeptScenarios}
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                {soarTechScenarios}
-                            </div>
-                        </div>
-                    </div>
+                    <Form onSubmit={this.handleSubmit} type="button" style={{ margin: '25px auto 0', maxWidth: '40%' }}>
+                        <Form.Group className="mb-3" controlId="participantID">
+                            <Form.Label>Enter Participant ID:</Form.Label>
+                            <Form.Control type="text" name="participantID" placeholder="Participant ID" required onChange={this.onFormChange}></Form.Control>
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="vrEnvironments">
+                            <Form.Label>Select VR environments you have ALREADY completed (Leave blank if none)</Form.Label>
+                            <Form.Control as="select" name="vrEnvCompleted" multiple onChange={this.onFormMultiChange} defaultValue={[]}>
+                                <option value="sub">Submarine</option>
+                                <option value="jungle">Jungle</option>
+                                <option value="urban">Urban</option>
+                                <option value="desert">Desert</option>
+                            </Form.Control>
+                            <Form.Text className="text-muted">
+                                Use command/control click
+                            </Form.Text>
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="moderatorOrder">
+                            <Form.Label>Moderator enter order from participant log:</Form.Label>
+                            <Form.Control as="select" name="moderatorOrder" defaultValue="" required onChange={this.onFormChange}>
+                                <option value="" disabled></option>
+                                <option value={1}>1 – ST Jungle, AD Jungle; AD Submarine, ST Submarine</option>
+                                <option value={2}>2 – AD Submarine, ST Submarine;  ST Jungle, AD Jungle </option>
+                                <option value={3}>3 – ST Desert, AD Desert; AD Urban, ST Urban</option>
+                                <option value={4}>4 – AD Urban, ST Urban; ST Desert, AD Desert</option>
+                            </Form.Control>
+                        </Form.Group>
+                        <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} type="submit">
+                            Continue
+                        </Button>
+                    </Form>
                 )}
                 {this.state.currentConfig && (
-                    <>
-                        <div style={{ position: 'absolute', top: '70px', right: '10px', padding: '10px' }}>
-                            <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={this.exitSurveyConfirmation}>
-                                Exit Scenario
-                            </Button>
-                        </div>
-                        <Survey model={this.state.currentConfig} />
-                    </>
+                    <Survey model={this.survey} />
                 )}
                 {this.state.uploadData && (
                     <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
