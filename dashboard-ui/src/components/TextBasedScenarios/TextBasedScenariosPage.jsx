@@ -11,7 +11,6 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import surveyTheme from './surveyTheme.json';
-import introConfig from './introConfig.json'
 import { Button, Form } from 'react-bootstrap'
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
