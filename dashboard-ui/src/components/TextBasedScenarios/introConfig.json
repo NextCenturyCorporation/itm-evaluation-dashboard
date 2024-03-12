@@ -1,0 +1,56 @@
+{
+    "logoPosition": "right",
+    "completedHtml": "<h3>Thank you for completing the scenario</h3>",
+    "showCompletedPage": false,
+    "pages": [
+        {
+            "name": "User Info",
+            "elements": [
+                {
+                    "type": "text",
+                    "name": "Participant ID",
+                    "title": "Enter Participant ID:",
+                    "isRequired": true
+                },
+                {
+                    "type": "checkbox",
+                    "name": "vrEnvironmentsCompleted",
+                    "title": "Select VR Environments you have ALREADY completed",
+                    "isRequired": true,
+                    "choices": [
+                        "Submarine",
+                        "Jungle",
+                        "Urban",
+                        "Desert"
+                    ],
+                    "showNoneItem": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "scenarioOrder",
+                    "title": "Moderator enter the order from participant log:",
+                    "isRequired": true,
+                    "choices": [
+                     {
+                      "value": "[\"SoarTech Jungle\", \"Adept Jungle\", \"Adept Submarine\", \"SoarTech Submarine\"] ",
+                      "text": " 1 – ST Jungle, AD Jungle; AD Submarine, ST Submarine"
+                     },
+                     {
+                      "value": "[\"Adept Submarine\", \"SoarTech Submarine\", \"SoarTech Jungle\", \"Adept Jungle\"] ",
+                      "text": " 2 – AD Submarine, ST Submarine;  ST Jungle, AD Jungle "
+                     },
+                     {
+                      "value": "[\"SoarTech Desert\", \"Adept Desert\", \"Adept Urban\", \"SoarTech Urban\"] ",
+                      "text": " 3 - ST Desert, AD Desert; AD Urban, ST Urban"
+                     },
+                     {
+                      "value": "[\"Adept Urban\", \"SoarTech Urban\", \"SoarTech Desert\", \"Adept Desert\"] ",
+                      "text": " 4 – AD Urban, ST Urban; ST Desert, AD Desert"
+                     }
+                    ]
+                   }
+            ]
+        }
+    ],
+    "showPrevButton": false
+}

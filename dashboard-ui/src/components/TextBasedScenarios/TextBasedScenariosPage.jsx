@@ -10,8 +10,8 @@ import stUrbanConfig from './stUrbanConfig.json'
 import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
+import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
-import { Button, Form } from 'react-bootstrap'
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
@@ -22,6 +22,16 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`
 
+const scenarioMappings = {
+    "SoarTech Jungle": stJungleConfig,
+    "SoarTech Urban": stUrbanConfig,
+    "SoarTech Desert": stDesertConfig,
+    "SoarTech Submarine": stSubConfig,
+    "Adept Jungle": adeptJungleConfig,
+    "Adept Urban": adeptUrbanConfig,
+    "Adept Desert": adeptDesertConfig,
+    "Adept Submarine": adeptSubConfig
+}
 class TextBasedScenariosPage extends Component {
 
     constructor(props) {
@@ -32,7 +42,6 @@ class TextBasedScenariosPage extends Component {
             uploadData: false,
             participantID: "",
             vrEnvCompleted: [],
-            moderatorOrder: "",
             startTime: null,
             scenarios: []
         };
@@ -40,8 +49,36 @@ class TextBasedScenariosPage extends Component {
         this.surveyData = {};
         this.surveyDataByScenario = [];
         this.survey = null;
+        this.introSurvey = new Model(introConfig);
+        this.introSurvey.onComplete.add(this.introSurveyComplete)
+        this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
+    }
+
+    introSurveyComplete = (survey) => {
+        const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
+        const scenarioOrderArray = JSON.parse(scenarioOrderString);
+        console.log(scenarioOrderArray)
+        this.setState({
+            scenarios: scenarioOrderArray,
+            participantID: survey.data.participantID,
+            vrEnvCompleted: survey.data.vrEnvCompleted
+        })
+
+        const selectedScenarios = []
+        for (const scenario of scenarioOrderArray) {
+            selectedScenarios.push(scenarioMappings[scenario])
+        }
+
+        let title = ""
+        if (scenarioOrderArray.includes("SoarTech Desert")) {
+            title = "Desert/Urban Text Scenarios"
+        } else if (scenarioOrderArray.includes("SoarTech Jungle")) {
+            title = "Jungle/Submarine Text Scenarios"
+        }
+
+        this.loadSurveyConfig(selectedScenarios, title !== "" ? title : "")
     }
 
 
@@ -159,93 +196,11 @@ class TextBasedScenariosPage extends Component {
         return page ? page.questions.map(question => question.name) : [];
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault()
-        event.persist()
-
-        let selectedScenarios = []
-        let title = ""
-        switch (this.state.moderatorOrder) {
-            case "1":
-                selectedScenarios = [stJungleConfig, adeptJungleConfig, adeptSubConfig, stSubConfig]
-                title = "ST Jungle, AD Jungle; AD Submarine, ST Submarine"
-                this.setState({ scenarios: ["SoarTech Jungle", "Adept Jungle", "Adept Submarine", "SoarTech Submarine"] })
-                break;
-            case "2":
-                selectedScenarios = [adeptSubConfig, stSubConfig, stJungleConfig, adeptJungleConfig]
-                this.setState({ scenarios: ["Adept Submarine", "SoarTech Submarine", "SoarTech Jungle", "Adept Jungle"] })
-                title = "AD Submarine, ST Submarine;  ST Jungle, AD Jungle"
-                break;
-            case "3":
-                selectedScenarios = [stDesertConfig, adeptDesertConfig, adeptUrbanConfig, stUrbanConfig]
-                this.setState({ scenarios: ["SoarTech Desert", "Adept Desert", "Adept Urban", "SoarTech Urban"] })
-                title = "ST Desert, AD Desert; AD Urban, ST Urban"
-                break;
-            case "4":
-                selectedScenarios = [adeptUrbanConfig, stUrbanConfig, stDesertConfig, adeptDesertConfig]
-                this.setState({ scenarios: ["Adept Urban", "SoarTech Urban", "SoarTech Desert", "Adept Desert"] })
-                title = "AD Urban, ST Urban; ST Desert, AD Desert"
-                break;
-            default:
-                console.log("invalid moderator order")
-        }
-
-        this.loadSurveyConfig(selectedScenarios, title)
-    }
-
-    onFormChange = (e) => {
-        const name = e.target.name;
-        const value = e.target.value;
-
-        this.setState({ [name]: value });
-    };
-
-    onFormMultiChange = (e) => {
-        const options = e.target.options;
-        let value = [];
-        for (let i = 0; i < options.length; i++) {
-            if (options[i].selected) {
-                value.push(options[i].value);
-            }
-        }
-        this.setState({ vrEnvCompleted: value })
-    }
-
     render() {
         return (
             <>
                 {!this.state.currentConfig && (
-                    <Form onSubmit={this.handleSubmit} type="button" style={{ margin: '25px auto 0', maxWidth: '40%' }}>
-                        <Form.Group className="mb-3" controlId="participantID">
-                            <Form.Label>Enter Participant ID:</Form.Label>
-                            <Form.Control type="text" name="participantID" placeholder="Participant ID" required onChange={this.onFormChange}></Form.Control>
-                        </Form.Group>
-                        <Form.Group className="mb-3" controlId="vrEnvironments">
-                            <Form.Label>Select VR environments you have ALREADY completed (Leave blank if none)</Form.Label>
-                            <Form.Control as="select" name="vrEnvCompleted" multiple onChange={this.onFormMultiChange} defaultValue={[]}>
-                                <option value="sub">Submarine</option>
-                                <option value="jungle">Jungle</option>
-                                <option value="urban">Urban</option>
-                                <option value="desert">Desert</option>
-                            </Form.Control>
-                            <Form.Text className="text-muted">
-                                Use command/control click
-                            </Form.Text>
-                        </Form.Group>
-                        <Form.Group className="mb-3" controlId="moderatorOrder">
-                            <Form.Label>Moderator enter order from participant log:</Form.Label>
-                            <Form.Control as="select" name="moderatorOrder" defaultValue="" required onChange={this.onFormChange}>
-                                <option value="" disabled></option>
-                                <option value={1}>1 – ST Jungle, AD Jungle; AD Submarine, ST Submarine</option>
-                                <option value={2}>2 – AD Submarine, ST Submarine;  ST Jungle, AD Jungle </option>
-                                <option value={3}>3 – ST Desert, AD Desert; AD Urban, ST Urban</option>
-                                <option value={4}>4 – AD Urban, ST Urban; ST Desert, AD Desert</option>
-                            </Form.Control>
-                        </Form.Group>
-                        <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} type="submit">
-                            Continue
-                        </Button>
-                    </Form>
+                    <Survey model={this.introSurvey} />
                 )}
                 {this.state.currentConfig && (
                     <Survey model={this.survey} />
