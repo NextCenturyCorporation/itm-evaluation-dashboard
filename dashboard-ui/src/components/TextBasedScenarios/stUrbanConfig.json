@@ -1758,11 +1758,11 @@
                     "title": "What action do you take?",
                     "isRequired": true,
                     "choices": [
-                        "Transport Casualty U to local hospital",
-                        "Transport Casualty V to local hospital",
+                        "Transport Casualty W to local hospital",
+                        "Transport Casualty X to local hospital",
                         "Transport both casualties to the local hospital despite hospital availability",
-                        "Transport Casualty U to the local safehouse",
-                        "Transport Casualty V to the local safehouse",
+                        "Transport Casualty W to the local safehouse",
+                        "Transport Casualty X to the local safehouse",
                         "Keep both casualties at the local safehouse"
                     ]
                 }
