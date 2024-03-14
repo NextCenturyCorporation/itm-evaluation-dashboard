@@ -31,6 +31,14 @@ export class ComparisonModel extends Question {
     set decisionMakers(decisionMakers) {
         this.setPropertyValue("decisionMakers", decisionMakers);
     }
+
+    get isOmnibus() {
+        return this.getPropertyValue("isOmnibus");
+    }
+
+    set isOmnibus(isOmnibus) {
+        this.setPropertyValue("isOmnibus", isOmnibus)
+    }
 }
 
 Serializer.addClass(
@@ -39,6 +47,10 @@ Serializer.addClass(
         {
             name: "decisionMakers",
             default: []
+        },
+        {
+            name: "isOmnibus",
+            default: false
         }
     ],
     function () {
@@ -73,56 +85,65 @@ export class Comparison extends SurveyQuestionElementBase {
         return this.question.decisionMakers;
     }
 
+    get isOmnibus() {
+        return this.question.isOmnibus;
+    }
+
     componentDidMount() {
+        console.log(this.isOmnibus)
         let config = surveyConfig
         let decisionMakers = this.decisionMakers;
-        // in case of duplicates somehow
-        decisionMakers = [...new Set(decisionMakers)];
-        let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
-        let dmDetails = relevantPages.map(page => page.elements[0]);
-        //extra cleansing of any potential duplicates
-        dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
-        console.log(dmDetails)
-        this.question.value = decisionMakers
-
-        this.setState({ dmDetails });
+        if (!this.isOmnibus) {
+            // in case of duplicates somehow
+            decisionMakers = [...new Set(decisionMakers)];
+            let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
+            let dmDetails = relevantPages.map(page => page.elements[0]);
+            //extra cleansing of any potential duplicates
+            dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
+            this.setState({ dmDetails });
+        } else {
+            if (this.decisionMakers.includes("Medic-A")) {
+                console.log("HELLO")
+            }
+            console.log("outside")
+        }
     }
 
     handleShowModal = (content) => {
         console.log(content)
         this.dm = content
-        this.setState({ showModal: true});
+        this.setState({ showModal: true });
     };
 
     handleCloseModal = () => {
-        this.setState({ showModal: false});
+        this.setState({ showModal: false });
     };
 
     renderElement() {
         return (
             <>
-            {this.state.dmDetails.map((dm, index) => (
-                    <Button key={dm.name} className="mx-3" onClick={() => this.handleShowModal(dm)}>
+                {this.state.dmDetails.map((dm, index) => (
+                    <Button key={dm.name} className="mx-3" variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={() => this.handleShowModal(dm)}>
                         {dm.dmName}
                     </Button>
-            ))}
-            <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="xl">
-                <Modal.Header closeButton>
-                    <Modal.Title>{this.dm.name}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Dynamic
-                        patients={this.dm.patients} 
-                        situation={this.dm.situation} 
-                        supplies={this.dm.supplies} 
-                        decision={this.dm.decision} 
-                        dmName={this.dm.dmName}
-                        actions={this.dm.actions}
-                        explanation={this.dm.explanation}
-                        showModal={false}
-                    />
-                </Modal.Body>
-            </Modal>
+                ))}
+                <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="xl">
+                    <Modal.Header closeButton>
+                        <Modal.Title>{this.dm.name}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Dynamic
+                            patients={this.dm.patients}
+                            situation={this.dm.situation}
+                            supplies={this.dm.supplies}
+                            decision={this.dm.decision}
+                            dmName={this.dm.dmName}
+                            actions={this.dm.actions}
+                            explanation={this.dm.explanation}
+                            showModal={false}
+                        />
+                    </Modal.Body>
+                </Modal>
             </>
         )
     }
