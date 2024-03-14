@@ -6,6 +6,7 @@ import ScenarioPage from '../ScenarioPage/scenarioPage';
 import Actions from '../ActionsCompare/actions';
 import SurveyPage from '../Survey/survey';
 import TextBasedScenariosPage from '../TextBasedScenarios/TextBasedScenariosPage';
+import TextBasedResultsPage from '../SurveyResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -56,7 +57,11 @@ function Survey(currentUser) {
 }
 
 function TextBased() {
-    return <TextBasedScenariosPage/>
+    return <TextBasedScenariosPage />;
+}
+
+function TextBasedResults() {
+    return <TextBasedResultsPage />;
 }
 
 
@@ -163,11 +168,11 @@ export class App extends React.Component {
                                     </NavDropdown.Item>
                                 </NavDropdown>
                                 <NavDropdown title="Text Scenarios">
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/text-based">Complete Text Scenarios</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
+                                        Complete Text Scenarios
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item disabled>
-                                        <span className="dropdown-item" style={{opacity: 0.5}}>Text Scenario Results</span>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
+                                        Text Scenario Results
                                     </NavDropdown.Item>
                                 </NavDropdown>
                             </ul>
@@ -230,6 +235,9 @@ export class App extends React.Component {
                             </Route>
                             <Route path="/text-based">
                                 <TextBased />
+                            </Route>
+                            <Route path="/text-based-results">
+                                <TextBasedResults />
                             </Route>
                         </Switch>
                     </div>

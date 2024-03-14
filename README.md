@@ -25,7 +25,7 @@ bash startup-scripts/dashboard_ui.sh
 
 For Development
 ```
-bash starup-scripts/dev_dashboard_ui.sh
+bash startup-scripts/dev_dashboard_ui.sh
 ```
 
 # Helpful Script to Rebuild Graphql and UI
@@ -39,7 +39,7 @@ bash startup-scripts/graphql_dashboard_ui.sh
 
 For Development
 ```
-bash starup-scripts/dev_graphql_dashboard_ui.sh
+bash startup-scripts/dev_graphql_dashboard_ui.sh
 ```
 
 # Populate MongoDB with Backup
