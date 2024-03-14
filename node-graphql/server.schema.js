@@ -270,7 +270,9 @@ const resolvers = {
       }).toArray().then(result => { return result; });
     },
     getAllScenarioResults: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('userScenarioResults').find().toArray().then(result => { return result; });
+      return await dashboardDB.db.collection('userScenarioResults').find({
+        "participantID": { $not: /test/i }
+      }).toArray().then(result => { return result; });
     }
     
   },

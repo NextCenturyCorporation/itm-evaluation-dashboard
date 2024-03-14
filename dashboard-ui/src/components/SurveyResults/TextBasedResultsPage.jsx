@@ -8,7 +8,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 
 const GET_SCENARIO_RESULTS = gql`
-    query GetScenarioREsults{
+    query GetScenarioResults{
         getAllScenarioResults
     }`;
 
@@ -96,7 +96,19 @@ export default function TextBasedResultsPage() {
     React.useEffect(() => {
         // only display results concerning the chosen scenario
         if (scenarioChosen && responsesByScenario && responsesByScenario[scenarioChosen]) {
-            setResults(responsesByScenario[scenarioChosen]);
+            let found = false;
+            for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
+                if (Object.keys(responsesByScenario[scenarioChosen][k]).length > 0) {
+                    setResults(responsesByScenario[scenarioChosen]);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                setResults(null);
+            }
+        } else {
+            setResults(null);
         }
     }, [scenarioChosen]);
 
