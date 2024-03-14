@@ -7,6 +7,7 @@ import surveyTheme from './surveyTheme.json';
 import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
 import { Omnibus } from "./omnibusTemplate";
+import { Comparison } from "./comparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { getUID, shuffle } from './util';
@@ -310,4 +311,9 @@ ReactQuestionFactory.Instance.registerQuestion("dynamic-template", (props) => {
 
 ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
     return React.createElement(Omnibus, props)
+})
+
+
+ReactQuestionFactory.Instance.registerQuestion("comparison", (props) => {
+    return React.createElement(Comparison, props)
 })
