@@ -6,6 +6,8 @@ import { useQuery } from '@apollo/react-hooks';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import { VisualizationPanel } from 'survey-analytics';
+import { Model } from 'survey-core';
 
 const GET_SCENARIO_RESULTS = gql`
     query GetScenarioResults{
@@ -22,6 +24,120 @@ const SCENARIO_OPTIONS = [
     "SoarTech Desert",
     "SoarTech Jungle"
 ];
+
+function shortenAnswer(answer) {
+    switch (answer) {
+        case 'I mostly considered the potential to save the most lives.':
+            return "Save the Most Lives";
+        case 'I considered the intent to cause harm and the degree of responsibility for the situation.':
+            return "Intent to Cause Harm/Responsibility";
+        case 'I primarily considered the likely medical impact and tried to save the most lives.':
+            return "Medical Impact/Save the Most Lives";
+        case 'The patient further from the IED':
+            return "Patient further from IED"
+        case 'The patient closer to the IED':
+            return "Patient closer to IED";
+        case 'Perform vitals assessment on Casualty W':
+            return "Vitals: Casualty W";
+        case 'Perform vitals assessment on Casualty X':
+            return "Vitals: Casualty X";
+        case 'Perform vitals assessment on Casualty V':
+            return "Vitals: Casualty V";
+        case 'Assess Casualty W for internal bleeding':
+            return "Assess Casualty W";
+        case 'Assess Casualty X for pelvic fracture':
+            return "Assess Casualty X";
+        case 'Provide burn dressing with pain control':
+            return "Burn dressing and pain control";
+        case 'Plan to treat both by alternating bag valve mask (BVM) ':
+            return "Treat both with BVM";
+        case 'Do not treat and search for help':
+            return 'Search for help';
+        case 'Apply Pain Med/Aid Bag to Casualty U':
+            return 'Treat Casualty U: Pain Meds/Aid Bag';
+        case 'Call to find out if additional support is possible':
+            return 'Call for support';
+        case 'Move forward with evacuating without confirming care capabilities':
+            return 'Evacuate';
+        case 'Hold casualties to determine if they can be transported':
+            return 'Hold for transport';
+        case 'Transport Casualty V to local hospital':
+            return 'Casualty V: transport to local hospital';
+        case 'Apply Decompression Needle to Casualty W':
+            return 'Casualty W: Needle Treatment';
+        case 'Check respiration on Casualty W':
+            return 'Casualty W: Respiration';
+        case 'Not assessing local capabilities and move forward with evacuating':
+            return 'Evacuate';
+        default:
+            return answer;
+    }
+}
+
+function SingleGraph({ data, pageName }) {
+    const [survey, setSurvey] = React.useState(null);
+    const [vizPanel, setVizPanel] = React.useState(null);
+    const [surveyResults, setSurveyResults] = React.useState([]);
+
+    React.useEffect(() => {
+        if (data) {
+            // set survey question for graph
+            const surveyJson = {
+                elements: [{
+                    name: pageName,
+                    title: pageName,
+                    type: "radiogroup",
+                    choices: Object.keys(data).filter((x) => x !== 'total').map((x) => shortenAnswer(x))
+                }]
+            };
+            console.log(data);
+            const survey = new Model(surveyJson);
+            console.log(survey);
+            setSurvey(survey);
+            // get results ready for graph
+            const curResults = [];
+            for (const answer of Object.keys(data)) {
+                for (let i = 0; i < data[answer]; i++) {
+                    const tmpResult = {};
+                    tmpResult[pageName] = shortenAnswer(answer);
+                    curResults.push(tmpResult);
+                }
+            }
+            console.log(curResults);
+            setSurveyResults([...curResults]);
+        }
+    }, [data]);
+
+    const vizPanelOptions = {
+        allowHideQuestions: false,
+        defaultChartType: "bar",
+        labelTruncateLength: -1,
+        showPercentages: true,
+        allowDragDrop: false
+    }
+
+    if (!vizPanel && !!survey) {
+        const vizPanel = new VisualizationPanel(
+            survey.getAllQuestions(),
+            surveyResults,
+            vizPanelOptions
+        );
+        vizPanel.showToolbar = false;
+        setVizPanel(vizPanel);
+    }
+
+    React.useEffect(() => {
+        if (vizPanel) {
+            vizPanel.render("viz_" + pageName);
+            return () => {
+                document.getElementById("viz_" + pageName).innerHTML = "";
+            }
+        }
+    }, [vizPanel]);
+
+
+    return (<div id={"viz_" + pageName} className='full-width-graph' />);
+}
 
 
 export default function TextBasedResultsPage() {
@@ -112,24 +228,34 @@ export default function TextBasedResultsPage() {
         }
     }, [scenarioChosen]);
 
+    // const ResultsSection = () => {
+    //     // display the results for the chosen scenario
+    //     return (<div className="scenario-results">
+    //         <div className="text-based-header">
+    //             <h2>Text-Based Scenario Results for: {scenarioChosen}</h2>
+    //         </div>
+    //         {questionAnswerSets ?
+    //             Object.keys(questionAnswerSets).map((qkey) => {
+    //                 return (<div className='result-section' key={qkey}>
+    //                     <h3 className='question-header'>{qkey}</h3>
+    //                     {Object.keys(questionAnswerSets[qkey]).map((answer) => {
+    //                         if (answer != 'total') {
+    //                             return (<div key={qkey + '_' + answer}>
+    //                                 {answer}: {questionAnswerSets[qkey][answer]} / {questionAnswerSets[qkey]['total']} = <b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b>
+    //                             </div>);
+    //                         }
+    //                     })}
+    //                 </div>);
+    //             })
+    //             : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
+    //     </div>);
+    // }
+
     const ResultsSection = () => {
-        // display the results for the chosen scenario
-        return (<div className="scenario-results">
-            <div className="text-based-header">
-                <h2>Text-Based Scenario Results for: {scenarioChosen}</h2>
-            </div>
+        return (<div className="scenario-results2">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey) => {
-                    return (<div className='result-section' key={qkey}>
-                        <h3 className='question-header'>{qkey}</h3>
-                        {Object.keys(questionAnswerSets[qkey]).map((answer) => {
-                            if (answer != 'total') {
-                                return (<div key={qkey + '_' + answer}>
-                                    {answer}: {questionAnswerSets[qkey][answer]} / {questionAnswerSets[qkey]['total']} = <b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b>
-                                </div>);
-                            }
-                        })}
-                    </div>);
+                    return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} />);
                 })
                 : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
         </div>);

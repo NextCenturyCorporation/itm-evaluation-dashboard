@@ -198,7 +198,21 @@
     width: 100%;
 }
 
+.scenario-results2 {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 50% 50%;
+}
+
 .no-data {
     margin-left: 12px;
     margin-top: 12px;
+}
+
+.full-width-graph * {
+    width: 100% !important;
+}
+
+.full-width-graph {
+    border-right: 1px solid black;
 }
