@@ -152,8 +152,7 @@ class SurveyPage extends Component {
             shuffledGroupedPages.push(...groupPages);
         });
 
-
-        this.surveyConfigClone.pages = [...omnibusPages, ...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
+        this.surveyConfigClone.pages = [ ...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
     }
 
     onAfterRenderPage = (sender, options) => {

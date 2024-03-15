@@ -31,14 +31,6 @@ export class ComparisonModel extends Question {
     set decisionMakers(decisionMakers) {
         this.setPropertyValue("decisionMakers", decisionMakers);
     }
-
-    get isOmnibus() {
-        return this.getPropertyValue("isOmnibus");
-    }
-
-    set isOmnibus(isOmnibus) {
-        this.setPropertyValue("isOmnibus", isOmnibus)
-    }
 }
 
 Serializer.addClass(
@@ -48,10 +40,6 @@ Serializer.addClass(
             name: "decisionMakers",
             default: []
         },
-        {
-            name: "isOmnibus",
-            default: false
-        }
     ],
     function () {
         return new ComparisonModel("");
@@ -85,32 +73,19 @@ export class Comparison extends SurveyQuestionElementBase {
         return this.question.decisionMakers;
     }
 
-    get isOmnibus() {
-        return this.question.isOmnibus;
-    }
-
     componentDidMount() {
-        console.log(this.isOmnibus)
         let config = surveyConfig
         let decisionMakers = this.decisionMakers;
-        if (!this.isOmnibus) {
-            // in case of duplicates somehow
-            decisionMakers = [...new Set(decisionMakers)];
-            let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
-            let dmDetails = relevantPages.map(page => page.elements[0]);
-            //extra cleansing of any potential duplicates
-            dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
-            this.setState({ dmDetails });
-        } else {
-            if (this.decisionMakers.includes("Medic-A")) {
-                console.log("HELLO")
-            }
-            console.log("outside")
-        }
+        // in case of duplicates somehow
+        decisionMakers = [...new Set(decisionMakers)];
+        let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
+        let dmDetails = relevantPages.map(page => page.elements[0]);
+        //extra cleansing of any potential duplicates
+        dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
+        this.setState({ dmDetails });
     }
 
     handleShowModal = (content) => {
-        console.log(content)
         this.dm = content
         this.setState({ showModal: true });
     };
