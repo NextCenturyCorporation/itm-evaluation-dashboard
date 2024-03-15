@@ -102,7 +102,6 @@ function SingleGraph({ data }) {
             setSurveyResults([...curResults]);
             const survey = new Model(surveyJson);
             setSurvey(survey);
-            console.log(survey, curResults);
         }
     }, [data]);
 

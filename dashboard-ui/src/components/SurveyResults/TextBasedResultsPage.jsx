@@ -8,6 +8,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { VisualizationPanel } from 'survey-analytics';
 import { Model } from 'survey-core';
+import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
+
 
 const GET_SCENARIO_RESULTS = gql`
     query GetScenarioResults{
@@ -70,11 +72,14 @@ function shortenAnswer(answer) {
         case 'Not assessing local capabilities and move forward with evacuating':
             return 'Evacuate';
         default:
+            if (answer.includes("BVM")) {
+                return "Treat both with BVM";
+            }
             return answer;
     }
 }
 
-function SingleGraph({ data, pageName }) {
+function SingleGraph({ data, pageName, type }) {
     const [survey, setSurvey] = React.useState(null);
     const [vizPanel, setVizPanel] = React.useState(null);
     const [surveyResults, setSurveyResults] = React.useState([]);
@@ -90,9 +95,7 @@ function SingleGraph({ data, pageName }) {
                     choices: Object.keys(data).filter((x) => x !== 'total').map((x) => shortenAnswer(x))
                 }]
             };
-            console.log(data);
             const survey = new Model(surveyJson);
-            console.log(survey);
             setSurvey(survey);
             // get results ready for graph
             const curResults = [];
@@ -103,14 +106,13 @@ function SingleGraph({ data, pageName }) {
                     curResults.push(tmpResult);
                 }
             }
-            console.log(curResults);
             setSurveyResults([...curResults]);
         }
     }, [data]);
 
     const vizPanelOptions = {
         allowHideQuestions: false,
-        defaultChartType: "bar",
+        defaultChartType: type == 'pie' ? 'pie' : "bar",
         labelTruncateLength: -1,
         showPercentages: true,
         allowDragDrop: false
@@ -146,6 +148,7 @@ export default function TextBasedResultsPage() {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
     });
+    const [dataFormat, setDataFormat] = React.useState("charts")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
 
@@ -226,45 +229,63 @@ export default function TextBasedResultsPage() {
         } else {
             setResults(null);
         }
-    }, [scenarioChosen]);
+    }, [scenarioChosen, responsesByScenario]);
 
-    // const ResultsSection = () => {
-    //     // display the results for the chosen scenario
-    //     return (<div className="scenario-results">
-    //         <div className="text-based-header">
-    //             <h2>Text-Based Scenario Results for: {scenarioChosen}</h2>
-    //         </div>
-    //         {questionAnswerSets ?
-    //             Object.keys(questionAnswerSets).map((qkey) => {
-    //                 return (<div className='result-section' key={qkey}>
-    //                     <h3 className='question-header'>{qkey}</h3>
-    //                     {Object.keys(questionAnswerSets[qkey]).map((answer) => {
-    //                         if (answer != 'total') {
-    //                             return (<div key={qkey + '_' + answer}>
-    //                                 {answer}: {questionAnswerSets[qkey][answer]} / {questionAnswerSets[qkey]['total']} = <b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b>
-    //                             </div>);
-    //                         }
-    //                     })}
-    //                 </div>);
-    //             })
-    //             : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
-    //     </div>);
-    // }
-
-    const ResultsSection = () => {
-        return (<div className="scenario-results2">
+    const TextResultsSection = () => {
+        // display the results for the chosen scenario
+        return (<div className="text-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey) => {
-                    return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} />);
+                    return (<div className='result-section' key={qkey}>
+                        <h3 className='question-header'>{qkey} (N={questionAnswerSets[qkey]['total']})</h3>
+                        <table className="text-result-table">
+                            <tr>
+                                <th>
+                                    Answer
+                                </th>
+                                <th>
+                                    Count
+                                </th>
+                                <th>
+                                    Percentage
+                                </th>
+                            </tr>
+                            {Object.keys(questionAnswerSets[qkey]).map((answer) => {
+                                if (answer != 'total') {
+                                    return (<tr key={qkey + '_' + answer}>
+                                        <td>{shortenAnswer(answer)}</td>
+                                        <td>{questionAnswerSets[qkey][answer]}</td>
+                                        <td><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
+                                    </tr>);
+                                }
+                            })}
+                        </table>
+                    </div>);
                 })
                 : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
         </div>);
     }
 
+    const ChartedResultsSection = () => {
+        return (<div className="chart-scenario-results">
+            {questionAnswerSets ?
+                Object.keys(questionAnswerSets).map((qkey) => {
+                    return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} type={dataFormat} />);
+                })
+                : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
+        </div>);
+    }
+
+    const handleFormatChange = (selected) => {
+        if (selected.length == 2) {
+            setDataFormat(selected[1]);
+        }
+    };
+
     return (<div className='text-results'>
         <div className='sidebar-options'>
             <h3 className='sidebar-title'>Scenario</h3>
-            <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
+            <List className="nav-list" component="nav">
                 {SCENARIO_OPTIONS.map((item) =>
                     <ListItem className="nav-list-item" id={"scenario_" + item} key={"scenario_" + item}
                         button
@@ -275,6 +296,17 @@ export default function TextBasedResultsPage() {
                 )}
             </List>
         </div>
-        {scenarioChosen && <ResultsSection />}
+        {scenarioChosen && <div className="result-display">
+            <div className="text-based-header">
+                <div />
+                <h2>{scenarioChosen}</h2>
+                <ToggleButtonGroup className="viewGroup" type="checkbox" value={dataFormat} onChange={handleFormatChange}>
+                    <ToggleButton variant="secondary" id='choose-text' value={"text"}>Text</ToggleButton>
+                    <ToggleButton variant="secondary" id='choose-chart' value={"charts"}>Charts</ToggleButton>
+                    <ToggleButton variant="secondary" id='choose-pie' value={"pie"}>Pie Graphs</ToggleButton>
+                </ToggleButtonGroup>
+            </div>
+            {dataFormat == 'text' ? <TextResultsSection /> : <ChartedResultsSection />}
+        </div>}
     </div>);
 }

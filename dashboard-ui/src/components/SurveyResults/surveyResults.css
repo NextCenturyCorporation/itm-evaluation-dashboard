@@ -148,12 +148,13 @@
 
 .text-based-header {
     display: flex;
-    width: 100%;
+    width: calc(100% - 20px);
     height: fit-content;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-between;
     border-bottom: 1px solid rgba(89, 38, 16, 1);
     padding: 12px 0px;
+    box-sizing: border-box;
     margin: 0px 8px;
 }
 
@@ -165,6 +166,8 @@
 
 .result-section {
     margin-left: 12px;
+    height: fit-content;
+    width: fit-content;
 }
 
 .text-results {
@@ -192,13 +195,13 @@
     margin-top: 0px;
 }
 
-.scenario-results {
-    display: flex;
-    flex-direction: column;
+.text-scenario-results {
     width: 100%;
+    display: grid;
+    grid-template-columns: 50% 50%;
 }
 
-.scenario-results2 {
+.chart-scenario-results {
     width: 100%;
     display: grid;
     grid-template-columns: 50% 50%;
@@ -215,4 +218,13 @@
 
 .full-width-graph {
     border-right: 1px solid black;
+}
+
+.result-display {
+    width: 100%;
+}
+
+.viewGroup {
+    text-align: center;
+    align-items: center;
 }
