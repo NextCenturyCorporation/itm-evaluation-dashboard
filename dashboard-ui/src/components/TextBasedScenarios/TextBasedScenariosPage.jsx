@@ -16,6 +16,7 @@ import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
+import { Prompt } from 'react-router-dom'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -54,6 +55,7 @@ class TextBasedScenariosPage extends Component {
         this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
+        this.shouldBlockNavigation = true
     }
 
     introSurveyComplete = (survey) => {
@@ -135,6 +137,7 @@ class TextBasedScenariosPage extends Component {
                 this.uploadButtonRef.current.click();
             }
         });
+        this.shouldBlockNavigation = false
     }
 
     onSurveyComplete = (survey) => {
@@ -205,7 +208,15 @@ class TextBasedScenariosPage extends Component {
                     <Survey model={this.introSurvey} />
                 )}
                 {this.state.currentConfig && (
+                    <>
                     <Survey model={this.survey} />
+                    {this.shouldBlockNavigation && (
+                        <Prompt
+                            when={this.shouldBlockNavigation}
+                            message='Please finish the scenarios before leaving the page. By hitting "OK" you will be leaving before completing.'
+                        />
+                    )}
+                    </>
                 )}
                 {this.state.uploadData && (
                     <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
