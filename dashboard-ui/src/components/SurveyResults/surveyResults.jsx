@@ -177,7 +177,7 @@ export function SurveyResults() {
             console.log(indices)
             setScenarioIndices(indices);
             if (indices.length > 0) {
-                setSelectedScenario(1);
+                setSelectedScenario(0);
             }
         }
     }, [filterBySurveyVersion, data]);
@@ -204,7 +204,7 @@ export function SurveyResults() {
             }
             setResultData(separatedData);
         }
-    }, [selectedScenario]);
+    }, [selectedScenario, filterBySurveyVersion]);
 
     // detect survey versions in data set
     React.useEffect(() => {
@@ -239,7 +239,8 @@ export function SurveyResults() {
         {error && <p>Error</p>}
         {data && <>
             <div className="selection-box">
-                <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                {filterBySurveyVersion.length < 1 && (<center><h3>Select Major Version To View Graphs Or Select Tabulated Data</h3></center>)}
+                <div className="selection-header">
                 <FormControl className='version-select'>
                     <InputLabel>Survey Version</InputLabel>
                     <Select
@@ -257,6 +258,8 @@ export function SurveyResults() {
                         })}
                     </Select>
                 </FormControl>
+                <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                </div>
                 {filterBySurveyVersion.length > 0 && (
                     <>
                         <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}</div>
