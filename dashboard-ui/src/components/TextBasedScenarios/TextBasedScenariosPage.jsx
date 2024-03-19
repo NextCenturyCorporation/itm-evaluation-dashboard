@@ -213,7 +213,7 @@ class TextBasedScenariosPage extends Component {
                     {this.shouldBlockNavigation && (
                         <Prompt
                             when={this.shouldBlockNavigation}
-                            message='Please finish the scenarios before leaving the page. By hitting "OK" you will be leaving before completing.'
+                            message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the scenarios before completion and will be required to start the scenarios over from the beginning.'
                         />
                     )}
                     </>

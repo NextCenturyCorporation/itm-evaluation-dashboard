@@ -282,7 +282,7 @@ class SurveyPage extends Component {
                 {this.shouldBlockNavigation && (
                     <Prompt
                         when={this.shouldBlockNavigation}
-                        message='Please finish the survey before leaving the page. By hitting "OK" you will be leaving the survey before completing.'
+                        message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
                     />
                 )}
                 <Survey model={this.survey} />
