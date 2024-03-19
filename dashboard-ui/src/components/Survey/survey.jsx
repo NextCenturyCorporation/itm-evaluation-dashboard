@@ -12,6 +12,7 @@ import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { getUID, shuffle } from './util';
 import Bowser from "bowser";
+import { Prompt } from 'react-router-dom'
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
@@ -29,7 +30,7 @@ class SurveyPage extends Component {
             surveyId: null,
             surveyVersion: surveyConfig.version,
             iPad: false,
-            browserInfo: null
+            browserInfo: null,
         };
 
         // clone surveyConfig, don't edit directly
@@ -45,6 +46,7 @@ class SurveyPage extends Component {
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
+        this.shouldBlockNavigation = true
     }
 
     initializeSurvey = () => {
@@ -152,7 +154,7 @@ class SurveyPage extends Component {
             shuffledGroupedPages.push(...groupPages);
         });
 
-        this.surveyConfigClone.pages = [ ...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
+        this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
     }
 
     onAfterRenderPage = (sender, options) => {
@@ -246,6 +248,7 @@ class SurveyPage extends Component {
     onSurveyComplete = (survey) => {
         // final upload
         this.uploadSurveyData(survey);
+        this.shouldBlockNavigation = false;
     }
 
     onValueChanged = (sender, options) => {
@@ -276,6 +279,12 @@ class SurveyPage extends Component {
     render() {
         return (
             <>
+                {this.shouldBlockNavigation && (
+                    <Prompt
+                        when={this.shouldBlockNavigation}
+                        message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
+                    />
+                )}
                 <Survey model={this.survey} />
                 {this.state.uploadData && (
                     <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
