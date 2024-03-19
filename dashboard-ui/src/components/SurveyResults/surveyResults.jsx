@@ -5,18 +5,26 @@ import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
-import surveyConfig from '../Survey/surveyConfig.json';
+import surveyConfig2x from '../Survey/surveyConfig2x.json';
+import surveyConfig1x from '../Survey/surveyConfig1x.json'
 import { Modal } from "@mui/material";
 import { ResultsTable } from './resultsTable';
 import CloseIcon from '@material-ui/icons/Close';
+import FormControl from '@mui/material/FormControl';
+import ListItemText from '@mui/material/ListItemText';
+import Select from '@mui/material/Select';
+import Checkbox from '@mui/material/Checkbox';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+
 
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
         getAllSurveyResults
     }`;
 
-function getQuestionAnswerSets(pageName) {
-    const pagesFound = surveyConfig.pages.filter((page) => page.name === pageName);
+function getQuestionAnswerSets(pageName, version) {
+    const pagesFound = (version === 1 ? surveyConfig1x : surveyConfig2x).pages.filter((page) => page.name === pageName);
     if (pagesFound.length > 0) {
         const page = pagesFound[0];
         const surveyJson = { elements: [] };
@@ -43,7 +51,7 @@ const vizPanelOptions = {
     allowHideQuestions: false
 }
 
-function ScenarioGroup({ scenario, data }) {
+function ScenarioGroup({ scenario, data, version }) {
     const [singles, setSingles] = React.useState([]);
     const [comparisons, setComparisons] = React.useState([]);
 
@@ -67,15 +75,15 @@ function ScenarioGroup({ scenario, data }) {
     return (<div className='scenario-group'>
         <h2 className='scenario-header'>Scenario {scenario}</h2>
         <div className='singletons'>
-            {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton}></SingleGraph> })}
+            {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton} version={version}></SingleGraph> })}
         </div>
         <div className='comparisons'>
-            {comparisons?.map((comparison) => { return <SingleGraph key={comparison[0].pageName} data={comparison}></SingleGraph> })}
+            {comparisons?.map((comparison) => { return <SingleGraph key={comparison[0].pageName} data={comparison} version={version}></SingleGraph> })}
         </div>
     </div>);
 }
 
-function SingleGraph({ data }) {
+function SingleGraph({ data, version }) {
     const [survey, setSurvey] = React.useState(null);
     const [vizPanel, setVizPanel] = React.useState(null);
     const [pageName, setPageName] = React.useState('Unknown Set');
@@ -83,10 +91,9 @@ function SingleGraph({ data }) {
 
     React.useEffect(() => {
         if (data.length > 0) {
-
             setPageName(data[0].pageName + ": Survey Results");
             // create a survey config based off of answers in the survey data
-            const surveyJson = getQuestionAnswerSets(data[0].pageName);
+            const surveyJson = getQuestionAnswerSets(data[0].pageName, version);
             const curResults = [];
             for (const entry of data) {
                 const entryResults = {};
@@ -136,17 +143,49 @@ function SingleGraph({ data }) {
 export function SurveyResults() {
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
         // only pulls from network, never cached
-        fetchPolicy: 'network-only', 
-      });
+        fetchPolicy: 'network-only',
+    });
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState(-1);
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
+    const [filterBySurveyVersion, setVersionOption] = React.useState([]);
+    const [versions, setVersions] = React.useState([]);
+    const [filteredData, setFilteredData] = React.useState(null)
 
     React.useEffect(() => {
-        if (data) {
+        if (data && filterBySurveyVersion.length > 0) {
+            const filteredData = data.getAllSurveyResults.filter(result => {
+                if (!result.results) { return false; }
+                return filterBySurveyVersion.includes(Math.floor(result.results.surveyVersion));
+            });
+
+            setFilteredData(filteredData);
+
+            let indices = [];
+            for (const result of filteredData) {
+                if (result.results) {
+                    for (const x of Object.keys(result.results)) {
+                        if (result.results[x]?.scenarioIndex) {
+                            indices.push(result.results[x].scenarioIndex);
+                        }
+                    }
+                }
+            }
+            indices = Array.from(new Set(indices));
+            indices.sort((a, b) => a - b);
+            console.log(indices)
+            setScenarioIndices(indices);
+            if (indices.length > 0) {
+                setSelectedScenario(1);
+            }
+        }
+    }, [filterBySurveyVersion, data]);
+
+    React.useEffect(() => {
+        if (filteredData) {
             const separatedData = {};
-            for (const result of data.getAllSurveyResults) {
+            for (const result of filteredData) {
                 let obj = result;
                 if (result.results) {
                     obj = result.results;
@@ -154,12 +193,12 @@ export function SurveyResults() {
                 for (const x of Object.keys(obj)) {
                     const res = obj[x];
                     if (res?.scenarioIndex === selectedScenario) {
-                            const indexBy = res.pageType + '_' + res.pageName;
-                            if (Object.keys(separatedData).includes(indexBy)) {
-                                separatedData[indexBy].push(res);
-                            } else {
-                                separatedData[indexBy] = [res];
-                            }
+                        const indexBy = res.pageType + '_' + res.pageName;
+                        if (Object.keys(separatedData).includes(indexBy)) {
+                            separatedData[indexBy].push(res);
+                        } else {
+                            separatedData[indexBy] = [res];
+                        }
                     }
                 }
             }
@@ -167,43 +206,69 @@ export function SurveyResults() {
         }
     }, [selectedScenario]);
 
-    if (!scenarioIndices && data) {
-        // go through data to find all scenario indicies
-        let indices = [];
+    // detect survey versions in data set
+    React.useEffect(() => {
+        if (!data) { return; }
+
+        let detectedVersions = [];
         for (const result of data.getAllSurveyResults) {
-            if (result.results) {
-                for (const x of Object.keys(result.results)) {
-                    if (result.results[x]?.scenarioIndex) {
-                        indices.push(result.results[x].scenarioIndex);
-                    }
-                }
+            const obj = result.results;
+            if (!obj || !obj.surveyVersion) { continue; }
+
+            const majorVersion = String(obj.surveyVersion).charAt(0)
+            if (majorVersion && detectedVersions.indexOf(majorVersion) === -1) {
+                detectedVersions.push(majorVersion)
             }
         }
-        indices = Array.from(new Set(indices));
-        indices.sort((a, b) => a - b);
-        setScenarioIndices([...indices]);
-        if (indices.length > 0) {
-            setSelectedScenario(1);
-        }
-    }
+
+        detectedVersions = detectedVersions.map(str => parseInt(str, 10))
+
+        setVersions(detectedVersions);
+    }, [data]);
 
     const closeModal = () => {
         setShowTable(false);
     }
+
+    const updateVersions = (selected) => {
+        setVersionOption([...selected.target.value]);
+    };
 
     return (<>
         {loading && <p>Loading</p>}
         {error && <p>Error</p>}
         {data && <>
             <div className="selection-box">
-                <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}<button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button></div>
-                <section className="button-section">
-                    {scenarioIndices?.map((index) => {
-                        return <button key={"scenario_btn_" + index} disabled={index === selectedScenario} onClick={() => setSelectedScenario(index)} className="selection-btn">Scenario {index}</button>
-                    })}
-                </section>
+                <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                <FormControl className='version-select'>
+                    <InputLabel>Survey Version</InputLabel>
+                    <Select
+                        multiple
+                        value={filterBySurveyVersion}
+                        label="Survey Version"
+                        renderValue={(selected) => `${selected}.x`}
+                        onChange={updateVersions}
+                    >
+                        {versions.map((v) => {
+                            return <MenuItem key={v} value={v}>
+                                <Checkbox checked={filterBySurveyVersion.indexOf(v) > -1} />
+                                <ListItemText primary={`${v}` + '.x'} />
+                            </MenuItem>;
+                        })}
+                    </Select>
+                </FormControl>
+                {filterBySurveyVersion.length > 0 && (
+                    <>
+                        <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}</div>
+                        <section className="button-section">
+                            {scenarioIndices?.map((index) => {
+                                return <button key={"scenario_btn_" + index} disabled={index === selectedScenario} onClick={() => setSelectedScenario(index)} className="selection-btn">Scenario {index}</button>
+                            })}
+                        </section>
+                    </>
+                )}
             </div>
-            {selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData}></ScenarioGroup>}
+            {filterBySurveyVersion.length > 0 && selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData} version={filterBySurveyVersion[0]}></ScenarioGroup>}
             <Modal className='table-modal' open={showTable} onClose={closeModal}>
                 <div className='modal-body'>
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
