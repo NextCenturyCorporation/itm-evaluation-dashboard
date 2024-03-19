@@ -10,18 +10,29 @@ import stUrbanConfig from './stUrbanConfig.json'
 import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
+import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
-import { Button } from 'react-bootstrap'
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
+import { Prompt } from 'react-router-dom'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
-    mutation uploadScenarioResults($results: JSON) {
+    mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
 
+const scenarioMappings = {
+    "SoarTech Jungle": stJungleConfig,
+    "SoarTech Urban": stUrbanConfig,
+    "SoarTech Desert": stDesertConfig,
+    "SoarTech Submarine": stSubConfig,
+    "Adept Jungle": adeptJungleConfig,
+    "Adept Urban": adeptUrbanConfig,
+    "Adept Desert": adeptDesertConfig,
+    "Adept Submarine": adeptSubConfig
+}
 class TextBasedScenariosPage extends Component {
 
     constructor(props) {
@@ -29,87 +40,182 @@ class TextBasedScenariosPage extends Component {
 
         this.state = {
             currentConfig: null,
-            uploadData: false
+            uploadData: false,
+            participantID: "",
+            vrEnvCompleted: [],
+            startTime: null,
+            scenarios: []
         };
 
-        this.surveyData = {}
+        this.surveyData = {};
+        this.surveyDataByScenario = [];
+        this.survey = null;
+        this.introSurvey = new Model(introConfig);
+        this.introSurvey.onComplete.add(this.introSurveyComplete)
+        this.introSurvey.applyTheme(surveyTheme);
+        this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
+        this.shouldBlockNavigation = true
     }
 
+    introSurveyComplete = (survey) => {
+        console.log(survey.data)
+        const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
+        const scenarioOrderArray = JSON.parse(scenarioOrderString);
+        console.log(scenarioOrderArray)
+        this.setState({
+            scenarios: scenarioOrderArray,
+            participantID: survey.data["Participant ID"],
+            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
+        })
+
+        const selectedScenarios = []
+        for (const scenario of scenarioOrderArray) {
+            selectedScenarios.push(scenarioMappings[scenario])
+        }
+
+        let title = ""
+        if (scenarioOrderArray.includes("SoarTech Desert")) {
+            title = "Desert/Urban Text Scenarios"
+        } else if (scenarioOrderArray.includes("SoarTech Jungle")) {
+            title = "Jungle/Submarine Text Scenarios"
+        }
+
+        this.loadSurveyConfig(selectedScenarios, title !== "" ? title : "")
+    }
+
+
     uploadResults = (survey) => {
-        this.surveyData.response = survey.valuesHash
-        this.surveyData.scenario = survey.title
+        this.timerHelper();
+
+        for (const pageName in this.pageStartTimes) {
+            if (this.pageStartTimes.hasOwnProperty(pageName)) {
+                const page = this.survey.getPageByName(pageName)?.jsonObj;
+                this.surveyData[pageName] = {
+                    timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
+                    pageName: page?.name,
+                    questions: {}
+                };
+
+                const pageQuestions = this.getPageQuestions(pageName);
+
+                pageQuestions.forEach(questionName => {
+                    let questionValue;
+                    questionValue = survey.valuesHash[questionName];
+                    this.surveyData[pageName].questions[questionName] = {
+                        response: questionValue
+                    };
+                });
+            }
+        }
+
+        this.surveyData.timeComplete = new Date().toString();
+        this.surveyData.startTime = this.state.startTime
+        this.surveyData.scenarioTitle = this.survey.title
+
+        for (const pageName in this.surveyData) {
+            const pageData = this.surveyData[pageName];
+
+            for (const scenario of this.state.scenarios) {
+                const scenarioIndex = this.state.scenarios.indexOf(scenario)
+                if (pageName.includes(scenario) || Object.values(pageData).some(value => value?.toString().includes(scenario))) {
+                    this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
+                    this.surveyDataByScenario[scenarioIndex][pageName] = pageData;
+                }
+            }
+        }
+
+        let temp = 0
+        for (const scenario of this.surveyDataByScenario) {
+            scenario.participantID = this.state.participantID
+            scenario.vrEnvCompleted = this.state.vrEnvCompleted
+            scenario.title = this.state.scenarios[temp++]
+        }
+
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
             }
         });
+        this.shouldBlockNavigation = false
     }
 
     onSurveyComplete = (survey) => {
-        this.uploadResults(survey)
+        this.uploadResults(survey);
     }
 
-    loadSurveyConfig = (config) => {
-        const survey = new Model(config);
-        survey.applyTheme(surveyTheme);
-        survey.onComplete.add(this.onSurveyComplete);
-        this.setState({ currentConfig: survey });
+    loadSurveyConfig = (selectedScenarios, title) => {
+        let config = selectedScenarios[0]
+
+        for (const scenario of selectedScenarios.slice(1)) {
+            config.pages = (config.pages).concat(scenario.pages)
+        }
+
+        config.title = title
+
+        this.survey = new Model(config);
+        this.survey.applyTheme(surveyTheme);
+
+        this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
+        this.survey.onComplete.add(this.onSurveyComplete);
+
+        // function for uploading data
+        this.survey.onComplete.add(this.onSurveyComplete);
+
+        this.setState({ currentConfig: this.survey });
     };
 
-    exitSurveyConfirmation = () => {
-        const isConfirmed = window.confirm('Are you sure you want to exit the scenario?');
-        if (isConfirmed) {
-            this.setState({ currentConfig: null });
+    onAfterRenderPage = (sender, options) => {
+        console.log(this.state)
+        if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+            this.setState({
+                firstPageCompleted: true,
+                startTime: new Date().toString()
+            });
         }
+
+        const pageName = options.page.name;
+
+        if (Object.keys(this.pageStartTimes).length > 0) {
+            this.timerHelper();
+        }
+
+        this.pageStartTimes[pageName] = new Date();
     }
 
-    renderScenarioButtons() {
-        const scenarios = [
-            { label: "Adept Urban", config: adeptUrbanConfig },
-            { label: "Adept Submarine", config: adeptSubConfig },
-            { label: "Adept Desert", config: adeptDesertConfig },
-            { label: "Adept Jungle", config: adeptJungleConfig },
-            { label: "SoarTech Urban", config: stUrbanConfig },
-            { label: "SoarTech Submarine", config: stSubConfig },
-            { label: "SoarTech Desert", config: stDesertConfig },
-            { label: "SoarTech Jungle", config: stJungleConfig }
-        ];
+    timerHelper = () => {
+        const previousPageName = Object.keys(this.pageStartTimes).pop();
+        const endTime = new Date();
+        const startTime = this.pageStartTimes[previousPageName];
+        const timeSpentInSeconds = (endTime - startTime) / 1000;
 
-        return scenarios.map((scenario, index) => (
-            <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} className="my-1 mx-2" key={scenario.label} onClick={() => this.loadSurveyConfig(scenario.config)}>
-                {scenario.label}
-            </Button>
-        ));
+        // update time spent for the previous page
+        this.surveyData[previousPageName] = {};
+        this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
+        this.surveyData[previousPageName].questions = this.getPageQuestions(previousPageName);
     }
+
+    getPageQuestions = (pageName) => {
+        // returns every question on the page
+        const page = this.survey.getPageByName(pageName);
+        return page ? page.questions.map(question => question.name) : [];
+    };
 
     render() {
-        const adeptScenarios = this.renderScenarioButtons().filter(button => button.props.children.includes('Adept'));
-        const soarTechScenarios = this.renderScenarioButtons().filter(button => button.props.children.includes('SoarTech'));
-
         return (
             <>
                 {!this.state.currentConfig && (
-                    <div style={{ textAlign: 'center' }}>
-                        <h1>Choose a Scenario</h1>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                {adeptScenarios}
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                {soarTechScenarios}
-                            </div>
-                        </div>
-                    </div>
+                    <Survey model={this.introSurvey} />
                 )}
                 {this.state.currentConfig && (
                     <>
-                        <div style={{ position: 'absolute', top: '70px', right: '10px', padding: '10px', 'z-index': '100' }}>
-                            <Button variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={this.exitSurveyConfirmation}>
-                                Exit Scenario
-                            </Button>
-                        </div>
-                        <Survey model={this.state.currentConfig} />
+                    <Survey model={this.survey} />
+                    {this.shouldBlockNavigation && (
+                        <Prompt
+                            when={this.shouldBlockNavigation}
+                            message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the scenarios before completion and will be required to start the scenarios over from the beginning.'
+                        />
+                    )}
                     </>
                 )}
                 {this.state.uploadData && (
@@ -119,9 +225,9 @@ class TextBasedScenariosPage extends Component {
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
                                     uploadSurveyResults({
-                                        variables: { results: this.surveyData }
+                                        variables: { results: this.surveyDataByScenario }
                                     });
-                                    // uploads data then sets 
+                                    // uploads data 
                                     this.setState({ uploadData: false });
                                 }}></button>
                             </div>

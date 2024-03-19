@@ -2,9 +2,10 @@
     "logoPosition": "right",
     "title": "SoarTech Jungle Scenario",
     "completedHtml": "<h3>Thank you for completing the scenario</h3>",
+    "showPrevButton": false,
     "pages": [
         {
-            "name": "Jungle Scenario",
+            "name": "SoarTech Jungle Scenario",
             "elements":[
                 {
                     "type": "html",
@@ -15,7 +16,7 @@
 
         },
         {
-            "name": "Jungle Probe 1-1",
+            "name": "SoarTech Jungle Probe 1-1",
             "elements": [
                 {
                     "type": "expression",
@@ -100,6 +101,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 1-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Search other vehicle for more casualties",
                         "Assess Casualty U first",
@@ -111,7 +113,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 1-2",
+            "name": "SoarTech Jungle Probe 1-2",
             "elements": [
                 {
                     "type": "expression",
@@ -196,6 +198,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 1-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Perform vitals assessment on Casualty U",
                         "Perform vitals assessment on Casualty V",
@@ -206,7 +209,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 1-3",
+            "name": "SoarTech Jungle Probe 1-3",
             "elements": [
                 {
                     "type": "expression",
@@ -291,6 +294,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 1-3",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Perform an escharotomy",
                         "Provide IV pain control",
@@ -302,7 +306,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 2-1",
+            "name": "SoarTech Jungle Probe 2-1",
             "elements": [
                 {
                     "type": "expression",
@@ -387,6 +391,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Stop treatment and assess Casualty V",
                         "Continue to treat Casualty U",
@@ -398,7 +403,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 2-2",
+            "name": "SoarTech Jungle Probe 2-2",
             "elements": [
                 {
                     "type": "expression",
@@ -483,6 +488,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Continue to treat Casualty U",
                         "Move to treat Casualty V ",
@@ -492,7 +498,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 2-3",
+            "name": "SoarTech Jungle Probe 2-3",
             "elements": [
                 {
                     "type": "expression",
@@ -577,6 +583,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-3",
                     "title": "What action do you take for casualty V?",
+                    "isRequired": true,
                     "choices": [
                         "Perform an escharotomy",
                         "Provide burn dressing with pain control",
@@ -589,7 +596,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 2-4",
+            "name": "SoarTech Jungle Probe 2-4",
             "elements": [
                 {
                     "type": "expression",
@@ -674,6 +681,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 2-4",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Carefully divide the burn kit to cover the worst burns on each casualty",
                         "Give it to Casualty U",
@@ -683,7 +691,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 3-1",
+            "name": "SoarTech Jungle Probe 3-1",
             "elements": [
                 {
                     "type": "expression",
@@ -768,6 +776,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 3-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties until you get updated info on the capabilities of the embassy",
@@ -777,7 +786,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 3-2",
+            "name": "SoarTech Jungle Probe 3-2",
             "elements": [
                 {
                     "type": "expression",
@@ -862,6 +871,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 3-2",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Evacuate Casualty U to local hospital",
                         "Evacuate Casualty V to local hospital",
@@ -873,7 +883,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 4-1",
+            "name": "SoarTech Jungle Probe 4-1",
             "elements": [
                 {
                     "type": "expression",
@@ -958,6 +968,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 4-1",
                     "title": "What tag would you give casualty U?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -968,7 +979,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 4-2",
+            "name": "SoarTech Jungle Probe 4-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1053,6 +1064,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 4-2",
                     "title": "What tag would you give casualty V?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1073,7 +1085,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 5-1",
+            "name": "SoarTech Jungle Probe 5-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1158,6 +1170,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 5-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty W first",
@@ -1169,7 +1182,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 5-2",
+            "name": "SoarTech Jungle Probe 5-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1254,6 +1267,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 5-2",
                     "title": "What is your plan of action?",
+                    "isRequired": true,
                     "choices": [
                         "Perform vitals assessment on Casualty W",
                         "Perform vitals assessment on Casualty X",
@@ -1264,7 +1278,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 5-3",
+            "name": "SoarTech Jungle Probe 5-3",
             "elements": [
                 {
                     "type": "expression",
@@ -1349,6 +1363,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 5-3",
                     "title": "What action do you take for Casualty W?",
+                    "isRequired": true,
                     "choices": [
                         "Insert a chest tube",
                         "Perform a needle decompression",
@@ -1361,7 +1376,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 6-1",
+            "name": "SoarTech Jungle Probe 6-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1446,6 +1461,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 6-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
@@ -1458,7 +1474,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 6-2",
+            "name": "SoarTech Jungle Probe 6-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1543,6 +1559,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 6-2",
                     "title": "What action do you take for Casualty X?",
+                    "isRequired": true,
                     "choices": [
                         "Apply a traction splint",
                         "Give blood",
@@ -1557,7 +1574,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 7-1",
+            "name": "SoarTech Jungle Probe 7-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1642,6 +1659,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 7-1",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties to determine if they can be transported",
@@ -1651,7 +1669,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 7-2",
+            "name": "SoarTech Jungle Probe 7-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1736,6 +1754,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 7-2",
                     "title": "What action do you take?",
+                    "isRequired": true,
                     "choices": [
                         "Transport Casualty U to local hospital",
                         "Transport Casualty V to local hospital",
@@ -1748,7 +1767,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 8-1",
+            "name": "SoarTech Jungle Probe 8-1",
             "elements": [
                 {
                     "type": "expression",
@@ -1833,6 +1852,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 8-1",
                     "title": "What tag would you give Casualty W?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1843,7 +1863,7 @@
             ]
         },
         {
-            "name": "Jungle Probe 8-2",
+            "name": "SoarTech Jungle Probe 8-2",
             "elements": [
                 {
                     "type": "expression",
@@ -1928,6 +1948,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Jungle 8-2",
                     "title": "What tag would you give Casualty X?",
+                    "isRequired": true,
                     "choices": [
                         "Green",
                         "Yellow",

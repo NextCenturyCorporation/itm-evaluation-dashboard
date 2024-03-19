@@ -1,5 +1,5 @@
 import React from "react";
-import { ListGroup, Card, Row, Col, ListGroupItem } from "react-bootstrap";
+import { ListGroup, Card, Row, Col } from "react-bootstrap";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 
