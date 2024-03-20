@@ -189,7 +189,7 @@ function getQuestionText(qkey, scenario) {
         for (const res of page['elements']) {
             if (res['name'] === qkey && res['choices']) {
                 // set title name
-                return res['title'];
+                return res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey);
             }
         }
     }
@@ -203,12 +203,11 @@ function ParticipantView({ data, scenarioName }) {
     const [orderedHeaders, setHeaders] = React.useState([]);
     React.useEffect(() => {
         const formatted = {};
-        const headers = ['Participant ID', 'Jungle VR?', 'Urban VR?', 'Submarine VR?', 'Desert VR?'];
+        const headers = ['Participant ID'];
         const excel = [];
         for (const page of data) {
             const obj = {
-                'Participant ID': page['participantID'], 'Jungle VR?': page['vrEnvCompleted'].includes("Jungle"), 'Urban VR?': page['vrEnvCompleted'].includes("Urban"),
-                'Submarine VR?': page['vrEnvCompleted'].includes("Submarine"), 'Desert VR?': page['vrEnvCompleted'].includes("Desert")
+                'Participant ID': page['participantID']
             };
             formatted[page['_id']] = { ...obj };
 
