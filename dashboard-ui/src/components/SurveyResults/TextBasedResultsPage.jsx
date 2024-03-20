@@ -10,7 +10,8 @@ import { VisualizationPanel } from 'survey-analytics';
 import { Model } from 'survey-core';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import { scenarioMappings } from '../TextBasedScenarios/TextBasedScenariosPage';
-
+import * as FileSaver from 'file-saver';
+import XLSX from 'sheetjs-style';
 
 const GET_SCENARIO_RESULTS = gql`
     query GetScenarioResults{
@@ -182,6 +183,101 @@ function SingleGraph({ data, pageName }) {
 }
 
 
+function getQuestionText(qkey, scenario) {
+    const pagesForScenario = scenarioMappings[scenario]['pages'];
+    for (const page of pagesForScenario) {
+        for (const res of page['elements']) {
+            if (res['name'] === qkey && res['choices']) {
+                // set title name
+                return res['title'];
+            }
+        }
+    }
+    return qkey;
+}
+
+
+function ParticipantView({ data, scenarioName }) {
+    const [organizedData, setOrganizedData] = React.useState(null);
+    const [excelData, setExcelData] = React.useState(null);
+    const [orderedHeaders, setHeaders] = React.useState([]);
+    React.useEffect(() => {
+        const formatted = {};
+        const headers = ['Participant ID', 'Jungle VR?', 'Urban VR?', 'Submarine VR?', 'Desert VR?'];
+        const excel = [];
+        for (const page of data) {
+            const obj = {
+                'Participant ID': page['participantID'], 'Jungle VR?': page['vrEnvCompleted'].includes("Jungle"), 'Urban VR?': page['vrEnvCompleted'].includes("Urban"),
+                'Submarine VR?': page['vrEnvCompleted'].includes("Submarine"), 'Desert VR?': page['vrEnvCompleted'].includes("Desert")
+            };
+            formatted[page['_id']] = { ...obj };
+
+            for (const key of Object.keys(page)) {
+                // top level pages with timing
+                const time_key = key + ' time (s)';
+                if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
+                    if (!headers.includes(time_key)) {
+                        headers.push(time_key);
+                    }
+
+                    formatted[page['_id']][time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
+                    obj[time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
+                    if (Object.keys(page[key]).includes('questions')) {
+                        for (const q of Object.keys(page[key]['questions'])) {
+                            if (Object.keys(page[key]['questions'][q]).includes('response')) {
+                                if (!headers.includes(q)) {
+                                    headers.push(q);
+                                }
+                                formatted[page['_id']][q] = page[key]['questions'][q]['response'];
+                                obj[getQuestionText(q, scenarioName)] = page[key]['questions'][q]['response'];
+                            }
+                        }
+                    }
+                }
+            }
+            excel.push(obj);
+        }
+        setOrganizedData(formatted);
+        setHeaders(headers);
+        setExcelData(excel);
+    }, [data]);
+
+    const exportToExcel = async () => {
+        const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+        const fileExtension = '.xlsx';
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const data = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(data, 'text_result_data_' + scenarioName + fileExtension);
+    };
+
+    return (<div className="participant-text-results">
+        <button onClick={exportToExcel}>Download Results</button>
+        <div className="table-container">
+            {organizedData && <table className="by-participant">
+                <thead>
+                    <tr>
+                        {orderedHeaders.map((key) => {
+                            return <th key={scenarioName + "_" + key}>{getQuestionText(key, scenarioName)}</th>
+                        })}
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.keys(organizedData).map((k) => {
+                        return <tr key={k}>
+                            {orderedHeaders.map((h) => {
+                                return <td key={k + '_' + h}>{Object.keys(organizedData[k]).includes(h) ? organizedData[k][h].toString() : '-'}</td>
+                            })}
+                        </tr>
+                    })}
+                </tbody>
+            </table>}
+        </div>
+    </div>);
+}
+
+
 export default function TextBasedResultsPage() {
     const [scenarioChosen, setScenario] = React.useState(SCENARIO_OPTIONS[0]);
     const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS, {
@@ -191,16 +287,20 @@ export default function TextBasedResultsPage() {
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
+    const [participantBased, setParticipantBased] = React.useState(null);
 
     React.useEffect(() => {
         // populate responsesByScenario with gql data
         const tmpResponses = {};
+        const participants = {};
         for (let opt of SCENARIO_OPTIONS) {
             tmpResponses[opt] = {};
+            participants[opt] = [];
         }
         if (data?.getAllScenarioResults) {
             for (const result of data.getAllScenarioResults) {
                 let scenario = null;
+
                 for (const k of Object.keys(result)) {
                     // find matching scenario for this set
                     scenario = SCENARIO_OPTIONS.filter((x) => k.toLowerCase().includes(x.toLowerCase()));
@@ -213,6 +313,7 @@ export default function TextBasedResultsPage() {
                     }
                 }
                 if (scenario) {
+                    participants[scenario].push(result);
                     // once the scenario is found, start populating object with data
                     // go through each item in the result object
                     const pagesForScenario = scenarioMappings[result['title']]['pages'];
@@ -224,7 +325,7 @@ export default function TextBasedResultsPage() {
                                 // start by getting *all* possible responses to the question
                                 for (const page of pagesForScenario) {
                                     for (const res of page['elements']) {
-                                        if (res['name'] == q && res['choices']) {
+                                        if (res['name'] === q && res['choices']) {
                                             for (const choice of res['choices']) {
                                                 if (!Object.keys(tmpResponses[scenario]).includes(q)) {
                                                     tmpResponses[scenario][q] = {};
@@ -268,6 +369,7 @@ export default function TextBasedResultsPage() {
                 }
             }
             setByScenario(tmpResponses);
+            setParticipantBased(participants);
         }
     }, [data]);
 
@@ -341,7 +443,7 @@ export default function TextBasedResultsPage() {
     }
 
     const handleFormatChange = (selected) => {
-        if (selected.length == 2) {
+        if (selected.length === 2) {
             setDataFormat(selected[1]);
         }
     };
@@ -367,9 +469,10 @@ export default function TextBasedResultsPage() {
                 <ToggleButtonGroup className="viewGroup" type="checkbox" value={dataFormat} onChange={handleFormatChange}>
                     <ToggleButton variant="secondary" id='choose-text' value={"text"}>Text</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-chart' value={"charts"}>Charts</ToggleButton>
+                    <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
                 </ToggleButtonGroup>
             </div>
-            {dataFormat == 'text' ? <TextResultsSection /> : <ChartedResultsSection />}
+            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} /> : <ChartedResultsSection />}
         </div>}
     </div>);
 }
