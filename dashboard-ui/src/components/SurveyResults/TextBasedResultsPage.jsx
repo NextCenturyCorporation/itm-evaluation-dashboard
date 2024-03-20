@@ -9,6 +9,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { VisualizationPanel } from 'survey-analytics';
 import { Model } from 'survey-core';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
+import { scenarioMappings } from '../TextBasedScenarios/TextBasedScenariosPage';
 
 
 const GET_SCENARIO_RESULTS = gql`
@@ -28,6 +29,7 @@ const SCENARIO_OPTIONS = [
 ];
 
 function shortenAnswer(answer) {
+    // shortens an answer so the whole thing is visible and understandable without taking up too much screen real estate
     switch (answer) {
         case 'I mostly considered the potential to save the most lives.':
             return "Save the Most Lives";
@@ -35,6 +37,8 @@ function shortenAnswer(answer) {
             return "Intent to Cause Harm/Responsibility";
         case 'I primarily considered the likely medical impact and tried to save the most lives.':
             return "Medical Impact/Save the Most Lives";
+        case 'I considered the intent to cause harm, the degree of responsibility for the situation, and the potential to save the most lives.':
+            return 'Intent to Cause Harm/Responsibility/Save the Most Lives';
         case 'The patient further from the IED':
             return "Patient further from IED"
         case 'The patient closer to the IED':
@@ -71,15 +75,46 @@ function shortenAnswer(answer) {
             return 'Casualty W: Respiration';
         case 'Not assessing local capabilities and move forward with evacuating':
             return 'Evacuate';
+        case 'Carefully divide the burn kit to cover the worst burns on each casualty':
+            return 'Divide Burn Kit';
+        case "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties":
+            return 'Hold until info on local hospital capabilities';
+        case "Hold casualties until you get updated info on the capabilities of the embassy":
+            return 'Hold until info on embassy capabilities';
+        case "I considered the likely medical impact and also the intent to cause harm.":
+            return "Medical Impact/Intent to Cause Harm";
+        case "I considered the likely medical impact and also the degree of responsibility for the situation.":
+            return "Medical Impact/Degree of Responsibility";
+        case "Transport both casualties to the local hospital despite hospital availability":
+            return "Transport both to hospital";
+        case "Hold casualties to determine if they can be transported to safehouse":
+            return "Hold for transport to safehouse";
+        case "I considered the intent to cause harm, the degree of responsibility for the situation, and helpful things each patient had done.":
+            return "Intent to Harm/Responsibility/Helpfulness of Patient";
+        case "I considered the intent to cause harm, the degree of responsibility for the situation, the helpful things each patient had done, and the fact that the patients were from different groups":
+            return "Intent/Responsibility/Helpfulness/Different Groups";
+        case "Provide burn dressing with pain control (Burn kit)":
+            return "Burn Kit";
+        case "Perform an escharotomy (minor surgical kit)":
+            return "Escharotomy";
+        case "Get info on local hospital's capabilities to manage the casualties":
+            return "Info on Local Hospital";
+        case "Get info on the capabilities of the embassy to hold casualties until evacuation":
+            return "Info on Embassy";
+        case "I mostly considered the fact that the patients were from different groups.":
+            return "Patients are from different groups";
         default:
             if (answer.includes("BVM")) {
                 return "Treat both with BVM";
+            }
+            if (answer.includes("until you get updated info on the capabilities of the embassy")) {
+                return 'Hold until info on embassy capabilities';
             }
             return answer;
     }
 }
 
-function SingleGraph({ data, pageName, type }) {
+function SingleGraph({ data, pageName }) {
     const [survey, setSurvey] = React.useState(null);
     const [vizPanel, setVizPanel] = React.useState(null);
     const [surveyResults, setSurveyResults] = React.useState([]);
@@ -90,9 +125,9 @@ function SingleGraph({ data, pageName, type }) {
             const surveyJson = {
                 elements: [{
                     name: pageName,
-                    title: pageName,
+                    title: data['question'],
                     type: "radiogroup",
-                    choices: Object.keys(data).filter((x) => x !== 'total').map((x) => shortenAnswer(x))
+                    choices: Object.keys(data).filter((x) => x !== 'total' && x !== 'question').map((x) => shortenAnswer(x))
                 }]
             };
             const survey = new Model(surveyJson);
@@ -112,7 +147,7 @@ function SingleGraph({ data, pageName, type }) {
 
     const vizPanelOptions = {
         allowHideQuestions: false,
-        defaultChartType: type == 'pie' ? 'pie' : "bar",
+        defaultChartType: "bar",
         labelTruncateLength: -1,
         showPercentages: true,
         allowDragDrop: false
@@ -138,7 +173,12 @@ function SingleGraph({ data, pageName, type }) {
     }, [vizPanel]);
 
 
-    return (<div id={"viz_" + pageName} className='full-width-graph' />);
+    return (
+        <div className='graph-section'>
+            <h3 className='question-header'>{pageName} (N={data['total']})</h3>
+            <div id={"viz_" + pageName} className='full-width-graph' />
+        </div>
+    );
 }
 
 
@@ -148,7 +188,7 @@ export default function TextBasedResultsPage() {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
     });
-    const [dataFormat, setDataFormat] = React.useState("charts")
+    const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
 
@@ -175,11 +215,30 @@ export default function TextBasedResultsPage() {
                 if (scenario) {
                     // once the scenario is found, start populating object with data
                     // go through each item in the result object
+                    const pagesForScenario = scenarioMappings[result['title']]['pages'];
                     for (const k of Object.keys(result)) {
                         // if it is an object and has a questions array...
                         if (typeof (result[k]) === 'object' && result[k].questions) {
                             // go through the questions object and find all that has responses
                             for (const q of Object.keys(result[k].questions)) {
+                                // start by getting *all* possible responses to the question
+                                for (const page of pagesForScenario) {
+                                    for (const res of page['elements']) {
+                                        if (res['name'] == q && res['choices']) {
+                                            for (const choice of res['choices']) {
+                                                if (!Object.keys(tmpResponses[scenario]).includes(q)) {
+                                                    tmpResponses[scenario][q] = {};
+                                                }
+                                                if (!Object.keys(tmpResponses[scenario][q]).includes(choice)) {
+                                                    tmpResponses[scenario][q][choice] = 0;
+                                                }
+                                                // set title name
+                                                tmpResponses[scenario][q]['question'] = res['title'];
+                                            }
+                                        }
+                                    }
+
+                                }
                                 if (result[k].questions[q].response) {
                                     const answer = result[k].questions[q].response;
                                     // for each response found, log the response and the key
@@ -238,27 +297,32 @@ export default function TextBasedResultsPage() {
                 Object.keys(questionAnswerSets).map((qkey) => {
                     return (<div className='result-section' key={qkey}>
                         <h3 className='question-header'>{qkey} (N={questionAnswerSets[qkey]['total']})</h3>
+                        <p>{questionAnswerSets[qkey]['question']}</p>
                         <table className="text-result-table">
-                            <tr>
-                                <th>
-                                    Answer
-                                </th>
-                                <th>
-                                    Count
-                                </th>
-                                <th>
-                                    Percentage
-                                </th>
-                            </tr>
-                            {Object.keys(questionAnswerSets[qkey]).map((answer) => {
-                                if (answer != 'total') {
-                                    return (<tr key={qkey + '_' + answer}>
-                                        <td>{shortenAnswer(answer)}</td>
-                                        <td>{questionAnswerSets[qkey][answer]}</td>
-                                        <td><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
-                                    </tr>);
-                                }
-                            })}
+                            <thead>
+                                <tr>
+                                    <th className="answer-column">
+                                        Answer
+                                    </th>
+                                    <th className="count-column">
+                                        Count
+                                    </th>
+                                    <th className="count-column">
+                                        Percentage
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Object.keys(questionAnswerSets[qkey]).map((answer) => {
+                                    if (answer !== 'total' && answer !== 'question') {
+                                        return (<tr key={qkey + '_' + answer}>
+                                            <td className="answer-column">{shortenAnswer(answer)}</td>
+                                            <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
+                                            <td className="count-column"><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
+                                        </tr>);
+                                    }
+                                })}
+                            </tbody>
                         </table>
                     </div>);
                 })
@@ -270,7 +334,7 @@ export default function TextBasedResultsPage() {
         return (<div className="chart-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey) => {
-                    return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} type={dataFormat} />);
+                    return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} />);
                 })
                 : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
         </div>);
@@ -303,7 +367,6 @@ export default function TextBasedResultsPage() {
                 <ToggleButtonGroup className="viewGroup" type="checkbox" value={dataFormat} onChange={handleFormatChange}>
                     <ToggleButton variant="secondary" id='choose-text' value={"text"}>Text</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-chart' value={"charts"}>Charts</ToggleButton>
-                    <ToggleButton variant="secondary" id='choose-pie' value={"pie"}>Pie Graphs</ToggleButton>
                 </ToggleButtonGroup>
             </div>
             {dataFormat == 'text' ? <TextResultsSection /> : <ChartedResultsSection />}
