@@ -149,15 +149,15 @@ export function SurveyResults() {
     const [selectedScenario, setSelectedScenario] = React.useState(-1);
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
-    const [filterBySurveyVersion, setVersionOption] = React.useState([]);
+    const [filterBySurveyVersion, setVersionOption] = React.useState("");
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
 
     React.useEffect(() => {
-        if (data && filterBySurveyVersion.length > 0) {
+        if (data && filterBySurveyVersion) {
             const filteredData = data.getAllSurveyResults.filter(result => {
                 if (!result.results) { return false; }
-                return filterBySurveyVersion.includes(Math.floor(result.results.surveyVersion));
+                return filterBySurveyVersion === (Math.floor(result.results.surveyVersion));
             });
 
             setFilteredData(filteredData);
@@ -174,7 +174,6 @@ export function SurveyResults() {
             }
             indices = Array.from(new Set(indices));
             indices.sort((a, b) => a - b);
-            console.log(indices)
             setScenarioIndices(indices);
             if (indices.length > 0) {
                 setSelectedScenario(0);
@@ -231,7 +230,7 @@ export function SurveyResults() {
     }
 
     const updateVersions = (selected) => {
-        setVersionOption([...selected.target.value]);
+        setVersionOption(selected.target.value);
     };
 
     return (<>
@@ -239,12 +238,11 @@ export function SurveyResults() {
         {error && <p>Error</p>}
         {data && <>
             <div className="selection-box">
-                {filterBySurveyVersion.length < 1 && (<center><h3>Select Major Version To View Graphs Or Select Tabulated Data</h3></center>)}
+                {!filterBySurveyVersion && (<center><h3>Select Major Version To View Graphs Or Select Tabulated Data</h3></center>)}
                 <div className="selection-header">
                 <FormControl className='version-select'>
                     <InputLabel>Survey Version</InputLabel>
                     <Select
-                        multiple
                         value={filterBySurveyVersion}
                         label="Survey Version"
                         renderValue={(selected) => `${selected}.x`}
@@ -252,7 +250,7 @@ export function SurveyResults() {
                     >
                         {versions.map((v) => {
                             return <MenuItem key={v} value={v}>
-                                <Checkbox checked={filterBySurveyVersion.indexOf(v) > -1} />
+                                <Checkbox checked={filterBySurveyVersion === v} />
                                 <ListItemText primary={`${v}` + '.x'} />
                             </MenuItem>;
                         })}
@@ -260,7 +258,7 @@ export function SurveyResults() {
                 </FormControl>
                 <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
                 </div>
-                {filterBySurveyVersion.length > 0 && (
+                {filterBySurveyVersion && (
                     <>
                         <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}</div>
                         <section className="button-section">
@@ -271,7 +269,7 @@ export function SurveyResults() {
                     </>
                 )}
             </div>
-            {filterBySurveyVersion.length > 0 && selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData} version={filterBySurveyVersion[0]}></ScenarioGroup>}
+            {filterBySurveyVersion && selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData} version={filterBySurveyVersion}></ScenarioGroup>}
             <Modal className='table-modal' open={showTable} onClose={closeModal}>
                 <div className='modal-body'>
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
