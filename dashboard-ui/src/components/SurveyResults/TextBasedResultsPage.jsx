@@ -316,6 +316,7 @@ export default function TextBasedResultsPage() {
                     // once the scenario is found, start populating object with data
                     // go through each item in the result object
                     const pagesForScenario = scenarioMappings[result['title']]['pages'];
+                    let qs = [];
                     for (const k of Object.keys(result)) {
                         // if it is an object and has a questions array...
                         if (typeof (result[k]) === 'object' && result[k].questions) {
@@ -362,8 +363,17 @@ export default function TextBasedResultsPage() {
                                     }
 
                                 }
+                                if (Object.keys(tmpResponses[scenario]).includes(q) && Object.keys(tmpResponses[scenario][q]).includes('question')) {
+                                    // if duplicate questions are present, precede with "After inject"
+                                    if (qs.includes(tmpResponses[scenario][q]['question'])) {
+                                        tmpResponses[scenario][q]['question'] = 'After inject, ' + tmpResponses[scenario][q]['question'];
+                                        qs = [];
+                                    }
+                                    qs.push(tmpResponses[scenario][q]['question']);
+                                }
                             }
                         }
+
                     }
                 }
             }
