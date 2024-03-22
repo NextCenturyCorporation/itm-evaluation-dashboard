@@ -59,10 +59,8 @@ class TextBasedScenariosPage extends Component {
     }
 
     introSurveyComplete = (survey) => {
-        console.log(survey.data)
         const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
         const scenarioOrderArray = JSON.parse(scenarioOrderString);
-        console.log(scenarioOrderArray)
         this.setState({
             scenarios: scenarioOrderArray,
             participantID: survey.data["Participant ID"],
@@ -98,12 +96,12 @@ class TextBasedScenariosPage extends Component {
                 };
 
                 const pageQuestions = this.getPageQuestions(pageName);
-
+                let index = 0;
                 pageQuestions.forEach(questionName => {
-                    let questionValue;
-                    questionValue = survey.valuesHash[questionName];
+                    const questionValue = survey.valuesHash[questionName];
                     this.surveyData[pageName].questions[questionName] = {
-                        response: questionValue
+                        response: questionValue,
+                        probe: survey.getPageByName(pageName).jsonObj.elements[index++].probe
                     };
                 });
             }
@@ -166,7 +164,6 @@ class TextBasedScenariosPage extends Component {
     };
 
     onAfterRenderPage = (sender, options) => {
-        console.log(this.state)
         if (!sender.isFirstPage && !this.state.firstPageCompleted) {
             this.setState({
                 firstPageCompleted: true,
