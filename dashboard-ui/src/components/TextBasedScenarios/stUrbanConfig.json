@@ -102,7 +102,7 @@
                     "name": "SoarTech Urban 1-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "1-1",
+                    "probe": "probe-1.1",
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty U first",
@@ -200,7 +200,7 @@
                     "name": "SoarTech Urban 1-2",
                     "title": "What is your plan of action?",
                     "isRequired": true,
-                    "probe": "1-2",
+                    "probe": "probe-1.2",
                     "choices": [
                         "Perform vitals assessment on Casualty U",
                         "Perform vitals assessment on Casualty V",
@@ -297,7 +297,7 @@
                     "name": "SoarTech Urban 1-3",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "1-3",
+                    "probe": "probe-1.3",
                     "choices": [
                         "Apply a tourniquet",
                         "Apply hemostatic gauze",
@@ -395,7 +395,7 @@
                     "name": "SoarTech Urban 2-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "2-1",
+                    "probe": "probe-2.1",
                     "choices": [
                         "Stop treatment and assess Casualty V",
                         "Continue to treat Casualty U",
@@ -493,7 +493,7 @@
                     "name": "SoarTech Urban 2-2",
                     "title": "What is your plan of action?",
                     "isRequired": true,
-                    "probe": "2-2",
+                    "probe": "probe-2.2",
                     "choices": [
                         "Continue to treat Casualty U",
                         "Move to treat Casualty V ",
@@ -589,7 +589,7 @@
                     "name": "SoarTech Urban 2-3",
                     "title": "What action do you take for casualty V?",
                     "isRequired": true,
-                    "probe": "2-3",
+                    "probe": "probe-2.3",
                     "choices": [
                         "Perform an escharotomy (minor surgical kit)",
                         "Provide burn dressing with pain control (Burn kit)",
@@ -690,7 +690,7 @@
                     "name": "SoarTech Urban 2-4",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "2-4",
+                    "probe": "probe-2.4",
                     "choices": [
                         "Give each casualty one unit of blood",
                         "Give two units of blood to Casualty U",
@@ -786,7 +786,7 @@
                     "name": "SoarTech Urban 3-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "3-1",
+                    "probe": "probe-3.1",
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties until you get updated info on the capabilities of the embassy",
@@ -882,7 +882,7 @@
                     "name": "SoarTech Urban 3-2",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "3-2",
+                    "probe": "probe-3.2",
                     "choices": [
                         "Evacuate Casualty U to local hospital",
                         "Evacuate Casualty V to local hospital",
@@ -980,7 +980,7 @@
                     "name": "SoarTech Urban 4-1",
                     "title": "What tag would you give casualty U?",
                     "isRequired": true,
-                    "probe": "4-1",
+                    "probe": "probe-4.1",
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1077,7 +1077,7 @@
                     "name": "SoarTech Urban 4-2",
                     "title": "What tag would you give casualty V?",
                     "isRequired": true,
-                    "probe": "4-2",
+                    "probe": "probe-4.2",
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1184,7 +1184,7 @@
                     "name": "SoarTech Urban 5-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "5-1",
+                    "probe": "probe-5.1",
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty W first",
@@ -1282,7 +1282,7 @@
                     "name": "SoarTech Urban 5-2",
                     "title": "What is your plan of action?",
                     "isRequired": true,
-                    "probe": "5-2",
+                    "probe": "probe-5.2",
                     "choices": [
                         "Perform vitals assessment on Casualty W",
                         "Perform vitals assessment on Casualty X",
@@ -1379,7 +1379,7 @@
                     "name": "SoarTech Urban 5-3",
                     "title": "What action do you take for Casualty W?",
                     "isRequired": true,
-                    "probe": "5-3",
+                    "probe": "probe-5.3",
                     "choices": [
                         "Insert a chest tube",
                         "Perform a needle decompression",
@@ -1478,7 +1478,7 @@
                     "name": "SoarTech Urban 6-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "6-1",
+                    "probe": "probe-6.1",
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
@@ -1577,7 +1577,7 @@
                     "name": "SoarTech Urban 6-2",
                     "title": "What action do you take for Casualty X?",
                     "isRequired": true,
-                    "probe": "6-2",
+                    "probe": "probe-6.2",
                     "choices": [
                         "Apply a traction splint",
                         "Give blood",
@@ -1678,7 +1678,7 @@
                     "name": "SoarTech Urban 7-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "7-1",
+                    "probe": "probe-7.1",
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties to determine if they can be transported to safehouse",
@@ -1774,7 +1774,7 @@
                     "name": "SoarTech Urban 7-2",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "7-2",
+                    "probe": "probe-7.2",
                     "choices": [
                         "Transport Casualty W to local hospital",
                         "Transport Casualty X to local hospital",
@@ -1873,7 +1873,7 @@
                     "name": "SoarTech Urban 8-1",
                     "title": "What tag would you give Casualty W?",
                     "isRequired": true,
-                    "probe": "8-1",
+                    "probe": "probe-8.1",
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1970,7 +1970,7 @@
                     "name": "SoarTech Urban 8-2",
                     "title": "What tag would you give Casualty X?",
                     "isRequired": true,
-                    "probe": "8-2",
+                    "probe": "probe-8.2",
                     "choices": [
                         "Green",
                         "Yellow",

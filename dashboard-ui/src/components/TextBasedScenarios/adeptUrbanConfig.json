@@ -177,7 +177,7 @@
                     "name": "Urban 1",
                     "title": "Which patient do you treat first?",
                     "isRequired": true,
-                    "probe": "1",
+                    "probe": "MetricsEval.MD1.1",
                     "choices": [
                         "Patient 1, civilian in black clothes",
                         "Patient 2, the other civilian"
@@ -366,7 +366,7 @@
                     "name": "Urban 2",
                     "title": "Which patient do you treat?",
                     "isRequired": true,
-                    "probe": "2",
+                    "probe": "MetricsEval.MD1.2",
                     "choices": [
                         "Patient 1, the shooter",
                         "Patient 2, the victim"
@@ -555,7 +555,7 @@
                     "name": "Urban 3",
                     "title": "Which patient would you transport?",
                     "isRequired": true,
-                    "probe": "3",
+                    "probe": "MetricsEval.MD1.3",
                     "choices": [
                         "Patient 1, the shooter",
                         "Patient 2, the victim"

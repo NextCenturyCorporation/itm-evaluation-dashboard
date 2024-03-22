@@ -175,7 +175,7 @@
                     "name": "Jungle 1",
                     "title": "Who do you treat first?",
                     "isRequired": true,
-                    "probe": 1,
+                    "probe": "MetricsEval.MD-Jungle.1",
                     "choices": [
                         "The patient closer to the IED",
                         "The patient further from the IED"
@@ -365,7 +365,7 @@
                     "name": "Jungle 2",
                     "title": "Who do you treat?",
                     "isRequired": true,
-                    "probe": "2",
+                    "probe": "MetricsEval.MD-Jungle.2",
                     "choices": [
                         "The patient closer to the IED",
                         "The patient further from the IED"
@@ -397,7 +397,7 @@
                     "name": "Jungle 3",
                     "title": "You are informed there is one helicopter transport slot. Who do you transport?",
                     "isRequired": true,
-                    "probe": "3",
+                    "probe": "MetricsEval.MD-Jungle.3",
                     "choices": [
                         "The patient closer to the IED",
                         "The patient further from the IED"

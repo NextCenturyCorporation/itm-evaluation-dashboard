@@ -102,7 +102,7 @@
                     "name": "SoarTech Submarine 1-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "1-1",
+                    "probe": "probe-1.1",
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty U first",
@@ -200,7 +200,7 @@
                     "name": "SoarTech Submarine 1-2",
                     "title": "What is your plan of action?",
                     "isRequired": true,
-                    "probe": "1-2",
+                    "probe": "probe-1.2",
                     "choices": [
                         "Perform vitals assessment on Casualty U",
                         "Perform vitals assessment on Casualty V",
@@ -297,7 +297,7 @@
                     "name": "SoarTech Submarine 1-3",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "1-3",
+                    "probe": "probe-1.3",
                     "choices": [
                         "Perform an escharotomy",
                         "Provide IV pain control",
@@ -395,7 +395,7 @@
                     "name": "SoarTech Submarine 2-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "2-1",
+                    "probe": "probe-2.1",
                     "choices": [
                         "Stop treatment and assess Casualty V",
                         "Continue to treat Casualty U",
@@ -493,7 +493,7 @@
                     "name": "SoarTech Submarine 2-2",
                     "title": "What is your plan of action?",
                     "isRequired": true,
-                    "probe": "2-2",
+                    "probe": "probe-2.2",
                     "choices": [
                         "Continue to treat Casualty U",
                         "Move to treat Casualty V ",
@@ -590,7 +590,7 @@
                     "name": "SoarTech Submarine 2-3",
                     "title": "What action do you take for casualty V?",
                     "isRequired": true,
-                    "probe": "2-3",
+                    "probe": "probe-2.3",
                     "choices": [
                         "Perform an escharotomy",
                         "Provide burn dressing with pain control",
@@ -689,7 +689,7 @@
                     "name": "SoarTech Submarine 2-4",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "2-4",
+                    "probe": "probe-2.4",
                     "choices": [
                         "Carefully divide the burn kit to cover the worst burns on each casualty",
                         "Give it to Casualty U",
@@ -785,7 +785,7 @@
                     "name": "SoarTech Submarine 3-1",
                     "title": "What tag would you give Casualty U?",
                     "isRequired": true,
-                    "probe": "3-1",
+                    "probe": "probe-3.1",
                     "choices": [
                         "Green",
                         "Yellow",
@@ -882,7 +882,7 @@
                     "name": "SoarTech Submarine 3-2",
                     "title": "What tag would you give Casualty V?",
                     "isRequired": true,
-                    "probe": "3-2",
+                    "probe": "probe-3.2",
                     "choices": [
                         "Green",
                         "Yellow",
@@ -989,7 +989,7 @@
                     "name": "SoarTech Submarine 4-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "4-1",
+                    "probe": "probe-4.1",
                     "choices": [
                         "Search for more casualties",
                         "Assess Casualty W first",
@@ -1087,7 +1087,7 @@
                     "name": "SoarTech Submarine 4-2",
                     "title": "What is your plan of action?",
                     "isRequired": true,
-                    "probe": "4-2",
+                    "probe": "probe-4.2",
                     "choices": [
                         "Perform vitals assessment on Casualty W",
                         "Perform vitals assessment on Casualty X",
@@ -1184,7 +1184,7 @@
                     "name": "SoarTech Submarine 4-3",
                     "title": "What action do you take for Casualty W?",
                     "isRequired": true,
-                    "probe": "4-3",
+                    "probe": "probe-4.3",
                     "choices": [
                         "Insert a chest tube",
                         "Perform a needle decompression",
@@ -1283,7 +1283,7 @@
                     "name": "SoarTech Submarine 5-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "5-1",
+                    "probe": "probe-5.1",
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
@@ -1382,7 +1382,7 @@
                     "name": "SoarTech Submarine 5-2",
                     "title": "What action do you take for Casualty X?",
                     "isRequired": true,
-                    "probe": "5-2",
+                    "probe": "probe-5.2",
                     "choices": [
                         "Apply a traction splint",
                         "Give blood",
@@ -1484,7 +1484,7 @@
                     "name": "SoarTech Submarine 6-1",
                     "title": "What tag would you give Casualty W?",
                     "isRequired": true,
-                    "probe": "6-1",
+                    "probe": "probe-6.1",
                     "choices": [
                         "Green",
                         "Yellow",
@@ -1581,7 +1581,7 @@
                     "name": "SoarTech Submarine 6-2",
                     "title": "What tag would you give Casualty X?",
                     "isRequired": true,
-                    "probe": "6-2",
+                    "probe": "probe-6.2",
                     "choices": [
                         "Green",
                         "Yellow",

@@ -17,7 +17,7 @@
                     "name": "Submarine 1",
                     "title": "Who do you want to bring in first?",
                     "isRequired": true,
-                    "probe": "1",
+                    "probe": "MetricsEval.MD6.1",
                     "choices": [
                         "The Electrician’s mate",
                         "The other sailor"
@@ -209,7 +209,7 @@
                     "name": "Submarine 2",
                     "title": "Who do you treat first?",
                     "isRequired": true,
-                    "probe": "2",
+                    "probe": "MetricsEval.MD6.2",
                     "choices": [
                         "The Electrician’s mate",
                         "The other sailor"
@@ -231,7 +231,7 @@
                     "name": "Submarine 3",
                     "title": "Who do you treat?",
                     "isRequired": true,
-                    "probe": "3",
+                    "probe": "MetricsEval.MD6.3",
                     "choices": [
                         "The two sailors here",
                         "The new patient"

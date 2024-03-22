@@ -18,7 +18,7 @@
                     "name": "Desert 1",
                     "title": "Which patient would you want to evacuate?",
                     "isRequired": true,
-                    "probe": "1",
+                    "probe": "MetricsEval.MD5.1",
                     "choices": [
                         "The US soldier",
                         "The local soldier"
@@ -48,7 +48,7 @@
                     "name": "Desert 2",
                     "title": "Which patient would you want to evacuate?",
                     "isRequired": true,
-                    "probe": "2",
+                    "probe": "MetricsEval.MD5.2",
                     "choices": [
                         "The US soldier",
                         "The local soldier"
@@ -216,7 +216,7 @@
                     "name": "Desert 3",
                     "title": "Which patient do you evacuate in the helicopter?",
                     "isRequired": true,
-                    "probe": "3",
+                    "probe": "MetricsEval.MD5.3",
                     "choices": [
                         "The US soldier",
                         "The local soldier"
