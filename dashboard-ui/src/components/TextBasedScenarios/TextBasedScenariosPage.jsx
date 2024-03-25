@@ -17,6 +17,7 @@ import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
+import {mapAnswers} from './util.js'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -128,7 +129,7 @@ class TextBasedScenariosPage extends Component {
             scenario.participantID = this.state.participantID
             scenario.vrEnvCompleted = this.state.vrEnvCompleted
             scenario.title = this.state.scenarios[temp++]
-            this.mapAnswers(scenario)
+            mapAnswers(scenario, scenarioMappings)
         }
 
         this.setState({ uploadData: true }, () => {
@@ -199,12 +200,12 @@ class TextBasedScenariosPage extends Component {
         return page ? page.questions.map(question => question.name) : [];
     };
 
-    mapAnswers = (scenario) => {
+    /*mapAnswers = (scenario) => {
         // maps the user's answer to the correct naming convention for ADEPT choice id
         const scenarioConfig = scenarioMappings[scenario.title.replace(' Scenario', '')];
-        Object.entries(scenario).map(field => {
+        Object.entries(scenario).forEach(field => {
             if (!field[1].questions) { return; }
-            Object.entries(field[1].questions).map(question => {
+            Object.entries(field[1].questions).forEach(question => {
                 if (!question[1].probe) { return; }
                 const page = scenarioConfig.pages.find((page) => page.name === field[0]);
                 const pageQuestion = page.elements.find((element) => element.name === question[0]);
@@ -223,7 +224,7 @@ class TextBasedScenariosPage extends Component {
                 question[1].choice = choice;
             })
         })
-    }
+    }*/
 
     render() {
         return (
