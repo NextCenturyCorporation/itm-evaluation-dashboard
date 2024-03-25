@@ -11,6 +11,7 @@ import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
+import AggregateResults from '../SurveyResults/aggregateResults';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import Nav from "react-bootstrap/Nav"
@@ -145,9 +146,14 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/">Home</Link>
                                 </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/results">Results</Link>
-                                </li>
+                                <NavDropdown title="Results">
+                                    <NavDropdown.Item as={Link} lassName="dropdown-item" to="/results">
+                                        Alignment Results
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} lassName="dropdown-item" to="/dataset">
+                                        Aggregate Results
+                                    </NavDropdown.Item>
+                                </NavDropdown>
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/scenarios">Scenarios</Link>
                                 </li>
@@ -205,6 +211,9 @@ export class App extends React.Component {
                             </Route>
                             <Route exact path="/results">
                                 <Results />
+                            </Route>
+                            <Route exact path="/dataset">
+                                <AggregateResults />
                             </Route>
                             <Route exact path="/scenarios">
                                 <Scenarios />
