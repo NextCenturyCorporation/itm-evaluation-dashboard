@@ -1,4 +1,5 @@
 const mapAnswers = (scenario, scenarioMappings) => {
+    if (!scenario.participantID) { return; }
     const scenarioConfig = scenarioMappings[scenario.title.replace(' Scenario', '')];
     Object.entries(scenario).forEach(field => {
         if (!field[1].questions) { return; }
@@ -23,4 +24,19 @@ const mapAnswers = (scenario, scenarioMappings) => {
     })
 };
 
-module.exports = {mapAnswers}
+const addProbeIDs = (scenario, scenarioMappings) => {
+    if (!scenario.participantID) { return; }
+    const scenarioConfig = scenarioMappings[scenario.title.replace(' Scenario', '')];
+    Object.entries(scenario).forEach(field => {
+        if(!field[1].questions) { return; }
+        Object.entries(field[1].questions).forEach(question => {
+            if(question[1].response && !question[0].includes("Follow Up")) { 
+                const page = scenarioConfig.pages.find((page) => page.name === field[0]);
+                const pageQuestion = page.elements.find((element) => element.name === question[0]);
+                question[1].probe = pageQuestion.probe;
+            }
+        })
+    })
+}
+
+module.exports = {mapAnswers, addProbeIDs}

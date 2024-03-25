@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 const process = require('process');
-const { mapAnswers } = require('./util');
+const { mapAnswers, addProbeIDs } = require('./util');
 const stJungleConfig = require('./stJungleConfig.json');
 const stUrbanConfig = require('./stUrbanConfig.json');
 const stDesertConfig = require('./stDesertConfig.json');
@@ -30,7 +30,6 @@ if (!username || !password) {
 
 const connectionString = `mongodb://${username}:${password}@localhost:27017/?authSource=dashboard`;
 const client = new MongoClient(connectionString);
-
 async function run() {
   try {
     // grab scenario results array
@@ -39,6 +38,7 @@ async function run() {
     const collection = db.collection('userScenarioResults');
     const results = await collection.find({}).toArray();
     for (const result of results) {
+        addProbeIDs(result, scenarioMappings);
         mapAnswers(result, scenarioMappings);
         await collection.updateOne(
             { _id: result._id },
