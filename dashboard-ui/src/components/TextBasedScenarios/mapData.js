@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 const process = require('process');
-const { mapAnswers, addProbeIDs } = require('./util');
+const { mapAnswers, addProbeIDs, getAdeptAlignment } = require('./util');
 const stJungleConfig = require('./stJungleConfig.json');
 const stUrbanConfig = require('./stUrbanConfig.json');
 const stDesertConfig = require('./stDesertConfig.json');
@@ -9,6 +9,8 @@ const adeptJungleConfig = require('./adeptJungleConfig.json');
 const adeptUrbanConfig = require('./adeptUrbanConfig.json');
 const adeptDesertConfig = require('./adeptDesertConfig.json');
 const adeptSubConfig = require('./adeptSubConfig.json');
+
+// mappings to config files
 const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
     "SoarTech Urban": stUrbanConfig,
@@ -19,6 +21,16 @@ const scenarioMappings = {
     "Adept Desert": adeptDesertConfig,
     "Adept Submarine": adeptSubConfig
 }
+
+// titles attached to data to proper scenario id for server
+const scenarioNameToID = {
+    "Adept Submarine": "MetricsEval.MD6-Submarine",
+    "Adept Desert": "MetricsEval.MD5-Desert",
+    "Adept Urban": "MetricsEval.MD1-Urban",
+    "Adept Jungle": "MetricsEval.MD4-Jungle"
+}
+
+// mongo credentials
 const username = process.argv[2];
 const password = process.argv[3];
 
@@ -38,8 +50,12 @@ async function run() {
     const collection = db.collection('userScenarioResults');
     const results = await collection.find({}).toArray();
     for (const result of results) {
+        if (!result.participantID) { continue; }
         addProbeIDs(result, scenarioMappings);
         mapAnswers(result, scenarioMappings);
+        if (result.title.includes("Adept")) {
+            await getAdeptAlignment(result, scenarioNameToID[result.title]);
+        }
         await collection.updateOne(
             { _id: result._id },
             { $set: result }
