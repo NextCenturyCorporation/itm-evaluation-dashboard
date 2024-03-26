@@ -61,7 +61,7 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
                     // post a response
                     const responseOptions = {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Accept': 'application/json',
                             'Content-Type': 'application/json'
                         },
@@ -114,8 +114,8 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
     try {
         const fetch = (await import('node-fetch')).default;
         const startSession = await fetch(url, options);
-        const sessionId = startSession.json();
-        console.log(startSession.json());
+        const sessionId = await startSession.json();
+
         Object.entries(scenarioResults).forEach(field => {
             if (!field[1].questions) { return; }
             Object.entries(field[1].questions).forEach(async question => {
@@ -123,7 +123,7 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
                     // post a response
                     const responseOptions = {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Accept': 'application/json',
                             'Content-Type': 'application/json'
                         },
@@ -155,10 +155,10 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         };
         const alignmentResponse = await fetch(urlAlignment, optionsAlignment);
         const alignmentData = await alignmentResponse.json();
+        console.log(await alignmentData)
 
         scenarioResults.alignmentData = alignmentData;
         scenarioResults.serverSessionId = sessionId;
-        console.log(alignmentData)
     } catch (error) {
         console.error('Error', error);
     }

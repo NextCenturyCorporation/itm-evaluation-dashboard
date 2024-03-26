@@ -27,7 +27,11 @@ const scenarioNameToID = {
     "Adept Submarine": "MetricsEval.MD6-Submarine",
     "Adept Desert": "MetricsEval.MD5-Desert",
     "Adept Urban": "MetricsEval.MD1-Urban",
-    "Adept Jungle": "MetricsEval.MD4-Jungle"
+    "Adept Jungle": "MetricsEval.MD4-Jungle",
+    "SoarTech Urban": "urban-1",
+    "SoarTech Submarine": "submarine-1",
+    "SoarTech Desert": "desert-1",
+    "SoarTech Jungle": "jungle-1"
 }
 
 // mongo credentials
@@ -40,7 +44,7 @@ if (!username || !password) {
   process.exit(1);
 }
 
-const connectionString = `mongodb://${username}:${password}@localhost:27017/?authSource=dashboard`;
+const connectionString = `mongodb://${username}:${password}@localhost:27030/?authSource=dashboard`;
 const client = new MongoClient(connectionString);
 async function run() {
   try {
@@ -56,7 +60,7 @@ async function run() {
         if (result.title.includes("Adept")) {
             //await getAdeptAlignment(result, scenarioNameToID[result.title]);
         } else if (result.title.includes("SoarTech")) {
-            await getSoarTechAlignments(result, result.title)
+            await getSoarTechAlignments(result, scenarioNameToID[result.title]);
         } else {
             console.log('Error: unrecognized scenario title');
             process.exit(1);

@@ -20,7 +20,7 @@ let AWS = require('aws-sdk');
 // });
 
 // We connect mongoose to our local mongodb database
-const connection = mongoose.connect('mongodb://dashboard-mongo:27017/dashboard', {
+const connection = mongoose.connect('mongodb://dashboard-mongo:27030/dashboard', {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useCreateIndex: true,
