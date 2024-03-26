@@ -1961,5 +1961,5 @@
     ],
     "showQuestionNumbers": "off",
     "widthMode": "responsive",
-    "showProgressBar": "bottom"
+    "showProgressBar": "top"
 }
