@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 const process = require('process');
-const { mapAnswers, addProbeIDs, getAdeptAlignment } = require('./util');
+const { mapAnswers, addProbeIDs, getAdeptAlignment, getSoarTechAlignments } = require('./util');
 const stJungleConfig = require('./stJungleConfig.json');
 const stUrbanConfig = require('./stUrbanConfig.json');
 const stDesertConfig = require('./stDesertConfig.json');
@@ -54,7 +54,12 @@ async function run() {
         addProbeIDs(result, scenarioMappings);
         mapAnswers(result, scenarioMappings);
         if (result.title.includes("Adept")) {
-            await getAdeptAlignment(result, scenarioNameToID[result.title]);
+            //await getAdeptAlignment(result, scenarioNameToID[result.title]);
+        } else if (result.title.includes("SoarTech")) {
+            await getSoarTechAlignments(result, result.title)
+        } else {
+            console.log('Error: unrecognized scenario title');
+            process.exit(1);
         }
         await collection.updateOne(
             { _id: result._id },
