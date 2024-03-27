@@ -86,6 +86,65 @@ const ATTRIBUTE_MAP = {
     "Medic-D": 0
 };
 
+const MEDIAN_ALIGNMENT_VALUES = {};
+
+// TODO: get text alignment scores for every participant, and the median value of those scores
+function getTextAlignment(data) {
+    const alignmentMap = {};
+    // get all recorded kdmas by participant id
+    for (const res of data.getAllScenarioResults) {
+        if (res.participantID && res.alignmentData?.kdma_values) {
+            for (const kdma of res.alignmentData.kdma_values) {
+                const kdmaKey = kdma.kdma;
+                const kdmaVal = kdma.value;
+                // only look at the result if the participant id is at the top level! other versions are old
+                if (Object.keys(alignmentMap).includes(res.participantID)) {
+                    const resAtPid = alignmentMap[res.participantID];
+                    if (Object.keys(resAtPid).includes(kdmaKey)) {
+                        resAtPid[kdmaKey]['total'] += kdmaVal;
+                        resAtPid[kdmaKey]['count'] += 1;
+                    }
+                    else {
+                        resAtPid[kdmaKey] = { 'total': kdmaVal, 'count': 1 };
+                    }
+                }
+                else {
+                    alignmentMap[res.participantID] = {};
+                    alignmentMap[res.participantID][kdmaKey] = { 'total': kdmaVal, 'count': 1 };
+                }
+            }
+        }
+    }
+
+    // combine kdmas into a single value (average) for each kdma for each participant
+    const kdmas = {};
+    for (const pid of Object.keys(alignmentMap)) {
+        for (const kdma of Object.keys(alignmentMap[pid])) {
+            const avg = alignmentMap[pid][kdma]['total'] / alignmentMap[pid][kdma]['count'];
+            alignmentMap[pid][kdma] = avg;
+            if (Object.keys(kdmas).includes(kdma)) {
+                kdmas[kdma].push(avg);
+            } else {
+                kdmas[kdma] = [avg];
+            }
+        }
+    }
+    // get median for each kdma
+    for (const k of Object.keys(kdmas)) {
+        kdmas[k].sort();
+        // if even, take the middle two values
+        if (kdmas[k].length % 2 == 0) {
+            MEDIAN_ALIGNMENT_VALUES[k] = (kdmas[k][Math.floor(kdmas[k].length / 2) - 1] + kdmas[k][Math.floor(kdmas[k].length / 2)]) / 2;
+        }
+        else {
+            // if odd, just grab middle val
+            MEDIAN_ALIGNMENT_VALUES[k] = kdmas[k][Math.floor(kdmas[k].length / 2) + 1];
+        }
+    }
+    // return object of kdma values for each participant
+    return alignmentMap;
+}
+
 
 function isDefined(x) {
     return x !== undefined && x !== null;
@@ -253,16 +312,17 @@ function getAttributeAlignment(res, att, medics, q, trans) {
 
 
 function populateDataSet(data) {
+    const txtAlign = getTextAlignment(data);
     const allResults = [];
     for (const res of data.getAllSurveyResults) {
-        // console.log(res);
         if (res.results?.surveyVersion === 2) {
             console.log(res);
             // use this result!
             const tmpSet = {};
 
             // get participant id. two different versions exist: one with Participant ID and the other with Participant ID Page
-            tmpSet['ParticipantID'] = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
+            const pid = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
+            tmpSet['ParticipantID'] = pid;
 
             // get date. see if start time exists. If not, use end time
             tmpSet['Date'] = new Date(safeGet(res, ['results', 'startTime'], ['results', 'timeComplete'])).toLocaleDateString();
@@ -317,10 +377,13 @@ function populateDataSet(data) {
             // TODO: get alignment for sim from ta1 server (ST)
             // TODO: get high/low maximization attribute (ST) DO NOT HARDCODE
             const stAttribute = 1;
-            // TODO: get alignment for text responses from ta1 server (AD)
+            // get alignment for text responses from ta1 server (AD)
+            // for now, hard code adept to moral desert
+            tmpSet['AD_AlignText'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
             // TODO: get alignment for sim from ta1 server (AD)
-            // TODO: get high/low moral deserts attribute (AD) DO NOT HARDCODE
-            const adAttribute = 1;
+            // get high/low moral deserts attribute (AD) DO NOT HARDCODE
+            const adAttribute = tmpSet['AD_AlignText'] > MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
+            tmpSet['AD_AttribGrp'] = adAttribute;
 
             // get delegation rate for ST. not delegate = 0, delegate at all = 1; average
             const stDel = getStDelRate(res);

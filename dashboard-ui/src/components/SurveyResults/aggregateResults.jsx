@@ -6,8 +6,9 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 
 const GET_SURVEY_RESULTS = gql`
-    query GetSurveyResults{
-        getAllSurveyResults
+    query GetAllResults{
+        getAllSurveyResults,
+        getAllScenarioResults
     }`;
 
 const HEADER = [
@@ -96,7 +97,7 @@ export default function AggregateResults() {
 
     React.useEffect(() => {
         // only get survey version 2!!
-        if (data?.getAllSurveyResults) {
+        if (data?.getAllSurveyResults && data?.getAllScenarioResults) {
             setFullData(populateDataSet(data));
         }
     }, [data]);
