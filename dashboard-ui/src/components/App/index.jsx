@@ -6,7 +6,7 @@ import ScenarioPage from '../ScenarioPage/scenarioPage';
 import Actions from '../ActionsCompare/actions';
 import SurveyPage from '../Survey/survey';
 import TextBasedScenariosPage from '../TextBasedScenarios/TextBasedScenariosPage';
-import TextBasedResultsPage from '../SurveyResults/TextBasedResultsPage';
+import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';

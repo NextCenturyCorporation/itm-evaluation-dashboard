@@ -1,6 +1,6 @@
 import React from 'react';
 import 'survey-core/defaultV2.min.css';
-import './surveyResults.css';
+import './TextResults.css';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
 import List from '@material-ui/core/List';
@@ -144,7 +144,7 @@ function SingleGraph({ data, pageName }) {
             }
             setSurveyResults([...curResults]);
         }
-    }, [data]);
+    }, [data, pageName]);
 
     const vizPanelOptions = {
         allowHideQuestions: false,
@@ -171,7 +171,7 @@ function SingleGraph({ data, pageName }) {
                 document.getElementById("viz_" + pageName).innerHTML = "";
             }
         }
-    }, [vizPanel]);
+    }, [vizPanel, pageName]);
 
 
     return (
@@ -239,7 +239,7 @@ function ParticipantView({ data, scenarioName }) {
         setOrganizedData(formatted);
         setHeaders(headers);
         setExcelData(excel);
-    }, [data]);
+    }, [data, scenarioName]);
 
     const exportToExcel = async () => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -432,12 +432,13 @@ export default function TextBasedResultsPage() {
                                             <td className="count-column"><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
                                         </tr>);
                                     }
+                                    return <></>;
                                 })}
                             </tbody>
                         </table>
                     </div>);
                 })
-                : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
+                : loading ? <h2 className="no-data">Loading Data...</h2> : error ? <h2 className="no-data">Error fetching data</h2> : <h2 className="no-data">No Data Found</h2>}
         </div>);
     }
 
