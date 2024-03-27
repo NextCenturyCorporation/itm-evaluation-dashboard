@@ -3,7 +3,7 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Accordion } from "react-bootstrap";
 import Dynamic from "./dynamic";
-import surveyConfig from './surveyConfig.json';
+import surveyConfig2x from './surveyConfig2x.json';
 import './template.css'
 
 
@@ -71,7 +71,7 @@ export class Omnibus extends SurveyQuestionElementBase {
     }
 
     componentDidMount() {
-        let config = surveyConfig
+        let config = surveyConfig2x
         let decisionMakers = this.decisionMakers;
         // in case of duplicates somehow
         decisionMakers = [...new Set(decisionMakers)];

@@ -14,7 +14,6 @@ import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
-import Nav from "react-bootstrap/Nav"
 import { createBrowserHistory } from 'history';
 
 // CSS and Image Stuff 
@@ -160,11 +159,11 @@ export class App extends React.Component {
                                     <Link className="nav-link" to="/actionsCompare">Actions Compare</Link>
                                 </li>
                                 <NavDropdown title="Surveys">
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/survey">Take Survey</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
+                                        Take Survey
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/survey-results">Survey Results</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
+                                        Survey Results
                                     </NavDropdown.Item>
                                 </NavDropdown>
                                 <NavDropdown title="Text Scenarios">
