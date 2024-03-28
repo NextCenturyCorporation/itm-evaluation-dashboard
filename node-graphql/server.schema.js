@@ -177,7 +177,8 @@ const typeDefs = gql`
     getAllHumanRuns: [JSON]
     getAllImages: [JSON],
     getAllSurveyResults: [JSON],
-    getAllScenarioResults: [JSON]
+    getAllScenarioResults: [JSON],
+    getAllSimAlignment: [JSON]
   }
 
   type Mutation {
@@ -275,6 +276,9 @@ const resolvers = {
       return await dashboardDB.db.collection('userScenarioResults').find({
         "participantID": { $not: /test/i }
       }).toArray().then(result => { return result; });
+    },
+    getAllSimAlignment: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
     }
     
   },

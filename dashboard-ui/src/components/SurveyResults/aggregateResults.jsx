@@ -8,7 +8,8 @@ import XLSX from 'sheetjs-style';
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults{
         getAllSurveyResults,
-        getAllScenarioResults
+        getAllScenarioResults,
+        getAllSimAlignment
     }`;
 
 const HEADER = [
@@ -97,10 +98,10 @@ export default function AggregateResults() {
 
     React.useEffect(() => {
         // only get survey version 2!!
-        if (data?.getAllSurveyResults && data?.getAllScenarioResults) {
+        if (!loading && !error && data?.getAllSurveyResults && data?.getAllScenarioResults) {
             setFullData(populateDataSet(data));
         }
-    }, [data]);
+    }, [data, error, loading]);
 
     const exportToExcel = async () => {
         const ws = XLSX.utils.json_to_sheet(fullData);

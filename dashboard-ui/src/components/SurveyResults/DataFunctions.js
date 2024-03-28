@@ -2,6 +2,13 @@
  * functions that help with data aggregation
  */
 
+const SIM_MAP = {
+    "submarine": 1,
+    "jungle": 2,
+    "urban": 3,
+    "desert": 4
+}
+
 const MED_ROLE_MAP = {
     "M-3 Medical student": 1,
     "M-4 medical student": 1,
@@ -87,8 +94,9 @@ const ATTRIBUTE_MAP = {
 };
 
 const MEDIAN_ALIGNMENT_VALUES = {};
+const SIM_ORDER = {};
 
-// TODO: get text alignment scores for every participant, and the median value of those scores
+// get text alignment scores for every participant, and the median value of those scores
 function getTextAlignment(data) {
     const alignmentMap = {};
     // get all recorded kdmas by participant id
@@ -133,7 +141,7 @@ function getTextAlignment(data) {
     for (const k of Object.keys(kdmas)) {
         kdmas[k].sort();
         // if even, take the middle two values
-        if (kdmas[k].length % 2 == 0) {
+        if (kdmas[k].length % 2 === 0) {
             MEDIAN_ALIGNMENT_VALUES[k] = (kdmas[k][Math.floor(kdmas[k].length / 2) - 1] + kdmas[k][Math.floor(kdmas[k].length / 2)]) / 2;
         }
         else {
@@ -145,6 +153,37 @@ function getTextAlignment(data) {
     return alignmentMap;
 }
 
+function getSimAlignment(data) {
+    // get sim alignment from mongo; also populate order of sims completed
+    const alignments = {};
+    const sims = {};
+    for (const entry of data) {
+        const pid = entry.pid.replace('"', '').trim();
+        if (!Object.keys(alignments).includes(pid)) {
+            alignments[pid] = {};
+            sims[pid] = {};
+        }
+        sims[pid][entry.env] = entry.timestamp;
+        for (const k of entry.data) {
+            if (Object.keys(k).includes('probe') && k.probe && Object.keys(k.probe).includes('kdma_association')) {
+                for (const kdma of Object.keys(k.probe.kdma_association)) {
+                    if (Object.keys(alignments[pid]).includes(kdma)) {
+                        alignments[pid][kdma]['total'] += k.probe.kdma_association[kdma];
+                        alignments[pid][kdma]['count'] += 1;
+                    } else {
+                        alignments[pid][kdma] = { 'total': k.probe.kdma_association[kdma], 'count': 1 }
+                    }
+                }
+            }
+        }
+    }
+    Object.keys(alignments).forEach((x) => Object.keys(alignments[x]).forEach((y) => alignments[x][y] = alignments[x][y]['total'] / alignments[x][y]['count']));
+    for (const pid of Object.keys(sims)) {
+        // get time-based order of simulations
+        SIM_ORDER[pid] = Object.keys(sims[pid]).sort((a, b) => sims[pid][a] - sims[pid][b]);
+    }
+    return alignments;
+}
 
 function isDefined(x) {
     return x !== undefined && x !== null;
@@ -215,27 +254,29 @@ function getAdConfRate(res) {
     return tally > 0 ? val / tally : null;
 }
 
-function getAnyDelRate(sets) {
+function getAnyDelRate(sets, forced = false) {
     let val = 0;
     let tally = 0;
     let high = 0; // how many high-aligned ADMs were chosen
     let low = 0; // how many low-aligned ADMs were chosen
+    let chosen = 0; // how many times the participant actually chose (not both or neither)
     for (let s of sets) {
         if (isDefined(s)) {
             val += s !== 'I would prefer not to delegate to either Medic';
             tally += 1;
-            if (s.includes('only')) {
+            if (s.includes('only') || forced) {
                 for (const x of Object.keys(ATTRIBUTE_MAP)) {
                     if (s.includes(x)) {
-                        high += ATTRIBUTE_MAP[x] == 1;
-                        low += ATTRIBUTE_MAP[x] == 0;
+                        high += ATTRIBUTE_MAP[x] === 1;
+                        low += ATTRIBUTE_MAP[x] === 0;
+                        chosen += 1;
                         break;
                     }
                 }
             }
         }
     }
-    return { 'val': val, 'tally': tally, 'high': high, 'low': low };
+    return { 'val': val, 'tally': tally, 'high': high, 'low': low, 'delegated': chosen };
 }
 
 function getAdDelRate(res, forced = false) {
@@ -246,7 +287,7 @@ function getAdDelRate(res, forced = false) {
     const adSet3 = safeGet(res, ['results', 'Medic-AD5 vs Medic-AD6', 'questions', 'Medic-AD5 vs Medic-AD6: ' + q, 'response']);
     const adSet4 = safeGet(res, ['results', 'Medic-AD7 vs Medic-AD8', 'questions', 'Medic-AD7 vs Medic-AD8: ' + q, 'response']);
     const adSets = [adSet1, adSet2, adSet3, adSet4];
-    return getAnyDelRate(adSets);
+    return getAnyDelRate(adSets, forced);
 }
 
 function getStDelRate(res, forced = false) {
@@ -257,7 +298,7 @@ function getStDelRate(res, forced = false) {
     const stSet3 = safeGet(res, ['results', 'Medic-ST5 vs Medic-ST6', 'questions', 'Medic-ST5 vs Medic-ST6: ' + q, 'response']);
     const stSet4 = safeGet(res, ['results', 'Medic-ST7 vs Medic-ST8', 'questions', 'Medic-ST7 vs Medic-ST8: ' + q, 'response']);
     const stSets = [stSet1, stSet2, stSet3, stSet4];
-    return getAnyDelRate(stSets);
+    return getAnyDelRate(stSets, forced);
 }
 
 function getOverallDelRate(res) {
@@ -297,7 +338,7 @@ function getAttributeAlignment(res, att, medics, q, trans) {
         const data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], ['results', 'Omnibus: ' + x, 'questions', x + ': ' + q, 'response']);
         if (data) {
             const trustVal = trans[data];
-            if (ATTRIBUTE_MAP[x] == att) {
+            if (ATTRIBUTE_MAP[x] === att) {
                 align += trustVal;
                 alignTally += 1;
             } else {
@@ -310,18 +351,27 @@ function getAttributeAlignment(res, att, medics, q, trans) {
     return { 'align': alignTally > 0 ? align / alignTally : null, 'misalign': misalignTally > 0 ? misalign / misalignTally : null };
 }
 
-
 function populateDataSet(data) {
+    let simAlign = null;
+    if (data.getAllSimAlignment) {
+        simAlign = getSimAlignment(data.getAllSimAlignment);
+    }
     const txtAlign = getTextAlignment(data);
     const allResults = [];
     for (const res of data.getAllSurveyResults) {
         if (res.results?.surveyVersion === 2) {
-            console.log(res);
             // use this result!
             const tmpSet = {};
 
             // get participant id. two different versions exist: one with Participant ID and the other with Participant ID Page
-            const pid = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
+            let pid = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
+            if (!pid) {
+                continue;
+            }
+            // fix typo
+            if (pid === '20234204') {
+                pid = '2024204';
+            }
             tmpSet['ParticipantID'] = pid;
 
             // get date. see if start time exists. If not, use end time
@@ -368,19 +418,37 @@ function populateDataSet(data) {
             allResults.push(tmpSet);
 
             // get order of text based
-            tmpSet['TextOrder'] = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
+            const textOrder = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
+            tmpSet['TextOrder'] = textOrder;
 
-            // TODO: get sim session order from sim files (date-time-based?)
-            // TODO: calculate sim order according to document
-            // TODO: make sure sim and text were different
+            //\get sim session order from sim files (date-time-based)
+            tmpSet['Sim1'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][0]] : null;
+            tmpSet['Sim2'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][1]] ?? null : null;
+
+            // verify sim order according to document
+            const sims = [tmpSet['Sim1'], tmpSet['Sim2']]
+            tmpSet['SimOrder'] = sims.includes(1) ? Number(sims.includes(2)) : sims.includes(3) ? Number(sims.includes(4)) : 0;
+
+            // make sure sim and text were different
+            // cannot have textOrder 1,2 with sim 1,2, cannot have textOrder 3,4 with sim 3,4
+            tmpSet['TextSimDiff'] = Number(!sims.includes(textOrder));
+
+
             // TODO: get alignment for text responses from ta1 server (ST)
-            // TODO: get alignment for sim from ta1 server (ST)
+
+            // get alignment for sim from ta1 server (ST). Hardcode maximization for now
+            tmpSet['ST_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
+
             // TODO: get high/low maximization attribute (ST) DO NOT HARDCODE
             const stAttribute = 1;
+
             // get alignment for text responses from ta1 server (AD)
             // for now, hard code adept to moral desert
             tmpSet['AD_AlignText'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
-            // TODO: get alignment for sim from ta1 server (AD)
+
+            // get alignment for sim from ta1 server (AD). for now hardcode moral desert
+            tmpSet['AD_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
+
             // get high/low moral deserts attribute (AD) DO NOT HARDCODE
             const adAttribute = tmpSet['AD_AlignText'] > MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
             tmpSet['AD_AttribGrp'] = adAttribute;
@@ -402,31 +470,32 @@ function populateDataSet(data) {
             // get st align delC and forced - see how many chosen are high, how many are low, divide by number delegated
             const stDelF = getStDelRate(res, true);
             // high alignment = 1
-            if (stAttribute == 1) {
-                tmpSet['ST_Align_DelC'] = stDel['tally'] > 0 ? stDel['high'] / stDel['tally'] : null;
+            if (stAttribute === 1) {
+                tmpSet['ST_Align_DelC'] = stDel['delegated'] > 0 ? stDel['high'] / stDel['delegated'] : null;
                 tmpSet['ST_Align_DelFC'] = stDelF['tally'] > 0 ? stDelF['high'] / stDelF['tally'] : null;
             }
             else {
-                tmpSet['ST_Align_DelC'] = stDel['tally'] > 0 ? stDel['low'] / stDel['tally'] : null;
+                tmpSet['ST_Align_DelC'] = stDel['delegated'] > 0 ? stDel['low'] / stDel['delegated'] : null;
                 tmpSet['ST_Align_DelFC'] = stDelF['tally'] > 0 ? stDelF['low'] / stDelF['tally'] : null;
             }
-
 
             // get alignment of soartech omnibus choice delegation
             for (let x of Object.keys(ATTRIBUTE_MAP)) {
                 if (stOmni?.includes(x)) {
-                    tmpSet['ST_Align_DelC_Omni'] = Number(ATTRIBUTE_MAP[x] == stAttribute);
+                    tmpSet['ST_Align_DelC_Omni'] = Number(ATTRIBUTE_MAP[x] === stAttribute);
                     break;
                 }
             }
+
             // get alignment of soartech omnibus forced choice delegation
             const stOmniF = safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Forced Choice', 'response']);
             for (let x of Object.keys(ATTRIBUTE_MAP)) {
                 if (stOmniF?.includes(x)) {
-                    tmpSet['ST_Align_DelFC_Omni'] = Number(ATTRIBUTE_MAP[x] == stAttribute);
+                    tmpSet['ST_Align_DelFC_Omni'] = Number(ATTRIBUTE_MAP[x] === stAttribute);
                     break;
                 }
             }
+
             // get st align trust and misalign trust
             // go through soartech medics
             // if a medic matches stAttribute, add the value of this to the score
@@ -487,18 +556,18 @@ function populateDataSet(data) {
             // get st align delC and forced - see how many chosen are high, how many are low, divide by number delegated
             const adDelF = getAdDelRate(res, true);
             // high alignment = 1
-            if (adAttribute == 1) {
-                tmpSet['AD_Align_DelC'] = adDel['tally'] > 0 ? adDel['high'] / adDel['tally'] : null;
+            if (adAttribute === 1) {
+                tmpSet['AD_Align_DelC'] = adDel['delegated'] > 0 ? adDel['high'] / adDel['delegated'] : null;
                 tmpSet['AD_Align_DelFC'] = adDelF['tally'] > 0 ? adDelF['high'] / adDelF['tally'] : null;
             }
             else {
-                tmpSet['AD_Align_DelC'] = adDel['tally'] > 0 ? adDel['low'] / adDel['tally'] : null;
+                tmpSet['AD_Align_DelC'] = adDel['delegated'] > 0 ? adDel['low'] / adDel['delegated'] : null;
                 tmpSet['AD_Align_DelFC'] = adDelF['tally'] > 0 ? adDelF['low'] / adDelF['tally'] : null;
             }
             // get alignment of adept omnibus choice delegation
             for (let x of Object.keys(ATTRIBUTE_MAP)) {
                 if (adOmni?.includes(x)) {
-                    tmpSet['AD_Align_DelC_Omni'] = Number(ATTRIBUTE_MAP[x] == adAttribute);
+                    tmpSet['AD_Align_DelC_Omni'] = Number(ATTRIBUTE_MAP[x] === adAttribute);
                     break;
                 }
             }
@@ -506,7 +575,7 @@ function populateDataSet(data) {
             const adOmniF = safeGet(res, ['results', 'Omnibus: Medic-C vs Medic-D', 'questions', 'Medic-C vs Medic-D: Forced Choice', 'response']);
             for (let x of Object.keys(ATTRIBUTE_MAP)) {
                 if (adOmniF?.includes(x)) {
-                    tmpSet['AD_Align_DelFC_Omni'] = Number(ATTRIBUTE_MAP[x] == adAttribute);
+                    tmpSet['AD_Align_DelFC_Omni'] = Number(ATTRIBUTE_MAP[x] === adAttribute);
                     break;
                 }
             }
