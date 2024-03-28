@@ -50,27 +50,30 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
     try {
         const startSession = await axios.post(url);
         const sessionId = startSession.data;
+        let responsePromises = [];
         Object.entries(scenarioResults).forEach(field => {
             if (!field[1].questions) { return; }
             Object.entries(field[1].questions).forEach(async question => {
                 if (question[1].response && !question[0].includes("Follow Up")) {
                     const responseUrl = 'http://localhost:8080/api/v1/response';
-                    try {
-                        await axios.post(responseUrl, {
-                            response: {
-                                choice: question[1].choice,
-                                justification: "justification",
-                                probe_id: question[1].probe,
-                                scenario_id: scenarioId,
-                            },
-                            session_id: sessionId
-                        });
-                    } catch (error) {
+                    const promise = axios.post(responseUrl, {
+                        response: {
+                            choice: question[1].choice,
+                            justification: "justification",
+                            probe_id: question[1].probe,
+                            scenario_id: scenarioId,
+                        },
+                        session_id: sessionId
+                    }).catch(error => {
                         console.error(`Error in submitting response for probe ${question[1].probe}:`, error);
-                    }
+                    });
+                    responsePromises.push(promise);
                 }
             })
         })
+
+        // wait for all response submissions to complete
+        await Promise.all(responsePromises);
         // get alignment for session
         const targetId = 'ADEPT-metrics_eval-alignment-target-train-HIGH';
         const urlAlignment = `http://localhost:8080/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}&population=false`;
@@ -93,7 +96,7 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
     try {
         const startSession = await axios.post(url);
         const sessionId = await startSession.data;
-
+        let responsePromises = [];
         Object.entries(scenarioResults).forEach(field => {
             if (!field[1].questions) { return; }
             Object.entries(field[1].questions).forEach(async question => {
@@ -101,8 +104,8 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
                     console.log(question[1].probe)
                     // post a response
                     const responseUrl = 'http://localhost:8084/api/v1/response';
-                    try {
-                        await axios.post(responseUrl, {
+                  
+                        const promise = await axios.post(responseUrl, {
                             session_id: sessionId,
                             response: {
                                 choice: question[1].choice,
@@ -110,13 +113,16 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
                                 probe_id: question[1].probe,
                                 scenario_id: scenarioId,
                             },
-                        });
-                    } catch (error) {
+                        }).catch(error => {
                         console.error(`Error in submitting response for probe ${question[1].probe}:`, error);
-                    }
+                    })
+                    responsePromises.push(promise);
                 }
             })
         })
+        
+        // wait for all post requests to finish
+        await Promise.all(responsePromises);
         // get alignment for session
         const targetId = 'maximization_high';
         const urlAlignment = `http://localhost:8084/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}`;

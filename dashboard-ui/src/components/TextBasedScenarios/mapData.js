@@ -58,7 +58,7 @@ async function run() {
         addProbeIDs(result, scenarioMappings);
         mapAnswers(result, scenarioMappings);
         if (result.title.includes("Adept")) {
-            //await getAdeptAlignment(result, scenarioNameToID[result.title]);
+            await getAdeptAlignment(result, scenarioNameToID[result.title]);
         } else if (result.title.includes("SoarTech")) {
             await getSoarTechAlignments(result, scenarioNameToID[result.title]);
         } else {
