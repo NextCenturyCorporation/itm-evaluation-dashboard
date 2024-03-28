@@ -395,7 +395,7 @@
                     "name": "SoarTech Jungle 2-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-2.1",
+                    "probe": "",
                     "choices": [
                         "Stop treatment and assess Casualty V",
                         "Continue to treat Casualty U",
@@ -688,7 +688,7 @@
                     "name": "SoarTech Jungle 2-4",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-2.4",
+                    "probe": "",
                     "choices": [
                         "Carefully divide the burn kit to cover the worst burns on each casualty",
                         "Give it to Casualty U",
@@ -784,7 +784,7 @@
                     "name": "SoarTech Jungle 3-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-3.1",
+                    "probe": "",
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties until you get updated info on the capabilities of the embassy",
@@ -880,7 +880,7 @@
                     "name": "SoarTech Jungle 3-2",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-3.2",
+                    "probe": "",
                     "choices": [
                         "Evacuate Casualty U to local hospital",
                         "Evacuate Casualty V to local hospital",
@@ -1476,7 +1476,7 @@
                     "name": "SoarTech Jungle 6-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-6.1",
+                    "probe": "",
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
@@ -1676,7 +1676,7 @@
                     "name": "SoarTech Jungle 7-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-7.1",
+                    "probe": "",
                     "choices": [
                         "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties",
                         "Hold casualties to determine if they can be transported",
@@ -1772,7 +1772,7 @@
                     "name": "SoarTech Jungle 7-2",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-7.2",
+                    "probe": "",
                     "choices": [
                         "Transport Casualty U to local hospital",
                         "Transport Casualty V to local hospital",

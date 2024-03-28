@@ -394,7 +394,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Desert 2-1",
                     "title": "What action do you take?",
-                    "probe": "probe-2.1",
+                    "probe": "",
                     "isRequired": true,
                     "choices": [
                         "Stop treatment and assess Casualty V",
@@ -689,7 +689,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Desert 2-4",
                     "title": "What action do you take?",
-                    "probe": "probe-2.4",
+                    "probe": "",
                     "isRequired": true,
                     "choices": [
                         "Give each casualty one unit of blood",
@@ -785,7 +785,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Desert 3-1",
                     "title": "What action do you take?",
-                    "probe": "probe-3.1",
+                    "probe": "",
                     "isRequired": true,
                     "choices": [
                         "Get info on local hospital's capabilities to manage the casualties",
@@ -882,7 +882,7 @@
                     "name": "SoarTech Desert 3-2",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-3.2",
+                    "probe": "",
                     "choices": [
                         "Evacuate Casualty U to local hospital",
                         "Evacuate Casualty V to local hospital",
@@ -1478,7 +1478,7 @@
                     "name": "SoarTech Desert 6-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-6.1",
+                    "probe": "",
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
@@ -1677,7 +1677,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Desert 7-1",
                     "title": "What action do you take?",
-                    "probe": "probe-7.1",
+                    "probe": "",
                     "isRequired": true,
                     "choices": [
                         "Get info on local hospital's capabilities to manage the casualties",
@@ -1773,7 +1773,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Desert 7-2",
                     "title": "What action do you take?",
-                    "probe": "probe-7.2",
+                    "probe": "",
                     "isRequired": true,
                     "choices": [
                         "Transport Casualty W to local hospital",

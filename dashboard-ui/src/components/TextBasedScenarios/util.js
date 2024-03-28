@@ -97,7 +97,8 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         Object.entries(scenarioResults).forEach(field => {
             if (!field[1].questions) { return; }
             Object.entries(field[1].questions).forEach(async question => {
-                if (question[1].response) {
+                if (question[1].response && question[1].probe) {
+                    console.log(question[1].probe)
                     // post a response
                     const responseUrl = 'http://localhost:8084/api/v1/response';
                     try {

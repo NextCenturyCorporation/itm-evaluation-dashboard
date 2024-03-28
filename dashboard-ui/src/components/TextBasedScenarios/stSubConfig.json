@@ -395,7 +395,7 @@
                     "name": "SoarTech Submarine 2-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-2.1",
+                    "probe": "",
                     "choices": [
                         "Stop treatment and assess Casualty V",
                         "Continue to treat Casualty U",
@@ -689,7 +689,7 @@
                     "name": "SoarTech Submarine 2-4",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-2.4",
+                    "probe": "",
                     "choices": [
                         "Carefully divide the burn kit to cover the worst burns on each casualty",
                         "Give it to Casualty U",
@@ -1283,7 +1283,7 @@
                     "name": "SoarTech Submarine 5-1",
                     "title": "What action do you take?",
                     "isRequired": true,
-                    "probe": "probe-5.1",
+                    "probe": "",
                     "choices": [
                         "Get updated vital signs on Casualty W",
                         "Check respiration on Casualty W",
