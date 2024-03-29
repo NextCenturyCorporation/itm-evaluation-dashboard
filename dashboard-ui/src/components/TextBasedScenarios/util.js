@@ -1,10 +1,11 @@
 const axios = require('axios');
+const { stUrban, stDesert, stJungle, stSubmarine } = require('./problemProbes')
 // add proper choice id's to questions
 const mapAnswers = (scenario, scenarioMappings) => {
     if (!scenario.participantID) { return; }
     const scenarioConfig = scenarioMappings[scenario.title.replace(' Scenario', '')];
     Object.entries(scenario).forEach(field => {
-        if (!field[1].questions) { return; }
+        if (!field[1]?.questions) { return; }
         Object.entries(field[1].questions).forEach(question => {
             if (!question[1].probe) { return; }
             const page = scenarioConfig.pages.find((page) => page.name === field[0]);
@@ -31,7 +32,7 @@ const addProbeIDs = (scenario, scenarioMappings) => {
     if (!scenario.participantID) { return; }
     const scenarioConfig = scenarioMappings[scenario.title.replace(' Scenario', '')];
     Object.entries(scenario).forEach(field => {
-        if (!field[1].questions) { return; }
+        if (!field[1]?.questions) { return; }
         Object.entries(field[1].questions).forEach(question => {
             if (question[1].response && !question[0].includes("Follow Up")) {
                 const page = scenarioConfig.pages.find((page) => page.name === field[0]);
@@ -52,7 +53,7 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
         const sessionId = startSession.data;
         let responsePromises = [];
         Object.entries(scenarioResults).forEach(field => {
-            if (!field[1].questions) { return; }
+            if (!field[1]?.questions) { return; }
             Object.entries(field[1].questions).forEach(async question => {
                 if (question[1].response && !question[0].includes("Follow Up")) {
                     const responseUrl = 'http://localhost:8080/api/v1/response';
@@ -82,7 +83,7 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
 
         scenarioResults.alignmentData = alignmentData;
         scenarioResults.serverSessionId = sessionId;
-        console.log(alignmentData)
+        //console.log(alignmentData)
     } catch (error) {
         console.error('Error:', error);
     }
@@ -98,10 +99,14 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         const sessionId = await startSession.data;
         let responsePromises = [];
         Object.entries(scenarioResults).forEach(field => {
-            if (!field[1].questions) { return; }
+            if (!field[1]?.questions) { return; }
             Object.entries(field[1].questions).forEach(async question => {
                 if (question[1].response && question[1].probe) {
-                    console.log(question[1].probe)
+                    const problemProbe = isProblemProbe(question[1], scenarioResults.title)
+                    if (problemProbe) {
+                        // fix probe if it can be, if returns false skip over
+                        if (!fixProblemProbe(question[1], problemProbe)) { return; }
+                    }
                     // post a response
                     const responseUrl = 'http://localhost:8084/api/v1/response';
                   
@@ -127,14 +132,49 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         const targetId = 'maximization_high';
         const urlAlignment = `http://localhost:8084/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}`;
 
-        const alignmentResponse = await axios.get(urlAlignment);
-        const alignmentData = alignmentResponse.data;
+        const alignmentResponse = await axios.get(urlAlignment).catch(error => {
+            console.log("Error retrieving alignment for " + sessionId)
+            console.log(error);
+        });
+        const alignmentData = alignmentResponse ? alignmentResponse.data : null;
 
-        scenarioResults.alignmentData = alignmentData;
+        scenarioResults.alignmentData = alignmentData ? alignmentData : null;
         scenarioResults.serverSessionId = sessionId;
-        console.log(alignmentData);
+        //console.log(alignmentData)
     } catch (error) {
         console.error('Error', error);
+    }
+}
+
+const isProblemProbe = (question, scenarioTitle) => {
+    switch (scenarioTitle) {
+        case "SoarTech Submarine":
+            return stSubmarine[question.probe] ? stSubmarine : null;
+        case "SoarTech Jungle":
+            return stJungle[question.probe] ? stJungle : null;
+        case "SoarTech Urban":
+            return stUrban[question.probe] ? stUrban : null;
+        case "SoarTech Desert":
+            return stDesert[question.probe] ? stDesert : null;
+        default:
+            console.log("didnt find scenario title match")
+            return null;
+    }
+}
+
+/* 
+* the purpose of this function is to address the soartech probes where the choices from the materials
+* do not match up with the YAML files. If the choice can be mapped, this function fixes the choice id
+* and returns true. If the choice can't be mapped, the function returns false and 
+*/
+const fixProblemProbe = (question, mapping) => {
+    const probeDict = mapping[question.probe];
+    const mappedChoice = probeDict[question.chocie];
+    if (mappedChoice) {
+        question.choice = mappedChoice;
+        return true;
+    } else {
+        return false;
     }
 }
 

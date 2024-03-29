@@ -1076,7 +1076,7 @@
                     "type": "radiogroup",
                     "name": "SoarTech Desert 4-2",
                     "title": "What tag would you give casualty V?",
-                    "probe": "probe-4.2",
+                    "probe": "",
                     "isRequired": true,
                     "choices": [
                         "Green",

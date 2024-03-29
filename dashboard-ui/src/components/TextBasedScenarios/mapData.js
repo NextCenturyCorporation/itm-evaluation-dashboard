@@ -55,16 +55,22 @@ async function run() {
     const results = await collection.find({}).toArray();
     for (const result of results) {
         if (!result.participantID) { continue; }
+        
+        // attaches probeID's to results
         addProbeIDs(result, scenarioMappings);
+        // attach choice id's to results
         mapAnswers(result, scenarioMappings);
+
+        // get alignment scores
         if (result.title.includes("Adept")) {
-            await getAdeptAlignment(result, scenarioNameToID[result.title]);
+            //await getAdeptAlignment(result, scenarioNameToID[result.title]);
         } else if (result.title.includes("SoarTech")) {
             await getSoarTechAlignments(result, scenarioNameToID[result.title]);
         } else {
             console.log('Error: unrecognized scenario title');
             process.exit(1);
         }
+        // update mongo document
         await collection.updateOne(
             { _id: result._id },
             { $set: result }
