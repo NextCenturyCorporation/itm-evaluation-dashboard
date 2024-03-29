@@ -157,8 +157,9 @@ const typeDefs = gql`
     getAllHistoryByID(historyId: ID): JSON
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
-    getPerformerADMsForScenario(scenarioID: ID): JSON
-    getTestByADMandScenario(scenarioID: ID, admName: ID): JSON
+    getScenarioNamesByEval(evalNumber: Float): [JSON]
+    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON
+    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID): JSON
     getAllScenarios(id: ID): [Scenario]
     getScenarioState(id: ID): State
     getAllScenarioStates: [State]
@@ -176,7 +177,10 @@ const typeDefs = gql`
     getAllSupplies: [Supplies]
     getAllHumanRuns: [JSON]
     getAllImages: [JSON],
-    getAllSurveyResults: [JSON]
+    getAllSurveyResults: [JSON],
+    getAllScenarioResults: [JSON],
+    getAllSimAlignment: [JSON],
+    getEvalNameNumbers: [JSON]
   }
 
   type Mutation {
@@ -188,90 +192,111 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    getHistory: async (obj, args, context, infow) => {
+    getHistory: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').findOne(args).then(result => { return result; });
     },
-    getAllHistory: async (obj, args, context, infow) => {
+    getAllHistory: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
     },
-    getAllHistoryByID: async (obj, args, context, infow) => {
+    getAllHistoryByID: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
     },
-    getScenario: async (obj, args, context, infow) => {
+    getScenario: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').findOne({ "id": args["scenarioId"] }).then(result => { return result; });
     },
-    getScenarioNames: async (obj, args, context, infow) => {
+    getScenarioNames: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').aggregate([{ $group: { _id: { "id": '$id', "name": '$name' } } }])
         .toArray().then(result => { return result });
     },
-    getPerformerADMsForScenario: async (obj, args, context, infow) => {
-      return await dashboardDB.db.collection('test').distinct("history.parameters.ADM Name", { "history.response.id": args["scenarioID"] }).then(result => { return result });
+    getScenarioNamesByEval: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('scenarios').aggregate([{$match: {"evalNumber": args["evalNumber"]}},{ $group: { _id: { "id": '$id', "name": '$name' } } }])
+        .toArray().then(result => { return result });
     },
-    getTestByADMandScenario: async (obj, args, context, infow) => {
-      return await dashboardDB.db.collection('test').findOne({ "history.parameters.ADM Name": args["admName"], "history.response.id": args["scenarioID"] }).then(result => { return result });
+    getPerformerADMsForScenario: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('test').distinct(args["admQueryStr"], { "history.response.id": args["scenarioID"] }).then(result => { return result });
     },
-    getAllScenarios: async (obj, args, context, infow) => {
+    getTestByADMandScenario: async (obj, args, context, inflow) => {
+      let queryObj = {};
+      queryObj[args["admQueryStr"]] = args["admName"];
+      queryObj["history.response.id"] = args["scenarioID"];
+
+      return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
+    },
+    getAllScenarios: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').find().toArray().then(result => { return result; });
     },
-    getScenarioState: async (obj, args, context, infow) => {
+    getScenarioState: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarioStates').findOne(args).then(result => { return result; });
     },
-    getAllScenarioStates: async (obj, args, context, infow) => {
+    getAllScenarioStates: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarioStates').find().toArray().then(result => { return result; });
     },
-    getProbe: async (obj, args, context, infow) => {
+    getProbe: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('probes').findOne(args).then(result => { return result; });
     },
-    getAllProbes: async (obj, args, context, infow) => {
+    getAllProbes: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('probes').find().toArray().then(result => { return result; });
     },
-    getPatient: async (obj, args, context, infow) => {
+    getPatient: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('patients').findOne(args).then(result => { return result; });
     },
-    getAllPatients: async (obj, args, context, infow) => {
+    getAllPatients: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('patients').find().toArray().then(result => { return result; });
     },
-    getInjury: async (obj, args, context, infow) => {
+    getInjury: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('injuries').findOne(args).then(result => { return result; });
     },
-    getAllInjuries: async (obj, args, context, infow) => {
+    getAllInjuries: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('injuries').find().toArray().then(result => { return result; });
     },
-    getVitals: async (obj, args, context, infow) => {
+    getVitals: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('vitals').findOne(args).then(result => { return result; });
     },
-    getAllVitals: async (obj, args, context, infow) => {
+    getAllVitals: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('vitals').find().toArray().then(result => { return result; });
     },
-    getTriageCategory: async (obj, args, context, infow) => {
+    getTriageCategory: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('triageCategories').findOne(args).then(result => { return result; });
     },
-    getAllTriageCategories: async (obj, args, context, infow) => {
+    getAllTriageCategories: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('triageCategories').find().toArray().then(result => { return result; });
     },
-    getSupply: async (obj, args, context, infow) => {
+    getSupply: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('medicalSupplies').findOne(args).then(result => { return result; });
     },
-    getAllSupplies: async (obj, args, context, infow) => {
+    getAllSupplies: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('medicalSupplies').find().toArray().then(result => { return result; });
     },
-    getAllHumanRuns: async (obj, args, context, infow) => {
+    getAllHumanRuns: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanRuns').find({ "runId": { $exists: true } }).toArray().then(result => { return result; });
     },
-    getAllImages: async (obj, args, context, infow) => {
+    getAllImages: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
       return await dashboardDB.db.collection('surveyResults').find({
         "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
-        "Participant ID.questions.Participant ID.response": {$not: /test/i}
+        "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       }).toArray().then(result => { return result; });
+    },
+    getAllScenarioResults: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('userScenarioResults').find({
+        "participantID": { $not: /test/i }
+      }).toArray().then(result => { return result; });
+    },
+    getAllSimAlignment: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
+    },
+    getEvalNameNumbers: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('test').aggregate( 
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
     }
-    
   },
   Mutation: {
-    updateAdminUser: async (obj, args, context, infow) => {
+    updateAdminUser: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('users').update(
         { "username": args["username"] },
         { $set: { "admin": args["isAdmin"] } }
@@ -287,6 +312,7 @@ const resolvers = {
     uploadScenarioResults: async (obj, args, context, inflow) => {
       const results = args.results
       for (const result of results) {
+        if (result.participantID.toLowerCase().includes('test')) { continue }
         await dashboardDB.db.collection('userScenarioResults').insertOne(result)
       }
     }

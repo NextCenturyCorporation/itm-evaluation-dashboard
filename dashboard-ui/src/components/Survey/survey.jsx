@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui"
-import surveyConfig from './surveyConfig.json';
+import surveyConfig2x from './surveyConfig2x.json';
 import surveyTheme from './surveyTheme.json';
 import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
@@ -28,13 +28,13 @@ class SurveyPage extends Component {
             startTime: null,
             firstPageCompleted: false,
             surveyId: null,
-            surveyVersion: surveyConfig.version,
+            surveyVersion: surveyConfig2x.version,
             iPad: false,
             browserInfo: null,
         };
 
         // clone surveyConfig, don't edit directly
-        this.surveyConfigClone = JSON.parse(JSON.stringify(surveyConfig));
+        this.surveyConfigClone = JSON.parse(JSON.stringify(surveyConfig2x));
         this.initializeSurvey();
 
         this.survey = new Model(this.surveyConfigClone);
@@ -83,7 +83,7 @@ class SurveyPage extends Component {
     assignOmnibus = (soarTechDMs, adeptDMs) => {
         /*
         * Medics A and C should have High attribute DMs from soartech and adept, respectively. 
-        * Medics B and D are the low sttribute DMs
+        * Medics B and D are the low attribute DMs
         */
 
         let medicA = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-A")

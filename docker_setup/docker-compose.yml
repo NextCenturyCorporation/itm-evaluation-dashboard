@@ -56,6 +56,7 @@ services:
   dashboard-mongo: 
     image: 'mongo'
     container_name: dashboard-mongo
+    command: --port 27030
     networks:
       dashboard-net:
     environment:
@@ -65,4 +66,4 @@ services:
     volumes:
       - ./resources/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
-      - '27017:27017'
+      - '27030:27030'
