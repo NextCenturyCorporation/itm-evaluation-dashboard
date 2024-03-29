@@ -53,6 +53,11 @@ const stUrban = {
         "choice-2": "choice-4",
         "choice-3": "choice-7"
     },
+    "probe-2.2": {
+        "choice-0": "choice-0",
+        "choice-1": "choice-1",
+        "choice-2": null
+    },
     "probe-2.3": {
         "choice-0": null,
         "choice-1": null,
@@ -96,6 +101,11 @@ const stDesert = {
         "choice-1": "choice-1",
         "choice-2": "choice-4",
         "choice-3": "choice-7"
+    },
+    "probe2.2": {
+        "choice-0": "choice-0",
+        "choice-1": "choice-1",
+        "choice-2": null
     },
     "probe-2.3": {
         "choice-0": "choice-0",
