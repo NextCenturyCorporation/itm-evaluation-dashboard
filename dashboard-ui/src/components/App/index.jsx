@@ -12,7 +12,7 @@ import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
-import AggregateResults from '../SurveyResults/aggregateResults';
+import AggregateResults from '../AggregateResults/aggregateResults';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import Nav from "react-bootstrap/Nav"

@@ -1,9 +1,12 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { populateDataSet } from './DataFunctions';
+import { getAggregatedData, populateDataSet } from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
+import './aggregateResults.css';
+
+const SHOW_BY_PARTICIPANT = false;
 
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults{
@@ -95,11 +98,13 @@ export default function AggregateResults() {
     });
 
     const [fullData, setFullData] = React.useState([]);
+    const [aggregateData, setAggregateData] = React.useState(null);
 
     React.useEffect(() => {
         // only get survey version 2!!
         if (!loading && !error && data?.getAllSurveyResults && data?.getAllScenarioResults) {
             setFullData(populateDataSet(data));
+            setAggregateData(getAggregatedData());
         }
     }, [data, error, loading]);
 
@@ -111,10 +116,14 @@ export default function AggregateResults() {
         FileSaver.saveAs(data, 'participant_data' + fileExtension);
     };
 
+    const getMean = (att) => {
+        return aggregateData[att]['count'] > 0 ? aggregateData[att]['total'] / aggregateData[att]['count'] : '-';
+    }
+
     return (
-        <>
-            <button onClick={exportToExcel}>Download</button>
-            <div className='resultTableSection'>
+        <div className='aggregatePage'>
+            <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
+            {SHOW_BY_PARTICIPANT && <div className='resultTableSection'>
                 <table>
                     <thead>
                         <tr>
@@ -138,6 +147,24 @@ export default function AggregateResults() {
 
                     </tbody>
                 </table>
-            </div></>
+            </div>}
+
+            {aggregateData && <table className='miniTable'>
+                <thead>
+                    <tr>
+                        <th>Mean Prop Trust</th>
+                        <th>Mean Delegation</th>
+                        <th>Mean Trust</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{getMean('PropTrust')}</td>
+                        <td>{getMean('Delegation')}</td>
+                        <td>{getMean('Trust')}</td>
+                    </tr>
+                </tbody>
+            </table>}
+        </div>
     );
 }

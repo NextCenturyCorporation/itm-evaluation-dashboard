@@ -1,0 +1,27 @@
+.aggregateDownloadBtn {
+    border-radius: 4px;
+    margin: 8px;
+    float: right;
+    padding: 4px;
+}
+
+.aggregateDownloadBtn:hover {
+    cursor: pointer;
+    background-color: rgb(204, 204, 204);
+}
+
+.aggregateDownloadBtn:active {
+    cursor: pointer;
+    background-color: darkgrey;
+    color: white;
+}
+
+.miniTable td, .miniTable th {
+    width: fit-content;
+    min-width: none;
+}
+
+.miniTable {
+    width: fit-content;
+    margin: 12px;
+}

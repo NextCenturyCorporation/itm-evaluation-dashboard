@@ -95,6 +95,7 @@ const ATTRIBUTE_MAP = {
 
 const MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
+const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
 function getTextAlignment(data) {
@@ -406,12 +407,19 @@ function populateDataSet(data) {
             const trust2 = TRUST_MAP[safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'I usually trust people until they give me a reason not to trust them', 'response'])] ?? 0;
             const trust3 = TRUST_MAP[safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'Trusting another person is not difficult for me', 'response'])] ?? 0;
             tmpSet['PropTrust'] = (trust1 + trust2 + trust3) / 3;
+            AGGREGATED_DATA['PropTrust']['total'] += tmpSet['PropTrust'];
+            AGGREGATED_DATA['PropTrust']['count'] += 1;
+
 
             // get overall delegation. not delegate = 0, delegate at all = 1; average
             tmpSet['Delegation'] = getOverallDelRate(res);
+            AGGREGATED_DATA['Delegation']['total'] += tmpSet['Delegation'];
+            AGGREGATED_DATA['Delegation']['count'] += 1;
 
             // get overall trust for medics; average
             tmpSet['Trust'] = getOverallTrust(res);
+            AGGREGATED_DATA['Trust']['total'] += tmpSet['Trust'];
+            AGGREGATED_DATA['Trust']['count'] += 1;
 
             // get post vr state. 
             tmpSet['PostVRstate'] = COMFORT_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'VR Comfort Level', 'response'], ['results', 'Participant ID', 'questions', 'VR Comfort Level', 'response'])] ?? 0;
@@ -627,4 +635,8 @@ function populateDataSet(data) {
     return allResults;
 }
 
-export { safeGet, isDefined, getOverallDelRate, getOverallTrust, populateDataSet };
+function getAggregatedData() {
+    return AGGREGATED_DATA;
+}
+
+export { populateDataSet, getAggregatedData };
