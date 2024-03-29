@@ -68,7 +68,7 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
         })
 
-        let selectedScenarios = []
+        const selectedScenarios = []
         for (const scenario of scenarioOrderArray) {
             // make deep copies of json files to be sure the originals are not unintentionally tampered with
             selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
