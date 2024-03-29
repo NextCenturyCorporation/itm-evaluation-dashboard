@@ -63,7 +63,7 @@ async function run() {
 
         // get alignment scores
         if (result.title.includes("Adept")) {
-            //await getAdeptAlignment(result, scenarioNameToID[result.title]);
+            await getAdeptAlignment(result, scenarioNameToID[result.title]);
         } else if (result.title.includes("SoarTech")) {
             await getSoarTechAlignments(result, scenarioNameToID[result.title]);
         } else {

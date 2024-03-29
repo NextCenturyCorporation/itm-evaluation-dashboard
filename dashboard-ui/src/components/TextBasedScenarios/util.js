@@ -11,6 +11,8 @@ const mapAnswers = (scenario, scenarioMappings) => {
             const page = scenarioConfig.pages.find((page) => page.name === field[0]);
             const pageQuestion = page.elements.find((element) => element.name === question[0]);
             const indexOfAnswer = pageQuestion.choices.indexOf(question[1].response);
+            // should never happen for real data but don't want older test data throwing errors
+            if (indexOfAnswer < 0) { return; }
             let choice;
             if (scenario.title.includes("Adept")) {
                 if (indexOfAnswer >= 0) {
@@ -55,7 +57,7 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
         for (const [fieldName, field] of Object.entries(scenarioResults)) {
             if (!field?.questions) { continue; }
             for (const [questionName, question] of Object.entries(field.questions)) {
-                if (question.response && !questionName.includes("Follow Up") && question.probe) {
+                if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
                     const responseUrl = 'http://localhost:8080/api/v1/response';
                     const promise = axios.post(responseUrl, {
                         response: {
@@ -101,19 +103,12 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         for (const [fieldName, field] of Object.entries(scenarioResults)) {
             if (!field?.questions) { continue; }
             for (const [questionName, question] of Object.entries(field.questions)) {
-                if (question.response && question.probe) {
+                if (question.response && question.probe && question.choice) {
                     const problemProbe = isProblemProbe(question, scenarioResults.title)
                     if (problemProbe) {
                         // fix probe if it can be, if returns false skip over
-                        if (!fixProblemProbe(question, problemProbe)) { 
-                            console.log("cant fix")
-                            return; 
-                        }
+                        if (!fixProblemProbe(question, problemProbe)) { continue; }
                     }
-                    console.log("responding to probe")
-                    console.log(question.probe)
-                    console.log(question.choice)
-                    console.log("\n")
                     // post a response
                     const responseUrl = 'http://localhost:8084/api/v1/response';
                   
@@ -147,7 +142,7 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
 
         scenarioResults.alignmentData = alignmentData ? alignmentData : null;
         scenarioResults.serverSessionId = sessionId;
-        console.log(alignmentData)
+        console.log(scenarioResults.alignmentData)
     } catch (error) {
         console.error('Error', error);
     }
