@@ -6,6 +6,7 @@ import ScenarioPage from '../ScenarioPage/scenarioPage';
 import Actions from '../ActionsCompare/actions';
 import SurveyPage from '../Survey/survey';
 import TextBasedScenariosPage from '../TextBasedScenarios/TextBasedScenariosPage';
+import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -13,7 +14,6 @@ import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
-import Nav from "react-bootstrap/Nav"
 import { createBrowserHistory } from 'history';
 
 // CSS and Image Stuff 
@@ -56,7 +56,11 @@ function Survey(currentUser) {
 }
 
 function TextBased() {
-    return <TextBasedScenariosPage/>
+    return <TextBasedScenariosPage />;
+}
+
+function TextBasedResults() {
+    return <TextBasedResultsPage />;
 }
 
 
@@ -155,19 +159,19 @@ export class App extends React.Component {
                                     <Link className="nav-link" to="/actionsCompare">Actions Compare</Link>
                                 </li>
                                 <NavDropdown title="Surveys">
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/survey">Take Survey</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
+                                        Take Survey
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/survey-results">Survey Results</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
+                                        Survey Results
                                     </NavDropdown.Item>
                                 </NavDropdown>
                                 <NavDropdown title="Text Scenarios">
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/text-based">Complete Text Scenarios</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
+                                        Complete Text Scenarios
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item disabled>
-                                        <span className="dropdown-item" style={{opacity: 0.5}}>Text Scenario Results</span>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
+                                        Text Scenario Results
                                     </NavDropdown.Item>
                                 </NavDropdown>
                             </ul>
@@ -230,6 +234,9 @@ export class App extends React.Component {
                             </Route>
                             <Route path="/text-based">
                                 <TextBased />
+                            </Route>
+                            <Route path="/text-based-results">
+                                <TextBasedResults />
                             </Route>
                         </Switch>
                     </div>

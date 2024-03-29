@@ -1593,5 +1593,6 @@
         }
     ],
     "showQuestionNumbers": "off",
-    "widthMode": "responsive"
+    "widthMode": "responsive",
+    "showProgressBar": "top"
 }

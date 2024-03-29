@@ -24,7 +24,7 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`
 
-const scenarioMappings = {
+export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
     "SoarTech Urban": stUrbanConfig,
     "SoarTech Desert": stDesertConfig,
