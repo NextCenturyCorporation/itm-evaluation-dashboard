@@ -150,14 +150,9 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/">Home</Link>
                                 </li>
-                                <NavDropdown title="Results">
-                                    <NavDropdown.Item as={Link} lassName="dropdown-item" to="/results">
-                                        Alignment Results
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} lassName="dropdown-item" to="/dataset">
-                                        Aggregate Results
-                                    </NavDropdown.Item>
-                                </NavDropdown>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/results">Results</Link>
+                                </li>
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/scenarios">Scenarios</Link>
                                 </li>
@@ -180,6 +175,9 @@ export class App extends React.Component {
                                         Text Scenario Results
                                     </NavDropdown.Item>
                                 </NavDropdown>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/dataset">Data Analysis</Link>
+                                </li>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
