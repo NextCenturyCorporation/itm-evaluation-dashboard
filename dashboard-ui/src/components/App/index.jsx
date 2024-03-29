@@ -146,16 +146,16 @@ export class App extends React.Component {
                                     <Link className="nav-link" to="/">Home</Link>
                                 </li>
                                 <NavDropdown title="ADM Results">
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/results">Results by ADM</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
+                                        Results by ADM
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/scenarios">ADM Scenarios</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/scenarios">
+                                        ADM Scenarios
                                     </NavDropdown.Item>
                                 </NavDropdown>
                                 <NavDropdown title="Delegation Surveys">
-                                    <NavDropdown.Item>
-                                        <Link className="dropdown-item" to="/survey">Take Survey</Link>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
+                                        Take Survey
                                     </NavDropdown.Item>
                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
                                         Survey Results
