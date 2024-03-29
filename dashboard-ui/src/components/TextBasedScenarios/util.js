@@ -173,8 +173,6 @@ const isProblemProbe = (question, scenarioTitle) => {
 const fixProblemProbe = (question, mapping) => {
     const probeDict = mapping[question.probe];
     const mappedChoice = probeDict[question.choice];
-    const beginChoice = question.choice
-
     if (mappedChoice) {
         question.choice = mappedChoice;
         return true;

@@ -102,7 +102,7 @@ const stDesert = {
         "choice-2": "choice-4",
         "choice-3": "choice-7"
     },
-    "probe2.2": {
+    "probe-2.2": {
         "choice-0": "choice-0",
         "choice-1": "choice-1",
         "choice-2": null
