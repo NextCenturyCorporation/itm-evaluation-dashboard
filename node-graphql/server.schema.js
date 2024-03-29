@@ -177,7 +177,8 @@ const typeDefs = gql`
     getAllHumanRuns: [JSON]
     getAllImages: [JSON],
     getAllSurveyResults: [JSON],
-    getAllScenarioResults: [JSON]
+    getAllScenarioResults: [JSON],
+    getAllSimAlignment: [JSON]
   }
 
   type Mutation {
@@ -266,13 +267,18 @@ const resolvers = {
       // return all survey results except for those containing "test" in participant ID
       return await dashboardDB.db.collection('surveyResults').find({
         "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
-        "Participant ID.questions.Participant ID.response": {$not: /test/i}
+        "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       }).toArray().then(result => { return result; });
     },
     getAllScenarioResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('userScenarioResults').find({
         "participantID": { $not: /test/i }
       }).toArray().then(result => { return result; });
+    },
+    getAllSimAlignment: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
     }
     
   },

@@ -12,6 +12,7 @@ import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
+import AggregateResults from '../AggregateResults/aggregateResults';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import { createBrowserHistory } from 'history';
@@ -174,6 +175,9 @@ export class App extends React.Component {
                                         Text Scenario Results
                                     </NavDropdown.Item>
                                 </NavDropdown>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/dataset">Data Analysis</Link>
+                                </li>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
@@ -209,6 +213,9 @@ export class App extends React.Component {
                             </Route>
                             <Route exact path="/results">
                                 <Results />
+                            </Route>
+                            <Route exact path="/dataset">
+                                <AggregateResults />
                             </Route>
                             <Route exact path="/scenarios">
                                 <Scenarios />
