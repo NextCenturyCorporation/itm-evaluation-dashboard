@@ -23,10 +23,30 @@
     width: 95%;
 }
 
-/* .chart-selector {
-    margin-left: 15px;
-} */
-
 .chart-header-label {
     margin-top: 9px;
+}
+
+.home-navigation-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 25px 0 0;
+}
+
+.evaluation-selector-container {
+    margin-left: 35px;
+    display: flex;
+}
+
+.evaluation-selector-label {
+    margin-top: 7px;
+    margin-right: 10px;
+}
+
+.evaluation-selector-holder {
+    width: 250px;
+}
+
+.flex-chart-center svg{
+    overflow: visible !important;
 }
