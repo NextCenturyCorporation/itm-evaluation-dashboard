@@ -13,21 +13,27 @@ import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
-const getScenarioNamesQueryName = "getScenarioNames";
+const getScenarioNamesQueryName = "getScenarioNamesByEval";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
 const getTestByADMandScenarioName = "getTestByADMandScenario";
+const getEvalNameNumbers = "getEvalNameNumbers";
+
+const get_eval_name_numbers = gql`
+    query getEvalNameNumbers{
+        getEvalNameNumbers
+  }`;
 
 const scenario_names_aggregation = gql`
-    query getScenarioNames{
-        getScenarioNames
+    query getScenarioNamesByEval($evalNumber: Float!){
+        getScenarioNamesByEval(evalNumber: $evalNumber)
     }`;
 const performer_adm_by_scenario = gql`
-    query getPerformerADMsForScenario($scenarioID: ID){
-        getPerformerADMsForScenario(scenarioID: $scenarioID)
+    query getPerformerADMsForScenario($admQueryStr: String, $scenarioID: ID){
+        getPerformerADMsForScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID)
     }`;
 const test_by_adm_and_scenario = gql`
-    query getTestByADMandScenario($scenarioID: ID, $admName: ID){
-        getTestByADMandScenario(scenarioID: $scenarioID, admName: $admName)
+    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID){
+        getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName)
     }`;
 
 class ResultsTable extends React.Component {
@@ -37,12 +43,24 @@ class ResultsTable extends React.Component {
         this.state = {
             adm: "",
             scenario: "",
+            evalNumber: null,
+            ADMQueryString: "history.parameters.ADM Name"
         }
+    }
+
+    setEval(target){
+        this.setState({
+            evalNumber: target,
+            adm: "",
+            scenario: "",
+            ADMQueryString: target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name"
+        });
     }
 
     setScenario(target){
         this.setState({
-            scenario: target
+            scenario: target,
+            adm: "",
         });
     }
 
@@ -53,10 +71,18 @@ class ResultsTable extends React.Component {
     }
 
     formatScenarioString(id) {
-        if(id.toLowerCase().indexOf("adept") > -1 ) {
-            return ("BBN: " + id);
+        if(this.state.evalNumber < 3) {
+            if(id.toLowerCase().indexOf("adept") > -1 ) {
+                return ("BBN: " + id);
+            } else {
+                return ("Soartech: " + id);
+            }
         } else {
-            return ("Soartech: " + id);
+            if(id.toLowerCase().indexOf("metricseval") > -1 ) {
+                return ("ADEPT: " + id);
+            } else {
+                return ("Soartech: " + id);
+            }
         }
     }
 
@@ -117,33 +143,32 @@ class ResultsTable extends React.Component {
                 <div className="layout-board">
                     <div className="nav-section">
                         <div className="nav-header">
-                            <span className="nav-header-text">Scenario</span>
+                            <span className="nav-header-text">Evaluation</span>
                         </div>
                         <div className="nav-menu">
-                            <Query query={scenario_names_aggregation}>
+                            <Query query={get_eval_name_numbers}>
                             {
                                 ({ loading, error, data }) => {
                                     if (loading) return <div>Loading ...</div> 
                                     if (error) return <div>Error</div>
 
-                                    const scenarioNameOptions = data[getScenarioNamesQueryName];
-                                    let scenariosArray = [];
-                                    for(let i=0; i < scenarioNameOptions.length; i++) {
-                                        scenariosArray.push({
-                                            "value": scenarioNameOptions[i]._id.id, 
-                                            "name": scenarioNameOptions[i]._id.name
-                                        });
+                                    const evalOptionsRaw = data[getEvalNameNumbers];
+                                    let evalOptions = [];
+
+                                    for(let i=0; i < evalOptionsRaw.length; i++) {
+                                        evalOptions.push({value: evalOptionsRaw[i]._id.evalNumber, label:  evalOptionsRaw[i]._id.evalName})
                                     }
-                                    scenariosArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+                                    evalOptions.sort((a, b) => (a.value < b.value) ? 1 : -1)
 
                                     return (
                                         <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
-                                            {scenariosArray.map((item,key) =>
-                                                <ListItem className="nav-list-item" id={"scenario_" + key} key={"scenario_" + key}
+                                            {evalOptions.map((item,key) =>
+                                                <ListItem className="nav-list-item" id={"eval_" + key} key={"eval_" + key}
                                                     button
-                                                    selected={this.state.scenario === item.value}
-                                                    onClick={() => this.setScenario(item.value)}>
-                                                    <ListItemText primary={this.formatScenarioString(item.value)} />
+                                                    selected={this.state.evalNumber === item.value}
+                                                    onClick={() => this.setEval(item.value)}>
+                                                    <ListItemText primary={item.label} />
                                                 </ListItem>
                                             )}
                                         </List>
@@ -152,13 +177,53 @@ class ResultsTable extends React.Component {
                             }
                             </Query>
                         </div>
-                        {this.state.scenario !== "" &&
+                        {this.state.evalNumber !== null &&
+                            <>
+                                <div className="nav-header">
+                                    <span className="nav-header-text">Scenario</span>
+                                </div>
+                                <div className="nav-menu">
+                                    <Query query={scenario_names_aggregation}  variables={{"evalNumber": this.state.evalNumber}}>
+                                    {
+                                        ({ loading, error, data }) => {
+                                            if (loading) return <div>Loading ...</div> 
+                                            if (error) return <div>Error</div>
+
+                                            const scenarioNameOptions = data[getScenarioNamesQueryName];
+                                            let scenariosArray = [];
+                                            for(let i=0; i < scenarioNameOptions.length; i++) {
+                                                scenariosArray.push({
+                                                    "value": scenarioNameOptions[i]._id.id, 
+                                                    "name": scenarioNameOptions[i]._id.name
+                                                });
+                                            }
+                                            scenariosArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+                                            return (
+                                                <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
+                                                    {scenariosArray.map((item,key) =>
+                                                        <ListItem className="nav-list-item" id={"scenario_" + key} key={"scenario_" + key}
+                                                            button
+                                                            selected={this.state.scenario === item.value}
+                                                            onClick={() => this.setScenario(item.value)}>
+                                                            <ListItemText primary={this.formatScenarioString(item.value)} />
+                                                        </ListItem>
+                                                    )}
+                                                </List>
+                                            )
+                                        }
+                                    }
+                                    </Query>
+                                </div>
+                            </>
+                        }
+                        {this.state.evalNumber !== null && this.state.scenario !== "" &&
                             <>
                                 <div className="nav-header">
                                     <span className="nav-header-text">Performer/ADM</span>
                                 </div>
                                 <div className="nav-menu">
-                                <Query query={performer_adm_by_scenario} variables={{"scenarioID": this.state.scenario}}>
+                                <Query query={performer_adm_by_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario}}>
                                     {
                                         ({ loading, error, data }) => {
                                             if (loading) return <div>Loading ...</div> 
@@ -194,8 +259,8 @@ class ResultsTable extends React.Component {
                         }
                     </div>
                     <div className="test-overview-area">
-                        {(this.state.scenario !== "" && this.state.adm !== "") &&
-                            <Query query={test_by_adm_and_scenario} variables={{"scenarioID": this.state.scenario, "admName": this.state.adm}}>
+                        {(this.state.evalNumber !== null && this.state.scenario !== "" && this.state.adm !== "") &&
+                            <Query query={test_by_adm_and_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm}}>
                             {
                                 ({ loading, error, data }) => {
                                     if (loading) return <div>Loading ...</div> 

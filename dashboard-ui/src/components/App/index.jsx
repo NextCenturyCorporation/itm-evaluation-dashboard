@@ -3,7 +3,6 @@ import queryString from 'query-string';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
-import Actions from '../ActionsCompare/actions';
 import SurveyPage from '../Survey/survey';
 import TextBasedScenariosPage from '../TextBasedScenarios/TextBasedScenariosPage';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
@@ -46,10 +45,6 @@ function Results() {
 
 function Scenarios() {
     return <ScenarioPage />;
-}
-
-function ActionsCompare() {
-    return <Actions />;
 }
 
 function Survey(currentUser) {
@@ -150,18 +145,17 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/">Home</Link>
                                 </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/results">Results</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/scenarios">Scenarios</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/actionsCompare">Actions Compare</Link>
-                                </li>
-                                <NavDropdown title="Surveys">
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
-                                        Take Survey
+                                <NavDropdown title="ADM Results">
+                                    <NavDropdown.Item>
+                                        <Link className="dropdown-item" to="/results">Results by ADM</Link>
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item>
+                                        <Link className="dropdown-item" to="/scenarios">ADM Scenarios</Link>
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                                <NavDropdown title="Delegation Surveys">
+                                    <NavDropdown.Item>
+                                        <Link className="dropdown-item" to="/survey">Take Survey</Link>
                                     </NavDropdown.Item>
                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
                                         Survey Results
@@ -229,9 +223,6 @@ export class App extends React.Component {
                             </Route>
                             <Route path="/admin">
                                 <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
-                            </Route>
-                            <Route path="/actionsCompare">
-                                <ActionsCompare />
                             </Route>
                             <Route path="/survey">
                                 <Survey currentUser={this.state.currentUser} />

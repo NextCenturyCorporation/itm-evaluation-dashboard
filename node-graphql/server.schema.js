@@ -157,8 +157,9 @@ const typeDefs = gql`
     getAllHistoryByID(historyId: ID): JSON
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
-    getPerformerADMsForScenario(scenarioID: ID): JSON
-    getTestByADMandScenario(scenarioID: ID, admName: ID): JSON
+    getScenarioNamesByEval(evalNumber: Float): [JSON]
+    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON
+    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID): JSON
     getAllScenarios(id: ID): [Scenario]
     getScenarioState(id: ID): State
     getAllScenarioStates: [State]
@@ -178,7 +179,8 @@ const typeDefs = gql`
     getAllImages: [JSON],
     getAllSurveyResults: [JSON],
     getAllScenarioResults: [JSON],
-    getAllSimAlignment: [JSON]
+    getAllSimAlignment: [JSON],
+    getEvalNameNumbers: [JSON]
   }
 
   type Mutation {
@@ -206,11 +208,19 @@ const resolvers = {
       return await dashboardDB.db.collection('scenarios').aggregate([{ $group: { _id: { "id": '$id', "name": '$name' } } }])
         .toArray().then(result => { return result });
     },
+    getScenarioNamesByEval: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('scenarios').aggregate([{$match: {"evalNumber": args["evalNumber"]}},{ $group: { _id: { "id": '$id', "name": '$name' } } }])
+        .toArray().then(result => { return result });
+    },
     getPerformerADMsForScenario: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').distinct("history.parameters.ADM Name", { "history.response.id": args["scenarioID"] }).then(result => { return result });
+      return await dashboardDB.db.collection('test').distinct(args["admQueryStr"], { "history.response.id": args["scenarioID"] }).then(result => { return result });
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').findOne({ "history.parameters.ADM Name": args["admName"], "history.response.id": args["scenarioID"] }).then(result => { return result });
+      let queryObj = {};
+      queryObj[args["admQueryStr"]] = args["admName"];
+      queryObj["history.response.id"] = args["scenarioID"];
+
+      return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
     },
     getAllScenarios: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').find().toArray().then(result => { return result; });
@@ -279,8 +289,11 @@ const resolvers = {
     },
     getAllSimAlignment: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
+    },
+    getEvalNameNumbers: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('test').aggregate( 
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
     }
-    
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
