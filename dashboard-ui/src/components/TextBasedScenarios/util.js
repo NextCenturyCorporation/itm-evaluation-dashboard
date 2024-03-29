@@ -52,16 +52,16 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
         const startSession = await axios.post(url);
         const sessionId = startSession.data;
         let responsePromises = [];
-        Object.entries(scenarioResults).forEach(field => {
-            if (!field[1]?.questions) { return; }
-            Object.entries(field[1].questions).forEach(async question => {
-                if (question[1].response && !question[0].includes("Follow Up")) {
+        for (const [fieldName, field] of Object.entries(scenarioResults)) {
+            if (!field?.questions) { continue; }
+            for (const [questionName, question] of Object.entries(field.questions)) {
+                if (question.response && !questionName.includes("Follow Up") && question.probe) {
                     const responseUrl = 'http://localhost:8080/api/v1/response';
                     const promise = axios.post(responseUrl, {
                         response: {
-                            choice: question[1].choice,
+                            choice: question.choice,
                             justification: "justification",
-                            probe_id: question[1].probe,
+                            probe_id: question.probe,
                             scenario_id: scenarioId,
                         },
                         session_id: sessionId
@@ -70,8 +70,8 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
                     });
                     responsePromises.push(promise);
                 }
-            })
-        })
+            }
+        }
 
         // wait for all response submissions to complete
         await Promise.all(responsePromises);
@@ -98,27 +98,31 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         const startSession = await axios.post(url);
         const sessionId = await startSession.data;
         let responsePromises = [];
-        Object.entries(scenarioResults).forEach(field => {
-            if (!field[1]?.questions) { return; }
-            Object.entries(field[1].questions).forEach(async question => {
-                if (question[1].response && question[1].probe) {
-                    const problemProbe = isProblemProbe(question[1], scenarioResults.title)
+        for (const [fieldName, field] of Object.entries(scenarioResults)) {
+            if (!field?.questions) { continue; }
+            for (const [questionName, question] of Object.entries(field.questions)) {
+                if (question.response && question.probe) {
+                    const problemProbe = isProblemProbe(question, scenarioResults.title)
                     if (problemProbe) {
                         // fix probe if it can be, if returns false skip over
-                        if (!fixProblemProbe(question[1], problemProbe)) { 
-
+                        if (!fixProblemProbe(question, problemProbe)) { 
+                            console.log("cant fix")
                             return; 
                         }
                     }
+                    console.log("responding to probe")
+                    console.log(question.probe)
+                    console.log(question.choice)
+                    console.log("\n")
                     // post a response
                     const responseUrl = 'http://localhost:8084/api/v1/response';
                   
                         const promise = await axios.post(responseUrl, {
                             session_id: sessionId,
                             response: {
-                                choice: question[1].choice,
+                                choice: question.choice,
                                 justification: "justification",
-                                probe_id: question[1].probe,
+                                probe_id: question.probe,
                                 scenario_id: scenarioId,
                             },
                         }).catch(error => {
@@ -126,8 +130,8 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
                     })
                     responsePromises.push(promise);
                 }
-            })
-        })
+            }
+        }
         
         // wait for all post requests to finish
         await Promise.all(responsePromises);
