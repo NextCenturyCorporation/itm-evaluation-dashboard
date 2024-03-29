@@ -83,7 +83,7 @@ class SurveyPage extends Component {
     assignOmnibus = (soarTechDMs, adeptDMs) => {
         /*
         * Medics A and C should have High attribute DMs from soartech and adept, respectively. 
-        * Medics B and D are the low sttribute DMs
+        * Medics B and D are the low attribute DMs
         */
 
         let medicA = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-A")

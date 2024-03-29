@@ -17,6 +17,7 @@ import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
+import {mapAnswers} from './util.js'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -67,9 +68,10 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
         })
 
-        const selectedScenarios = []
+        let selectedScenarios = []
         for (const scenario of scenarioOrderArray) {
-            selectedScenarios.push(scenarioMappings[scenario])
+            // make deep copies of json files to be sure the originals are not unintentionally tampered with
+            selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
         }
 
         let title = ""
@@ -78,7 +80,6 @@ class TextBasedScenariosPage extends Component {
         } else if (scenarioOrderArray.includes("SoarTech Jungle")) {
             title = "Jungle/Submarine Text Scenarios"
         }
-
         this.loadSurveyConfig(selectedScenarios, title !== "" ? title : "")
     }
 
@@ -96,12 +97,12 @@ class TextBasedScenariosPage extends Component {
                 };
 
                 const pageQuestions = this.getPageQuestions(pageName);
-
+                let index = 0;
                 pageQuestions.forEach(questionName => {
-                    let questionValue;
-                    questionValue = survey.valuesHash[questionName];
+                    const questionValue = survey.valuesHash[questionName];
                     this.surveyData[pageName].questions[questionName] = {
-                        response: questionValue
+                        response: questionValue,
+                        probe: survey.getPageByName(pageName).jsonObj.elements[index++].probe
                     };
                 });
             }
@@ -128,6 +129,7 @@ class TextBasedScenariosPage extends Component {
             scenario.participantID = this.state.participantID
             scenario.vrEnvCompleted = this.state.vrEnvCompleted
             scenario.title = this.state.scenarios[temp++]
+            mapAnswers(scenario, scenarioMappings)
         }
 
         this.setState({ uploadData: true }, () => {
@@ -198,6 +200,32 @@ class TextBasedScenariosPage extends Component {
         return page ? page.questions.map(question => question.name) : [];
     };
 
+    /*mapAnswers = (scenario) => {
+        // maps the user's answer to the correct naming convention for ADEPT choice id
+        const scenarioConfig = scenarioMappings[scenario.title.replace(' Scenario', '')];
+        Object.entries(scenario).forEach(field => {
+            if (!field[1].questions) { return; }
+            Object.entries(field[1].questions).forEach(question => {
+                if (!question[1].probe) { return; }
+                const page = scenarioConfig.pages.find((page) => page.name === field[0]);
+                const pageQuestion = page.elements.find((element) => element.name === question[0]);
+                const indexOfAnswer = pageQuestion.choices.indexOf(question[1].response);
+                let choice;
+                if (scenario.title.includes("Adept")) {
+                    if (indexOfAnswer >= 0) {
+                        choice = question[1].probe + '.';
+                        choice += String.fromCharCode(65 + indexOfAnswer);
+                    } else {
+                        console.err("Error mapping user selection to choice ID");
+                    }
+                } else {
+                    choice = "choice-"+indexOfAnswer;
+                }
+                question[1].choice = choice;
+            })
+        })
+    }*/
+
     render() {
         return (
             <>
@@ -206,13 +234,13 @@ class TextBasedScenariosPage extends Component {
                 )}
                 {this.state.currentConfig && (
                     <>
-                    <Survey model={this.survey} />
-                    {this.shouldBlockNavigation && (
-                        <Prompt
-                            when={this.shouldBlockNavigation}
-                            message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the scenarios before completion and will be required to start the scenarios over from the beginning.'
-                        />
-                    )}
+                        <Survey model={this.survey} />
+                        {this.shouldBlockNavigation && (
+                            <Prompt
+                                when={this.shouldBlockNavigation}
+                                message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the scenarios before completion and will be required to start the scenarios over from the beginning.'
+                            />
+                        )}
                     </>
                 )}
                 {this.state.uploadData && (

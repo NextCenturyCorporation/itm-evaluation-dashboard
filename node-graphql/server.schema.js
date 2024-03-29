@@ -299,6 +299,7 @@ const resolvers = {
     uploadScenarioResults: async (obj, args, context, inflow) => {
       const results = args.results
       for (const result of results) {
+        if (result.participantID.toLowerCase().includes('test')) { continue }
         await dashboardDB.db.collection('userScenarioResults').insertOne(result)
       }
     }
