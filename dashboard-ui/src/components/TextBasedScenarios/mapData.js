@@ -44,7 +44,7 @@ if (!username || !password) {
   process.exit(1);
 }
 
-const connectionString = `mongodb://${username}:${password}@localhost:27030/?authSource=dashboard`;
+const connectionString = `mongodb://${username}:${password}@127.0.0.1:27030/?authSource=dashboard`;
 const client = new MongoClient(connectionString);
 async function run() {
   try {
