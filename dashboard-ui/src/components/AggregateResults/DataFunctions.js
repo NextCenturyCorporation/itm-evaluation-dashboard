@@ -442,13 +442,15 @@ function populateDataSet(data) {
             tmpSet['TextSimDiff'] = Number(!sims.includes(textOrder));
 
 
-            // TODO: get alignment for text responses from ta1 server (ST)
+            // get alignment for text responses from ta1 server (ST)
+            // for now, hard code st to maximization
+            tmpSet['ST_AlignText'] = txtAlign[pid] ? txtAlign[pid]['maximization'] ? txtAlign[pid]['maximization'] : null : null;
 
             // get alignment for sim from ta1 server (ST). Hardcode maximization for now
             tmpSet['ST_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
 
-            // TODO: get high/low maximization attribute (ST) DO NOT HARDCODE
-            const stAttribute = 1;
+            // get high/low maximization attribute (ST)
+            const stAttribute = tmpSet['ST_AlignText'] > MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
 
             // get alignment for text responses from ta1 server (AD)
             // for now, hard code adept to moral desert
@@ -457,7 +459,7 @@ function populateDataSet(data) {
             // get alignment for sim from ta1 server (AD). for now hardcode moral desert
             tmpSet['AD_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
 
-            // get high/low moral deserts attribute (AD) DO NOT HARDCODE
+            // get high/low moral deserts attribute (AD)
             const adAttribute = tmpSet['AD_AlignText'] > MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
             tmpSet['AD_AttribGrp'] = adAttribute;
 
