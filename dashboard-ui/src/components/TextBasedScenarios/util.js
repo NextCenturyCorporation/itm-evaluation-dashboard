@@ -83,7 +83,7 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
 
         scenarioResults.alignmentData = alignmentData;
         scenarioResults.serverSessionId = sessionId;
-        //console.log(alignmentData)
+        console.log(alignmentData)
     } catch (error) {
         console.error('Error:', error);
     }
@@ -105,7 +105,10 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
                     const problemProbe = isProblemProbe(question[1], scenarioResults.title)
                     if (problemProbe) {
                         // fix probe if it can be, if returns false skip over
-                        if (!fixProblemProbe(question[1], problemProbe)) { return; }
+                        if (!fixProblemProbe(question[1], problemProbe)) { 
+
+                            return; 
+                        }
                     }
                     // post a response
                     const responseUrl = 'http://localhost:8084/api/v1/response';
@@ -140,7 +143,7 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
 
         scenarioResults.alignmentData = alignmentData ? alignmentData : null;
         scenarioResults.serverSessionId = sessionId;
-        //console.log(alignmentData)
+        console.log(alignmentData)
     } catch (error) {
         console.error('Error', error);
     }
@@ -169,7 +172,9 @@ const isProblemProbe = (question, scenarioTitle) => {
 */
 const fixProblemProbe = (question, mapping) => {
     const probeDict = mapping[question.probe];
-    const mappedChoice = probeDict[question.chocie];
+    const mappedChoice = probeDict[question.choice];
+    const beginChoice = question.choice
+
     if (mappedChoice) {
         question.choice = mappedChoice;
         return true;
