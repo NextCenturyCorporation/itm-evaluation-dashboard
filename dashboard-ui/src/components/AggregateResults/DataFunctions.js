@@ -103,6 +103,23 @@ function getTextAlignment(data) {
     // get all recorded kdmas by participant id
     for (const res of data.getAllScenarioResults) {
         if (res.participantID && res.alignmentData?.kdma_values) {
+            // recover from typos in pids
+            switch (res.participantID) {
+                case '202402':
+                    res.participantID = '2024202';
+                    break;
+                case '202417':
+                    res.participantID = '2024217';
+                    break;
+                case '2021216':
+                    res.participantID = '2024216';
+                    break;
+                case '202419':
+                    res.participantID = '2024219';
+                    break;
+                default:
+                    break;
+            }
             for (const kdma of res.alignmentData.kdma_values) {
                 const kdmaKey = kdma.kdma;
                 const kdmaVal = kdma.value;
@@ -373,7 +390,7 @@ function populateDataSet(data) {
             if (pid === '20234204') {
                 pid = '2024204';
             }
-            tmpSet['ParticipantID'] = pid;
+            tmpSet['ParticipantID'] = pid.trim();
 
             // get date. see if start time exists. If not, use end time
             tmpSet['Date'] = new Date(safeGet(res, ['results', 'startTime'], ['results', 'timeComplete'])).toLocaleDateString();

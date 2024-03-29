@@ -6,6 +6,7 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
 
+// turn to true for better dev experience
 const SHOW_BY_PARTICIPANT = false;
 
 const GET_SURVEY_RESULTS = gql`
