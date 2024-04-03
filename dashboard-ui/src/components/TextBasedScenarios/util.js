@@ -48,7 +48,7 @@ const addProbeIDs = (scenario, scenarioMappings) => {
 const getAdeptAlignment = async (scenarioResults, scenarioId) => {
     /*local host 8080 is where I had adept running, if you had to change your port must change script to match */
     // build fetch for starting new session
-    const url = 'http://10.216.38.70/api/v1/new_session';
+    const url = 'http://10.216.38.70:8080/api/v1/new_session';
 
     try {
         const startSession = await axios.post(url);

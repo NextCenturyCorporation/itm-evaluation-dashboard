@@ -182,17 +182,17 @@ function getSimAlignment(data) {
             sims[pid] = {};
         }
         sims[pid][entry.env] = entry.timestamp;
-        for (const k of entry.data) {
-            if (Object.keys(k).includes('probe') && k.probe && Object.keys(k.probe).includes('kdma_association')) {
-                for (const kdma of Object.keys(k.probe.kdma_association)) {
-                    if (Object.keys(alignments[pid]).includes(kdma)) {
-                        alignments[pid][kdma]['total'] += k.probe.kdma_association[kdma];
-                        alignments[pid][kdma]['count'] += 1;
-                    } else {
-                        alignments[pid][kdma] = { 'total': k.probe.kdma_association[kdma], 'count': 1 }
-                    }
+        const k = entry.data;
+        if (Object.keys(k).includes('alignment') && k.alignment && Object.keys(k.alignment).includes('kdma_values')) {
+            for (let x of k.alignment['kdma_values']) {
+                if (Object.keys(alignments[pid]).includes(x.kdma)) {
+                    alignments[pid][x.kdma]['total'] += x.value;
+                    alignments[pid][x.kdma]['count'] += 1;
+                } else {
+                    alignments[pid][x.kdma] = { 'total': x.value, 'count': 1 }
                 }
             }
+
         }
     }
     Object.keys(alignments).forEach((x) => Object.keys(alignments[x]).forEach((y) => alignments[x][y] = alignments[x][y]['total'] / alignments[x][y]['count']));
@@ -353,7 +353,11 @@ function getAttributeAlignment(res, att, medics, q, trans) {
     let misalign = 0;
     let misalignTally = 0;
     for (let x of medics) {
-        const data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], ['results', 'Omnibus: ' + x, 'questions', x + ': ' + q, 'response']);
+        // some adept scenarios in the config are missing the question and are only labelled by name
+        let data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], ['results', x, 'questions', x, 'response'])
+        if (!data) {
+            data = safeGet(res, ['results', 'Omnibus: ' + x, 'questions', x + ': ' + q, 'response']);
+        }
         if (data) {
             const trustVal = trans[data];
             if (ATTRIBUTE_MAP[x] === att) {
@@ -377,13 +381,15 @@ function populateDataSet(data) {
     const txtAlign = getTextAlignment(data);
     const allResults = [];
     for (const res of data.getAllSurveyResults) {
-        if (res.results?.surveyVersion === 2) {
+        // if survey instructions does not exist, we don't want the entry
+        if (res.results?.surveyVersion === 2 && Object.keys(res.results).includes('Survey Introduction')) {
             // use this result!
             const tmpSet = {};
 
             // get participant id. two different versions exist: one with Participant ID and the other with Participant ID Page
             let pid = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
-            if (!pid) {
+            if (!pid || pid === '42' || pid === '019') {
+            // ignore some pids
                 continue;
             }
             // fix typo
@@ -461,23 +467,24 @@ function populateDataSet(data) {
 
             // get alignment for text responses from ta1 server (ST)
             // for now, hard code st to maximization
-            tmpSet['ST_AlignText'] = txtAlign[pid] ? txtAlign[pid]['maximization'] ? txtAlign[pid]['maximization'] : null : null;
+            tmpSet['ST_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['maximization'] ? txtAlign[pid]['maximization'] : null : null;
 
             // get alignment for sim from ta1 server (ST). Hardcode maximization for now
-            tmpSet['ST_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
+            tmpSet['ST_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
 
             // get high/low maximization attribute (ST)
-            const stAttribute = tmpSet['ST_AlignText'] > MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+            const stAttribute = tmpSet['ST_KDMA_Text'] > MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+            tmpSet['ST_AttribGrp'] = stAttribute;
 
             // get alignment for text responses from ta1 server (AD)
             // for now, hard code adept to moral desert
-            tmpSet['AD_AlignText'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
+            tmpSet['AD_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
 
             // get alignment for sim from ta1 server (AD). for now hardcode moral desert
-            tmpSet['AD_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
+            tmpSet['AD_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
 
             // get high/low moral deserts attribute (AD)
-            const adAttribute = tmpSet['AD_AlignText'] > MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
+            const adAttribute = tmpSet['AD_KDMA_Text'] > MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
             tmpSet['AD_AttribGrp'] = adAttribute;
 
             // get delegation rate for ST. not delegate = 0, delegate at all = 1; average
