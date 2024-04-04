@@ -378,7 +378,7 @@ function getAttributeAlignment(res, att, medics, q, trans) {
     let misalignTally = 0;
     for (let x of medics) {
         // some adept scenarios in the config are missing the question and are only labelled by name
-        let data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], ['results', x, 'questions', x, 'response'])
+        let data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], q === 'The way this medic makes medical decisions is how I make decisions' ? ['results', x, 'questions', x, 'response'] : undefined)
         if (!data) {
             data = safeGet(res, ['results', 'Omnibus: ' + x, 'questions', x + ': ' + q, 'response']);
         }
@@ -689,9 +689,52 @@ function populateDataSet(data) {
                 const selfReportADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
                 tmpSet['AD_Align_AlignSR_Omni' + suffix] = selfReportADomni['align'];
                 tmpSet['AD_Misalign_AlignSR_Omni' + suffix] = selfReportADomni['misalign'];
+
+                // get average of responses for high alignment adms and trust
+                tmpSet['ST_High_Trust'] = stAttribute == 1 ? trustST['align'] : trustST['misalign'];
+                tmpSet['ST_Low_Trust'] = stAttribute == 0 ? trustST['align'] : trustST['misalign'];
+                tmpSet['ST_High_Agree'] = stAttribute == 1 ? agreeST['align'] : agreeST['misalign'];
+                tmpSet['ST_Low_Agree'] = stAttribute == 0 ? agreeST['align'] : agreeST['misalign'];
+                tmpSet['ST_High_Trustworthy'] = stAttribute == 1 ? trustworthyST['align'] : trustworthyST['misalign'];
+                tmpSet['ST_Low_Trustworthy'] = stAttribute == 0 ? trustworthyST['align'] : trustworthyST['misalign'];
+                tmpSet['ST_High_AlignSR'] = stAttribute == 1 ? selfReportST['align'] : selfReportST['misalign'];
+                tmpSet['ST_Low_AlignSR'] = stAttribute == 0 ? selfReportST['align'] : selfReportST['misalign'];
+                tmpSet['ST_AlignScore_High'] = Math.abs(0.9 - tmpSet['ST_KDMA_Text']);
+                tmpSet['ST_AlignScore_Low'] = Math.abs(0.1 - tmpSet['ST_KDMA_Text']);
+
+                tmpSet['ST_High_Trust_Omni'] = stAttribute == 1 ? trustSTomni['align'] : trustSTomni['misalign'];
+                tmpSet['ST_Low_Trust_Omni'] = stAttribute == 0 ? trustSTomni['align'] : trustSTomni['misalign'];
+                tmpSet['ST_High_Agree_Omni'] = stAttribute == 1 ? agreeSTomni['align'] : agreeSTomni['misalign'];
+                tmpSet['ST_Low_Agree_Omni'] = stAttribute == 0 ? agreeSTomni['align'] : agreeSTomni['misalign'];
+                tmpSet['ST_High_Trustworthy_Omni'] = stAttribute == 1 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
+                tmpSet['ST_Low_Trustworthy_Omni'] = stAttribute == 0 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
+                tmpSet['ST_High_AlignSR_Omni'] = stAttribute == 1 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
+                tmpSet['ST_Low_AlignSR_Omni'] = stAttribute == 0 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
+
+                tmpSet['AD_High_Trust'] = adAttribute == 1 ? trustAD['align'] : trustAD['misalign'];
+                tmpSet['AD_Low_Trust'] = adAttribute == 0 ? trustAD['align'] : trustAD['misalign'];
+                tmpSet['AD_High_Agree'] = adAttribute == 1 ? agreeAD['align'] : agreeAD['misalign'];
+                tmpSet['AD_Low_Agree'] = adAttribute == 0 ? agreeAD['align'] : agreeAD['misalign'];
+                tmpSet['AD_High_Trustworthy'] = adAttribute == 1 ? trustworthyAD['align'] : trustworthyAD['misalign'];
+                tmpSet['AD_Low_Trustworthy'] = adAttribute == 0 ? trustworthyAD['align'] : trustworthyAD['misalign'];
+                tmpSet['AD_High_AlignSR'] = adAttribute == 1 ? selfReportAD['align'] : selfReportAD['misalign'];
+                tmpSet['AD_Low_AlignSR'] = adAttribute == 0 ? selfReportAD['align'] : selfReportAD['misalign'];
+                tmpSet['AD_AlignScore_High'] = Math.abs(0.84 - tmpSet['AD_KDMA_Text']);
+                tmpSet['AD_AlignScore_Low'] = Math.abs(0.22 - tmpSet['AD_KDMA_Text']);
+
+                tmpSet['AD_High_Trust_Omni'] = adAttribute == 1 ? trustADomni['align'] : trustADomni['misalign'];
+                tmpSet['AD_Low_Trust_Omni'] = adAttribute == 0 ? trustADomni['align'] : trustADomni['misalign'];
+                tmpSet['AD_High_Agree_Omni'] = adAttribute == 1 ? agreeADomni['align'] : agreeADomni['misalign'];
+                tmpSet['AD_Low_Agree_Omni'] = adAttribute == 0 ? agreeADomni['align'] : agreeADomni['misalign'];
+                tmpSet['AD_High_Trustworthy_Omni'] = adAttribute == 1 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
+                tmpSet['AD_Low_Trustworthy_Omni'] = adAttribute == 0 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
+                tmpSet['AD_High_AlignSR_Omni'] = adAttribute == 1 ? selfReportADomni['align'] : selfReportADomni['misalign'];
+                tmpSet['AD_Low_AlignSR_Omni'] = adAttribute == 0 ? selfReportADomni['align'] : selfReportADomni['misalign'];
             }
         }
     }
+
+
     // get all results that don't have delegation survey
     for (let id of [...Object.keys(txtAlign), ...Object.keys(simAlign)]) {
         if (!allResults.find((x) => x['ParticipantID'].trim() === id.trim())) {
@@ -761,6 +804,7 @@ function populateDataSet(data) {
             allResults.push(tmpSet);
         }
     }
+
     return allResults;
 }
 
@@ -768,4 +812,33 @@ function getAggregatedData() {
     return AGGREGATED_DATA;
 }
 
-export { populateDataSet, getAggregatedData };
+function getChartData(data) {
+    const scattered = [];
+    let i = 0;
+    const stt = [];
+    const sts = [];
+    const adt = [];
+    const ads = [];
+    for (const x of data) {
+        if (x['ST_Align_Trust_Text']) {
+            scattered.push({ pid: Number(x['ParticipantID'].split('2024')[1]), id: i, stt: x['ST_KDMA_Text'], sts: x['ST_KDMA_Sim'], adt: x['AD_KDMA_Text'], ads: x['AD_KDMA_Sim'], st_trust: x['ST_Align_Trust_Text'], ad_trust: x['AD_Align_Trust_Text'] });
+        }
+        if (isDefined(x['ST_KDMA_Text'])) {
+            stt.push(x['ST_KDMA_Text']);
+        }
+        if (isDefined(x['ST_KDMA_Sim'])) {
+            sts.push(x['ST_KDMA_Sim']);
+        }
+        if (isDefined(x['AD_KDMA_Text'])) {
+            adt.push(x['AD_KDMA_Text']);
+        }
+        if (isDefined(x['AD_KDMA_Sim'])) {
+            ads.push(x['AD_KDMA_Sim']);
+        }
+        i += 1;
+    }
+    return { 'scatter': scattered, 'stt': stt, 'sts': sts, 'adt': adt, 'ads': ads };
+}
+
+
+export { populateDataSet, getAggregatedData, getChartData, isDefined };

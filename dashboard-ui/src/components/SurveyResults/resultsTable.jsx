@@ -173,7 +173,7 @@ export function ResultsTable({ data }) {
             </div>
         </section>
             <div className='resultTableSection'>
-                <table>
+                <table className='itm-table'>
                     <thead>
                         <tr>
                             {headers.map((val, index) => {

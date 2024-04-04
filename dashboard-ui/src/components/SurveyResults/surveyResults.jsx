@@ -127,7 +127,8 @@ function SingleGraph({ data, version }) {
         if (vizPanel) {
             vizPanel.render("viz_" + pageName);
             return () => {
-                document.getElementById("viz_" + pageName).innerHTML = "";
+                if (document.getElementById("viz_" + pageName))
+                    document.getElementById("viz_" + pageName).innerHTML = "";
             }
         }
     }, [vizPanel]);

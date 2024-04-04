@@ -168,7 +168,8 @@ function SingleGraph({ data, pageName }) {
         if (vizPanel) {
             vizPanel.render("viz_" + pageName);
             return () => {
-                document.getElementById("viz_" + pageName).innerHTML = "";
+                if (document.getElementById("viz_" + pageName))
+                    document.getElementById("viz_" + pageName).innerHTML = "";
             }
         }
     }, [vizPanel, pageName]);
@@ -254,7 +255,7 @@ function ParticipantView({ data, scenarioName }) {
     return (<div className="participant-text-results">
         <button onClick={exportToExcel}>Download Results</button>
         <div className="table-container">
-            {organizedData && <table className="by-participant">
+            {organizedData && <table className="itm-table by-participant">
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
@@ -409,7 +410,7 @@ export default function TextBasedResultsPage() {
                     return (<div className='result-section' key={qkey}>
                         <h3 className='question-header'>{qkey} (N={questionAnswerSets[qkey]['total']})</h3>
                         <p>{questionAnswerSets[qkey]['question']}</p>
-                        <table className="text-result-table">
+                        <table className="itm-table text-result-table">
                             <thead>
                                 <tr>
                                     <th className="answer-column">

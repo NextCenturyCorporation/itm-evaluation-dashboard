@@ -172,6 +172,12 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/dataset">Data Analysis</Link>
                                 </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/results/program-questions">Results: Program Questions</Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/dataset">Results: Evaluation Segments</Link>
+                                </li>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
@@ -209,7 +215,7 @@ export class App extends React.Component {
                                 <Results />
                             </Route>
                             <Route exact path="/dataset">
-                                <AggregateResults />
+                                <AggregateResults type="Aggregate" />
                             </Route>
                             <Route exact path="/scenarios">
                                 <Scenarios />
@@ -235,6 +241,9 @@ export class App extends React.Component {
                             </Route>
                             <Route path="/text-based-results">
                                 <TextBasedResults />
+                            </Route>
+                            <Route path="/results/program-questions">
+                                <AggregateResults type="Program" />
                             </Route>
                         </Switch>
                     </div>
