@@ -54,8 +54,8 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
         const startSession = await axios.post(url);
         const sessionId = startSession.data;
         let responsePromises = [];
-        for (const [fieldName, field] of Object.entries(scenarioResults)) {
-            if (!field?.questions) { continue; }
+        for (const field of Object.entries(scenarioResults)) {
+            if (!field[1]?.questions) { continue; }
             for (const [questionName, question] of Object.entries(field.questions)) {
                 if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
                     const responseUrl = 'http://10.216.38.70:8080/api/v1/response';
@@ -100,14 +100,14 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         const startSession = await axios.post(url);
         const sessionId = await startSession.data;
         let responsePromises = [];
-        for (const [fieldName, field] of Object.entries(scenarioResults)) {
-            if (!field?.questions) { continue; }
-            for (const [questionName, question] of Object.entries(field.questions)) {
-                if (question.response && question.probe && question.choice) {
-                    const problemProbe = isProblemProbe(question, scenarioResults.title)
+        for (const field of Object.entries(scenarioResults)) {
+            if (!field[1]?.questions) { continue; }
+            for (const question of Object.entries(field.questions)) {
+                if (question[1].response && question[1].probe && question[1].choice) {
+                    const problemProbe = isProblemProbe(question[1], scenarioResults.title)
                     if (problemProbe) {
                         // fix probe if it can be, if returns false skip over
-                        if (!fixProblemProbe(question, problemProbe)) { continue; }
+                        if (!fixProblemProbe(question[1], problemProbe)) { continue; }
                     }
                     // post a response
                     const responseUrl = 'http://10.216.38.125:8084/api/v1/response';
@@ -115,9 +115,9 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
                         const promise = await axios.post(responseUrl, {
                             session_id: sessionId,
                             response: {
-                                choice: question.choice,
+                                choice: question[1].choice,
                                 justification: "justification",
-                                probe_id: question.probe,
+                                probe_id: question[1].probe,
                                 scenario_id: scenarioId,
                             },
                         }).catch(error => {
