@@ -1,5 +1,10 @@
 const axios = require('axios');
-const { stUrban, stDesert, stJungle, stSubmarine } = require('./problemProbes')
+const { stUrban, stDesert, stJungle, stSubmarine } = require('./problemProbes');
+// for env variables
+require('dotenv').config();
+const ADEPT_URL = process.env.ADEPT_URL;
+const ST_URL = process.env.ST_URL;
+
 // add proper choice id's to questions
 const mapAnswers = (scenario, scenarioMappings) => {
     if (!scenario.participantID) { return; }
@@ -46,15 +51,8 @@ const addProbeIDs = (scenario, scenarioMappings) => {
 }
 
 const getAdeptAlignment = async (scenarioResults, scenarioId) => {
-    /*local host 8080 is where I had adept running, if you had to change your port must change script to match */
     // build fetch for starting new session
-    
-    //PROD
-    const url = 'http://10.216.38.70/api/v1/new_session';
-
-    // DEV
-    // const url = 'http://127.0.0.1:8080/api/v1/new_session';
-    
+    const url = ADEPT_URL + '/api/v1/new_session';
     try {
         const startSession = await axios.post(url);
         const sessionId = startSession.data;
@@ -63,11 +61,7 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
             if (!field[1]?.questions) { continue; }
             for (const [questionName, question] of Object.entries(field[1].questions)) {
                 if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
-                    // PROD
-                    const responseUrl = 'http://10.216.38.70:8080/api/v1/response';
-                    
-                    // DEV
-                    // const responseUrl = 'http://127.0.0.1:8080/api/v1/response';
+                    const responseUrl = ADEPT_URL + '/api/v1/response';
                     const promise = axios.post(responseUrl, {
                         response: {
                             choice: question.choice,
@@ -88,11 +82,8 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
         await Promise.all(responsePromises);
         // get alignment for session
         const targetId = 'ADEPT-metrics_eval-alignment-target-train-HIGH';
-        // PROD
-        const urlAlignment = `http://10.216.38.70:8080/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}&population=false`;
+        const urlAlignment = ADEPT_URL + `/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}&population=false`;
 
-        // DEV
-        // const urlAlignment = `http://127.0.0.1:8080/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}&population=false`;
         const alignmentResponse = await axios.get(urlAlignment);
         const alignmentData = alignmentResponse.data;
 
@@ -105,13 +96,8 @@ const getAdeptAlignment = async (scenarioResults, scenarioId) => {
 }
 
 const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
-    /*local host 8084 is where I had soartech running, if you had to change your port must change script to match */
     // build fetch for starting new session
-    // PROD
-    const url = 'http://10.216.38.125:8084/api/v1/new_session?user_id=default_use';
-
-    // DEV
-    // const url = 'http://127.0.0.1:8084/api/v1/new_session?user_id=default_use';
+    const url = ST_URL + '/api/v1/new_session?user_id=default_use';
 
     try {
         const startSession = await axios.post(url);
@@ -127,11 +113,7 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
                         if (!fixProblemProbe(question[1], problemProbe)) { continue; }
                     }
                     // post a response
-                    // PROD
-                    const responseUrl = 'http://10.216.38.125:8084/api/v1/response';
-                    
-                    // DEV
-                    // const responseUrl = 'http://127.0.0.1:8084/api/v1/response';
+                    const responseUrl = ST_URL + '/api/v1/response';
                         const promise = await axios.post(responseUrl, {
                             session_id: sessionId,
                             response: {
@@ -152,11 +134,8 @@ const getSoarTechAlignments = async (scenarioResults, scenarioId) => {
         await Promise.all(responsePromises);
         // get alignment for session
         const targetId = 'maximization_high';
-        // PROD
-        const urlAlignment = `http://10.216.38.125:8084/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}`;
+        const urlAlignment = ST_URL + `/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}`;
 
-        // DEV
-        // const urlAlignment = `http://127.0.0.1:8084/api/v1/alignment/session?session_id=${sessionId}&target_id=${targetId}`;
         const alignmentResponse = await axios.get(urlAlignment).catch(error => {
             console.log("Error retrieving alignment for " + sessionId)
             console.log(error);
