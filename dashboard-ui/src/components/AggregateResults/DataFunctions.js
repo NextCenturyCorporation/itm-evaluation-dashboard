@@ -750,7 +750,7 @@ function populateDataSet(data) {
                 "2024214": new Date("March 20, 2024")
             }
 
-            tmpSet['Date'] = date[id].toLocaleDateString();
+            tmpSet['Date'] = date[id] ? date[id].toLocaleDateString() : null;
 
             // get order of text based (TODO: not hardcoded?)
             const textOrder = {
