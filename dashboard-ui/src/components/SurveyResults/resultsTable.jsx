@@ -47,7 +47,10 @@ export function ResultsTable({ data }) {
             }
             entryObj['Participant Id'] = entry['Participant ID']?.questions['Participant ID']?.response;
             if (!entryObj['Participant Id']) {
-                continue;
+                entryObj['Participant Id'] = entry['Participant ID Page']?.questions['Participant ID']?.response;
+                if (!entryObj['Participant Id']) { 
+                    continue;
+                }
             }
             entryObj['Username'] = entry?.user?.username;
             entryObj['Survey Version'] = version;
