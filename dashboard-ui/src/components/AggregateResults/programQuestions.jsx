@@ -150,8 +150,6 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
             }
             setAdmData(admKdmas);
         }
-
-        console.log(admKdmas);
     }, [data]);
 
     const getMeanAtt = (att) => {
