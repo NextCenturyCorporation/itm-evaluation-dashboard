@@ -69,3 +69,23 @@ nav.MuiList-root.nav-list.MuiList-padding {
     margin: 10px 20px;
     flex: 1;
 }
+
+.tableCellKey {
+    width: 10%; 
+    white-space: nowrap; 
+}
+
+.tableCellValue {
+    width: 90%;
+}
+
+.tableCellIcon {
+    width: 10px !important;
+    padding: 0 !important;
+    min-width: 0 !important; 
+    border-right: none !important;
+}
+
+.tableCellCommand {
+    border-left: none !important;
+}
