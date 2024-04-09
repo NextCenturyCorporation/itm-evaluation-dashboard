@@ -10,6 +10,7 @@ import './humanResults.css';
 const GET_HUMAN_RESULTS = gql`
     query getAllRawSimData {
         getAllRawSimData
+        getAllSimAlignment
   }`;
 
 const ENV_MAP = {
@@ -30,45 +31,79 @@ export default function HumanResults() {
     const [teamSelected, setSelectedTeam] = React.useState('adept');
 
     React.useEffect(() => {
-        if (data?.getAllRawSimData) {
+        if (data?.getAllRawSimData && data?.getAllSimAlignment) {
             const organized = {};
             for (const entry of data.getAllRawSimData) {
                 const scene = entry.data?.configData?.scene;
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
-                    // TODO: go through the scene to find where each scenario starts/ends
-                    entry['adept_start'] = -1;
-                    entry['adept_end'] = -1;
-                    entry['soartech_start'] = -1;
-                    entry['soartech_end'] = -1;
-                    entry['freeform_start'] = -1;
-                    entry['freeform_end'] = entry.data.actionList.length;
+                    const probes = data.getAllSimAlignment.filter((x) => pid === x.pid && ENV_MAP[scene].toLowerCase() === x.env);
+                    // go through the scene to find where each scenario starts/ends
+                    entry['adept'] = [];
+                    entry['soartech'] = [];
+                    entry['freeform'] = [];
+                    let adept_start = -1;
+                    let adept_end = -1;
+                    let soartech_start = -1;
+                    let soartech_end = -1;
+                    let freeform_start = -1;
+                    let last_action = null;
+                    let probes_matched = [];
                     for (const action of entry.data.actionList) {
-                        if (entry['soartech_start'] === -1 && (action.question?.toLowerCase().includes('soartech') || action.casualty.includes('atient U') || action.casualty.includes('atient V') || action.casualty.includes('atient W') || action.casualty.includes('atient X'))) {
+                        if (soartech_start === -1 && (action.question?.toLowerCase().includes('soartech') || action.casualty.includes('atient U') || action.casualty.includes('atient V') || action.casualty.includes('atient W') || action.casualty.includes('atient X'))) {
                             // soartech!!
-                            entry['soartech_start'] = entry.data.actionList.indexOf(action);
-                            if (entry['adept_start'] !== -1) {
-                                entry['adept_end'] = entry['soartech_start'] - 1;
+                            soartech_start = entry.data.actionList.indexOf(action);
+                            if (adept_start !== -1) {
+                                adept_end = soartech_start - 1;
                             }
                         }
-                        if (entry['adept_start'] === -1 && (action.question?.toLowerCase().includes('adept') || action.casualty.includes('Adept') || action.casualty.includes('NPC') || action.casualty.includes('Soldier') || action.casualty.includes('electrician') || action.casualty.includes('bystander') || (action.casualty.includes('Civilian 1') && !action.casualty.toLowerCase().includes('male')) || action.casualty.includes('Civilian 2'))) {
+                        if (adept_start === -1 && (action.question?.toLowerCase().includes('adept') || action.casualty.includes('Adept') || action.casualty.includes('NPC') || action.casualty.includes('Soldier') || action.casualty.includes('electrician') || action.casualty.includes('bystander') || (action.casualty.includes('Civilian 1') && !action.casualty.toLowerCase().includes('male')) || action.casualty.includes('Civilian 2'))) {
                             // adept!! adept shooter/victim, npcs sometimes end up in the data, local soldier and us soldier, electrician and bystander, and jungle civilians
-                            entry['adept_start'] = entry.data.actionList.indexOf(action);
-                            if (entry['soartech_start'] !== -1) {
-                                entry['soartech_end'] = entry['adept_start'] - 1;
+                            adept_start = entry.data.actionList.indexOf(action);
+                            if (soartech_start !== -1) {
+                                soartech_end = adept_start - 1;
                             }
                         }
-                        if ((entry['adept_start'] !== -1 && entry['soartech_start'] !== -1 && entry['freeform_start'] === -1) && (action.casualty.includes('Navy') || action.casualty.includes('Open World') || action.casualty.includes('Marine') || action.casualty.includes('Civilian 1 Female'))) {
-                            entry['freeform_start'] = entry.data.actionList.indexOf(action);
-                            if (entry['adept_end'] === -1) {
-                                entry['adept_end'] = entry['freeform_start'] - 1;
+                        if ((adept_start !== -1 && soartech_start !== -1 && freeform_start === -1) && (action.casualty.includes('Navy') || action.casualty.includes('Open World') || action.casualty.includes('Marine') || action.casualty.includes('Civilian 1 Female'))) {
+                            freeform_start = entry.data.actionList.indexOf(action);
+                            if (adept_end === -1) {
+                                adept_end = freeform_start - 1;
                             }
-                            if (entry['soartech_end'] === -1) {
-                                entry['soartech_end'] = entry['freeform_start'] - 1;
+                            if (soartech_end === -1) {
+                                soartech_end = freeform_start - 1;
                             }
                         }
+                        if (last_action && last_action.actionType === 'Pulse' && last_action.actionType === action.actionType && last_action.casualty === action.casualty) {
+                            continue;
+                        }
+                        // see if the action matches a probe
+                        let probeFound = false;
+                        for (const probe of probes) {
+                            for (const match of probe.data.data) {
+                                if (!probes_matched.includes(match.probe_id) && match.found_match && match.user_action && match.user_action.actionType === action.actionType && match.user_action.casualty === action.casualty &&
+                                    match.user_action.treatment === action.treatment && match.user_action.treatmentLocation === action.treatmentLocation && match.user_action.tagColor === action.tagColor
+                                    && match.user_action.tagType === action.tagType && match.user_action.question === action.question && match.user_action.answer === action.answer) {
+                                    probeFound = true;
+                                    action.probe = match.probe;
+                                    probes_matched.push(match.probe_id);
+                                    break;
+                                }
+                            }
+                            if (probeFound) {
+                                break;
+                            }
+                        }
+                        if (soartech_start !== -1 && soartech_end === -1) {
+                            entry['soartech'].push(action);
+                        }
+                        if (adept_start !== -1 && adept_end === -1) {
+                            entry['adept'].push(action);
+                        }
+                        if (freeform_start !== -1) {
+                            entry['freeform'].push(action);
+                        }
+                        last_action = action;
                     }
-                    console.log(entry);
                     if (Object.keys(organized).includes(scene)) {
                         organized[scene][pid] = entry;
                     } else {
@@ -77,7 +112,6 @@ export default function HumanResults() {
                     }
                 }
             }
-            // console.log(organized);
             setDataByScene(organized);
         }
     }, [data]);
@@ -135,11 +169,12 @@ export default function HumanResults() {
                         <tr>
                             <th>Action Type</th>
                             <th>Action Details</th>
+                            {teamSelected !== 'freeform' && <th>Probe</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {
-                            (dataByScene[selectedScene][selectedPID].data.actionList.slice(teamSelected === 'soartech' ? dataByScene[selectedScene][selectedPID]['soartech_start'] : teamSelected === 'adept' ? dataByScene[selectedScene][selectedPID]['adept_start'] : dataByScene[selectedScene][selectedPID]['freeform_start'], teamSelected === 'soartech' ? dataByScene[selectedScene][selectedPID]['soartech_end'] : teamSelected === 'adept' ? dataByScene[selectedScene][selectedPID]['adept_end'] : dataByScene[selectedScene][selectedPID]['freeform_end'])).map((action, index) =>
+                            (dataByScene[selectedScene][selectedPID][teamSelected]).map((action, index) =>
                                 < tr key={action + '_' + index}>
                                     <td className="action-type-cell">{action.actionType}</td>
                                     <td>
@@ -161,6 +196,19 @@ export default function HumanResults() {
                                         </table>
 
                                     </td>
+                                    {teamSelected !== 'freeform' && <td className='probe-cell'>
+                                        {action.probe && <table className="sub-table">
+                                            <tbody>
+                                                {isStringDefined(action.probe.probe_id) && <tr><td>Probe ID:</td><td>{action.probe.probe_id}</td></tr>}
+                                                {isStringDefined(action.probe.unstructured) && <tr><td>Details:</td><td>{action.probe.unstructured}</td></tr>}
+                                                {isStringDefined(action.probe.action_id) && <tr><td>Action ID:</td><td>{action.probe.action_id}</td></tr>}
+                                                {isStringDefined(action.probe.action_type) && <tr><td>Action Type:</td><td>{action.probe.action_type}</td></tr>}
+                                                {isStringDefined(action.probe.character_id) && <tr><td>Character ID:</td><td>{action.probe.character_id}</td></tr>}
+                                                {isStringDefined(action.probe.choice) && <tr><td>Choice:</td><td>{action.probe.choice}</td></tr>}
+                                                {isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
+                                            </tbody>
+                                        </table>}
+                                    </td>}
                                 </tr>
                             )
                         }

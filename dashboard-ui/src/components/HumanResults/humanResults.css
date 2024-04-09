@@ -31,6 +31,10 @@
     border: 1px solid black;
 }
 
+.probe-cell {
+    border-left: 1px solid black;
+}
+
 .sub-table tr td:first-child {
     font-weight: bold;
     padding: 0px 8px;
