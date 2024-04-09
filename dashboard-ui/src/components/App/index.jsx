@@ -29,6 +29,7 @@ import 'react-dual-listbox/lib/react-dual-listbox.css';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
+import HumanResults from '../HumanResults/humanResults';
 
 const history = createBrowserHistory();
 
@@ -178,6 +179,9 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/dataset">Results: Evaluation Segments</Link>
                                 </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/human-results">Human Results</Link>
+                                </li>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
@@ -244,6 +248,9 @@ export class App extends React.Component {
                             </Route>
                             <Route path="/results/program-questions">
                                 <AggregateResults type="Program" />
+                            </Route>
+                            <Route path="/human-results">
+                                <HumanResults />
                             </Route>
                         </Switch>
                     </div>

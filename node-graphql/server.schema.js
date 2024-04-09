@@ -180,7 +180,8 @@ const typeDefs = gql`
     getAllSurveyResults: [JSON],
     getAllScenarioResults: [JSON],
     getAllSimAlignment: [JSON],
-    getEvalNameNumbers: [JSON]
+    getEvalNameNumbers: [JSON],
+    getAllRawSimData: [JSON]
   }
 
   type Mutation {
@@ -293,7 +294,10 @@ const resolvers = {
     getEvalNameNumbers: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').aggregate( 
         [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
-    }
+    },
+    getAllRawSimData: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });
+    },
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {

@@ -27,11 +27,11 @@ const MED_EXP_MAP = {
 };
 
 const TRUST_MAP = {
-    "Strongly disagree": -2,
-    "Disagree": -1,
-    "Neither agree nor disagree": 0,
-    "Agree": 1,
-    "Strongly agree": 2
+    "Strongly disagree": 1,
+    "Disagree": 2,
+    "Neither agree nor disagree": 3,
+    "Agree": 4,
+    "Strongly agree": 5
 };
 
 const COMFORT_MAP = {
@@ -52,21 +52,21 @@ const TEXT_BASED_MAP = {
 };
 
 const RESPONSIBILITY_MAP = {
-    "Strongly disagree": 0,
-    "Disagree": 1,
-    "Neither agree nor disagree": 2,
-    "Agree": 3,
-    "Strongly agree": 4
+    "Strongly disagree": 1,
+    "Disagree": 2,
+    "Neither agree nor disagree": 3,
+    "Agree": 4,
+    "Strongly agree": 5
 };
 
 const CONFIDENCE_MAP = {
-    "Not confident at all": 0,
-    "No confident at all": 0,
-    "Not confidence at all": 0,
-    "Not confident": 1,
-    "Somewhat confident": 2,
-    "Confident": 3,
-    "Completely confident": 4
+    "Not confident at all": 1,
+    "No confident at all": 1,
+    "Not confidence at all": 1,
+    "Not confident": 2,
+    "Somewhat confident": 3,
+    "Confident": 4,
+    "Completely confident": 5
 };
 
 // 1 is high alignment, 0 is low alignment
@@ -691,45 +691,45 @@ function populateDataSet(data) {
                 tmpSet['AD_Misalign_AlignSR_Omni' + suffix] = selfReportADomni['misalign'];
 
                 // get average of responses for high alignment adms and trust
-                tmpSet['ST_High_Trust'] = stAttribute == 1 ? trustST['align'] : trustST['misalign'];
-                tmpSet['ST_Low_Trust'] = stAttribute == 0 ? trustST['align'] : trustST['misalign'];
-                tmpSet['ST_High_Agree'] = stAttribute == 1 ? agreeST['align'] : agreeST['misalign'];
-                tmpSet['ST_Low_Agree'] = stAttribute == 0 ? agreeST['align'] : agreeST['misalign'];
-                tmpSet['ST_High_Trustworthy'] = stAttribute == 1 ? trustworthyST['align'] : trustworthyST['misalign'];
-                tmpSet['ST_Low_Trustworthy'] = stAttribute == 0 ? trustworthyST['align'] : trustworthyST['misalign'];
-                tmpSet['ST_High_AlignSR'] = stAttribute == 1 ? selfReportST['align'] : selfReportST['misalign'];
-                tmpSet['ST_Low_AlignSR'] = stAttribute == 0 ? selfReportST['align'] : selfReportST['misalign'];
+                tmpSet['ST_High_Trust'] = stAttribute === 1 ? trustST['align'] : trustST['misalign'];
+                tmpSet['ST_Low_Trust'] = stAttribute === 0 ? trustST['align'] : trustST['misalign'];
+                tmpSet['ST_High_Agree'] = stAttribute === 1 ? agreeST['align'] : agreeST['misalign'];
+                tmpSet['ST_Low_Agree'] = stAttribute === 0 ? agreeST['align'] : agreeST['misalign'];
+                tmpSet['ST_High_Trustworthy'] = stAttribute === 1 ? trustworthyST['align'] : trustworthyST['misalign'];
+                tmpSet['ST_Low_Trustworthy'] = stAttribute === 0 ? trustworthyST['align'] : trustworthyST['misalign'];
+                tmpSet['ST_High_AlignSR'] = stAttribute === 1 ? selfReportST['align'] : selfReportST['misalign'];
+                tmpSet['ST_Low_AlignSR'] = stAttribute === 0 ? selfReportST['align'] : selfReportST['misalign'];
                 tmpSet['ST_AlignScore_High'] = Math.abs(0.9 - tmpSet['ST_KDMA_Text']);
                 tmpSet['ST_AlignScore_Low'] = Math.abs(0.1 - tmpSet['ST_KDMA_Text']);
 
-                tmpSet['ST_High_Trust_Omni'] = stAttribute == 1 ? trustSTomni['align'] : trustSTomni['misalign'];
-                tmpSet['ST_Low_Trust_Omni'] = stAttribute == 0 ? trustSTomni['align'] : trustSTomni['misalign'];
-                tmpSet['ST_High_Agree_Omni'] = stAttribute == 1 ? agreeSTomni['align'] : agreeSTomni['misalign'];
-                tmpSet['ST_Low_Agree_Omni'] = stAttribute == 0 ? agreeSTomni['align'] : agreeSTomni['misalign'];
-                tmpSet['ST_High_Trustworthy_Omni'] = stAttribute == 1 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
-                tmpSet['ST_Low_Trustworthy_Omni'] = stAttribute == 0 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
-                tmpSet['ST_High_AlignSR_Omni'] = stAttribute == 1 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
-                tmpSet['ST_Low_AlignSR_Omni'] = stAttribute == 0 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
+                tmpSet['ST_High_Trust_Omni'] = stAttribute === 1 ? trustSTomni['align'] : trustSTomni['misalign'];
+                tmpSet['ST_Low_Trust_Omni'] = stAttribute === 0 ? trustSTomni['align'] : trustSTomni['misalign'];
+                tmpSet['ST_High_Agree_Omni'] = stAttribute === 1 ? agreeSTomni['align'] : agreeSTomni['misalign'];
+                tmpSet['ST_Low_Agree_Omni'] = stAttribute === 0 ? agreeSTomni['align'] : agreeSTomni['misalign'];
+                tmpSet['ST_High_Trustworthy_Omni'] = stAttribute === 1 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
+                tmpSet['ST_Low_Trustworthy_Omni'] = stAttribute === 0 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
+                tmpSet['ST_High_AlignSR_Omni'] = stAttribute === 1 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
+                tmpSet['ST_Low_AlignSR_Omni'] = stAttribute === 0 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
 
-                tmpSet['AD_High_Trust'] = adAttribute == 1 ? trustAD['align'] : trustAD['misalign'];
-                tmpSet['AD_Low_Trust'] = adAttribute == 0 ? trustAD['align'] : trustAD['misalign'];
-                tmpSet['AD_High_Agree'] = adAttribute == 1 ? agreeAD['align'] : agreeAD['misalign'];
-                tmpSet['AD_Low_Agree'] = adAttribute == 0 ? agreeAD['align'] : agreeAD['misalign'];
-                tmpSet['AD_High_Trustworthy'] = adAttribute == 1 ? trustworthyAD['align'] : trustworthyAD['misalign'];
-                tmpSet['AD_Low_Trustworthy'] = adAttribute == 0 ? trustworthyAD['align'] : trustworthyAD['misalign'];
-                tmpSet['AD_High_AlignSR'] = adAttribute == 1 ? selfReportAD['align'] : selfReportAD['misalign'];
-                tmpSet['AD_Low_AlignSR'] = adAttribute == 0 ? selfReportAD['align'] : selfReportAD['misalign'];
+                tmpSet['AD_High_Trust'] = adAttribute === 1 ? trustAD['align'] : trustAD['misalign'];
+                tmpSet['AD_Low_Trust'] = adAttribute === 0 ? trustAD['align'] : trustAD['misalign'];
+                tmpSet['AD_High_Agree'] = adAttribute === 1 ? agreeAD['align'] : agreeAD['misalign'];
+                tmpSet['AD_Low_Agree'] = adAttribute === 0 ? agreeAD['align'] : agreeAD['misalign'];
+                tmpSet['AD_High_Trustworthy'] = adAttribute === 1 ? trustworthyAD['align'] : trustworthyAD['misalign'];
+                tmpSet['AD_Low_Trustworthy'] = adAttribute === 0 ? trustworthyAD['align'] : trustworthyAD['misalign'];
+                tmpSet['AD_High_AlignSR'] = adAttribute === 1 ? selfReportAD['align'] : selfReportAD['misalign'];
+                tmpSet['AD_Low_AlignSR'] = adAttribute === 0 ? selfReportAD['align'] : selfReportAD['misalign'];
                 tmpSet['AD_AlignScore_High'] = Math.abs(0.84 - tmpSet['AD_KDMA_Text']);
                 tmpSet['AD_AlignScore_Low'] = Math.abs(0.22 - tmpSet['AD_KDMA_Text']);
 
-                tmpSet['AD_High_Trust_Omni'] = adAttribute == 1 ? trustADomni['align'] : trustADomni['misalign'];
-                tmpSet['AD_Low_Trust_Omni'] = adAttribute == 0 ? trustADomni['align'] : trustADomni['misalign'];
-                tmpSet['AD_High_Agree_Omni'] = adAttribute == 1 ? agreeADomni['align'] : agreeADomni['misalign'];
-                tmpSet['AD_Low_Agree_Omni'] = adAttribute == 0 ? agreeADomni['align'] : agreeADomni['misalign'];
-                tmpSet['AD_High_Trustworthy_Omni'] = adAttribute == 1 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
-                tmpSet['AD_Low_Trustworthy_Omni'] = adAttribute == 0 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
-                tmpSet['AD_High_AlignSR_Omni'] = adAttribute == 1 ? selfReportADomni['align'] : selfReportADomni['misalign'];
-                tmpSet['AD_Low_AlignSR_Omni'] = adAttribute == 0 ? selfReportADomni['align'] : selfReportADomni['misalign'];
+                tmpSet['AD_High_Trust_Omni'] = adAttribute === 1 ? trustADomni['align'] : trustADomni['misalign'];
+                tmpSet['AD_Low_Trust_Omni'] = adAttribute === 0 ? trustADomni['align'] : trustADomni['misalign'];
+                tmpSet['AD_High_Agree_Omni'] = adAttribute === 1 ? agreeADomni['align'] : agreeADomni['misalign'];
+                tmpSet['AD_Low_Agree_Omni'] = adAttribute === 0 ? agreeADomni['align'] : agreeADomni['misalign'];
+                tmpSet['AD_High_Trustworthy_Omni'] = adAttribute === 1 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
+                tmpSet['AD_Low_Trustworthy_Omni'] = adAttribute === 0 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
+                tmpSet['AD_High_AlignSR_Omni'] = adAttribute === 1 ? selfReportADomni['align'] : selfReportADomni['misalign'];
+                tmpSet['AD_Low_AlignSR_Omni'] = adAttribute === 0 ? selfReportADomni['align'] : selfReportADomni['misalign'];
             }
         }
     }

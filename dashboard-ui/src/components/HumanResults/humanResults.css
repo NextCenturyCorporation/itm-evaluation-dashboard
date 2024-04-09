@@ -1,0 +1,60 @@
+.selection-section .nav-header {
+    margin-bottom: 0px;
+}
+
+.selection-section .nav-list {
+    margin-top: 0px;
+}
+
+.human-results {
+    display: flex;
+    flex-direction: row;
+}
+
+.hr-nav {
+    width: 20%;
+    min-width: 200px;
+}
+
+.not-found {
+    text-align: center;
+    width: 80%;
+    margin-top: 12px;
+}
+
+.sim-participant {
+    width: 80%;
+    margin: 12px;
+}
+
+.action-section {
+    border: 1px solid black;
+}
+
+.sub-table tr td:first-child {
+    font-weight: bold;
+    padding: 0px 8px;
+}
+
+.action-list>tbody>tr {
+    border: 1px solid black;
+}
+
+.action-list>thead>tr>th {
+    border: 1px solid black;
+    padding-left: 8px;
+}
+
+.action-type-cell {
+    border: 1px solid black;
+    padding-left: 8px;
+}
+
+.action-list {
+    width: 100%;
+}
+
+.team-chooser {
+    float: right;
+    margin-bottom: 8px;
+}
