@@ -150,3 +150,9 @@
     text-align: center;
     width: 100%;
 }
+
+.home-container .result-table-section-override {
+    border: 0px !important;
+    padding: 5px 10px 15px 10px !important;
+    margin-bottom: 25px !important;
+} 

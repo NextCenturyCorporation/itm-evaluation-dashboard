@@ -96,7 +96,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
+const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 }};
 
 // get text alignment scores for every participant, and the median value of those scores
 function getTextAlignment(data) {
@@ -397,10 +397,76 @@ function getAttributeAlignment(res, att, medics, q, trans) {
     return { 'align': alignTally > 0 ? align / alignTally : null, 'misalign': misalignTally > 0 ? misalign / misalignTally : null };
 }
 
+function populateHumanDataRow(rowObject) {
+    let adept = 0;
+    let soartech = 1;
+    if(rowObject[0]._id.indexOf("_st_") > -1) {
+        adept = 1;
+        soartech = 0;
+    }
+
+    let returnObj = {
+        "Participant": rowObject[0].pid,
+        "SimEnv": rowObject[0].env,
+        "SimOrder": rowObject[0].simOrder,
+        "AD_P1": rowObject[adept].data.data.length > 0 ? rowObject[adept].data.data[0].probe.kdma_association["MoralDesert"] : "",
+        "AD_P2": rowObject[adept].data.data.length > 1 ? rowObject[adept].data.data[1].probe.kdma_association["MoralDesert"] : "",
+        "AD_P3": rowObject[adept].data.data.length > 2 ? rowObject[adept].data.data[2].probe.kdma_association["MoralDesert"] : "",
+        "ST_1.1": "",
+        "ST_1.2": "",
+        "ST_1.3": "",
+        "ST_2.2": "",
+        "ST_2.3": "",
+        "ST_3.1": "",
+        "ST_3.2": "",
+        "ST_4.1": "",
+        "ST_4.2": "",
+        "ST_4.3": "",
+        "ST_5.1": "",
+        "ST_5.2": "",
+        "ST_5.3": "",
+        "ST_6.1": "",
+        "ST_6.2": "",
+        "ST_8.1": "",
+        "ST_8.2": "",
+        "AD_KDMA_Env": rowObject[adept].data.alignment.kdma_values.length > 0 ? Math.round(rowObject[adept].data.alignment.kdma_values[0].value * 100) / 100 : "",
+        "ST_KDMA_Env": rowObject[soartech].data.alignment !== null && rowObject[soartech].data.alignment.kdma_values.length > 0 ? Math.round(rowObject[soartech].data.alignment.kdma_values[0].value * 100) / 100 : "",
+        "AD_KDMA": isNaN(Math.round(rowObject[adept].avgKDMA * 100) / 100) ? "" : Math.round(rowObject[adept].avgKDMA * 100) / 100,
+        "ST_KDMA": isNaN(Math.round(rowObject[soartech].avgKDMA * 100) / 100) ? "" : Math.round(rowObject[soartech].avgKDMA * 100) / 100
+    };
+
+    const soartechProbeIds = ["1.1", "1.2", "1.3", "2.2", "2.3", "3.1", "3.2", "4.1", "4.2", "4.3", "5.1", "5.2", "5.3", "6.1", "6.2", "8.1", "8.2"]
+
+    for(let i=0; i < rowObject[soartech].data.data.length; i++) {
+        for(let j=0; j < soartechProbeIds.length; j++) {
+            if(rowObject[soartech].data.data[i].found_match !== false) { 
+                if (rowObject[soartech].data.data[i].probe_id.indexOf(soartechProbeIds[j]) > -1) {
+                    returnObj["ST_" + soartechProbeIds[j]] = rowObject[soartech].data.data[i].probe.kdma_association["maximization"];
+                } 
+            }
+        }
+    }
+
+    return returnObj;
+}
+
 function populateDataSet(data) {
     let simAlign = null;
     if (data.getAllSimAlignment) {
         simAlign = getSimAlignment(data.getAllSimAlignment);
+        let tempGroupHumanSimData = Object.groupBy(data.getAllSimAlignment, ({env}) => env);
+        Object.keys(tempGroupHumanSimData).forEach (key => {
+            tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({pid}) => pid);
+            let tempGroupPidArray = [];
+            Object.keys(tempGroupHumanSimData[key]).forEach (keyPid => {
+                if(keyPid.indexOf(" ") === -1) {
+                    tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid]));
+                }
+            });
+            tempGroupHumanSimData[key] = tempGroupPidArray;
+        });
+        
+        AGGREGATED_DATA["groupedSim"] = tempGroupHumanSimData
     }
     const txtAlign = getTextAlignment(data);
     const allResults = [];
