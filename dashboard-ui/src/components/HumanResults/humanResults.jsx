@@ -164,56 +164,58 @@ export default function HumanResults() {
                     <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-freeform' value={"freeform"}>Freeform</ToggleButton>
                 </ToggleButtonGroup>
-                <table className="action-list">
-                    <thead>
-                        <tr>
-                            <th>Action Type</th>
-                            <th>Action Details</th>
-                            {teamSelected !== 'freeform' && <th>Probe</th>}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            (dataByScene[selectedScene][selectedPID][teamSelected]).map((action, index) =>
-                                < tr key={action + '_' + index}>
-                                    <td className="action-type-cell">{action.actionType}</td>
-                                    <td>
-                                        <table className="sub-table">
-                                            <tbody>
-                                                {isStringDefined(action.casualty) && <tr><td>Character:</td><td>{action.casualty}</td></tr>}
-                                                {isStringDefined(action.injuryType) && <tr><td>Injury Type:</td><td>{action.injuryType}</td></tr>}
-                                                {isStringDefined(action.treatment) && <tr><td>Treatment:</td><td>{action.treatment}</td></tr>}
-                                                {isStringDefined(action.treatmentLocation) && <tr><td>Treatment Location:</td><td>{action.treatmentLocation}</td></tr>}
-                                                {isStringDefined(action.question) && <tr><td>Question:</td><td>{action.question}</td></tr>}
-                                                {isStringDefined(action.answer) && <tr><td>Answer:</td><td>{action.answer}</td></tr>}
-                                                {isStringDefined(action.breathing) && <tr><td>Breathing:</td><td>{action.breathing}</td></tr>}
-                                                {isStringDefined(action.pulse) && <tr><td>Pulse:</td><td>{action.pulse}</td></tr>}
-                                                {isStringDefined(action.SpO2) && <tr><td>SpO2:</td><td>{action.SpO2}</td></tr>}
-                                                {isStringDefined(action.successfulTreatment) && action.actionType === 'Treatment' && <tr><td>Successful Treatment:</td><td>{action.successfulTreatment.toString()}</td></tr>}
-                                                {isStringDefined(action.tagColor) && <tr><td>Tag Color:</td><td>{action.tagColor}</td></tr>}
-                                                {isStringDefined(action.tagType) && <tr><td>Tag Type:</td><td>{action.tagType}</td></tr>}
-                                            </tbody>
-                                        </table>
+                <div className="table-container">
+                    <table className="action-list">
+                        <thead>
+                            <tr>
+                                <th>Action Type</th>
+                                <th>Action Details</th>
+                                {teamSelected !== 'freeform' && <th>Probe</th>}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                (dataByScene[selectedScene][selectedPID][teamSelected]).map((action, index) =>
+                                    < tr key={action + '_' + index}>
+                                        <td className="action-type-cell">{action.actionType}</td>
+                                        <td>
+                                            <table className="sub-table">
+                                                <tbody>
+                                                    {isStringDefined(action.casualty) && <tr><td>Character:</td><td>{action.casualty}</td></tr>}
+                                                    {isStringDefined(action.injuryType) && <tr><td>Injury Type:</td><td>{action.injuryType}</td></tr>}
+                                                    {isStringDefined(action.treatment) && <tr><td>Treatment:</td><td>{action.treatment}</td></tr>}
+                                                    {isStringDefined(action.treatmentLocation) && <tr><td>Treatment Location:</td><td>{action.treatmentLocation}</td></tr>}
+                                                    {isStringDefined(action.question) && <tr><td>Question:</td><td>{action.question}</td></tr>}
+                                                    {isStringDefined(action.answer) && <tr><td>Answer:</td><td>{action.answer}</td></tr>}
+                                                    {isStringDefined(action.breathing) && <tr><td>Breathing:</td><td>{action.breathing}</td></tr>}
+                                                    {isStringDefined(action.pulse) && <tr><td>Pulse:</td><td>{action.pulse}</td></tr>}
+                                                    {isStringDefined(action.SpO2) && <tr><td>SpO2:</td><td>{action.SpO2}</td></tr>}
+                                                    {isStringDefined(action.successfulTreatment) && action.actionType === 'Treatment' && <tr><td>Successful Treatment:</td><td>{action.successfulTreatment.toString()}</td></tr>}
+                                                    {isStringDefined(action.tagColor) && <tr><td>Tag Color:</td><td>{action.tagColor}</td></tr>}
+                                                    {isStringDefined(action.tagType) && <tr><td>Tag Type:</td><td>{action.tagType}</td></tr>}
+                                                </tbody>
+                                            </table>
 
-                                    </td>
-                                    {teamSelected !== 'freeform' && <td className='probe-cell'>
-                                        {action.probe && <table className="sub-table">
-                                            <tbody>
-                                                {isStringDefined(action.probe.probe_id) && <tr><td>Probe ID:</td><td>{action.probe.probe_id}</td></tr>}
-                                                {isStringDefined(action.probe.unstructured) && <tr><td>Details:</td><td>{action.probe.unstructured}</td></tr>}
-                                                {isStringDefined(action.probe.action_id) && <tr><td>Action ID:</td><td>{action.probe.action_id}</td></tr>}
-                                                {isStringDefined(action.probe.action_type) && <tr><td>Action Type:</td><td>{action.probe.action_type}</td></tr>}
-                                                {isStringDefined(action.probe.character_id) && <tr><td>Character ID:</td><td>{action.probe.character_id}</td></tr>}
-                                                {isStringDefined(action.probe.choice) && <tr><td>Choice:</td><td>{action.probe.choice}</td></tr>}
-                                                {isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
-                                            </tbody>
-                                        </table>}
-                                    </td>}
-                                </tr>
-                            )
-                        }
-                    </tbody>
-                </table>
+                                        </td>
+                                        {teamSelected !== 'freeform' && <td className='probe-cell'>
+                                            {action.probe && <table className="sub-table">
+                                                <tbody>
+                                                    {isStringDefined(action.probe.probe_id) && <tr><td>Probe ID:</td><td>{action.probe.probe_id}</td></tr>}
+                                                    {isStringDefined(action.probe.unstructured) && <tr><td>Details:</td><td>{action.probe.unstructured}</td></tr>}
+                                                    {isStringDefined(action.probe.action_id) && <tr><td>Action ID:</td><td>{action.probe.action_id}</td></tr>}
+                                                    {isStringDefined(action.probe.action_type) && <tr><td>Action Type:</td><td>{action.probe.action_type}</td></tr>}
+                                                    {isStringDefined(action.probe.character_id) && <tr><td>Character ID:</td><td>{action.probe.character_id}</td></tr>}
+                                                    {isStringDefined(action.probe.choice) && <tr><td>Choice:</td><td>{action.probe.choice}</td></tr>}
+                                                    {isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
+                                                </tbody>
+                                            </table>}
+                                        </td>}
+                                    </tr>
+                                )
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
             : <h2 className="not-found">Please select an environment and participant to view results</h2>
         }
