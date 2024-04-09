@@ -15,6 +15,7 @@ import AggregateResults from '../AggregateResults/aggregateResults';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import { createBrowserHistory } from 'history';
+import ADMChartPage from '../AdmCharts/admChartPage';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -58,6 +59,10 @@ function TextBased() {
 
 function TextBasedResults() {
     return <TextBasedResultsPage />;
+}
+
+function AdmResults() {
+    return <ADMChartPage/>
 }
 
 
@@ -146,42 +151,39 @@ export class App extends React.Component {
                                 <li className="nav-item">
                                     <Link className="nav-link" to="/">Home</Link>
                                 </li>
-                                <NavDropdown title="ADM Results">
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
-                                        Results by ADM
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/scenarios">
-                                        ADM Scenarios
-                                    </NavDropdown.Item>
-                                </NavDropdown>
-                                <NavDropdown title="Delegation Surveys">
+                                <NavDropdown title="Data Collection">
                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
-                                        Take Survey
+                                        Take Delegation Survey
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
-                                        Survey Results
-                                    </NavDropdown.Item>
-                                </NavDropdown>
-                                <NavDropdown title="Text Scenarios">
                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
                                         Complete Text Scenarios
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                                <NavDropdown title="Human Evaluation Segments">
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
+                                        Delegation Survey Results
                                     </NavDropdown.Item>
                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
                                         Text Scenario Results
                                     </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanSimParticipant">
+                                        Human Sim Participant Data
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
+                                        Human Sim Probe Values
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
+                                        Play by Play: Humans in Sim
+                                    </NavDropdown.Item>
                                 </NavDropdown>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/dataset">Data Analysis</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/results/program-questions">Results: Program Questions</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/dataset">Results: Evaluation Segments</Link>
-                                </li>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/human-results">Human Results</Link>
-                                </li>
+                                <NavDropdown title="ADM Evaluation Segments">
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
+                                        ADM Data
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
+                                        ADM Alignment Results
+                                    </NavDropdown.Item>
+                                </NavDropdown>
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
@@ -218,8 +220,11 @@ export class App extends React.Component {
                             <Route exact path="/results">
                                 <Results />
                             </Route>
-                            <Route exact path="/dataset">
-                                <AggregateResults type="Aggregate" />
+                            <Route exact path="/adm-results">
+                                <AdmResults />
+                            </Route>
+                            <Route exact path="/humanSimParticipant">
+                                <AggregateResults type="HumanSimParticipant" />
                             </Route>
                             <Route exact path="/scenarios">
                                 <Scenarios />
@@ -246,8 +251,8 @@ export class App extends React.Component {
                             <Route path="/text-based-results">
                                 <TextBasedResults />
                             </Route>
-                            <Route path="/results/program-questions">
-                                <AggregateResults type="Program" />
+                            <Route path="/humanProbeData">
+                                <AggregateResults type="HumanProbeData" />
                             </Route>
                             <Route path="/human-results">
                                 <HumanResults />

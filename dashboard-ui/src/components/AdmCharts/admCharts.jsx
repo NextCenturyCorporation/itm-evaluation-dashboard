@@ -1,5 +1,5 @@
 import React from 'react';
-import ScoreChart from '../Home/scoreChart';
+import ScoreChart from './scoreChart';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 import Select from 'react-select';
@@ -11,7 +11,7 @@ const scenario_names_aggregation = gql`
         getScenarioNamesByEval(evalNumber: $evalNumber)
   }`;
 
-class HomeCharts extends React.Component {
+class AdmCharts extends React.Component {
 
     constructor(props) {
         super();
@@ -104,4 +104,4 @@ class HomeCharts extends React.Component {
     }
 }
 
-export default HomeCharts;
+export default AdmCharts;

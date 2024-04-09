@@ -14,12 +14,12 @@
     background-color: #ffffff;
     margin: 10px 25px;
     min-height:150px;
+    padding-bottom: 10px;
 }
 
 .chart-header {
     display: flex;
     padding: 5px 0 0 20px;
-    position: absolute;
     width: 95%;
 }
 
@@ -49,4 +49,9 @@
 
 .flex-chart-center svg{
     overflow: visible !important;
+}
+
+.center-text {
+    width:100%;
+    text-align: center;
 }

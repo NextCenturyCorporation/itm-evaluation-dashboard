@@ -6,6 +6,7 @@ import { getBoxWhiskerData, getMean, getMedian, getStandDev, getStandardError } 
 import { isDefined } from './DataFunctions';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
+import HomeCharts from '../AdmCharts/admCharts';
 
 const GET_ADM_DATA = gql`
     query getAllHistory {
@@ -183,586 +184,663 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
     };
 
     return (
-        <div className='programQuestions'>
-
-            <h2>1. Does alignment score correlate with trust?</h2>
-            {chartData && <div className="kdma-section">
-                <div className="boxWhisker outlinedPlot">
-                    <CanvasJSChart options={{
-                        maintainAspectRatio: false,
-                        height: "250",
-                        width: "700",
-                        data: [{
-                            type: "boxAndWhisker", dataPoints: [
-                                { label: "ST_KDMA_Text", y: getBoxWhiskerData(chartData.stt) },
-                                { label: "ST_KDMA_Sim", y: getBoxWhiskerData(chartData.sts) },
-                                { label: "AD_KDMA_Text", y: getBoxWhiskerData(chartData.adt) },
-                                { label: "AD_KDMA_Sim", y: getBoxWhiskerData(chartData.ads) },
-                            ]
-                        }]
-                    }} />
+        <div className="home-container">
+            <div className='chart-home-container'>
+                <div className='chart-header'>
+                    <div className='chart-header-label'>
+                        <h4>1. Does alignment score correlate with trust?</h4>
+                    </div>
                 </div>
-                <table className='itm-table miniTable kdmaTable'>
-                    <thead >
-                        <tr>
-                            <th></th>
-                            <th>Mean</th>
-                            <th>Median</th>
-                            <th>Standard Deviation</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>ST_KDMA_Text</td>
-                            <td>{getMean(chartData.stt).toFixed(2)}</td>
-                            <td>{getMedian(chartData.stt).toFixed(2)}</td>
-                            <td>{getStandDev(chartData.stt).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>ST_KDMA_Sim</td>
-                            <td>{getMean(chartData.sts).toFixed(2)}</td>
-                            <td>{getMedian(chartData.sts).toFixed(2)}</td>
-                            <td>{getStandDev(chartData.sts).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>AD_KDMA_Text</td>
-                            <td>{getMean(chartData.adt).toFixed(2)}</td>
-                            <td>{getMedian(chartData.adt).toFixed(2)}</td>
-                            <td>{getStandDev(chartData.adt).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>AD_KDMA_Sim</td>
-                            <td>{getMean(chartData.ads).toFixed(2)}</td>
-                            <td>{getMedian(chartData.ads).toFixed(2)}</td>
-                            <td>{getStandDev(chartData.ads).toFixed(2)}</td>
-                        </tr>
-                    </tbody>
-                </table>
 
-            </div>}
+                {chartData && <div className="kdma-section">
+                    <div className="boxWhisker outlinedPlot">
+                        <CanvasJSChart options={{
+                            maintainAspectRatio: false,
+                            height: "250",
+                            width: "700",
+                            data: [{
+                                type: "boxAndWhisker", dataPoints: [
+                                    { label: "ST_KDMA_Text", y: getBoxWhiskerData(chartData.stt) },
+                                    { label: "ST_KDMA_Sim", y: getBoxWhiskerData(chartData.sts) },
+                                    { label: "AD_KDMA_Text", y: getBoxWhiskerData(chartData.adt) },
+                                    { label: "AD_KDMA_Sim", y: getBoxWhiskerData(chartData.ads) },
+                                ]
+                            }]
+                        }} />
+                    </div>
+                    <table className='itm-table miniTable kdmaTable'>
+                        <thead >
+                            <tr>
+                                <th></th>
+                                <th>Mean</th>
+                                <th>Median</th>
+                                <th>Standard Deviation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ST_KDMA_Text</td>
+                                <td>{getMean(chartData.stt).toFixed(2)}</td>
+                                <td>{getMedian(chartData.stt).toFixed(2)}</td>
+                                <td>{getStandDev(chartData.stt).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>ST_KDMA_Sim</td>
+                                <td>{getMean(chartData.sts).toFixed(2)}</td>
+                                <td>{getMedian(chartData.sts).toFixed(2)}</td>
+                                <td>{getStandDev(chartData.sts).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>AD_KDMA_Text</td>
+                                <td>{getMean(chartData.adt).toFixed(2)}</td>
+                                <td>{getMedian(chartData.adt).toFixed(2)}</td>
+                                <td>{getStandDev(chartData.adt).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td>AD_KDMA_Sim</td>
+                                <td>{getMean(chartData.ads).toFixed(2)}</td>
+                                <td>{getMedian(chartData.ads).toFixed(2)}</td>
+                                <td>{getStandDev(chartData.ads).toFixed(2)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-            <CorrelationTables ta1="ADEPT" data={allData} />
-            <CorrelationTables ta1="SoarTech" data={allData} />
+                </div>}
 
-            {kdmaScatter &&
-                <div className="scatters">
-                    <div className="outlinedPlot scatter">
-                        <ScatterChart
-                            width={700}
-                            height={300}
-                            xAxis={[{ label: "ST_Align_Trust_Text" }]}
-                            series={[
+                <CorrelationTables ta1="ADEPT" data={allData} />
+                <CorrelationTables ta1="SoarTech" data={allData} />
+
+                {kdmaScatter &&
+                    <div className="scatters">
+                        <div className="outlinedPlot scatter">
+                            <ScatterChart
+                                width={700}
+                                height={300}
+                                xAxis={[{ label: "ST_Align_Trust_Text" }]}
+                                series={[
+                                    {
+                                        label: 'ST_KDMA_Text',
+                                        data: kdmaScatter.map((v) => ({ x: v.st_trust, y: v.stt, id: v.id })),
+                                    },
+                                    {
+                                        label: 'ST_KDMA_Sim',
+                                        data: kdmaScatter.map((v) => ({ x: v.st_trust, y: v.sts, id: v.id })),
+                                    }
+                                ]}
+                            />
+                        </div>
+                        <div className="outlinedPlot scatter">
+                            <ScatterChart
+                                width={700}
+                                height={300}
+                                xAxis={[{ label: "AD_Align_Trust_Text" }]}
+                                series={[
+                                    {
+                                        label: 'AD_KDMA_Text',
+                                        data: kdmaScatter.map((v) => ({ x: v.ad_trust, y: v.adt, id: v.id })),
+                                    },
+                                    {
+                                        label: 'AD_KDMA_Sim',
+                                        data: kdmaScatter.map((v) => ({ x: v.ad_trust, y: v.ads, id: v.id })),
+                                    }
+                                ]}
+                            />
+                        </div>
+                    </div>}
+            </div>
+            <div className='chart-home-container'>
+                <div className='chart-header'>
+                    <div className='chart-header-label'>
+                        <h4>2. Does aligned ADM have a higher alignment score than baseline ADM?</h4>
+                    </div>
+                </div>
+
+
+                {admData && <div className='q2-adms'>
+                    <div>
+                        <h3>Parallax - Maximization</h3>
+                        <CanvasJSChart options={{
+                            width: "1200",
+                            height: "380",
+                            axisY: {
+                                labelFormatter: setYAxis
+                            },
+                            data: [
+                                ...BASE_DATA_MAX,
                                 {
-                                    label: 'ST_KDMA_Text',
-                                    data: kdmaScatter.map((v) => ({ x: v.st_trust, y: v.stt, id: v.id })),
+                                    type: "scatter",
+                                    name: "Aligned Low",
+                                    showInLegend: true,
+                                    color: '#9ed483',
+                                    toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#9ed483',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('TAD aligned', 0, 'S')
                                 },
                                 {
-                                    label: 'ST_KDMA_Sim',
-                                    data: kdmaScatter.map((v) => ({ x: v.st_trust, y: v.sts, id: v.id })),
-                                }
-                            ]}
+                                    type: "scatter",
+                                    name: "Aligned High",
+                                    showInLegend: true,
+                                    color: '#4f994e',
+                                    toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#4f994e',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('TAD aligned', 1, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Misaligned Low",
+                                    showInLegend: true,
+                                    color: '#76b3c2',
+                                    toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('TAD misaligned', 0, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Misaligned High",
+                                    showInLegend: true,
+                                    color: '#367d8f',
+                                    toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('TAD misaligned', 1, 'S')
+                                },
+                                // {
+                                //     type: "scatter",
+                                //     name: "Minimum",
+                                //     showInLegend: true,
+                                //     color: '#888',
+                                //     toolTipContent: "<span style=\"color:#888 \">{name}<br/><span>{l}: {x}</span></span>",
+                                //     markerType: "square",
+                                //     markerBorderColor: '#777',
+                                //     markerBorderThickness: 1,
+                                //     markerSize: 9,
+                                //     dataPoints: [
+                                //         { x: 0.3, y: 1, l: "MD - Jungle" },
+                                //         { x: 0.3, y: 2, l: "MD - Submarine" },
+                                //         { x: 0.3, y: 3, l: "MD - Desert" },
+                                //         { x: 0.3, y: 4, l: "MD - Urban" },
+                                //         { x: 0.3, y: 5, l: "Max - Urban" },
+                                //         { x: 0.3, y: 6, l: "Max - Desert" },
+                                //         { x: 0.3, y: 7, l: "Max - Submarine" },
+                                //         { x: 0.3, y: 8, l: "Max - Jungle" },
+                                //     ]
+                                // },
+                                // {
+                                //     type: "scatter",
+                                //     name: "Maximum",
+                                //     showInLegend: true,
+                                //     color: '#888',
+                                //     toolTipContent: "<span style=\"color:#888 \">{name}<br/><span>{l}: {x}</span></span>",
+                                //     markerType: "square",
+                                //     markerBorderColor: '#777',
+                                //     markerBorderThickness: 1,
+                                //     markerSize: 9,
+                                //     dataPoints: [
+                                //         { x: 0.3, y: 1, l: "MD - Jungle" },
+                                //         { x: 0.3, y: 2, l: "MD - Submarine" },
+                                //         { x: 0.3, y: 3, l: "MD - Desert" },
+                                //         { x: 0.3, y: 4, l: "MD - Urban" },
+                                //         { x: 0.3, y: 5, l: "Max - Urban" },
+                                //         { x: 0.3, y: 6, l: "Max - Desert" },
+                                //         { x: 0.3, y: 7, l: "Max - Submarine" },
+                                //         { x: 0.3, y: 8, l: "Max - Jungle" },
+                                //     ]
+                                // },
+                                {
+                                    type: "scatter",
+                                    name: "Severity Baseline Low",
+                                    showInLegend: true,
+                                    color: '#db9239',
+                                    toolTipContent: "<span style=\"color:#db9239 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerSize: 11,
+                                    dataPoints: getDataPoints('TAD severity-baseline', 0, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Severity Baseline High",
+                                    showInLegend: true,
+                                    color: '#995e17',
+                                    toolTipContent: "<span style=\"color:#995e17 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerSize: 11,
+                                    dataPoints: getDataPoints('TAD severity-baseline', 1, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline Low",
+                                    showInLegend: true,
+                                    color: '#aba41b',
+                                    toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('TAD baseline', 0, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline High",
+                                    showInLegend: true,
+                                    color: '#f0e513',
+                                    toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('TAD baseline', 1, 'S')
+                                }]
+                        }}
                         />
                     </div>
-                    <div className="outlinedPlot scatter">
-                        <ScatterChart
-                            width={700}
-                            height={300}
-                            xAxis={[{ label: "AD_Align_Trust_Text" }]}
-                            series={[
+                    
+                    <div>
+                        <h3>Parallax - Moral Desert</h3>
+                        <CanvasJSChart options={{
+                            width: "1200",
+                            height: "380",
+                            axisY: {
+                                labelFormatter: setYAxis
+                            },
+                            data: [
+                                ...BASE_DATA_MD,
                                 {
-                                    label: 'AD_KDMA_Text',
-                                    data: kdmaScatter.map((v) => ({ x: v.ad_trust, y: v.adt, id: v.id })),
+                                    type: "scatter",
+                                    name: "Aligned Low",
+                                    showInLegend: true,
+                                    color: '#9ed483',
+                                    toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#9ed483',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('TAD aligned', 0, 'A')
                                 },
                                 {
-                                    label: 'AD_KDMA_Sim',
-                                    data: kdmaScatter.map((v) => ({ x: v.ad_trust, y: v.ads, id: v.id })),
-                                }
-                            ]}
+                                    type: "scatter",
+                                    name: "Aligned High",
+                                    showInLegend: true,
+                                    color: '#4f994e',
+                                    toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#4f994e',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('TAD aligned', 1, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Misaligned Low",
+                                    showInLegend: true,
+                                    color: '#76b3c2',
+                                    toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('TAD misaligned', 0, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Misaligned High",
+                                    showInLegend: true,
+                                    color: '#367d8f',
+                                    toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('TAD misaligned', 1, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Severity Baseline Low",
+                                    showInLegend: true,
+                                    color: '#db9239',
+                                    toolTipContent: "<span style=\"color:#db9239 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerSize: 11,
+                                    dataPoints: getDataPoints('TAD severity-baseline', 0, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Severity Baseline High",
+                                    showInLegend: true,
+                                    color: '#995e17',
+                                    toolTipContent: "<span style=\"color:#995e17 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerSize: 11,
+                                    dataPoints: getDataPoints('TAD severity-baseline', 1, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline Low",
+                                    showInLegend: true,
+                                    color: '#aba41b',
+                                    toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('TAD baseline', 0, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline High",
+                                    showInLegend: true,
+                                    color: '#f0e513',
+                                    toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('TAD baseline', 1, 'A')
+                                }]
+                        }}
+                        />
+                    </div>
+                    <div>
+                        <h3>Kitware - Maximization</h3>
+                        <CanvasJSChart options={{
+                            width: "1200",
+                            height: "380",
+                            axisY: {
+                                labelFormatter: setYAxis
+                            },
+                            data: [
+                                ...BASE_DATA_MAX,
+                                {
+                                    type: "scatter",
+                                    name: "Hybrid Aligned Low",
+                                    showInLegend: true,
+                                    color: '#9ed483',
+                                    toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#9ed483',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Hybrid Aligned High",
+                                    showInLegend: true,
+                                    color: '#4f994e',
+                                    toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#4f994e',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Single Aligned Low",
+                                    showInLegend: true,
+                                    color: '#76b3c2',
+                                    toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 0, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Single Aligned High",
+                                    showInLegend: true,
+                                    color: '#367d8f',
+                                    toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline Low",
+                                    showInLegend: true,
+                                    color: '#aba41b',
+                                    toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'S')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline High",
+                                    showInLegend: true,
+                                    color: '#f0e513',
+                                    toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'S')
+                                }]
+                        }}
+                        />
+                    </div>
+                    <div>
+                        <h3>Kitware - Moral Desert</h3>
+                        <CanvasJSChart options={{
+                            width: "1200",
+                            height: "380",
+                            axisY: {
+                                labelFormatter: setYAxis
+                            },
+                            data: [
+                                ...BASE_DATA_MD,
+                                {
+                                    type: "scatter",
+                                    name: "Hybrid Aligned Low",
+                                    showInLegend: true,
+                                    color: '#9ed483',
+                                    toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#9ed483',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Hybrid Aligned High",
+                                    showInLegend: true,
+                                    color: '#4f994e',
+                                    toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "cross",
+                                    markerBorderColor: '#4f994e',
+                                    markerBorderThickness: 3,
+                                    markerSize: 16,
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Single Aligned Low",
+                                    showInLegend: true,
+                                    color: '#76b3c2',
+                                    toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 0, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Single Aligned High",
+                                    showInLegend: true,
+                                    color: '#367d8f',
+                                    toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "circle",
+                                    markerSize: 10,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline Low",
+                                    showInLegend: true,
+                                    color: '#aba41b',
+                                    toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'A')
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Baseline High",
+                                    showInLegend: true,
+                                    color: '#f0e513',
+                                    toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerBorderColor: '#aaa',
+                                    markerBorderThickness: 1,
+                                    markerSize: 12,
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'A')
+                                }]
+                        }}
                         />
                     </div>
                 </div>}
+            </div>
+            <div className='chart-home-container'>
+                <div className='chart-header'>
+                    <div className='chart-header-label'>
+                        <h4>3. Does alignment affect delegation?</h4>
+                    </div>
+                </div>
 
 
-            <h2>2. Does aligned ADM have a higher alignment score than baseline ADM?</h2>
-            {admData && <div className='q2-adms'>
-                <div>
-                    <h3>Parallax - Maximization</h3>
+                <div className='delegationChoices'>
+                    <div>
+                        <h3>Forced Choice Delegation</h3>
+                        <CanvasJSChart options={{
+                            width: "700",
+                            dataPointWidth: 100,
+                            toolTip: {
+                                shared: true
+                            },
+                            axisX: {
+                                interval: 1
+                            },
+                            legend: {
+                                verticalAlign: "top",
+                                horizontalAlign: "center",
+                                cursor: "pointer"
+                            },
+                            data: [{
+                                type: "column",
+                                name: "Delegation Text Grouping",
+                                color: 'grey',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAtt('ST_Align_DelFC_Text'), label: "SoarTech" },
+                                    { y: getMeanAtt('AD_Align_DelFC_Text'), label: "ADEPT" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                color: "#555",
+                                name: "Variability Range",
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAtt('ST_Align_DelFC_Text'), label: "SoarTech" },
+                                    { y: getSeAtt('AD_Align_DelFC_Text'), label: "ADEPT" }
+                                ]
+                            },
+                            {
+                                type: "column",
+                                name: "Delegation Sim Grouping",
+                                color: '#cc9999',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAtt('ST_Align_DelFC_Sim'), label: "SoarTech" },
+                                    { y: getMeanAtt('AD_Align_DelFC_Sim'), label: "ADEPT" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                name: "Variability Range",
+                                color: '#555',
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAtt('ST_Align_DelFC_Sim'), label: "SoarTech" },
+                                    { y: getSeAtt('AD_Align_DelFC_Sim'), label: "ADEPT" }
+                                ]
+                            }
+                            ]
+                        }} />
+                    </div>
+
+                    <div>
+                        <h3>Full Choice Delegation</h3>
+                        <CanvasJSChart options={{
+                            width: "700",
+                            dataPointWidth: 100,
+                            toolTip: {
+                                shared: true
+                            },
+                            legend: {
+                                verticalAlign: "top",
+                                horizontalAlign: "center",
+                                cursor: "pointer"
+                            },
+                            data: [{
+                                type: "column",
+                                name: "Delegation Text Grouping",
+                                color: 'grey',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAtt('ST_Align_DelC_Text'), label: "SoarTech" },
+                                    { y: getMeanAtt('AD_Align_DelC_Text'), label: "ADEPT" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                color: "#555",
+                                name: "Variability Range",
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAtt('ST_Align_DelC_Text'), label: "SoarTech" },
+                                    { y: getSeAtt('AD_Align_DelC_Text'), label: "ADEPT" }
+                                ]
+                            },
+                            {
+                                type: "column",
+                                name: "Delegation Sim Grouping",
+                                color: '#cc9999',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAtt('ST_Align_DelC_Sim'), label: "SoarTech" },
+                                    { y: getMeanAtt('AD_Align_DelC_Sim'), label: "ADEPT" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                name: "Variability Range",
+                                color: '#555',
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAtt('ST_Align_DelC_Sim'), label: "SoarTech" },
+                                    { y: getSeAtt('AD_Align_DelC_Sim'), label: "ADEPT" }
+                                ]
+                            }
+                            ]
+                        }} />
+                    </div>
+                </div>
+
+                <div className="center-text"><h2>ADEPT</h2></div>
+                <div className="relatedResults">
                     <CanvasJSChart options={{
                         width: "1200",
-                        height: "380",
-                        axisY: {
-                            labelFormatter: setYAxis
-                        },
-                        data: [
-                            ...BASE_DATA_MAX,
-                            {
-                                type: "scatter",
-                                name: "Aligned Low",
-                                showInLegend: true,
-                                color: '#9ed483',
-                                toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#9ed483',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('TAD aligned', 0, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Aligned High",
-                                showInLegend: true,
-                                color: '#4f994e',
-                                toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#4f994e',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('TAD aligned', 1, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Misaligned Low",
-                                showInLegend: true,
-                                color: '#76b3c2',
-                                toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('TAD misaligned', 0, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Misaligned High",
-                                showInLegend: true,
-                                color: '#367d8f',
-                                toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('TAD misaligned', 1, 'S')
-                            },
-                            // {
-                            //     type: "scatter",
-                            //     name: "Minimum",
-                            //     showInLegend: true,
-                            //     color: '#888',
-                            //     toolTipContent: "<span style=\"color:#888 \">{name}<br/><span>{l}: {x}</span></span>",
-                            //     markerType: "square",
-                            //     markerBorderColor: '#777',
-                            //     markerBorderThickness: 1,
-                            //     markerSize: 9,
-                            //     dataPoints: [
-                            //         { x: 0.3, y: 1, l: "MD - Jungle" },
-                            //         { x: 0.3, y: 2, l: "MD - Submarine" },
-                            //         { x: 0.3, y: 3, l: "MD - Desert" },
-                            //         { x: 0.3, y: 4, l: "MD - Urban" },
-                            //         { x: 0.3, y: 5, l: "Max - Urban" },
-                            //         { x: 0.3, y: 6, l: "Max - Desert" },
-                            //         { x: 0.3, y: 7, l: "Max - Submarine" },
-                            //         { x: 0.3, y: 8, l: "Max - Jungle" },
-                            //     ]
-                            // },
-                            // {
-                            //     type: "scatter",
-                            //     name: "Maximum",
-                            //     showInLegend: true,
-                            //     color: '#888',
-                            //     toolTipContent: "<span style=\"color:#888 \">{name}<br/><span>{l}: {x}</span></span>",
-                            //     markerType: "square",
-                            //     markerBorderColor: '#777',
-                            //     markerBorderThickness: 1,
-                            //     markerSize: 9,
-                            //     dataPoints: [
-                            //         { x: 0.3, y: 1, l: "MD - Jungle" },
-                            //         { x: 0.3, y: 2, l: "MD - Submarine" },
-                            //         { x: 0.3, y: 3, l: "MD - Desert" },
-                            //         { x: 0.3, y: 4, l: "MD - Urban" },
-                            //         { x: 0.3, y: 5, l: "Max - Urban" },
-                            //         { x: 0.3, y: 6, l: "Max - Desert" },
-                            //         { x: 0.3, y: 7, l: "Max - Submarine" },
-                            //         { x: 0.3, y: 8, l: "Max - Jungle" },
-                            //     ]
-                            // },
-                            {
-                                type: "scatter",
-                                name: "Severity Baseline Low",
-                                showInLegend: true,
-                                color: '#db9239',
-                                toolTipContent: "<span style=\"color:#db9239 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerSize: 11,
-                                dataPoints: getDataPoints('TAD severity-baseline', 0, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Severity Baseline High",
-                                showInLegend: true,
-                                color: '#995e17',
-                                toolTipContent: "<span style=\"color:#995e17 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerSize: 11,
-                                dataPoints: getDataPoints('TAD severity-baseline', 1, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline Low",
-                                showInLegend: true,
-                                color: '#aba41b',
-                                toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('TAD baseline', 0, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline High",
-                                showInLegend: true,
-                                color: '#f0e513',
-                                toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('TAD baseline', 1, 'S')
-                            }]
-                    }}
-                    />
-                </div>
-                <div>
-                    <h3>Parallax - Moral Desert</h3>
-                    <CanvasJSChart options={{
-                        width: "1200",
-                        height: "380",
-                        axisY: {
-                            labelFormatter: setYAxis
-                        },
-                        data: [
-                            ...BASE_DATA_MD,
-                            {
-                                type: "scatter",
-                                name: "Aligned Low",
-                                showInLegend: true,
-                                color: '#9ed483',
-                                toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#9ed483',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('TAD aligned', 0, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Aligned High",
-                                showInLegend: true,
-                                color: '#4f994e',
-                                toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#4f994e',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('TAD aligned', 1, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Misaligned Low",
-                                showInLegend: true,
-                                color: '#76b3c2',
-                                toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('TAD misaligned', 0, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Misaligned High",
-                                showInLegend: true,
-                                color: '#367d8f',
-                                toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('TAD misaligned', 1, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Severity Baseline Low",
-                                showInLegend: true,
-                                color: '#db9239',
-                                toolTipContent: "<span style=\"color:#db9239 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerSize: 11,
-                                dataPoints: getDataPoints('TAD severity-baseline', 0, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Severity Baseline High",
-                                showInLegend: true,
-                                color: '#995e17',
-                                toolTipContent: "<span style=\"color:#995e17 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerSize: 11,
-                                dataPoints: getDataPoints('TAD severity-baseline', 1, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline Low",
-                                showInLegend: true,
-                                color: '#aba41b',
-                                toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('TAD baseline', 0, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline High",
-                                showInLegend: true,
-                                color: '#f0e513',
-                                toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('TAD baseline', 1, 'A')
-                            }]
-                    }}
-                    />
-                </div>
-                <div>
-                    <h3>Kitware - Maximization</h3>
-                    <CanvasJSChart options={{
-                        width: "1200",
-                        height: "380",
-                        axisY: {
-                            labelFormatter: setYAxis
-                        },
-                        data: [
-                            ...BASE_DATA_MAX,
-                            {
-                                type: "scatter",
-                                name: "Hybrid Aligned Low",
-                                showInLegend: true,
-                                color: '#9ed483',
-                                toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#9ed483',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Hybrid Aligned High",
-                                showInLegend: true,
-                                color: '#4f994e',
-                                toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#4f994e',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Single Aligned Low",
-                                showInLegend: true,
-                                color: '#76b3c2',
-                                toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 0, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Single Aligned High",
-                                showInLegend: true,
-                                color: '#367d8f',
-                                toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline Low",
-                                showInLegend: true,
-                                color: '#aba41b',
-                                toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'S')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline High",
-                                showInLegend: true,
-                                color: '#f0e513',
-                                toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'S')
-                            }]
-                    }}
-                    />
-                </div>
-                <div>
-                    <h3>Kitware - Moral Desert</h3>
-                    <CanvasJSChart options={{
-                        width: "1200",
-                        height: "380",
-                        axisY: {
-                            labelFormatter: setYAxis
-                        },
-                        data: [
-                            ...BASE_DATA_MD,
-                            {
-                                type: "scatter",
-                                name: "Hybrid Aligned Low",
-                                showInLegend: true,
-                                color: '#9ed483',
-                                toolTipContent: "<span style=\"color:#9ed483 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#9ed483',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Hybrid Aligned High",
-                                showInLegend: true,
-                                color: '#4f994e',
-                                toolTipContent: "<span style=\"color:#4f994e \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "cross",
-                                markerBorderColor: '#4f994e',
-                                markerBorderThickness: 3,
-                                markerSize: 16,
-                                dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Single Aligned Low",
-                                showInLegend: true,
-                                color: '#76b3c2',
-                                toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 0, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Single Aligned High",
-                                showInLegend: true,
-                                color: '#367d8f',
-                                toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "circle",
-                                markerSize: 10,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline Low",
-                                showInLegend: true,
-                                color: '#aba41b',
-                                toolTipContent: "<span style=\"color:#aba41b \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'A')
-                            },
-                            {
-                                type: "scatter",
-                                name: "Baseline High",
-                                showInLegend: true,
-                                color: '#f0e513',
-                                toolTipContent: "<span style=\"color:#f0e513 \">{name}<br/><span>{l}: {x}</span></span>",
-                                markerType: "triangle",
-                                markerBorderColor: '#aaa',
-                                markerBorderThickness: 1,
-                                markerSize: 12,
-                                dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'A')
-                            }]
-                    }}
-                    />
-                </div>
-            </div>}
-
-
-            <h2>3. Does alignment affect delegation?</h2>
-            <div className='delegationChoices'>
-                <div>
-                    <h3>Forced Choice Delegation</h3>
-                    <CanvasJSChart options={{
-                        width: "700",
-                        dataPointWidth: 100,
-                        toolTip: {
-                            shared: true
-                        },
-                        axisX: {
-                            interval: 1
-                        },
-                        legend: {
-                            verticalAlign: "top",
-                            horizontalAlign: "center",
-                            cursor: "pointer"
-                        },
-                        data: [{
-                            type: "column",
-                            name: "Delegation Text Grouping",
-                            color: 'grey',
-                            showInLegend: true,
-                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                            dataPoints: [
-                                { y: getMeanAtt('ST_Align_DelFC_Text'), label: "SoarTech" },
-                                { y: getMeanAtt('AD_Align_DelFC_Text'), label: "ADEPT" }
-                            ]
-                        },
-                        {
-                            type: "error",
-                            color: "#555",
-                            name: "Variability Range",
-                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                            dataPoints: [
-                                { y: getSeAtt('ST_Align_DelFC_Text'), label: "SoarTech" },
-                                { y: getSeAtt('AD_Align_DelFC_Text'), label: "ADEPT" }
-                            ]
-                        },
-                        {
-                            type: "column",
-                            name: "Delegation Sim Grouping",
-                            color: '#cc9999',
-                            showInLegend: true,
-                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                            dataPoints: [
-                                { y: getMeanAtt('ST_Align_DelFC_Sim'), label: "SoarTech" },
-                                { y: getMeanAtt('AD_Align_DelFC_Sim'), label: "ADEPT" }
-                            ]
-                        },
-                        {
-                            type: "error",
-                            name: "Variability Range",
-                            color: '#555',
-                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                            dataPoints: [
-                                { y: getSeAtt('ST_Align_DelFC_Sim'), label: "SoarTech" },
-                                { y: getSeAtt('AD_Align_DelFC_Sim'), label: "ADEPT" }
-                            ]
-                        }
-                        ]
-                    }} />
-                </div>
-
-                <div>
-                    <h3>Full Choice Delegation</h3>
-                    <CanvasJSChart options={{
-                        width: "700",
-                        dataPointWidth: 100,
                         toolTip: {
                             shared: true
                         },
@@ -773,13 +851,19 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                         },
                         data: [{
                             type: "column",
-                            name: "Delegation Text Grouping",
+                            name: "ADEPT_Text",
                             color: 'grey',
                             showInLegend: true,
                             toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                             dataPoints: [
-                                { y: getMeanAtt('ST_Align_DelC_Text'), label: "SoarTech" },
-                                { y: getMeanAtt('AD_Align_DelC_Text'), label: "ADEPT" }
+                                { y: getMeanAtt('AD_Align_Trust_Text'), label: "Trust - Align" },
+                                { y: getMeanAtt('AD_Misalign_Trust_Text'), label: "Trust - Misalign" },
+                                { y: getMeanAtt('AD_Align_Agree_Text'), label: "Agree - Align" },
+                                { y: getMeanAtt('AD_Misalign_Agree_Text'), label: "Agree - Miaslign" },
+                                { y: getMeanAtt('AD_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
+                                { y: getMeanAtt('AD_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
+                                { y: getMeanAtt('AD_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
+                                { y: getMeanAtt('AD_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
                             ]
                         },
                         {
@@ -788,19 +872,31 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                             name: "Variability Range",
                             toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
                             dataPoints: [
-                                { y: getSeAtt('ST_Align_DelC_Text'), label: "SoarTech" },
-                                { y: getSeAtt('AD_Align_DelC_Text'), label: "ADEPT" }
+                                { y: getSeAtt('AD_Align_Trust_Text'), label: "Trust - Align" },
+                                { y: getSeAtt('AD_Misalign_Trust_Text'), label: "Trust - Misalign" },
+                                { y: getSeAtt('AD_Align_Agree_Text'), label: "Agree - Align" },
+                                { y: getSeAtt('AD_Misalign_Agree_Text'), label: "Agree - Miaslign" },
+                                { y: getSeAtt('AD_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
+                                { y: getSeAtt('AD_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
+                                { y: getSeAtt('AD_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
+                                { y: getSeAtt('AD_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
                             ]
                         },
                         {
                             type: "column",
-                            name: "Delegation Sim Grouping",
+                            name: "ADEPT_Sim",
                             color: '#cc9999',
                             showInLegend: true,
                             toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                             dataPoints: [
-                                { y: getMeanAtt('ST_Align_DelC_Sim'), label: "SoarTech" },
-                                { y: getMeanAtt('AD_Align_DelC_Sim'), label: "ADEPT" }
+                                { y: getMeanAtt('AD_Align_Trust_Sim'), label: "Trust - Align" },
+                                { y: getMeanAtt('AD_Misalign_Trust_Sim'), label: "Trust - Misalign" },
+                                { y: getMeanAtt('AD_Align_Agree_Sim'), label: "Agree - Align" },
+                                { y: getMeanAtt('AD_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
+                                { y: getMeanAtt('AD_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
+                                { y: getMeanAtt('AD_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
+                                { y: getMeanAtt('AD_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
+                                { y: getMeanAtt('AD_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
                             ]
                         },
                         {
@@ -809,177 +905,101 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                             color: '#555',
                             toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
                             dataPoints: [
-                                { y: getSeAtt('ST_Align_DelC_Sim'), label: "SoarTech" },
-                                { y: getSeAtt('AD_Align_DelC_Sim'), label: "ADEPT" }
+                                { y: getSeAtt('AD_Align_Trust_Sim'), label: "Trust - Align" },
+                                { y: getSeAtt('AD_Misalign_Trust_Sim'), label: "Trust - Misalign" },
+                                { y: getSeAtt('AD_Align_Agree_Sim'), label: "Agree - Align" },
+                                { y: getSeAtt('AD_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
+                                { y: getSeAtt('AD_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
+                                { y: getSeAtt('AD_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
+                                { y: getSeAtt('AD_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
+                                { y: getSeAtt('AD_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
                             ]
                         }
                         ]
                     }} />
                 </div>
-            </div>
 
-            <h2>ADEPT</h2>
-            <div className="relatedResults">
-                <CanvasJSChart options={{
-                    width: "1200",
-                    toolTip: {
-                        shared: true
-                    },
-                    legend: {
-                        verticalAlign: "top",
-                        horizontalAlign: "center",
-                        cursor: "pointer"
-                    },
-                    data: [{
-                        type: "column",
-                        name: "ADEPT_Text",
-                        color: 'grey',
-                        showInLegend: true,
-                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                        dataPoints: [
-                            { y: getMeanAtt('AD_Align_Trust_Text'), label: "Trust - Align" },
-                            { y: getMeanAtt('AD_Misalign_Trust_Text'), label: "Trust - Misalign" },
-                            { y: getMeanAtt('AD_Align_Agree_Text'), label: "Agree - Align" },
-                            { y: getMeanAtt('AD_Misalign_Agree_Text'), label: "Agree - Miaslign" },
-                            { y: getMeanAtt('AD_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
-                            { y: getMeanAtt('AD_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
-                            { y: getMeanAtt('AD_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
-                            { y: getMeanAtt('AD_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
+                <div className="center-text"><h2>SoarTech</h2></div>
+                <div className="relatedResults">
+                    <CanvasJSChart options={{
+                        width: "1200",
+                        toolTip: {
+                            shared: true
+                        },
+                        legend: {
+                            verticalAlign: "top",
+                            horizontalAlign: "center",
+                            cursor: "pointer"
+                        },
+                        data: [{
+                            type: "column",
+                            name: "SoarTech_Text",
+                            color: 'grey',
+                            showInLegend: true,
+                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                            dataPoints: [
+                                { y: getMeanAtt('ST_Align_Trust_Text'), label: "Trust - Align" },
+                                { y: getMeanAtt('ST_Misalign_Trust_Text'), label: "Trust - Misalign" },
+                                { y: getMeanAtt('ST_Align_Agree_Text'), label: "Agree - Align" },
+                                { y: getMeanAtt('ST_Misalign_Agree_Text'), label: "Agree - Miaslign" },
+                                { y: getMeanAtt('ST_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
+                                { y: getMeanAtt('ST_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
+                                { y: getMeanAtt('ST_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
+                                { y: getMeanAtt('ST_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
+                            ]
+                        },
+                        {
+                            type: "error",
+                            color: "#555",
+                            name: "Variability Range",
+                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                            dataPoints: [
+                                { y: getSeAtt('ST_Align_Trust_Text'), label: "Trust - Align" },
+                                { y: getSeAtt('ST_Misalign_Trust_Text'), label: "Trust - Misalign" },
+                                { y: getSeAtt('ST_Align_Agree_Text'), label: "Agree - Align" },
+                                { y: getSeAtt('ST_Misalign_Agree_Text'), label: "Agree - Miaslign" },
+                                { y: getSeAtt('ST_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
+                                { y: getSeAtt('ST_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
+                                { y: getSeAtt('ST_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
+                                { y: getSeAtt('ST_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
+                            ]
+                        },
+                        {
+                            type: "column",
+                            name: "SoarTech_Sim",
+                            color: '#cc9999',
+                            showInLegend: true,
+                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                            dataPoints: [
+                                { y: getMeanAtt('ST_Align_Trust_Sim'), label: "Trust - Align" },
+                                { y: getMeanAtt('ST_Misalign_Trust_Sim'), label: "Trust - Misalign" },
+                                { y: getMeanAtt('ST_Align_Agree_Sim'), label: "Agree - Align" },
+                                { y: getMeanAtt('ST_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
+                                { y: getMeanAtt('ST_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
+                                { y: getMeanAtt('ST_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
+                                { y: getMeanAtt('ST_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
+                                { y: getMeanAtt('ST_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
+                            ]
+                        },
+                        {
+                            type: "error",
+                            name: "Variability Range",
+                            color: '#555',
+                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                            dataPoints: [
+                                { y: getSeAtt('ST_Align_Trust_Sim'), label: "Trust - Align" },
+                                { y: getSeAtt('ST_Misalign_Trust_Sim'), label: "Trust - Misalign" },
+                                { y: getSeAtt('ST_Align_Agree_Sim'), label: "Agree - Align" },
+                                { y: getSeAtt('ST_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
+                                { y: getSeAtt('ST_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
+                                { y: getSeAtt('ST_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
+                                { y: getSeAtt('ST_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
+                                { y: getSeAtt('ST_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
+                            ]
+                        }
                         ]
-                    },
-                    {
-                        type: "error",
-                        color: "#555",
-                        name: "Variability Range",
-                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                        dataPoints: [
-                            { y: getSeAtt('AD_Align_Trust_Text'), label: "Trust - Align" },
-                            { y: getSeAtt('AD_Misalign_Trust_Text'), label: "Trust - Misalign" },
-                            { y: getSeAtt('AD_Align_Agree_Text'), label: "Agree - Align" },
-                            { y: getSeAtt('AD_Misalign_Agree_Text'), label: "Agree - Miaslign" },
-                            { y: getSeAtt('AD_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
-                            { y: getSeAtt('AD_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
-                            { y: getSeAtt('AD_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
-                            { y: getSeAtt('AD_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
-                        ]
-                    },
-                    {
-                        type: "column",
-                        name: "ADEPT_Sim",
-                        color: '#cc9999',
-                        showInLegend: true,
-                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                        dataPoints: [
-                            { y: getMeanAtt('AD_Align_Trust_Sim'), label: "Trust - Align" },
-                            { y: getMeanAtt('AD_Misalign_Trust_Sim'), label: "Trust - Misalign" },
-                            { y: getMeanAtt('AD_Align_Agree_Sim'), label: "Agree - Align" },
-                            { y: getMeanAtt('AD_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
-                            { y: getMeanAtt('AD_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
-                            { y: getMeanAtt('AD_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
-                            { y: getMeanAtt('AD_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
-                            { y: getMeanAtt('AD_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
-                        ]
-                    },
-                    {
-                        type: "error",
-                        name: "Variability Range",
-                        color: '#555',
-                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                        dataPoints: [
-                            { y: getSeAtt('AD_Align_Trust_Sim'), label: "Trust - Align" },
-                            { y: getSeAtt('AD_Misalign_Trust_Sim'), label: "Trust - Misalign" },
-                            { y: getSeAtt('AD_Align_Agree_Sim'), label: "Agree - Align" },
-                            { y: getSeAtt('AD_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
-                            { y: getSeAtt('AD_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
-                            { y: getSeAtt('AD_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
-                            { y: getSeAtt('AD_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
-                            { y: getSeAtt('AD_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
-                        ]
-                    }
-                    ]
-                }} />
-            </div>
-
-            <h2>SoarTech</h2>
-            <div className="relatedResults">
-                <CanvasJSChart options={{
-                    width: "1200",
-                    toolTip: {
-                        shared: true
-                    },
-                    legend: {
-                        verticalAlign: "top",
-                        horizontalAlign: "center",
-                        cursor: "pointer"
-                    },
-                    data: [{
-                        type: "column",
-                        name: "SoarTech_Text",
-                        color: 'grey',
-                        showInLegend: true,
-                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                        dataPoints: [
-                            { y: getMeanAtt('ST_Align_Trust_Text'), label: "Trust - Align" },
-                            { y: getMeanAtt('ST_Misalign_Trust_Text'), label: "Trust - Misalign" },
-                            { y: getMeanAtt('ST_Align_Agree_Text'), label: "Agree - Align" },
-                            { y: getMeanAtt('ST_Misalign_Agree_Text'), label: "Agree - Miaslign" },
-                            { y: getMeanAtt('ST_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
-                            { y: getMeanAtt('ST_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
-                            { y: getMeanAtt('ST_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
-                            { y: getMeanAtt('ST_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
-                        ]
-                    },
-                    {
-                        type: "error",
-                        color: "#555",
-                        name: "Variability Range",
-                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                        dataPoints: [
-                            { y: getSeAtt('ST_Align_Trust_Text'), label: "Trust - Align" },
-                            { y: getSeAtt('ST_Misalign_Trust_Text'), label: "Trust - Misalign" },
-                            { y: getSeAtt('ST_Align_Agree_Text'), label: "Agree - Align" },
-                            { y: getSeAtt('ST_Misalign_Agree_Text'), label: "Agree - Miaslign" },
-                            { y: getSeAtt('ST_Align_Trustworthy_Text'), label: "Trustworthy - Align" },
-                            { y: getSeAtt('ST_Misalign_Trustworthy_Text'), label: "Trustworthy - Misalign" },
-                            { y: getSeAtt('ST_Align_AlignSR_Text'), label: "AlignSelfReport - Align" },
-                            { y: getSeAtt('ST_Misalign_AlignSR_Text'), label: "AlignSelfReport - Miaslign" }
-                        ]
-                    },
-                    {
-                        type: "column",
-                        name: "SoarTech_Sim",
-                        color: '#cc9999',
-                        showInLegend: true,
-                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                        dataPoints: [
-                            { y: getMeanAtt('ST_Align_Trust_Sim'), label: "Trust - Align" },
-                            { y: getMeanAtt('ST_Misalign_Trust_Sim'), label: "Trust - Misalign" },
-                            { y: getMeanAtt('ST_Align_Agree_Sim'), label: "Agree - Align" },
-                            { y: getMeanAtt('ST_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
-                            { y: getMeanAtt('ST_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
-                            { y: getMeanAtt('ST_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
-                            { y: getMeanAtt('ST_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
-                            { y: getMeanAtt('ST_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
-                        ]
-                    },
-                    {
-                        type: "error",
-                        name: "Variability Range",
-                        color: '#555',
-                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                        dataPoints: [
-                            { y: getSeAtt('ST_Align_Trust_Sim'), label: "Trust - Align" },
-                            { y: getSeAtt('ST_Misalign_Trust_Sim'), label: "Trust - Misalign" },
-                            { y: getSeAtt('ST_Align_Agree_Sim'), label: "Agree - Align" },
-                            { y: getSeAtt('ST_Misalign_Agree_Sim'), label: "Agree - Miaslign" },
-                            { y: getSeAtt('ST_Align_Trustworthy_Sim'), label: "Trustworthy - Align" },
-                            { y: getSeAtt('ST_Misalign_Trustworthy_Sim'), label: "Trustworthy - Misalign" },
-                            { y: getSeAtt('ST_Align_AlignSR_Sim'), label: "AlignSelfReport - Align" },
-                            { y: getSeAtt('ST_Misalign_AlignSR_Sim'), label: "AlignSelfReport - Miaslign" }
-                        ]
-                    }
-                    ]
-                }} />
+                    }} />
+                </div>
             </div>
         </div>
     );
