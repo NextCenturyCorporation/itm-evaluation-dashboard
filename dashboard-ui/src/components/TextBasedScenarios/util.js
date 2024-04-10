@@ -1,9 +1,8 @@
 const axios = require('axios');
 const { stUrban, stDesert, stJungle, stSubmarine } = require('./problemProbes');
 // for env variables
-require('dotenv').config();
-const ADEPT_URL = process.env.ADEPT_URL;
-const ST_URL = process.env.ST_URL;
+const ADEPT_URL = 'http://10.216.38.70:8080';
+const ST_URL = 'http://10.216.38.125:8084';
 
 // add proper choice id's to questions
 const mapAnswers = (scenario, scenarioMappings) => {

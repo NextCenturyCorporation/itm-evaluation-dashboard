@@ -406,8 +406,8 @@ export default function TextBasedResultsPage() {
         // display the results for the chosen scenario
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
-                Object.keys(questionAnswerSets).map((qkey) => {
-                    return (<div className='result-section' key={qkey}>
+                Object.keys(questionAnswerSets).map((qkey, ind) => {
+                    return (<div className='result-section' key={qkey + '_' + ind}>
                         <h3 className='question-header'>{qkey} (N={questionAnswerSets[qkey]['total']})</h3>
                         <p>{questionAnswerSets[qkey]['question']}</p>
                         <table className="itm-table text-result-table">
