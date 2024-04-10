@@ -96,7 +96,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
+const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 }};
 
 // get text alignment scores for every participant, and the median value of those scores
 function getTextAlignment(data) {
@@ -378,7 +378,7 @@ function getAttributeAlignment(res, att, medics, q, trans) {
     let misalignTally = 0;
     for (let x of medics) {
         // some adept scenarios in the config are missing the question and are only labelled by name
-        let data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], ['results', x, 'questions', x, 'response'])
+        let data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], q === 'The way this medic makes medical decisions is how I make decisions' ? ['results', x, 'questions', x, 'response'] : undefined)
         if (!data) {
             data = safeGet(res, ['results', 'Omnibus: ' + x, 'questions', x + ': ' + q, 'response']);
         }
@@ -397,10 +397,76 @@ function getAttributeAlignment(res, att, medics, q, trans) {
     return { 'align': alignTally > 0 ? align / alignTally : null, 'misalign': misalignTally > 0 ? misalign / misalignTally : null };
 }
 
+function populateHumanDataRow(rowObject) {
+    let adept = 0;
+    let soartech = 1;
+    if(rowObject[0]._id.indexOf("_st_") > -1) {
+        adept = 1;
+        soartech = 0;
+    }
+
+    let returnObj = {
+        "Participant": rowObject[0].pid,
+        "SimEnv": rowObject[0].env,
+        "SimOrder": rowObject[0].simOrder,
+        "AD_P1": rowObject[adept].data.data.length > 0 ? rowObject[adept].data.data[0].probe.kdma_association["MoralDesert"] : "",
+        "AD_P2": rowObject[adept].data.data.length > 1 ? rowObject[adept].data.data[1].probe.kdma_association["MoralDesert"] : "",
+        "AD_P3": rowObject[adept].data.data.length > 2 ? rowObject[adept].data.data[2].probe.kdma_association["MoralDesert"] : "",
+        "ST_1.1": "",
+        "ST_1.2": "",
+        "ST_1.3": "",
+        "ST_2.2": "",
+        "ST_2.3": "",
+        "ST_3.1": "",
+        "ST_3.2": "",
+        "ST_4.1": "",
+        "ST_4.2": "",
+        "ST_4.3": "",
+        "ST_5.1": "",
+        "ST_5.2": "",
+        "ST_5.3": "",
+        "ST_6.1": "",
+        "ST_6.2": "",
+        "ST_8.1": "",
+        "ST_8.2": "",
+        "AD_KDMA_Env": rowObject[adept].data.alignment.kdma_values.length > 0 ? Math.round(rowObject[adept].data.alignment.kdma_values[0].value * 100) / 100 : "",
+        "ST_KDMA_Env": rowObject[soartech].data.alignment !== null && rowObject[soartech].data.alignment.kdma_values.length > 0 ? Math.round(rowObject[soartech].data.alignment.kdma_values[0].value * 100) / 100 : "",
+        "AD_KDMA": isNaN(Math.round(rowObject[adept].avgKDMA * 100) / 100) ? "" : Math.round(rowObject[adept].avgKDMA * 100) / 100,
+        "ST_KDMA": isNaN(Math.round(rowObject[soartech].avgKDMA * 100) / 100) ? "" : Math.round(rowObject[soartech].avgKDMA * 100) / 100
+    };
+
+    const soartechProbeIds = ["1.1", "1.2", "1.3", "2.2", "2.3", "3.1", "3.2", "4.1", "4.2", "4.3", "5.1", "5.2", "5.3", "6.1", "6.2", "8.1", "8.2"]
+
+    for(let i=0; i < rowObject[soartech].data.data.length; i++) {
+        for(let j=0; j < soartechProbeIds.length; j++) {
+            if(rowObject[soartech].data.data[i].found_match !== false) { 
+                if (rowObject[soartech].data.data[i].probe_id.indexOf(soartechProbeIds[j]) > -1) {
+                    returnObj["ST_" + soartechProbeIds[j]] = rowObject[soartech].data.data[i].probe.kdma_association["maximization"];
+                } 
+            }
+        }
+    }
+
+    return returnObj;
+}
+
 function populateDataSet(data) {
     let simAlign = null;
     if (data.getAllSimAlignment) {
         simAlign = getSimAlignment(data.getAllSimAlignment);
+        let tempGroupHumanSimData = Object.groupBy(data.getAllSimAlignment, ({env}) => env);
+        Object.keys(tempGroupHumanSimData).forEach (key => {
+            tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({pid}) => pid);
+            let tempGroupPidArray = [];
+            Object.keys(tempGroupHumanSimData[key]).forEach (keyPid => {
+                if(keyPid.indexOf(" ") === -1) {
+                    tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid]));
+                }
+            });
+            tempGroupHumanSimData[key] = tempGroupPidArray;
+        });
+        
+        AGGREGATED_DATA["groupedSim"] = tempGroupHumanSimData
     }
     const txtAlign = getTextAlignment(data);
     const allResults = [];
@@ -689,9 +755,52 @@ function populateDataSet(data) {
                 const selfReportADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
                 tmpSet['AD_Align_AlignSR_Omni' + suffix] = selfReportADomni['align'];
                 tmpSet['AD_Misalign_AlignSR_Omni' + suffix] = selfReportADomni['misalign'];
+
+                // get average of responses for high alignment adms and trust
+                tmpSet['ST_High_Trust'] = stAttribute == 1 ? trustST['align'] : trustST['misalign'];
+                tmpSet['ST_Low_Trust'] = stAttribute == 0 ? trustST['align'] : trustST['misalign'];
+                tmpSet['ST_High_Agree'] = stAttribute == 1 ? agreeST['align'] : agreeST['misalign'];
+                tmpSet['ST_Low_Agree'] = stAttribute == 0 ? agreeST['align'] : agreeST['misalign'];
+                tmpSet['ST_High_Trustworthy'] = stAttribute == 1 ? trustworthyST['align'] : trustworthyST['misalign'];
+                tmpSet['ST_Low_Trustworthy'] = stAttribute == 0 ? trustworthyST['align'] : trustworthyST['misalign'];
+                tmpSet['ST_High_AlignSR'] = stAttribute == 1 ? selfReportST['align'] : selfReportST['misalign'];
+                tmpSet['ST_Low_AlignSR'] = stAttribute == 0 ? selfReportST['align'] : selfReportST['misalign'];
+                tmpSet['ST_AlignScore_High'] = Math.abs(0.9 - tmpSet['ST_KDMA_Text']);
+                tmpSet['ST_AlignScore_Low'] = Math.abs(0.1 - tmpSet['ST_KDMA_Text']);
+
+                tmpSet['ST_High_Trust_Omni'] = stAttribute == 1 ? trustSTomni['align'] : trustSTomni['misalign'];
+                tmpSet['ST_Low_Trust_Omni'] = stAttribute == 0 ? trustSTomni['align'] : trustSTomni['misalign'];
+                tmpSet['ST_High_Agree_Omni'] = stAttribute == 1 ? agreeSTomni['align'] : agreeSTomni['misalign'];
+                tmpSet['ST_Low_Agree_Omni'] = stAttribute == 0 ? agreeSTomni['align'] : agreeSTomni['misalign'];
+                tmpSet['ST_High_Trustworthy_Omni'] = stAttribute == 1 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
+                tmpSet['ST_Low_Trustworthy_Omni'] = stAttribute == 0 ? trustworthySTomni['align'] : trustworthySTomni['misalign'];
+                tmpSet['ST_High_AlignSR_Omni'] = stAttribute == 1 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
+                tmpSet['ST_Low_AlignSR_Omni'] = stAttribute == 0 ? selfReportSTomni['align'] : selfReportSTomni['misalign'];
+
+                tmpSet['AD_High_Trust'] = adAttribute == 1 ? trustAD['align'] : trustAD['misalign'];
+                tmpSet['AD_Low_Trust'] = adAttribute == 0 ? trustAD['align'] : trustAD['misalign'];
+                tmpSet['AD_High_Agree'] = adAttribute == 1 ? agreeAD['align'] : agreeAD['misalign'];
+                tmpSet['AD_Low_Agree'] = adAttribute == 0 ? agreeAD['align'] : agreeAD['misalign'];
+                tmpSet['AD_High_Trustworthy'] = adAttribute == 1 ? trustworthyAD['align'] : trustworthyAD['misalign'];
+                tmpSet['AD_Low_Trustworthy'] = adAttribute == 0 ? trustworthyAD['align'] : trustworthyAD['misalign'];
+                tmpSet['AD_High_AlignSR'] = adAttribute == 1 ? selfReportAD['align'] : selfReportAD['misalign'];
+                tmpSet['AD_Low_AlignSR'] = adAttribute == 0 ? selfReportAD['align'] : selfReportAD['misalign'];
+                tmpSet['AD_AlignScore_High'] = Math.abs(0.84 - tmpSet['AD_KDMA_Text']);
+                tmpSet['AD_AlignScore_Low'] = Math.abs(0.22 - tmpSet['AD_KDMA_Text']);
+
+                tmpSet['AD_High_Trust_Omni'] = adAttribute == 1 ? trustADomni['align'] : trustADomni['misalign'];
+                tmpSet['AD_Low_Trust_Omni'] = adAttribute == 0 ? trustADomni['align'] : trustADomni['misalign'];
+                tmpSet['AD_High_Agree_Omni'] = adAttribute == 1 ? agreeADomni['align'] : agreeADomni['misalign'];
+                tmpSet['AD_Low_Agree_Omni'] = adAttribute == 0 ? agreeADomni['align'] : agreeADomni['misalign'];
+                tmpSet['AD_High_Trustworthy_Omni'] = adAttribute == 1 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
+                tmpSet['AD_Low_Trustworthy_Omni'] = adAttribute == 0 ? trustworthyADomni['align'] : trustworthyADomni['misalign'];
+                tmpSet['AD_High_AlignSR_Omni'] = adAttribute == 1 ? selfReportADomni['align'] : selfReportADomni['misalign'];
+                tmpSet['AD_Low_AlignSR_Omni'] = adAttribute == 0 ? selfReportADomni['align'] : selfReportADomni['misalign'];
             }
         }
     }
+
+
     // get all results that don't have delegation survey
     for (let id of [...Object.keys(txtAlign), ...Object.keys(simAlign)]) {
         if (!allResults.find((x) => x['ParticipantID'].trim() === id.trim())) {
@@ -707,7 +816,7 @@ function populateDataSet(data) {
                 "2024214": new Date("March 20, 2024")
             }
 
-            tmpSet['Date'] = date[id].toLocaleDateString();
+            tmpSet['Date'] = date[id] ? date[id].toLocaleDateString() : null;
 
             // get order of text based (TODO: not hardcoded?)
             const textOrder = {
@@ -761,6 +870,7 @@ function populateDataSet(data) {
             allResults.push(tmpSet);
         }
     }
+
     return allResults;
 }
 
@@ -768,4 +878,33 @@ function getAggregatedData() {
     return AGGREGATED_DATA;
 }
 
-export { populateDataSet, getAggregatedData };
+function getChartData(data) {
+    const scattered = [];
+    let i = 0;
+    const stt = [];
+    const sts = [];
+    const adt = [];
+    const ads = [];
+    for (const x of data) {
+        if (x['ST_Align_Trust_Text']) {
+            scattered.push({ pid: Number(x['ParticipantID'].split('2024')[1]), id: i, stt: x['ST_KDMA_Text'], sts: x['ST_KDMA_Sim'], adt: x['AD_KDMA_Text'], ads: x['AD_KDMA_Sim'], st_trust: x['ST_Align_Trust_Text'], ad_trust: x['AD_Align_Trust_Text'] });
+        }
+        if (isDefined(x['ST_KDMA_Text'])) {
+            stt.push(x['ST_KDMA_Text']);
+        }
+        if (isDefined(x['ST_KDMA_Sim'])) {
+            sts.push(x['ST_KDMA_Sim']);
+        }
+        if (isDefined(x['AD_KDMA_Text'])) {
+            adt.push(x['AD_KDMA_Text']);
+        }
+        if (isDefined(x['AD_KDMA_Sim'])) {
+            ads.push(x['AD_KDMA_Sim']);
+        }
+        i += 1;
+    }
+    return { 'scatter': scattered, 'stt': stt, 'sts': sts, 'adt': adt, 'ads': ads };
+}
+
+
+export { populateDataSet, getAggregatedData, getChartData, isDefined };

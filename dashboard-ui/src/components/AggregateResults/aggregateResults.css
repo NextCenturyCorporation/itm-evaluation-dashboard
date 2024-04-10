@@ -17,11 +17,140 @@
 }
 
 .miniTable td, .miniTable th {
-    width: fit-content;
-    min-width: none;
+    width: fit-content !important;
+    min-width: 0px !important;
 }
 
 .miniTable {
+    width: fit-content !important;
+    margin: 12px !important;
+}
+
+.miniTable thead {
+    position: static !important;
+}
+
+.boxWhisker {
+    width: 701px;
+}
+
+.scatter {
     width: fit-content;
     margin: 12px;
+    background-color: white;
 }
+
+.outlinedPlot {
+    border: 0.5px solid black;
+    height: fit-content;
+    margin-left: 12px;
+    margin-bottom: 8px;
+}
+
+.kdma-section>* {
+    margin-top: 0px;
+}
+
+.programQuestions h2 {
+    margin: 20px 12px 24px 12px;
+    border-bottom: 3px solid black;
+    padding-bottom: 4px;
+}
+
+@media only screen and (min-width: 1450px) {
+    .scatters {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+    }
+
+    .kdma-section {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+    }
+
+    .delegationChoices {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+    }
+
+}
+
+@media only screen and (max-width: 1449px) {
+    .scatters {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .kdma-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .delegationChoices {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+.delegationChoices>* {
+    border: 1px solid black;
+    margin: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: white;
+    width: 702px;
+}
+
+.kdmaTable {
+    width: 700px !important;
+    height: 250px !important;
+}
+
+.kdmaTable td, .kdmaTable th {
+    min-width: 0px;
+}
+
+.centeredTable {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.relatedResults {
+    margin: 12px auto;
+    width: 1212px;
+    padding: 8px;
+    background-color: white;
+    border: 1px solid black;
+}
+
+.q2-adms {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.q2-adms>* {
+    margin: 12px;
+    width: 1202px;
+    border: 1px solid black;
+    background-color: white;
+}
+
+.q2-adms h3 {
+    text-align: center;
+    width: 100%;
+}
+
+.home-container .result-table-section-override {
+    margin: 5px 20px;
+} 
