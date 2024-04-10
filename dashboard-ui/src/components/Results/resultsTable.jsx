@@ -325,16 +325,16 @@ function TestHistoryRow({ item, index }) {
                     </IconButton>
                 </TableCell>
                 <TableCell className="tableCellCommand">
-                    <strong>Command:</strong> {item.command}
-                    <br />
-                    <strong>Parameters:</strong> {Object.keys(item.parameters).length > 0 ? renderNestedItems(item.parameters) : "None"}
+                    <Typography><strong>Command:</strong> {item.command}</Typography>
+                    <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>  
+                    {renderNestedItems(item.parameters)}
                 </TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 1 }}>
-                            <strong>Response:</strong>
+                            <Typography><strong>Response:</strong></Typography>
                             <div style={{ paddingLeft: '16px' }}>
                                 {renderNestedItems(item.response)}
                             </div>
