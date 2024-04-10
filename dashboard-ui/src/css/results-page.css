@@ -97,3 +97,11 @@ nav.MuiList-root.nav-list.MuiList-padding {
 .TableBodyScrollable {
     display: block;
 }
+
+.noBorderRow {
+    border-bottom: none !important;
+}
+
+.noBorderCell {
+    border-bottom: none !important;
+}

@@ -240,10 +240,10 @@ class ResultsTable extends React.Component {
                                                         <AlignmentScoreBox performer={this.formatADMString(this.state.adm)} data={testData} scenario={this.state.scenario} />
                                                         <div className='paper-container'>
                                                             <TableContainer className="TableContainer">
-                                                                <Table stickyHeader aria-label="simple table">
+                                                                <Table className='itm-table' stickyHeader aria-label="simple table">
                                                                     <TableBody className='TableBodyScrollable'>
                                                                         {testData.history.map((item, index) => (
-                                                                            <TestHistoryRow key={index} item={item} index={index}/>
+                                                                            <ActionRow key={item.command + index} item={item} index={index}/>
                                                                         ))}
                                                                     </TableBody>
                                                                 </Table>
@@ -265,8 +265,9 @@ class ResultsTable extends React.Component {
 }
 
 
-function TestHistoryRow({ item, index }) {
+function ActionRow({ item, index }) {
     const [open, setOpen] = React.useState(false);
+    console.log(item)
 
     const renderNestedItems= (item) => {
         if (isObject(item)) {
@@ -312,8 +313,8 @@ function TestHistoryRow({ item, index }) {
 
     return (
         <React.Fragment>
-            <TableRow onClick={() => setOpen(!open)}>
-                <TableCell className="tableCellIcon">
+            <TableRow className='noBorderRow' onClick={() => setOpen(!open)}>
+                <TableCell className="noBorderCell tableCellIcon">
                 <IconButton
                         aria-label="expand row"
                         onClick={(e) => {
@@ -324,7 +325,7 @@ function TestHistoryRow({ item, index }) {
                         {open ? <KeyboardArrowUpIcon fontSize='large'/> : <KeyboardArrowDownIcon fontSize='large'/>}
                     </IconButton>
                 </TableCell>
-                <TableCell className="tableCellCommand">
+                <TableCell className="noBorderCell tableCellCommand">
                     <Typography><strong>Command:</strong> {item.command}</Typography>
                     <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>  
                     {renderNestedItems(item.parameters)}
