@@ -4,6 +4,7 @@
 
 .TableContainer {
     max-height: 70vh;
+    width: 100%;
   }
   
 .layout-board {
@@ -76,7 +77,9 @@ nav.MuiList-root.nav-list.MuiList-padding {
 }
 
 .tableCellValue {
-    width: 90%;
+    white-space: normal; /* Change from nowrap to normal to allow wrapping */
+    word-wrap: break-word; /* Ensures long words do not force the table to expand */
+    max-width: 200px; /* Or any other max-width that fits your design, can be percentage-based */
 }
 
 .tableCellIcon {
@@ -88,4 +91,8 @@ nav.MuiList-root.nav-list.MuiList-padding {
 
 .tableCellCommand {
     border-left: none !important;
+}
+
+.TableBodyScrollable {
+    display: block;
 }
