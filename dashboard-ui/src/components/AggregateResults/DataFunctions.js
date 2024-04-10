@@ -93,7 +93,8 @@ const ATTRIBUTE_MAP = {
     "Medic-D": 0
 };
 
-const MEDIAN_ALIGNMENT_VALUES = {};
+const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
+const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
@@ -157,14 +158,14 @@ function getTextAlignment(data) {
     }
     // get median for each kdma
     for (const k of Object.keys(kdmas)) {
-        kdmas[k].sort();
+        kdmas[k].sort((a, b) => a - b);
         // if even, take the middle two values
         if (kdmas[k].length % 2 === 0) {
-            MEDIAN_ALIGNMENT_VALUES[k] = (kdmas[k][Math.floor(kdmas[k].length / 2) - 1] + kdmas[k][Math.floor(kdmas[k].length / 2)]) / 2;
+            TEXT_MEDIAN_ALIGNMENT_VALUES[k] = (kdmas[k][Math.floor(kdmas[k].length / 2) - 1] + kdmas[k][Math.floor(kdmas[k].length / 2)]) / 2;
         }
         else {
             // if odd, just grab middle val
-            MEDIAN_ALIGNMENT_VALUES[k] = kdmas[k][Math.floor(kdmas[k].length / 2) + 1];
+            TEXT_MEDIAN_ALIGNMENT_VALUES[k] = kdmas[k][Math.floor(kdmas[k].length / 2) + 1];
         }
     }
     // return object of kdma values for each participant
@@ -182,20 +183,43 @@ function getSimAlignment(data) {
             sims[pid] = {};
         }
         sims[pid][entry.env] = entry.timestamp;
-        for (const k of entry.data) {
-            if (Object.keys(k).includes('probe') && k.probe && Object.keys(k.probe).includes('kdma_association')) {
-                for (const kdma of Object.keys(k.probe.kdma_association)) {
-                    if (Object.keys(alignments[pid]).includes(kdma)) {
-                        alignments[pid][kdma]['total'] += k.probe.kdma_association[kdma];
-                        alignments[pid][kdma]['count'] += 1;
-                    } else {
-                        alignments[pid][kdma] = { 'total': k.probe.kdma_association[kdma], 'count': 1 }
-                    }
+        const k = entry.data;
+        if (Object.keys(k).includes('alignment') && k.alignment && Object.keys(k.alignment).includes('kdma_values')) {
+            for (let x of k.alignment['kdma_values']) {
+                if (Object.keys(alignments[pid]).includes(x.kdma)) {
+                    alignments[pid][x.kdma]['total'] += x.value;
+                    alignments[pid][x.kdma]['count'] += 1;
+                } else {
+                    alignments[pid][x.kdma] = { 'total': x.value, 'count': 1 }
                 }
             }
+
         }
     }
     Object.keys(alignments).forEach((x) => Object.keys(alignments[x]).forEach((y) => alignments[x][y] = alignments[x][y]['total'] / alignments[x][y]['count']));
+    const kdmas = {};
+    for (const pid of Object.keys(alignments)) {
+        for (const kdma of Object.keys(alignments[pid])) {
+            const avg = alignments[pid][kdma];
+            if (Object.keys(kdmas).includes(kdma)) {
+                kdmas[kdma].push(avg);
+            } else {
+                kdmas[kdma] = [avg];
+            }
+        }
+    }
+    // get median for each kdma
+    for (const k of Object.keys(kdmas)) {
+        kdmas[k].sort((a, b) => a - b);
+        // if even, take the middle two values
+        if (kdmas[k].length % 2 === 0) {
+            SIM_MEDIAN_ALIGNMENT_VALUES[k] = (kdmas[k][Math.floor(kdmas[k].length / 2) - 1] + kdmas[k][Math.floor(kdmas[k].length / 2)]) / 2;
+        }
+        else {
+            // if odd, just grab middle val
+            SIM_MEDIAN_ALIGNMENT_VALUES[k] = kdmas[k][Math.floor(kdmas[k].length / 2) + 1];
+        }
+    }
     for (const pid of Object.keys(sims)) {
         // get time-based order of simulations
         SIM_ORDER[pid] = Object.keys(sims[pid]).sort((a, b) => sims[pid][a] - sims[pid][b]);
@@ -353,7 +377,11 @@ function getAttributeAlignment(res, att, medics, q, trans) {
     let misalign = 0;
     let misalignTally = 0;
     for (let x of medics) {
-        const data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], ['results', 'Omnibus: ' + x, 'questions', x + ': ' + q, 'response']);
+        // some adept scenarios in the config are missing the question and are only labelled by name
+        let data = safeGet(res, ['results', x, 'questions', x + ': ' + q, 'response'], ['results', x, 'questions', x, 'response'])
+        if (!data) {
+            data = safeGet(res, ['results', 'Omnibus: ' + x, 'questions', x + ': ' + q, 'response']);
+        }
         if (data) {
             const trustVal = trans[data];
             if (ATTRIBUTE_MAP[x] === att) {
@@ -377,13 +405,15 @@ function populateDataSet(data) {
     const txtAlign = getTextAlignment(data);
     const allResults = [];
     for (const res of data.getAllSurveyResults) {
-        if (res.results?.surveyVersion === 2) {
+        // if survey instructions does not exist, we don't want the entry
+        if (res.results?.surveyVersion === 2 && Object.keys(res.results).includes('Survey Introduction')) {
             // use this result!
             const tmpSet = {};
 
             // get participant id. two different versions exist: one with Participant ID and the other with Participant ID Page
             let pid = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
-            if (!pid) {
+            if (!pid || pid === '42' || pid === '019') {
+            // ignore some pids
                 continue;
             }
             // fix typo
@@ -446,7 +476,7 @@ function populateDataSet(data) {
             const textOrder = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
             tmpSet['TextOrder'] = textOrder;
 
-            //\get sim session order from sim files (date-time-based)
+            // get sim session order from sim files (date-time-based)
             tmpSet['Sim1'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][0]] : null;
             tmpSet['Sim2'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][1]] ?? null : null;
 
@@ -461,194 +491,274 @@ function populateDataSet(data) {
 
             // get alignment for text responses from ta1 server (ST)
             // for now, hard code st to maximization
-            tmpSet['ST_AlignText'] = txtAlign[pid] ? txtAlign[pid]['maximization'] ? txtAlign[pid]['maximization'] : null : null;
+            tmpSet['ST_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['maximization'] ? txtAlign[pid]['maximization'] : null : null;
 
             // get alignment for sim from ta1 server (ST). Hardcode maximization for now
-            tmpSet['ST_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
+            tmpSet['ST_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
 
             // get high/low maximization attribute (ST)
-            const stAttribute = tmpSet['ST_AlignText'] > MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+            let stAttribute = tmpSet['ST_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+            tmpSet['ST_AttribGrp_Text'] = stAttribute;
+            // get sim attribute alignment
+            tmpSet['ST_AttribGrp_Sim'] = tmpSet['ST_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
 
             // get alignment for text responses from ta1 server (AD)
             // for now, hard code adept to moral desert
-            tmpSet['AD_AlignText'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
+            tmpSet['AD_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
 
             // get alignment for sim from ta1 server (AD). for now hardcode moral desert
-            tmpSet['AD_AlignSim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
+            tmpSet['AD_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
 
             // get high/low moral deserts attribute (AD)
-            const adAttribute = tmpSet['AD_AlignText'] > MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
-            tmpSet['AD_AttribGrp'] = adAttribute;
+            let adAttribute = tmpSet['AD_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
+            tmpSet['AD_AttribGrp_Text'] = adAttribute;
+            // get sim attribute alignment
+            tmpSet['AD_AttribGrp_Sim'] = tmpSet['AD_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
 
-            // get delegation rate for ST. not delegate = 0, delegate at all = 1; average
-            const stDel = getStDelRate(res);
-            tmpSet['ST_Del'] = stDel['tally'] > 0 ? stDel['val'] / stDel['tally'] : null;
+            for (let i = 0; i < 2; i++) {
+                const suffix = i === 0 ? "_Text" : "_Sim";
+                adAttribute = i === 0 ? tmpSet['AD_AttribGrp_Text'] : tmpSet['AD_AttribGrp_Sim'];
+                stAttribute = i === 0 ? tmpSet['ST_AttribGrp_Text'] : tmpSet['ST_AttribGrp_Sim'];
 
-            // get confidence in forced choice ST
-            tmpSet['ST_ConfFC'] = getStConfRate(res);
+                // get delegation rate for ST. not delegate = 0, delegate at all = 1; average
+                const stDel = getStDelRate(res);
+                tmpSet['ST_Del' + suffix] = stDel['tally'] > 0 ? stDel['val'] / stDel['tally'] : null;
 
-            // get omnibus delegation rate for ST
-            const stOmni = safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Given the information provided', 'response']);
-            tmpSet['ST_Del_Omni'] = isDefined(stOmni) ? Number(stOmni !== 'I would prefer not to delegate to either Medic') : null;
+                // get confidence in forced choice ST
+                tmpSet['ST_ConfFC' + suffix] = getStConfRate(res);
 
-            // get omnibus confidence rate for ST
-            tmpSet['ST_ConfFC_Omni'] = CONFIDENCE_MAP[safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Rate your confidence about the delegation decision indicated in the previous question', 'response'])];
+                // get omnibus delegation rate for ST
+                const stOmni = safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Given the information provided', 'response']);
+                tmpSet['ST_Del_Omni' + suffix] = isDefined(stOmni) ? Number(stOmni !== 'I would prefer not to delegate to either Medic') : null;
 
-            // get st align delC and forced - see how many chosen are high, how many are low, divide by number delegated
-            const stDelF = getStDelRate(res, true);
-            // high alignment = 1
-            if (stAttribute === 1) {
-                tmpSet['ST_Align_DelC'] = stDel['delegated'] > 0 ? stDel['high'] / stDel['delegated'] : null;
-                tmpSet['ST_Align_DelFC'] = stDelF['tally'] > 0 ? stDelF['high'] / stDelF['tally'] : null;
-            }
-            else {
-                tmpSet['ST_Align_DelC'] = stDel['delegated'] > 0 ? stDel['low'] / stDel['delegated'] : null;
-                tmpSet['ST_Align_DelFC'] = stDelF['tally'] > 0 ? stDelF['low'] / stDelF['tally'] : null;
-            }
+                // get omnibus confidence rate for ST
+                tmpSet['ST_ConfFC_Omni' + suffix] = CONFIDENCE_MAP[safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Rate your confidence about the delegation decision indicated in the previous question', 'response'])];
 
-            // get alignment of soartech omnibus choice delegation
-            for (let x of Object.keys(ATTRIBUTE_MAP)) {
-                if (stOmni?.includes(x)) {
-                    tmpSet['ST_Align_DelC_Omni'] = Number(ATTRIBUTE_MAP[x] === stAttribute);
-                    break;
+                // get st align delC and forced - see how many chosen are high, how many are low, divide by number delegated
+                const stDelF = getStDelRate(res, true);
+                // high alignment = 1
+                if (stAttribute === 1) {
+                    tmpSet['ST_Align_DelC' + suffix] = stDel['delegated'] > 0 ? stDel['high'] / stDel['delegated'] : null;
+                    tmpSet['ST_Align_DelFC' + suffix] = stDelF['tally'] > 0 ? stDelF['high'] / stDelF['tally'] : null;
                 }
-            }
-
-            // get alignment of soartech omnibus forced choice delegation
-            const stOmniF = safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Forced Choice', 'response']);
-            for (let x of Object.keys(ATTRIBUTE_MAP)) {
-                if (stOmniF?.includes(x)) {
-                    tmpSet['ST_Align_DelFC_Omni'] = Number(ATTRIBUTE_MAP[x] === stAttribute);
-                    break;
+                else {
+                    tmpSet['ST_Align_DelC' + suffix] = stDel['delegated'] > 0 ? stDel['low'] / stDel['delegated'] : null;
+                    tmpSet['ST_Align_DelFC' + suffix] = stDelF['tally'] > 0 ? stDelF['low'] / stDelF['tally'] : null;
                 }
-            }
 
-            // get st align trust and misalign trust
-            // go through soartech medics
-            // if a medic matches stAttribute, add the value of this to the score
-            const st_medics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
-            const trustST = getAttributeAlignment(res, stAttribute, st_medics, "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_Trust'] = trustST['align'];
-            tmpSet['ST_Misalign_Trust'] = trustST['misalign'];
-
-            // get st align agree and misalign agree
-            const agreeST = getAttributeAlignment(res, stAttribute, st_medics, "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_Agree'] = agreeST['align'];
-            tmpSet['ST_Misalign_Agree'] = agreeST['misalign'];
-
-            // get st align trustworthy and misalign trustworthy
-            const trustworthyST = getAttributeAlignment(res, stAttribute, st_medics, "This medic is trustworthy", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_Trustworthy'] = trustworthyST['align'];
-            tmpSet['ST_Misalign_Trustworthy'] = trustworthyST['misalign'];
-
-            // get st align self report and misalign self report
-            const selfReportST = getAttributeAlignment(res, stAttribute, st_medics, "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_AlignSR'] = selfReportST['align'];
-            tmpSet['ST_Misalign_AlignSR'] = selfReportST['misalign'];
-
-            // get st align trust and misalign trust omni
-            const trustSTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_Trust_Omni'] = trustSTomni['align'];
-            tmpSet['ST_Misalign_Trust_Omni'] = trustSTomni['misalign'];
-
-            // get st align agree and misalign agree
-            const agreeSTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_Agree_Omni'] = agreeSTomni['align'];
-            tmpSet['ST_Misalign_Agree_Omni'] = agreeSTomni['misalign'];
-
-            // get st align trustworthy and misalign trustworthy
-            const trustworthySTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "This medic is trustworthy", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_Trustworthy_Omni'] = trustworthySTomni['align'];
-            tmpSet['ST_Misalign_Trustworthy_Omni'] = trustworthySTomni['misalign'];
-
-            // get st align self report and misalign self report
-            const selfReportSTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
-            tmpSet['ST_Align_AlignSR_Omni'] = selfReportSTomni['align'];
-            tmpSet['ST_Misalign_AlignSR_Omni'] = selfReportSTomni['misalign'];
-
-            // get delegation rate for AD. not delegate = 0, delegate at all = 1; average
-            const adDel = getAdDelRate(res);
-            tmpSet['AD_Del'] = adDel['tally'] > 0 ? adDel['val'] / adDel['tally'] : null;
-
-            // get confidence in forced choice AD
-            tmpSet['AD_ConfFC'] = getAdConfRate(res);
-
-            // get omnibus delegation rate for AD
-            const adOmni = safeGet(res, ['results', 'Omnibus: Medic-C vs Medic-D', 'questions', 'Medic-C vs Medic-D: Given the information provided', 'response']);
-            tmpSet['AD_Del_Omni'] = isDefined(adOmni) ? Number(adOmni !== 'I would prefer not to delegate to either Medic') : null;
-
-            // get omnibus confidence rate for AD
-            tmpSet['AD_ConfFC_Omni'] = CONFIDENCE_MAP[safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Rate your confidence about the delegation decision indicated in the previous question', 'response'])];
-
-            // get st align delC and forced - see how many chosen are high, how many are low, divide by number delegated
-            const adDelF = getAdDelRate(res, true);
-            // high alignment = 1
-            if (adAttribute === 1) {
-                tmpSet['AD_Align_DelC'] = adDel['delegated'] > 0 ? adDel['high'] / adDel['delegated'] : null;
-                tmpSet['AD_Align_DelFC'] = adDelF['tally'] > 0 ? adDelF['high'] / adDelF['tally'] : null;
-            }
-            else {
-                tmpSet['AD_Align_DelC'] = adDel['delegated'] > 0 ? adDel['low'] / adDel['delegated'] : null;
-                tmpSet['AD_Align_DelFC'] = adDelF['tally'] > 0 ? adDelF['low'] / adDelF['tally'] : null;
-            }
-            // get alignment of adept omnibus choice delegation
-            for (let x of Object.keys(ATTRIBUTE_MAP)) {
-                if (adOmni?.includes(x)) {
-                    tmpSet['AD_Align_DelC_Omni'] = Number(ATTRIBUTE_MAP[x] === adAttribute);
-                    break;
+                // get alignment of soartech omnibus choice delegation
+                for (let x of Object.keys(ATTRIBUTE_MAP)) {
+                    if (stOmni?.includes(x)) {
+                        tmpSet['ST_Align_DelC_Omni' + suffix] = Number(ATTRIBUTE_MAP[x] === stAttribute);
+                        break;
+                    }
                 }
-            }
-            // get alignment of adept omnibus forced choice delegation
-            const adOmniF = safeGet(res, ['results', 'Omnibus: Medic-C vs Medic-D', 'questions', 'Medic-C vs Medic-D: Forced Choice', 'response']);
-            for (let x of Object.keys(ATTRIBUTE_MAP)) {
-                if (adOmniF?.includes(x)) {
-                    tmpSet['AD_Align_DelFC_Omni'] = Number(ATTRIBUTE_MAP[x] === adAttribute);
-                    break;
+
+                // get alignment of soartech omnibus forced choice delegation
+                const stOmniF = safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Forced Choice', 'response']);
+                for (let x of Object.keys(ATTRIBUTE_MAP)) {
+                    if (stOmniF?.includes(x)) {
+                        tmpSet['ST_Align_DelFC_Omni' + suffix] = Number(ATTRIBUTE_MAP[x] === stAttribute);
+                        break;
+                    }
                 }
+
+                // get st align trust and misalign trust
+                // go through soartech medics
+                // if a medic matches stAttribute, add the value of this to the score
+                const st_medics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
+                const trustST = getAttributeAlignment(res, stAttribute, st_medics, "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_Trust' + suffix] = trustST['align'];
+                tmpSet['ST_Misalign_Trust' + suffix] = trustST['misalign'];
+
+                // get st align agree and misalign agree
+                const agreeST = getAttributeAlignment(res, stAttribute, st_medics, "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_Agree' + suffix] = agreeST['align'];
+                tmpSet['ST_Misalign_Agree' + suffix] = agreeST['misalign'];
+
+                // get st align trustworthy and misalign trustworthy
+                const trustworthyST = getAttributeAlignment(res, stAttribute, st_medics, "This medic is trustworthy", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_Trustworthy' + suffix] = trustworthyST['align'];
+                tmpSet['ST_Misalign_Trustworthy' + suffix] = trustworthyST['misalign'];
+
+                // get st align self report and misalign self report
+                const selfReportST = getAttributeAlignment(res, stAttribute, st_medics, "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_AlignSR' + suffix] = selfReportST['align'];
+                tmpSet['ST_Misalign_AlignSR' + suffix] = selfReportST['misalign'];
+
+                // get st align trust and misalign trust omni
+                const trustSTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_Trust_Omni' + suffix] = trustSTomni['align'];
+                tmpSet['ST_Misalign_Trust_Omni' + suffix] = trustSTomni['misalign'];
+
+                // get st align agree and misalign agree
+                const agreeSTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_Agree_Omni' + suffix] = agreeSTomni['align'];
+                tmpSet['ST_Misalign_Agree_Omni' + suffix] = agreeSTomni['misalign'];
+
+                // get st align trustworthy and misalign trustworthy
+                const trustworthySTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "This medic is trustworthy", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_Trustworthy_Omni' + suffix] = trustworthySTomni['align'];
+                tmpSet['ST_Misalign_Trustworthy_Omni' + suffix] = trustworthySTomni['misalign'];
+
+                // get st align self report and misalign self report
+                const selfReportSTomni = getAttributeAlignment(res, stAttribute, ['Medic-A', 'Medic-B'], "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
+                tmpSet['ST_Align_AlignSR_Omni' + suffix] = selfReportSTomni['align'];
+                tmpSet['ST_Misalign_AlignSR_Omni' + suffix] = selfReportSTomni['misalign'];
+
+                // get delegation rate for AD. not delegate = 0, delegate at all = 1; average
+                const adDel = getAdDelRate(res);
+                tmpSet['AD_Del' + suffix] = adDel['tally'] > 0 ? adDel['val'] / adDel['tally'] : null;
+
+                // get confidence in forced choice AD
+                tmpSet['AD_ConfFC' + suffix] = getAdConfRate(res);
+
+                // get omnibus delegation rate for AD
+                const adOmni = safeGet(res, ['results', 'Omnibus: Medic-C vs Medic-D', 'questions', 'Medic-C vs Medic-D: Given the information provided', 'response']);
+                tmpSet['AD_Del_Omni' + suffix] = isDefined(adOmni) ? Number(adOmni !== 'I would prefer not to delegate to either Medic') : null;
+
+                // get omnibus confidence rate for AD
+                tmpSet['AD_ConfFC_Omni' + suffix] = CONFIDENCE_MAP[safeGet(res, ['results', 'Omnibus: Medic-A vs Medic-B', 'questions', 'Medic-A vs Medic-B: Rate your confidence about the delegation decision indicated in the previous question', 'response'])];
+
+                // get st align delC and forced - see how many chosen are high, how many are low, divide by number delegated
+                const adDelF = getAdDelRate(res, true);
+                // high alignment = 1
+                if (adAttribute === 1) {
+                    tmpSet['AD_Align_DelC' + suffix] = adDel['delegated'] > 0 ? adDel['high'] / adDel['delegated'] : null;
+                    tmpSet['AD_Align_DelFC' + suffix] = adDelF['tally'] > 0 ? adDelF['high'] / adDelF['tally'] : null;
+                }
+                else {
+                    tmpSet['AD_Align_DelC' + suffix] = adDel['delegated'] > 0 ? adDel['low'] / adDel['delegated'] : null;
+                    tmpSet['AD_Align_DelFC' + suffix] = adDelF['tally'] > 0 ? adDelF['low'] / adDelF['tally'] : null;
+                }
+                // get alignment of adept omnibus choice delegation
+                for (let x of Object.keys(ATTRIBUTE_MAP)) {
+                    if (adOmni?.includes(x)) {
+                        tmpSet['AD_Align_DelC_Omni' + suffix] = Number(ATTRIBUTE_MAP[x] === adAttribute);
+                        break;
+                    }
+                }
+                // get alignment of adept omnibus forced choice delegation
+                const adOmniF = safeGet(res, ['results', 'Omnibus: Medic-C vs Medic-D', 'questions', 'Medic-C vs Medic-D: Forced Choice', 'response']);
+                for (let x of Object.keys(ATTRIBUTE_MAP)) {
+                    if (adOmniF?.includes(x)) {
+                        tmpSet['AD_Align_DelFC_Omni' + suffix] = Number(ATTRIBUTE_MAP[x] === adAttribute);
+                        break;
+                    }
+                }
+
+                // get ad align trust and misalign trust
+                // go through soartech medics
+                // if a medic matches stAttribute, add the value of this to the score
+                const ad_medics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
+                const trustAD = getAttributeAlignment(res, adAttribute, ad_medics, "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_Trust' + suffix] = trustAD['align'];
+                tmpSet['AD_Misalign_Trust' + suffix] = trustAD['misalign'];
+
+                // get ad align agree and misalign agree
+                const agreeAD = getAttributeAlignment(res, adAttribute, ad_medics, "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_Agree' + suffix] = agreeAD['align'];
+                tmpSet['AD_Misalign_Agree' + suffix] = agreeAD['misalign'];
+
+                // get ad align trustworthy and misalign trustworthy
+                const trustworthyAD = getAttributeAlignment(res, adAttribute, ad_medics, "This medic is trustworthy", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_Trustworthy' + suffix] = trustworthyAD['align'];
+                tmpSet['AD_Misalign_Trustworthy' + suffix] = trustworthyAD['misalign'];
+
+                // get ad align self report and misalign self report
+                const selfReportAD = getAttributeAlignment(res, adAttribute, ad_medics, "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_AlignSR' + suffix] = selfReportAD['align'];
+                tmpSet['AD_Misalign_AlignSR' + suffix] = selfReportAD['misalign'];
+
+                // get ad align trust and misalign trust omni
+                const trustADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_Trust_Omni' + suffix] = trustADomni['align'];
+                tmpSet['AD_Misalign_Trust_Omni' + suffix] = trustADomni['misalign'];
+
+                // get ad align agree and misalign agree
+                const agreeADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_Agree_Omni' + suffix] = agreeADomni['align'];
+                tmpSet['AD_Misalign_Agree_Omni' + suffix] = agreeADomni['misalign'];
+
+                // get ad align trustworthy and misalign trustworthy
+                const trustworthyADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "This medic is trustworthy", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_Trustworthy_Omni' + suffix] = trustworthyADomni['align'];
+                tmpSet['AD_Misalign_Trustworthy_Omni' + suffix] = trustworthyADomni['misalign'];
+
+                // get ad align self report and misalign self report
+                const selfReportADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
+                tmpSet['AD_Align_AlignSR_Omni' + suffix] = selfReportADomni['align'];
+                tmpSet['AD_Misalign_AlignSR_Omni' + suffix] = selfReportADomni['misalign'];
+            }
+        }
+    }
+    // get all results that don't have delegation survey
+    for (let id of [...Object.keys(txtAlign), ...Object.keys(simAlign)]) {
+        if (!allResults.find((x) => x['ParticipantID'].trim() === id.trim())) {
+            id = id.trim();
+            const tmpSet = {};
+            tmpSet['ParticipantID'] = id.trim();
+
+            const date = {
+                "2024221": new Date("March 20, 2024"),
+                "2024222": new Date("March 22, 2024"),
+                "2024223": new Date("March 22, 2024"),
+                "2024217": new Date("March 20, 2024"),
+                "2024214": new Date("March 20, 2024")
             }
 
-            // get ad align trust and misalign trust
-            // go through soartech medics
-            // if a medic matches stAttribute, add the value of this to the score
-            const ad_medics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
-            const trustAD = getAttributeAlignment(res, adAttribute, ad_medics, "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_Trust'] = trustAD['align'];
-            tmpSet['AD_Misalign_Trust'] = trustAD['misalign'];
+            tmpSet['Date'] = date[id].toLocaleDateString();
 
-            // get ad align agree and misalign agree
-            const agreeAD = getAttributeAlignment(res, adAttribute, ad_medics, "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_Agree'] = agreeAD['align'];
-            tmpSet['AD_Misalign_Agree'] = agreeAD['misalign'];
+            // get order of text based (TODO: not hardcoded?)
+            const textOrder = {
+                "2024221": 1,
+                "2024222": 2,
+                "2024223": 3,
+                "2024217": 1,
+                "2024214": 2
+            };
+            tmpSet['TextOrder'] = textOrder[id];
 
-            // get ad align trustworthy and misalign trustworthy
-            const trustworthyAD = getAttributeAlignment(res, adAttribute, ad_medics, "This medic is trustworthy", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_Trustworthy'] = trustworthyAD['align'];
-            tmpSet['AD_Misalign_Trustworthy'] = trustworthyAD['misalign'];
+            // get sim session order from sim files (date-time-based)
+            tmpSet['Sim1'] = SIM_ORDER[id] ? SIM_MAP[SIM_ORDER[id][0]] : null;
+            tmpSet['Sim2'] = SIM_ORDER[id] ? SIM_MAP[SIM_ORDER[id][1]] ?? null : null;
 
-            // get ad align self report and misalign self report
-            const selfReportAD = getAttributeAlignment(res, adAttribute, ad_medics, "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_AlignSR'] = selfReportAD['align'];
-            tmpSet['AD_Misalign_AlignSR'] = selfReportAD['misalign'];
+            // verify sim order according to document
+            const sims = [tmpSet['Sim1'], tmpSet['Sim2']]
+            tmpSet['SimOrder'] = sims.includes(1) ? Number(sims.includes(2)) : sims.includes(3) ? Number(sims.includes(4)) : 0;
 
-            // get ad align trust and misalign trust omni
-            const trustADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_Trust_Omni'] = trustADomni['align'];
-            tmpSet['AD_Misalign_Trust_Omni'] = trustADomni['misalign'];
+            // make sure sim and text were different
+            // cannot have textOrder 1,2 with sim 1,2, cannot have textOrder 3,4 with sim 3,4
+            tmpSet['TextSimDiff'] = Number(!sims.includes(textOrder[id]));
 
-            // get ad align agree and misalign agree
-            const agreeADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "Do you agree with the decisions that this medic made?", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_Agree_Omni'] = agreeADomni['align'];
-            tmpSet['AD_Misalign_Agree_Omni'] = agreeADomni['misalign'];
+            // get alignment for text responses from ta1 server (ST)
+            // for now, hard code st to maximization
+            tmpSet['ST_KDMA_Text'] = txtAlign[id] ? txtAlign[id]['maximization'] ? txtAlign[id]['maximization'] : null : null;
 
-            // get ad align trustworthy and misalign trustworthy
-            const trustworthyADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "This medic is trustworthy", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_Trustworthy_Omni'] = trustworthyADomni['align'];
-            tmpSet['AD_Misalign_Trustworthy_Omni'] = trustworthyADomni['misalign'];
+            // get alignment for sim from ta1 server (ST). Hardcode maximization for now
+            tmpSet['ST_KDMA_Sim'] = simAlign ? simAlign[id] ? simAlign[id]['maximization'] : null : null;
 
-            // get ad align self report and misalign self report
-            const selfReportADomni = getAttributeAlignment(res, adAttribute, ['Medic-A', 'Medic-B'], "The way this medic makes medical decisions is how I make decisions", RESPONSIBILITY_MAP);
-            tmpSet['AD_Align_AlignSR_Omni'] = selfReportADomni['align'];
-            tmpSet['AD_Misalign_AlignSR_Omni'] = selfReportADomni['misalign'];
+            // get high/low maximization attribute (ST)
+            let stAttribute = tmpSet['ST_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+            tmpSet['ST_AttribGrp_Text'] = stAttribute;
+            // get sim attribute alignment
+            tmpSet['ST_AttribGrp_Sim'] = tmpSet['ST_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+
+            // get alignment for text responses from ta1 server (AD)
+            // for now, hard code adept to moral desert
+            tmpSet['AD_KDMA_Text'] = txtAlign[id] ? txtAlign[id]['MoralDesert'] ? txtAlign[id]['MoralDesert'] : null : null;
+
+            // get alignment for sim from ta1 server (AD). for now hardcode moral desert
+            tmpSet['AD_KDMA_Sim'] = simAlign ? simAlign[id] ? simAlign[id]['MoralDesert'] : null : null;
+
+            // get high/low moral deserts attribute (AD)
+            let adAttribute = tmpSet['AD_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
+            tmpSet['AD_AttribGrp_Text'] = adAttribute;
+            // get sim attribute alignment
+            tmpSet['AD_AttribGrp_Sim'] = tmpSet['AD_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
+            tmpSet['AD_AttribGrp_Text'] = adAttribute;
+
+            allResults.push(tmpSet);
         }
     }
     return allResults;

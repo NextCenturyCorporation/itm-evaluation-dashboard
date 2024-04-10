@@ -53,6 +53,7 @@ const addProbeIDs = (scenario, scenarioMappings) => {
 const getAdeptAlignment = async (scenarioResults, scenarioId) => {
     // build fetch for starting new session
     const url = ADEPT_URL + '/api/v1/new_session';
+
     try {
         const startSession = await axios.post(url);
         const sessionId = startSession.data;
