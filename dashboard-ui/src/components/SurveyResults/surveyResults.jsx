@@ -110,7 +110,7 @@ function SingleGraph({ data, version }) {
             const survey = new Model(surveyJson);
             setSurvey(survey);
         }
-    }, [data]);
+    }, [data, version]);
 
     if (!vizPanel && !!survey) {
         const vizPanel = new VisualizationPanel(
@@ -130,7 +130,7 @@ function SingleGraph({ data, version }) {
                 document.getElementById("viz_" + pageName).innerHTML = "";
             }
         }
-    }, [vizPanel]);
+    }, [vizPanel, pageName]);
 
 
     return (<div>
@@ -203,7 +203,7 @@ export function SurveyResults() {
             }
             setResultData(separatedData);
         }
-    }, [selectedScenario, filterBySurveyVersion]);
+    }, [selectedScenario, filterBySurveyVersion, filteredData]);
 
     // detect survey versions in data set
     React.useEffect(() => {
@@ -251,7 +251,7 @@ export function SurveyResults() {
                         {versions.map((v) => {
                             return <MenuItem key={v} value={v}>
                                 <Checkbox checked={filterBySurveyVersion === v} />
-                                <ListItemText primary={`${v}` + '.x'} />
+                                <ListItemText primary={v + '.x'} />
                             </MenuItem>;
                         })}
                     </Select>
