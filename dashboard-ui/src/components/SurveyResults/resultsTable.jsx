@@ -117,7 +117,7 @@ export function ResultsTable({ data }) {
         setFormattedData(allObjs);
         setHeaders(found_headers);
         setVersions(tmpVersion);
-    }, [data, filterBySurveyVersion]);
+    }, [data, filterBySurveyVersion, headers, selectAll]);
 
 
     const exportToExcel = async () => {
@@ -149,7 +149,7 @@ export function ResultsTable({ data }) {
         } else {
             setVersionOption([...versions]);
         }
-    }, [selectAll]);
+    }, [selectAll, filterBySurveyVersion, versions]);
 
     return (<>
         {data && <><section className='tableHeader'>
