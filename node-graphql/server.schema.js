@@ -158,8 +158,9 @@ const typeDefs = gql`
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
     getScenarioNamesByEval(evalNumber: Float): [JSON]
-    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON
-    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID): JSON
+    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON,
+    getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID): JSON,
+    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String): JSON
     getAllScenarios(id: ID): [Scenario]
     getScenarioState(id: ID): State
     getAllScenarioStates: [State]
@@ -216,11 +217,25 @@ const resolvers = {
     getPerformerADMsForScenario: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').distinct(args["admQueryStr"], { "history.response.id": args["scenarioID"] }).then(result => { return result });
     },
+    getAlignmentTargetsPerScenario: async (obj, args, context, inflow) => {
+      let alignmentTargets = await dashboardDB.db.collection('test').distinct("history.response.id", { "history.response.id": args["scenarioID"], "evalNumber": args["evalNumber"]}).then(result => { return result });
+      // The scenarioID still comes back in this distinct because of the way the JSON is configured, remove it before sending the array
+      const indexOfScenario = alignmentTargets.indexOf(args["scenarioID"]);
+      alignmentTargets.splice(indexOfScenario, 1);
+      return alignmentTargets;
+    },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
+      // NOTE: We might need to add evalNumber to this query in the future
       let queryObj = {};
-      queryObj[args["admQueryStr"]] = args["admName"];
-      queryObj["history.response.id"] = args["scenarioID"];
-
+      if( args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") { 
+        queryObj[args["admQueryStr"]] = args["admName"];
+        queryObj["history.response.id"] = args["scenarioID"];
+      } else {
+        queryObj = {
+          $and: [{"history.response.id": args["alignmentTarget"]}, {"history.response.id": args["scenarioID"]}],
+        };
+        queryObj[args["admQueryStr"]] = args["admName"];
+      }
       return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
     },
     getAllScenarios: async (obj, args, context, inflow) => {
