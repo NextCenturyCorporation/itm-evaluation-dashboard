@@ -1,0 +1,89 @@
+.selection-section .nav-header {
+    margin-bottom: 0px;
+}
+
+.selection-section .nav-list {
+    margin-top: 0px;
+}
+
+.human-results {
+    display: flex;
+    flex-direction: row;
+}
+
+.hr-nav {
+    width: 20%;
+    min-width: 200px;
+}
+
+.not-found {
+    text-align: center;
+    width: 80%;
+    margin-top: 12px;
+}
+
+.sim-participant {
+    width: 80%;
+    margin: 12px;
+}
+
+.probe-cell {
+    border-left: 1px solid black;
+}
+
+.sub-table tr td:first-child {
+    font-weight: bold;
+    padding: 0px 8px;
+}
+
+.action-list>tbody>tr>td {
+    border: 1px solid black;
+}
+
+.action-list>thead>tr>th {
+    border: 1px solid black;
+    padding-left: 8px;
+}
+
+.action-type-cell {
+    border-right: 1px solid black;
+    padding-left: 8px;
+}
+
+.action-list {
+    width: 100%;
+    background-color: white;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.action-list thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: rgb(88, 88, 115);
+    color: white;
+    border-bottom: 2px solid black;
+    border-collapse: separate;
+}
+
+.action-list thead th {
+    padding: 12px;
+    font-weight: 500;
+}
+
+.table-container {
+    width: calc(100% - 24px);
+    max-height: 750px;
+    overflow: auto;
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 12px;
+    margin: 12px;
+}
+
+.team-chooser {
+    float: right;
+    margin-bottom: 8px;
+    margin-right: 12px;
+}

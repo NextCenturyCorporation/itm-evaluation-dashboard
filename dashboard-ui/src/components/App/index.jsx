@@ -30,6 +30,7 @@ import 'react-dual-listbox/lib/react-dual-listbox.css';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
+import HumanResults from '../HumanResults/humanResults';
 
 const history = createBrowserHistory();
 
@@ -171,6 +172,9 @@ export class App extends React.Component {
                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
                                         Human Sim Probe Values
                                     </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
+                                        Play by Play: Humans in Sim
+                                    </NavDropdown.Item>
                                 </NavDropdown>
                                 <NavDropdown title="ADM Evaluation Segments">
                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
@@ -250,7 +254,9 @@ export class App extends React.Component {
                             <Route path="/humanProbeData">
                                 <AggregateResults type="HumanProbeData" />
                             </Route>
-                            
+                            <Route path="/human-results">
+                                <HumanResults />
+                            </Route>
                         </Switch>
                     </div>
 
