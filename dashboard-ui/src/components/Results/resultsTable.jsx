@@ -25,6 +25,7 @@ const getScenarioNamesQueryName = "getScenarioNamesByEval";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
 const getTestByADMandScenarioName = "getTestByADMandScenario";
 const getEvalNameNumbers = "getEvalNameNumbers";
+const getAlignmentTargetsPerScenario = "getAlignmentTargetsPerScenario";
 
 const get_eval_name_numbers = gql`
     query getEvalNameNumbers{
@@ -40,9 +41,14 @@ const performer_adm_by_scenario = gql`
         getPerformerADMsForScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID)
     }`;
 const test_by_adm_and_scenario = gql`
-    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID){
-        getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName)
+    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTarget: String){
+        getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName, alignmentTarget: $alignmentTarget)
     }`;
+const alignment_target_by_scenario = gql`
+    query getAlignmentTargetsPerScenario($evalNumber: Float!, $scenarioID: ID){
+        getAlignmentTargetsPerScenario(evalNumber: $evalNumber, scenarioID: $scenarioID)
+    }`;
+
 
 class ResultsTable extends React.Component {
 
@@ -53,7 +59,8 @@ class ResultsTable extends React.Component {
             scenario: "",
             evalNumber: null,
             ADMQueryString: "history.parameters.ADM Name",
-            showScrollButton: false
+            showScrollButton: false,
+            alignmentTarget: null
         }
     }
 
@@ -89,7 +96,8 @@ class ResultsTable extends React.Component {
             evalNumber: target,
             adm: "",
             scenario: "",
-            ADMQueryString: target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name"
+            ADMQueryString: target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name",
+            alignmentTarget: null
         });
     }
 
@@ -97,12 +105,20 @@ class ResultsTable extends React.Component {
         this.setState({
             scenario: target,
             adm: "",
+            alignmentTarget: null
         });
     }
 
     setPerformerADM(target) {
         this.setState({
-            adm: target
+            adm: target,
+            alignmentTarget: null
+        });
+    }
+
+    setAlignmentTarget(target) {
+        this.setState({
+            alignmentTarget: target
         });
     }
 
@@ -252,13 +268,54 @@ class ResultsTable extends React.Component {
                                 </div>
                             </>
                         }
+                        {(this.state.evalNumber == 3 && this.state.scenario !== ""  && this.state.adm !== "")&&
+                            <>
+                                <div className="nav-header">
+                                    <span className="nav-header-text">Alignment Target</span>
+                                </div>
+                                <div className="nav-menu">
+                                <Query query={alignment_target_by_scenario} variables={{"evalNumber": this.state.evalNumber, "scenarioID": this.state.scenario}}>
+                                    {
+                                        ({ loading, error, data }) => {
+                                            if (loading) return <div>Loading ...</div> 
+                                            if (error) return <div>Error</div>
+
+                                            const alignmentTargetOptions = data[getAlignmentTargetsPerScenario];
+                                            let alignmentTargetArray = [];
+                                            for(const element of alignmentTargetOptions) {
+                                                alignmentTargetArray.push({
+                                                    "value": element,
+                                                    "name": element
+                                                });
+                                            }
+                                            alignmentTargetArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+                                            return (
+                                                <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
+                                                    {alignmentTargetArray.map((item,key) =>
+                                                        <ListItem className="nav-list-item" id={"alignTarget_" + key} key={"alignTarget_" + key}
+                                                            button
+                                                            selected={this.state.alignmentTarget === item.value}
+                                                            onClick={() => this.setAlignmentTarget(item.value)}>
+                                                            <ListItemText primary={item.value} />
+                                                        </ListItem>
+                                                    )}
+                                                </List>
+                                            )
+                                        }
+                                    }
+                                    </Query>
+                                </div>
+                            </>
+                        }
                     </div>
                     <div className="test-overview-area">
-                        {(this.state.evalNumber !== null && this.state.scenario !== "" && this.state.adm !== "") &&
-                            <Query query={test_by_adm_and_scenario} variables={{ "admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm }}>
+                        {((this.state.evalNumber < 3 && this.state.scenario !== "" && this.state.adm !== "") || (
+                            this.state.evalNumber === 3 && this.state.scenario !== "" && this.state.adm !== "" && this.state.alignmentTarget !== null) ) &&
+                            <Query query={test_by_adm_and_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm, "alignmentTarget": this.state.alignmentTarget}}>
                                 {
                                     ({ loading, error, data }) => {
-                                        if (loading) return <div>Loading ...</div>
+                                        if (loading) return <div>Loading ...</div> 
                                         if (error) return <div>Error</div>
                                         const testData = data[getTestByADMandScenarioName];
 
