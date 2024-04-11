@@ -38,7 +38,7 @@ function Home({ newState }) {
     if (newState.currentUser == null) {
         history.push('/login');
     }
-    return <HomePage />;
+    return <HomePage currentUser={newState.currentUser}/>;
 }
 
 function Results() {
@@ -67,8 +67,8 @@ function AdmResults() {
 
 
 function Login({ newState, userLoginHandler, updateHandler }) {
-    if (newState.currentUser !== null) {
-        return <Home newState={newState} />;
+    if (newState !== null && newState.currentUser !== null) {
+        return <Home newState={newState} currentUser={newState.currentUser}/>;
     } else {
         return <LoginApp userLoginHandler={userLoginHandler} />;
     }
@@ -159,31 +159,35 @@ export class App extends React.Component {
                                         Complete Text Scenarios
                                     </NavDropdown.Item>
                                 </NavDropdown>
-                                <NavDropdown title="Human Evaluation Segments">
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
-                                        Delegation Survey Results
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
-                                        Text Scenario Results
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanSimParticipant">
-                                        Human Sim Participant Data
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
-                                        Human Sim Probe Values
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
-                                        Play by Play: Humans in Sim
-                                    </NavDropdown.Item>
-                                </NavDropdown>
-                                <NavDropdown title="ADM Evaluation Segments">
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
-                                        ADM Data
-                                    </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
-                                        ADM Alignment Results
-                                    </NavDropdown.Item>
-                                </NavDropdown>
+                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
+                                    <>
+                                        <NavDropdown title="Human Evaluation Segments">
+                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
+                                                Delegation Survey Results
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
+                                                Text Scenario Results
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/humanSimParticipant">
+                                                Human Sim Participant Data
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
+                                                Human Sim Probe Values
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
+                                                Play by Play: Humans in Sim
+                                            </NavDropdown.Item>
+                                        </NavDropdown>
+                                        <NavDropdown title="ADM Evaluation Segments">
+                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
+                                                ADM Data
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
+                                                ADM Alignment Results
+                                            </NavDropdown.Item>
+                                        </NavDropdown>
+                                    </>
+                                )}
                             </ul>
                             <ul className="navbar-nav ml-auto">
                                 <li className="login-user">
