@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -52,8 +53,36 @@ class ResultsTable extends React.Component {
             scenario: "",
             evalNumber: null,
             ADMQueryString: "history.parameters.ADM Name",
+            showScrollButton: false
         }
     }
+
+    componentDidMount() {
+        window.addEventListener('scroll', this.toggleVisibility);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.toggleVisibility);
+    }
+
+    toggleVisibility = () => {
+        if (window.pageYOffset > 300) {
+            this.setState({
+                showScrollButton: true
+            });
+        } else {
+            this.setState({
+                showScrollButton: false
+            });
+        }
+    };
+
+    scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    };
 
     setEval(target) {
         this.setState({
@@ -239,7 +268,7 @@ class ResultsTable extends React.Component {
                                                     <>
                                                         <AlignmentScoreBox performer={this.formatADMString(this.state.adm)} data={testData} scenario={this.state.scenario} />
                                                         <div className='paper-container'>
-                                                            <TableContainer className="TableContainer">
+                                                            <TableContainer>
                                                                 <Table className='itm-table' stickyHeader aria-label="simple table">
                                                                     <TableBody className='TableBodyScrollable'>
                                                                         {testData.history.map((item, index) => (
@@ -259,6 +288,24 @@ class ResultsTable extends React.Component {
                         }
                     </div>
                 </div>
+                {this.state.showScrollButton && (
+                    <IconButton onClick={(e) => {
+                        e.stopPropagation()
+                        this.scrollToTop()
+                    }} style={{
+                        position: 'fixed',
+                        left: '20px',
+                        bottom: '20px',
+                        borderRadius: '10px',
+                        backgroundColor: '#592610', 
+                        color: 'white', 
+                        cursor: 'pointer',
+                        zIndex: 1000, 
+                        boxShadow: '0px 2px 10px rgba(0,0,0,0.3)' 
+                    }}>
+                        Back To Top <ArrowUpwardIcon fontSize='large'/>
+                    </IconButton>
+                )}
             </div>
         );
     }
