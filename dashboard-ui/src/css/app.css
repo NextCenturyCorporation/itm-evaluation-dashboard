@@ -207,3 +207,8 @@ body {
     left: 50%;
     transform: translateX(-50%);
   }
+
+  .data-collection-only {
+    margin: 50px;
+    padding: 10px;
+  }

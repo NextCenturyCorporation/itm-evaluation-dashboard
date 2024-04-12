@@ -168,7 +168,8 @@ function SingleGraph({ data, pageName }) {
         if (vizPanel) {
             vizPanel.render("viz_" + pageName);
             return () => {
-                document.getElementById("viz_" + pageName).innerHTML = "";
+                if (document.getElementById("viz_" + pageName))
+                    document.getElementById("viz_" + pageName).innerHTML = "";
             }
         }
     }, [vizPanel, pageName]);
@@ -212,6 +213,14 @@ function ParticipantView({ data, scenarioName }) {
             formatted[page['_id']] = { ...obj };
 
             for (const key of Object.keys(page)) {
+                if (key === 'alignmentData') {
+                    if (!headers.includes('KDMA')) {
+                        headers.push('KDMA')
+                    }
+                    formatted[page['_id']]['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
+                    obj['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
+                    continue;
+                }
                 // top level pages with timing
                 const time_key = key + ' time (s)';
                 if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
@@ -254,7 +263,7 @@ function ParticipantView({ data, scenarioName }) {
     return (<div className="participant-text-results">
         <button onClick={exportToExcel}>Download Results</button>
         <div className="table-container">
-            {organizedData && <table className="by-participant">
+            {organizedData && <table className="itm-table by-participant">
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
@@ -405,11 +414,11 @@ export default function TextBasedResultsPage() {
         // display the results for the chosen scenario
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
-                Object.keys(questionAnswerSets).map((qkey) => {
-                    return (<div className='result-section' key={qkey}>
+                Object.keys(questionAnswerSets).map((qkey, ind) => {
+                    return (<div className='result-section' key={qkey + '_' + ind}>
                         <h3 className='question-header'>{qkey} (N={questionAnswerSets[qkey]['total']})</h3>
                         <p>{questionAnswerSets[qkey]['question']}</p>
-                        <table className="text-result-table">
+                        <table className="itm-table text-result-table">
                             <thead>
                                 <tr>
                                     <th className="answer-column">

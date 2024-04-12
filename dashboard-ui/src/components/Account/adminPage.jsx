@@ -15,9 +15,14 @@ const GET_USERS = gql`
 const UPDATE_ADMIN_USER = gql`
     mutation updateAdminUser($username: String!, $isAdmin: Boolean!){
         updateAdminUser(username: $username, isAdmin: $isAdmin) 
-  }`;
+    }`;
 
-function DualInputBox({options, selectedOptions}) {
+const UPDATE_EVALUATOR_USER = gql`
+    mutation updateEvaluatorUser($username: String!, $isEvaluator: Boolean!){
+        updateEvaluatorUser(username: $username, isEvaluator: $isEvaluator) 
+    }`;
+
+function AdminInputBox({options, selectedOptions}) {
     const [selected, setSelected] = useState(selectedOptions.sort());
     const [updateAdminUserCall] = useMutation(UPDATE_ADMIN_USER);
 
@@ -56,6 +61,45 @@ function DualInputBox({options, selectedOptions}) {
     );
 }
 
+function EvaluatorInputBox({options, selectedOptions}) {
+    const [selected, setSelected] = useState(selectedOptions.sort());
+    const [updateEvaluatorUserCall] = useMutation(UPDATE_EVALUATOR_USER);
+
+    const setEvaluator = (newSelect) => {
+        for(let i=0; i < newSelect.length; i++) {
+            if(!selected.includes(newSelect[i])) {
+                updateEvaluatorUserCall({ variables: { 
+                    username: newSelect[i],
+                    isEvaluator: true
+                }});
+            }
+        }
+        for(let i=0; i < selected.length; i++) {
+            if(!newSelect.includes(selected[i])) {
+                updateEvaluatorUserCall({ variables: { 
+                    username: selected[i],
+                    isEvaluator: false
+                }});
+            }
+        }
+        setSelected(newSelect);
+    }
+
+    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+    return (
+        <DualListBox 
+            options={options} 
+            selected={selected} 
+            onChange={setEvaluator} 
+            showHeaderLabels={true}
+            lang={{
+                availableHeader: "All Users",
+                selectedHeader: "Evaluators"
+            }}/>
+    );
+}
+
 class AdminPage extends React.Component {
 
     constructor(props) {
@@ -77,28 +121,51 @@ class AdminPage extends React.Component {
                     let options = [];
                     let selectedOptions = [];
 
+                    let evaluatorOptions = [];
+                    let evaluatorSelectedOptions = [];
+
                     const users = data[getUsersQueryName]
                     for(let i=0; i < users.length; i++) {
                         options.push({value: users[i].username, label: users[i].username + " (" + users[i].emails[0].address + ")"});
+                        evaluatorOptions.push({value: users[i].username, label: users[i].username + " (" + users[i].emails[0].address + ")"});
 
                         if(users[i].admin) {
                             selectedOptions.push(users[i].username)
                         }
+
+                        if(users[i].evaluator) {
+                            evaluatorSelectedOptions.push(users[i].username)
+                        }
                     }
 
                     return (
-                        <div className="admin-container">
-                            <h3>Administrator</h3>
-                            <div className="admin-description">
-                                Manage administrator settings.
+                        <>
+                            <div className="admin-container">
+                                <h3>Administrator</h3>
+                                <div className="admin-description">
+                                    Manage administrator settings.
+                                </div>
+                                <div className="modify-admins-header">
+                                    <h5>Modify Current Admins</h5>
+                                </div>
+                                <div className="dual-input-container">
+                                    <AdminInputBox options={options} selectedOptions={selectedOptions}/>
+                                </div>
                             </div>
-                            <div className="modify-admins-header">
-                                <h5>Modify Current Admins</h5>
+
+                            <div className="admin-container">
+                                <h3>Evaluators</h3>
+                                <div className="admin-description">
+                                    Manage evaluator settings.
+                                </div>
+                                <div className="modify-admins-header">
+                                    <h5>Modify Current Evaluators</h5>
+                                </div>
+                                <div className="dual-input-container">
+                                    <EvaluatorInputBox options={evaluatorOptions} selectedOptions={evaluatorSelectedOptions}/>
+                                </div>
                             </div>
-                            <div className="dual-input-container">
-                                <DualInputBox options={options} selectedOptions={selectedOptions}/>
-                            </div>
-                        </div>
+                        </>
                     )
                 }
             }

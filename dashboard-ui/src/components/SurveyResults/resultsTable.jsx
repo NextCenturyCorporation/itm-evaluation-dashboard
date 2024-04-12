@@ -47,7 +47,10 @@ export function ResultsTable({ data }) {
             }
             entryObj['Participant Id'] = entry['Participant ID']?.questions['Participant ID']?.response;
             if (!entryObj['Participant Id']) {
-                continue;
+                entryObj['Participant Id'] = entry['Participant ID Page']?.questions['Participant ID']?.response;
+                if (!entryObj['Participant Id']) { 
+                    continue;
+                }
             }
             entryObj['Username'] = entry?.user?.username;
             entryObj['Survey Version'] = version;
@@ -114,7 +117,7 @@ export function ResultsTable({ data }) {
         setFormattedData(allObjs);
         setHeaders(found_headers);
         setVersions(tmpVersion);
-    }, [data, filterBySurveyVersion]);
+    }, [data, filterBySurveyVersion, headers, selectAll]);
 
 
     const exportToExcel = async () => {
@@ -146,7 +149,7 @@ export function ResultsTable({ data }) {
         } else {
             setVersionOption([...versions]);
         }
-    }, [selectAll]);
+    }, [selectAll, filterBySurveyVersion, versions]);
 
     return (<>
         {data && <><section className='tableHeader'>
@@ -173,7 +176,7 @@ export function ResultsTable({ data }) {
             </div>
         </section>
             <div className='resultTableSection'>
-                <table>
+                <table className='itm-table'>
                     <thead>
                         <tr>
                             {headers.map((val, index) => {
