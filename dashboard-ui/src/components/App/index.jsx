@@ -37,8 +37,9 @@ const history = createBrowserHistory();
 function Home({ newState }) {
     if (newState.currentUser == null) {
         history.push('/login');
+    } else {
+        return <HomePage currentUser={newState.currentUser}/>;
     }
-    return <HomePage currentUser={newState.currentUser}/>;
 }
 
 function Results() {
@@ -65,33 +66,35 @@ function AdmResults() {
     return <ADMChartPage/>
 }
 
-
 function Login({ newState, userLoginHandler, updateHandler }) {
-    if (newState !== null && newState.currentUser !== null) {
-        return <Home newState={newState} currentUser={newState.currentUser}/>;
+    if (newState !== null) {
+        if(newState.currentUser !== null) {
+            return <Home newState={newState} currentUser={newState.currentUser}/>;
+        } else {
+            return <LoginApp userLoginHandler={userLoginHandler} />;
+        }
     } else {
         return <LoginApp userLoginHandler={userLoginHandler} />;
     }
 }
 
 function MyAccount({ newState, userLoginHandler }) {
-    if (newState.currentUser == null) {
+    if (newState.currentUser === null) {
         history.push("/login");
+    } else {
+        return <MyAccountPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
     }
-
-    return <MyAccountPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
 }
 
 function Admin({ newState, userLoginHandler }) {
-    if (newState.currentUser == null) {
+    if (newState.currentUser === null) {
         history.push("/login");
-    }
-
-    // Do not let users who aren't admins somehow go to the admin page
-    if (newState.currentUser !== null && newState.currentUser.admin === true) {
-        return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
     } else {
-        return <Home newState={newState} />;
+        if(newState.currentUser.admin === true) {
+            return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
+        } else {
+            return <Home newState={newState} />;
+        }
     }
 }
 
