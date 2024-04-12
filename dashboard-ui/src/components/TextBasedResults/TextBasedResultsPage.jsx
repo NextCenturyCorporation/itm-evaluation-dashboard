@@ -213,6 +213,14 @@ function ParticipantView({ data, scenarioName }) {
             formatted[page['_id']] = { ...obj };
 
             for (const key of Object.keys(page)) {
+                if (key === 'alignmentData') {
+                    if (!headers.includes('KDMA')) {
+                        headers.push('KDMA')
+                    }
+                    formatted[page['_id']]['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
+                    obj['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
+                    continue;
+                }
                 // top level pages with timing
                 const time_key = key + ' time (s)';
                 if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
