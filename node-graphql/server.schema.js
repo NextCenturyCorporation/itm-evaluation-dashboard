@@ -17,6 +17,7 @@ const typeDefs = gql`
 
   extend type User {
     admin: Boolean
+    evaluator: Boolean
   }
 
   type Player {
@@ -187,6 +188,7 @@ const typeDefs = gql`
 
   type Mutation {
     updateAdminUser(username: String, isAdmin: Boolean): JSON
+    updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON
     uploadSurveyResults(surveyId: String, results: JSON): JSON
     uploadScenarioResults(results: [JSON]): JSON
   }
@@ -313,12 +315,21 @@ const resolvers = {
     getAllRawSimData: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });
     },
+    getUsers: async(obj, args, context, infow) => {
+      return await dashboardDB.db.collection('users').find().project({"services":0, "createdAt":0, "updatedAt": 0}).toArray().then(result => {return result});
+    }
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('users').update(
         { "username": args["username"] },
         { $set: { "admin": args["isAdmin"] } }
+      );
+    },
+    updateEvaluatorUser: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "evaluator": args["isEvaluator"] } }
       );
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {
