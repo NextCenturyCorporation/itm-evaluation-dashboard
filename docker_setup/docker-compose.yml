@@ -22,6 +22,7 @@ services:
   dashboard-ui:
     container_name: dashboard-ui
     image: dashboard-ui
+    mem_limit: 4gb
     volumes:
       - ../dashboard-ui/public/configs/prod/config.js:/usr/src/app/src/services/config.js
       - ../dashboard-ui/public:/usr/src//app/public
