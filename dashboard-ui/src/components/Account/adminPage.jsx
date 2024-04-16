@@ -126,8 +126,8 @@ class AdminPage extends React.Component {
 
                     const users = data[getUsersQueryName]
                     for(let i=0; i < users.length; i++) {
-                        options.push({value: users[i].username, label: users[i].username + " (" + users[i].emails[0].address + ")"});
-                        evaluatorOptions.push({value: users[i].username, label: users[i].username + " (" + users[i].emails[0].address + ")"});
+                        options.push({value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")"});
+                        evaluatorOptions.push({value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")"});
 
                         if(users[i].admin) {
                             selectedOptions.push(users[i].username)

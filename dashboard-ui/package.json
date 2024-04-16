@@ -33,6 +33,7 @@
         "lodash": "^4.17.21",
         "material-design-icons": "^3.0.1",
         "mongodb": "^6.5.0",
+        "npm": "^10.5.2",
         "npm-force-resolutions": "^0.0.10",
         "popper.js": "^1.16.1",
         "query-string": "^9.0.0",
