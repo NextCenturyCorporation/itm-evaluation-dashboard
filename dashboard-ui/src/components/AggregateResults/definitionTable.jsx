@@ -1,8 +1,8 @@
 import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
-import xlFile from './Metrics Eval Variables.xlsx';
-import wordFile from './Metrics Evaluation Human Dataset Variables Dashboard.docx'
+import xlFile from './Metrics_Eval_Variables.xlsx';
+import wordFile from './Metrics_Evaluation_Human_Dataset_Variables_Dashboard.docx'
 
 
 export function DefinitionTable() {
