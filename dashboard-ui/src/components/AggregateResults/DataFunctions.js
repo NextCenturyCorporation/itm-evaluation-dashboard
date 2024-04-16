@@ -429,8 +429,8 @@ function populateHumanDataRow(rowObject) {
         "ST_6.2": "",
         "ST_8.1": "",
         "ST_8.2": "",
-        "AD_KDMA_Env": rowObject[adept].data.alignment.kdma_values !== undefined && rowObject[adept].data.alignment.kdma_values.length > 0 ? Math.round(rowObject[adept].data.alignment.kdma_values[0].value * 100) / 100 : "",
-        "ST_KDMA_Env": rowObject[adept].data.alignment.kdma_values !== undefined ? rowObject[soartech].data.alignment !== null && rowObject[soartech].data.alignment.kdma_values.length > 0 ? Math.round(rowObject[soartech].data.alignment.kdma_values[0].value * 100) / 100 : "" : "",
+        "AD_KDMA_Env": rowObject[adept]?.data?.alignment?.kdma_values?.length > 0 ? Math.round(rowObject[adept].data.alignment.kdma_values[0].value * 100) / 100 : "",
+        "ST_KDMA_Env": rowObject[soartech]?.data?.alignment?.kdma_values?.length > 0 ? Math.round(rowObject[soartech].data.alignment.kdma_values[0].value * 100) / 100 : "",
         "AD_KDMA": isNaN(Math.round(rowObject[adept].avgKDMA * 100) / 100) ? "" : Math.round(rowObject[adept].avgKDMA * 100) / 100,
         "ST_KDMA": isNaN(Math.round(rowObject[soartech].avgKDMA * 100) / 100) ? "" : Math.round(rowObject[soartech].avgKDMA * 100) / 100
     };
