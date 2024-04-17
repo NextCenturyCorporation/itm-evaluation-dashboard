@@ -836,8 +836,8 @@ function populateDataSet(data) {
                 tmpSet['ST_Low_Trustworthy'] = stAttribute === 0 ? trustworthyST['align'] : trustworthyST['misalign'];
                 tmpSet['ST_High_AlignSR'] = stAttribute === 1 ? selfReportST['align'] : selfReportST['misalign'];
                 tmpSet['ST_Low_AlignSR'] = stAttribute === 0 ? selfReportST['align'] : selfReportST['misalign'];
-                tmpSet['ST_AlignScore_High'] = 1 - Math.abs(0.9 - txtScores[pid]['st']['high']);
-                tmpSet['ST_AlignScore_Low'] = 1 - Math.abs(0.1 - txtScores[pid]['st']['low']);
+                tmpSet['ST_AlignScore_High'] = txtScores[pid]['st']['high'];
+                tmpSet['ST_AlignScore_Low'] = txtScores[pid]['st']['low'];
 
                 tmpSet['ST_High_Trust_Omni'] = stAttribute === 1 ? trustSTomni['align'] : trustSTomni['misalign'];
                 tmpSet['ST_Low_Trust_Omni'] = stAttribute === 0 ? trustSTomni['align'] : trustSTomni['misalign'];
@@ -856,8 +856,8 @@ function populateDataSet(data) {
                 tmpSet['AD_Low_Trustworthy'] = adAttribute === 0 ? trustworthyAD['align'] : trustworthyAD['misalign'];
                 tmpSet['AD_High_AlignSR'] = adAttribute === 1 ? selfReportAD['align'] : selfReportAD['misalign'];
                 tmpSet['AD_Low_AlignSR'] = adAttribute === 0 ? selfReportAD['align'] : selfReportAD['misalign'];
-                tmpSet['AD_AlignScore_High'] = 1 - Math.abs(0.84 - txtScores[pid]['ad']['high']);
-                tmpSet['AD_AlignScore_Low'] = 1 - Math.abs(0.22 - txtScores[pid]['ad']['low']);
+                tmpSet['AD_AlignScore_High'] = txtScores[pid]['ad']['high'];
+                tmpSet['AD_AlignScore_Low'] = txtScores[pid]['ad']['low'];
 
                 tmpSet['AD_High_Trust_Omni'] = adAttribute === 1 ? trustADomni['align'] : trustADomni['misalign'];
                 tmpSet['AD_Low_Trust_Omni'] = adAttribute === 0 ? trustADomni['align'] : trustADomni['misalign'];
