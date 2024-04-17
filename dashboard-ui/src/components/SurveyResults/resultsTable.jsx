@@ -6,7 +6,6 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import ListItemText from '@mui/material/ListItemText';
-import Select from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 
 /* A list of names that are not pages to record in the excel sheet */
@@ -22,12 +21,14 @@ function formatTime(seconds) {
     return `${minutes}:${formatted_seconds}`
 }
 
+const STARTING_HEADERS = ['Participant Id', 'Username', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation'];
+
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
-    const [filterBySurveyVersion, setVersionOption] = React.useState(['All']);
+    const [filterBySurveyVersion, setVersionOption] = React.useState(['2']);
     const [versions, setVersions] = React.useState(['All']);
-    const [selectAll, setSelectAll] = React.useState(true);
-    const [headers, setHeaders] = React.useState(['Participant Id', 'Username', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation']);
+    const [selectAll, setSelectAll] = React.useState(false);
+    const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
@@ -35,14 +36,14 @@ export function ResultsTable({ data }) {
         // every time data updates, we need to go through and get all the participant data, 
         // putting it in an object
         const allObjs = [];
-        const allHeaders = [...headers];
+        const allHeaders = [...STARTING_HEADERS];
         const tmpVersion = ['All'];
         for (let entry of data) {
             entry = entry.results ?? entry;
             const entryObj = {};
             let addToTable = true;
             const version = entry?.surveyVersion
-            if (!filterBySurveyVersion.includes(version) && !selectAll) {
+            if (!filterBySurveyVersion.includes(version?.toString()) && !selectAll) {
                 addToTable = false;
             }
             entryObj['Participant Id'] = entry['Participant ID']?.questions['Participant ID']?.response;
@@ -117,7 +118,7 @@ export function ResultsTable({ data }) {
         setFormattedData(allObjs);
         setHeaders(found_headers);
         setVersions(tmpVersion);
-    }, [data, filterBySurveyVersion, headers, selectAll]);
+    }, [data, filterBySurveyVersion, selectAll]);
 
 
     const exportToExcel = async () => {
@@ -129,48 +130,46 @@ export function ResultsTable({ data }) {
     };
 
     const updateVersions = (selected) => {
-        if (selected.target.value.includes('All') && !selectAll) {
-            setSelectAll(true);
-            setVersionOption([...versions]);
-        } else {
-            setVersionOption([...selected.target.value]);
+        if (selected.target.checked && !selectAll) {
+            if (selected.target.value === 'All') {
+                setSelectAll(true);
+                setVersionOption([...versions]);
+            } else {
+                setVersionOption([...filterBySurveyVersion, selected.target.value]);
+            }
+        }
+        else {
+            if (selectAll && selected.target.value !== 'All') {
+                setSelectAll(false);
+                setVersionOption(versions.filter((x) => x !== 'All' && x.toString() !== selected.target.value).map((x) => x.toString()));
+            }
+            else {
+                setSelectAll(false);
+                if (selected.target.value === 'All') {
+                    setVersionOption(['2']);
+                }
+                else {
+                    setVersionOption(filterBySurveyVersion.filter((x) => x !== selected.target.value));
+                }
+            }
+
         }
     };
-
-    const clickedVersion = () => {
-        if (selectAll) {
-            setSelectAll(false);
-        }
-    };
-
-    React.useEffect(() => {
-        if (!selectAll) {
-            setVersionOption(filterBySurveyVersion.filter((x) => x !== 'All'));
-        } else {
-            setVersionOption([...versions]);
-        }
-    }, [selectAll, filterBySurveyVersion, versions]);
 
     return (<>
         {data && <><section className='tableHeader'>
             <h2>Tabulated Survey Results</h2>
             <div className="option-section">
                 <FormControl className='version-select'>
-                    <InputLabel>Survey Version</InputLabel>
-                    <Select
-                        multiple
-                        value={filterBySurveyVersion}
-                        label="Survey Version"
-                        renderValue={(selected) => selectAll ? 'All' : selected.join(', ')}
-                        onChange={updateVersions}
-                    >
+                    <InputLabel shrink>Survey Version</InputLabel>
+                    <div className='checkboxes'>
                         {versions.map((v) => {
-                            return <MenuItem onClick={clickedVersion} key={v} value={v}>
-                                <Checkbox checked={filterBySurveyVersion.indexOf(v) > -1 || selectAll} />
+                            return <MenuItem key={v} value={v}>
+                                <Checkbox value={v.toString()} checked={filterBySurveyVersion.indexOf(v.toString()) > -1 || selectAll} onChange={updateVersions} />
                                 <ListItemText primary={v} />
                             </MenuItem>;
                         })}
-                    </Select>
+                    </div>
                 </FormControl>
             <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
             </div>

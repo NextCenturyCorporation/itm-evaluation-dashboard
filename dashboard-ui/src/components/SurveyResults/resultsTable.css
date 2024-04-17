@@ -87,3 +87,8 @@
     min-width: 150px !important;
     margin-right: 8px !important;
 }
+
+.checkboxes {
+    display: flex;
+    flex-direction: row;
+}
