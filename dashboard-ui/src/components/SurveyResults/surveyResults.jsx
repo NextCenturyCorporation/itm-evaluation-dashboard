@@ -10,12 +10,11 @@ import surveyConfig1x from '../Survey/surveyConfig1x.json'
 import { Modal } from "@mui/material";
 import { ResultsTable } from './resultsTable';
 import CloseIcon from '@material-ui/icons/Close';
-import FormControl from '@mui/material/FormControl';
-import ListItemText from '@mui/material/ListItemText';
-import Select from '@mui/material/Select';
-import Checkbox from '@mui/material/Checkbox';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import IconButton from '@mui/material/IconButton';
+import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 
 
 const GET_SURVEY_RESULTS = gql`
@@ -48,7 +47,11 @@ function getQuestionAnswerSets(pageName, version) {
 }
 
 const vizPanelOptions = {
-    allowHideQuestions: false
+    allowHideQuestions: false,
+    defaultChartType: "bar",
+    labelTruncateLength: -1,
+    showPercentages: true,
+    allowDragDrop: false
 }
 
 function ScenarioGroup({ scenario, data, version }) {
@@ -153,6 +156,24 @@ export function SurveyResults() {
     const [filterBySurveyVersion, setVersionOption] = React.useState("");
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
+    const [showScrollButton, setShowScrollButton] = React.useState(false);
+
+    React.useEffect(() => {
+        // component did mount
+        window.addEventListener('scroll', toggleVisibility);
+        return () => {
+            // component will unmount
+            window.removeEventListener('scroll', toggleVisibility);
+        }
+    }, []);
+
+    const toggleVisibility = () => {
+        if (window.scrollY > 300) {
+            setShowScrollButton(true);
+        } else {
+            setShowScrollButton(false);
+        }
+    };
 
     React.useEffect(() => {
         if (data && filterBySurveyVersion) {
@@ -230,47 +251,60 @@ export function SurveyResults() {
         setShowTable(false);
     }
 
-    const updateVersions = (selected) => {
-        setVersionOption(selected.target.value);
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
     };
 
-    return (<>
+    return (<div className="delegation-results">
         {loading && <p>Loading</p>}
         {error && <p>Error</p>}
         {data && <>
-            <div className="selection-box">
-                {!filterBySurveyVersion && (<center><h3>Select Major Version To View Graphs Or Select Tabulated Data</h3></center>)}
-                <div className="selection-header">
-                <FormControl className='version-select'>
-                    <InputLabel>Survey Version</InputLabel>
-                    <Select
-                        value={filterBySurveyVersion}
-                        label="Survey Version"
-                        renderValue={(selected) => `${selected}.x`}
-                        onChange={updateVersions}
-                    >
-                        {versions.map((v) => {
-                            return <MenuItem key={v} value={v}>
-                                <Checkbox checked={filterBySurveyVersion === v} />
-                                <ListItemText primary={v + '.x'} />
-                            </MenuItem>;
-                        })}
-                    </Select>
-                </FormControl>
-                <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+            <div className="delegation-results-nav">
+                <div className="selection-section">
+                    <div className="nav-header">
+                        <span className="nav-header-text">Survey Version</span>
+                    </div>
+                    <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
+                        {versions.map((item) =>
+                            <ListItem id={"version_" + item} key={"version_" + item}
+                                button
+                                selected={filterBySurveyVersion === item}
+                                onClick={() => { setVersionOption(item); setSelectedScenario(-1); }}>
+                                <ListItemText primary={item + '.x'} />
+                            </ListItem>
+                        )}
+                    </List>
                 </div>
-                {filterBySurveyVersion && (
-                    <>
-                        <div className='selection-header'>{scenarioIndices?.length > 0 ? <h3>Select a Scenario to See Results:</h3> : <h3>No Survey Results Found</h3>}</div>
-                        <section className="button-section">
-                            {scenarioIndices?.map((index) => {
-                                return <button key={"scenario_btn_" + index} disabled={index === selectedScenario} onClick={() => setSelectedScenario(index)} className="selection-btn">Scenario {index}</button>
-                            })}
-                        </section>
-                    </>
-                )}
+                {filterBySurveyVersion && scenarioIndices?.length > 0 &&
+                    <div className="selection-section">
+                        <div className="nav-header">
+                            <span className="nav-header-text">Scenario</span>
+                        </div>
+                        <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
+                            {scenarioIndices.map((item) =>
+                                <ListItem id={"scenario_" + item} key={"scenario_" + item}
+                                    button
+                                    selected={selectedScenario === item}
+                                    onClick={() => { setSelectedScenario(item); }}>
+                                    <ListItemText primary={'Scenario ' + item} />
+                                </ListItem>
+                            )}
+                        </List>
+                    </div>}
             </div>
-            {filterBySurveyVersion && selectedScenario > 0 && <ScenarioGroup scenario={selectedScenario} data={resultData} version={filterBySurveyVersion}></ScenarioGroup>}
+            {filterBySurveyVersion && selectedScenario > 0 ?
+                <div className="graph-section">
+                    <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                    <ScenarioGroup scenario={selectedScenario} data={resultData} version={filterBySurveyVersion} />
+                </div>
+                :
+                <div className="graph-section">
+                    <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                    <h2>Please select a survey version and scenario to view graphical results</h2>
+                </div>}
             <Modal className='table-modal' open={showTable} onClose={closeModal}>
                 <div className='modal-body'>
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
@@ -278,5 +312,23 @@ export function SurveyResults() {
                 </div>
             </Modal>
         </>}
-    </>);
+        {showScrollButton && (
+            <IconButton onClick={(e) => {
+                e.stopPropagation()
+                scrollToTop()
+            }} style={{
+                position: 'fixed',
+                left: '20px',
+                bottom: '20px',
+                borderRadius: '10px',
+                backgroundColor: '#592610',
+                color: 'white',
+                cursor: 'pointer',
+                zIndex: 1000,
+                boxShadow: '0px 2px 10px rgba(0,0,0,0.3)'
+            }}>
+                Back To Top <ArrowUpwardIcon fontSize='large' />
+            </IconButton>
+        )}
+    </div>);
 }

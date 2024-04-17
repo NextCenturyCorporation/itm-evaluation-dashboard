@@ -172,7 +172,7 @@ export class App extends React.Component {
                                                 Text Scenario Results
                                             </NavDropdown.Item>
                                             <NavDropdown.Item as={Link} className="dropdown-item" to="/humanSimParticipant">
-                                                Human Sim Participant Data
+                                                Human Participant Data: Within-Subjects Analysis
                                             </NavDropdown.Item>
                                             <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
                                                 Human Sim Probe Values

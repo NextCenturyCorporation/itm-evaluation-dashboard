@@ -293,11 +293,26 @@ const resolvers = {
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
-      return await dashboardDB.db.collection('surveyResults').find({
+
+      const excludeTestID = {
         "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
         "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
         "Participant ID.questions.Participant ID.response": { $not: /test/i },
         "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
+      };
+    
+      // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
+      const surveyVersionFilter = {
+        $or: [
+          { "results.surveyVersion": { $ne: 2 } }, 
+          { $and: [ 
+            { "results.surveyVersion": 2 },
+            { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
+          ]}
+        ]
+      };
+      return await dashboardDB.db.collection('surveyResults').find({
+        $and: [excludeTestID, surveyVersionFilter]
       }).toArray().then(result => { return result; });
     },
     getAllScenarioResults: async (obj, args, context, inflow) => {
