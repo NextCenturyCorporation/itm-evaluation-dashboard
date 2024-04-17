@@ -1,3 +1,15 @@
+.delegation-results-nav {
+    width: 10%;
+    min-width: 200px;
+}
+
+.delegation-results {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+}
+
 .selection-btn {
     background-color: transparent;
     border: 2px solid black;
@@ -39,6 +51,9 @@
 
 .scenario-group {
     border: 1px solid black;
+    width: calc(100% - 40px);
+    margin: 8px 20px;
+    border-radius: 8px;
 }
 
 .singletons {
@@ -59,8 +74,11 @@
 
 .scenario-header {
     text-align: center;
-    padding-bottom: 8px;
-    border-bottom: 1px solid black;
+    padding: 8px;
+    border-bottom: 2px solid black;
+    background-color: rgb(88, 88, 115);
+    color: white;
+    border-radius: 6px 6px 0px 0px;
 }
 
 .sa-question-layouted {
@@ -94,8 +112,20 @@
     justify-content: space-between;
 }
 
+.graph-section {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    margin: 0px auto;
+    width: 100%;
+}
+
 .navigateBtn {
     border-radius: 4px;
+    float: right;
+    padding: 8px;
+    margin: 8px 20px 0px auto;
+    width: fit-content;
 }
 
 .navigateBtn:hover {
@@ -108,6 +138,7 @@
     background-color: darkgrey;
     color: white;
 }
+
 .table-modal>.modal-body {
     background-color: white;
     margin: 20px 14px auto 14px;
@@ -131,6 +162,7 @@
 .table-modal button {
     font-size: 16px;
 }
+
 .close-icon {
     padding: 10px 4px;
     border-radius: 100%;

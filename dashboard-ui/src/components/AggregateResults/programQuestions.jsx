@@ -6,7 +6,6 @@ import { getBoxWhiskerData, getMean, getMedian, getStandDev, getStandardError } 
 import { isDefined } from './DataFunctions';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import HomeCharts from '../AdmCharts/admCharts';
 
 const GET_ADM_DATA = gql`
     query getAllHistory {
