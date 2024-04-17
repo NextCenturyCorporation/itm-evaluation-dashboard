@@ -91,4 +91,9 @@
 .checkboxes {
     display: flex;
     flex-direction: row;
+    padding-top: 10px;
+}
+
+.checkboxes li {
+    padding: 0 5px;
 }
