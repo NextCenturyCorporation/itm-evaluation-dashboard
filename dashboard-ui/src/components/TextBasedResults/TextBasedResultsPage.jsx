@@ -213,12 +213,15 @@ function ParticipantView({ data, scenarioName }) {
             formatted[page['_id']] = { ...obj };
 
             for (const key of Object.keys(page)) {
-                if (key === 'alignmentData') {
+                if (key === 'highAlignmentData') {
                     if (!headers.includes('KDMA')) {
                         headers.push('KDMA')
                     }
                     formatted[page['_id']]['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
                     obj['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
+                    continue;
+                }
+                if (key === 'alignmentData' || key === 'lowAlignmentData') {
                     continue;
                 }
                 // top level pages with timing
@@ -328,7 +331,7 @@ export default function TextBasedResultsPage() {
                     let qs = [];
                     for (const k of Object.keys(result)) {
                         // if it is an object and has a questions array...
-                        if (typeof (result[k]) === 'object' && result[k].questions) {
+                        if (typeof (result[k]) === 'object' && result[k]?.questions) {
                             // go through the questions object and find all that has responses
                             for (const q of Object.keys(result[k].questions)) {
                                 // start by getting *all* possible responses to the question
