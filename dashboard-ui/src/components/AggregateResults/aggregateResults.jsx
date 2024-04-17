@@ -6,10 +6,9 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
 import ProgramQuestions from './programQuestions';
-
-
-// turn to true for better dev experience
-const SHOW_BY_PARTICIPANT = false;
+import { Modal } from "@mui/material";
+import { DefinitionTable } from './definitionTable';
+import CloseIcon from '@material-ui/icons/Close';
 
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults{
@@ -219,6 +218,7 @@ export default function AggregateResults({ type }) {
     const [aggregateData, setAggregateData] = React.useState(null);
     const [kdmaScatter, setKdmaScatter] = React.useState(null);
     const [chartData, setChartData] = React.useState(null);
+    const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     React.useEffect(() => {
         // only get survey version 2!!
@@ -257,16 +257,21 @@ export default function AggregateResults({ type }) {
         return aggregateData[att]['count'] > 0 ? aggregateData[att]['total'] / aggregateData[att]['count'] : '-';
     }
 
+    const closeModal = () => {
+        setShowDefinitions(false);
+    }
+
     return (
         <div className='aggregatePage'>
             {type === 'HumanSimParticipant' && 
                 <div className="home-container">
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
-                            <div className="evaluation-selector-label"><h2>Human Sim Participant Data</h2></div>
+                            <div className="evaluation-selector-label"><h2>Human Participant Data: Within-Subjects Analysis</h2></div>
                         </div>
                         <div className="aggregate-button-holder">
                             <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
+                            <button className='aggregateDownloadBtn' onClick={() => setShowDefinitions(true)}>View Definitions</button>
                         </div>
                     </div>
                     <div className='resultTableSection'>
@@ -340,7 +345,12 @@ export default function AggregateResults({ type }) {
 
                 </div>
             }
-
+            {type === 'HumanSimParticipant' && <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
+                <div className='modal-body'>
+                    <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
+                    <DefinitionTable />
+                </div>
+            </Modal>}
         </div>
     );
 }
