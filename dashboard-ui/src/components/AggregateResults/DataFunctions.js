@@ -99,11 +99,11 @@ const SIM_ORDER = {};
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 }};
 
 // get text alignment scores for every participant, and the median value of those scores
-function getTextAlignment(data) {
+function getTextKDMA(data) {
     const alignmentMap = {};
     // get all recorded kdmas by participant id
     for (const res of data.getAllScenarioResults) {
-        if (res.participantID && res.alignmentData?.kdma_values) {
+        if (res.participantID && res.highAlignmentData?.kdma_values) {
             // recover from typos in pids
             switch (res.participantID) {
                 case '202402':
@@ -121,7 +121,7 @@ function getTextAlignment(data) {
                 default:
                     break;
             }
-            for (const kdma of res.alignmentData.kdma_values) {
+            for (const kdma of res.highAlignmentData.kdma_values) {
                 const kdmaKey = kdma.kdma;
                 const kdmaVal = kdma.value;
                 // only look at the result if the participant id is at the top level! other versions are old
@@ -169,6 +169,76 @@ function getTextAlignment(data) {
         }
     }
     // return object of kdma values for each participant
+    return alignmentMap;
+}
+
+function getTextAlignment(data) {
+    const alignmentMap = {};
+    // get all recorded kdmas by participant id
+    for (const res of data.getAllScenarioResults) {
+        if (res.participantID) {
+            // recover from typos in pids
+            let pid = res.participantID;
+            switch (pid) {
+                case '202402':
+                    pid = '2024202';
+                    break;
+                case '202417':
+                    pid = '2024217';
+                    break;
+                case '2021216':
+                    pid = '2024216';
+                    break;
+                case '202419':
+                    pid = '2024219';
+                    break;
+                default:
+                    break;
+            }
+            if (!Object.keys(alignmentMap).includes(pid)) {
+                if (res.highAlignmentData?.alignment_target_id.includes('ADEPT')) {
+                    alignmentMap[pid] = { 'ad': {}, 'st': {} };
+                    alignmentMap[pid]['ad']['high'] = res.highAlignmentData?.score ?? 0;
+                    alignmentMap[pid]['ad']['low'] = res.lowAlignmentData?.score ?? 0;
+                    alignmentMap[pid]['ad']['highC'] = isDefined(res.highAlignmentData?.score) ? 1 : 0;
+                    alignmentMap[pid]['ad']['lowC'] = isDefined(res.lowAlignmentData?.score) ? 1 : 0;
+                    alignmentMap[pid]['st']['high'] = 0;
+                    alignmentMap[pid]['st']['low'] = 0;
+                    alignmentMap[pid]['st']['highC'] = 0;
+                    alignmentMap[pid]['st']['lowC'] = 0;
+                } else {
+                    alignmentMap[pid] = { 'ad': {}, 'st': {} };
+                    alignmentMap[pid]['st']['high'] = res.highAlignmentData?.score ?? 0;
+                    alignmentMap[pid]['st']['low'] = res.lowAlignmentData?.score ?? 0;
+                    alignmentMap[pid]['st']['highC'] = isDefined(res.highAlignmentData?.score) ? 1 : 0;
+                    alignmentMap[pid]['st']['lowC'] = isDefined(res.lowAlignmentData?.score) ? 1 : 0;
+                    alignmentMap[pid]['ad']['high'] = 0;
+                    alignmentMap[pid]['ad']['low'] = 0;
+                    alignmentMap[pid]['ad']['highC'] = 0;
+                    alignmentMap[pid]['ad']['lowC'] = 0;
+                }
+            }
+            else {
+                if (res.highAlignmentData?.alignment_target_id.includes('ADEPT')) {
+                    alignmentMap[pid]['ad']['high'] += res.highAlignmentData?.score;
+                    alignmentMap[pid]['ad']['low'] += res.lowAlignmentData?.score;
+                    alignmentMap[pid]['ad']['highC'] += isDefined(res.highAlignmentData?.score) ? 1 : 0;
+                    alignmentMap[pid]['ad']['lowC'] += isDefined(res.lowAlignmentData?.score) ? 1 : 0;
+                } else {
+                    alignmentMap[pid]['st']['high'] += res.highAlignmentData?.score;
+                    alignmentMap[pid]['st']['low'] += res.lowAlignmentData?.score;
+                    alignmentMap[pid]['st']['highC'] += isDefined(res.highAlignmentData?.score) ? 1 : 0;
+                    alignmentMap[pid]['st']['lowC'] += isDefined(res.lowAlignmentData?.score) ? 1 : 0;
+                }
+            }
+        }
+    }
+    for (const pid of Object.keys(alignmentMap)) {
+        alignmentMap[pid]['ad']['high'] = alignmentMap[pid]['ad']['high'] / alignmentMap[pid]['ad']['highC'];
+        alignmentMap[pid]['ad']['low'] = alignmentMap[pid]['ad']['low'] / alignmentMap[pid]['ad']['lowC'];
+        alignmentMap[pid]['st']['high'] = alignmentMap[pid]['st']['high'] / alignmentMap[pid]['st']['highC'];
+        alignmentMap[pid]['st']['low'] = alignmentMap[pid]['st']['low'] / alignmentMap[pid]['st']['lowC'];
+    }
     return alignmentMap;
 }
 
@@ -468,7 +538,8 @@ function populateDataSet(data) {
         
         AGGREGATED_DATA["groupedSim"] = tempGroupHumanSimData
     }
-    const txtAlign = getTextAlignment(data);
+    const txtAlign = getTextKDMA(data);
+    const txtScores = getTextAlignment(data);
     const allResults = [];
     for (const res of data.getAllSurveyResults) {
         // if survey instructions does not exist, we don't want the entry
@@ -765,8 +836,8 @@ function populateDataSet(data) {
                 tmpSet['ST_Low_Trustworthy'] = stAttribute === 0 ? trustworthyST['align'] : trustworthyST['misalign'];
                 tmpSet['ST_High_AlignSR'] = stAttribute === 1 ? selfReportST['align'] : selfReportST['misalign'];
                 tmpSet['ST_Low_AlignSR'] = stAttribute === 0 ? selfReportST['align'] : selfReportST['misalign'];
-                tmpSet['ST_AlignScore_High'] = Math.abs(0.9 - tmpSet['ST_KDMA_Text']);
-                tmpSet['ST_AlignScore_Low'] = Math.abs(0.1 - tmpSet['ST_KDMA_Text']);
+                tmpSet['ST_AlignScore_High'] = 1 - Math.abs(0.9 - txtScores[pid]['st']['high']);
+                tmpSet['ST_AlignScore_Low'] = 1 - Math.abs(0.1 - txtScores[pid]['st']['low']);
 
                 tmpSet['ST_High_Trust_Omni'] = stAttribute === 1 ? trustSTomni['align'] : trustSTomni['misalign'];
                 tmpSet['ST_Low_Trust_Omni'] = stAttribute === 0 ? trustSTomni['align'] : trustSTomni['misalign'];
@@ -785,8 +856,8 @@ function populateDataSet(data) {
                 tmpSet['AD_Low_Trustworthy'] = adAttribute === 0 ? trustworthyAD['align'] : trustworthyAD['misalign'];
                 tmpSet['AD_High_AlignSR'] = adAttribute === 1 ? selfReportAD['align'] : selfReportAD['misalign'];
                 tmpSet['AD_Low_AlignSR'] = adAttribute === 0 ? selfReportAD['align'] : selfReportAD['misalign'];
-                tmpSet['AD_AlignScore_High'] = Math.abs(0.84 - tmpSet['AD_KDMA_Text']);
-                tmpSet['AD_AlignScore_Low'] = Math.abs(0.22 - tmpSet['AD_KDMA_Text']);
+                tmpSet['AD_AlignScore_High'] = 1 - Math.abs(0.84 - txtScores[pid]['ad']['high']);
+                tmpSet['AD_AlignScore_Low'] = 1 - Math.abs(0.22 - txtScores[pid]['ad']['low']);
 
                 tmpSet['AD_High_Trust_Omni'] = adAttribute === 1 ? trustADomni['align'] : trustADomni['misalign'];
                 tmpSet['AD_Low_Trust_Omni'] = adAttribute === 0 ? trustADomni['align'] : trustADomni['misalign'];
