@@ -150,6 +150,7 @@ export function SurveyResults() {
         fetchPolicy: 'network-only',
     });
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
+    const [scenarioNames, setScenarioNames] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState(-1);
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
@@ -185,18 +186,24 @@ export function SurveyResults() {
             setFilteredData(filteredData);
 
             let indices = [];
+            let scenarioNames = [];
             for (const result of filteredData) {
                 if (result.results) {
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
                             indices.push(result.results[x].scenarioIndex);
+                            if (result.results[x]?.scenarioName) { scenarioNames.push(result.result[x].scenarioName); }
                         }
                     }
                 }
             }
             indices = Array.from(new Set(indices));
             indices.sort((a, b) => a - b);
+            scenarioNames = Array.from(new Set(scenarioNames));
+
+            setScenarioNames(scenarioNames)
             setScenarioIndices(indices);
+
             if (indices.length > 0) {
                 setSelectedScenario(0);
             }
@@ -289,7 +296,11 @@ export function SurveyResults() {
                                     button
                                     selected={selectedScenario === item}
                                     onClick={() => { setSelectedScenario(item); }}>
-                                    <ListItemText primary={'Scenario ' + item} />
+                                    {scenarioNames[item] ?
+                                        <ListItemText primary={scenarioNames[item]} />
+                                        :
+                                        <ListItemText primary={'Scenario ' + item} />
+                                    }
                                 </ListItem>
                             )}
                         </List>
