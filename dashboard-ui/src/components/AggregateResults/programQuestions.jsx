@@ -529,12 +529,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                 name: "Aligned",
                                 color: '#5B89C1',
                                 showInLegend: true,
-                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                toolTipContent: "<b>{tooltip}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                                 dataPoints: [
-                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_high', 'maximization_low']), label: "Parallax - Max" },
-                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD" },
-                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high', 'maximization_low']), label: "Kitware - Max" },
-                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD" }
+                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_high', 'maximization_low']), label: "Parallax - Max", tooltip: "Parallax - Maximization" },
+                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD", tooltip: "Parallax - Moral Desert" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high', 'maximization_low']), label: "Kitware - Max", tooltip: "Kitware -  Maximization" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD", tooltip: "Kitware - Moral Desert" }
                                 ]
                             },
                             {
@@ -554,12 +554,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                 name: "Baseline",
                                 color: '#C15B5B',
                                 showInLegend: true,
-                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                toolTipContent: "<b>{tooltip}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                                 dataPoints: [
-                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_high', 'maximization_low']), label: "Parallax - Max" },
-                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD" },
-                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high', 'maximization_low']), label: "Kitware - Max" },
-                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD" }
+                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_high', 'maximization_low']), label: "Parallax - Max", tooltip: "Parallax - Maximization" },
+                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD", tooltip: "Parallax - Moral Desert" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high', 'maximization_low']), label: "Kitware - Max", tooltip: "Kitware - Maximization" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD", tooltip: "Kitware - Moral Desert" }
                                 ]
                             },
                             {
@@ -605,12 +605,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     name: "Aligned",
                                     color: '#5B89C1',
                                     showInLegend: true,
-                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    toolTipContent: "<b>{tooltip}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                                     dataPoints: [
-                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_high']), label: "Max - High" },
-                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_low']), label: "Max - Low" },
-                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
-                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_high']), label: "Max - High", tooltip: "Maximization - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_low']), label: "Max - Low", tooltip: "Maximization - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High", tooltip: "Moral Desert - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low", tooltip: "Moral Desert - Low" }
                                     ]
                                 },
                                 {
@@ -630,12 +630,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     name: "Baseline",
                                     color: '#C15B5B',
                                     showInLegend: true,
-                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    toolTipContent: "<b>{tooltip}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                                     dataPoints: [
-                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_high']), label: "Max - High" },
-                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_low']), label: "Max - Low" },
-                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
-                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_high']), label: "Max - High", tooltip: "Maximization - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_low']), label: "Max - Low", tooltip: "Maximization - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High", tooltip: "Moral Desert - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low", tooltip: "Moral Desert - Low" }
                                     ]
                                 },
                                 {
@@ -678,12 +678,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     name: "Aligned",
                                     color: '#5B89C1',
                                     showInLegend: true,
-                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    toolTipContent: "<b>{tooltip}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                                     dataPoints: [
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high']), label: "Max - High" },
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_low']), label: "Max - Low" },
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high']), label: "Max - High", tooltip: "Maximization - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_low']), label: "Max - Low", tooltip: "Maximization - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High", tooltip: "Moral Desert - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low", tooltip: "Moral Desert - Low" }
                                     ]
                                 },
                                 {
@@ -703,12 +703,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     name: "Baseline",
                                     color: '#C15B5B',
                                     showInLegend: true,
-                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    toolTipContent: "<b>{tooltip}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
                                     dataPoints: [
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high']), label: "Max - High" },
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_low']), label: "Max - Low" },
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
-                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high']), label: "Max - High", tooltip: "Maximization - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_low']), label: "Max - Low", tooltip: "Maximization - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High", tooltip: "Moral Desert - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low", tooltip: "Moral Desert - Low" }
                                     ]
                                 },
                                 {
