@@ -154,7 +154,6 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                     }
                 }
             }
-            console.log(admAlign);
             setAdmAlignment(admAlign);
             setAdmKdmas(admKdmas);
         }
