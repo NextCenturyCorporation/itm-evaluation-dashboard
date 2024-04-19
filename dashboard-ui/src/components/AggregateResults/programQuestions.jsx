@@ -118,10 +118,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
     });
-    const [admData, setAdmData] = React.useState(null);
+    const [admKdmas, setAdmKdmas] = React.useState(null);
+    const [admAlignment, setAdmAlignment] = React.useState(null);
 
     React.useEffect(() => {
         const admKdmas = {};
+        const admAlign = {};
         if (data?.getAllHistory) {
             const rawData = data.getAllHistory.filter((x) => x.evalNumber === 3);
             for (const x of rawData) {
@@ -136,19 +138,25 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                     if (Object.keys(admKdmas).includes(admName)) {
                         if (Object.keys(admKdmas[admName]).includes(target)) {
                             admKdmas[admName][target][scenario] = kdma;
+                            admAlign[admName][target].push(x.history[x.history.length - 1].response.score);
                         }
                         else {
                             admKdmas[admName][target] = {};
                             admKdmas[admName][target][scenario] = kdma;
+                            admAlign[admName][target] = [x.history[x.history.length - 1].response.score];
                         }
                     } else {
                         admKdmas[admName] = {};
                         admKdmas[admName][target] = {};
                         admKdmas[admName][target][scenario] = kdma;
+                        admAlign[admName] = {};
+                        admAlign[admName][target] = [x.history[x.history.length - 1].response.score];
                     }
                 }
             }
-            setAdmData(admKdmas);
+            console.log(admAlign);
+            setAdmAlignment(admAlign);
+            setAdmKdmas(admKdmas);
         }
     }, [data]);
 
@@ -166,12 +174,42 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
         return AXIS_CONVERSION[e.value] || '';
     };
 
+    const getMeanAcrossAll = (obj, keys = 'all') => {
+        const data = [];
+        for (const key of Object.keys(obj)) {
+            if (keys === 'all' || keys.includes(key)) {
+                data.push(...obj[key]);
+            }
+        }
+        return getMean(data);
+    };
+
+    const getSeAcrossAll = (obj, keys = 'all') => {
+        const data = [];
+        for (const key of Object.keys(obj)) {
+            if (keys === 'all' || keys.includes(key)) {
+                data.push(...obj[key]);
+            }
+        }
+        return getStandardError(data);
+    };
+
+    const getN = (obj, keys = 'all') => {
+        const data = [];
+        for (const key of Object.keys(obj)) {
+            if (keys === 'all' || keys.includes(key)) {
+                data.push(...obj[key]);
+            }
+        }
+        return data.length;
+    };
+
     const getDataPoints = (admName, att, ta1, yOffset = 0) => {
         const target = ta1 === 'A' ? ('ADEPT-metrics_eval-alignment-target-eval-' + (att === 1 ? 'HIGH' : 'LOW')) : ('maximization_' + (att === 1 ? 'high' : 'low'));
-        const j = admData[admName][target][ta1 == 'A' ? 'MetricsEval.MD4-Jungle' : 'jungle-1'];
-        const s = admData[admName][target][ta1 === 'A' ? 'MetricsEval.MD6-Submarine' : 'submarine-1'];
-        const d = admData[admName][target][ta1 === 'A' ? 'MetricsEval.MD5-Desert' : 'desert-1'];
-        const u = admData[admName][target][ta1 === 'A' ? 'MetricsEval.MD1-Urban' : 'urban-1'];
+        const j = admKdmas[admName][target][ta1 == 'A' ? 'MetricsEval.MD4-Jungle' : 'jungle-1'];
+        const s = admKdmas[admName][target][ta1 === 'A' ? 'MetricsEval.MD6-Submarine' : 'submarine-1'];
+        const d = admKdmas[admName][target][ta1 === 'A' ? 'MetricsEval.MD5-Desert' : 'desert-1'];
+        const u = admKdmas[admName][target][ta1 === 'A' ? 'MetricsEval.MD1-Urban' : 'urban-1'];
         const x = [
             { x: j, y: 1 + yOffset, l: "Jungle" },
             { x: s, y: 2 + yOffset, l: "Submarine" },
@@ -293,9 +331,406 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                         <h4>2. Does aligned ADM have a higher alignment score than baseline ADM?</h4>
                     </div>
                 </div>
+                <h2 className='subtitle'>Alignment</h2>
+                {admAlignment && <><div className='q2-adms'>
+                    <div>
+                        <h3>Average Alignment Scores for Aligned and Baseline ADMs across Attributes and Alignment Targets (N={getN(admAlignment['TAD aligned'])})</h3>
+                        <CanvasJSChart options={{
+                            width: "1200",
+                            dataPointWidth: 80,
+                            toolTip: {
+                                shared: true
+                            },
+                            axisX: {
+                                interval: 1
+                            },
+                            axisY: {
+                                minimum: 0,
+                                maximum: 1
+                            },
+                            legend: {
+                                verticalAlign: "top",
+                                horizontalAlign: "center",
+                                cursor: "pointer"
+                            },
+                            data: [{
+                                type: "column",
+                                name: "Aligned",
+                                color: '#5B89C1',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD aligned']), label: "Parallax" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                color: "#555",
+                                name: "Variability Range",
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD aligned']), label: "Parallax" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "column",
+                                name: "Baseline",
+                                color: '#C15B5B',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD baseline']), label: "Parallax" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                name: "Variability Range",
+                                color: '#555',
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD baseline']), label: "Parallax" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline']), label: "Kitware" }
+                                ]
+                            }
+                            ]
+                        }} />
+                    </div>
+                    <div>
+                        <h3>Average Alignment Scores for Aligned and Baseline ADMs across Attributes for High and Low Alignment Targets (N={getN(admAlignment['TAD aligned'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH'])})</h3>
+                        <CanvasJSChart options={{
+                            width: "1200",
+                            dataPointWidth: 80,
+                            toolTip: {
+                                shared: true
+                            },
+                            axisX: {
+                                interval: 1
+                            },
+                            axisY: {
+                                minimum: 0,
+                                maximum: 1
+                            },
+                            legend: {
+                                verticalAlign: "top",
+                                horizontalAlign: "center",
+                                cursor: "pointer"
+                            },
+                            data: [{
+                                type: "column",
+                                name: "Aligned High",
+                                color: '#85CBD6',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Parallax" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                color: "#555",
+                                name: "Variability Range",
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD aligned'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Parallax" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "column",
+                                name: "Baseline High",
+                                color: '#475684',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Parallax" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                name: "Variability Range",
+                                color: '#555',
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD baseline'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Parallax" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high', 'ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "column",
+                                name: "Aligned Low",
+                                color: '#779D86',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                color: "#555",
+                                name: "Variability Range",
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD aligned'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "column",
+                                name: "Baseline Low",
+                                color: '#489C9A',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                name: "Variability Range",
+                                color: '#555',
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD baseline'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_low', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware" }
+                                ]
+                            }
+                            ]
+                        }} />
+                    </div>
+                    <div>
+                        <h3>Average Alignment Scores for Aligned and Baseline ADMs across Alignment Targets (N={getN(admAlignment['TAD aligned'], ['maximization_high', 'maximization_low'])})</h3>
+                        <CanvasJSChart options={{
+                            width: "1200",
+                            dataPointWidth: 80,
+                            toolTip: {
+                                shared: true
+                            },
+                            axisX: {
+                                interval: 1
+                            },
+                            axisY: {
+                                minimum: 0,
+                                maximum: 1
+                            },
+                            legend: {
+                                verticalAlign: "top",
+                                horizontalAlign: "center",
+                                cursor: "pointer"
+                            },
+                            data: [{
+                                type: "column",
+                                name: "Aligned",
+                                color: '#5B89C1',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_high', 'maximization_low']), label: "Parallax - Max" },
+                                    { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high', 'maximization_low']), label: "Kitware - Max" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                color: "#555",
+                                name: "Variability Range",
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD aligned'], ['maximization_high', 'maximization_low']), label: "Parallax - Max" },
+                                    { y: getSeAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high', 'maximization_low']), label: "Kitware - Max" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD" }
+                                ]
+                            },
+                            {
+                                type: "column",
+                                name: "Baseline",
+                                color: '#C15B5B',
+                                showInLegend: true,
+                                toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                dataPoints: [
+                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_high', 'maximization_low']), label: "Parallax - Max" },
+                                    { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high', 'maximization_low']), label: "Kitware - Max" },
+                                    { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD" }
+                                ]
+                            },
+                            {
+                                type: "error",
+                                name: "Variability Range",
+                                color: '#555',
+                                toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                dataPoints: [
+                                    { y: getSeAcrossAll(admAlignment['TAD baseline'], ['maximization_high', 'maximization_low']), label: "Parallax - Max" },
+                                    { y: getSeAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Parallax - MD" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high', 'maximization_low']), label: "Kitware - Max" },
+                                    { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH', 'ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "Kitware - MD" }
+                                ]
+                            }
+                            ]
+                        }} />
+                    </div>
 
-
-                {admData && <div className='q2-adms'>
+                </div>
+                    <div className='side-by-side'>
+                        <div>
+                            <h3>Average Alignment Scores for Aligned and Baseline ADMs by Attributes and Alignment Targets <br /> -- Parallax (N={getN(admAlignment['TAD aligned'], ['maximization_high'])}) --</h3>
+                            <CanvasJSChart options={{
+                                width: "700",
+                                dataPointWidth: 50,
+                                toolTip: {
+                                    shared: true
+                                },
+                                axisX: {
+                                    interval: 1
+                                },
+                                axisY: {
+                                    minimum: 0,
+                                    maximum: 1
+                                },
+                                legend: {
+                                    verticalAlign: "top",
+                                    horizontalAlign: "center",
+                                    cursor: "pointer"
+                                },
+                                data: [{
+                                    type: "column",
+                                    name: "Aligned",
+                                    color: '#5B89C1',
+                                    showInLegend: true,
+                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    dataPoints: [
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_high']), label: "Max - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                },
+                                {
+                                    type: "error",
+                                    color: "#555",
+                                    name: "Variability Range",
+                                    toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                    dataPoints: [
+                                        { y: getSeAcrossAll(admAlignment['TAD aligned'], ['maximization_high']), label: "Max - High" },
+                                        { y: getSeAcrossAll(admAlignment['TAD aligned'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getSeAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getSeAcrossAll(admAlignment['TAD aligned'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                },
+                                {
+                                    type: "column",
+                                    name: "Baseline",
+                                    color: '#C15B5B',
+                                    showInLegend: true,
+                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    dataPoints: [
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_high']), label: "Max - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getMeanAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                },
+                                {
+                                    type: "error",
+                                    color: "#555",
+                                    name: "Variability Range",
+                                    toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                    dataPoints: [
+                                        { y: getSeAcrossAll(admAlignment['TAD baseline'], ['maximization_high']), label: "Max - High" },
+                                        { y: getSeAcrossAll(admAlignment['TAD baseline'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getSeAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getSeAcrossAll(admAlignment['TAD baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                }
+                                ]
+                            }} />
+                        </div>
+                        <div>
+                            <h3>Average Alignment Scores for Aligned and Baseline ADMs by Attributes and Alignment Targets <br /> -- Kitware (N={getN(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high'])}) --</h3>
+                            <CanvasJSChart options={{
+                                width: "700",
+                                dataPointWidth: 50,
+                                toolTip: {
+                                    shared: true
+                                },
+                                axisX: {
+                                    interval: 1
+                                },
+                                axisY: {
+                                    minimum: 0,
+                                    maximum: 1
+                                },
+                                legend: {
+                                    verticalAlign: "top",
+                                    horizontalAlign: "center",
+                                    cursor: "pointer"
+                                },
+                                data: [{
+                                    type: "column",
+                                    name: "Aligned",
+                                    color: '#5B89C1',
+                                    showInLegend: true,
+                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    dataPoints: [
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high']), label: "Max - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                },
+                                {
+                                    type: "error",
+                                    color: "#555",
+                                    name: "Variability Range",
+                                    toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                    dataPoints: [
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_high']), label: "Max - High" },
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-aligned-no-negatives'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                },
+                                {
+                                    type: "column",
+                                    name: "Baseline",
+                                    color: '#C15B5B',
+                                    showInLegend: true,
+                                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                    dataPoints: [
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high']), label: "Max - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getMeanAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                },
+                                {
+                                    type: "error",
+                                    color: "#555",
+                                    name: "Variability Range",
+                                    toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                    dataPoints: [
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_high']), label: "Max - High" },
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['maximization_low']), label: "Max - Low" },
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-HIGH']), label: "MD - High" },
+                                        { y: getSeAcrossAll(admAlignment['kitware-single-kdma-adm-baseline'], ['ADEPT-metrics_eval-alignment-target-eval-LOW']), label: "MD - Low" }
+                                    ]
+                                }
+                                ]
+                            }} />
+                        </div>
+                    </div>
+                </>}
+                <h2 className='subtitle'>KDMAs</h2>
+                {admKdmas && <div className='q2-adms'>
                     <div>
                         <h3>Parallax - Maximization</h3>
                         <CanvasJSChart options={{
@@ -397,7 +832,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                         }}
                         />
                     </div>
-                    
+
                     <div>
                         <h3>Parallax - Moral Desert</h3>
                         <CanvasJSChart options={{
@@ -662,6 +1097,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                         />
                     </div>
                 </div>}
+
             </div>
             <div className='chart-home-container'>
                 <div className='chart-header'>
