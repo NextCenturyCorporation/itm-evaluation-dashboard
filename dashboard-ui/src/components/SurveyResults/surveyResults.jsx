@@ -150,7 +150,6 @@ export function SurveyResults() {
         fetchPolicy: 'network-only',
     });
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
-    const [scenarioNames, setScenarioNames] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState(-1);
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
@@ -185,26 +184,22 @@ export function SurveyResults() {
 
             setFilteredData(filteredData);
 
-            let indices = [];
-            let scenarioNames = [];
+            let scenarios = {}
             for (const result of filteredData) {
                 if (result.results) {
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
-                            indices.push(result.results[x].scenarioIndex);
-                            if (result.results[x]?.scenarioName) { scenarioNames.push(result.result[x].scenarioName); }
+                            const scenarioIndex = result.results[x].scenarioIndex;
+                            const scenarioName = result.results[x]?.scenarioName || `Scenario ${scenarioIndex}`;
+                            scenarios[scenarioIndex] = scenarioName;
                         }
                     }
                 }
             }
-            indices = Array.from(new Set(indices));
-            indices.sort((a, b) => a - b);
-            scenarioNames = Array.from(new Set(scenarioNames));
+            const sortedIndices = Object.keys(scenarios).map(Number).sort((a, b) => a - b);
+            setScenarioIndices(scenarios);
 
-            setScenarioNames(scenarioNames)
-            setScenarioIndices(indices);
-
-            if (indices.length > 0) {
+            if (sortedIndices.length > 0) {
                 setSelectedScenario(0);
             }
         }
@@ -285,22 +280,18 @@ export function SurveyResults() {
                         )}
                     </List>
                 </div>
-                {filterBySurveyVersion && scenarioIndices?.length > 0 &&
+                {scenarioIndices && Object.keys(scenarioIndices).length > 0 &&
                     <div className="selection-section">
                         <div className="nav-header">
                             <span className="nav-header-text">Scenario</span>
                         </div>
                         <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
-                            {scenarioIndices.map((item) =>
-                                <ListItem id={"scenario_" + item} key={"scenario_" + item}
+                            {Object.entries(scenarioIndices).map(([index, name]) =>
+                                <ListItem id={"scenario_" + index} key={"scenario_" + index}
                                     button
-                                    selected={selectedScenario === item}
-                                    onClick={() => { setSelectedScenario(item); }}>
-                                    {scenarioNames[item] ?
-                                        <ListItemText primary={scenarioNames[item]} />
-                                        :
-                                        <ListItemText primary={'Scenario ' + item} />
-                                    }
+                                    selected={selectedScenario === index}
+                                    onClick={() => { setSelectedScenario(index); }}>
+                                    <ListItemText primary={name} />
                                 </ListItem>
                             )}
                         </List>
