@@ -166,18 +166,18 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
         return AXIS_CONVERSION[e.value] || '';
     };
 
-    const getDataPoints = (admName, att, ta1) => {
+    const getDataPoints = (admName, att, ta1, yOffset = 0) => {
         const target = ta1 === 'A' ? ('ADEPT-metrics_eval-alignment-target-eval-' + (att === 1 ? 'HIGH' : 'LOW')) : ('maximization_' + (att === 1 ? 'high' : 'low'));
         const j = admData[admName][target][ta1 == 'A' ? 'MetricsEval.MD4-Jungle' : 'jungle-1'];
         const s = admData[admName][target][ta1 === 'A' ? 'MetricsEval.MD6-Submarine' : 'submarine-1'];
         const d = admData[admName][target][ta1 === 'A' ? 'MetricsEval.MD5-Desert' : 'desert-1'];
         const u = admData[admName][target][ta1 === 'A' ? 'MetricsEval.MD1-Urban' : 'urban-1'];
         const x = [
-            { x: j, y: 1, l: "Jungle" },
-            { x: s, y: 2, l: "Submarine" },
-            { x: d, y: 3, l: "Desert" },
-            { x: u, y: 4, l: "Urban" },
-            { x: ((j + s + d + u) / 4).toFixed(2), y: 5, l: "Average" }
+            { x: j, y: 1 + yOffset, l: "Jungle" },
+            { x: s, y: 2 + yOffset, l: "Submarine" },
+            { x: d, y: 3 + yOffset, l: "Desert" },
+            { x: u, y: 4 + yOffset, l: "Urban" },
+            { x: ((j + s + d + u) / 4).toFixed(2), y: 5 + yOffset, l: "Average" }
         ];
         return x;
     };
@@ -316,7 +316,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#9ed483',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('TAD aligned', 0, 'S')
+                                    dataPoints: getDataPoints('TAD aligned', 0, 'S', 0.2)
                                 },
                                 {
                                     type: "scatter",
@@ -328,7 +328,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#4f994e',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('TAD aligned', 1, 'S')
+                                    dataPoints: getDataPoints('TAD aligned', 1, 'S', 0.2)
                                 },
                                 {
                                     type: "scatter",
@@ -338,7 +338,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "circle",
                                     markerSize: 10,
-                                    dataPoints: getDataPoints('TAD misaligned', 0, 'S')
+                                    dataPoints: getDataPoints('TAD misaligned', 0, 'S', -0.1)
                                 },
                                 {
                                     type: "scatter",
@@ -348,50 +348,8 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "circle",
                                     markerSize: 10,
-                                    dataPoints: getDataPoints('TAD misaligned', 1, 'S')
+                                    dataPoints: getDataPoints('TAD misaligned', 1, 'S', -0.1)
                                 },
-                                // {
-                                //     type: "scatter",
-                                //     name: "Minimum",
-                                //     showInLegend: true,
-                                //     color: '#888',
-                                //     toolTipContent: "<span style=\"color:#888 \">{name}<br/><span>{l}: {x}</span></span>",
-                                //     markerType: "square",
-                                //     markerBorderColor: '#777',
-                                //     markerBorderThickness: 1,
-                                //     markerSize: 9,
-                                //     dataPoints: [
-                                //         { x: 0.3, y: 1, l: "MD - Jungle" },
-                                //         { x: 0.3, y: 2, l: "MD - Submarine" },
-                                //         { x: 0.3, y: 3, l: "MD - Desert" },
-                                //         { x: 0.3, y: 4, l: "MD - Urban" },
-                                //         { x: 0.3, y: 5, l: "Max - Urban" },
-                                //         { x: 0.3, y: 6, l: "Max - Desert" },
-                                //         { x: 0.3, y: 7, l: "Max - Submarine" },
-                                //         { x: 0.3, y: 8, l: "Max - Jungle" },
-                                //     ]
-                                // },
-                                // {
-                                //     type: "scatter",
-                                //     name: "Maximum",
-                                //     showInLegend: true,
-                                //     color: '#888',
-                                //     toolTipContent: "<span style=\"color:#888 \">{name}<br/><span>{l}: {x}</span></span>",
-                                //     markerType: "square",
-                                //     markerBorderColor: '#777',
-                                //     markerBorderThickness: 1,
-                                //     markerSize: 9,
-                                //     dataPoints: [
-                                //         { x: 0.3, y: 1, l: "MD - Jungle" },
-                                //         { x: 0.3, y: 2, l: "MD - Submarine" },
-                                //         { x: 0.3, y: 3, l: "MD - Desert" },
-                                //         { x: 0.3, y: 4, l: "MD - Urban" },
-                                //         { x: 0.3, y: 5, l: "Max - Urban" },
-                                //         { x: 0.3, y: 6, l: "Max - Desert" },
-                                //         { x: 0.3, y: 7, l: "Max - Submarine" },
-                                //         { x: 0.3, y: 8, l: "Max - Jungle" },
-                                //     ]
-                                // },
                                 {
                                     type: "scatter",
                                     name: "Severity Baseline Low",
@@ -400,7 +358,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#db9239 \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "triangle",
                                     markerSize: 11,
-                                    dataPoints: getDataPoints('TAD severity-baseline', 0, 'S')
+                                    dataPoints: getDataPoints('TAD severity-baseline', 0, 'S', 0.09)
                                 },
                                 {
                                     type: "scatter",
@@ -410,7 +368,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#995e17 \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "triangle",
                                     markerSize: 11,
-                                    dataPoints: getDataPoints('TAD severity-baseline', 1, 'S')
+                                    dataPoints: getDataPoints('TAD severity-baseline', 1, 'S', 0.09)
                                 },
                                 {
                                     type: "scatter",
@@ -422,7 +380,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('TAD baseline', 0, 'S')
+                                    dataPoints: getDataPoints('TAD baseline', 0, 'S', -0.09)
                                 },
                                 {
                                     type: "scatter",
@@ -434,7 +392,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('TAD baseline', 1, 'S')
+                                    dataPoints: getDataPoints('TAD baseline', 1, 'S', -0.09)
                                 }]
                         }}
                         />
@@ -460,7 +418,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#9ed483',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('TAD aligned', 0, 'A')
+                                    dataPoints: getDataPoints('TAD aligned', 0, 'A', 0.23)
                                 },
                                 {
                                     type: "scatter",
@@ -472,7 +430,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#4f994e',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('TAD aligned', 1, 'A')
+                                    dataPoints: getDataPoints('TAD aligned', 1, 'A', 0.23)
                                 },
                                 {
                                     type: "scatter",
@@ -482,7 +440,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "circle",
                                     markerSize: 10,
-                                    dataPoints: getDataPoints('TAD misaligned', 0, 'A')
+                                    dataPoints: getDataPoints('TAD misaligned', 0, 'A', 0.07)
                                 },
                                 {
                                     type: "scatter",
@@ -492,27 +450,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "circle",
                                     markerSize: 10,
-                                    dataPoints: getDataPoints('TAD misaligned', 1, 'A')
-                                },
-                                {
-                                    type: "scatter",
-                                    name: "Severity Baseline Low",
-                                    showInLegend: true,
-                                    color: '#db9239',
-                                    toolTipContent: "<span style=\"color:#db9239 \">{name}<br/><span>{l}: {x}</span></span>",
-                                    markerType: "triangle",
-                                    markerSize: 11,
-                                    dataPoints: getDataPoints('TAD severity-baseline', 0, 'A')
-                                },
-                                {
-                                    type: "scatter",
-                                    name: "Severity Baseline High",
-                                    showInLegend: true,
-                                    color: '#995e17',
-                                    toolTipContent: "<span style=\"color:#995e17 \">{name}<br/><span>{l}: {x}</span></span>",
-                                    markerType: "triangle",
-                                    markerSize: 11,
-                                    dataPoints: getDataPoints('TAD severity-baseline', 1, 'A')
+                                    dataPoints: getDataPoints('TAD misaligned', 1, 'A', 0.07)
                                 },
                                 {
                                     type: "scatter",
@@ -524,7 +462,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('TAD baseline', 0, 'A')
+                                    dataPoints: getDataPoints('TAD baseline', 0, 'A', -0.06)
                                 },
                                 {
                                     type: "scatter",
@@ -536,7 +474,27 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('TAD baseline', 1, 'A')
+                                    dataPoints: getDataPoints('TAD baseline', 1, 'A', 0.16)
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Severity Baseline Low",
+                                    showInLegend: true,
+                                    color: '#db9239',
+                                    toolTipContent: "<span style=\"color:#db9239 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerSize: 11,
+                                    dataPoints: getDataPoints('TAD severity-baseline', 0, 'A', 0.04)
+                                },
+                                {
+                                    type: "scatter",
+                                    name: "Severity Baseline High",
+                                    showInLegend: true,
+                                    color: '#995e17',
+                                    toolTipContent: "<span style=\"color:#995e17 \">{name}<br/><span>{l}: {x}</span></span>",
+                                    markerType: "triangle",
+                                    markerSize: 11,
+                                    dataPoints: getDataPoints('TAD severity-baseline', 1, 'A', -0.17)
                                 }]
                         }}
                         />
@@ -561,7 +519,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#9ed483',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'S')
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'S', 0.2)
                                 },
                                 {
                                     type: "scatter",
@@ -573,7 +531,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#4f994e',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'S')
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'S', 0.2)
                                 },
                                 {
                                     type: "scatter",
@@ -583,7 +541,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#76b3c2 \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "circle",
                                     markerSize: 10,
-                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 0, 'S')
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 0, 'S', -0.1)
                                 },
                                 {
                                     type: "scatter",
@@ -593,7 +551,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "circle",
                                     markerSize: 10,
-                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'S')
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'S', -0.1)
                                 },
                                 {
                                     type: "scatter",
@@ -605,7 +563,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'S')
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'S', 0.1)
                                 },
                                 {
                                     type: "scatter",
@@ -617,7 +575,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'S')
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'S', 0.1)
                                 }]
                         }}
                         />
@@ -642,7 +600,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#9ed483',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'A')
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 0, 'A', 0.25)
                                 },
                                 {
                                     type: "scatter",
@@ -654,7 +612,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#4f994e',
                                     markerBorderThickness: 3,
                                     markerSize: 16,
-                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'A')
+                                    dataPoints: getDataPoints('kitware-hybrid-kaleido-aligned', 1, 'A', 0.3)
                                 },
                                 {
                                     type: "scatter",
@@ -674,7 +632,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     toolTipContent: "<span style=\"color:#367d8f \">{name}<br/><span>{l}: {x}</span></span>",
                                     markerType: "circle",
                                     markerSize: 10,
-                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'A')
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-aligned-no-negatives', 1, 'A', 0.15)
                                 },
                                 {
                                     type: "scatter",
@@ -686,7 +644,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'A')
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 0, 'A', -0.23)
                                 },
                                 {
                                     type: "scatter",
@@ -698,7 +656,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
                                     markerBorderColor: '#aaa',
                                     markerBorderThickness: 1,
                                     markerSize: 12,
-                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'A')
+                                    dataPoints: getDataPoints('kitware-single-kdma-adm-baseline', 1, 'A', -0.1)
                                 }]
                         }}
                         />
