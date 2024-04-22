@@ -19,8 +19,6 @@ const GET_SURVEY_RESULTS = gql`
 
 const HEADER = [
     'ParticipantID',
-    'Date',
-    'Gender',
     'MedRole',
     'MedExp',
     'MilitaryExp',

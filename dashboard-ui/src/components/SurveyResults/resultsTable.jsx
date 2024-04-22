@@ -21,7 +21,7 @@ function formatTime(seconds) {
     return `${minutes}:${formatted_seconds}`
 }
 
-const STARTING_HEADERS = ['Participant Id', 'Username', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation'];
+const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation'];
 
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
@@ -53,7 +53,6 @@ export function ResultsTable({ data }) {
                     continue;
                 }
             }
-            entryObj['Username'] = entry?.user?.username;
             entryObj['Survey Version'] = version;
             if (version && !tmpVersion.includes(version)) {
                 tmpVersion.push(version);
