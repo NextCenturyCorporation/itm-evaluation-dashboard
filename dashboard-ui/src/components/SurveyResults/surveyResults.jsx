@@ -54,7 +54,7 @@ const vizPanelOptions = {
     allowDragDrop: false
 }
 
-function ScenarioGroup({ scenario, data, version }) {
+function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
     const [singles, setSingles] = React.useState([]);
     const [comparisons, setComparisons] = React.useState([]);
 
@@ -76,7 +76,7 @@ function ScenarioGroup({ scenario, data, version }) {
     }, [data]);
 
     return (<div className='scenario-group'>
-        <h2 className='scenario-header'>Scenario {scenario}</h2>
+        <h2 className='scenario-header'>Scenario {scenarioIndices[scenario]}</h2>
         <div className='singletons'>
             {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton} version={version}></SingleGraph> })}
         </div>
@@ -215,7 +215,7 @@ export function SurveyResults() {
                 }
                 for (const x of Object.keys(obj)) {
                     const res = obj[x];
-                    if (res?.scenarioIndex === selectedScenario) {
+                    if (res?.scenarioIndex == selectedScenario) {
                         const indexBy = res.pageType + '_' + res.pageName;
                         if (Object.keys(separatedData).includes(indexBy)) {
                             separatedData[indexBy].push(res);
@@ -300,7 +300,7 @@ export function SurveyResults() {
             {filterBySurveyVersion && selectedScenario > 0 ?
                 <div className="graph-section">
                     <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
-                    <ScenarioGroup scenario={selectedScenario} data={resultData} version={filterBySurveyVersion} />
+                    <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
                 </div>
                 :
                 <div className="graph-section">
