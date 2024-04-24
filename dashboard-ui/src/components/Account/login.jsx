@@ -24,23 +24,30 @@ class LoginApp extends React.Component {
         this.createAccount = this.createAccount.bind(this);
     }
 
-    createAccount = async () => {
+    createAccount = async (e) => {
+        e.preventDefault();  // Prevent the default form submission
+        const { createEmail, createUserName, createPassword } = this.state;
+    
+        if (!createEmail || !createUserName || !createPassword) {
+            $("#create-account-feedback").addClass("feedback-display").text("All fields are required.");
+            return; // Stop the function if any field is empty
+        }
+    
         $("#create-account-feedback").removeClass("feedback-display");
         try {
-
             let results = await accountsPassword.createUser({
-                username: this.state.createUserName,
-                password: this.state.createPassword,
-                email: this.state.createEmail
+                username: createUserName,
+                password: createPassword,
+                email: createEmail
             });
-
+    
             results = await accountsPassword.login({
-                password: this.state.createPassword,
+                password: createPassword,
                 user: {
-                    email: this.state.createEmail,
+                    email: createEmail,
                 }
             });
-
+    
             this.props.history.push('/');
             this.props.userLoginHandler(results.user);
         } catch (err) {
@@ -48,6 +55,7 @@ class LoginApp extends React.Component {
             this.setState({ error: err.message, createAccountFailed: true });
         }
     }
+    
 
 
 
@@ -156,18 +164,18 @@ class LoginApp extends React.Component {
                                         <div className="sign-in-header">Create Account</div>
                                         <div>Create an account to save, share and comment on queries.</div>
                                     </div>
-                                    <form>
+                                    <form onSubmit={this.createAccount}>
                                         <div className="form-group">
                                             <div className="input-login-header">Email Address</div>
-                                            <input className="form-control form-control-lg" placeholder="Email" type="text" id="createEmail" value={this.state.createEmail} onChange={this.onChangeCreateEmail} />
+                                            <input className="form-control form-control-lg" required placeholder="Email" type="text" id="createEmail" value={this.state.createEmail} onChange={this.onChangeCreateEmail} />
                                         </div>
                                         <div className="form-group">
                                             <div className="input-login-header">Username</div>
-                                            <input className="form-control form-control-lg" placeholder="Username" type="text" id="createUserName" value={this.state.createUserName} onChange={this.onChangeCreateUserName} />
+                                            <input className="form-control form-control-lg" required placeholder="Username" type="text" id="createUserName" value={this.state.createUserName} onChange={this.onChangeCreateUserName} />
                                         </div>
                                         <div className="form-group">
                                             <div className="input-login-header">Password</div>
-                                            <input className="form-control form-control-lg" placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
+                                            <input className="form-control form-control-lg" required placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
                                         </div>
                                         {this.state.createAccountFailed && (
                                             <div className="custom-toast">
@@ -181,7 +189,7 @@ class LoginApp extends React.Component {
                                             </div>
                                         )}
                                         <div className="form-group">
-                                            <button className="btn btn-primary btn-lg btn-block" onClick={this.createAccount} type="button">Create Account</button>
+                                            <button className="btn btn-primary btn-lg btn-block" type="submit">Create Account</button>
                                         </div>
                                         <div className="invalid-feedback" id="create-account-feedback">
                                             {this.state.error}
