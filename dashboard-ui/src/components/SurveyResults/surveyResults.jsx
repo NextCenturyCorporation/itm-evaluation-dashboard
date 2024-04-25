@@ -215,7 +215,7 @@ export function SurveyResults() {
                 }
                 for (const x of Object.keys(obj)) {
                     const res = obj[x];
-                    if (res?.scenarioIndex == selectedScenario) {
+                    if (res?.scenarioIndex === selectedScenario) {
                         const indexBy = res.pageType + '_' + res.pageName;
                         if (Object.keys(separatedData).includes(indexBy)) {
                             separatedData[indexBy].push(res);
@@ -290,7 +290,9 @@ export function SurveyResults() {
                                 <ListItem id={"scenario_" + index} key={"scenario_" + index}
                                     button
                                     selected={selectedScenario === index}
-                                    onClick={() => { setSelectedScenario(index); }}>
+                                    onClick={() => { 
+                                        setSelectedScenario(Number(index)); 
+                                        }}>
                                     <ListItemText primary={name} />
                                 </ListItem>
                             )}
