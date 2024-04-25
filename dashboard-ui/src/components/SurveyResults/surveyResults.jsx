@@ -76,7 +76,7 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
     }, [data]);
 
     return (<div className='scenario-group'>
-        <h2 className='scenario-header'>Scenario {scenarioIndices[scenario]}</h2>
+        <h2 className='scenario-header'>{scenarioIndices[scenario]}</h2>
         <div className='singletons'>
             {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton} version={version}></SingleGraph> })}
         </div>
@@ -196,10 +196,10 @@ export function SurveyResults() {
                     }
                 }
             }
-            const sortedIndices = Object.keys(scenarios).map(Number).sort((a, b) => a - b);
+            
             setScenarioIndices(scenarios);
 
-            if (sortedIndices.length > 0) {
+            if (Object.keys(scenarios).length > 0) {
                 setSelectedScenario(0);
             }
         }
