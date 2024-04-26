@@ -62,3 +62,8 @@ MongoDB Compass allows you to easily view all of the collections of the database
 ```
 mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27030/?authMechanism=DEFAULT&authSource=dashboard
 ```
+
+#  Admin Account
+When you first make an account you will not be able to see the dashboard in its entirety, just the data collection pages.
+To make yourself an admin you will need to add your username to scripts/_0_0_6_set_admin_users.py inside of the ITM-Ingest repo.
+After running the script with your username added, you should be able to see all of the pages of the dashboard. 
