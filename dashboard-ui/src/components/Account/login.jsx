@@ -1,7 +1,7 @@
 import React from 'react';
 import { accountsPassword } from '../../services/accountsService';
 import { withRouter } from 'react-router-dom';
-import $ from 'jquery';
+import $, { trim } from 'jquery';
 import brandImage from '../../img/logo.png';
 import { Tabs, Tab, Toast } from 'react-bootstrap';
 class LoginApp extends React.Component {
@@ -28,6 +28,10 @@ class LoginApp extends React.Component {
         e.preventDefault();  // Prevent the default form submission
         const { createEmail, createUserName, createPassword } = this.state;
 
+        // removing leading and trailing white space 
+        const trimmedEmail = createEmail.trim()
+        const trimmedUserName = createUserName.trim()
+
         if (!createEmail || !createUserName || !createPassword) {
             $("#create-account-feedback").addClass("feedback-display").text("All fields are required.");
             return; // Stop the function if any field is empty
@@ -36,15 +40,15 @@ class LoginApp extends React.Component {
         $("#create-account-feedback").removeClass("feedback-display");
         try {
             let results = await accountsPassword.createUser({
-                username: createUserName,
+                username: trimmedUserName,
                 password: createPassword,
-                email: createEmail
+                email: trimmedEmail
             });
 
             results = await accountsPassword.login({
                 password: createPassword,
                 user: {
-                    email: createEmail,
+                    email: trimmedEmail,
                 }
             });
 
