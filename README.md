@@ -57,7 +57,7 @@ mongorestore --uri="mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@lo
 # Helpful Tool for MongoDB
 MongoDB Compass allows you to easily view all of the collections of the database.
 
-1. You can find a download for MongoDB Compass on this page https://www.mongodb.com/try/download/shell
+1. You can find a download for MongoDB Compass on this page https://www.mongodb.com/try/download/compass
 2. Once you have downloaded and launched the application, use the following connection string
 ```
 mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27030/?authMechanism=DEFAULT&authSource=dashboard
