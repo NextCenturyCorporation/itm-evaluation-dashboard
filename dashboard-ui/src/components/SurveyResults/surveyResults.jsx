@@ -54,7 +54,7 @@ const vizPanelOptions = {
     allowDragDrop: false
 }
 
-function ScenarioGroup({ scenario, data, version }) {
+function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
     const [singles, setSingles] = React.useState([]);
     const [comparisons, setComparisons] = React.useState([]);
 
@@ -76,7 +76,7 @@ function ScenarioGroup({ scenario, data, version }) {
     }, [data]);
 
     return (<div className='scenario-group'>
-        <h2 className='scenario-header'>Scenario {scenario}</h2>
+        <h2 className='scenario-header'>{scenarioIndices[scenario]}</h2>
         <div className='singletons'>
             {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton} version={version}></SingleGraph> })}
         </div>
@@ -184,20 +184,22 @@ export function SurveyResults() {
 
             setFilteredData(filteredData);
 
-            let indices = [];
+            let scenarios = {}
             for (const result of filteredData) {
                 if (result.results) {
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
-                            indices.push(result.results[x].scenarioIndex);
+                            const scenarioIndex = result.results[x].scenarioIndex;
+                            const scenarioName = result.results[x]?.scenarioName || `Scenario ${scenarioIndex}`;
+                            scenarios[scenarioIndex] = scenarioName;
                         }
                     }
                 }
             }
-            indices = Array.from(new Set(indices));
-            indices.sort((a, b) => a - b);
-            setScenarioIndices(indices);
-            if (indices.length > 0) {
+            
+            setScenarioIndices(scenarios);
+
+            if (Object.keys(scenarios).length > 0) {
                 setSelectedScenario(0);
             }
         }
@@ -278,18 +280,20 @@ export function SurveyResults() {
                         )}
                     </List>
                 </div>
-                {filterBySurveyVersion && scenarioIndices?.length > 0 &&
+                {scenarioIndices && Object.keys(scenarioIndices).length > 0 &&
                     <div className="selection-section">
                         <div className="nav-header">
                             <span className="nav-header-text">Scenario</span>
                         </div>
                         <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
-                            {scenarioIndices.map((item) =>
-                                <ListItem id={"scenario_" + item} key={"scenario_" + item}
+                            {Object.entries(scenarioIndices).map(([index, name]) =>
+                                <ListItem id={"scenario_" + index} key={"scenario_" + index}
                                     button
-                                    selected={selectedScenario === item}
-                                    onClick={() => { setSelectedScenario(item); }}>
-                                    <ListItemText primary={'Scenario ' + item} />
+                                    selected={selectedScenario === index}
+                                    onClick={() => { 
+                                        setSelectedScenario(Number(index)); 
+                                        }}>
+                                    <ListItemText primary={name} />
                                 </ListItem>
                             )}
                         </List>
@@ -298,7 +302,7 @@ export function SurveyResults() {
             {filterBySurveyVersion && selectedScenario > 0 ?
                 <div className="graph-section">
                     <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
-                    <ScenarioGroup scenario={selectedScenario} data={resultData} version={filterBySurveyVersion} />
+                    <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
                 </div>
                 :
                 <div className="graph-section">
