@@ -52,7 +52,7 @@ tar -xzvf <file_name>
 ```
 3. Import data into MongoDB (file should uncompress to dashboard-mongodb.dump)
 ```
-mongorestore --uri="mongodb://simplemongousername:simplemongopassword@localhost:27030/?authSource=dashboard" --archive=dashboard-mongodb.dump --db dashboard
+mongorestore --uri="mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27030/?authSource=dashboard" --archive=dashboard-mongodb.dump --db dashboard
 ```
 # Helpful Tool for MongoDB
 MongoDB Compass allows you to easily view all of the collections of the database.
