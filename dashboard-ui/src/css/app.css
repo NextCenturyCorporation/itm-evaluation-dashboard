@@ -31,31 +31,6 @@ body {
     display: none;
 }
 
-.custom-toast {
-    display: flex;
-    flex-direction: row;
-    align-items: center; 
-    background-color: #ff5555;
-    color: #fff;
-    border-radius: 5px;
-    padding: 10px;
-    max-width: 400px;
-    margin: 5px 0px 5px 0px;
-}
-
-.custom-toast span {
-    flex: 1; 
-    white-space: nowrap; 
-    overflow: hidden;
-    text-overflow: ellipsis; 
-}
-
-.custom-toast button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-left: 10px; 
-}
 .close-button {
     background: none;
     border: none;

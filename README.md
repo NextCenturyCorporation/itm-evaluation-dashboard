@@ -45,12 +45,25 @@ bash startup-scripts/dev_graphql_dashboard_ui.sh
 # Populate MongoDB with Backup
 When you build the dashboard-mongo container for the first time, it will be empty. Follow these steps to populate it:
 
-1. Navigate to AWS and download backup.tar.gz from s3 bucket (dashboard-assets/mongodb-backups)
+1. Navigate to AWS and download the most recent mongodb backup from S3/Buckets/itm-backups/mongodb
 2. Uncompress the file
 ```
-tar -xzvf backup.tar.gz
+tar -xzvf <file_name>
 ```
-3. Import data into MongoDB
+3. Import data into MongoDB (file should uncompress to dashboard-mongodb.dump)
 ```
-mongorestore --uri="mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27017/?authSource=dashboard" backup 
+mongorestore --uri="mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27030/?authSource=dashboard" --archive=dashboard-mongodb.dump --db dashboard
 ```
+# Helpful Tool for MongoDB
+MongoDB Compass allows you to easily view all of the collections of the database.
+
+1. You can find a download for MongoDB Compass on this page https://www.mongodb.com/try/download/compass
+2. Once you have downloaded and launched the application, use the following connection string
+```
+mongodb://<INSERT_MONGO_USERNAME>:<INSERT_MONGO_PASSWORD>@localhost:27030/?authMechanism=DEFAULT&authSource=dashboard
+```
+
+#  Admin Account
+When you first make an account you will not be able to see the dashboard in its entirety, just the data collection pages.
+To make yourself an admin you will need to add your username to scripts/_0_0_6_set_admin_users.py inside of the ITM-Ingest repo.
+After running the script with your username added, you should be able to see all of the pages of the dashboard. 
