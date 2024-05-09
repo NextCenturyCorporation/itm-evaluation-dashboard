@@ -17,10 +17,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
 
     // log actions
     const logAction = (actionName) => {
-        const newLog = { actionName, timestamp: new Date().toISOString() };
+        const newLog = { dmName, actionName, timestamp: new Date().toISOString() };
         const updatedLogs = [...actionLogs, newLog];
         if (updateActionLogs) {
-            updateActionLogs(updatedLogs);
+            updateActionLogs(newLog);
         }
         setActionLogs(updatedLogs);
     };

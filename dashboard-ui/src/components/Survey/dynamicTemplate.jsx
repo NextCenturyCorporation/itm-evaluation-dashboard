@@ -149,10 +149,12 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         return this.question.explanation
     }
 
-    updateActionLogs = (actionLogs) => {
-        this.setState({ userActions: actionLogs }, () => {
-            this.question.value = this.state.userActions;
-        });
+    updateActionLogs = (newAction) => {
+        this.setState( prevState => ({
+            userActions: [...prevState.userActions, newAction]
+        }), () => {
+            this.question.value = this.state.userActions
+        })
     }
 
     renderElement() {
