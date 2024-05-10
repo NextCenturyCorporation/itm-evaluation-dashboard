@@ -87,13 +87,19 @@ export class Omnibus extends SurveyQuestionElementBase {
         this.setState({ dmDetails });
     }
 
+    getScenarioHeader(title) {
+        const scenarios = ['Desert', 'Jungle', 'Submarine', 'Urban'];
+        const foundScenario = scenarios.find(scenario => title.includes(scenario));
+        return foundScenario;
+    }
+
     renderElement() {
         const { dmDetails } = this.state;
         return (
             <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3']}>
                 {dmDetails.map((dm, index) => (
                     <Accordion.Item eventKey={index.toString()} key={dm.name}>
-                        <Accordion.Header>Scenario</Accordion.Header>
+                        <Accordion.Header>{this.getScenarioHeader(dm.title)} Scenario</Accordion.Header>
                         <Accordion.Body>
                             <Dynamic
                                 actions={dm.actions}
