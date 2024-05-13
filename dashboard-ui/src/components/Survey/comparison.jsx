@@ -83,13 +83,13 @@ export class Comparison extends SurveyQuestionElementBase {
 
     handleShowModal = (content) => {
         this.dm = content
-        const newLog = { dmName: this.dm.name, actionName: "Opened DM Review Modal", timestamp: new Date().toISOString() };
+        const newLog = { dmName: this.dm.dmName, actionName: "Opened DM Review Modal", timestamp: new Date().toISOString() };
         this.updateActionLogs(newLog)
         this.setState({ showModal: true });
     };
 
     handleCloseModal = () => {
-        const newLog = { dmName: this.dm.name, actionName: "Closed DM Review Modal", timestamp: new Date().toISOString() };
+        const newLog = { dmName: this.dm.dmName, actionName: "Closed DM Review Modal", timestamp: new Date().toISOString() };
         this.updateActionLogs(newLog)
         this.setState({ showModal: false });
     };
