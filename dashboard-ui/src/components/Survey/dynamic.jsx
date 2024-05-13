@@ -84,7 +84,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                             </div>
                         </Col>
                         <Col md={4}>
-                            <VitalsDropdown vitals={patient.vitals} />
+                            <VitalsDropdown vitals={patient.vitals} logAction={logAction} patientName={patient.name}/>
                         </Col>
                     </Row>
                 </Card>
