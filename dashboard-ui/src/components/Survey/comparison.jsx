@@ -14,14 +14,8 @@ export class ComparisonModel extends Question {
         return CUSTOM_TYPE;
     }
 
-    // return the decisionMakers as the question value
-    getValue() {
-        return this.decisionMakers;
-    }
-
-    setValue(newValue, locNotification) {
-        super.setValue(newValue, locNotification);
-        this.decisionMakers = newValue;
+    setValueCore(newValue) {
+        super.setValueCore(newValue);
     }
 
     get decisionMakers() {
@@ -59,10 +53,12 @@ export class Comparison extends SurveyQuestionElementBase {
 
         this.state = {
             dmDetails: [],
-            showModal: false
+            showModal: false,
+            userActions: []
         }
 
         this.dm = ' '
+        this.updateActionLogs = this.updateActionLogs.bind(this)
     }
 
     get question() {
@@ -87,12 +83,24 @@ export class Comparison extends SurveyQuestionElementBase {
 
     handleShowModal = (content) => {
         this.dm = content
+        const newLog = { dmName, actionName: "Opened DM Review Modal", timestamp: new Date().toISOString() };
+        this.updateActionLogs(newLog)
         this.setState({ showModal: true });
     };
 
     handleCloseModal = () => {
+        const newLog = { dmName, actionName: "Closed DM Review Modal", timestamp: new Date().toISOString() };
+        this.updateActionLogs(newLog)
         this.setState({ showModal: false });
     };
+
+    updateActionLogs = (newAction) => {
+        this.setState( prevState => ({
+            userActions: [...prevState.userActions, newAction]
+        }), () => {
+            this.question.value = this.state.userActions
+        })
+    }
 
     renderElement() {
         return (
@@ -116,6 +124,7 @@ export class Comparison extends SurveyQuestionElementBase {
                             actions={this.dm.actions}
                             explanation={this.dm.explanation}
                             showModal={false}
+                            updateActionLogs={this.updateActionLogs}
                         />
                     </Modal.Body>
                 </Modal>
