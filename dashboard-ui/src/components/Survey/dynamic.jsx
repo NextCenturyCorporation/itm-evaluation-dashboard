@@ -17,10 +17,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
 
     // log actions
     const logAction = (actionName) => {
-        const newLog = { actionName, timestamp: new Date().toString() };
+        const newLog = { dmName, actionName, timestamp: new Date().toISOString() };
         const updatedLogs = [...actionLogs, newLog];
         if (updateActionLogs) {
-            updateActionLogs(updatedLogs);
+            updateActionLogs(newLog);
         }
         setActionLogs(updatedLogs);
     };
@@ -84,7 +84,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                             </div>
                         </Col>
                         <Col md={4}>
-                            <VitalsDropdown vitals={patient.vitals} />
+                            <VitalsDropdown vitals={patient.vitals} logAction={logAction} patientName={patient.name}/>
                         </Col>
                     </Row>
                 </Card>

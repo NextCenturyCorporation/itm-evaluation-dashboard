@@ -4,10 +4,16 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import './template.css';
 
-const VitalsDropdown = ({ vitals }) => {
+const VitalsDropdown = ({ vitals, patientName, logAction }) => {
     const [visible, setVisible] = useState(false);
 
     const toggleVisibility = () => {
+        if (!visible) {
+            logAction(`Vitals expanded: ${patientName}`);
+        } else {
+            logAction(`Vitals collapsed: ${patientName}`);
+        }
+        
         setVisible(!visible);
     };
 

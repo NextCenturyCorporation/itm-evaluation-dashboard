@@ -14,14 +14,8 @@ export class OmnibusModel extends Question {
         return CUSTOM_TYPE;
     }
 
-    // return the decisionMakers as the question value
-    getValue() {
-        return this.decisionMakers;
-    }
-
-    setValue(newValue, locNotification) {
-        super.setValue(newValue, locNotification); 
-        this.decisionMakers = newValue; 
+    setValueCore(newValue) {
+        super.setValueCore(newValue);
     }
 
     get decisionMakers() {
@@ -58,8 +52,10 @@ export class Omnibus extends SurveyQuestionElementBase {
         super(props);
 
         this.state = {
-            dmDetails: []
+            dmDetails: [],
+            userActions: []
         }
+        this.updateActionLogs = this.updateActionLogs.bind(this)
     }
 
     get question() {
@@ -68,6 +64,14 @@ export class Omnibus extends SurveyQuestionElementBase {
 
     get decisionMakers() {
         return this.question.decisionMakers;
+    }
+
+    updateActionLogs = (newAction) => {
+        this.setState( prevState => ({
+            userActions: [...prevState.userActions, newAction]
+        }), () => {
+            this.question.value = this.state.userActions
+        })
     }
 
     componentDidMount() {
@@ -79,9 +83,14 @@ export class Omnibus extends SurveyQuestionElementBase {
         let dmDetails = relevantPages.map(page => page.elements[0]);
         //extra cleansing of any potential duplicates
         dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
-        this.question.value = decisionMakers
 
         this.setState({ dmDetails });
+    }
+
+    getScenarioHeader(title) {
+        const scenarios = ['Desert', 'Jungle', 'Submarine', 'Urban'];
+        const foundScenario = scenarios.find(scenario => title.includes(scenario));
+        return foundScenario;
     }
 
     renderElement() {
@@ -90,7 +99,7 @@ export class Omnibus extends SurveyQuestionElementBase {
             <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3']}>
                 {dmDetails.map((dm, index) => (
                     <Accordion.Item eventKey={index.toString()} key={dm.name}>
-                        <Accordion.Header>Scenario</Accordion.Header>
+                        <Accordion.Header>{this.getScenarioHeader(dm.title)} Scenario</Accordion.Header>
                         <Accordion.Body>
                             <Dynamic
                                 actions={dm.actions}
@@ -101,6 +110,7 @@ export class Omnibus extends SurveyQuestionElementBase {
                                 situation={dm.situation}
                                 supplies={dm.supplies}
                                 showModal={false}
+                                updateActionLogs={this.updateActionLogs}
                             />
                         </Accordion.Body>
                     </Accordion.Item>
