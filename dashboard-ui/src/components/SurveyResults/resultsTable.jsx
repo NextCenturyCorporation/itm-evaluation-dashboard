@@ -49,7 +49,7 @@ export function ResultsTable({ data }) {
             entryObj['Participant Id'] = entry['Participant ID']?.questions['Participant ID']?.response;
             if (!entryObj['Participant Id']) {
                 entryObj['Participant Id'] = entry['Participant ID Page']?.questions['Participant ID']?.response;
-                if (!entryObj['Participant Id']) { 
+                if (!entryObj['Participant Id']) {
                     continue;
                 }
             }
@@ -80,13 +80,19 @@ export function ResultsTable({ data }) {
                                     .replace('I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)', 'Completed Disaster Response Training')
                                     .replace('How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)', 'Disaster Drill Count')
                                     .replace('I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs', 'I had enough information to answer these questions');
+                                if (!entry[page][key][q].response) { continue; }
                                 if (typeof (entry[page][key][q].response) === 'string') {
                                     entryObj[header_name] = entry[page][key][q].response;
                                     if (!allHeaders.includes(header_name)) {
                                         allHeaders.push(header_name);
                                     }
                                 }
-                                else if (entry[page][key][q].response && typeof (entry[page][key][q].response) !== 'object') {
+                                else if (typeof (entry[page][key][q].response) !== 'object') {
+                                    if (!allHeaders.includes(header_name)) {
+                                        allHeaders.push(header_name);
+                                    }
+                                    entryObj[header_name] = entry[page][key][q].response.toString();
+                                } else if (q === "What is your current role (choose all that apply):" || q === "Condition") {
                                     if (!allHeaders.includes(header_name)) {
                                         allHeaders.push(header_name);
                                     }
@@ -170,7 +176,7 @@ export function ResultsTable({ data }) {
                         })}
                     </div>
                 </FormControl>
-            <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+                <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
             </div>
         </section>
             <div className='resultTableSection'>
