@@ -61,7 +61,11 @@ export function ResultsTable({ data }) {
             entryObj['End Time'] = new Date(entry?.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry?.timeComplete).getTime() - new Date(entry?.startTime).getTime()) / 1000;
             entryObj['Total Time'] = formatTime(timeDifSeconds);
-            entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response?.includes('NOT')).toString();
+            if (entryObj < 2) {
+                entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response?.includes('NOT')).toString();
+            } else {
+                entryObj['Completed Simulation'] = (!entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response?.includes('none')).toString();
+            }
             for (const page of Object.keys(entry)) {
                 if (!NON_PAGES.includes(page) && typeof (entry[page]) === 'object') {
                     // get all keys from the page and name them nicely within the excel
@@ -92,7 +96,7 @@ export function ResultsTable({ data }) {
                                         allHeaders.push(header_name);
                                     }
                                     entryObj[header_name] = entry[page][key][q].response.toString();
-                                } else if (q === "What is your current role (choose all that apply):" || q === "Condition") {
+                                } else if (q === "What is your current role (choose all that apply):" || q === "VR Scenarios Completed") {
                                     if (!allHeaders.includes(header_name)) {
                                         allHeaders.push(header_name);
                                     }
