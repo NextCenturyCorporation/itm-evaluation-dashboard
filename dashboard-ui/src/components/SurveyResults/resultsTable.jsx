@@ -61,7 +61,7 @@ export function ResultsTable({ data }) {
             entryObj['End Time'] = new Date(entry?.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry?.timeComplete).getTime() - new Date(entry?.startTime).getTime()) / 1000;
             entryObj['Total Time'] = formatTime(timeDifSeconds);
-            if (entryObj < 2) {
+            if (entryObj['Survey Version'] < 2) {
                 entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response?.includes('NOT')).toString();
             } else {
                 entryObj['Completed Simulation'] = (!entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response?.includes('none')).toString();
