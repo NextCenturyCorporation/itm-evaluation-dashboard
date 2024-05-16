@@ -91,12 +91,7 @@ export function ResultsTable({ data }) {
                                         allHeaders.push(header_name);
                                     }
                                 }
-                                else if (typeof (entry[page][key][q].response) !== 'object') {
-                                    if (!allHeaders.includes(header_name)) {
-                                        allHeaders.push(header_name);
-                                    }
-                                    entryObj[header_name] = entry[page][key][q].response.toString();
-                                } else if (q === "What is your current role (choose all that apply):" || q === "VR Scenarios Completed") {
+                                else if (typeof (entry[page][key][q].response) !== 'object' || q === "What is your current role (choose all that apply):" || q === "VR Scenarios Completed") {
                                     if (!allHeaders.includes(header_name)) {
                                         allHeaders.push(header_name);
                                     }
