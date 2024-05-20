@@ -8,7 +8,6 @@ import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
 import { Omnibus } from "./omnibusTemplate";
 import { Comparison } from "./comparison";
-import { OmnibusComparison } from "./omnibusComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { getUID, shuffle } from './util';
@@ -51,6 +50,7 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
+        this.assignOmnibus(this.surveyConfigClone.soarTechDMs, this.surveyConfigClone.adeptDMs)
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
         this.applyPageRandomization(groupedDMs, comparisonPages, removed);
     }
@@ -78,6 +78,33 @@ class SurveyPage extends Component {
         })
 
         return { groupedDMs, comparisonPages, removed };
+    }
+
+    assignOmnibus = (soarTechDMs, adeptDMs) => {
+        /*
+        * Medics A and C should have High attribute DMs from soartech and adept, respectively. 
+        * Medics B and D are the low attribute DMs
+        */
+
+        let medicA = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-A")
+        let medicB = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-B")
+        let medicC = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-C")
+        let medicD = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-D")
+
+        soarTechDMs.forEach(pairing => {
+            if (medicA.elements[0].decisionMakers.length < 4 && medicB.elements[0].decisionMakers.length < 4) {
+                medicA.elements[0].decisionMakers.push(pairing[0]);
+                medicB.elements[0].decisionMakers.push(pairing[1]);
+            }
+        })
+
+        adeptDMs.forEach(pairing => {
+            if (medicC.elements[0].decisionMakers.length < 4 && medicD.elements[0].decisionMakers.length < 4) {
+                medicC.elements[0].decisionMakers.push(pairing[0]);
+                medicD.elements[0].decisionMakers.push(pairing[1]);
+            }
+        }
+        )
     }
 
     applyPageRandomization = (groupedDMs, comparisonPages, removedPages) => {
@@ -297,8 +324,4 @@ ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
 
 ReactQuestionFactory.Instance.registerQuestion("comparison", (props) => {
     return React.createElement(Comparison, props)
-})
-
-ReactQuestionFactory.Instance.registerQuestion("omnibusComparison", (props) => {
-    return React.createElement(OmnibusComparison, props)
 })
