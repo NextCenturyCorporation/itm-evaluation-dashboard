@@ -72,39 +72,37 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
         return this.question.decisionMakers;
     }
 
-    componentDidMount() {
-        let decisionMakers = this.decisionMakers;
-        // in case of duplicates somehow
+    getSurveyDetails(decisionMakers) {
         decisionMakers = [...new Set(decisionMakers)];
         let relevantPages = this.config.pages.filter(page => decisionMakers.includes(page.name));
-        let dmDetails = relevantPages.map(page => page.elements[0]);
-        //extra cleansing of any potential duplicates
-        dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
+        let details = relevantPages.map(page => page.elements[0]);
+        // Extra cleansing of any potential duplicates
+        details = Array.from(new Set(details.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
+        return details;
+    }
+
+    componentDidMount() {
+        const dmDetails = this.getSurveyDetails(this.decisionMakers);
         this.setState({ dmDetails });
     }
 
     handleShowModal = (content) => {
-        this.dm = content
-        this.getOmnibusDetails(content.decisionMakers)
+        this.dm = content;
+        this.getOmnibusDetails(content.decisionMakers);
+        this.setState({ showModal: true});
         const newLog = { dmName: this.dm.dmName, actionName: "Opened DM Review Modal", timestamp: new Date().toISOString() };
-        this.updateActionLogs(newLog)
-        this.setState({ showModal: true });
+        this.updateActionLogs(newLog);
     };
 
+    // Updated getOmnibusDetails to use the helper function
     getOmnibusDetails(decisionMakers) {
-        // in case of duplicates somehow
-        decisionMakers = [...new Set(decisionMakers)];
-        let relevantPages = this.config.pages.filter(page => decisionMakers.includes(page.name));
-        let omnibusDetails = relevantPages.map(page => page.elements[0]);
-        //extra cleansing of any potential duplicates
-        omnibusDetails = Array.from(new Set(omnibusDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
-
+        const omnibusDetails = this.getSurveyDetails(decisionMakers);
         this.setState({ omnibusDetails });
     }
 
     handleCloseModal = () => {
         const newLog = { dmName: this.dm.dmName, actionName: "Closed DM Review Modal", timestamp: new Date().toISOString() };
-        this.updateActionLogs(newLog)
+        this.updateActionLogs(newLog);
         this.setState({ showModal: false });
     };
 
@@ -112,7 +110,7 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
         this.setState(prevState => ({
             userActions: [...prevState.userActions, newAction]
         }), () => {
-            this.question.value = this.state.userActions
+            this.question.value = this.state.userActions;
         })
     }
 
