@@ -123,7 +123,6 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
     }
 
     renderElement() {
-        console.log(this.state)
         return (
             <>
                 {this.state.dmDetails &&
