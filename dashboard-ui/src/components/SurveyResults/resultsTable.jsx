@@ -49,7 +49,7 @@ export function ResultsTable({ data }) {
             entryObj['Participant Id'] = entry['Participant ID']?.questions['Participant ID']?.response;
             if (!entryObj['Participant Id']) {
                 entryObj['Participant Id'] = entry['Participant ID Page']?.questions['Participant ID']?.response;
-                if (!entryObj['Participant Id']) { 
+                if (!entryObj['Participant Id']) {
                     continue;
                 }
             }
@@ -61,7 +61,11 @@ export function ResultsTable({ data }) {
             entryObj['End Time'] = new Date(entry?.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry?.timeComplete).getTime() - new Date(entry?.startTime).getTime()) / 1000;
             entryObj['Total Time'] = formatTime(timeDifSeconds);
-            entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response?.includes('NOT')).toString();
+            if (entryObj['Survey Version'] < 2) {
+                entryObj['Completed Simulation'] = (!entry['Participant ID']?.questions?.Condition?.response?.includes('NOT')).toString();
+            } else {
+                entryObj['Completed Simulation'] = (!entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response?.includes('none')).toString();
+            }
             for (const page of Object.keys(entry)) {
                 if (!NON_PAGES.includes(page) && typeof (entry[page]) === 'object') {
                     // get all keys from the page and name them nicely within the excel
@@ -80,13 +84,14 @@ export function ResultsTable({ data }) {
                                     .replace('I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)', 'Completed Disaster Response Training')
                                     .replace('How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)', 'Disaster Drill Count')
                                     .replace('I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs', 'I had enough information to answer these questions');
+                                if (!entry[page][key][q].response) { continue; }
                                 if (typeof (entry[page][key][q].response) === 'string') {
                                     entryObj[header_name] = entry[page][key][q].response;
                                     if (!allHeaders.includes(header_name)) {
                                         allHeaders.push(header_name);
                                     }
                                 }
-                                else if (entry[page][key][q].response && typeof (entry[page][key][q].response) !== 'object') {
+                                else if (typeof (entry[page][key][q].response) !== 'object' || q === "What is your current role (choose all that apply):" || q === "VR Scenarios Completed") {
                                     if (!allHeaders.includes(header_name)) {
                                         allHeaders.push(header_name);
                                     }
@@ -170,7 +175,7 @@ export function ResultsTable({ data }) {
                         })}
                     </div>
                 </FormControl>
-            <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+                <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
             </div>
         </section>
             <div className='resultTableSection'>

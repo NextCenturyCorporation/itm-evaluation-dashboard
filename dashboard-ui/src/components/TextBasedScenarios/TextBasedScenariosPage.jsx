@@ -17,7 +17,6 @@ import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
-import {mapAnswers} from './util.js'
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -129,7 +128,6 @@ class TextBasedScenariosPage extends Component {
             scenario.participantID = this.state.participantID
             scenario.vrEnvCompleted = this.state.vrEnvCompleted
             scenario.title = this.state.scenarios[temp++]
-            mapAnswers(scenario, scenarioMappings)
         }
 
         this.setState({ uploadData: true }, () => {
