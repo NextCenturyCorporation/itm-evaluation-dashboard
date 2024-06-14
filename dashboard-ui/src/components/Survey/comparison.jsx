@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Button, Modal } from "react-bootstrap";
 import Dynamic from "./dynamic";
-import surveyConfig2x from './surveyConfig2x.json';
 import './template.css'
-
+import { useSelector } from "react-redux";
 
 const CUSTOM_TYPE = "comparison";
 
@@ -54,7 +53,9 @@ export class Comparison extends SurveyQuestionElementBase {
         this.state = {
             dmDetails: [],
             showModal: false,
-            userActions: []
+            userActions: [],
+            surveyConfig: null,
+            isSurveyLoaded: false
         }
 
         this.dm = ' '
@@ -69,8 +70,8 @@ export class Comparison extends SurveyQuestionElementBase {
         return this.question.decisionMakers;
     }
 
-    componentDidMount() {
-        let config = surveyConfig2x
+    postConfigSetup = () => {
+        let config = this.state.surveyConfig;
         let decisionMakers = this.decisionMakers;
         // in case of duplicates somehow
         decisionMakers = [...new Set(decisionMakers)];
@@ -79,6 +80,26 @@ export class Comparison extends SurveyQuestionElementBase {
         //extra cleansing of any potential duplicates
         dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
         this.setState({ dmDetails });
+        this.setState({
+            isSurveyLoaded: true
+        });
+    }
+
+
+    ConfigGetter = () => {
+        // TODO: get id based on .env or some other easily-accessible variable
+        const reducer = useSelector((state) => state?.configs?.surveyConfigs);
+        useEffect(() => {
+            if (reducer) {
+                this.setState({
+                    surveyConfig: reducer['delegation_v2.0']
+                }, () => {
+                    this.postConfigSetup();
+                })
+
+            }
+        }, [reducer])
+        return null;
     }
 
     handleShowModal = (content) => {
@@ -95,7 +116,7 @@ export class Comparison extends SurveyQuestionElementBase {
     };
 
     updateActionLogs = (newAction) => {
-        this.setState( prevState => ({
+        this.setState(prevState => ({
             userActions: [...prevState.userActions, newAction]
         }), () => {
             this.question.value = this.state.userActions
@@ -105,29 +126,33 @@ export class Comparison extends SurveyQuestionElementBase {
     renderElement() {
         return (
             <>
-                {this.state.dmDetails.map((dm, index) => (
-                    <Button key={dm.name} className="mx-3" variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={() => this.handleShowModal(dm)}>
-                        {dm.dmName}
-                    </Button>
-                ))}
-                <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="xl">
-                    <Modal.Header closeButton>
-                        <Modal.Title>{this.dm.name}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Dynamic
-                            patients={this.dm.patients}
-                            situation={this.dm.situation}
-                            supplies={this.dm.supplies}
-                            decision={this.dm.decision}
-                            dmName={this.dm.dmName}
-                            actions={this.dm.actions}
-                            explanation={this.dm.explanation}
-                            showModal={false}
-                            updateActionLogs={this.updateActionLogs}
-                        />
-                    </Modal.Body>
-                </Modal>
+                <this.ConfigGetter />
+                {this.state.isSurveyLoaded && <>
+                    {this.state.dmDetails.map((dm, index) => (
+                        <Button key={dm.name} className="mx-3" variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={() => this.handleShowModal(dm)}>
+                            {dm.dmName}
+                        </Button>
+                    ))}
+                    <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="xl">
+                        <Modal.Header closeButton>
+                            <Modal.Title>{this.dm.name}</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Dynamic
+                                patients={this.dm.patients}
+                                situation={this.dm.situation}
+                                supplies={this.dm.supplies}
+                                decision={this.dm.decision}
+                                dmName={this.dm.dmName}
+                                actions={this.dm.actions}
+                                explanation={this.dm.explanation}
+                                showModal={false}
+                                updateActionLogs={this.updateActionLogs}
+                            />
+                        </Modal.Body>
+                    </Modal>
+                </>
+                }
             </>
         )
     }
