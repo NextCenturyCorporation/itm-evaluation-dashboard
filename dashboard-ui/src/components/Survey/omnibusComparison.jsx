@@ -73,14 +73,8 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
     }
 
     postConfigSetup = () => {
-        let config = this.state.surveyConfig;
-        let decisionMakers = this.decisionMakers;
-    // in case of duplicates somehow
-        decisionMakers = [...new Set(decisionMakers)];
-        let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
-        let dmDetails = relevantPages.map(page => page.elements[0]);
-        // Extra cleansing of any potential duplicates
-        dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
+        const decisionMakers = this.decisionMakers;
+        const dmDetails = this.getSurveyDetails(decisionMakers);
         this.setState({ dmDetails });
         this.setState({
             isSurveyLoaded: true
@@ -88,12 +82,11 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
     }
 
     ConfigGetter = () => {
-        // TODO: get id based on .env or some other easily-accessible variable
         const reducer = useSelector((state) => state?.configs?.surveyConfigs);
         useEffect(() => {
             if (reducer) {
                 this.setState({
-                    surveyConfig: reducer['delegation_v2.0']
+                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
                 }, () => {
                     this.postConfigSetup();
                 })
@@ -103,7 +96,15 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
         return null;
     }
 
-
+    getSurveyDetails(decisionMakers) {
+        let config = this.state.surveyConfig;
+        decisionMakers = [...new Set(decisionMakers)];
+        let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
+        let details = relevantPages.map(page => page.elements[0]);
+        // Extra cleansing of any potential duplicates
+        details = Array.from(new Set(details.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
+        return details;
+    }
 
     handleShowModal = (content) => {
         this.dm = content;
@@ -142,7 +143,8 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
     renderElement() {
         return (
             <>
-                {this.state.dmDetails &&
+                <this.ConfigGetter />
+                {this.state.isSurveyLoaded && this.state.dmDetails &&
                     <>
                         {this.state.dmDetails.map((dm, index) => (
                             <Button key={dm.name} className="mx-3" variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={() => this.handleShowModal(dm)}>

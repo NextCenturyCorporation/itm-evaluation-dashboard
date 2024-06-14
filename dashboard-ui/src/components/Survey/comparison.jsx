@@ -87,12 +87,11 @@ export class Comparison extends SurveyQuestionElementBase {
 
 
     ConfigGetter = () => {
-        // TODO: get id based on .env or some other easily-accessible variable
         const reducer = useSelector((state) => state?.configs?.surveyConfigs);
         useEffect(() => {
             if (reducer) {
                 this.setState({
-                    surveyConfig: reducer['delegation_v2.0']
+                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
                 }, () => {
                     this.postConfigSetup();
                 })
