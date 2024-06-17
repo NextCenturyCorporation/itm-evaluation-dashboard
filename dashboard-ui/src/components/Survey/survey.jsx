@@ -69,7 +69,11 @@ class SurveyPage extends Component {
                 this.setState({
                     surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
                 }, () => {
-                    this.postConfigSetup();
+                    this.setState({
+                        surveyVersion: this.state.surveyConfig['version']
+                    }, () => {
+                        this.postConfigSetup();
+                    })
                 })
 
             }

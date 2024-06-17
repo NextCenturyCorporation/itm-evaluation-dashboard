@@ -151,6 +151,28 @@ export class App extends React.Component {
         this.setState({ currentUser: userObject });
     }
 
+    setupConfigWithImages(data) {
+        // Get the survey configs one by one, since they are all needed for the results pages
+        // and add the correct image urls back to them
+        // then store them properly in localStorage
+        for (const config of data.getAllSurveyConfigs) {
+            for (const page of config.survey.pages) {
+                for (const el of page.elements) {
+                    if (Object.keys(el).includes("patients")) {
+                        for (const patient of el.patients) {
+                            const foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
+                            if (isDefined(foundImg)) {
+                                patient.imgUrl = foundImg.url;
+                            }
+
+                        }
+                    }
+                }
+            }
+            store.dispatch(addConfig({ id: config._id, data: config }));
+        }
+    }
+
     render() {
         const { currentUser } = this.state;
         return (
@@ -165,25 +187,7 @@ export class App extends React.Component {
                                 console.warn("Error getting survey config: ", error);
                                 return;
                             }
-                            // Get the survey configs one by one, since they are all needed for the results pages
-                            // and add the correct image urls back to them
-                            // then store them properly in localStorage
-                            for (const config of data.getAllSurveyConfigs) {
-                                for (const page of config.survey.pages) {
-                                    for (const el of page.elements) {
-                                        if (Object.keys(el).includes("patients")) {
-                                            for (const patient of el.patients) {
-                                                const foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
-                                                if (isDefined(foundImg)) {
-                                                    patient.imgUrl = foundImg.url;
-                                                }
-
-                                            }
-                                        }
-                                    }
-                                }
-                                store.dispatch(addConfig({ id: config._id, data: config }));
-                            }
+                            this.setupConfigWithImages(data);
 
 
                             return (<div className="itm-app">
