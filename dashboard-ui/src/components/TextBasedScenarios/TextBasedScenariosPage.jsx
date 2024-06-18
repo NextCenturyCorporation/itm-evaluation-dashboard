@@ -206,6 +206,7 @@ class TextBasedScenariosPage extends Component {
         //Check if a probe is a known problem probe and get the mapping if it is.
         //problem probes specific to this scenario
         const scenarioProblemProbes = problemProbes[scenarioTitle]
+        if (!scenarioProblemProbes) { return false }
         return scenarioProblemProbes[question['probe']]
     }
 
@@ -223,7 +224,6 @@ class TextBasedScenariosPage extends Component {
         for (const [fieldName, fieldValue] of Object.entries(scenario)) {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
-                console.log(question)
                 if (typeof question !== 'object') { continue }
                 if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
                     const problemProbe = this.isProblemProbe(question, scenario.title)
@@ -241,10 +241,7 @@ class TextBasedScenariosPage extends Component {
                         "session_id": sessionID
                     }
                     try {
-                        console.log(responseUrl)
-                        console.log(responsePayload)
                         const response = await axios.post(responseUrl, responsePayload)
-                        console.log(response)
                     } catch (err) {
                         console.log(err)
                         continue
@@ -259,14 +256,11 @@ class TextBasedScenariosPage extends Component {
         const highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH"
         const lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW"
         const session = await axios.post(`${adeptUrl}/api/v1/new_session`)
-        console.log(session)
         if (session.status == 200) {
             const sessionId = session.data
             const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
             scenario.highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
-            console.log(scenario.highAlignmentData)
             scenario.lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
-            console.log(scenario.lowAlignmentData)
             scenario.serverSessionId = sessionId
         }
     }
@@ -275,7 +269,7 @@ class TextBasedScenariosPage extends Component {
         const stURL = process.env.REACT_APP_SOARTECH_URL
         const highTarget = "maximization_high"
         const lowTarget = "maximization_low"
-        const session = await axios.post(`${stURL}/api/vi/new_session`)
+        const session = await axios.post(`${stURL}/api/v1/new_session?user_id=default_user`)
         console.log(session)
         if (session.status == 201) {
             const sessionId = session.data
