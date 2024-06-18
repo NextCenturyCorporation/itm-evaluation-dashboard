@@ -121,8 +121,6 @@ class TextBasedScenariosPage extends Component {
             }
         }
 
-        this.surveyData.timeComplete = new Date().toString();
-        this.surveyData.startTime = this.state.startTime
         this.surveyData.scenarioTitle = this.survey.title
 
         for (const pageName in this.surveyData) {
@@ -142,14 +140,13 @@ class TextBasedScenariosPage extends Component {
             scenario.participantID = this.state.participantID
             scenario.vrEnvCompleted = this.state.vrEnvCompleted
             scenario.title = this.state.scenarios[temp++]
+            scenario.timeComplete = new Date().toString()
+            scenario.startTime = this.state.startTime
         }
 
-        // TODO ITM-467. For each of the scenarios, run through textbased scnearios and get alignment scores
-
+        // add alignment data for each of the scenarios
         for (const scenario of this.surveyDataByScenario) {
-            if (scenario) {
-                await this.getAlignmentScore(scenario)
-            }
+            await this.getAlignmentScore(scenario)
         }
 
         this.setState({ uploadData: true }, () => {
@@ -160,12 +157,12 @@ class TextBasedScenariosPage extends Component {
         this.shouldBlockNavigation = false
     }
 
-    getAlignmentScore = (scenario) => {
+    getAlignmentScore = async (scenario) => {
         this.mapAnswers(scenario)
         if (scenario.title.includes('SoarTech')) {
-            this.getSoarTechAlignment(scenario)
+            await this.getSoarTechAlignment(scenario)
         } else if (scenario.title.includes('Adept')) {
-            this.getAdeptAlignment(scenario)
+            await this.getAdeptAlignment(scenario)
         }
     }
 
@@ -259,8 +256,10 @@ class TextBasedScenariosPage extends Component {
         if (session.status == 200) {
             const sessionId = session.data
             const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
-            scenario.highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
-            scenario.lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
+            const highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
+            scenario.highAlignmentData = highAlignmentData.data
+            const lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
+            scenario.lowAlignmentData = lowAlignmentData.data
             scenario.serverSessionId = sessionId
         }
     }
@@ -270,14 +269,13 @@ class TextBasedScenariosPage extends Component {
         const highTarget = "maximization_high"
         const lowTarget = "maximization_low"
         const session = await axios.post(`${stURL}/api/v1/new_session?user_id=default_user`)
-        console.log(session)
         if (session.status == 201) {
             const sessionId = session.data
             const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], stURL, sessionId)
-            scenario.highAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}`)
-            console.log(scenario.highAlignmentData)
-            scenario.lowAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}`)
-            console.log(scenario.lowAlignmentData)
+            const highAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}`)
+            scenario.highAlignmentData = highAlignmentData.data
+            const lowAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}`)
+            scenario.lowAlignmentData = lowAlignmentData.data
             scenario.serverSessionId = sessionId
         }
     }
