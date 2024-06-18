@@ -98,7 +98,7 @@ class TextBasedScenariosPage extends Component {
     }
 
 
-    uploadResults = (survey) => {
+    uploadResults = async (survey) => {
         this.timerHelper();
 
         for (const pageName in this.pageStartTimes) {
@@ -139,7 +139,6 @@ class TextBasedScenariosPage extends Component {
         }
 
         let temp = 0
-        console.log(this.surveyDataByScenario)
         for (const scenario of this.surveyDataByScenario) {
             if (scenario) {
                 scenario.participantID = this.state.participantID
@@ -152,7 +151,7 @@ class TextBasedScenariosPage extends Component {
 
         for (const scenario of this.surveyDataByScenario) {
             if (scenario) {
-                this.getAlignmentScore(scenario)
+                await this.getAlignmentScore(scenario)
             }
         }
 
@@ -165,6 +164,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = (scenario) => {
+        this.mapAnswers(scenario)
         if (scenario.title.includes('SoarTech')) {
             this.getSoarTechAlignment(scenario)
         } else if (scenario.title.includes('Adept')) {
@@ -172,24 +172,64 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
+    mapAnswers = (scenario) => {
+        const scenarioTitle = scenario.title
+        const scenarioConfig = scenarioMappings[scenarioTitle];
+        if (!scenarioConfig) { return };
+
+        for (const [fieldName, fieldValue] of Object.entries(scenario)) {
+            if (fieldValue && fieldValue.questions) {
+                for (const [questionName, question] of Object.entries(fieldValue.questions)) {
+                    if (question && question.probe) {
+                        const page = scenarioConfig.pages.find(p => p.name === fieldName);
+                        if (page) {
+                            const pageQuestion = page.elements.find(e => e.name === questionName);
+                            if (pageQuestion) {
+                                try {
+                                    const indexOfAnswer = pageQuestion.choices.indexOf(question.response);
+                                    let choice;
+                                    if (scenarioTitle.startsWith("Adept")) {
+                                        choice = `${question.probe}.${String.fromCharCode(65 + indexOfAnswer)}`;
+                                        console.log(choice)
+                                    } else {
+                                        choice = `choice-${indexOfAnswer}`;
+                                    }
+                                    question.choice = choice;
+                                } catch (err) {
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
         for (const [fieldName, fieldValue] of Object.entries(scenario)) {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
+                console.log(questionName)
+                console.log(question)
                 if (typeof question !== 'object') { continue }
                 if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
+                    console.log("inside")
                     const responseUrl = `${urlBase}/api/v1/response`
                     const responsePayload = {
-                        reponse: {
-                            choice: question.choice,
-                            justification: "justification",
-                            probe_id: question.probe,
-                            scenario_id: scenarioID,
+                        "response": {
+                            "choice": question.choice,
+                            "justification": "justification",
+                            "probe_id": question.probe,
+                            "scenario_id": scenarioID,
                         },
-                        session_id: sessionID
+                        "session_id": sessionID
                     }
                     try {
+                        console.log(responseUrl)
+                        console.log(responsePayload)
                         const response = await axios.post(responseUrl, responsePayload)
+                        console.log(response)
                     } catch (err) {
                         console.log(err)
                         continue
@@ -209,7 +249,9 @@ class TextBasedScenariosPage extends Component {
             const sessionId = session.data
             const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
             scenario.highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
+            console.log(scenario.highAlignmentData)
             scenario.lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
+            console.log(scenario.lowAlignmentData)
             scenario.serverSessionId = sessionId
         }
     }
