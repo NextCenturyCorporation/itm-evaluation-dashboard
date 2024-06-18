@@ -11,6 +11,7 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import introConfig from './introConfig.json'
+import problemProbes from './problemProbes.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
@@ -82,10 +83,8 @@ class TextBasedScenariosPage extends Component {
 
         const selectedScenarios = []
         for (const scenario of scenarioOrderArray) {
-            if (scenario.includes("Adept")) {
-                // make deep copies of json files to be sure the originals are not unintentionally tampered with
-                selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
-            }
+            // make deep copies of json files to be sure the originals are not unintentionally tampered with
+            selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
         }
 
         let title = ""
@@ -140,11 +139,9 @@ class TextBasedScenariosPage extends Component {
 
         let temp = 0
         for (const scenario of this.surveyDataByScenario) {
-            if (scenario) {
-                scenario.participantID = this.state.participantID
-                scenario.vrEnvCompleted = this.state.vrEnvCompleted
-                scenario.title = this.state.scenarios[temp++]
-            }
+            scenario.participantID = this.state.participantID
+            scenario.vrEnvCompleted = this.state.vrEnvCompleted
+            scenario.title = this.state.scenarios[temp++]
         }
 
         // TODO ITM-467. For each of the scenarios, run through textbased scnearios and get alignment scores
@@ -190,7 +187,6 @@ class TextBasedScenariosPage extends Component {
                                     let choice;
                                     if (scenarioTitle.startsWith("Adept")) {
                                         choice = `${question.probe}.${String.fromCharCode(65 + indexOfAnswer)}`;
-                                        console.log(choice)
                                     } else {
                                         choice = `choice-${indexOfAnswer}`;
                                     }
@@ -206,15 +202,34 @@ class TextBasedScenariosPage extends Component {
         }
     };
 
+    isProblemProbe = (question, scenarioTitle) => {
+        //Check if a probe is a known problem probe and get the mapping if it is.
+        //problem probes specific to this scenario
+        const scenarioProblemProbes = problemProbes[scenarioTitle]
+        return scenarioProblemProbes[question['probe']]
+    }
+
+    fixProblemProbe = (question, mapping) => {
+        // tries to map user choice on problem probe to valid choice id if possible
+        const mappedChoice = mapping[question['choice']]
+        if (mappedChoice) {
+            question['choice'] = mappedChoice
+            return true
+        }
+        return false
+    }
+
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
         for (const [fieldName, fieldValue] of Object.entries(scenario)) {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
-                console.log(questionName)
                 console.log(question)
                 if (typeof question !== 'object') { continue }
                 if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
-                    console.log("inside")
+                    const problemProbe = this.isProblemProbe(question, scenario.title)
+                    if (problemProbe) {
+                        if (!this.fixProblemProbe(question, problemProbe)) { continue }
+                    }
                     const responseUrl = `${urlBase}/api/v1/response`
                     const responsePayload = {
                         "response": {
@@ -256,8 +271,21 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    getSoarTechAlignment = (scenario) => {
-        const url = process.env.REACT_APP_SOARTECH_URL
+    getSoarTechAlignment = async (scenario) => {
+        const stURL = process.env.REACT_APP_SOARTECH_URL
+        const highTarget = "maximization_high"
+        const lowTarget = "maximization_low"
+        const session = await axios.post(`${stURL}/api/vi/new_session`)
+        console.log(session)
+        if (session.status == 201) {
+            const sessionId = session.data
+            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], stURL, sessionId)
+            scenario.highAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}`)
+            console.log(scenario.highAlignmentData)
+            scenario.lowAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}`)
+            console.log(scenario.lowAlignmentData)
+            scenario.serverSessionId = sessionId
+        }
     }
 
     onSurveyComplete = (survey) => {
