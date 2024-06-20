@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Accordion } from "react-bootstrap";
 import Dynamic from "./dynamic";
-import surveyConfig2x from './surveyConfig2x.json';
 import './template.css'
-
+import { useSelector } from "react-redux";
 
 const CUSTOM_TYPE = "omnibus";
 
@@ -53,7 +52,9 @@ export class Omnibus extends SurveyQuestionElementBase {
 
         this.state = {
             dmDetails: [],
-            userActions: []
+            userActions: [],
+            surveyConfig: null,
+            isSurveyLoaded: false
         }
         this.updateActionLogs = this.updateActionLogs.bind(this)
     }
@@ -74,8 +75,8 @@ export class Omnibus extends SurveyQuestionElementBase {
         })
     }
 
-    componentDidMount() {
-        let config = surveyConfig2x
+    postConfigSetup = () => {
+        let config = this.state.surveyConfig;
         let decisionMakers = this.decisionMakers;
         // in case of duplicates somehow
         decisionMakers = [...new Set(decisionMakers)];
@@ -85,6 +86,24 @@ export class Omnibus extends SurveyQuestionElementBase {
         dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
 
         this.setState({ dmDetails });
+        this.setState({
+            isSurveyLoaded: true
+        });
+    }
+
+    ConfigGetter = () => {
+        const reducer = useSelector((state) => state?.configs?.surveyConfigs);
+        useEffect(() => {
+            if (reducer) {
+                this.setState({
+                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
+                }, () => {
+                    this.postConfigSetup();
+                })
+
+            }
+        }, [reducer])
+        return null;
     }
 
     getScenarioHeader(title) {
@@ -96,26 +115,29 @@ export class Omnibus extends SurveyQuestionElementBase {
     renderElement() {
         const { dmDetails } = this.state;
         return (
-            <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3']}>
-                {dmDetails.map((dm, index) => (
-                    <Accordion.Item eventKey={index.toString()} key={dm.name}>
-                        <Accordion.Header>{this.getScenarioHeader(dm.title)} Scenario</Accordion.Header>
-                        <Accordion.Body>
-                            <Dynamic
-                                actions={dm.actions}
-                                decision={dm.decision}
-                                explanation={dm.explanation}
-                                dmName={dm.name}
-                                patients={dm.patients}
-                                situation={dm.situation}
-                                supplies={dm.supplies}
-                                showModal={false}
-                                updateActionLogs={this.updateActionLogs}
-                            />
-                        </Accordion.Body>
-                    </Accordion.Item>
-                ))}
-            </Accordion>
+            <>
+                <this.ConfigGetter />
+                {this.state.isSurveyLoaded && <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3']}>
+                    {dmDetails.map((dm, index) => (
+                        <Accordion.Item eventKey={index.toString()} key={dm.name}>
+                            <Accordion.Header>{this.getScenarioHeader(dm.title)} Scenario</Accordion.Header>
+                            <Accordion.Body>
+                                <Dynamic
+                                    actions={dm.actions}
+                                    decision={dm.decision}
+                                    explanation={dm.explanation}
+                                    dmName={dm.name}
+                                    patients={dm.patients}
+                                    situation={dm.situation}
+                                    supplies={dm.supplies}
+                                    showModal={false}
+                                    updateActionLogs={this.updateActionLogs}
+                                />
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    ))}
+                </Accordion>}
+            </>
         )
     }
 }

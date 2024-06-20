@@ -5,8 +5,6 @@ import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
-import surveyConfig2x from '../Survey/surveyConfig2x.json';
-import surveyConfig1x from '../Survey/surveyConfig1x.json'
 import { Modal } from "@mui/material";
 import { ResultsTable } from './resultsTable';
 import CloseIcon from '@material-ui/icons/Close';
@@ -15,6 +13,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@mui/material/IconButton';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
+import { useSelector } from 'react-redux';
 
 
 const GET_SURVEY_RESULTS = gql`
@@ -22,8 +21,8 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResults
     }`;
 
-function getQuestionAnswerSets(pageName, version) {
-    const pagesFound = (version === 1 ? surveyConfig1x : surveyConfig2x).pages.filter((page) => page.name === pageName);
+function getQuestionAnswerSets(pageName, config) {
+    const pagesFound = config.pages.filter((page) => page.name === pageName);
     if (pagesFound.length > 0) {
         const page = pagesFound[0];
         const surveyJson = { elements: [] };
@@ -91,12 +90,13 @@ function SingleGraph({ data, version }) {
     const [vizPanel, setVizPanel] = React.useState(null);
     const [pageName, setPageName] = React.useState('Unknown Set');
     const [surveyResults, setSurveyResults] = React.useState([]);
+    const surveys = useSelector((state) => state.configs.surveyConfigs);
 
     React.useEffect(() => {
         if (data.length > 0) {
             setPageName(data[0].pageName + ": Survey Results");
             // create a survey config based off of answers in the survey data
-            const surveyJson = getQuestionAnswerSets(data[0].pageName, version);
+            const surveyJson = getQuestionAnswerSets(data[0].pageName, version === 1 ? surveys['delegation_v1.0'] : surveys['delegation_v2.0']);
             const curResults = [];
             for (const entry of data) {
                 const entryResults = {};
@@ -113,7 +113,7 @@ function SingleGraph({ data, version }) {
             const survey = new Model(surveyJson);
             setSurvey(survey);
         }
-    }, [data, version]);
+    }, [data, version, surveys]);
 
     if (!vizPanel && !!survey) {
         const vizPanel = new VisualizationPanel(

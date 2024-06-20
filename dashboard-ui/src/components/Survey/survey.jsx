@@ -1,8 +1,7 @@
-import React, { Component } from "react";
+import React, { Component, useEffect } from "react";
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui"
-import surveyConfig2x from './surveyConfig2x.json';
 import surveyTheme from './surveyTheme.json';
 import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
@@ -14,6 +13,7 @@ import { Mutation } from '@apollo/react-components';
 import { getUID, shuffle } from './util';
 import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
+import { useSelector } from "react-redux";
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
@@ -29,13 +29,22 @@ class SurveyPage extends Component {
             startTime: null,
             firstPageCompleted: false,
             surveyId: null,
-            surveyVersion: surveyConfig2x.version,
+            surveyConfig: null,
+            surveyVersion: null,
             iPad: false,
             browserInfo: null,
+            isSurveyLoaded: false,
         };
+        this.surveyConfigClone = null;
 
+        if (this.state.surveyConfig) {
+            this.postConfigSetup();
+        }
+    }
+
+    postConfigSetup = () => {
         // clone surveyConfig, don't edit directly
-        this.surveyConfigClone = JSON.parse(JSON.stringify(surveyConfig2x));
+        this.surveyConfigClone = JSON.parse(JSON.stringify(this.state.surveyConfig));
         this.initializeSurvey();
 
         this.survey = new Model(this.surveyConfigClone);
@@ -47,7 +56,29 @@ class SurveyPage extends Component {
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
-        this.shouldBlockNavigation = true
+        this.shouldBlockNavigation = true;
+        this.setState({
+            isSurveyLoaded: true
+        });
+    }
+
+    ConfigGetter = () => {
+        const reducer = useSelector((state) => state?.configs?.surveyConfigs);
+        useEffect(() => {
+            if (reducer) {
+                this.setState({
+                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
+                }, () => {
+                    this.setState({
+                        surveyVersion: this.state.surveyConfig['version']
+                    }, () => {
+                        this.postConfigSetup();
+                    })
+                })
+
+            }
+        }, [reducer])
+        return null;
     }
 
     initializeSurvey = () => {
@@ -252,29 +283,32 @@ class SurveyPage extends Component {
     render() {
         return (
             <>
-                {this.shouldBlockNavigation && (
-                    <Prompt
-                        when={this.shouldBlockNavigation}
-                        message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
-                    />
-                )}
-                <Survey model={this.survey} />
-                {this.state.uploadData && (
-                    <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
-                        {(uploadSurveyResults, { data }) => (
-                            <div>
-                                <button ref={this.uploadButtonRef} onClick={(e) => {
-                                    e.preventDefault();
-                                    uploadSurveyResults({
-                                        variables: { surveyId: this.state.surveyId, results: this.surveyData }
-                                    });
-                                    this.setState({ uploadData: false });
-                                }}></button>
-                            </div>
-                        )}
-                    </Mutation>
-                )
-                }
+                <this.ConfigGetter />
+                {this.state.isSurveyLoaded &&
+                    <>
+                    {this.shouldBlockNavigation && (
+                        <Prompt
+                            when={this.shouldBlockNavigation}
+                            message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
+                        />
+                    )}
+                    <Survey model={this.survey} />
+                    {this.state.uploadData && (
+                        <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
+                            {(uploadSurveyResults, { data }) => (
+                                <div>
+                                    <button ref={this.uploadButtonRef} onClick={(e) => {
+                                        e.preventDefault();
+                                        uploadSurveyResults({
+                                            variables: { surveyId: this.state.surveyId, results: this.surveyData }
+                                        });
+                                        this.setState({ uploadData: false });
+                                    }}></button>
+                                </div>
+                            )}
+                        </Mutation>
+                    )
+                        } </>}
             </>
         )
     }
