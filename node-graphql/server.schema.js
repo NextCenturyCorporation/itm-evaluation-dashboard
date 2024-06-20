@@ -339,7 +339,7 @@ const resolvers = {
       return await dashboardDB.db.collection('delegationConfig').find().toArray().then(result => { return result; });
     },
     getAllImageUrls: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('screenshotImages').find().toArray().then(result => { return result; });
+      return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
     },
   },
   Mutation: {

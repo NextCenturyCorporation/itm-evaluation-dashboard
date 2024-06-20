@@ -87,28 +87,54 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        // randomize order of soarTech scenarios and adept scenarios
-        let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
-        let adept = shuffle(this.surveyConfigClone.adeptDMs)
+        if (this.state.surveyVersion !== 3) {
+            // randomize order of soarTech scenarios and adept scenarios
+            let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
+            let adept = shuffle(this.surveyConfigClone.adeptDMs)
 
-        // select two scenarios from each
-        let groupedDMs = shuffle((soarTech.slice(0, 2)).concat(adept.slice(0, 2)))
-        let removed = (soarTech.slice(2)).concat(adept.slice(2))
+            // select two scenarios from each
+            let groupedDMs = shuffle((soarTech.slice(0, 2)).concat(adept.slice(0, 2)))
+            let removed = (soarTech.slice(2)).concat(adept.slice(2))
 
-        // keep track of pages to ignore in surveyConfig
-        let removedComparisonPages = []
-        removed.forEach(group => {
-            removedComparisonPages.push(group[0] + " vs " + group[1])
-        })
-        removed = removed.flat().concat(removedComparisonPages)
+            // keep track of pages to ignore in surveyConfig
+            let removedComparisonPages = []
+            removed.forEach(group => {
+                removedComparisonPages.push(group[0] + " vs " + group[1])
+            })
+            removed = removed.flat().concat(removedComparisonPages)
 
-        // keep track of relevant comparison pages of selected scenarios
-        let comparisonPages = []
-        groupedDMs.forEach(group => {
-            comparisonPages.push(group[0] + " vs " + group[1])
-        })
+            // keep track of relevant comparison pages of selected scenarios
+            let comparisonPages = []
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0] + " vs " + group[1])
+            })
 
-        return { groupedDMs, comparisonPages, removed };
+            return { groupedDMs, comparisonPages, removed };
+        }
+        else {
+            const sets = shuffle(this.surveyConfigClone.validSingleSets);
+            const groupedDMs = shuffle(sets.slice(0));
+            let removed = [];
+            for (const x of sets.slice(1)) {
+                for (const e of x) {
+                    removed.push(e)
+                }
+            }
+
+            // keep track of pages to ignore in surveyConfig
+            let removedComparisonPages = []
+            removed.forEach(group => {
+                removedComparisonPages.push(group[0] + " vs " + group[1])
+            })
+            removed = removed.flat().concat(removedComparisonPages)
+
+            // keep track of relevant comparison pages of selected scenarios
+            const comparisonPages = []
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0] + " vs " + group[1])
+            });
+            return { groupedDMs, comparisonPages, removed };
+        }
     }
 
     applyPageRandomization = (groupedDMs, comparisonPages, removedPages) => {
@@ -117,7 +143,32 @@ class SurveyPage extends Component {
             respective comparison pages intact. i.e 'Medic-33', 'Medic-44' then 'Medic-33 vs Medic-44'
         */
         const postScenarioPage = this.surveyConfigClone.pages.find(page => page.name === "Post-Scenario Measures");
-        const omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
+        let omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
+        if (this.state.surveyVersion === 3) {
+            // only select omnibus pages we want
+            omnibusPages = [];
+            const sets = shuffle(this.surveyConfigClone.validOmniSets);
+            const chosen = shuffle(sets.slice(0));
+            const namesSelected = [];
+            for (const group of chosen[0]) {
+                for (const medic of group) {
+                    // get single omnibus medics
+                    omnibusPages.push(this.surveyConfigClone.pages.filter(page => page.name.includes(medic))[0]);
+                    namesSelected.push(medic);
+                }
+                // get comparison omnibus medics
+                const tmpPage = this.surveyConfigClone.pages.filter(page => page.name.includes('Omnibus') && page.name.includes(group[0]) && page.name.includes(group[1]))[0];
+                omnibusPages.push(tmpPage);
+                namesSelected.push(tmpPage.name);
+            }
+            // remove all other omnibus pages
+            for (const page of this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"))) {
+                if (!namesSelected.includes(page.name)) {
+                    removedPages.push(page.name);
+                }
+            }
+
+        }
         //filter out pages to be added after randomized portion
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => page.name !== "Post-Scenario Measures");
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => !page.name.includes("Omnibus"));
