@@ -11,12 +11,14 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import introConfig from './introConfig.json'
+import problemProbes from './problemProbes.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
+import axios from 'axios';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -32,6 +34,17 @@ export const scenarioMappings = {
     "Adept Urban": adeptUrbanConfig,
     "Adept Desert": adeptDesertConfig,
     "Adept Submarine": adeptSubConfig
+}
+
+const scenarioNameToID = {
+    "Adept Submarine": "MetricsEval.MD6-Submarine",
+    "Adept Desert": "MetricsEval.MD5-Desert",
+    "Adept Urban": "MetricsEval.MD1-Urban",
+    "Adept Jungle": "MetricsEval.MD4-Jungle",
+    "SoarTech Urban": "urban-1",
+    "SoarTech Submarine": "submarine-1",
+    "SoarTech Desert": "desert-1",
+    "SoarTech Jungle": "jungle-1"
 }
 class TextBasedScenariosPage extends Component {
 
@@ -61,6 +74,7 @@ class TextBasedScenariosPage extends Component {
     introSurveyComplete = (survey) => {
         const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
         const scenarioOrderArray = JSON.parse(scenarioOrderString);
+
         this.setState({
             scenarios: scenarioOrderArray,
             participantID: survey.data["Participant ID"],
@@ -83,7 +97,7 @@ class TextBasedScenariosPage extends Component {
     }
 
 
-    uploadResults = (survey) => {
+    uploadResults = async (survey) => {
         this.timerHelper();
 
         for (const pageName in this.pageStartTimes) {
@@ -107,8 +121,6 @@ class TextBasedScenariosPage extends Component {
             }
         }
 
-        this.surveyData.timeComplete = new Date().toString();
-        this.surveyData.startTime = this.state.startTime
         this.surveyData.scenarioTitle = this.survey.title
 
         for (const pageName in this.surveyData) {
@@ -128,6 +140,13 @@ class TextBasedScenariosPage extends Component {
             scenario.participantID = this.state.participantID
             scenario.vrEnvCompleted = this.state.vrEnvCompleted
             scenario.title = this.state.scenarios[temp++]
+            scenario.timeComplete = new Date().toString()
+            scenario.startTime = this.state.startTime
+        }
+
+        // add alignment data for each of the scenarios
+        for (const scenario of this.surveyDataByScenario) {
+            await this.getAlignmentScore(scenario)
         }
 
         this.setState({ uploadData: true }, () => {
@@ -136,6 +155,129 @@ class TextBasedScenariosPage extends Component {
             }
         });
         this.shouldBlockNavigation = false
+    }
+
+    getAlignmentScore = async (scenario) => {
+        this.mapAnswers(scenario)
+        if (scenario.title.includes('SoarTech')) {
+            await this.getSoarTechAlignment(scenario)
+        } else if (scenario.title.includes('Adept')) {
+            await this.getAdeptAlignment(scenario)
+        }
+    }
+
+    mapAnswers = (scenario) => {
+        const scenarioTitle = scenario.title
+        const scenarioConfig = scenarioMappings[scenarioTitle];
+        if (!scenarioConfig) { return };
+
+        for (const [fieldName, fieldValue] of Object.entries(scenario)) {
+            if (fieldValue && fieldValue.questions) {
+                for (const [questionName, question] of Object.entries(fieldValue.questions)) {
+                    if (question && question.probe) {
+                        const page = scenarioConfig.pages.find(p => p.name === fieldName);
+                        if (page) {
+                            const pageQuestion = page.elements.find(e => e.name === questionName);
+                            if (pageQuestion) {
+                                try {
+                                    const indexOfAnswer = pageQuestion.choices.indexOf(question.response);
+                                    let choice;
+                                    if (scenarioTitle.startsWith("Adept")) {
+                                        choice = `${question.probe}.${String.fromCharCode(65 + indexOfAnswer)}`;
+                                    } else {
+                                        choice = `choice-${indexOfAnswer}`;
+                                    }
+                                    question.choice = choice;
+                                } catch (err) {
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    isProblemProbe = (question, scenarioTitle) => {
+        //Check if a probe is a known problem probe and get the mapping if it is.
+        //problem probes specific to this scenario
+        const scenarioProblemProbes = problemProbes[scenarioTitle]
+        if (!scenarioProblemProbes) { return false }
+        return scenarioProblemProbes[question['probe']]
+    }
+
+    fixProblemProbe = (question, mapping) => {
+        // tries to map user choice on problem probe to valid choice id if possible
+        const mappedChoice = mapping[question['choice']]
+        if (mappedChoice) {
+            question['choice'] = mappedChoice
+            return true
+        }
+        return false
+    }
+
+    submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
+        for (const [fieldName, fieldValue] of Object.entries(scenario)) {
+            if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
+            for (const [questionName, question] of Object.entries(fieldValue.questions)) {
+                if (typeof question !== 'object') { continue }
+                if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
+                    const problemProbe = this.isProblemProbe(question, scenario.title)
+                    if (problemProbe) {
+                        if (!this.fixProblemProbe(question, problemProbe)) { continue }
+                    }
+                    const responseUrl = `${urlBase}/api/v1/response`
+                    const responsePayload = {
+                        "response": {
+                            "choice": question.choice,
+                            "justification": "justification",
+                            "probe_id": question.probe,
+                            "scenario_id": scenarioID,
+                        },
+                        "session_id": sessionID
+                    }
+                    try {
+                        const response = await axios.post(responseUrl, responsePayload)
+                    } catch (err) {
+                        console.log(err)
+                        continue
+                    }
+                }
+            }
+        }
+    }
+
+    getAdeptAlignment = async (scenario) => {
+        const adeptUrl = process.env.REACT_APP_ADEPT_URL
+        const highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH"
+        const lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW"
+        const session = await axios.post(`${adeptUrl}/api/v1/new_session`)
+        if (session.status == 200) {
+            const sessionId = session.data
+            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
+            const highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
+            scenario.highAlignmentData = highAlignmentData.data
+            const lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
+            scenario.lowAlignmentData = lowAlignmentData.data
+            scenario.serverSessionId = sessionId
+        }
+    }
+
+    getSoarTechAlignment = async (scenario) => {
+        const stURL = process.env.REACT_APP_SOARTECH_URL
+        const highTarget = "maximization_high"
+        const lowTarget = "maximization_low"
+        const session = await axios.post(`${stURL}/api/v1/new_session?user_id=default_user`)
+        if (session.status == 201) {
+            const sessionId = session.data
+            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], stURL, sessionId)
+            const highAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}`)
+            scenario.highAlignmentData = highAlignmentData.data
+            const lowAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}`)
+            scenario.lowAlignmentData = lowAlignmentData.data
+            scenario.serverSessionId = sessionId
+        }
     }
 
     onSurveyComplete = (survey) => {
@@ -197,32 +339,6 @@ class TextBasedScenariosPage extends Component {
         const page = this.survey.getPageByName(pageName);
         return page ? page.questions.map(question => question.name) : [];
     };
-
-    /*mapAnswers = (scenario) => {
-        // maps the user's answer to the correct naming convention for ADEPT choice id
-        const scenarioConfig = scenarioMappings[scenario.title.replace(' Scenario', '')];
-        Object.entries(scenario).forEach(field => {
-            if (!field[1].questions) { return; }
-            Object.entries(field[1].questions).forEach(question => {
-                if (!question[1].probe) { return; }
-                const page = scenarioConfig.pages.find((page) => page.name === field[0]);
-                const pageQuestion = page.elements.find((element) => element.name === question[0]);
-                const indexOfAnswer = pageQuestion.choices.indexOf(question[1].response);
-                let choice;
-                if (scenario.title.includes("Adept")) {
-                    if (indexOfAnswer >= 0) {
-                        choice = question[1].probe + '.';
-                        choice += String.fromCharCode(65 + indexOfAnswer);
-                    } else {
-                        console.err("Error mapping user selection to choice ID");
-                    }
-                } else {
-                    choice = "choice-"+indexOfAnswer;
-                }
-                question[1].choice = choice;
-            })
-        })
-    }*/
 
     render() {
         return (
