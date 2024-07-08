@@ -16,6 +16,11 @@ import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import { useSelector } from 'react-redux';
 
 
+const additionalFilters = [
+    "Participant has military experience",
+    "Participant has completed VR"
+]
+
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
         getAllSurveyResults
@@ -154,6 +159,7 @@ export function SurveyResults() {
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
     const [filterBySurveyVersion, setVersionOption] = React.useState("");
+    const [additionalFilter, setAdditionalFilter] = React.useState("");
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
@@ -196,7 +202,7 @@ export function SurveyResults() {
                     }
                 }
             }
-            
+
             setScenarioIndices(scenarios);
 
             if (Object.keys(scenarios).length > 0) {
@@ -260,79 +266,106 @@ export function SurveyResults() {
         });
     };
 
-    return (<div className="delegation-results">
-        {loading && <p>Loading</p>}
-        {error && <p>Error</p>}
-        {data && <>
-            <div className="delegation-results-nav">
-                <div className="selection-section">
-                    <div className="nav-header">
-                        <span className="nav-header-text">Survey Version</span>
-                    </div>
-                    <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
-                        {versions.map((item) =>
-                            <ListItem id={"version_" + item} key={"version_" + item}
-                                button
-                                selected={filterBySurveyVersion === item}
-                                onClick={() => { setVersionOption(item); setSelectedScenario(-1); }}>
-                                <ListItemText primary={item + '.x'} />
-                            </ListItem>
-                        )}
-                    </List>
-                </div>
-                {scenarioIndices && Object.keys(scenarioIndices).length > 0 &&
-                    <div className="selection-section">
-                        <div className="nav-header">
-                            <span className="nav-header-text">Scenario</span>
+    return (
+        <div className="delegation-results">
+            {loading && <p>Loading</p>}
+            {error && <p>Error</p>}
+            {data && (
+                <>
+                    <div className="delegation-results-nav">
+                        <div className="selection-section">
+                            <div className="nav-header">
+                                <span className="nav-header-text">Survey Version</span>
+                            </div>
+                            <List component="nav" className="nav-list">
+                                {versions.map((item) => (
+                                    <ListItem
+                                        key={"version_" + item}
+                                        button
+                                        selected={filterBySurveyVersion === item}
+                                        onClick={() => { setVersionOption(item); setSelectedScenario(-1); }}
+                                    >
+                                        <ListItemText primary={item + '.x'} />
+                                    </ListItem>
+                                ))}
+                            </List>
                         </div>
-                        <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
-                            {Object.entries(scenarioIndices).map(([index, name]) =>
-                                <ListItem id={"scenario_" + index} key={"scenario_" + index}
-                                    button
-                                    selected={selectedScenario === index}
-                                    onClick={() => { 
-                                        setSelectedScenario(Number(index)); 
-                                        }}>
-                                    <ListItemText primary={name} />
-                                </ListItem>
-                            )}
-                        </List>
-                    </div>}
-            </div>
-            {filterBySurveyVersion && selectedScenario > 0 ?
-                <div className="graph-section">
-                    <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
-                    <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
-                </div>
-                :
-                <div className="graph-section">
-                    <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
-                    <h2>Please select a survey version and scenario to view graphical results</h2>
-                </div>}
-            <Modal className='table-modal' open={showTable} onClose={closeModal}>
-                <div className='modal-body'>
-                    <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                    <ResultsTable data={data.getAllSurveyResults} />
-                </div>
-            </Modal>
-        </>}
-        {showScrollButton && (
-            <IconButton onClick={(e) => {
-                e.stopPropagation()
-                scrollToTop()
-            }} style={{
-                position: 'fixed',
-                left: '20px',
-                bottom: '20px',
-                borderRadius: '10px',
-                backgroundColor: '#592610',
-                color: 'white',
-                cursor: 'pointer',
-                zIndex: 1000,
-                boxShadow: '0px 2px 10px rgba(0,0,0,0.3)'
-            }}>
-                Back To Top <ArrowUpwardIcon fontSize='large' />
-            </IconButton>
-        )}
-    </div>);
+                        {scenarioIndices && Object.keys(scenarioIndices).length > 0 && (
+                            <>
+                                <div className="selection-section">
+                                    <div className="nav-header">
+                                        <span className="nav-header-text">Scenario</span>
+                                    </div>
+                                    <List component="nav" className="nav-list">
+                                        {Object.entries(scenarioIndices).map(([index, name]) => (
+                                            <ListItem
+                                                key={"scenario_" + index}
+                                                button
+                                                selected={selectedScenario === index}
+                                                onClick={() => { setSelectedScenario(Number(index)); }}
+                                            >
+                                                <ListItemText primary={name} />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </div>
+                                <div className="selection-section">
+                                    <div className="nav-header">
+                                        <span className="nav-header-text">Filters</span>
+                                    </div>
+                                    <List component="nav" className="nav-list">
+                                        {additionalFilters.map((filter) => (
+                                            <ListItem
+                                                key={"filter_" + filter}
+                                                button
+                                                selected={additionalFilter === filter}
+                                                onClick={() => { setAdditionalFilter(filter)}}
+                                            >
+                                                <ListItemText primary={filter} />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    {filterBySurveyVersion && selectedScenario > 0 ? (
+                        <div className="graph-section">
+                            <button className="navigateBtn" onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                            <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
+                        </div>
+                    ) : (
+                        <div className="graph-section">
+                            <button className="navigateBtn" onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                            <h2>Please select a survey version and scenario to view graphical results</h2>
+                        </div>
+                    )}
+                    <Modal className="table-modal" open={showTable} onClose={closeModal}>
+                        <div className="modal-body">
+                            <span className="close-icon" onClick={closeModal}><CloseIcon /></span>
+                            <ResultsTable data={data.getAllSurveyResults} />
+                        </div>
+                    </Modal>
+                </>
+            )}
+            {showScrollButton && (
+                <IconButton
+                    onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
+                    style={{
+                        position: 'fixed',
+                        left: '20px',
+                        bottom: '20px',
+                        borderRadius: '10px',
+                        backgroundColor: '#592610',
+                        color: 'white',
+                        cursor: 'pointer',
+                        zIndex: 1000,
+                        boxShadow: '0px 2px 10px rgba(0,0,0,0.3)'
+                    }}
+                >
+                    Back To Top <ArrowUpwardIcon fontSize="large" />
+                </IconButton>
+            )}
+        </div>
+    );    
 }
