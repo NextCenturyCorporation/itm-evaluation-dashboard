@@ -235,6 +235,20 @@ export function SurveyResults() {
         }
     }, [selectedScenario, filterBySurveyVersion, filteredData]);
 
+    // apply selected additional filter 
+    React.useEffect(() => {
+        if (resultData && additionalFilter) {
+            const dataWithFilter = [];
+            for (const obj of filteredData) {
+                const field = obj.results['Post-Scenario Measures']?.questions['Years experience in military medical role'];
+                if (field && Object.keys(field).length > 0) {
+                    dataWithFilter.push(obj)
+                }
+            }
+            setFilteredData(dataWithFilter)
+        }
+    }, [additionalFilter]);
+
     // detect survey versions in data set
     React.useEffect(() => {
         if (!data) { return; }
@@ -319,7 +333,7 @@ export function SurveyResults() {
                                                 key={"filter_" + filter}
                                                 button
                                                 selected={additionalFilter === filter}
-                                                onClick={() => { setAdditionalFilter(filter)}}
+                                                onClick={() => { setAdditionalFilter(filter) }}
                                             >
                                                 <ListItemText primary={filter} />
                                             </ListItem>
@@ -367,5 +381,5 @@ export function SurveyResults() {
                 </IconButton>
             )}
         </div>
-    );    
+    );
 }
