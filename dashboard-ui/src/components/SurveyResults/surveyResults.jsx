@@ -315,7 +315,7 @@ export function SurveyResults() {
                                             <ListItem
                                                 key={"scenario_" + index}
                                                 button
-                                                selected={selectedScenario === index}
+                                                selected={selectedScenario == index}
                                                 onClick={() => { setSelectedScenario(Number(index)); }}
                                             >
                                                 <ListItemText primary={name} />
