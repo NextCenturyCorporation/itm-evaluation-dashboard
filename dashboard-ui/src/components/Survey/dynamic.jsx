@@ -135,8 +135,8 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                                         <ListGroup>
                                             {actions.map((action, index) => (
                                                 <ListGroup.Item key={"action-" + index} style={{
-                                                    "font-weight": action.includes('Update:') || action.includes('Note:') ? "700" : "500",
-                                                    "background-color": action.includes('Update:') || action.includes('Note:') ? "#eee" : "#fff"
+                                                    "fontWeight": action.includes('Update:') || action.includes('Note:') ? "700" : "500",
+                                                    "backgroundColor": action.includes('Update:') || action.includes('Note:') ? "#eee" : "#fff"
                                                 }}>{action}</ListGroup.Item>
                                             ))}
                                         </ListGroup>
