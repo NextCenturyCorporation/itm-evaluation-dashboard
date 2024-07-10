@@ -16,10 +16,20 @@ import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import { useSelector } from 'react-redux';
 
 
-const additionalFilters = [
-    "Participant has military experience",
-    "Participant has completed VR"
-]
+const filterFunctions = {
+    "Participant has military experience": (filteredData) => {
+        return filteredData.filter((obj) => {
+            const field = obj.results['Post-Scenario Measures']?.questions['What is your current role (choose all that apply):'];
+            return field && field.response.includes('Military Background');
+        });
+    },
+    "Participant has completed VR": (filteredData) => {
+        return filteredData.filter((obj) => {
+            const field = obj.results['Post-Scenario Measures']?.questions['Completed VR training'];
+            return field && field === "Yes";
+        });
+    }
+};
 
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
@@ -58,7 +68,7 @@ const vizPanelOptions = {
     allowDragDrop: false
 }
 
-function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
+function ScenarioGroup({ scenario, scenarioIndices, data, version, additionalFilter }) {
     const [singles, setSingles] = React.useState([]);
     const [comparisons, setComparisons] = React.useState([]);
 
@@ -77,7 +87,7 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
             setSingles([...singleData]);
             setComparisons([...comparisonData]);
         }
-    }, [data]);
+    }, [data, additionalFilter]);
 
     return (<div className='scenario-group'>
         <h2 className='scenario-header'>{scenarioIndices[scenario]}</h2>
@@ -159,7 +169,7 @@ export function SurveyResults() {
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
     const [filterBySurveyVersion, setVersionOption] = React.useState("");
-    const [additionalFilter, setAdditionalFilter] = React.useState("");
+    const [additionalFilter, setAdditionalFilter] = React.useState(null);
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
@@ -237,17 +247,12 @@ export function SurveyResults() {
 
     // apply selected additional filter 
     React.useEffect(() => {
-        if (resultData && additionalFilter) {
-            const dataWithFilter = [];
-            for (const obj of filteredData) {
-                const field = obj.results['Post-Scenario Measures']?.questions['Years experience in military medical role'];
-                if (field && Object.keys(field).length > 0) {
-                    dataWithFilter.push(obj)
-                }
-            }
-            setFilteredData(dataWithFilter)
+        if (resultData && additionalFilter && filterFunctions[additionalFilter]) {
+            const dataWithFilter = filterFunctions[additionalFilter](filteredData);
+            setFilteredData(dataWithFilter);
         }
     }, [additionalFilter]);
+    
 
     // detect survey versions in data set
     React.useEffect(() => {
@@ -297,7 +302,7 @@ export function SurveyResults() {
                                         key={"version_" + item}
                                         button
                                         selected={filterBySurveyVersion === item}
-                                        onClick={() => { setVersionOption(item); setSelectedScenario(-1); }}
+                                        onClick={() => { setVersionOption(item); setSelectedScenario(-1); setAdditionalFilter(null) }}
                                     >
                                         <ListItemText primary={item + '.x'} />
                                     </ListItem>
@@ -328,7 +333,7 @@ export function SurveyResults() {
                                         <span className="nav-header-text">Filters</span>
                                     </div>
                                     <List component="nav" className="nav-list">
-                                        {additionalFilters.map((filter) => (
+                                        {Object.keys(filterFunctions).map((filter) => (
                                             <ListItem
                                                 key={"filter_" + filter}
                                                 button
@@ -340,13 +345,14 @@ export function SurveyResults() {
                                         ))}
                                     </List>
                                 </div>
+
                             </>
                         )}
                     </div>
                     {filterBySurveyVersion && selectedScenario > 0 ? (
                         <div className="graph-section">
                             <button className="navigateBtn" onClick={() => setShowTable(true)}>View Tabulated Data</button>
-                            <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
+                            <ScenarioGroup key={`${selectedScenario}-${additionalFilter}`} scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} additionalFilter={additionalFilter}/>
                         </div>
                     ) : (
                         <div className="graph-section">
