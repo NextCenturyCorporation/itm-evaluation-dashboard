@@ -134,7 +134,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                                     <Accordion.Body>
                                         <ListGroup>
                                             {actions.map((action, index) => (
-                                                <ListGroup.Item key={"action-" + index}>{action}</ListGroup.Item>
+                                                <ListGroup.Item key={"action-" + index} style={{
+                                                    "font-weight": action.includes('Update:') || action.includes('Note:') ? "700" : "500",
+                                                    "background-color": action.includes('Update:') || action.includes('Note:') ? "#eee" : "#fff"
+                                                }}>{action}</ListGroup.Item>
                                             ))}
                                         </ListGroup>
                                         <div className="my-2"><strong>Explanation:</strong> {explanation}</div>
