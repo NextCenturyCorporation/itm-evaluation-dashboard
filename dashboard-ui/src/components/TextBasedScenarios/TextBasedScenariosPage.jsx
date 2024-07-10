@@ -19,6 +19,7 @@ import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
+import MedicalScenario from './testTemplate';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -343,6 +344,8 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
+            <MedicalScenario/>
+            {/*
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
@@ -374,6 +377,7 @@ class TextBasedScenariosPage extends Component {
                     </Mutation>
                 )
                 }
+                */}
             </>
         )
     }
