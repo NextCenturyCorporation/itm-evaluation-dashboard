@@ -324,7 +324,7 @@ class SurveyPage extends Component {
         this.surveyData.surveyVersion = this.state.surveyVersion
         this.surveyData.browserInfo = this.state.browserInfo
 
-        //For 7-11-24 data collect, note which pages were treataed as Ai and which ones as human
+        // For 7-11-24 data collect, note which pages were treated as AI and which ones as human
         if (this.state.surveyVersion == 2.1) {
             this.surveyData['firstGroup'] = this.state.firstGroup
             this.surveyData['secondGroup'] = this.state.secondGroup
