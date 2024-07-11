@@ -183,7 +183,9 @@ const typeDefs = gql`
     getAllScenarioResults: [JSON],
     getAllSimAlignment: [JSON],
     getEvalNameNumbers: [JSON],
-    getAllRawSimData: [JSON]
+    getAllRawSimData: [JSON],
+    getAllSurveyConfigs: [JSON],
+    getAllImageUrls: [JSON]
   }
 
   type Mutation {
@@ -332,7 +334,13 @@ const resolvers = {
     },
     getUsers: async(obj, args, context, infow) => {
       return await dashboardDB.db.collection('users').find().project({"services":0, "createdAt":0, "updatedAt": 0}).toArray().then(result => {return result});
-    }
+    },
+    getAllSurveyConfigs: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('delegationConfig').find().toArray().then(result => { return result; });
+    },
+    getAllImageUrls: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
+    },
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {

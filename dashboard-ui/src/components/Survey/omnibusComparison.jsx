@@ -1,12 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Button, Modal } from "react-bootstrap";
 import Dynamic from "./dynamic";
 import { Accordion } from "react-bootstrap";
-import surveyConfig2x from './surveyConfig2x.json';
 import './template.css'
-
+import { useSelector } from "react-redux";
 
 const CUSTOM_TYPE = "omnibusComparison";
 
@@ -56,11 +55,12 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
             dmDetails: [],
             showModal: false,
             userActions: [],
-            omnibusDetails: []
+            omnibusDetails: [],
+            surveyConfig: null,
+            isSurveyLoaded: false
         }
 
         this.dm = ' '
-        this.config = surveyConfig2x
         this.updateActionLogs = this.updateActionLogs.bind(this)
     }
 
@@ -72,18 +72,38 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
         return this.question.decisionMakers;
     }
 
+    postConfigSetup = () => {
+        const decisionMakers = this.decisionMakers;
+        const dmDetails = this.getSurveyDetails(decisionMakers);
+        this.setState({ dmDetails });
+        this.setState({
+            isSurveyLoaded: true
+        });
+    }
+
+    ConfigGetter = () => {
+        const reducer = useSelector((state) => state?.configs?.surveyConfigs);
+        useEffect(() => {
+            if (reducer) {
+                this.setState({
+                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
+                }, () => {
+                    this.postConfigSetup();
+                })
+
+            }
+        }, [reducer])
+        return null;
+    }
+
     getSurveyDetails(decisionMakers) {
+        let config = this.state.surveyConfig;
         decisionMakers = [...new Set(decisionMakers)];
-        let relevantPages = this.config.pages.filter(page => decisionMakers.includes(page.name));
+        let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
         let details = relevantPages.map(page => page.elements[0]);
         // Extra cleansing of any potential duplicates
         details = Array.from(new Set(details.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
         return details;
-    }
-
-    componentDidMount() {
-        const dmDetails = this.getSurveyDetails(this.decisionMakers);
-        this.setState({ dmDetails });
     }
 
     handleShowModal = (content) => {
@@ -123,7 +143,8 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
     renderElement() {
         return (
             <>
-                {this.state.dmDetails &&
+                <this.ConfigGetter />
+                {this.state.isSurveyLoaded && this.state.dmDetails &&
                     <>
                         {this.state.dmDetails.map((dm, index) => (
                             <Button key={dm.name} className="mx-3" variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={() => this.handleShowModal(dm)}>

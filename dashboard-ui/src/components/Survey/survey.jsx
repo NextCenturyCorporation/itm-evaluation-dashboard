@@ -1,8 +1,7 @@
-import React, { Component } from "react";
+import React, { Component, useEffect } from "react";
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui"
-import surveyConfig2x from './surveyConfig2x.json';
 import surveyTheme from './surveyTheme.json';
 import { StaticTemplate } from "./staticTemplate";
 import { DynamicTemplate } from "./dynamicTemplate";
@@ -14,6 +13,7 @@ import { Mutation } from '@apollo/react-components';
 import { getUID, shuffle } from './util';
 import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
+import { useSelector } from "react-redux";
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
@@ -29,13 +29,24 @@ class SurveyPage extends Component {
             startTime: null,
             firstPageCompleted: false,
             surveyId: null,
-            surveyVersion: surveyConfig2x.version,
+            surveyConfig: null,
+            surveyVersion: null,
             iPad: false,
             browserInfo: null,
+            isSurveyLoaded: false,
+            firstGroup: [],
+            secondGroup: []
         };
+        this.surveyConfigClone = null;
 
+        if (this.state.surveyConfig) {
+            this.postConfigSetup();
+        }
+    }
+
+    postConfigSetup = () => {
         // clone surveyConfig, don't edit directly
-        this.surveyConfigClone = JSON.parse(JSON.stringify(surveyConfig2x));
+        this.surveyConfigClone = JSON.parse(JSON.stringify(this.state.surveyConfig));
         this.initializeSurvey();
 
         this.survey = new Model(this.surveyConfigClone);
@@ -47,7 +58,29 @@ class SurveyPage extends Component {
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
-        this.shouldBlockNavigation = true
+        this.shouldBlockNavigation = true;
+        this.setState({
+            isSurveyLoaded: true
+        });
+    }
+
+    ConfigGetter = () => {
+        const reducer = useSelector((state) => state?.configs?.surveyConfigs);
+        useEffect(() => {
+            if (reducer) {
+                this.setState({
+                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
+                }, () => {
+                    this.setState({
+                        surveyVersion: this.state.surveyConfig['version']
+                    }, () => {
+                        this.postConfigSetup();
+                    })
+                })
+
+            }
+        }, [reducer])
+        return null;
     }
 
     initializeSurvey = () => {
@@ -56,28 +89,63 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        // randomize order of soarTech scenarios and adept scenarios
-        let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
-        let adept = shuffle(this.surveyConfigClone.adeptDMs)
+        if (this.state.surveyVersion == 2) {
+            // randomize order of soarTech scenarios and adept scenarios
+            let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
+            let adept = shuffle(this.surveyConfigClone.adeptDMs)
 
-        // select two scenarios from each
-        let groupedDMs = shuffle((soarTech.slice(0, 2)).concat(adept.slice(0, 2)))
-        let removed = (soarTech.slice(2)).concat(adept.slice(2))
+            // select two scenarios from each
+            let groupedDMs = shuffle((soarTech.slice(0, 2)).concat(adept.slice(0, 2)))
+            let removed = (soarTech.slice(2)).concat(adept.slice(2))
 
-        // keep track of pages to ignore in surveyConfig
-        let removedComparisonPages = []
-        removed.forEach(group => {
-            removedComparisonPages.push(group[0] + " vs " + group[1])
-        })
-        removed = removed.flat().concat(removedComparisonPages)
+            // keep track of pages to ignore in surveyConfig
+            let removedComparisonPages = []
+            removed.forEach(group => {
+                removedComparisonPages.push(group[0] + " vs " + group[1])
+            })
+            removed = removed.flat().concat(removedComparisonPages)
 
-        // keep track of relevant comparison pages of selected scenarios
-        let comparisonPages = []
-        groupedDMs.forEach(group => {
-            comparisonPages.push(group[0] + " vs " + group[1])
-        })
+            // keep track of relevant comparison pages of selected scenarios
+            let comparisonPages = []
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0] + " vs " + group[1])
+            })
 
-        return { groupedDMs, comparisonPages, removed };
+            return { groupedDMs, comparisonPages, removed };
+        }
+        else if (this.state.surveyVersion == 2.1){
+            let groupedDMs = shuffle(this.surveyConfigClone.adeptDMs)
+            let comparisonPages = []
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0] + " vs " + group[1])
+            })
+            let removed = []
+            return { groupedDMs, comparisonPages, removed};
+        }
+        else {
+            const sets = shuffle(this.surveyConfigClone.validSingleSets);
+            const groupedDMs = shuffle(sets.slice(0));
+            let removed = [];
+            for (const x of sets.slice(1)) {
+                for (const e of x) {
+                    removed.push(e)
+                }
+            }
+
+            // keep track of pages to ignore in surveyConfig
+            let removedComparisonPages = []
+            removed.forEach(group => {
+                removedComparisonPages.push(group[0] + " vs " + group[1])
+            })
+            removed = removed.flat().concat(removedComparisonPages)
+
+            // keep track of relevant comparison pages of selected scenarios
+            const comparisonPages = []
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0] + " vs " + group[1])
+            });
+            return { groupedDMs, comparisonPages, removed };
+        }
     }
 
     applyPageRandomization = (groupedDMs, comparisonPages, removedPages) => {
@@ -86,11 +154,35 @@ class SurveyPage extends Component {
             respective comparison pages intact. i.e 'Medic-33', 'Medic-44' then 'Medic-33 vs Medic-44'
         */
         const postScenarioPage = this.surveyConfigClone.pages.find(page => page.name === "Post-Scenario Measures");
-        const omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
+        let omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
+        if (this.state.surveyVersion === 3) {
+            // only select omnibus pages we want
+            omnibusPages = [];
+            const sets = shuffle(this.surveyConfigClone.validOmniSets);
+            const chosen = shuffle(sets.slice(0));
+            const namesSelected = [];
+            for (const group of chosen[0]) {
+                for (const medic of group) {
+                    // get single omnibus medics
+                    omnibusPages.push(this.surveyConfigClone.pages.filter(page => page.name.includes(medic))[0]);
+                    namesSelected.push(medic);
+                }
+                // get comparison omnibus medics
+                const tmpPage = this.surveyConfigClone.pages.filter(page => page.name.includes('Omnibus') && page.name.includes(group[0]) && page.name.includes(group[1]))[0];
+                omnibusPages.push(tmpPage);
+                namesSelected.push(tmpPage.name);
+            }
+            // remove all other omnibus pages
+            for (const page of this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"))) {
+                if (!namesSelected.includes(page.name)) {
+                    removedPages.push(page.name);
+                }
+            }
+
+        }
         //filter out pages to be added after randomized portion
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => page.name !== "Post-Scenario Measures");
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => !page.name.includes("Omnibus"));
-
         const groupedPages = [];
         const ungroupedPages = [];
         this.surveyConfigClone.pages.forEach(page => {
@@ -127,6 +219,28 @@ class SurveyPage extends Component {
             shuffledGroupedPages.push(...groupPages);
         });
 
+        // for data collect 7-11-24 survey version 2.1
+        // randomly insert 'treat as ai DM' OR 'treat as human DM'
+        if (this.state.surveyVersion == 2.1) {
+            const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
+            const firstGroup = [shuffledInstructionPages[0]]
+            const secondGroup = [shuffledInstructionPages[1]]
+            
+            for (let i = 0; i < 6; i++) {
+                firstGroup.push(shuffledGroupedPages[i].name)
+            }
+            
+            for (let i = 6; i < 12; i++) {
+                secondGroup.push(shuffledGroupedPages[i].name)
+            }
+            this.setState({
+                firstGroup: firstGroup,
+                secondGroup: secondGroup
+            })
+            
+            shuffledGroupedPages.unshift(shuffledInstructionPages[0])
+            shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
+        }
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
     }
 
@@ -210,6 +324,12 @@ class SurveyPage extends Component {
         this.surveyData.surveyVersion = this.state.surveyVersion
         this.surveyData.browserInfo = this.state.browserInfo
 
+        // For 7-11-24 data collect, note which pages were treated as AI and which ones as human
+        if (this.state.surveyVersion == 2.1) {
+            this.surveyData['firstGroup'] = this.state.firstGroup
+            this.surveyData['secondGroup'] = this.state.secondGroup
+        }
+
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
@@ -252,29 +372,32 @@ class SurveyPage extends Component {
     render() {
         return (
             <>
-                {this.shouldBlockNavigation && (
-                    <Prompt
-                        when={this.shouldBlockNavigation}
-                        message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
-                    />
-                )}
-                <Survey model={this.survey} />
-                {this.state.uploadData && (
-                    <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
-                        {(uploadSurveyResults, { data }) => (
-                            <div>
-                                <button ref={this.uploadButtonRef} onClick={(e) => {
-                                    e.preventDefault();
-                                    uploadSurveyResults({
-                                        variables: { surveyId: this.state.surveyId, results: this.surveyData }
-                                    });
-                                    this.setState({ uploadData: false });
-                                }}></button>
-                            </div>
-                        )}
-                    </Mutation>
-                )
-                }
+                <this.ConfigGetter />
+                {this.state.isSurveyLoaded &&
+                    <>
+                    {this.shouldBlockNavigation && (
+                        <Prompt
+                            when={this.shouldBlockNavigation}
+                            message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
+                        />
+                    )}
+                    <Survey model={this.survey} />
+                    {this.state.uploadData && (
+                        <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
+                            {(uploadSurveyResults, { data }) => (
+                                <div>
+                                    <button ref={this.uploadButtonRef} onClick={(e) => {
+                                        e.preventDefault();
+                                        uploadSurveyResults({
+                                            variables: { surveyId: this.state.surveyId, results: this.surveyData }
+                                        });
+                                        this.setState({ uploadData: false });
+                                    }}></button>
+                                </div>
+                            )}
+                        </Mutation>
+                    )
+                        } </>}
             </>
         )
     }
@@ -293,7 +416,6 @@ ReactQuestionFactory.Instance.registerQuestion("dynamic-template", (props) => {
 ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
     return React.createElement(Omnibus, props)
 })
-
 
 ReactQuestionFactory.Instance.registerQuestion("comparison", (props) => {
     return React.createElement(Comparison, props)
