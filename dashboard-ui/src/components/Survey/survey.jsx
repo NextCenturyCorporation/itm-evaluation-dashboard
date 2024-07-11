@@ -34,6 +34,8 @@ class SurveyPage extends Component {
             iPad: false,
             browserInfo: null,
             isSurveyLoaded: false,
+            firstGroup: [],
+            secondGroup: []
         };
         this.surveyConfigClone = null;
 
@@ -87,7 +89,7 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        if (this.state.surveyVersion !== 3) {
+        if (this.state.surveyVersion == 2) {
             // randomize order of soarTech scenarios and adept scenarios
             let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
             let adept = shuffle(this.surveyConfigClone.adeptDMs)
@@ -110,6 +112,15 @@ class SurveyPage extends Component {
             })
 
             return { groupedDMs, comparisonPages, removed };
+        }
+        else if (this.state.surveyVersion == 2.1){
+            let groupedDMs = shuffle(this.surveyConfigClone.adeptDMs)
+            let comparisonPages = []
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0] + " vs " + group[1])
+            })
+            let removed = []
+            return { groupedDMs, comparisonPages, removed};
         }
         else {
             const sets = shuffle(this.surveyConfigClone.validSingleSets);
@@ -172,7 +183,6 @@ class SurveyPage extends Component {
         //filter out pages to be added after randomized portion
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => page.name !== "Post-Scenario Measures");
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => !page.name.includes("Omnibus"));
-
         const groupedPages = [];
         const ungroupedPages = [];
         this.surveyConfigClone.pages.forEach(page => {
@@ -209,6 +219,28 @@ class SurveyPage extends Component {
             shuffledGroupedPages.push(...groupPages);
         });
 
+        // for data collect 7-11-24 survey version 2.1
+        // randomly insert 'treat as ai DM' OR 'treat as human DM'
+        if (this.state.surveyVersion == 2.1) {
+            const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
+            const firstGroup = [shuffledInstructionPages[0]]
+            const secondGroup = [shuffledInstructionPages[1]]
+            
+            for (let i = 0; i < 6; i++) {
+                firstGroup.push(shuffledGroupedPages[i].name)
+            }
+            
+            for (let i = 6; i < 12; i++) {
+                secondGroup.push(shuffledGroupedPages[i].name)
+            }
+            this.setState({
+                firstGroup: firstGroup,
+                secondGroup: secondGroup
+            })
+            
+            shuffledGroupedPages.unshift(shuffledInstructionPages[0])
+            shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
+        }
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
     }
 
@@ -291,6 +323,12 @@ class SurveyPage extends Component {
         this.surveyData.startTime = this.state.startTime
         this.surveyData.surveyVersion = this.state.surveyVersion
         this.surveyData.browserInfo = this.state.browserInfo
+
+        // For 7-11-24 data collect, note which pages were treated as AI and which ones as human
+        if (this.state.surveyVersion == 2.1) {
+            this.surveyData['firstGroup'] = this.state.firstGroup
+            this.surveyData['secondGroup'] = this.state.secondGroup
+        }
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -378,7 +416,6 @@ ReactQuestionFactory.Instance.registerQuestion("dynamic-template", (props) => {
 ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
     return React.createElement(Omnibus, props)
 })
-
 
 ReactQuestionFactory.Instance.registerQuestion("comparison", (props) => {
     return React.createElement(Comparison, props)
