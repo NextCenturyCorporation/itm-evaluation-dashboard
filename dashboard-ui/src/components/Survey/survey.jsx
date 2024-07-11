@@ -223,15 +223,15 @@ class SurveyPage extends Component {
         // randomly insert 'treat as ai DM' OR 'treat as human DM'
         if (this.state.surveyVersion == 2.1) {
             const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
-            const firstGroup = [shuffledGroupedPages[0]]
-            const secondGroup = [shuffledGroupedPages[1]]
+            const firstGroup = [shuffledInstructionPages[0]]
+            const secondGroup = [shuffledInstructionPages[1]]
             
             for (let i = 0; i < 6; i++) {
-                firstGroup.push(shuffledGroupedPages[i].pageName)
+                firstGroup.push(shuffledGroupedPages[i].name)
             }
             
             for (let i = 6; i < 12; i++) {
-                secondGroup.push(shuffledGroupedPages[i].pageName)
+                secondGroup.push(shuffledGroupedPages[i].name)
             }
             this.setState({
                 firstGroup: firstGroup,
