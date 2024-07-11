@@ -87,7 +87,7 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        if (this.state.surveyVersion !== 3) {
+        if (this.state.surveyVersion == 2) {
             // randomize order of soarTech scenarios and adept scenarios
             let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
             let adept = shuffle(this.surveyConfigClone.adeptDMs)
@@ -110,6 +110,15 @@ class SurveyPage extends Component {
             })
 
             return { groupedDMs, comparisonPages, removed };
+        }
+        else if (this.state.surveyVersion == 2.1){
+            let groupedDMs = shuffle(this.surveyConfigClone.adeptDMs)
+            let comparisonPages = []
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0] + " vs " + group[1])
+            })
+            let removed = []
+            return { groupedDMs, comparisonPages, removed};
         }
         else {
             const sets = shuffle(this.surveyConfigClone.validSingleSets);
@@ -172,7 +181,6 @@ class SurveyPage extends Component {
         //filter out pages to be added after randomized portion
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => page.name !== "Post-Scenario Measures");
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => !page.name.includes("Omnibus"));
-
         const groupedPages = [];
         const ungroupedPages = [];
         this.surveyConfigClone.pages.forEach(page => {
@@ -209,7 +217,16 @@ class SurveyPage extends Component {
             shuffledGroupedPages.push(...groupPages);
         });
 
+        // for data collect 7-11-24 survey version 2.1
+        // randomly insert 'treat as ai DM' OR 'treat as human DM'
+        if (this.state.surveyVersion == 2.1) {
+            const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
+            shuffledGroupedPages.unshift(shuffledInstructionPages[0])
+            shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
+        }
+        console.log(shuffledGroupedPages)
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
+        console.log(this.surveyConfigClone.pages)
     }
 
     onAfterRenderPage = (sender, options) => {
