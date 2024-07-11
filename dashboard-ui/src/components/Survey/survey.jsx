@@ -34,6 +34,8 @@ class SurveyPage extends Component {
             iPad: false,
             browserInfo: null,
             isSurveyLoaded: false,
+            firstGroup: [],
+            secondGroup: []
         };
         this.surveyConfigClone = null;
 
@@ -221,12 +223,25 @@ class SurveyPage extends Component {
         // randomly insert 'treat as ai DM' OR 'treat as human DM'
         if (this.state.surveyVersion == 2.1) {
             const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
+            const firstGroup = [shuffledGroupedPages[0]]
+            const secondGroup = [shuffledGroupedPages[1]]
+            
+            for (let i = 0; i < 6; i++) {
+                firstGroup.push(shuffledGroupedPages[i].pageName)
+            }
+            
+            for (let i = 6; i < 12; i++) {
+                secondGroup.push(shuffledGroupedPages[i].pageName)
+            }
+            this.setState({
+                firstGroup: firstGroup,
+                secondGroup: secondGroup
+            })
+            
             shuffledGroupedPages.unshift(shuffledInstructionPages[0])
             shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
         }
-        console.log(shuffledGroupedPages)
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
-        console.log(this.surveyConfigClone.pages)
     }
 
     onAfterRenderPage = (sender, options) => {
@@ -308,6 +323,12 @@ class SurveyPage extends Component {
         this.surveyData.startTime = this.state.startTime
         this.surveyData.surveyVersion = this.state.surveyVersion
         this.surveyData.browserInfo = this.state.browserInfo
+
+        //For 7-11-24 data collect, note which pages were treataed as Ai and which ones as human
+        if (this.state.surveyVersion == 2.1) {
+            this.surveyData['firstGroup'] = this.state.firstGroup
+            this.surveyData['secondGroup'] = this.state.secondGroup
+        }
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -395,7 +416,6 @@ ReactQuestionFactory.Instance.registerQuestion("dynamic-template", (props) => {
 ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
     return React.createElement(Omnibus, props)
 })
-
 
 ReactQuestionFactory.Instance.registerQuestion("comparison", (props) => {
     return React.createElement(Comparison, props)
