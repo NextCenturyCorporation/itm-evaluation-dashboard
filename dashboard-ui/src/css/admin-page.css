@@ -28,3 +28,9 @@
 .dual-input-container .rdl-move-all {
     visibility: hidden;
 }
+
+.form-select-container {
+    display: flex;
+    width: 25%; 
+}
+

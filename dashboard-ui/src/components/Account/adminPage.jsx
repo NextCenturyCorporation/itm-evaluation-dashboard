@@ -5,6 +5,7 @@ import gql from 'graphql-tag';
 import '../../css/admin-page.css';
 import DualListBox from 'react-dual-listbox';
 import {useMutation} from 'react-apollo';
+import Form from 'react-bootstrap/Form'
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -109,7 +110,6 @@ class AdminPage extends React.Component {
         };
     }
 
-
     render() {
         return (
             <Query query={GET_USERS} fetchPolicy={'no-cache'}>
@@ -163,6 +163,25 @@ class AdminPage extends React.Component {
                                 </div>
                                 <div className="dual-input-container">
                                     <EvaluatorInputBox options={evaluatorOptions} selectedOptions={evaluatorSelectedOptions}/>
+                                </div>
+                            </div>
+
+                            <div className="admin-container">
+                                <h3>Survey Version</h3>
+                                <div className="admin-description">
+                                    Manage survey settings.
+                                </div>
+                                <div className="modify-admins-header">
+                                    <h5>Select survey version</h5>
+                                </div>
+                                
+                                <div className="form-select-container">
+                                    <Form.Select>
+                                        <option>Select new version</option>
+                                        <option>3.0</option>
+                                        <option>2.1</option>
+                                        <option>2.0</option>
+                                    </Form.Select>
                                 </div>
                             </div>
                         </>

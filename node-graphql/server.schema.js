@@ -185,7 +185,8 @@ const typeDefs = gql`
     getEvalNameNumbers: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
-    getAllImageUrls: [JSON]
+    getAllImageUrls: [JSON],
+    getCurrentSurveyVersion: Float
   }
 
   type Mutation {
@@ -193,6 +194,7 @@ const typeDefs = gql`
     updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON
     uploadSurveyResults(surveyId: String, results: JSON): JSON
     uploadScenarioResults(results: [JSON]): JSON
+    updateCurrentSurveyVersion(newVersion: Float): JSON
   }
 `;
 
@@ -341,6 +343,9 @@ const resolvers = {
     getAllImageUrls: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
     },
+    getCurrentSurveyVersion: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('currentSurveyVersion').find().toArray().then(result => {return result; });
+    }
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
@@ -367,6 +372,21 @@ const resolvers = {
       for (const result of results) {
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await dashboardDB.db.collection('userScenarioResults').insertOne(result)
+      }
+    },
+    updateCurrentSurveyVersion: async (obj, args, context, inflow) => {
+      // update the current survey version in mongoDB 
+      const newVersion = args.newVersion;
+      try {
+        await dashboardDB.db.collection('currentSurveyVersion').updateOne(
+          {}, 
+          { $set: { version: newVersion } }, 
+          { upsert: true }
+        );
+        return true;
+      } catch (error) {
+        console.error('Error updating survey version:', error);
+        return false;
       }
     }
   },
