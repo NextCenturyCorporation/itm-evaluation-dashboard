@@ -3,7 +3,7 @@ import queryString from 'query-string';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
-import SurveyPage from '../Survey/survey';
+import {SurveyPage, SurveyPageWrapper} from '../Survey/survey';
 import TextBasedScenariosPage from '../TextBasedScenarios/TextBasedScenariosPage';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
@@ -62,7 +62,7 @@ function Scenarios() {
 }
 
 function Survey(currentUser) {
-    return <SurveyPage currentUser={currentUser?.currentUser} />
+    return <SurveyPageWrapper currentUser={currentUser?.currentUser} />
 }
 
 function TextBased() {

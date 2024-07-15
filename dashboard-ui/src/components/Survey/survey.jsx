@@ -10,10 +10,23 @@ import { Comparison } from "./comparison";
 import { OmnibusComparison } from "./omnibusComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
+import { useQuery } from 'react-apollo'
 import { getUID, shuffle } from './util';
 import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
+
+const COUNT_HUMAN_GROUP_FIRST = gql`
+  query CountHumanGroupFirst {
+    countHumanGroupFirst
+  }
+`;
+
+const COUNT_AI_GROUP_FIRST = gql`
+  query CountAIGroupFirst {
+    countAIGroupFirst
+  }
+`;
 
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
@@ -211,11 +224,20 @@ class SurveyPage extends Component {
                 delegationPages.push(pair[1])
                 delegationPages.push(this.surveyConfigClone.pages.find(page => page.name === comparisonPageName))
             })
+            
 
+            console.log(this.props.countHumanGroupFirst)
+            console.log(this.props.countAIGroupFirst)
             // insert agent pages
             const agentPages = this.surveyConfigClone.agentPages
-            delegationPages.unshift(agentPages[0])
-            delegationPages.splice(13, 0, agentPages[1])
+            // if there are more entries in mongo with ai group presenting first, set human group first and vice versa
+            if (this.props.countHumanGroupFirst <= this.props.countAIGroupFirst) {
+                delegationPages.unshift(agentPages[0])
+                delegationPages.splice(13, 0, agentPages[1])
+            } else {
+                delegationPages.unshift(agentPages[1])
+                delegationPages.splice(13, 0, agentPages[0])
+            }
 
             let firstGroup = [];
             let secondGroup = [];
@@ -234,14 +256,14 @@ class SurveyPage extends Component {
                 secondGroup: secondGroup
             });
 
-            console.log(delegationPages.length)
             this.surveyConfigClone.pages = [...introPages, ...delegationPages, postScenarioPage]
             console.log(this.surveyConfigClone.pages)
-
+            
             const orderLog = []
             this.orderLogHelper(firstGroup, orderLog, 0)
             this.orderLogHelper(secondGroup, orderLog, 12)
-            console.log(orderLog)
+            console.log(firstGroup)
+            console.log(secondGroup)
             this.setState({orderLog: orderLog})
             return;
             /* commenting out for now because this is not the logic we need for 7-16
@@ -436,6 +458,9 @@ class SurveyPage extends Component {
             this.surveyData['firstGroup'] = this.state.firstGroup
             this.surveyData['secondGroup'] = this.state.secondGroup
             this.surveyData['orderLog'] = this.state.orderLog
+            const humanGroupFirst = this.state.firstGroup.includes('Treat as Human')
+            this.surveyData['humanGroupFirst'] = humanGroupFirst
+            this.surveyData['aiGroupFirst'] = !humanGroupFirst
         }
 
         // upload the results to mongoDB
@@ -510,6 +535,21 @@ class SurveyPage extends Component {
         )
     }
 }
+
+export const SurveyPageWrapper = (props) => {
+    const { loading: loadingHumanGroupFirst, error: errorHumanGroupFirst, data: dataHumanGroupFirst } = useQuery(COUNT_HUMAN_GROUP_FIRST);
+    const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
+
+    if (loadingHumanGroupFirst || loadingAIGroupFirst) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst) return <p>Error :</p>;
+
+    return (
+        <SurveyPage 
+            countHumanGroupFirst={dataHumanGroupFirst.countHumanGroupFirst} 
+            countAIGroupFirst={dataAIGroupFirst.countAIGroupFirst} 
+            currentUser={props.currentUser}
+        />)
+};
 
 export default SurveyPage;
 
