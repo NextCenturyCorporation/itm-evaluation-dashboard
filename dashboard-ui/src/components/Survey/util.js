@@ -12,3 +12,14 @@ export function shuffle (array) {
     }
     return array;
 }
+
+export const survey3_0_groups = [
+        ['kitware', 'Adept Urban'],
+        ['TAD', 'Adept Urban'],
+        ['kitware', 'SoarTech Urban'],
+        ['TAD', 'SoarTech Urban'],
+        ['TAD', 'SoarTech Submarine'],
+        ['kitware', 'SoarTech Submarine'],
+        ['TAD', 'Adept Submarine'],
+        ['kitware', 'Adept Submarine']
+]
