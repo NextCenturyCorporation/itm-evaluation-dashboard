@@ -35,7 +35,8 @@ class SurveyPage extends Component {
             browserInfo: null,
             isSurveyLoaded: false,
             firstGroup: [],
-            secondGroup: []
+            secondGroup: [],
+            orderLog: []
         };
         this.surveyConfigClone = null;
 
@@ -210,8 +211,38 @@ class SurveyPage extends Component {
                 delegationPages.push(pair[1])
                 delegationPages.push(this.surveyConfigClone.pages.find(page => page.name === comparisonPageName))
             })
+
+            // insert agent pages
+            const agentPages = this.surveyConfigClone.agentPages
+            delegationPages.unshift(agentPages[0])
+            delegationPages.splice(13, 0, agentPages[1])
+
+            let firstGroup = [];
+            let secondGroup = [];
+
+            // keep track of which group each page is apart of (human or ai)
+            delegationPages.forEach((page, index) => {
+                if (index < 13) {
+                    firstGroup.push(page.name);
+                } else {
+                    secondGroup.push(page.name);
+                }
+            });
+
+            this.setState({
+                firstGroup: firstGroup,
+                secondGroup: secondGroup
+            });
+
+            console.log(delegationPages.length)
             this.surveyConfigClone.pages = [...introPages, ...delegationPages, postScenarioPage]
             console.log(this.surveyConfigClone.pages)
+
+            const orderLog = []
+            this.orderLogHelper(firstGroup, orderLog, 0)
+            this.orderLogHelper(secondGroup, orderLog, 12)
+            console.log(orderLog)
+            this.setState({orderLog: orderLog})
             return;
             /* commenting out for now because this is not the logic we need for 7-16
             // only select omnibus pages we want
@@ -304,6 +335,22 @@ class SurveyPage extends Component {
         console.log(this.surveyConfigClone.pages)
     }
 
+    orderLogHelper = (group, orderLog, offset) => {
+        const groupType = group[0] == 'Treat as Human' ? 'H' : 'AI'
+        let lastPage = {}
+        group.forEach((pageName, index) => {
+            if (index == 0) { return } // skip the agent page
+            const page = this.surveyConfigClone.pages.find(p => p.name === pageName);
+            if (page.pageType == 'singleMedic') {
+                // mark last page so comparison pages can read info from it 
+                lastPage = page
+                orderLog.push(`${index + offset}-${page.admAuthor}-${page.scenarioName.replace(/\s+/g, '-')}-${groupType}-${page.admAlignment}`);
+            } else {
+                orderLog.push(`${index + offset}-${lastPage.admAuthor}-${lastPage.scenarioName.replace(/\s+/g, '-')}-${groupType}-DEL`)
+            }
+        });
+    }
+
     onAfterRenderPage = (sender, options) => {
         // setTimeout makes the scroll work consistently
         setTimeout(() => {
@@ -384,10 +431,11 @@ class SurveyPage extends Component {
         this.surveyData.surveyVersion = this.state.surveyVersion
         this.surveyData.browserInfo = this.state.browserInfo
 
-        // For 7-11-24 data collect, note which pages were treated as AI and which ones as human
-        if (this.state.surveyVersion == 2.1) {
+        // 7-16 data collect. Log info about order, agent, and DM 
+        if (this.state.surveyVersion == 3.0 || this.state.surveyVersion == 2.1) {
             this.surveyData['firstGroup'] = this.state.firstGroup
             this.surveyData['secondGroup'] = this.state.secondGroup
+            this.surveyData['orderLog'] = this.state.orderLog
         }
 
         // upload the results to mongoDB
