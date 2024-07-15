@@ -202,17 +202,16 @@ class SurveyPage extends Component {
             // grabs introduction pages
             const introPages = this.surveyConfigClone.pages.slice(0, 3)
             const delegationPages = []
-            let counter = 0
-            console.log(groupedDMs)
-            console.log(comparisonPages)
             groupedDMs.forEach(pair => {
+                const comparisonPageName = pair[0].name + ' vs ' + pair[1].name
+                // random order for the pair
+                pair = shuffle(pair)
                 delegationPages.push(pair[0])
                 delegationPages.push(pair[1])
-                console.log(comparisonPages[counter])
-                delegationPages.push(this.surveyConfigClone.pages.find(page => page.name === pair[0].name + ' vs ' + pair[1].name))
+                delegationPages.push(this.surveyConfigClone.pages.find(page => page.name === comparisonPageName))
             })
             this.surveyConfigClone.pages = [...introPages, ...delegationPages, postScenarioPage]
-            console.log(this.surveyConfigClone)
+            console.log(this.surveyConfigClone.pages)
             return;
             /* commenting out for now because this is not the logic we need for 7-16
             // only select omnibus pages we want
