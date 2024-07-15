@@ -113,7 +113,7 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed };
         }
-        else if (this.state.surveyVersion == 2.1){
+        else if (this.state.surveyVersion == 2.1) {
             let groupedDMs = shuffle(this.surveyConfigClone.adeptDMs)
             let comparisonPages = []
             groupedDMs.forEach(group => {
@@ -121,6 +121,48 @@ class SurveyPage extends Component {
             })
             let removed = []
             return { groupedDMs, comparisonPages, removed};
+        }
+        else if (this.state.surveyVersion == 3.0) {
+            // data collect starting 7-16
+            let pages = this.surveyConfigClone.pages
+            let removed = []
+            let groupedDMs = []
+            let comparisonPages = []
+            /* Get the ADMS for urban and sub that are aligned either high or low */
+            const dms = pages.reduce((filtered, page) => {
+                if (page.scenarioName) {
+                    if ((page.scenarioName.includes("Urban") || page.scenarioName.includes("Sub")) &&
+                        (page.admType === 'aligned' || page.admType === 'other')) {
+                        filtered.push(page);
+                    } else {
+                        removed.push(page);
+                    }
+                }
+                return filtered;
+            }, []);
+
+            // matches adms with their counterparts (high matches to low)
+            const seenPairs = new Set();
+            dms.forEach((dm) => {
+                const pairKey = `${dm.admAuthor}-${dm.scenarioName}`;
+                if (!seenPairs.has(pairKey)) {
+                    const matches = dms.filter(
+                        (otherDm) => otherDm.admAuthor === dm.admAuthor && otherDm.scenarioName === dm.scenarioName
+                    );
+                    if (matches.length > 1) {
+                        groupedDMs.push(matches);
+                    }
+                    seenPairs.add(pairKey);
+                }
+            });
+
+            // keep track of relevant comparison pages of selected scenarios
+            groupedDMs.forEach(group => {
+                comparisonPages.push(group[0].name + " vs " + group[1].name)
+            });
+
+
+            return { groupedDMs, comparisonPages, removed }
         }
         else {
             const sets = shuffle(this.surveyConfigClone.validSingleSets);
@@ -155,7 +197,24 @@ class SurveyPage extends Component {
         */
         const postScenarioPage = this.surveyConfigClone.pages.find(page => page.name === "Post-Scenario Measures");
         let omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
-        if (this.state.surveyVersion === 3) {
+        if (this.state.surveyVersion === 3.0) {
+            omnibusPages = []
+            // grabs introduction pages
+            const introPages = this.surveyConfigClone.pages.slice(0, 3)
+            const delegationPages = []
+            let counter = 0
+            console.log(groupedDMs)
+            console.log(comparisonPages)
+            groupedDMs.forEach(pair => {
+                delegationPages.push(pair[0])
+                delegationPages.push(pair[1])
+                console.log(comparisonPages[counter])
+                delegationPages.push(this.surveyConfigClone.pages.find(page => page.name === pair[0].name + ' vs ' + pair[1].name))
+            })
+            this.surveyConfigClone.pages = [...introPages, ...delegationPages, postScenarioPage]
+            console.log(this.surveyConfigClone)
+            return;
+            /* commenting out for now because this is not the logic we need for 7-16
             // only select omnibus pages we want
             omnibusPages = [];
             const sets = shuffle(this.surveyConfigClone.validOmniSets);
@@ -178,6 +237,7 @@ class SurveyPage extends Component {
                     removedPages.push(page.name);
                 }
             }
+            */
 
         }
         //filter out pages to be added after randomized portion
@@ -242,6 +302,7 @@ class SurveyPage extends Component {
             shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
         }
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
+        console.log(this.surveyConfigClone.pages)
     }
 
     onAfterRenderPage = (sender, options) => {
