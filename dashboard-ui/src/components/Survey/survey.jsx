@@ -267,7 +267,7 @@ class SurveyPage extends Component {
             console.log(firstGroup)
             console.log(secondGroup)
             this.setState({ orderLog: orderLog })
-            this.surveyConfigClone.pages = [...introPages]
+            
             return;
             /* commenting out for now because this is not the logic we need for 7-16
             // only select omnibus pages we want
