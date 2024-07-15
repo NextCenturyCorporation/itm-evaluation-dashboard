@@ -267,6 +267,7 @@ class SurveyPage extends Component {
             console.log(firstGroup)
             console.log(secondGroup)
             this.setState({ orderLog: orderLog })
+            this.surveyConfigClone.pages = [...introPages]
             return;
             /* commenting out for now because this is not the logic we need for 7-16
             // only select omnibus pages we want
@@ -417,7 +418,7 @@ class SurveyPage extends Component {
     };
 
 
-    uploadSurveyData = (survey) => {
+    uploadSurveyData = (survey, finalUpload) => {
         this.timerHelper()
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
@@ -460,9 +461,12 @@ class SurveyPage extends Component {
             this.surveyData['firstGroup'] = this.state.firstGroup
             this.surveyData['secondGroup'] = this.state.secondGroup
             this.surveyData['orderLog'] = this.state.orderLog
-            const humanGroupFirst = this.state.firstGroup.includes('Treat as Human')
-            this.surveyData['humanGroupFirst'] = humanGroupFirst
-            this.surveyData['aiGroupFirst'] = !humanGroupFirst
+            // only record human or ai group first if the survey is fully complete
+            if (finalUpload) {
+                const humanGroupFirst = this.state.firstGroup.includes('Treat as Human')
+                this.surveyData['humanGroupFirst'] = humanGroupFirst
+                this.surveyData['aiGroupFirst'] = !humanGroupFirst
+            }
         }
 
         // upload the results to mongoDB
@@ -475,7 +479,7 @@ class SurveyPage extends Component {
 
     onSurveyComplete = (survey) => {
         // final upload
-        this.uploadSurveyData(survey);
+        this.uploadSurveyData(survey, true);
         this.shouldBlockNavigation = false;
     }
 
@@ -483,10 +487,10 @@ class SurveyPage extends Component {
         // ensures partial data will be saved if someone needs to step away from the survey
         if (!this.state.surveyId) {
             this.setState({ surveyId: getUID() }, () => {
-                this.uploadSurveyData(sender);
+                this.uploadSurveyData(sender, false);
             })
         } else {
-            this.uploadSurveyData(sender);
+            this.uploadSurveyData(sender, false);
         }
     }
 
