@@ -1,3 +1,14 @@
+import React from 'react';
+
+export const renderSituation = (situation) => {
+    if (Array.isArray(situation)) {
+        return situation.map((detail, index) => (
+            <p key={`detail-${index}`}>{detail}</p>
+        ));
+    }
+    return <p>{situation}</p>;
+};
+
 export function getUID() {
     return Date.now().toString(36)
 }
