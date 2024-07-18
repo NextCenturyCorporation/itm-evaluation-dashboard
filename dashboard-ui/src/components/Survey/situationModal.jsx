@@ -1,15 +1,13 @@
 import React from 'react';
 import { Modal } from 'react-bootstrap';
+import { renderSituation } from './util';
 const SituationModal = ({ show, situation, handleClose }) => (
     <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
             <Modal.Title>Situation</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-            {situation.map((detail, index) => (
-                <p key={index}>{detail}</p>
-            ))}
-        
+            {renderSituation(situation)}
         </Modal.Body>
     </Modal>
 );

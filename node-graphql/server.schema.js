@@ -185,7 +185,9 @@ const typeDefs = gql`
     getEvalNameNumbers: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
-    getAllImageUrls: [JSON]
+    getAllImageUrls: [JSON],
+    countHumanGroupFirst: Int,
+    countAIGroupFirst: Int
   }
 
   type Mutation {
@@ -341,6 +343,12 @@ const resolvers = {
     getAllImageUrls: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
     },
+    countHumanGroupFirst: async (obj, args, context, info) => {
+      return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.humanGroupFirst": true });
+    },
+    countAIGroupFirst: async (obj, args, context, info) => {
+      return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.aiGroupFirst": true });
+    }
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {

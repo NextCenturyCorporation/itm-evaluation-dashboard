@@ -5,6 +5,7 @@ import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import SituationModal from "./situationModal";
 import VitalsDropdown from "./vitalsDropdown";
 import './template.css';
+import { renderSituation } from './util';
 
 const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, explanation, showModal, updateActionLogs }) => {
     const [visiblePatients, setVisiblePatients] = useState({});
@@ -94,7 +95,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
         }
     });
 
-
     return (
         <div>
             {showSituationModal &&
@@ -107,15 +107,13 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, exp
                 <Col md={2}>
                     <Card className="mb-3">
                         <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={handleShowSituationModal} /></Card.Header>
-                        <Card.Body>
-                            {situation.map((detail, index) => (
-                                <Card.Text key={"detail-" + index}>{detail}</Card.Text>
-                            ))}
+                        <Card.Body className='overflow-auto' style={{maxHeight: '200px'}}>
+                            {renderSituation(situation)}
                         </Card.Body>
                     </Card>
                     <Card>
                         <Card.Header>Constraints / Resources</Card.Header>
-                        <Card.Body>
+                        <Card.Body className='overflow-auto' style={{maxHeight: '200px'}}>
                             {supplies.map((supplies, index) => (
                                 <Card.Text key={supplies.type}>
                                     {supplies.quantity ? supplies.quantity : ""} {supplies.type}
