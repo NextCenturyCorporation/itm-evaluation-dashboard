@@ -227,9 +227,6 @@ class SurveyPage extends Component {
                 delegationPages.push(this.surveyConfigClone.pages.find(page => page.name === comparisonPageName))
             })
 
-
-            console.log(this.props.countHumanGroupFirst)
-            console.log(this.props.countAIGroupFirst)
             // insert agent pages
             const agentPages = this.surveyConfigClone.agentPages
             // if there are more entries in mongo with ai group presenting first, set human group first and vice versa
@@ -259,13 +256,10 @@ class SurveyPage extends Component {
             });
 
             this.surveyConfigClone.pages = [...introPages, ...delegationPages, postScenarioPage]
-            console.log(this.surveyConfigClone.pages)
 
             const orderLog = []
             this.orderLogHelper(firstGroup, orderLog, 0)
             this.orderLogHelper(secondGroup, orderLog, 12)
-            console.log(firstGroup)
-            console.log(secondGroup)
             this.setState({ orderLog: orderLog })
             
             return;
@@ -357,7 +351,6 @@ class SurveyPage extends Component {
             shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
         }
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
-        console.log(this.surveyConfigClone.pages)
     }
 
     orderLogHelper = (group, orderLog, offset) => {
