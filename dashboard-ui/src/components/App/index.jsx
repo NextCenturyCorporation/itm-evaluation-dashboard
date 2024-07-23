@@ -39,11 +39,13 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 
 const history = createBrowserHistory();
 
-const GET_SURVEY_CONFIG = gql`
-    query GetSurveyConfig {
+const GET_CONFIGS = gql`
+    query GetConfigs {
         getAllSurveyConfigs,
-        getAllImageUrls
+        getAllImageUrls,
+        getAllTextBasedConfigs
     }`;
+
 
 function Home({ newState }) {
     if (newState.currentUser == null) {
@@ -173,11 +175,18 @@ export class App extends React.Component {
         }
     }
 
+    setupTextBasedConfig(data) {
+        for (const config of data.getAllTextBasedConfigs) {
+            store.dispatch(addConfig({ id: config._id, data: config }));
+        }
+    }
+    
+
     render() {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_SURVEY_CONFIG} fetchPolicy={'no-cache'}>
+                <Query query={GET_CONFIGS} fetchPolicy={'no-cache'}>
                     {
                         ({ loading, error, data }) => {
                             if (loading) {
@@ -187,7 +196,10 @@ export class App extends React.Component {
                                 console.warn("Error getting survey config: ", error);
                                 return;
                             }
+                            // survey configs
                             this.setupConfigWithImages(data);
+                            // text based configs
+                            this.setupTextBasedConfig(data);
 
 
                             return (<div className="itm-app">
