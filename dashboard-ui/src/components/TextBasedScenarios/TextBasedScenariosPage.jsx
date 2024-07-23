@@ -19,12 +19,14 @@ import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
-import MedicalScenario from './testTemplate';
+import MedicalScenario from './medicalScenario';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
+
+
 
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,

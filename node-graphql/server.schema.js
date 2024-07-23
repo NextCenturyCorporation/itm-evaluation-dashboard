@@ -185,6 +185,7 @@ const typeDefs = gql`
     getEvalNameNumbers: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
+    getAllTextBasedConfigs: [JSON],
     getAllImageUrls: [JSON],
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int
@@ -342,6 +343,9 @@ const resolvers = {
     },
     getAllImageUrls: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
+    },
+    getAllTextBasedConfigs: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedConfig').find().toArray().then(result => { return result; });
     },
     countHumanGroupFirst: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.humanGroupFirst": true });
