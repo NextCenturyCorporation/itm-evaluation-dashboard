@@ -19,7 +19,7 @@ import ADMChartPage from '../AdmCharts/admChartPage';
 import gql from "graphql-tag";
 import { Query } from '@apollo/react-components';
 import store from '../../store/store';
-import { addConfig } from '../../store/slices/configSlice';
+import { addConfig, addTextBasedConfig } from '../../store/slices/configSlice';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -45,6 +45,7 @@ const GET_CONFIGS = gql`
         getAllImageUrls,
         getAllTextBasedConfigs
     }`;
+
 
 
 function Home({ newState }) {
@@ -176,8 +177,12 @@ export class App extends React.Component {
     }
 
     setupTextBasedConfig(data) {
-        for (const config of data.getAllTextBasedConfigs) {
-            store.dispatch(addConfig({ id: config._id, data: config }));
+        if (data && data.getAllTextBasedConfigs) {
+            for (const config of data.getAllTextBasedConfigs) {
+                store.dispatch(addTextBasedConfig({ id: config._id, data: config }));
+            }
+        } else {
+            console.warn("No text-based configs found in Mongo");
         }
     }
     
@@ -193,7 +198,7 @@ export class App extends React.Component {
                                 return;
                             }
                             if (error) {
-                                console.warn("Error getting survey config: ", error);
+                                console.error("Error fetching configs: ", error.message);
                                 return;
                             }
                             // survey configs
