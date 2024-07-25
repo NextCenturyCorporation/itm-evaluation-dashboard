@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
-import { Model } from 'survey-core'
+import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
 import adeptJungleConfig from './adeptJungleConfig.json';
 import adeptSubConfig from './adeptSubConfig.json';

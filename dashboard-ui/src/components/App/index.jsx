@@ -5,6 +5,7 @@ import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
 import {SurveyPage, SurveyPageWrapper} from '../Survey/survey';
 import { TextBasedScenariosPage, TextBasedScenariosPageWrapper} from '../TextBasedScenarios/TextBasedScenariosPage';
+import { ReviewTextBased } from '../ReviewTextBased/ReviewTextBased';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
@@ -317,6 +318,9 @@ export class App extends React.Component {
                                         </Route>
                                         <Route path="/survey-results">
                                             <SurveyResults />
+                                        </Route>
+                                        <Route path="/review-text-based">
+                                            <ReviewTextBased/>
                                         </Route>
                                         <Route path="/text-based">
                                             <TextBased />
