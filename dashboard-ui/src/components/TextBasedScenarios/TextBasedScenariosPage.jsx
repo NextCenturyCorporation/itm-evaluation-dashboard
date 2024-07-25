@@ -19,14 +19,13 @@ import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
-import MedicalScenario from './medicalScenario';
+import { MedicalScenario } from './medicalScenario';
 import { useSelector, useDispatch } from 'react-redux';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
-
 
 
 export const scenarioMappings = {
@@ -52,16 +51,13 @@ const scenarioNameToID = {
 }
 
 export function TextBasedScenariosPageWrapper(props) {
-    const textBasedConfigs = useSelector(state => {
-        return state.configs.textBasedConfigs
-    });
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     return <TextBasedScenariosPage {...props} textBasedConfigs={textBasedConfigs} />;
 }
-class TextBasedScenariosPage extends Component {
 
+class TextBasedScenariosPage extends Component {
     constructor(props) {
         super(props);
-        console.log(props.textBasedConfigs)
         this.state = {
             currentConfig: null,
             uploadData: false,
@@ -70,11 +66,11 @@ class TextBasedScenariosPage extends Component {
             startTime: null,
             scenarios: []
         };
-
+        console.log(props.textBasedConfigs['MetricsEval.MD5-Desert'])
         this.surveyData = {};
         this.surveyDataByScenario = [];
         this.survey = null;
-        this.introSurvey = new Model(introConfig);
+        this.introSurvey = new Model(props.textBasedConfigs['MetricsEval.MD5-Desert']);
         this.introSurvey.onComplete.add(this.introSurveyComplete)
         this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
@@ -94,7 +90,6 @@ class TextBasedScenariosPage extends Component {
 
         const selectedScenarios = []
         for (const scenario of scenarioOrderArray) {
-            // make deep copies of json files to be sure the originals are not unintentionally tampered with
             selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
         }
 
@@ -106,7 +101,6 @@ class TextBasedScenariosPage extends Component {
         }
         this.loadSurveyConfig(selectedScenarios, title !== "" ? title : "")
     }
-
 
     uploadResults = async (survey) => {
         this.timerHelper();
@@ -310,9 +304,6 @@ class TextBasedScenariosPage extends Component {
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
 
-        // function for uploading data
-        this.survey.onComplete.add(this.onSurveyComplete);
-
         this.setState({ currentConfig: this.survey });
     };
 
@@ -377,20 +368,22 @@ class TextBasedScenariosPage extends Component {
                                     uploadSurveyResults({
                                         variables: { results: this.surveyDataByScenario }
                                     });
-                                    // uploads data 
                                     this.setState({ uploadData: false });
                                 }}></button>
                             </div>
                         )}
                     </Mutation>
-                )
-                }
+                )}
             </>
         )
     }
 }
 
 export default TextBasedScenariosPage;
+
+ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
+    return React.createElement(MedicalScenario, props)
+})
 
 ReactQuestionFactory.Instance.registerQuestion("adeptVitals", (props) => {
     return React.createElement(AdeptVitals, props)

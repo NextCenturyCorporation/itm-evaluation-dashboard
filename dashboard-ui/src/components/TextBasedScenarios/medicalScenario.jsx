@@ -1,90 +1,143 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Button, Card } from 'react-bootstrap';
+import React from "react";
+import { Container, Row, Col, Card, ListGroup } from 'react-bootstrap';
+import { ElementFactory, Question, Serializer } from "survey-core";
+import { SurveyQuestionElementBase } from "survey-react-ui";
 
-const MedicalScenario = () => {
-  const [selectedPatient, setSelectedPatient] = useState(null);
+const CUSTOM_TYPE = "medicalScenario";
 
-  const handlePatientSelection = (patient) => {
-    setSelectedPatient(patient);
+export class MedicalScenarioModel extends Question {
+  getType() {
+    return CUSTOM_TYPE;
+  }
+
+  get supplies() {
+    return this.getPropertyValue("supplies")
+  }
+
+  set supplies(supplies) {
+    this.setPropertyValue("supplies", supplies)
+  }
+
+  get unstructured() {
+    return this.getPropertyValue("unstructured")
+  }
+
+  set unstructured(unstructured) {
+    this.setPropertyValue("unstructured", unstructured)
+  }
+
+  get patients() {
+    return this.getPropertyValue("patients")
+  }
+
+  set patients(patients) {
+    this.setPropertyValue("patients", patients)
+  }
+}
+
+Serializer.addClass(
+  CUSTOM_TYPE,
+  [
+    { name: "unstructured", default: '' },
+    { name: "supplies", default: [] },
+    { name: "patients", default: [] }
+  ],
+  function () {
+    return new MedicalScenarioModel("");
+  },
+  "question"
+);
+
+ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
+  return new MedicalScenarioModel(name);
+});
+
+export class MedicalScenario extends SurveyQuestionElementBase {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedPatient: null
+    };
+  }
+
+  get question() {
+    return this.questionBase
+  }
+
+  get supplies() {
+    return this.question.supplies
+  }
+
+  get patients() {
+    return this.question.patients
+  }
+
+  get unstructured() {
+    return this.question.unstructured
+  }
+
+  handlePatientSelection = (patient) => {
+    this.setState({ selectedPatient: patient });
+    this.question.value = patient;
   };
 
-  return (
-    <Container>
-      <Row className="my-3">
-        <Col>
-          <Card className="text-center py-2">
-            <Card.Body>
-              <Card.Title>Scenario</Card.Title>
-              <Card.Text>
-                You are the only medic on the scene after there was some kind of shooting between civilians.
-                The local civilian hospital does not have significant surgical capabilities.
-              </Card.Text>
-              <Card.Text>
-                You do not have time to treat both patients, and both are likely to die without treatment.
-                The civilian in black clothes has injuries that are definitely treatable, but the other civilian
-                may die even if treated, due to the limited capabilities of the local hospital.
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-      <Row className="my-3">
-        <Col md={3}>
-          <Card className="py-3" style={{ backgroundColor: '#6c757d' }}>
-            <Card.Body>
-              <Card.Title className="text-white">Supplies</Card.Title>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={9}>
-          <Row>
-            <Col md={6}>
-              <Card className="mb-3">
-                <Card.Body>
-                  <Card.Title>Patient A</Card.Title>
-                  <Card.Text>Picture</Card.Text>
-                  <Card.Text>Vitals</Card.Text>
-                  <Card.Text>Say all the things here about the injury. And make it clear and big.</Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={6}>
-              <Card className="mb-3">
-                <Card.Body>
-                  <Card.Title>Patient B</Card.Title>
-                  <Card.Text>Picture</Card.Text>
-                  <Card.Text>Vitals</Card.Text>
-                  <Card.Text>More things about injuries.</Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
-      <Row className="my-3">
-        <Col>
-          <Card>
-            <Card.Body>
-              <Card.Text>Which patient would you transport?</Card.Text>
-              <Button variant="primary" onClick={() => handlePatientSelection('Patient 1')}>Patient 1, the shooter</Button>
-              <Button variant="secondary" className="ml-2" onClick={() => handlePatientSelection('Patient 2')}>Patient 2, the victim</Button>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-      {selectedPatient && (
-        <Row className="my-3">
+  renderElement() {
+    return (
+      <Container fluid className="p-0">
+        <Row noGutters>
           <Col>
-            <Card>
-              <Card.Body>
-                <Card.Text className="font-weight-bold">You selected: {selectedPatient}</Card.Text>
+            <Card className="border-0 rounded-0">
+              <Card.Body className="p-2">
+                <Card.Title className="mb-1">Scenario</Card.Title>
+                <Card.Text className="mb-0">{this.unstructured}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
         </Row>
-      )}
-    </Container>
-  );
-};
-
-export default MedicalScenario;
+        <Row noGutters className="mt-2">
+          <Col md={3}>
+            <Card className="border-0 rounded-0 h-100" style={{ backgroundColor: '#6c757d' }}>
+              <Card.Body className="p-2">
+                <Card.Title className="text-white mb-1">Supplies</Card.Title>
+                <ListGroup variant="flush">
+                  {this.supplies.map((supply, index) => (
+                    <ListGroup.Item key={index} className="p-1" style={{ backgroundColor: 'transparent', color: 'white' }}>
+                      {supply.type}: {supply.quantity} {supply.reusable ? "(Reusable)" : ""}
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={9}>
+            <Row noGutters>
+              {this.patients.map((patient, index) => (
+                <Col md={6} key={index} className="pr-md-2 mb-2 mb-md-0">
+                  <Card className="border-0 rounded-0 h-100">
+                    <Card.Body className="p-2">
+                      <Card.Title className="mb-1">{patient.name}</Card.Title>
+                      <Card.Text className="mb-1">
+                        <strong>Vitals:</strong><br />
+                        {Object.entries(patient.vitals).map(([key, value]) => (
+                          <span key={key} className="d-block">{key}: {value}</span>
+                        ))}
+                      </Card.Text>
+                      <Card.Text className="mb-0">
+                        <strong>Injuries:</strong><br />
+                        {patient.injuries.map((injury, i) => (
+                          <span key={i} className="d-block">
+                            {injury.location} {injury.name} - Severity: {injury.severity}, Status: {injury.status}
+                          </span>
+                        ))}
+                      </Card.Text>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Col>
+        </Row>
+      </Container>
+    );
+  }
+}
