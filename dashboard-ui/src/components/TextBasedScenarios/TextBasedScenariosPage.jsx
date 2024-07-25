@@ -20,6 +20,7 @@ import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
 import MedicalScenario from './medicalScenario';
+import { useSelector, useDispatch } from 'react-redux';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -49,11 +50,18 @@ const scenarioNameToID = {
     "SoarTech Desert": "desert-1",
     "SoarTech Jungle": "jungle-1"
 }
+
+export function TextBasedScenariosPageWrapper(props) {
+    const textBasedConfigs = useSelector(state => {
+        return state.configs.textBasedConfigs
+    });
+    return <TextBasedScenariosPage {...props} textBasedConfigs={textBasedConfigs} />;
+}
 class TextBasedScenariosPage extends Component {
 
     constructor(props) {
         super(props);
-
+        console.log(props.textBasedConfigs)
         this.state = {
             currentConfig: null,
             uploadData: false,
@@ -346,8 +354,6 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
-            <MedicalScenario/>
-            {/*
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
@@ -379,7 +385,6 @@ class TextBasedScenariosPage extends Component {
                     </Mutation>
                 )
                 }
-                */}
             </>
         )
     }
