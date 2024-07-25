@@ -84,8 +84,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   renderElement() {
     return (
       <Container fluid className="p-0">
-        <Row noGutters>
-          <Col>
+        <Row className="mx-0">
+          <Col className="px-0">
             <Card className="border-0 rounded-0">
               <Card.Body className="p-2">
                 <Card.Title className="mb-1">Scenario</Card.Title>
@@ -94,8 +94,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             </Card>
           </Col>
         </Row>
-        <Row noGutters className="mt-2">
-          <Col md={3}>
+        <Row className="mx-0 mt-2">
+          <Col md={3} className="px-0">
             <Card className="border-0 rounded-0 h-100" style={{ backgroundColor: '#6c757d' }}>
               <Card.Body className="p-2">
                 <Card.Title className="text-white mb-1">Supplies</Card.Title>
@@ -109,10 +109,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={9}>
-            <Row noGutters>
+          <Col md={9} className="px-0">
+            <Row className="mx-0">
               {this.patients.map((patient, index) => (
-                <Col md={6} key={index} className="pr-md-2 mb-2 mb-md-0">
+                <Col md={6} key={index} className="pr-md-2 mb-2 mb-md-0 px-0">
                   <Card className="border-0 rounded-0 h-100">
                     <Card.Body className="p-2">
                       <Card.Title className="mb-1">{patient.name}</Card.Title>
