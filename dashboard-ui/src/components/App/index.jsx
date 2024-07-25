@@ -224,6 +224,9 @@ export class App extends React.Component {
                                                 <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
                                                     Complete Text Scenarios
                                                 </NavDropdown.Item>
+                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
+                                                    Review Text Scenarios
+                                                </NavDropdown.Item>
                                             </NavDropdown>
                                             {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
                                                 <>

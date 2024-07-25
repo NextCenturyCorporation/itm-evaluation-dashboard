@@ -84,58 +84,69 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   renderElement() {
     return (
       <Container fluid className="p-0">
-        <Row className="mx-0">
-          <Col className="px-0">
-            <Card className="border-0 rounded-0">
-              <Card.Body className="p-2">
-                <Card.Title className="mb-1">Scenario</Card.Title>
-                <Card.Text className="mb-0">{this.unstructured}</Card.Text>
+        <Row className="mb-3">
+          <Col>
+            <Card className="border-1">
+              <Card.Body className="p-3">
+                <Card.Title className="text-center mb-2">Scenario</Card.Title>
+                <Card.Text className="text-center">{this.unstructured}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
         </Row>
-        <Row className="mx-0 mt-2">
-          <Col md={3} className="px-0">
-            <Card className="border-0 rounded-0 h-100" style={{ backgroundColor: '#6c757d' }}>
-              <Card.Body className="p-2">
-                <Card.Title className="text-white mb-1">Supplies</Card.Title>
-                <ListGroup variant="flush">
+        <Row>
+          <Col md={3}>
+            <Card className="h-100" style={{ backgroundColor: '#f0f0f0' }}>
+              <Card.Body>
+                <Card.Title>Supplies</Card.Title>
+                <ul className="list-unstyled">
                   {this.supplies.map((supply, index) => (
-                    <ListGroup.Item key={index} className="p-1" style={{ backgroundColor: 'transparent', color: 'white' }}>
+                    <li key={index}>
                       {supply.type}: {supply.quantity} {supply.reusable ? "(Reusable)" : ""}
-                    </ListGroup.Item>
+                    </li>
                   ))}
-                </ListGroup>
+                </ul>
               </Card.Body>
             </Card>
           </Col>
-          <Col md={9} className="px-0">
-            <Row className="mx-0">
-              {this.patients.map((patient, index) => (
-                <Col md={6} key={index} className="pr-md-2 mb-2 mb-md-0 px-0">
-                  <Card className="border-0 rounded-0 h-100">
+          {this.patients.map((patient, index) => (
+            <Col md={4} key={index}>
+              <Card className="h-100">
+                <Card.Body>
+                  <Card.Title>{patient.name}</Card.Title>
+                  <Row className="mb-3">
+                    <Col md={7} className="d-flex">
+                      <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100">
+                        Picture
+                      </div>
+                    </Col>
+                    <Col md={5} className="d-flex">
+                      <Card className="w-100" style={{backgroundColor: '#e6e6ff'}}>
+                        <Card.Body className="p-2">
+                          <Card.Title className="h6 mb-2">Vitals</Card.Title>
+                          {Object.entries(patient.vitals).map(([key, value]) => (
+                            <small key={key} className="d-block">{key}: {value.toString()}</small>
+                          ))}
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  </Row>
+                  <Card className="mb-0" style={{backgroundColor: '#e6e6ff'}}>
                     <Card.Body className="p-2">
-                      <Card.Title className="mb-1">{patient.name}</Card.Title>
-                      <Card.Text className="mb-1">
-                        <strong>Vitals:</strong><br />
-                        {Object.entries(patient.vitals).map(([key, value]) => (
-                          <span key={key} className="d-block">{key}: {value}</span>
-                        ))}
-                      </Card.Text>
-                      <Card.Text className="mb-0">
-                        <strong>Injuries:</strong><br />
-                        {patient.injuries.map((injury, i) => (
-                          <span key={i} className="d-block">
-                            {injury.location} {injury.name} - Severity: {injury.severity}, Status: {injury.status}
-                          </span>
-                        ))}
-                      </Card.Text>
+                      <Card.Title className="h6 mb-2">Injuries</Card.Title>
+                      {patient.injuries.map((injury, i) => (
+                        <p key={i} className="mb-1">
+                          <strong>{injury.location} {injury.name}</strong>
+                          <br />
+                          <small>Severity: {injury.severity}, Status: {injury.status}</small>
+                        </p>
+                      ))}
                     </Card.Body>
                   </Card>
-                </Col>
-              ))}
-            </Row>
-          </Col>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
         </Row>
       </Container>
     );
