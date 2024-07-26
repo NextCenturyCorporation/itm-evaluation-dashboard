@@ -3,9 +3,9 @@ import queryString from 'query-string';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
-import {SurveyPage, SurveyPageWrapper} from '../Survey/survey';
-import { TextBasedScenariosPage, TextBasedScenariosPageWrapper} from '../TextBasedScenarios/TextBasedScenariosPage';
-import { ReviewTextBased } from '../ReviewTextBased/ReviewTextBased';
+import { SurveyPage, SurveyPageWrapper } from '../Survey/survey';
+import { TextBasedScenariosPage, TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
+import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
@@ -113,6 +113,18 @@ function Admin({ newState, userLoginHandler }) {
     }
 }
 
+function ReviewTextBased({ newState, userLoginHandler }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.admin === true || newState.currentUser.evaluator) {
+            return <ReviewTextBasedPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
 export class App extends React.Component {
 
     constructor(props) {
@@ -186,7 +198,7 @@ export class App extends React.Component {
             console.warn("No text-based configs found in Mongo");
         }
     }
-    
+
 
     render() {
         const { currentUser } = this.state;
@@ -225,9 +237,12 @@ export class App extends React.Component {
                                                 <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
                                                     Complete Text Scenarios
                                                 </NavDropdown.Item>
-                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
-                                                    Review Text Scenarios
-                                                </NavDropdown.Item>
+                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
+                                                        Review Text Scenarios
+                                                    </NavDropdown.Item>
+                                                )}
+
                                             </NavDropdown>
                                             {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
                                                 <>
@@ -320,7 +335,7 @@ export class App extends React.Component {
                                             <SurveyResults />
                                         </Route>
                                         <Route path="/review-text-based">
-                                            <ReviewTextBased/>
+                                            <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
                                         </Route>
                                         <Route path="/text-based">
                                             <TextBased />
