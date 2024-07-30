@@ -22,12 +22,12 @@ export function ReviewTextBasedPage() {
     };
 
     const renderConfigButtons = () => {
-        const metricsEvalConfigs = [];
+        const mreConfigs = [];
         const otherConfigs = [];
 
-        Object.keys(textBasedConfigs).forEach(configName => {
-            if (configName.includes('MetricsEval')) {
-                metricsEvalConfigs.push(configName);
+        Object.entries(textBasedConfigs).forEach(([configName, config]) => {
+            if (config.eval === 'mre') {
+                mreConfigs.push(configName);
             } else {
                 otherConfigs.push(configName);
             }
@@ -49,7 +49,7 @@ export function ReviewTextBasedPage() {
             <>
                 {otherConfigs.length > 0 && (
                     <div style={groupStyle}>
-                        <h3>Other Configurations</h3>
+                        <h3>DRE Scenarios</h3>
                         {otherConfigs.map(configName => (
                             <button
                                 key={configName}
@@ -63,10 +63,10 @@ export function ReviewTextBasedPage() {
                     </div>
                 )}
 
-                {metricsEvalConfigs.length > 0 && (
+                {mreConfigs.length > 0 && (
                     <div style={groupStyle}>
-                        <h3>MRE</h3>
-                        {metricsEvalConfigs.map(configName => (
+                        <h3>MRE Scenarios</h3>
+                        {mreConfigs.map(configName => (
                             <button
                                 key={configName}
                                 onClick={() => handleConfigSelect(configName)}
