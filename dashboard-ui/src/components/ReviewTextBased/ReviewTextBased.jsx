@@ -4,16 +4,15 @@ import { useSelector } from "react-redux";
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
+import { Alert } from 'react-bootstrap'
+
 export function ReviewTextBasedPage() {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const [selectedConfig, setSelectedConfig] = useState(null);
 
     const handleConfigSelect = (configName) => {
-        // deep copy
         let config = JSON.parse(JSON.stringify(textBasedConfigs[configName]));
-
-        // allow user to go forward and back
-        config.showPrevButton = true
+        config.showPrevButton = true;
 
         if (config) {
             const surveyModel = new Model(config);
@@ -22,30 +21,78 @@ export function ReviewTextBasedPage() {
         }
     };
 
-    return (
-        <div>
-            <h1>Review Text-Based Scenarios</h1>
+    const renderConfigButtons = () => {
+        const metricsEvalConfigs = [];
+        const otherConfigs = [];
 
-            {!selectedConfig && (
-                <div>
-                    <h2>Select a configuration:</h2>
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        gap: '10px'  // This adds space between buttons
-                    }}>
-                        {Object.keys(textBasedConfigs).map((configName) => (
+        Object.keys(textBasedConfigs).forEach(configName => {
+            if (configName.includes('MetricsEval')) {
+                metricsEvalConfigs.push(configName);
+            } else {
+                otherConfigs.push(configName);
+            }
+        });
+
+        const buttonStyle = {
+            width: '200px',
+            marginBottom: '10px'
+        };
+
+        const groupStyle = {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            marginBottom: '20px'
+        };
+
+        return (
+            <>
+                {otherConfigs.length > 0 && (
+                    <div style={groupStyle}>
+                        <h3>Other Configurations</h3>
+                        {otherConfigs.map(configName => (
                             <button
                                 key={configName}
                                 onClick={() => handleConfigSelect(configName)}
                                 className="btn btn-primary"
-                                style={{ width: '200px' }}  // Set a fixed width for consistency
+                                style={buttonStyle}
                             >
                                 {configName}
                             </button>
                         ))}
                     </div>
+                )}
+
+                {metricsEvalConfigs.length > 0 && (
+                    <div style={groupStyle}>
+                        <h3>MRE</h3>
+                        {metricsEvalConfigs.map(configName => (
+                            <button
+                                key={configName}
+                                onClick={() => handleConfigSelect(configName)}
+                                className="btn btn-primary"
+                                style={buttonStyle}
+                            >
+                                {configName}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </>
+        );
+    };
+
+    return (
+        <div>
+            <Alert variant="warning" dismissible>
+                <Alert.Heading>Note: This page is for reviewing materials only. No data will be collected.</Alert.Heading>
+            </Alert>
+            <h1>Review Text-Based Scenarios</h1>
+
+            {!selectedConfig && (
+                <div>
+                    <h2>Select a configuration:</h2>
+                    {renderConfigButtons()}
                 </div>
             )}
 
