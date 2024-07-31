@@ -50,6 +50,7 @@ const scenarioNameToID = {
     "SoarTech Jungle": "jungle-1"
 }
 
+// wrapper makes it much easier to grab textbased configs and just pass them to existing class based component
 export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     return <TextBasedScenariosPage {...props} textBasedConfigs={textBasedConfigs} />;
@@ -66,11 +67,11 @@ class TextBasedScenariosPage extends Component {
             startTime: null,
             scenarios: []
         };
-        console.log(props.textBasedConfigs['MetricsEval.MD5-Desert'])
+
         this.surveyData = {};
         this.surveyDataByScenario = [];
         this.survey = null;
-        this.introSurvey = new Model(props.textBasedConfigs['MetricsEval.MD5-Desert']);
+        this.introSurvey = new Model(introConfig);
         this.introSurvey.onComplete.add(this.introSurveyComplete)
         this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
@@ -82,16 +83,19 @@ class TextBasedScenariosPage extends Component {
         const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
         const scenarioOrderArray = JSON.parse(scenarioOrderString);
 
+        // pull selected scenarios from prop
+        const scenarioConfigs = scenarioOrderArray.map(scenarioName => {
+            const scenarioId = scenarioNameToID[scenarioName];
+            return this.props.textBasedConfigs[scenarioId];
+        });
+
+        console.log("Scenario Configs:", scenarioConfigs);
+
         this.setState({
             scenarios: scenarioOrderArray,
             participantID: survey.data["Participant ID"],
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
         })
-
-        const selectedScenarios = []
-        for (const scenario of scenarioOrderArray) {
-            selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
-        }
 
         let title = ""
         if (scenarioOrderArray.includes("SoarTech Desert")) {
@@ -99,7 +103,7 @@ class TextBasedScenariosPage extends Component {
         } else if (scenarioOrderArray.includes("SoarTech Jungle")) {
             title = "Jungle/Submarine Text Scenarios"
         }
-        this.loadSurveyConfig(selectedScenarios, title !== "" ? title : "")
+        this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
     }
 
     uploadResults = async (survey) => {
@@ -289,21 +293,24 @@ class TextBasedScenariosPage extends Component {
         this.uploadResults(survey);
     }
 
-    loadSurveyConfig = (selectedScenarios, title) => {
-        let config = selectedScenarios[0]
-
-        for (const scenario of selectedScenarios.slice(1)) {
-            config.pages = (config.pages).concat(scenario.pages)
+    loadSurveyConfig = (scenarioConfigs, title) => {
+        let config = {
+            ...scenarioConfigs[0],
+            pages: [...scenarioConfigs[0].pages]
+        };
+    
+        for (const scenario of scenarioConfigs.slice(1)) {
+            config.pages = [...config.pages, ...scenario.pages];
         }
-
-        config.title = title
-
+    
+        config.title = title;
+    
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
-
+    
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
-
+    
         this.setState({ currentConfig: this.survey });
     };
 

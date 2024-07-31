@@ -35,9 +35,14 @@ export function ReviewTextBasedPage() {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const [selectedConfig, setSelectedConfig] = useState(null);
 
+    const handleSurveyComplete = (sender) => {
+        const results = sender.data;
+        console.log("Survey results:", results);
+      };
+
     const handleConfigSelect = (configName) => {
         let config = JSON.parse(JSON.stringify(textBasedConfigs[configName]));
-        config.showPrevButton = true;
+        //config.showPrevButton = true;
 
         if (config) {
             const surveyModel = new Model(config);
@@ -156,7 +161,7 @@ export function ReviewTextBasedPage() {
                         <span className="fs-5 fw-bold" style={{ color: HEADER_COLOR }}>Selected Configuration: {selectedConfig.name}</span>
                     </Container>
                     <div className="flex-grow-1 overflow-auto">
-                        <Survey model={selectedConfig} />
+                        <Survey model={selectedConfig} onComplete={handleSurveyComplete}/>
                     </div>
                 </>
             )}
