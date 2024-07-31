@@ -6,11 +6,10 @@ import { Model } from 'survey-core';
 import { Survey } from "survey-react-ui";
 import { Alert, Button, Card, Container, Row, Col } from 'react-bootstrap';
 
-const HEADER_COLOR = '#602414'; // Darker brown to match the header
-const TEXT_COLOR = '#602414'; // Keeping the dark red-brown for text
-const ALERT_BG_COLOR = '#FFF3CD'; // Light yellow for the alert background
+const HEADER_COLOR = '#602414';
+const SUBHEADER_COLOR = '#8B4513';
+const TEXT_COLOR = '#602414';
 
-// Custom CSS for button hover effect and alert styling
 const customStyles = `
   .custom-btn {
     color: ${TEXT_COLOR};
@@ -21,6 +20,14 @@ const customStyles = `
     background-color: ${TEXT_COLOR} !important;
     color: white !important;
     border-color: ${TEXT_COLOR} !important;
+  }
+  .subheader {
+    background-color: ${SUBHEADER_COLOR};
+    color: white;
+    padding: 10px 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
   }
 `;
 
@@ -40,48 +47,82 @@ export function ReviewTextBasedPage() {
     };
 
     const renderConfigButtons = () => {
-        const mreConfigs = [];
         const dreConfigs = [];
+        const mreAdeptConfigs = [];
+        const mreSoarTechConfigs = [];
         const otherConfigs = [];
 
         Object.entries(textBasedConfigs).forEach(([configName, config]) => {
-            if (config.eval === 'mre') {
-                mreConfigs.push(configName);
-            } else if (config.eval === 'dre') {
+            if (config.eval === 'dre') {
                 dreConfigs.push(configName);
+            } else if (config.eval === 'mre') {
+                if (configName.includes('MetricsEval')) {
+                    mreAdeptConfigs.push(configName);
+                } else {
+                    mreSoarTechConfigs.push(configName);
+                }
             } else {
-                otherConfigs.push(configName)
+                otherConfigs.push(configName);
             }
         });
 
-        const renderConfigGroup = (configs, title) => (
-            configs.length > 0 && (
-                <Card className="mb-4 border-0 shadow-sm">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>{title}</Card.Header>
-                    <Card.Body className="bg-light">
-                        <Row xs={1} md={2} lg={3} className="g-4">
-                            {configs.map(configName => (
-                                <Col key={configName}>
-                                    <Button
-                                        variant="outline-primary"
-                                        onClick={() => handleConfigSelect(configName)}
-                                        className="w-100 text-start text-truncate custom-btn"
-                                    >
-                                        {configName}
-                                    </Button>
-                                </Col>
-                            ))}
-                        </Row>
-                    </Card.Body>
-                </Card>
-            )
+        const getAdeptLabel = (configName) => {
+            if (configName.includes('Submarine')) return 'Submarine';
+            if (configName.includes('Desert')) return 'Desert';
+            if (configName.includes('Jungle')) return 'Jungle';
+            if (configName.includes('Urban')) return 'Urban';
+            return configName;
+        };
+
+        const getSoarTechLabel = (configName) => {
+            // Remove '-1' suffix and capitalize the first letter
+            return configName.replace('-1', '').charAt(0).toUpperCase() + configName.replace('-1', '').slice(1);
+        };
+
+        const renderConfigGroup = (configs, title, labelFunction = null) => (
+            <div>
+                <h5 className="subheader">{title}</h5>
+                <Row xs={1} md={2} lg={3} className="g-4">
+                    {configs.map(configName => (
+                        <Col key={configName}>
+                            <Button
+                                variant="outline-primary"
+                                onClick={() => handleConfigSelect(configName)}
+                                className="w-100 text-start text-truncate custom-btn"
+                            >
+                                {labelFunction ? labelFunction(configName) : configName}
+                            </Button>
+                        </Col>
+                    ))}
+                </Row>
+            </div>
         );
 
         return (
             <>
-                {renderConfigGroup(dreConfigs, "DRE Scenarios")}
-                {renderConfigGroup(mreConfigs, "MRE Scenarios")}
-                {renderConfigGroup(otherConfigs, "Misc Scenarios")}
+                <Card className="mb-4 border-0 shadow-sm">
+                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
+                    <Card.Body className="bg-light">
+                        {renderConfigGroup(dreConfigs, "")}
+                    </Card.Body>
+                </Card>
+
+                <Card className="mb-4 border-0 shadow-sm">
+                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>MRE Scenarios</Card.Header>
+                    <Card.Body className="bg-light">
+                        {renderConfigGroup(mreAdeptConfigs, "Adept", getAdeptLabel)}
+                        {renderConfigGroup(mreSoarTechConfigs, "SoarTech", getSoarTechLabel)}
+                    </Card.Body>
+                </Card>
+
+                {otherConfigs.length > 0 && (
+                    <Card className="mb-4 border-0 shadow-sm">
+                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Misc Scenarios</Card.Header>
+                        <Card.Body className="bg-light">
+                            {renderConfigGroup(otherConfigs, "")}
+                        </Card.Body>
+                    </Card>
+                )}
             </>
         );
     };
