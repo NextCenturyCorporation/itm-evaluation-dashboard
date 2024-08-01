@@ -167,7 +167,6 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        this.mapAnswers(scenario)
         if (scenario.title.includes('SoarTech')) {
             await this.getSoarTechAlignment(scenario)
         } else if (scenario.title.includes('Adept')) {
@@ -181,10 +180,6 @@ class TextBasedScenariosPage extends Component {
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
                 if (typeof question !== 'object') { continue }
                 if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
-                    const problemProbe = this.isProblemProbe(question, scenario.title)
-                    if (problemProbe) {
-                        if (!this.fixProblemProbe(question, problemProbe)) { continue }
-                    }
                     const responseUrl = `${urlBase}/api/v1/response`
                     const responsePayload = {
                         "response": {
