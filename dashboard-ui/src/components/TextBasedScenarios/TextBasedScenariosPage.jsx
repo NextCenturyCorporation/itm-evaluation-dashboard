@@ -175,57 +175,6 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    mapAnswers = (scenario) => {
-        const scenarioTitle = scenario.title
-        const scenarioConfig = scenarioMappings[scenarioTitle];
-        if (!scenarioConfig) { return };
-
-        for (const [fieldName, fieldValue] of Object.entries(scenario)) {
-            if (fieldValue && fieldValue.questions) {
-                for (const [questionName, question] of Object.entries(fieldValue.questions)) {
-                    if (question && question.probe) {
-                        const page = scenarioConfig.pages.find(p => p.name === fieldName);
-                        if (page) {
-                            const pageQuestion = page.elements.find(e => e.name === questionName);
-                            if (pageQuestion) {
-                                try {
-                                    const indexOfAnswer = pageQuestion.choices.indexOf(question.response);
-                                    let choice;
-                                    if (scenarioTitle.startsWith("Adept")) {
-                                        choice = `${question.probe}.${String.fromCharCode(65 + indexOfAnswer)}`;
-                                    } else {
-                                        choice = `choice-${indexOfAnswer}`;
-                                    }
-                                    question.choice = choice;
-                                } catch (err) {
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    isProblemProbe = (question, scenarioTitle) => {
-        //Check if a probe is a known problem probe and get the mapping if it is.
-        //problem probes specific to this scenario
-        const scenarioProblemProbes = problemProbes[scenarioTitle]
-        if (!scenarioProblemProbes) { return false }
-        return scenarioProblemProbes[question['probe']]
-    }
-
-    fixProblemProbe = (question, mapping) => {
-        // tries to map user choice on problem probe to valid choice id if possible
-        const mappedChoice = mapping[question['choice']]
-        if (mappedChoice) {
-            question['choice'] = mappedChoice
-            return true
-        }
-        return false
-    }
-
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
         for (const [fieldName, fieldValue] of Object.entries(scenario)) {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
