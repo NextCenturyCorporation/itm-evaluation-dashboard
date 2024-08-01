@@ -89,8 +89,6 @@ class TextBasedScenariosPage extends Component {
             return this.props.textBasedConfigs[scenarioId];
         });
 
-        console.log("Scenario Configs:", scenarioConfigs);
-
         this.setState({
             scenarios: scenarioOrderArray,
             participantID: survey.data["Participant ID"],
@@ -137,7 +135,7 @@ class TextBasedScenariosPage extends Component {
 
             for (const scenario of this.state.scenarios) {
                 const scenarioIndex = this.state.scenarios.indexOf(scenario)
-                if (pageName.includes(scenario) || Object.values(pageData).some(value => value?.toString().includes(scenario))) {
+                if (scenarioNameToID[scenario].includes(pageName.slice(0, -2)) || Object.values(pageData).some(value => value?.toString().includes(scenarioNameToID[scenario]))) {
                     this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
                     this.surveyDataByScenario[scenarioIndex][pageName] = pageData;
                 }
@@ -181,6 +179,7 @@ class TextBasedScenariosPage extends Component {
                 if (typeof question !== 'object') { continue }
                 if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
                     const responseUrl = `${urlBase}/api/v1/response`
+                    console.log(question)
                     const responsePayload = {
                         "response": {
                             "choice": question.choice,
@@ -203,9 +202,11 @@ class TextBasedScenariosPage extends Component {
 
     getAdeptAlignment = async (scenario) => {
         const adeptUrl = process.env.REACT_APP_ADEPT_URL
+        console.log(adeptUrl)
         const highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH"
         const lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW"
         const session = await axios.post(`${adeptUrl}/api/v1/new_session`)
+        console.log(session)
         if (session.status == 200) {
             const sessionId = session.data
             const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
@@ -242,10 +243,10 @@ class TextBasedScenariosPage extends Component {
             ...scenarioConfigs[0],
             pages: [...scenarioConfigs[0].pages]
         };
-    
+        /*
         for (const scenario of scenarioConfigs.slice(1)) {
             config.pages = [...config.pages, ...scenario.pages];
-        }
+        }*/
     
         config.title = title;
     
