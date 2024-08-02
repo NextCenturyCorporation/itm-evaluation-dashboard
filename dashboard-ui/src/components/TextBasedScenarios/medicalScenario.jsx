@@ -136,10 +136,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                       </div>
                     </Col>
                     <Col md={5} className="d-flex flex-column">
-                      <Card className="w-100 border-0 flex-grow-1" style={{ backgroundColor: '#e7f1ff', overflow: 'visible' }}>
-                        <Card.Body className="p-2 d-flex flex-column justify-content-center" style={{ overflow: 'visible' }}>
-                          <Card.Title className="h4 mb-2">Vitals</Card.Title>
-                          <div className="vitals-container">
+                      <Card className="w-100 border-0 flex-grow-1 vitals-card" style={{ backgroundColor: '#e7f1ff', overflow: 'visible' }}>
+                        <Card.Body className="p-2 d-flex flex-column" style={{ overflow: 'visible' }}>
+                          <Card.Title className="h4 mb-2 vitals-title">Vitals</Card.Title>
+                          <div className="vitals-container flex-grow-1">
                             {this.renderVitals(patient, patient.vitals)}
                           </div>
                         </Card.Body>
@@ -262,9 +262,19 @@ const componentStyles = `
   .vital-icon:hover .vital-name {
     opacity: 1;
   }
+  .vitals-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .vitals-title {
+    flex-shrink: 0;
+  }
   .vitals-container {
     position: relative;
     overflow: visible !important;
+    display: flex;
+    flex-direction: column;
   }
   .card-body {
     overflow: visible !important;
