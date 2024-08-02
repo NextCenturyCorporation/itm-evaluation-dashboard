@@ -57,14 +57,19 @@ export function ReviewTextBasedPage() {
     };
 
     const renderConfigButtons = () => {
-        const dreConfigs = [];
+        const dreAdeptConfigs = [];
+        const dreSoarTechConfigs = [];
         const mreAdeptConfigs = [];
         const mreSoarTechConfigs = [];
         const otherConfigs = [];
 
         Object.entries(textBasedConfigs).forEach(([configName, config]) => {
             if (config.eval === 'dre') {
-                dreConfigs.push(configName);
+                if (configName.includes('DryRunEval')) {
+                    dreAdeptConfigs.push(configName)
+                } else {
+                    dreSoarTechConfigs.push(configName)
+                }
             } else if (config.eval === 'mre') {
                 if (configName.includes('MetricsEval')) {
                     mreAdeptConfigs.push(configName);
@@ -110,14 +115,15 @@ export function ReviewTextBasedPage() {
 
         return (
             <>
-                <Card className="mb-4 border-0 shadow-sm">
+                <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {renderConfigGroup(dreConfigs, "")}
+                        {renderConfigGroup(dreAdeptConfigs, "Adept")}
+                        {renderConfigGroup(dreSoarTechConfigs, "SoarTech")}
                     </Card.Body>
                 </Card>
 
-                <Card className="mb-4 border-0 shadow-sm">
+                <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>MRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
                         {renderConfigGroup(mreAdeptConfigs, "Adept", getAdeptLabel)}
