@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Card, ListGroup, Badge } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import { FaHeartbeat, FaLungs, FaBrain, FaWalking, FaPercent, FaEye } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance } from 'react-icons/fa';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
 const CUSTOM_TYPE = "medicalScenario";
 
@@ -85,6 +85,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   renderElement() {
     return (
       <Container fluid className="p-3" style={{ backgroundColor: '#f8f9fa' }}>
+        <style>{componentStyles}</style>
         <Row className="mb-4">
           <Col>
             <Card className="border-0 shadow-sm">
@@ -118,11 +119,11 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           {this.patients.map((patient, index) => (
             <Col md={4} key={index} className="mb-4">
               <Card className="h-100 border-0 shadow-sm">
-                <Card.Body>
+                <Card.Body style={{ overflow: 'visible' }}>
                   <Card.Title className="h4 mb-3">{patient.name}</Card.Title>
                   <Row className="mb-3">
                     <Col md={7} className="d-flex mb-3 mb-md-0">
-                    <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px' }}>
+                      <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px' }}>
                         Picture Placeholder
                         <ZoomInIcon className="magnifying-glass" style={{
                           position: 'absolute',
@@ -134,10 +135,12 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                       </div>
                     </Col>
                     <Col md={5} className="d-flex flex-column">
-                      <Card className="w-100 border-0 flex-grow-1" style={{ backgroundColor: '#e7f1ff' }}>
-                        <Card.Body className="p-2 d-flex flex-column justify-content-center">
+                      <Card className="w-100 border-0 flex-grow-1" style={{ backgroundColor: '#e7f1ff', overflow: 'visible' }}>
+                        <Card.Body className="p-2 d-flex flex-column justify-content-center" style={{ overflow: 'visible' }}>
                           <Card.Title className="h4 mb-2">Vitals</Card.Title>
-                          {this.renderVitals(patient, patient.vitals)}
+                          <div className="vitals-container">
+                            {this.renderVitals(patient, patient.vitals)}
+                          </div>
                         </Card.Body>
                       </Card>
                     </Col>
@@ -160,7 +163,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   renderVitals(patient, vitals) {
     const vitalIcons = {
       avpu: <FaEye />,
-      ambulatory: <FaWalking />,
+      ambulatory: <FaAmbulance />,
       breathing: <FaLungs />,
       heart_rate: <FaHeartbeat />,
       spo2: <FaPercent />,
@@ -177,19 +180,19 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     };
 
     return (
-      <div className="d-flex flex-column gap-1 overflow-hidden" style={{ maxHeight: '100%' }}>
+      <div className="d-flex flex-column gap-1">
         {Object.entries(vitals).map(([key, value]) => (
-          <div key={key} className="d-flex align-items-center">
-              <div style={{ width: '20px', marginRight: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                {vitalIcons[key] || key}
-              </div>
+          <div key={key} className="d-flex align-items-center vital-item">
+            <span className="vital-icon" style={{ width: '24px', marginRight: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+              <span className="vital-name">{vitalNames[key]}</span>
+              {vitalIcons[key] || key}
+            </span>
             <Badge bg={this.getVitalBadgeColor(key, value)} className="fs-7">{value.toString()}</Badge>
           </div>
         ))}
       </div>
     );
   }
-
 
   renderInjuries(injuries) {
     return injuries.map((injury, i) => (
@@ -225,3 +228,42 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     }
   }
 }
+
+const componentStyles = `
+  .vital-item {
+    position: relative;
+  }
+  .vital-icon {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .vital-icon:hover {
+    transform: scale(1.2);
+  }
+  .vital-name {
+    position: absolute;
+    right: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+  }
+  .vital-icon:hover .vital-name {
+    opacity: 1;
+  }
+  .vitals-container {
+    position: relative;
+    overflow: visible !important;
+  }
+  .card-body {
+    overflow: visible !important;
+  }
+`;
