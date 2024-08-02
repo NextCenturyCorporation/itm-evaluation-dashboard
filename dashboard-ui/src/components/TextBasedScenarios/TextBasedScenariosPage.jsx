@@ -11,7 +11,6 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import introConfig from './introConfig.json'
-import problemProbes from './problemProbes.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
@@ -20,7 +19,7 @@ import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -131,13 +130,13 @@ class TextBasedScenariosPage extends Component {
         this.surveyData.scenarioTitle = this.survey.title
 
         for (const pageName in this.surveyData) {
-            const pageData = this.surveyData[pageName];
-
+            const pageResponse= this.surveyData[pageName];
             for (const scenario of this.state.scenarios) {
                 const scenarioIndex = this.state.scenarios.indexOf(scenario)
-                if (scenarioNameToID[scenario].includes(pageName.slice(0, -2)) || Object.values(pageData).some(value => value?.toString().includes(scenarioNameToID[scenario]))) {
+                const page = this.survey.getPageByName(pageName)
+                if (page && scenarioNameToID[scenario] === page['jsonObj']['scenario_id']) {
                     this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
-                    this.surveyDataByScenario[scenarioIndex][pageName] = pageData;
+                    this.surveyDataByScenario[scenarioIndex][pageName] = pageResponse;
                 }
             }
         }
@@ -165,10 +164,11 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
+        /* TODO, all i need to do is get the proper alignment targets I should be using*/
         if (scenario.title.includes('SoarTech')) {
             await this.getSoarTechAlignment(scenario)
         } else if (scenario.title.includes('Adept')) {
-            await this.getAdeptAlignment(scenario)
+            //await this.getAdeptAlignment(scenario)
         }
     }
 
@@ -177,14 +177,13 @@ class TextBasedScenariosPage extends Component {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
                 if (typeof question !== 'object') { continue }
-                if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
+                if (question.response && !questionName.includes("Follow Up")) {
                     const responseUrl = `${urlBase}/api/v1/response`
-                    console.log(question)
                     const responsePayload = {
                         "response": {
-                            "choice": question.choice,
+                            "choice": question.response['choice'],
                             "justification": "justification",
-                            "probe_id": question.probe,
+                            "probe_id": question.response['probe_id'],
                             "scenario_id": scenarioID,
                         },
                         "session_id": sessionID
@@ -201,12 +200,16 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAdeptAlignment = async (scenario) => {
+        /*
+        * Doesn't work for MRE anymore because most up to date adept server
+        * doesn't contain MRE scenarios in data/scenario
+        */
         const adeptUrl = process.env.REACT_APP_ADEPT_URL
-        console.log(adeptUrl)
+
+        // THESE TARGETS NEED TO BE CHANGED
         const highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH"
         const lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW"
         const session = await axios.post(`${adeptUrl}/api/v1/new_session`)
-        console.log(session)
         if (session.status == 200) {
             const sessionId = session.data
             const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
@@ -220,6 +223,7 @@ class TextBasedScenariosPage extends Component {
 
     getSoarTechAlignment = async (scenario) => {
         const stURL = process.env.REACT_APP_SOARTECH_URL
+        // may need to change these targets
         const highTarget = "maximization_high"
         const lowTarget = "maximization_low"
         const session = await axios.post(`${stURL}/api/v1/new_session?user_id=default_user`)
