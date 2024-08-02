@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, ListGroup, Badge } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance } from 'react-icons/fa';
+import { BsPersonFillGear } from 'react-icons/bs'
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
 const CUSTOM_TYPE = "medicalScenario";
 
@@ -167,7 +168,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       breathing: <FaLungs />,
       heart_rate: <FaHeartbeat />,
       spo2: <FaPercent />,
-      mental_status: <FaBrain />
+      mental_status: <FaBrain />,
+      conscious: <BsPersonFillGear />
     };
 
     const vitalNames = {
@@ -176,7 +178,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       breathing: "Breathing Rate",
       heart_rate: "Heart Rate",
       spo2: "Blood Oxygen Saturation (SPO2)",
-      mental_status: "Mental Status"
+      mental_status: "Mental Status",
+      conscious: "Conscious"
     };
 
     return (
