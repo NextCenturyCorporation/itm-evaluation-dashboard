@@ -4,7 +4,6 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { FaHeartbeat, FaLungs, FaBrain, FaWalking, FaPercent, FaEye } from 'react-icons/fa';
 
-
 const CUSTOM_TYPE = "medicalScenario";
 
 export class MedicalScenarioModel extends Question {
@@ -13,27 +12,27 @@ export class MedicalScenarioModel extends Question {
   }
 
   get supplies() {
-    return this.getPropertyValue("supplies")
+    return this.getPropertyValue("supplies");
   }
 
   set supplies(supplies) {
-    this.setPropertyValue("supplies", supplies)
+    this.setPropertyValue("supplies", supplies);
   }
 
   get unstructured() {
-    return this.getPropertyValue("unstructured")
+    return this.getPropertyValue("unstructured");
   }
 
   set unstructured(unstructured) {
-    this.setPropertyValue("unstructured", unstructured)
+    this.setPropertyValue("unstructured", unstructured);
   }
 
   get patients() {
-    return this.getPropertyValue("patients")
+    return this.getPropertyValue("patients");
   }
 
   set patients(patients) {
-    this.setPropertyValue("patients", patients)
+    this.setPropertyValue("patients", patients);
   }
 }
 
@@ -58,24 +57,26 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   constructor(props) {
     super(props);
     this.state = {
-      selectedPatient: null
+      selectedPatient: null,
+      showToolTip: {}
     };
+    this.targets = {};
   }
 
   get question() {
-    return this.questionBase
+    return this.questionBase;
   }
 
   get supplies() {
-    return this.question.supplies
+    return this.question.supplies;
   }
 
   get patients() {
-    return this.question.patients
+    return this.question.patients;
   }
 
   get unstructured() {
-    return this.question.unstructured
+    return this.question.unstructured;
   }
 
   handlePatientSelection = (patient) => {
@@ -84,7 +85,6 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   };
 
   renderElement() {
-
     return (
       <Container fluid className="p-3" style={{ backgroundColor: '#f8f9fa' }}>
         <Row className="mb-4">
@@ -104,10 +104,12 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                 <Card.Title className="mb-3">Supplies</Card.Title>
                 <ListGroup variant="flush">
                   {this.supplies.map((supply, index) => (
-                    <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
-                      {supply.type}
-                      <Badge bg="primary" pill>
-                        {supply.quantity} {supply.reusable ? "(R)" : ""}
+                    <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center py-2">
+                      <span style={{ fontSize: supply.type.length > 15 ? '0.9rem' : '1rem' }}>
+                        {supply.type}
+                      </span>
+                      <Badge bg="primary" pill style={{ fontSize: '0.9rem', marginLeft: '10px' }}>
+                        {supply.quantity} {supply.reusable ? "(Reusable)" : ""}
                       </Badge>
                     </ListGroup.Item>
                   ))}
@@ -117,7 +119,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Col>
           {this.patients.map((patient, index) => (
             <Col md={4} key={index} className="mb-4">
-              <Card className="h-100 border-0 shadow-sm" >
+              <Card className="h-100 border-0 shadow-sm">
                 <Card.Body>
                   <Card.Title className="h4 mb-3">{patient.name}</Card.Title>
                   <Row className="mb-3">
@@ -126,18 +128,18 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                         Picture Placeholder
                       </div>
                     </Col>
-                    <Col md={5} className="d-flex">
-                      <Card className="w-100 border-0" style={{backgroundColor: '#e7f1ff'}}>
-                        <Card.Body className="p-2">
-                          <Card.Title className="h6 mb-2">Vitals</Card.Title>
+                    <Col md={5} className="d-flex flex-column">
+                      <Card className="w-100 border-0 flex-grow-1" style={{ backgroundColor: '#e7f1ff' }}>
+                        <Card.Body className="p-2 d-flex flex-column justify-content-center">
+                          <Card.Title className="h4 mb-2">Vitals</Card.Title>
                           {this.renderVitals(patient.vitals)}
                         </Card.Body>
                       </Card>
                     </Col>
                   </Row>
-                  <Card className="mb-0 border-0" style={{backgroundColor: '#fff0f0'}}>
+                  <Card className="mb-0 border-0" style={{ backgroundColor: '#fff0f0' }}>
                     <Card.Body className="p-3">
-                      <Card.Title className="h6 mb-2">Injuries</Card.Title>
+                      <Card.Title className="h4 mb-2">Injuries</Card.Title>
                       {this.renderInjuries(patient.injuries)}
                     </Card.Body>
                   </Card>
@@ -159,7 +161,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       spo2: <FaPercent />,
       mental_status: <FaBrain />
     };
-  
+
     const vitalNames = {
       avpu: "AVPU Scale",
       ambulatory: "Ambulatory Status",
@@ -168,20 +170,20 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       spo2: "Blood Oxygen Saturation (SPO2)",
       mental_status: "Mental Status"
     };
-  
+
     return (
-      <div className="d-flex flex-column gap-1 overflow-auto" style={{maxHeight: '150px'}}>
+      <div className="d-flex flex-column gap-1 overflow-auto" style={{ maxHeight: '100%' }}>
         {Object.entries(vitals).map(([key, value]) => (
           <div key={key} className="d-flex align-items-center">
             <OverlayTrigger
-              placement="left"
+              placement="top"
               overlay={
-                <Tooltip id={`tooltip-${key}`} style={{position: 'absolute', left: '100%', marginLeft: '5px'}}>
+                <Tooltip id={`tooltip-${key}`}>
                   {vitalNames[key] || key}
                 </Tooltip>
               }
             >
-              <span className="me-2 text-center" style={{width: '20px', cursor: 'help'}}>
+              <span className="me-2 text-center" style={{ width: '20px', cursor: 'help', display: 'inline-block' }}>
                 {vitalIcons[key] || key}
               </span>
             </OverlayTrigger>
@@ -195,7 +197,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   renderInjuries(injuries) {
     return injuries.map((injury, i) => (
       <div key={i} className="mb-2">
-        <strong>{injury.location} {injury.name}</strong>
+        <strong>{this.capitalizeWords(injury.location)} {injury.name}</strong>
         <br />
         <small>
           Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{injury.severity}</Badge>
@@ -206,6 +208,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     ));
   }
 
+  capitalizeWords = (str) => {
+    return str.replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   getVitalBadgeColor(key, value) {
     // TODO Add logic here
     return "info";
@@ -213,7 +219,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
 
   getInjurySeverityColor(severity) {
     switch (severity.toLowerCase()) {
-      case 'extreme': return 'danger'
+      case 'extreme': return 'danger';
       case 'major': return 'danger';
       case 'substantial': return 'warning';
       case 'moderate': return 'info';

@@ -163,7 +163,6 @@ export function ReviewTextBasedPage() {
                         >
                             &larr; Back to Config Selection
                         </Button>
-                        <span className="fs-5 fw-bold" style={{ color: HEADER_COLOR }}>Selected Configuration: {selectedConfig.name}</span>
                     </Container>
                     <div className="flex-grow-1 overflow-auto">
                         <Survey model={selectedConfig} onComplete={handleSurveyComplete}/>
