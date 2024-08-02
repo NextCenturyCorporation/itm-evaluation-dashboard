@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Row, Col, Card, ListGroup, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Container, Row, Col, Card, ListGroup, Badge } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { FaHeartbeat, FaLungs, FaBrain, FaWalking, FaPercent, FaEye } from 'react-icons/fa';
@@ -58,9 +58,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     super(props);
     this.state = {
       selectedPatient: null,
-      showToolTip: {}
     };
-    this.targets = {};
   }
 
   get question() {
@@ -132,7 +130,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                       <Card className="w-100 border-0 flex-grow-1" style={{ backgroundColor: '#e7f1ff' }}>
                         <Card.Body className="p-2 d-flex flex-column justify-content-center">
                           <Card.Title className="h4 mb-2">Vitals</Card.Title>
-                          {this.renderVitals(patient.vitals)}
+                          {this.renderVitals(patient, patient.vitals)}
                         </Card.Body>
                       </Card>
                     </Col>
@@ -152,7 +150,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     );
   }
 
-  renderVitals(vitals) {
+  renderVitals(patient, vitals) {
     const vitalIcons = {
       avpu: <FaEye />,
       ambulatory: <FaWalking />,
@@ -172,27 +170,19 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     };
 
     return (
-      <div className="d-flex flex-column gap-1 overflow-auto" style={{ maxHeight: '100%' }}>
+      <div className="d-flex flex-column gap-1 overflow-hidden" style={{ maxHeight: '100%' }}>
         {Object.entries(vitals).map(([key, value]) => (
           <div key={key} className="d-flex align-items-center">
-            <OverlayTrigger
-              placement="top"
-              overlay={
-                <Tooltip id={`tooltip-${key}`}>
-                  {vitalNames[key] || key}
-                </Tooltip>
-              }
-            >
-              <span className="me-2 text-center" style={{ width: '20px', cursor: 'help', display: 'inline-block' }}>
+              <div style={{ width: '20px', marginRight: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 {vitalIcons[key] || key}
-              </span>
-            </OverlayTrigger>
+              </div>
             <Badge bg={this.getVitalBadgeColor(key, value)} className="fs-7">{value.toString()}</Badge>
           </div>
         ))}
       </div>
     );
   }
+
 
   renderInjuries(injuries) {
     return injuries.map((injury, i) => (
