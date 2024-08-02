@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, ListGroup, Badge } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { FaHeartbeat, FaLungs, FaBrain, FaWalking, FaPercent, FaEye } from 'react-icons/fa';
-
+import ZoomInIcon from '@material-ui/icons/ZoomIn';
 const CUSTOM_TYPE = "medicalScenario";
 
 export class MedicalScenarioModel extends Question {
@@ -122,8 +122,15 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                   <Card.Title className="h4 mb-3">{patient.name}</Card.Title>
                   <Row className="mb-3">
                     <Col md={7} className="d-flex mb-3 mb-md-0">
-                      <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded">
+                    <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px' }}>
                         Picture Placeholder
+                        <ZoomInIcon className="magnifying-glass" style={{
+                          position: 'absolute',
+                          bottom: '8px',
+                          left: '8px',
+                          fontSize: '24px',
+                          cursor: 'pointer'
+                        }} />
                       </div>
                     </Col>
                     <Col md={5} className="d-flex flex-column">
