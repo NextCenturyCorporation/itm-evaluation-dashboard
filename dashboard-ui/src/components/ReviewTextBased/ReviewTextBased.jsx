@@ -29,6 +29,11 @@ const customStyles = `
     margin-bottom: 15px;
     border-radius: 4px;
   }
+  body {
+    zoom: 0.8;
+    -moz-transform: scale(0.8);
+    -moz-transform-origin: 0 0;
+  }
 `;
 
 export function ReviewTextBasedPage() {

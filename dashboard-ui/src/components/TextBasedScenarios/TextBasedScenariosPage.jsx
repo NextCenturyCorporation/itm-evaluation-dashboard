@@ -130,7 +130,7 @@ class TextBasedScenariosPage extends Component {
         this.surveyData.scenarioTitle = this.survey.title
 
         for (const pageName in this.surveyData) {
-            const pageResponse= this.surveyData[pageName];
+            const pageResponse = this.surveyData[pageName];
             for (const scenario of this.state.scenarios) {
                 const scenarioIndex = this.state.scenarios.indexOf(scenario)
                 const page = this.survey.getPageByName(pageName)
@@ -251,15 +251,15 @@ class TextBasedScenariosPage extends Component {
         for (const scenario of scenarioConfigs.slice(1)) {
             config.pages = [...config.pages, ...scenario.pages];
         }*/
-    
+
         config.title = title;
-    
+
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
-    
+
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
-    
+
         this.setState({ currentConfig: this.survey });
     };
 
@@ -301,6 +301,15 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
+                <style>
+                    {`
+                        body {
+                        zoom: 0.8;
+                        -moz-transform: scale(0.8);
+                        -moz-transform-origin: 0 0;
+                        }
+                    `}
+                </style>
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
