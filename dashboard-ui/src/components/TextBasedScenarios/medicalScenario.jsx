@@ -35,6 +35,14 @@ export class MedicalScenarioModel extends Question {
   set patients(patients) {
     this.setPropertyValue("patients", patients);
   }
+
+  get events() {
+    return this.getPropertyValue("events");
+  }
+
+  set events(events) {
+    this.setPropertyValue("events", events);
+  }
 }
 
 Serializer.addClass(
@@ -42,7 +50,8 @@ Serializer.addClass(
   [
     { name: "unstructured", default: '' },
     { name: "supplies", default: [] },
-    { name: "patients", default: [] }
+    { name: "patients", default: [] },
+    { name: "events", default: [] }
   ],
   function () {
     return new MedicalScenarioModel("");
@@ -78,6 +87,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     return this.question.unstructured;
   }
 
+  get events() {
+    return this.question.events || [];
+  }
+
   handlePatientSelection = (patient) => {
     this.setState({ selectedPatient: patient });
     this.question.value = patient;
@@ -97,6 +110,21 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             </Card>
           </Col>
         </Row>
+
+        {/* Events Section */}
+        {this.events.length > 0 && (
+          <Row className="mb-4">
+            <Col>
+              <Card className="border-0 shadow-sm bg-info text-white new-event">
+                <Card.Body>
+                  <Card.Title className="h5">Latest Event</Card.Title>
+                  <Card.Text>{this.events[this.events.length - 1].message}</Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        )}
+
         <Row className="mb-4">
           <Col md={3}>
             <Card className="h-100 border-0 shadow-sm">
@@ -218,7 +246,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   };
 
   getVitalBadgeColor(key, value) {
-    // TODO Add logic here
+    // TODO: Add logic here
     return "info";
   }
 
@@ -280,5 +308,12 @@ const componentStyles = `
   }
   .card-body {
     overflow: visible !important;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .new-event {
+    animation: fadeIn 0.5s ease-out;
   }
 `;
