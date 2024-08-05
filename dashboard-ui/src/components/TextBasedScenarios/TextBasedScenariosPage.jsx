@@ -169,7 +169,6 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        console.log(scenario)
         /* TODO, all i need to do is get the proper alignment targets I should be using*/
         if (scenario.scenario_id.includes('DryRun')) {
             await this.calcScore(scenario, 'adept')
@@ -179,7 +178,6 @@ class TextBasedScenariosPage extends Component {
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
-        console.log(scenario)
         for (const [fieldName, fieldValue] of Object.entries(scenario)) {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
@@ -229,7 +227,7 @@ class TextBasedScenariosPage extends Component {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
                 const sessionId = session.data;
-                await this.submitResponses(scenario, scenarioNameToID[scenario.title], url, sessionId);
+                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
     
                 const getAlignmentData = async (targetId) => {
                     const response = await axios.get(`${url}${alignmentEndpoint}`, {
