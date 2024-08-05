@@ -181,9 +181,9 @@ class TextBasedScenariosPage extends Component {
                     const responseUrl = `${urlBase}/api/v1/response`
                     const responsePayload = {
                         "response": {
-                            "choice": question.response['choice'],
+                            "choice": question.response,
                             "justification": "justification",
-                            "probe_id": question.response['probe_id'],
+                            "probe_id": fieldName,
                             "scenario_id": scenarioID,
                         },
                         "session_id": sessionID
