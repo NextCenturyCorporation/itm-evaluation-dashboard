@@ -103,16 +103,18 @@ export class MedicalScenario extends SurveyQuestionElementBase {
               <Card.Body>
                 <Card.Title className="mb-3">Supplies</Card.Title>
                 <ListGroup variant="flush">
-                  {this.supplies.map((supply, index) => (
-                    <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center py-2">
-                      <span style={{ fontSize: supply.type.length > 15 ? '0.9rem' : '1rem' }}>
-                        {supply.type}
-                      </span>
-                      <Badge bg="primary" pill style={{ fontSize: '0.9rem', marginLeft: '10px' }}>
-                        {supply.quantity} {supply.reusable ? "(Reusable)" : ""}
-                      </Badge>
-                    </ListGroup.Item>
-                  ))}
+                  {this.supplies
+                    .filter(supply => supply.quantity > 0)
+                    .map((supply, index) => (
+                      <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center py-2">
+                        <span style={{ fontSize: supply.type.length > 15 ? '0.9rem' : '1rem' }}>
+                          {supply.type}
+                        </span>
+                        <Badge bg="primary" pill style={{ fontSize: '0.9rem', marginLeft: '10px' }}>
+                          {supply.quantity} {supply.reusable ? "(Reusable)" : ""}
+                        </Badge>
+                      </ListGroup.Item>
+                    ))}
                 </ListGroup>
               </Card.Body>
             </Card>
