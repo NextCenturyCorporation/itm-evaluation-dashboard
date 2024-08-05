@@ -28,25 +28,18 @@
                 {
                     "type": "radiogroup",
                     "name": "scenarioOrder",
-                    "title": "Moderator enter the order from participant log:",
+                    "title": "Pick a scenario:",
                     "isRequired": true,
                     "choices": [
-                     {
-                      "value": "[\"SoarTech Jungle\", \"Adept Jungle\", \"Adept Submarine\", \"SoarTech Submarine\"] ",
-                      "text": " 1 – ST Jungle, AD Jungle; AD Submarine, ST Submarine"
-                     },
-                     {
-                      "value": "[\"Adept Submarine\", \"SoarTech Submarine\", \"SoarTech Jungle\", \"Adept Jungle\"] ",
-                      "text": " 2 – AD Submarine, ST Submarine;  ST Jungle, AD Jungle "
-                     },
-                     {
-                      "value": "[\"SoarTech Desert\", \"Adept Desert\", \"Adept Urban\", \"SoarTech Urban\"] ",
-                      "text": " 3 - ST Desert, AD Desert; AD Urban, ST Urban"
-                     },
-                     {
-                      "value": "[\"Adept Urban\", \"SoarTech Urban\", \"SoarTech Desert\", \"Adept Desert\"] ",
-                      "text": " 4 – AD Urban, ST Urban; ST Desert, AD Desert"
-                     }
+                        "Urban VoL Fire Eval 1",
+                        "Urban VoL Fire Eval 2",
+                        "Urban VoL Fire Eval 3",
+                        "Urban QoL Fire Eval 1",
+                        "Urban QoL Fire Eval 2",
+                        "Urban QoL Fire Eval 3",
+                        "Shooter/Victim",
+                        "IED",
+                        "Fistfight"
                     ]
                    }
             ]

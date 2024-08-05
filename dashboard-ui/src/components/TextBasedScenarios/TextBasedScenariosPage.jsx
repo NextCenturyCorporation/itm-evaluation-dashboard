@@ -80,26 +80,30 @@ class TextBasedScenariosPage extends Component {
 
     introSurveyComplete = (survey) => {
         const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
-        const scenarioOrderArray = JSON.parse(scenarioOrderString);
+        //const scenarioOrderArray = JSON.parse(scenarioOrderString);
 
         // pull selected scenarios from prop
+        /* for multiple being concatenated onto each other. single for now
         const scenarioConfigs = scenarioOrderArray.map(scenarioName => {
-            const scenarioId = scenarioNameToID[scenarioName];
-            return this.props.textBasedConfigs[scenarioId];
+            return this.props.textBasedConfigs.find(config => 
+                config.name === scenarioName && config.eval === 'dre'
+            );
         });
+        */
+
+
+        let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config => 
+            config.name === scenarioOrderString && config.eval === 'dre'
+        )];
 
         this.setState({
-            scenarios: scenarioOrderArray,
+            scenarios: [scenarioOrderString],
             participantID: survey.data["Participant ID"],
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
         })
 
+        
         let title = ""
-        if (scenarioOrderArray.includes("SoarTech Desert")) {
-            title = "Desert/Urban Text Scenarios"
-        } else if (scenarioOrderArray.includes("SoarTech Jungle")) {
-            title = "Jungle/Submarine Text Scenarios"
-        }
         this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
     }
 
@@ -121,7 +125,7 @@ class TextBasedScenariosPage extends Component {
                     const questionValue = survey.valuesHash[questionName];
                     this.surveyData[pageName].questions[questionName] = {
                         response: questionValue,
-                        probe: survey.getPageByName(pageName).jsonObj.elements[index++].probe
+                        probe: survey.getPageByName(pageName).jsonObj.elements[index++]['probe_id']
                     };
                 });
             }
@@ -134,8 +138,9 @@ class TextBasedScenariosPage extends Component {
             for (const scenario of this.state.scenarios) {
                 const scenarioIndex = this.state.scenarios.indexOf(scenario)
                 const page = this.survey.getPageByName(pageName)
-                if (page && scenarioNameToID[scenario] === page['jsonObj']['scenario_id']) {
+                if (page && scenario === page['jsonObj']['scenario_name']) {
                     this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
+                    this.surveyDataByScenario[scenarioIndex]['scenario_id'] = page['jsonObj']['scenario_id']
                     this.surveyDataByScenario[scenarioIndex][pageName] = pageResponse;
                 }
             }
@@ -164,15 +169,17 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
+        console.log(scenario)
         /* TODO, all i need to do is get the proper alignment targets I should be using*/
-        if (scenario.title.includes('SoarTech')) {
-            await this.getSoarTechAlignment(scenario)
-        } else if (scenario.title.includes('Adept')) {
-            //await this.getAdeptAlignment(scenario)
+        if (scenario.scenario_id.includes('DryRun')) {
+            await this.calcScore(scenario, 'adept')
+        } else {
+            await this.calcScore(scenario, 'soartech')
         }
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
+        console.log(scenario)
         for (const [fieldName, fieldValue] of Object.entries(scenario)) {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
@@ -183,7 +190,7 @@ class TextBasedScenariosPage extends Component {
                         "response": {
                             "choice": question.response,
                             "justification": "justification",
-                            "probe_id": fieldName,
+                            "probe_id": question.probe,
                             "scenario_id": scenarioID,
                         },
                         "session_id": sessionID
@@ -199,42 +206,48 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    getAdeptAlignment = async (scenario) => {
-        /*
-        * Doesn't work for MRE anymore because most up to date adept server
-        * doesn't contain MRE scenarios in data/scenario
-        */
-        const adeptUrl = process.env.REACT_APP_ADEPT_URL
-
-        // THESE TARGETS NEED TO BE CHANGED
-        const highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH"
-        const lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW"
-        const session = await axios.post(`${adeptUrl}/api/v1/new_session`)
-        if (session.status == 200) {
-            const sessionId = session.data
-            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
-            const highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
-            scenario.highAlignmentData = highAlignmentData.data
-            const lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
-            scenario.lowAlignmentData = lowAlignmentData.data
-            scenario.serverSessionId = sessionId
+    calcScore = async (scenario, alignmentType) => {
+        let url, highTarget, lowTarget, sessionEndpoint, alignmentEndpoint;
+        
+        if (alignmentType === 'adept') {
+            url = process.env.REACT_APP_ADEPT_URL;
+            highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH";
+            lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW";
+            sessionEndpoint = '/api/v1/new_session';
+            alignmentEndpoint = '/api/v1/alignment/session';
+        } else if (alignmentType === 'soartech') {
+            url = process.env.REACT_APP_SOARTECH_URL;
+            highTarget = "maximization_high";
+            lowTarget = "maximization_low";
+            sessionEndpoint = '/api/v1/new_session?user_id=default_user';
+            alignmentEndpoint = '/api/v1/alignment/session';
+        } else {
+            throw new Error('Invalid alignment type');
         }
-    }
-
-    getSoarTechAlignment = async (scenario) => {
-        const stURL = process.env.REACT_APP_SOARTECH_URL
-        // may need to change these targets
-        const highTarget = "maximization_high"
-        const lowTarget = "maximization_low"
-        const session = await axios.post(`${stURL}/api/v1/new_session?user_id=default_user`)
-        if (session.status == 201) {
-            const sessionId = session.data
-            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], stURL, sessionId)
-            const highAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}`)
-            scenario.highAlignmentData = highAlignmentData.data
-            const lowAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}`)
-            scenario.lowAlignmentData = lowAlignmentData.data
-            scenario.serverSessionId = sessionId
+    
+        try {
+            const session = await axios.post(`${url}${sessionEndpoint}`);
+            if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
+                const sessionId = session.data;
+                await this.submitResponses(scenario, scenarioNameToID[scenario.title], url, sessionId);
+    
+                const getAlignmentData = async (targetId) => {
+                    const response = await axios.get(`${url}${alignmentEndpoint}`, {
+                        params: {
+                            session_id: sessionId,
+                            target_id: targetId,
+                            ...( alignmentType === 'adept' ? { population: false } : {} )
+                        }
+                    });
+                    return response.data;
+                };
+    
+                scenario.highAlignmentData = await getAlignmentData(highTarget);
+                scenario.lowAlignmentData = await getAlignmentData(lowTarget);
+                scenario.serverSessionId = sessionId;
+            }
+        } catch (error) {
+            console.error(`Error in ${alignmentType} alignment:`, error);
         }
     }
 
