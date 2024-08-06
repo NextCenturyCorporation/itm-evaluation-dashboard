@@ -51,7 +51,7 @@ export function ReviewTextBasedPage() {
         * stored as ints. I.e if the scene was named '2' instead of 'scene 2'. Only occured in 
         * MRE Adept scenarios
         */
-        const stringProps = ['name', 'title', 'description']; // Add any other properties that should be strings
+        const stringProps = ['name', 'title', 'description'];
         Object.keys(obj).forEach(key => {
             if (stringProps.includes(key) && obj[key] !== null && obj[key] !== undefined) {
                 obj[key] = String(obj[key]);
