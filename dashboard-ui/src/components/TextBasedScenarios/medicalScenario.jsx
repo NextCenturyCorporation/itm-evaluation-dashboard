@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Card, ListGroup, Badge } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaBell } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
 const CUSTOM_TYPE = "medicalScenario";
@@ -111,19 +111,27 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Col>
         </Row>
 
-        {/* Events Section */}
         {this.events.length > 0 && (
-          <Row className="mb-4">
-            <Col>
-              <Card className="border-0 shadow-sm bg-info text-white new-event">
-                <Card.Body>
-                  <Card.Title className="h5">Latest Event</Card.Title>
-                  <Card.Text>{this.events[this.events.length - 1].message}</Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        )}
+        <Row className="mb-4">
+          <Col>
+            <Card className="border-0 shadow-sm new-event event-card">
+              <Card.Body className="p-3">
+                <div className="d-flex align-items-center">
+                  <div className="event-icon-wrapper me-3">
+                    <FaBell className="event-icon" />
+                  </div>
+                  <div className="flex-grow-1">
+                    <Card.Text className="mb-1 event-message">{this.events[this.events.length - 1].message}</Card.Text>
+                    <small className="text-muted">
+                      {new Date().toLocaleTimeString()}
+                    </small>
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
 
         <Row className="mb-4">
           <Col md={3}>
@@ -313,7 +321,48 @@ const componentStyles = `
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+  }
+
   .new-event {
-    animation: fadeIn 0.5s ease-out;
+    animation: fadeIn 1.5s ease-out, pulse 2s infinite;
+  }
+
+  .event-card {
+    background-color: #e8f4fd;
+    border-left: 4px solid #007bff;
+    background-image: linear-gradient(45deg, #f1f9ff 25%, transparent 25%, transparent 75%, #f1f9ff 75%, #f1f9ff),
+                      linear-gradient(45deg, #f1f9ff 25%, transparent 25%, transparent 75%, #f1f9ff 75%, #f1f9ff);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+  }
+
+  .event-icon-wrapper {
+    background-color: #007bff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .event-icon {
+    color: white;
+    font-size: 1.2rem;
+  }
+
+  .event-message {
+    font-size: 1.1rem;
+    color: #333;
+  }
+
+  .text-muted {
+    font-size: 0.9rem;
   }
 `;
