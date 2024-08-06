@@ -43,16 +43,38 @@ export function ReviewTextBasedPage() {
     const handleSurveyComplete = (sender) => {
         const results = sender.data;
         console.log("Survey results:", results);
-      };
+    };
+
+    const ensureStringProperties = (obj) => {
+        /*
+        * Fix to weird bug phi found. Some values that should be stored as strings were being
+        * stored as ints. I.e if the scene was named '2' instead of 'scene 2'. Only occured in 
+        * MRE Adept scenarios
+        */
+        const stringProps = ['name', 'title', 'description']; // Add any other properties that should be strings
+        Object.keys(obj).forEach(key => {
+            if (stringProps.includes(key) && obj[key] !== null && obj[key] !== undefined) {
+                obj[key] = String(obj[key]);
+            }
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                ensureStringProperties(obj[key]);
+            }
+        });
+        return obj;
+    };
 
     const handleConfigSelect = (configName) => {
         let config = JSON.parse(JSON.stringify(textBasedConfigs[configName]));
-        //config.showPrevButton = true;
+        config = ensureStringProperties(config);
 
         if (config) {
-            const surveyModel = new Model(config);
-            surveyModel.applyTheme(surveyTheme);
-            setSelectedConfig(surveyModel);
+            try {
+                const surveyModel = new Model(config);
+                surveyModel.applyTheme(surveyTheme);
+                setSelectedConfig(surveyModel);
+            } catch (error) {
+                console.error('Error creating survey model:', error);
+            }
         }
     };
 
@@ -171,7 +193,7 @@ export function ReviewTextBasedPage() {
                         </Button>
                     </Container>
                     <div className="flex-grow-1 overflow-auto">
-                        <Survey model={selectedConfig} onComplete={handleSurveyComplete}/>
+                        <Survey model={selectedConfig} onComplete={handleSurveyComplete} />
                     </div>
                 </>
             )}
