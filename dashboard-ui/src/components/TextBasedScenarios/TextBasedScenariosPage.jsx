@@ -92,7 +92,7 @@ class TextBasedScenariosPage extends Component {
         */
 
 
-        let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config => 
+        let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config =>
             config.name === scenarioOrderString && config.eval === 'dre'
         )];
 
@@ -102,7 +102,7 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
         })
 
-        
+
         let title = ""
         this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
     }
@@ -120,12 +120,14 @@ class TextBasedScenariosPage extends Component {
                 };
 
                 const pageQuestions = this.getPageQuestions(pageName);
-                let index = 0;
-                pageQuestions.forEach(questionName => {
+                pageQuestions.forEach((questionName, index) => {
                     const questionValue = survey.valuesHash[questionName];
+                    const element = survey.getPageByName(pageName)?.jsonObj?.elements[index];
+                    console.log(element)
                     this.surveyData[pageName].questions[questionName] = {
                         response: questionValue,
-                        probe: survey.getPageByName(pageName).jsonObj.elements[index++]['probe_id']
+                        probe: element?.probe_id || '',
+                        question_mapping: element?.question_mapping || {}
                     };
                 });
             }
@@ -183,17 +185,19 @@ class TextBasedScenariosPage extends Component {
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
                 if (typeof question !== 'object') { continue }
                 if (question.response && !questionName.includes("Follow Up")) {
+                    const mapping = question.question_mapping[question.response]
                     const responseUrl = `${urlBase}/api/v1/response`
                     const responsePayload = {
                         "response": {
-                            "choice": question.response,
+                            "choice": mapping['choice'],
                             "justification": "justification",
-                            "probe_id": question.probe,
+                            "probe_id": mapping['probe_id'],
                             "scenario_id": scenarioID,
                         },
                         "session_id": sessionID
                     }
                     try {
+                        console.log(responsePayload)
                         const response = await axios.post(responseUrl, responsePayload)
                     } catch (err) {
                         console.log(err)
@@ -206,7 +210,7 @@ class TextBasedScenariosPage extends Component {
 
     calcScore = async (scenario, alignmentType) => {
         let url, highTarget, lowTarget, sessionEndpoint, alignmentEndpoint;
-        
+
         if (alignmentType === 'adept') {
             url = process.env.REACT_APP_ADEPT_URL;
             highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH";
@@ -215,31 +219,31 @@ class TextBasedScenariosPage extends Component {
             alignmentEndpoint = '/api/v1/alignment/session';
         } else if (alignmentType === 'soartech') {
             url = process.env.REACT_APP_SOARTECH_URL;
-            highTarget = "maximization_high";
-            lowTarget = "maximization_low";
+            highTarget = "79f47f55-qol-high";
+            lowTarget = "15d7b3ed-qol-low";
             sessionEndpoint = '/api/v1/new_session?user_id=default_user';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else {
             throw new Error('Invalid alignment type');
         }
-    
+
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
                 const sessionId = session.data;
                 await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
-    
+
                 const getAlignmentData = async (targetId) => {
                     const response = await axios.get(`${url}${alignmentEndpoint}`, {
                         params: {
                             session_id: sessionId,
                             target_id: targetId,
-                            ...( alignmentType === 'adept' ? { population: false } : {} )
+                            ...(alignmentType === 'adept' ? { population: false } : {})
                         }
                     });
                     return response.data;
                 };
-    
+
                 scenario.highAlignmentData = await getAlignmentData(highTarget);
                 scenario.lowAlignmentData = await getAlignmentData(lowTarget);
                 scenario.serverSessionId = sessionId;
