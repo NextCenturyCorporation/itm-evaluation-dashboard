@@ -38,21 +38,15 @@ export const scenarioMappings = {
     "Adept Submarine": adeptSubConfig
 }
 
-const scenarioNameToID = {
-    "Adept Submarine": "MetricsEval.MD6-Submarine",
-    "Adept Desert": "MetricsEval.MD5-Desert",
-    "Adept Urban": "MetricsEval.MD1-Urban",
-    "Adept Jungle": "MetricsEval.MD4-Jungle",
-    "SoarTech Urban": "urban-1",
-    "SoarTech Submarine": "submarine-1",
-    "SoarTech Desert": "desert-1",
-    "SoarTech Jungle": "jungle-1"
-}
-
 // wrapper makes it much easier to grab textbased configs and just pass them to existing class based component
 export function TextBasedScenariosPageWrapper(props) {
+    // grab configs
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    return <TextBasedScenariosPage {...props} textBasedConfigs={textBasedConfigs} />;
+
+    return <TextBasedScenariosPage 
+        {...props} 
+        textBasedConfigs={textBasedConfigs} 
+        />;
 }
 
 class TextBasedScenariosPage extends Component {
@@ -123,7 +117,6 @@ class TextBasedScenariosPage extends Component {
                 pageQuestions.forEach((questionName, index) => {
                     const questionValue = survey.valuesHash[questionName];
                     const element = survey.getPageByName(pageName)?.jsonObj?.elements[index];
-                    console.log(element)
                     this.surveyData[pageName].questions[questionName] = {
                         response: questionValue,
                         probe: element?.probe_id || '',
@@ -197,7 +190,6 @@ class TextBasedScenariosPage extends Component {
                         "session_id": sessionID
                     }
                     try {
-                        console.log(responsePayload)
                         const response = await axios.post(responseUrl, responsePayload)
                     } catch (err) {
                         console.log(err)
@@ -262,7 +254,7 @@ class TextBasedScenariosPage extends Component {
             ...scenarioConfigs[0],
             pages: [...scenarioConfigs[0].pages]
         };
-        /*
+        /* save for when we append 
         for (const scenario of scenarioConfigs.slice(1)) {
             config.pages = [...config.pages, ...scenario.pages];
         }*/

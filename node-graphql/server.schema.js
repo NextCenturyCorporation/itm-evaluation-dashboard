@@ -187,6 +187,7 @@ const typeDefs = gql`
     getAllSurveyConfigs: [JSON],
     getAllTextBasedConfigs: [JSON],
     getAllImageUrls: [JSON],
+    getAllTextBasedImages: [JSON],
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int
   }
@@ -295,6 +296,9 @@ const resolvers = {
     },
     getAllImages: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
+    },
+    getAllTextBasedImages: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedImages').find().toArray().then(result => {return result;})
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID

@@ -1,10 +1,11 @@
 import React from "react";
-import { Container, Row, Col, Card, ListGroup, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, ListGroup, Badge, Modal } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaBell } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
+
 const CUSTOM_TYPE = "medicalScenario";
 
 export class MedicalScenarioModel extends Question {
@@ -68,6 +69,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     super(props);
     this.state = {
       selectedPatient: null,
+      showModal: false,
+      selectedImage: null,
     };
   }
 
@@ -91,9 +94,12 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     return this.question.events || [];
   }
 
-  handlePatientSelection = (patient) => {
-    this.setState({ selectedPatient: patient });
-    this.question.value = patient;
+  handleImageClick = (patient) => {
+    this.setState({ showModal: true, selectedImage: patient.imgUrl, selectedPatient: patient});
+  };
+
+  handleCloseModal = () => {
+    this.setState({ showModal: false, selectedImage: null });
   };
 
   renderElement() {
@@ -162,15 +168,35 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                   <Card.Title className="h4 mb-3">{patient.name}</Card.Title>
                   <Row className="mb-3">
                     <Col md={7} className="d-flex mb-3 mb-md-0">
-                      <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px' }}>
-                        Picture Placeholder
-                        <ZoomInIcon className="magnifying-glass" style={{
-                          position: 'absolute',
-                          bottom: '8px',
-                          left: '8px',
-                          fontSize: '24px',
-                          cursor: 'pointer'
-                        }} />
+                      <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px', overflow: 'hidden' }}>
+                        {patient.imgUrl ? (
+                          <img
+                            src={`data:image/png;base64,${patient.imgUrl}`}
+                            alt={`${patient.name}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                            }}
+                          />
+                        ) : (
+                          "No image available"
+                        )}
+                        <ZoomInIcon
+                          className="magnifying-glass"
+                          style={{
+                            position: 'absolute',
+                            bottom: '8px',
+                            left: '8px',
+                            fontSize: '24px',
+                            cursor: 'pointer',
+                            zIndex: 1,
+                          }}
+                          onClick={() => this.handleImageClick(patient)}
+                        />
                       </div>
                     </Col>
                     <Col md={5} className="d-flex flex-column">
@@ -195,6 +221,21 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             </Col>
           ))}
         </Row>
+
+        <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.selectedPatient?.id}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {this.state.selectedImage && (
+              <img
+                src={`data:image/png;base64,${this.state.selectedImage}`}
+                alt="Patient"
+                style={{ width: '100%' }}
+              />
+            )}
+          </Modal.Body>
+        </Modal>
       </Container>
     );
   }
