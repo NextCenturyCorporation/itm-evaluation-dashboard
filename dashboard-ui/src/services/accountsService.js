@@ -7,8 +7,6 @@ import { InMemoryCache } from 'apollo-cache-inmemory'
 import {GRAPHQL_URL} from './config'
 import gql from 'graphql-tag';
 
-console.log("uri", GRAPHQL_URL, "1002");
-
 const httpLink = createHttpLink({
   uri: GRAPHQL_URL
 });
