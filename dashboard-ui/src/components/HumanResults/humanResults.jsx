@@ -6,6 +6,14 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import './humanResults.css';
+import Select from 'react-select';
+
+const get_eval_name_numbers = gql`
+    query getEvalNameNumbers{
+        getEvalNameNumbers
+  }`;
+let evalOptions = [];
+
 
 const GET_HUMAN_RESULTS = gql`
     query getAllRawSimData {
@@ -21,14 +29,29 @@ const ENV_MAP = {
 }
 
 export default function HumanResults() {
+    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
     });
     const [dataByScene, setDataByScene] = React.useState(null);
+    const [selectedEval, setSelectedEval] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
     const [selectedPID, setSelectedPID] = React.useState(null);
     const [teamSelected, setSelectedTeam] = React.useState('adept');
+
+    React.useEffect(() => {
+        evalOptions = [];
+        if (evalIdOptionsRaw?.getEvalNameNumbers) { 
+            evalOptions.push({value: 999, label:  "All"})
+            for (const result of evalIdOptionsRaw.getEvalNameNumbers) {
+                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+
+            }
+        }
+         
+    }, [evalIdOptionsRaw, evalOptions]);
 
     React.useEffect(() => {
         if (data?.getAllRawSimData && data?.getAllSimAlignment) {
@@ -122,22 +145,39 @@ export default function HumanResults() {
         }
     };
 
+    function selectEvaluation(target){
+        setSelectedEval(target.value);
+        setSelectedPID(null);
+    }
+
     return (<div className="human-results">
         <div className="hr-nav">
             {dataByScene &&
+                <div className="selection-section">
+                    <h3 className='sidebar-title'>Evaluation</h3>
+                    <Select
+                        onChange={selectEvaluation}
+                        options={evalOptions}
+                        placeholder="Select Evaluation"
+                    />
+                </div>}
+            {selectedEval &&                          
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Environment</span>
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
-                        {Object.keys(dataByScene).map((item) =>
-                            <ListItem id={"scene_" + item} key={"scene_" + item}
-                                button
-                                selected={selectedScene === item}
-                                onClick={() => { setSelectedScene(item); setSelectedPID(null); }}>
-                                <ListItemText primary={ENV_MAP[item]} />
-                            </ListItem>
-                        )}
+                        {
+                            
+                            Object.keys(dataByScene).map((item) =>
+                                <ListItem id={"scene_" + item} key={"scene_" + item}
+                                    button
+                                    selected={selectedScene === item}
+                                    onClick={() => { setSelectedScene(item); setSelectedPID(null); }}>
+                                    <ListItemText primary={ENV_MAP[item]} />
+                                </ListItem>
+                            )
+                        }
                     </List>
                 </div>}
             {selectedScene &&
@@ -147,12 +187,18 @@ export default function HumanResults() {
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {Object.keys(dataByScene[selectedScene]).map((item) =>
-                            <ListItem id={"pid_" + item} key={"pid_" + item}
-                                button
-                                selected={selectedPID === item}
-                                onClick={() => setSelectedPID(item)}>
-                                <ListItemText primary={item} />
-                            </ListItem>
+                            {
+                                if (dataByScene[selectedScene][item].evalNumber === selectedEval || selectedEval === 999){
+                                    return (
+                                    <ListItem id={"pid_" + item} key={"pid_" + item}
+                                        button
+                                        selected={selectedPID === item}
+                                        onClick={() => setSelectedPID(item)}>
+                                        <ListItemText primary={item} />
+                                    </ListItem>)
+                            
+                                }
+                            }                            
                         )}
                     </List>
                 </div>}
