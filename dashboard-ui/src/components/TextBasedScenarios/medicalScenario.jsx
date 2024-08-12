@@ -261,6 +261,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       conscious: "Conscious"
     };
 
+    if (!vitals) {
+      return <div>No vitals data available</div>;
+    }
+
     return (
       <div className="d-flex flex-column gap-1">
         {Object.entries(vitals).map(([key, value]) => (
@@ -300,6 +304,11 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   }
 
   getInjurySeverityColor(severity) {
+
+    if (!severity) {
+      return 'secondary';
+    }
+
     switch (severity.toLowerCase()) {
       case 'extreme': return 'danger';
       case 'major': return 'danger';
