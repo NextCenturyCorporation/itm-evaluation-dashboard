@@ -26,7 +26,6 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`
 
-
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
     "SoarTech Urban": stUrbanConfig,
@@ -58,7 +57,8 @@ class TextBasedScenariosPage extends Component {
             participantID: "",
             vrEnvCompleted: [],
             startTime: null,
-            scenarios: []
+            scenarios: [],
+            sanitizedData: null
         };
 
         this.surveyData = {};
@@ -74,6 +74,7 @@ class TextBasedScenariosPage extends Component {
 
     introSurveyComplete = (survey) => {
         const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
+
         //const scenarioOrderArray = JSON.parse(scenarioOrderString);
 
         // pull selected scenarios from prop
@@ -84,8 +85,7 @@ class TextBasedScenariosPage extends Component {
             );
         });
         */
-
-
+        
         let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config =>
             config.name === scenarioOrderString && config.eval === 'dre'
         )];
@@ -96,10 +96,22 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
         })
 
-
         let title = ""
         this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
     }
+
+    sanitizeKeys = (obj) => {
+        if (Array.isArray(obj)) {
+          return obj.map(this.sanitizeKeys);
+        } else if (obj !== null && typeof obj === 'object') {
+          return Object.keys(obj).reduce((acc, key) => {
+            const newKey = key.replace(/\./g, '');
+            acc[newKey] = this.sanitizeKeys(obj[key]);
+            return acc;
+          }, {});
+        }
+        return obj;
+    };
 
     uploadResults = async (survey) => {
         this.timerHelper();
@@ -150,12 +162,14 @@ class TextBasedScenariosPage extends Component {
             scenario.startTime = this.state.startTime
         }
 
+        const sanitizedData = this.sanitizeKeys(this.surveyDataByScenario);
+
         // add alignment data for each of the scenarios
-        for (const scenario of this.surveyDataByScenario) {
+        for (const scenario of sanitizedData) {
             await this.getAlignmentScore(scenario)
         }
 
-        this.setState({ uploadData: true }, () => {
+        this.setState({ uploadData: true, sanitizedData }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
             }
@@ -164,7 +178,6 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        /* TODO, all i need to do is get the proper alignment targets I should be using*/
         if (scenario.scenario_id.includes('DryRun')) {
             await this.calcScore(scenario, 'adept')
         } else {
@@ -254,10 +267,6 @@ class TextBasedScenariosPage extends Component {
             ...scenarioConfigs[0],
             pages: [...scenarioConfigs[0].pages]
         };
-        /* save for when we append 
-        for (const scenario of scenarioConfigs.slice(1)) {
-            config.pages = [...config.pages, ...scenario.pages];
-        }*/
 
         config.title = title;
 
@@ -338,7 +347,7 @@ class TextBasedScenariosPage extends Component {
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
                                     uploadSurveyResults({
-                                        variables: { results: this.surveyDataByScenario }
+                                        variables: { results: this.state.sanitizedData }
                                     });
                                     this.setState({ uploadData: false });
                                 }}></button>
