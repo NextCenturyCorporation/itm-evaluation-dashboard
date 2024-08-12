@@ -9,8 +9,8 @@ import './humanResults.css';
 import Select from 'react-select';
 
 const get_eval_name_numbers = gql`
-    query getEvalNameNumbers{
-        getEvalNameNumbers
+    query getEvalIdsForHumandResults{
+        getEvalIdsForHumandResults
   }`;
 let evalOptions = [];
 
@@ -43,9 +43,9 @@ export default function HumanResults() {
 
     React.useEffect(() => {
         evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalNameNumbers) { 
+        if (evalIdOptionsRaw?.getEvalIdsForHumandResults) { 
             evalOptions.push({value: 999, label:  "All"})
-            for (const result of evalIdOptionsRaw.getEvalNameNumbers) {
+            for (const result of evalIdOptionsRaw.getEvalIdsForHumandResults) {
                 evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
 
             }
