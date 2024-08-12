@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
-import { Model } from 'survey-core'
+import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
 import adeptJungleConfig from './adeptJungleConfig.json';
 import adeptSubConfig from './adeptSubConfig.json';
@@ -11,7 +11,6 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import introConfig from './introConfig.json'
-import problemProbes from './problemProbes.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
@@ -19,6 +18,8 @@ import { AdeptVitals } from './adeptTemplate'
 import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
+import { MedicalScenario } from './medicalScenario';
+import { useSelector } from 'react-redux';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -36,28 +37,28 @@ export const scenarioMappings = {
     "Adept Submarine": adeptSubConfig
 }
 
-const scenarioNameToID = {
-    "Adept Submarine": "MetricsEval.MD6-Submarine",
-    "Adept Desert": "MetricsEval.MD5-Desert",
-    "Adept Urban": "MetricsEval.MD1-Urban",
-    "Adept Jungle": "MetricsEval.MD4-Jungle",
-    "SoarTech Urban": "urban-1",
-    "SoarTech Submarine": "submarine-1",
-    "SoarTech Desert": "desert-1",
-    "SoarTech Jungle": "jungle-1"
-}
-class TextBasedScenariosPage extends Component {
+// wrapper makes it much easier to grab textbased configs and just pass them to existing class based component
+export function TextBasedScenariosPageWrapper(props) {
+    // grab configs
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
 
+    return <TextBasedScenariosPage 
+        {...props} 
+        textBasedConfigs={textBasedConfigs} 
+        />;
+}
+
+class TextBasedScenariosPage extends Component {
     constructor(props) {
         super(props);
-
         this.state = {
             currentConfig: null,
             uploadData: false,
             participantID: "",
             vrEnvCompleted: [],
             startTime: null,
-            scenarios: []
+            scenarios: [],
+            sanitizedData: null
         };
 
         this.surveyData = {};
@@ -73,29 +74,44 @@ class TextBasedScenariosPage extends Component {
 
     introSurveyComplete = (survey) => {
         const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
-        const scenarioOrderArray = JSON.parse(scenarioOrderString);
+
+        //const scenarioOrderArray = JSON.parse(scenarioOrderString);
+
+        // pull selected scenarios from prop
+        /* for multiple being concatenated onto each other. single for now
+        const scenarioConfigs = scenarioOrderArray.map(scenarioName => {
+            return this.props.textBasedConfigs.find(config => 
+                config.name === scenarioName && config.eval === 'dre'
+            );
+        });
+        */
+        
+        let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config =>
+            config.name === scenarioOrderString && config.eval === 'dre'
+        )];
 
         this.setState({
-            scenarios: scenarioOrderArray,
+            scenarios: [scenarioOrderString],
             participantID: survey.data["Participant ID"],
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
         })
 
-        const selectedScenarios = []
-        for (const scenario of scenarioOrderArray) {
-            // make deep copies of json files to be sure the originals are not unintentionally tampered with
-            selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
-        }
-
         let title = ""
-        if (scenarioOrderArray.includes("SoarTech Desert")) {
-            title = "Desert/Urban Text Scenarios"
-        } else if (scenarioOrderArray.includes("SoarTech Jungle")) {
-            title = "Jungle/Submarine Text Scenarios"
-        }
-        this.loadSurveyConfig(selectedScenarios, title !== "" ? title : "")
+        this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
     }
 
+    sanitizeKeys = (obj) => {
+        if (Array.isArray(obj)) {
+          return obj.map(this.sanitizeKeys);
+        } else if (obj !== null && typeof obj === 'object') {
+          return Object.keys(obj).reduce((acc, key) => {
+            const newKey = key.replace(/\./g, '');
+            acc[newKey] = this.sanitizeKeys(obj[key]);
+            return acc;
+          }, {});
+        }
+        return obj;
+    };
 
     uploadResults = async (survey) => {
         this.timerHelper();
@@ -110,12 +126,13 @@ class TextBasedScenariosPage extends Component {
                 };
 
                 const pageQuestions = this.getPageQuestions(pageName);
-                let index = 0;
-                pageQuestions.forEach(questionName => {
+                pageQuestions.forEach((questionName, index) => {
                     const questionValue = survey.valuesHash[questionName];
+                    const element = survey.getPageByName(pageName)?.jsonObj?.elements[index];
                     this.surveyData[pageName].questions[questionName] = {
                         response: questionValue,
-                        probe: survey.getPageByName(pageName).jsonObj.elements[index++].probe
+                        probe: element?.probe_id || '',
+                        question_mapping: element?.question_mapping || {}
                     };
                 });
             }
@@ -124,13 +141,14 @@ class TextBasedScenariosPage extends Component {
         this.surveyData.scenarioTitle = this.survey.title
 
         for (const pageName in this.surveyData) {
-            const pageData = this.surveyData[pageName];
-
+            const pageResponse = this.surveyData[pageName];
             for (const scenario of this.state.scenarios) {
                 const scenarioIndex = this.state.scenarios.indexOf(scenario)
-                if (pageName.includes(scenario) || Object.values(pageData).some(value => value?.toString().includes(scenario))) {
+                const page = this.survey.getPageByName(pageName)
+                if (page && scenario === page['jsonObj']['scenario_name']) {
                     this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
-                    this.surveyDataByScenario[scenarioIndex][pageName] = pageData;
+                    this.surveyDataByScenario[scenarioIndex]['scenario_id'] = page['jsonObj']['scenario_id']
+                    this.surveyDataByScenario[scenarioIndex][pageName] = pageResponse;
                 }
             }
         }
@@ -144,12 +162,14 @@ class TextBasedScenariosPage extends Component {
             scenario.startTime = this.state.startTime
         }
 
+        const sanitizedData = this.sanitizeKeys(this.surveyDataByScenario);
+
         // add alignment data for each of the scenarios
-        for (const scenario of this.surveyDataByScenario) {
+        for (const scenario of sanitizedData) {
             await this.getAlignmentScore(scenario)
         }
 
-        this.setState({ uploadData: true }, () => {
+        this.setState({ uploadData: true, sanitizedData }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
             }
@@ -158,63 +178,11 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        this.mapAnswers(scenario)
-        if (scenario.title.includes('SoarTech')) {
-            await this.getSoarTechAlignment(scenario)
-        } else if (scenario.title.includes('Adept')) {
-            await this.getAdeptAlignment(scenario)
+        if (scenario.scenario_id.includes('DryRun')) {
+            await this.calcScore(scenario, 'adept')
+        } else {
+            await this.calcScore(scenario, 'soartech')
         }
-    }
-
-    mapAnswers = (scenario) => {
-        const scenarioTitle = scenario.title
-        const scenarioConfig = scenarioMappings[scenarioTitle];
-        if (!scenarioConfig) { return };
-
-        for (const [fieldName, fieldValue] of Object.entries(scenario)) {
-            if (fieldValue && fieldValue.questions) {
-                for (const [questionName, question] of Object.entries(fieldValue.questions)) {
-                    if (question && question.probe) {
-                        const page = scenarioConfig.pages.find(p => p.name === fieldName);
-                        if (page) {
-                            const pageQuestion = page.elements.find(e => e.name === questionName);
-                            if (pageQuestion) {
-                                try {
-                                    const indexOfAnswer = pageQuestion.choices.indexOf(question.response);
-                                    let choice;
-                                    if (scenarioTitle.startsWith("Adept")) {
-                                        choice = `${question.probe}.${String.fromCharCode(65 + indexOfAnswer)}`;
-                                    } else {
-                                        choice = `choice-${indexOfAnswer}`;
-                                    }
-                                    question.choice = choice;
-                                } catch (err) {
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    isProblemProbe = (question, scenarioTitle) => {
-        //Check if a probe is a known problem probe and get the mapping if it is.
-        //problem probes specific to this scenario
-        const scenarioProblemProbes = problemProbes[scenarioTitle]
-        if (!scenarioProblemProbes) { return false }
-        return scenarioProblemProbes[question['probe']]
-    }
-
-    fixProblemProbe = (question, mapping) => {
-        // tries to map user choice on problem probe to valid choice id if possible
-        const mappedChoice = mapping[question['choice']]
-        if (mappedChoice) {
-            question['choice'] = mappedChoice
-            return true
-        }
-        return false
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
@@ -222,17 +190,14 @@ class TextBasedScenariosPage extends Component {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
                 if (typeof question !== 'object') { continue }
-                if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
-                    const problemProbe = this.isProblemProbe(question, scenario.title)
-                    if (problemProbe) {
-                        if (!this.fixProblemProbe(question, problemProbe)) { continue }
-                    }
+                if (question.response && !questionName.includes("Follow Up")) {
+                    const mapping = question.question_mapping[question.response]
                     const responseUrl = `${urlBase}/api/v1/response`
                     const responsePayload = {
                         "response": {
-                            "choice": question.choice,
+                            "choice": mapping['choice'],
                             "justification": "justification",
-                            "probe_id": question.probe,
+                            "probe_id": mapping['probe_id'],
                             "scenario_id": scenarioID,
                         },
                         "session_id": sessionID
@@ -248,35 +213,48 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    getAdeptAlignment = async (scenario) => {
-        const adeptUrl = process.env.REACT_APP_ADEPT_URL
-        const highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH"
-        const lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW"
-        const session = await axios.post(`${adeptUrl}/api/v1/new_session`)
-        if (session.status == 200) {
-            const sessionId = session.data
-            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
-            const highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
-            scenario.highAlignmentData = highAlignmentData.data
-            const lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
-            scenario.lowAlignmentData = lowAlignmentData.data
-            scenario.serverSessionId = sessionId
-        }
-    }
+    calcScore = async (scenario, alignmentType) => {
+        let url, highTarget, lowTarget, sessionEndpoint, alignmentEndpoint;
 
-    getSoarTechAlignment = async (scenario) => {
-        const stURL = process.env.REACT_APP_SOARTECH_URL
-        const highTarget = "maximization_high"
-        const lowTarget = "maximization_low"
-        const session = await axios.post(`${stURL}/api/v1/new_session?user_id=default_user`)
-        if (session.status == 201) {
-            const sessionId = session.data
-            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], stURL, sessionId)
-            const highAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}`)
-            scenario.highAlignmentData = highAlignmentData.data
-            const lowAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}`)
-            scenario.lowAlignmentData = lowAlignmentData.data
-            scenario.serverSessionId = sessionId
+        if (alignmentType === 'adept') {
+            url = process.env.REACT_APP_ADEPT_URL;
+            highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH";
+            lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW";
+            sessionEndpoint = '/api/v1/new_session';
+            alignmentEndpoint = '/api/v1/alignment/session';
+        } else if (alignmentType === 'soartech') {
+            url = process.env.REACT_APP_SOARTECH_URL;
+            highTarget = "79f47f55-qol-high";
+            lowTarget = "15d7b3ed-qol-low";
+            sessionEndpoint = '/api/v1/new_session?user_id=default_user';
+            alignmentEndpoint = '/api/v1/alignment/session';
+        } else {
+            throw new Error('Invalid alignment type');
+        }
+
+        try {
+            const session = await axios.post(`${url}${sessionEndpoint}`);
+            if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
+                const sessionId = session.data;
+                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
+
+                const getAlignmentData = async (targetId) => {
+                    const response = await axios.get(`${url}${alignmentEndpoint}`, {
+                        params: {
+                            session_id: sessionId,
+                            target_id: targetId,
+                            ...(alignmentType === 'adept' ? { population: false } : {})
+                        }
+                    });
+                    return response.data;
+                };
+
+                scenario.highAlignmentData = await getAlignmentData(highTarget);
+                scenario.lowAlignmentData = await getAlignmentData(lowTarget);
+                scenario.serverSessionId = sessionId;
+            }
+        } catch (error) {
+            console.error(`Error in ${alignmentType} alignment:`, error);
         }
     }
 
@@ -284,22 +262,18 @@ class TextBasedScenariosPage extends Component {
         this.uploadResults(survey);
     }
 
-    loadSurveyConfig = (selectedScenarios, title) => {
-        let config = selectedScenarios[0]
+    loadSurveyConfig = (scenarioConfigs, title) => {
+        let config = {
+            ...scenarioConfigs[0],
+            pages: [...scenarioConfigs[0].pages]
+        };
 
-        for (const scenario of selectedScenarios.slice(1)) {
-            config.pages = (config.pages).concat(scenario.pages)
-        }
-
-        config.title = title
+        config.title = title;
 
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
 
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
-        this.survey.onComplete.add(this.onSurveyComplete);
-
-        // function for uploading data
         this.survey.onComplete.add(this.onSurveyComplete);
 
         this.setState({ currentConfig: this.survey });
@@ -343,6 +317,15 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
+                <style>
+                    {`
+                        body {
+                        zoom: 0.8;
+                        -moz-transform: scale(0.8);
+                        -moz-transform-origin: 0 0;
+                        }
+                    `}
+                </style>
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
@@ -364,22 +347,24 @@ class TextBasedScenariosPage extends Component {
                                 <button ref={this.uploadButtonRef} onClick={(e) => {
                                     e.preventDefault();
                                     uploadSurveyResults({
-                                        variables: { results: this.surveyDataByScenario }
+                                        variables: { results: this.state.sanitizedData }
                                     });
-                                    // uploads data 
                                     this.setState({ uploadData: false });
                                 }}></button>
                             </div>
                         )}
                     </Mutation>
-                )
-                }
+                )}
             </>
         )
     }
 }
 
 export default TextBasedScenariosPage;
+
+ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
+    return React.createElement(MedicalScenario, props)
+})
 
 ReactQuestionFactory.Instance.registerQuestion("adeptVitals", (props) => {
     return React.createElement(AdeptVitals, props)

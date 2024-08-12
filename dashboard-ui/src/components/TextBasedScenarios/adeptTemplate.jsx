@@ -106,9 +106,9 @@ export class AdeptVitals extends SurveyQuestionElementBase {
                                         <Col xs={6} className="px-2">
                                             <h6>Vitals</h6>
                                             <ListGroup style={textStyle}>
-                                                {patient.vitals.map(vital => (
-                                                    <ListGroup.Item key={vital.type}>
-                                                        {vital.type}: {vital.value.toString()}
+                                                {Object.entries(patient.vitals).map(([key, value]) => (
+                                                    <ListGroup.Item key={key}>
+                                                        {key}: {value.toString()}
                                                     </ListGroup.Item>
                                                 ))}
                                             </ListGroup>

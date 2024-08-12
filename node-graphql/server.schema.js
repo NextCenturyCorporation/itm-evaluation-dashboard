@@ -185,7 +185,9 @@ const typeDefs = gql`
     getEvalNameNumbers: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
+    getAllTextBasedConfigs: [JSON],
     getAllImageUrls: [JSON],
+    getAllTextBasedImages: [JSON],
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int
   }
@@ -295,6 +297,9 @@ const resolvers = {
     getAllImages: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
     },
+    getAllTextBasedImages: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedImages').find().toArray().then(result => {return result;})
+    },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
 
@@ -342,6 +347,9 @@ const resolvers = {
     },
     getAllImageUrls: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
+    },
+    getAllTextBasedConfigs: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedConfig').find().toArray().then(result => { return result; });
     },
     countHumanGroupFirst: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.humanGroupFirst": true });
