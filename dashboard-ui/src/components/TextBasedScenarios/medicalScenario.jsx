@@ -111,7 +111,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             <Card className="border-0 shadow-sm">
               <Card.Body className="p-4">
                 <Card.Title className="text-center mb-3 h4">Scenario</Card.Title>
-                <Card.Text className="text-center lead">{this.unstructured}</Card.Text>
+                <Card.Text className="lead" style={{textAlign: 'left'}}>{this.unstructured}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
