@@ -193,7 +193,8 @@ export class App extends React.Component {
     setupTextBasedConfig(data) {
         if (data && data.getAllTextBasedConfigs) {
             for (const config of data.getAllTextBasedConfigs) {
-                for (const page of config.pages) {
+                let tempConfig = JSON.parse(JSON.stringify(config))
+                for (const page of tempConfig.pages) {
                     for (const el of page.elements) {
                         if (Object.keys(el).includes("patients")) {
                             for (const patient of el.patients) {
@@ -205,7 +206,7 @@ export class App extends React.Component {
                         }
                     }
                 }
-                store.dispatch(addTextBasedConfig({ id: config._id, data: config }));
+                store.dispatch(addTextBasedConfig({ id: tempConfig._id, data: tempConfig }));
             }
         } else {
             console.warn("No text-based configs found in Mongo");
