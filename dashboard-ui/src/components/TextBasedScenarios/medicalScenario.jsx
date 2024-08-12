@@ -117,27 +117,20 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Col>
         </Row>
 
-        {this.events.length > 0 && (
-        <Row className="mb-4">
-          <Col>
-            <Card className="border-0 shadow-sm new-event event-card">
-              <Card.Body className="p-3">
-                <div className="d-flex align-items-center">
-                  <div className="event-icon-wrapper me-3">
-                    <FaBell className="event-icon" />
-                  </div>
-                  <div className="flex-grow-1">
-                    <Card.Text className="mb-1 event-message">{this.events[this.events.length - 1].message}</Card.Text>
-                    <small className="text-muted">
-                      {new Date().toLocaleTimeString()}
-                    </small>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
+        {this.events.slice().map((event, index) => (
+        <Card key={index} className={`border-0 shadow-sm event-card mb-3 ${index === 0 ? 'new-event' : ''}`}>
+          <Card.Body className="p-3">
+            <div className="d-flex align-items-center">
+              <div className="event-icon-wrapper me-3">
+                <FaBell className="event-icon" />
+              </div>
+              <div className="flex-grow-1">
+                <Card.Text className="mb-1 event-message">{event.message}</Card.Text>
+              </div>
+            </div>
+          </Card.Body>
+        </Card>
+      ))}
 
         <Row className="mb-4">
           <Col md={3}>
