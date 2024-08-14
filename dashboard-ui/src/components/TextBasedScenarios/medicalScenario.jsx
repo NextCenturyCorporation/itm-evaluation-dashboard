@@ -161,6 +161,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                   <Card.Title className="h4 mb-1">
                     {patient.name}
                   </Card.Title>
+                  {/* ST has demographics info that Adept doesn't */}
                   { patient.demographics.age && 
                   <Card.Subtitle className="mb-2 text-muted">
                     {patient.demographics.age} years old, {patient.demographics.sex == 'F' ? 'Female' : 'Male'}
@@ -289,11 +290,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       <div key={i} className="mb-2">
         <strong>{this.capitalizeWords(injury.location)} {injury.name}</strong>
         <br />
-        <small>
-          Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{injury.severity}</Badge>
-          {' '}
-          Status: <Badge bg="secondary">{injury.status}</Badge>
-        </small>
+          Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{this.capitalizeWords(injury.severity)}</Badge>
       </div>
     ));
   }
