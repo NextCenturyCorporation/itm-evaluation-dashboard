@@ -158,9 +158,17 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             <Col md={4} key={index} className="mb-4">
               <Card className="h-100 border-0 shadow-sm">
                 <Card.Body style={{ overflow: 'visible' }}>
-                  <Card.Title className="h4 mb-3">
-                    {patient.id}
+                  <Card.Title className="h4 mb-1">
+                    {patient.name}
                   </Card.Title>
+                  { patient.demographics.age && 
+                  <Card.Subtitle className="mb-2 text-muted">
+                    {patient.demographics.age} years old, {patient.demographics.sex == 'F' ? 'Female' : 'Male'}
+                  </Card.Subtitle>
+                  } 
+                  <Card.Text className="mb-3 small">
+                    {patient.unstructured}
+                  </Card.Text>
                   <Row className="mb-3">
                     <Col md={7} className="d-flex mb-3 mb-md-0">
                       <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px', overflow: 'hidden' }}>
@@ -219,7 +227,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
 
         <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
           <Modal.Header closeButton>
-            <Modal.Title>{this.state.selectedPatient?.id} ({this.state.selectedPatient?.name})</Modal.Title>
+            <Modal.Title>{this.state.selectedPatient?.name}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {this.state.selectedPatient?.unstructured}
@@ -300,7 +308,6 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   }
 
   getInjurySeverityColor(severity) {
-
     if (!severity) {
       return 'secondary';
     }
