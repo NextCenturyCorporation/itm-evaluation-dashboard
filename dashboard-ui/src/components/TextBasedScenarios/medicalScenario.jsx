@@ -5,6 +5,7 @@ import { SurveyQuestionElementBase } from "survey-react-ui";
 import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaBell } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
+import '../../css/medical-scenario.css';
 
 const CUSTOM_TYPE = "medicalScenario";
 
@@ -95,7 +96,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   }
 
   handleImageClick = (patient) => {
-    this.setState({ showModal: true, selectedImage: patient.imgUrl, selectedPatient: patient});
+    this.setState({ showModal: true, selectedImage: patient.imgUrl, selectedPatient: patient });
   };
 
   handleCloseModal = () => {
@@ -105,32 +106,31 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   renderElement() {
     return (
       <Container fluid className="p-3" style={{ backgroundColor: '#f8f9fa' }}>
-        <style>{componentStyles}</style>
         <Row className="mb-4">
           <Col>
             <Card className="border-0 shadow-sm">
               <Card.Body className="p-4">
                 <Card.Title className="text-center mb-3 h4">Scenario</Card.Title>
-                <Card.Text className="lead" style={{textAlign: 'left'}}>{this.unstructured}</Card.Text>
+                <Card.Text className="lead" style={{ textAlign: 'left' }}>{this.unstructured}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
         </Row>
 
         {this.events.slice().map((event, index) => (
-        <Card key={index} className={`border-0 shadow-sm event-card mb-3 ${index === 0 ? 'new-event' : ''}`}>
-          <Card.Body className="p-3">
-            <div className="d-flex align-items-center">
-              <div className="event-icon-wrapper me-3">
-                <FaBell className="event-icon" />
+          <Card key={index} className={`border-0 shadow-sm event-card mb-3 ${index === 0 ? 'new-event' : ''}`}>
+            <Card.Body className="p-3">
+              <div className="d-flex align-items-center">
+                <div className="event-icon-wrapper me-3">
+                  <FaBell className="event-icon" />
+                </div>
+                <div className="flex-grow-1">
+                  <Card.Text className="mb-1 event-message">{event.message}</Card.Text>
+                </div>
               </div>
-              <div className="flex-grow-1">
-                <Card.Text className="mb-1 event-message">{event.message}</Card.Text>
-              </div>
-            </div>
-          </Card.Body>
-        </Card>
-      ))}
+            </Card.Body>
+          </Card>
+        ))}
 
         <Row className="mb-4">
           <Col md={3}>
@@ -158,14 +158,16 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             <Col md={4} key={index} className="mb-4">
               <Card className="h-100 border-0 shadow-sm">
                 <Card.Body style={{ overflow: 'visible' }}>
-                  <Card.Title className="h4 mb-3">{patient.name}</Card.Title>
+                  <Card.Title className="h4 mb-3">
+                    {patient.id}
+                  </Card.Title>
                   <Row className="mb-3">
                     <Col md={7} className="d-flex mb-3 mb-md-0">
                       <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px', overflow: 'hidden' }}>
                         {patient.imgUrl ? (
                           <img
                             src={`data:image/png;base64,${patient.imgUrl}`}
-                            alt={`${patient.name}`}
+                            alt={`${patient.id}`}
                             style={{
                               width: '100%',
                               height: '100%',
@@ -217,9 +219,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
 
         <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
           <Modal.Header closeButton>
-            <Modal.Title>{this.state.selectedPatient?.id}</Modal.Title>
+            <Modal.Title>{this.state.selectedPatient?.id} ({this.state.selectedPatient?.name})</Modal.Title>
           </Modal.Header>
           <Modal.Body>
+            {this.state.selectedPatient?.unstructured}
             {this.state.selectedImage && (
               <img
                 src={`data:image/png;base64,${this.state.selectedImage}`}
@@ -312,100 +315,3 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     }
   }
 }
-
-const componentStyles = `
-  .vital-item {
-    position: relative;
-  }
-  .vital-icon {
-    cursor: pointer;
-    transition: transform 0.2s ease;
-  }
-  .vital-icon:hover {
-    transform: scale(1.2);
-  }
-  .vital-name {
-    position: absolute;
-    right: calc(100% + 10px);
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: 1000;
-  }
-  .vital-icon:hover .vital-name {
-    opacity: 1;
-  }
-  .vitals-card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-  .vitals-title {
-    flex-shrink: 0;
-  }
-  .vitals-container {
-    position: relative;
-    overflow: visible !important;
-    display: flex;
-    flex-direction: column;
-  }
-  .card-body {
-    overflow: visible !important;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
-  }
-
-  .new-event {
-    animation: fadeIn 1.5s ease-out, pulse 2s infinite;
-  }
-
-  .event-card {
-    background-color: #e8f4fd;
-    border-left: 4px solid #007bff;
-    background-image: linear-gradient(45deg, #f1f9ff 25%, transparent 25%, transparent 75%, #f1f9ff 75%, #f1f9ff),
-                      linear-gradient(45deg, #f1f9ff 25%, transparent 25%, transparent 75%, #f1f9ff 75%, #f1f9ff);
-    background-size: 20px 20px;
-    background-position: 0 0, 10px 10px;
-  }
-
-  .event-icon-wrapper {
-    background-color: #007bff;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .event-icon {
-    color: white;
-    font-size: 1.2rem;
-  }
-
-  .event-message {
-    font-size: 1.1rem;
-    color: #333;
-  }
-
-  .text-muted {
-    font-size: 0.9rem;
-  }
-`;

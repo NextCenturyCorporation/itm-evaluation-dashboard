@@ -14,8 +14,6 @@ import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import { AdeptVitals } from './adeptTemplate'
-import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
@@ -319,7 +317,7 @@ class TextBasedScenariosPage extends Component {
             <>
                 <style>
                     {`
-                        body {
+                    .main-content {
                         zoom: 0.8;
                         -moz-transform: scale(0.8);
                         -moz-transform-origin: 0 0;
@@ -364,12 +362,4 @@ export default TextBasedScenariosPage;
 
 ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
     return React.createElement(MedicalScenario, props)
-})
-
-ReactQuestionFactory.Instance.registerQuestion("adeptVitals", (props) => {
-    return React.createElement(AdeptVitals, props)
-})
-
-ReactQuestionFactory.Instance.registerQuestion("stVitals", (props) => {
-    return React.createElement(STVitals, props)
 })
