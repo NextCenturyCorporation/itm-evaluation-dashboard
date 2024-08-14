@@ -38,7 +38,6 @@ export function ResultsTable({ data }) {
         const allHeaders = [...STARTING_HEADERS];
         const tmpVersion = ['All'];
         for (let entry of data) {
-            console.log(data)
             entry = entry.results ?? entry;
             const entryObj = {};
             let addToTable = true;
@@ -73,7 +72,6 @@ export function ResultsTable({ data }) {
             } else {
                 entryObj['Order Log'] = entry['orderLog'] || '-';
             }
-            console.log(entry['orderLog'])
 
             for (const page of Object.keys(entry)) {
                 if (!NON_PAGES.includes(page) && typeof (entry[page]) === 'object') {
@@ -128,7 +126,6 @@ export function ResultsTable({ data }) {
                 }
             }
         }
-        console.log(allObjs)
         setFormattedData(allObjs);
         setHeaders(found_headers);
         setVersions(tmpVersion);
