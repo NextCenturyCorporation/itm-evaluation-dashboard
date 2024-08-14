@@ -11,7 +11,7 @@ import { OmnibusComparison } from "./omnibusComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery } from 'react-apollo'
-import { getUID, shuffle, survey3_0_groups } from './util';
+import { getUID, shuffle, survey4_0_groups } from './util';
 import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
@@ -165,7 +165,7 @@ class SurveyPage extends Component {
                 dmMap.get(key).push(dm);
             });
 
-            survey3_0_groups.forEach(([author, scenario]) => {
+            survey4_0_groups.forEach(([author, scenario]) => {
                 const key = `${author}-${scenario}`;
                 if (dmMap.has(key)) {
                     groupedDMs.push(dmMap.get(key));

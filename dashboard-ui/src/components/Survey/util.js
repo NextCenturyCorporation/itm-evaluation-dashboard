@@ -34,3 +34,18 @@ export const survey3_0_groups = [
         ['TAD', 'Adept Submarine'],
         ['kitware', 'Adept Submarine']
 ]
+
+export const survey4_0_groups = [
+    ['kitware', 'Adept Desert'],
+    ['kitware', 'Adept Jungle'],
+    ['kitware', 'Adept Urban'],
+    ['kitware', 'SoarTech Desert'],
+    ['kitware', 'SoarTech Jungle'],
+    ['kitware', 'SoarTech Urban'],
+    ['TAD', 'Adept Desert'],
+    ['TAD', 'Adept Jungle'],
+    ['TAD', 'Adept Urban'],
+    ['TAD', 'SoarTech Desert'],
+    ['TAD', 'SoarTech Jungle'],
+    ['TAD', 'SoarTech Urban']
+]
