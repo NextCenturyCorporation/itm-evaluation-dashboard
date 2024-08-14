@@ -11,7 +11,6 @@ import Checkbox from '@mui/material/Checkbox';
 /* A list of names that are not pages to record in the excel sheet */
 const NON_PAGES = ['user', 'surveyVersion', 'startTime', 'timeComplete', 'Participant ID'];
 
-
 function formatTime(seconds) {
     seconds = Math.round(seconds);
     let minutes = (Math.floor(seconds / 60) % 60);
@@ -21,7 +20,7 @@ function formatTime(seconds) {
     return `${minutes}:${formatted_seconds}`
 }
 
-const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation'];
+const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation', 'Order Log'];
 
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
@@ -66,6 +65,14 @@ export function ResultsTable({ data }) {
             } else {
                 entryObj['Completed Simulation'] = (!entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response?.includes('none')).toString();
             }
+
+            // Handle Order Log
+            if (Array.isArray(entry['orderLog'])) {
+                entryObj['Order Log'] = JSON.stringify(entry['orderLog']);
+            } else {
+                entryObj['Order Log'] = entry['orderLog'] || '-';
+            }
+
             for (const page of Object.keys(entry)) {
                 if (!NON_PAGES.includes(page) && typeof (entry[page]) === 'object') {
                     // get all keys from the page and name them nicely within the excel
@@ -124,10 +131,19 @@ export function ResultsTable({ data }) {
         setVersions(tmpVersion);
     }, [data, filterBySurveyVersion, selectAll]);
 
-
     const exportToExcel = async () => {
+        // Create a new workbook and worksheet
+        const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(formattedData);
-        const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
+
+        // Adjust column widths
+        const colWidths = headers.map(header => ({wch: Math.max(header.length, 20)}));
+        ws['!cols'] = colWidths;
+
+        // Add the worksheet to the workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Survey Data');
+
+        // Generate Excel file
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
         FileSaver.saveAs(data, 'survey_data_v' + filterBySurveyVersion.join('_v') + fileExtension);
@@ -156,7 +172,6 @@ export function ResultsTable({ data }) {
                     setVersionOption(filterBySurveyVersion.filter((x) => x !== selected.target.value));
                 }
             }
-
         }
     };
 
@@ -199,11 +214,8 @@ export function ResultsTable({ data }) {
                                 })}
                             </tr>);
                         })}
-
                     </tbody>
                 </table>
             </div></>}
     </>);
 }
-
-
