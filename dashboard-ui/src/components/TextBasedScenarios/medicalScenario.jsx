@@ -311,10 +311,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
 
     switch (severity.toLowerCase()) {
       case 'extreme': return 'danger';
-      case 'major': return 'danger';
+      case 'major': return 'orange';
       case 'substantial': return 'warning';
       case 'moderate': return 'info';
-      case 'minor': return 'info';
+      case 'minor': return 'success';
       default: return 'secondary';
     }
   }

@@ -99,4 +99,6 @@
   .modal {
     z-index: 1055 !important;
   }
-  
+  .bg-orange {
+    background-color: #fd7e14 !important;
+  }
