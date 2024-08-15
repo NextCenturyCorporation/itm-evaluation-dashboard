@@ -161,8 +161,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                   <Card.Title className="h4 mb-1">
                     {patient.name}
                   </Card.Title>
-                  {/* ST has demographics info that Adept doesn't */}
-                  { patient.demographics.age && 
+                  {patient.demographics.age && 
                   <Card.Subtitle className="mb-2 text-muted">
                     {patient.demographics.age} years old, {patient.demographics.sex == 'F' ? 'Female' : 'Male'}
                   </Card.Subtitle>
@@ -233,11 +232,17 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           <Modal.Body>
             {this.state.selectedPatient?.unstructured}
             {this.state.selectedImage && (
-              <img
-                src={`data:image/png;base64,${this.state.selectedImage}`}
-                alt="Patient"
-                style={{ width: '100%' }}
-              />
+              <div style={{ minHeight: '300px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <img
+                  src={`data:image/png;base64,${this.state.selectedImage}`}
+                  alt="Patient"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '70vh',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
             )}
           </Modal.Body>
         </Modal>
