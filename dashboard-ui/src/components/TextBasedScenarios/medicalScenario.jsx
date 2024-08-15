@@ -12,7 +12,7 @@ const CUSTOM_TYPE = "medicalScenario";
 export class MedicalScenarioModel extends Question {
   getType() {
     return CUSTOM_TYPE;
-  }
+  }x
 
   get supplies() {
     return this.getPropertyValue("supplies");
@@ -356,6 +356,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   }
 
   renderVitals(patient, vitals) {
+    console.log(vitals)
     const vitalIcons = {
       avpu: <FaEye />,
       ambulatory: <FaAmbulance />,
@@ -365,30 +366,32 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       mental_status: <FaBrain />,
       conscious: <BsPersonFillGear />
     };
-
+  
     const vitalNames = {
-      avpu: "AVPU Scale",
-      ambulatory: "Ambulatory Status",
-      breathing: "Breathing Rate",
-      heart_rate: "Heart Rate",
-      spo2: "Blood Oxygen Saturation (SPO2)",
+      avpu: "AVPU",
+      ambulatory: "Ambulatory",
+      breathing: "BR",
+      heart_rate: "HR",
+      spo2: "SPO2",
       mental_status: "Mental Status",
       conscious: "Conscious"
     };
-
+  
     if (!vitals) {
       return <div>No vitals data available</div>;
     }
 
     return (
-      <div className="d-flex flex-column gap-1">
+      <div className="d-flex flex-column gap-1" style={{ minHeight: '200px', overflow: 'visible' }}>
         {Object.entries(vitals).map(([key, value]) => (
-          <div key={key} className="d-flex align-items-center vital-item">
-            <span className="vital-icon" style={{ width: '24px', marginRight: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-              <span className="vital-name">{vitalNames[key]}</span>
-              {vitalIcons[key] || key}
+          <div key={key} className="d-flex align-items-center vital-item" style={{ minHeight: '24px', overflow: 'visible' }}>
+            <span className="vital-icon me-2" style={{ width: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {vitalIcons[key] || key} 
             </span>
-            <Badge bg={this.getVitalBadgeColor(key, value)} className="fs-7">{value.toString()}</Badge>
+            <span>
+              {vitalNames[key]}
+            </span>
+            <Badge bg={this.getVitalBadgeColor(key, value)} className="fs-7 mx-1">{value.toString()}</Badge>
           </div>
         ))}
       </div>
@@ -410,7 +413,22 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   };
 
   getVitalBadgeColor(key, value) {
-    return "info";
+    switch (key) {
+      case 'avpu':
+        return this.avpuColors[value]
+      case 'ambulatory':
+        return value ? 'info' : 'warning'
+      case 'breathing':
+        return this.breathingColors[value]
+      case 'heart_rate':
+        return this.hrColors[value]
+      case 'spo2':
+        return this.spo2Colors[value]
+      case 'mental_status':
+        return this.mentalColors[value]
+      case 'conscious':
+        return 'info'
+    }
   }
 
   getInjurySeverityColor(severity) {
@@ -426,5 +444,46 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       case 'minor': return 'success';
       default: return 'secondary';
     }
+  }
+
+  avpuColors = {
+    'ALERT': 'info',
+    'VOICE': 'warning',
+    'PAIN': 'orange',
+    'UNRESPONSIVE': 'danger'
+  }
+
+  breathingColors = {
+    'NORMAL': 'info',
+    'RESTRICTED': 'orange',
+    'FAST': 'warning',
+    'SLOW': 'warning',
+    'NONE': 'danger'
+  }
+
+  hrColors = {
+    'NONE': 'danger',
+    'NORMAL': 'info',
+    'FAST': 'warning',
+    'SLOW': 'warning'
+  }
+
+  spo2Colors = {
+    'NORMAL': 'info',
+    'LOW': 'warning',
+    'NONE': 'danger'
+  }
+
+  mentalColors = {
+    'CALM': 'info',
+    'AGONY': 'danger',
+    'CONFUSED': 'warning',
+    'SHOCK': 'orange',
+    'UPSET': 'warning',
+    'UNRESPONSIVE': 'danger'
+  }
+
+  consciousColors = {
+
   }
 }
