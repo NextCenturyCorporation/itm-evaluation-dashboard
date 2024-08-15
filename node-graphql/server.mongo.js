@@ -19,6 +19,12 @@ let AWS = require('aws-sdk');
 //   })
 // });
 
+let transporter = nodemailer.createTransport({
+  host: `10.205.16.13`,
+  port: 25,
+  secure: false
+});
+
 // We connect mongoose to our local mongodb database
 const connection = mongoose.connect('mongodb://dashboard-mongo:27030/dashboard', {
         useNewUrlParser: true,
@@ -39,7 +45,7 @@ const accountsServer = new AccountsServer(
     db: dashboardDB,
     tokenSecret: 'dashboardPassword',
     sendMail: ({ from, subject, to, text, html }) => {
-      from = "patronus.engineering@gmail.com";
+      from = "phi.le@caci.com";
       transporter.sendMail({
         from,
         to,
