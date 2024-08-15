@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Card, ListGroup, Badge, Modal } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaBell, FaInfoCircle } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaMapMarkedAlt, FaBell, FaInfoCircle, FaBook, FaMedkit, FaClipboardList } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import '../../css/medical-scenario.css';
@@ -283,38 +283,71 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Modal.Body>
         </Modal>
 
-        <Modal show={this.state.showSituationModal} onHide={this.handleCloseSituationModal} size="lg">
-          <Modal.Header closeButton>
-            <Modal.Title>Additional Scenario Information</Modal.Title>
+        <Modal 
+          show={this.state.showSituationModal} 
+          onHide={this.handleCloseSituationModal} 
+          size="lg"
+          centered
+          className="scenario-info-modal"
+        >
+          <Modal.Header closeButton className="border-0 bg-primary text-white">
+            <Modal.Title>
+              <FaInfoCircle className="me-2" />
+              Additional Mission Information
+            </Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="p-4">
             {this.mission ? (
-              <>
+              <Row>
                 {this.mission.roe && (
-                  <div className="mb-4">
-                    <h5>Rules of Engagement</h5>
-                    <p>{this.mission.roe}</p>
-                  </div>
+                  <Col md={12} className="mb-4">
+                    <Card className="border-0 shadow-sm h-100 info-card">
+                      <Card.Body>
+                        <h5 className="card-title">
+                          <FaBook className="me-2 text-primary" />
+                          Rules of Engagement
+                        </h5>
+                        <p className="card-text">{this.mission.roe}</p>
+                      </Card.Body>
+                    </Card>
+                  </Col>
                 )}
                 {this.mission.medical_policies && this.mission.medical_policies.length > 0 && (
-                  <div className="mb-4">
-                    <h5>Medical Policies</h5>
-                    <ul>
-                      {this.mission.medical_policies.map((policy, index) => (
-                        <li key={index}>{policy}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <Col md={6} className="mb-4">
+                    <Card className="border-0 shadow-sm h-100 info-card">
+                      <Card.Body>
+                        <h5 className="card-title">
+                          <FaMedkit className="me-2 text-danger" />
+                          Medical Policies
+                        </h5>
+                        <ListGroup variant="flush">
+                          {this.mission.medical_policies.map((policy, index) => (
+                            <ListGroup.Item key={index} className="border-0 ps-0">
+                              <FaClipboardList className="me-2 text-muted" />
+                              {policy}
+                            </ListGroup.Item>
+                          ))}
+                        </ListGroup>
+                      </Card.Body>
+                    </Card>
+                  </Col>
                 )}
                 {this.mission.unstructured && (
-                  <div className="mb-4">
-                    <h5>Mission Details</h5>
-                    <p>{this.mission.unstructured}</p>
-                  </div>
+                  <Col md={this.mission.medical_policies && this.mission.medical_policies.length > 0 ? 6 : 12} className="mb-4">
+                    <Card className="border-0 shadow-sm h-100 info-card">
+                      <Card.Body>
+                        <h5 className="card-title">
+                          <FaMapMarkedAlt className="me-2 text-success" />
+                          Mission Details
+                        </h5>
+                        <p className="card-text">{this.mission.unstructured}</p>
+                      </Card.Body>
+                    </Card>
+                  </Col>
                 )}
-              </>
+              </Row>
             ) : (
-              <p>No additional mission information available.</p>
+              <p className="text-center text-muted">No additional mission information available.</p>
             )}
           </Modal.Body>
         </Modal>
