@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Card, ListGroup, Badge, Modal } from 'react-bootstrap';
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaBell } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaBell, FaInfoCircle } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import '../../css/medical-scenario.css';
@@ -45,6 +45,14 @@ export class MedicalScenarioModel extends Question {
   set events(events) {
     this.setPropertyValue("events", events);
   }
+
+  get mission() {
+    return this.getPropertyValue("mission");
+  }
+
+  set mission(mission) {
+    this.setPropertyValue("mission", mission)
+  }
 }
 
 Serializer.addClass(
@@ -53,7 +61,8 @@ Serializer.addClass(
     { name: "unstructured", default: '' },
     { name: "supplies", default: [] },
     { name: "patients", default: [] },
-    { name: "events", default: [] }
+    { name: "events", default: [] },
+    { name: 'mission', default: null}
   ],
   function () {
     return new MedicalScenarioModel("");
@@ -72,6 +81,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       selectedPatient: null,
       showModal: false,
       selectedImage: null,
+      showSituationModal: false,
     };
   }
 
@@ -95,6 +105,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     return this.question.events || [];
   }
 
+  get mission() {
+    return this.question.mission;
+  }
+
   handleImageClick = (patient) => {
     this.setState({ showModal: true, selectedImage: patient.imgUrl, selectedPatient: patient });
   };
@@ -103,13 +117,35 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     this.setState({ showModal: false, selectedImage: null });
   };
 
+  handleSituationClick = () => {
+    this.setState({ showSituationModal: true });
+  };
+
+  handleCloseSituationModal = () => {
+    this.setState({ showSituationModal: false });
+  };
+
   renderElement() {
     return (
       <Container fluid className="p-3" style={{ backgroundColor: '#f8f9fa' }}>
         <Row className="mb-4">
           <Col>
             <Card className="border-0 shadow-sm">
-              <Card.Body className="p-4">
+              <Card.Body className="p-4 position-relative">
+                { (this.mission?.roe && this.mission?.roe != "") && 
+                <div
+                  className="position-absolute d-flex align-items-center scenario-info-icon"
+                  style={{
+                    top: '10px',
+                    left: '10px',
+                    cursor: 'pointer',
+                  }}
+                  onClick={this.handleSituationClick}
+                >
+                  <FaInfoCircle size={28} color="#17a2b8" />
+                  <span className="ms-2 small text-muted">More Info</span>
+                </div>
+                }
                 <Card.Title className="text-center mb-3 h4">Scenario</Card.Title>
                 <Card.Text className="lead" style={{ textAlign: 'left' }}>{this.unstructured}</Card.Text>
               </Card.Body>
@@ -161,11 +197,11 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                   <Card.Title className="h4 mb-1">
                     {patient.name}
                   </Card.Title>
-                  {patient.demographics.age && 
-                  <Card.Subtitle className="mb-2 text-muted">
-                    {patient.demographics.age} years old, {patient.demographics.sex == 'F' ? 'Female' : 'Male'}
-                  </Card.Subtitle>
-                  } 
+                  {patient.demographics.age &&
+                    <Card.Subtitle className="mb-2 text-muted">
+                      {patient.demographics.age} years old, {patient.demographics.sex == 'F' ? 'Female' : 'Male'}
+                    </Card.Subtitle>
+                  }
                   <Card.Text className="mb-3 small">
                     {patient.unstructured}
                   </Card.Text>
@@ -225,14 +261,14 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           ))}
         </Row>
 
-        <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
+        <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="lg">
           <Modal.Header closeButton>
             <Modal.Title>{this.state.selectedPatient?.name}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {this.state.selectedPatient?.unstructured}
             {this.state.selectedImage && (
-              <div style={{ minHeight: '300px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{ minHeight: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <img
                   src={`data:image/png;base64,${this.state.selectedImage}`}
                   alt="Patient"
@@ -243,6 +279,42 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                   }}
                 />
               </div>
+            )}
+          </Modal.Body>
+        </Modal>
+
+        <Modal show={this.state.showSituationModal} onHide={this.handleCloseSituationModal} size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>Additional Scenario Information</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {this.mission ? (
+              <>
+                {this.mission.roe && (
+                  <div className="mb-4">
+                    <h5>Rules of Engagement</h5>
+                    <p>{this.mission.roe}</p>
+                  </div>
+                )}
+                {this.mission.medical_policies && this.mission.medical_policies.length > 0 && (
+                  <div className="mb-4">
+                    <h5>Medical Policies</h5>
+                    <ul>
+                      {this.mission.medical_policies.map((policy, index) => (
+                        <li key={index}>{policy}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {this.mission.unstructured && (
+                  <div className="mb-4">
+                    <h5>Mission Details</h5>
+                    <p>{this.mission.unstructured}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p>No additional mission information available.</p>
             )}
           </Modal.Body>
         </Modal>
@@ -295,7 +367,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       <div key={i} className="mb-2">
         <strong>{this.capitalizeWords(injury.location)} {injury.name}</strong>
         <br />
-          Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{this.capitalizeWords(injury.severity)}</Badge>
+        Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{this.capitalizeWords(injury.severity)}</Badge>
       </div>
     ));
   }
@@ -305,7 +377,6 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   };
 
   getVitalBadgeColor(key, value) {
-    // TODO: Add logic here
     return "info";
   }
 
