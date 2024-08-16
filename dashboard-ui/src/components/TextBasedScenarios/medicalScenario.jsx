@@ -205,8 +205,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Card>
         ))}
         <Row className="mb-4">
-        <Col md={3}>
-          <Card className="h-100 border-0 shadow-sm">
+        <Col md={3} className="d-flex flex-column">
+          <Card className="border-0 shadow-sm mb-4">
             <Card.Body>
               <Card.Title className="mb-3">Supplies</Card.Title>
               <ListGroup variant="flush">
