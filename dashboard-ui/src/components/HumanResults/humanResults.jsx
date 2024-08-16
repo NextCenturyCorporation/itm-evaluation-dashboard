@@ -38,9 +38,9 @@ export default function HumanResults() {
     const [dataByScene, setDataByScene] = React.useState(null);
     const [selectedEval, setSelectedEval] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
-    const [selectedPID, setSelectedPID] = React.useState(null);
     const [teamSelected, setSelectedTeam] = React.useState('adept');
-
+    const [selectedPID, setSelectedPID] = React.useState(null);
+    
     React.useEffect(() => {
         evalOptions = [];
         if (evalIdOptionsRaw?.getEvalIdsForHumandResults) { 

@@ -9,12 +9,20 @@ import ProgramQuestions from './programQuestions';
 import { Modal } from "@mui/material";
 import { DefinitionTable } from './definitionTable';
 import CloseIcon from '@material-ui/icons/Close';
+import Select from 'react-select';
+
+const get_eval_name_numbers = gql`
+    query getEvalIdsForSimAlignment{
+        getEvalIdsForSimAlignment
+  }`;
+let evalOptions = [];
+
 
 const GET_SURVEY_RESULTS = gql`
-    query GetAllResults{
-        getAllSurveyResults,
-        getAllScenarioResults,
-        getAllSimAlignment
+    query GetAllResults($evalNumber: Float!){
+        getAllSurveyResultsByEval(evalNumber: $evalNumber),
+        getAllScenarioResultsByEval(evalNumber: $evalNumber),
+        getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
 const HEADER = [
@@ -205,22 +213,41 @@ const HEADER_SIM_DATA = [
 ]
 
 export default function AggregateResults({ type }) {
+    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
-    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
-        // only pulls from network, never cached
-        fetchPolicy: 'network-only',
-    });
 
     const [fullData, setFullData] = React.useState([]);
     const [aggregateData, setAggregateData] = React.useState(null);
     const [kdmaScatter, setKdmaScatter] = React.useState(null);
     const [chartData, setChartData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    const [selectedEval, setSelectedEval] = React.useState(3);
+
+    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
+        variables: {"evalNumber": selectedEval}
+        // only pulls from network, never cached
+        //fetchPolicy: 'network-only',
+    });
+
+
+
+    React.useEffect(() => {
+        evalOptions = [];
+        if (evalIdOptionsRaw?.getEvalIdsForSimAlignment) { 
+            //Do we need an all option
+            //evalOptions.push({value: 999, label:  "All"})
+            for (const result of evalIdOptionsRaw.getEvalIdsForSimAlignment) {
+                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+
+            }
+        }
+         
+    }, [evalIdOptionsRaw, evalOptions]);
 
     React.useEffect(() => {
         // only get survey version 2!!
-        if (!loading && !error && data?.getAllSurveyResults && data?.getAllScenarioResults) {
+        if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval) {
             const full = populateDataSet(data);
             setFullData(full);
             setAggregateData(getAggregatedData());
@@ -259,6 +286,10 @@ export default function AggregateResults({ type }) {
         setShowDefinitions(false);
     }
 
+    function selectEvaluation(target){
+        setSelectedEval(target.value);
+    }    
+
     return (
         <div className='aggregatePage'>
             {type === 'HumanSimParticipant' && 
@@ -271,6 +302,19 @@ export default function AggregateResults({ type }) {
                             <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
                             <button className='aggregateDownloadBtn' onClick={() => setShowDefinitions(true)}>View Definitions</button>
                         </div>
+                    </div>
+                    <div className="selection-section">
+                        <h3 className='sidebar-title'>Evaluation</h3>
+                        <Select
+                            onChange={selectEvaluation}
+                            options={evalOptions}
+                            placeholder="Select Evaluation"
+                            defaultValue={evalOptions[0]}
+                            styles={{
+                                // Fixes the overlapping problem of the component
+                                menu: provided => ({ ...provided, zIndex: 9999 })
+                            }}
+                        />
                     </div>
                     <div className='resultTableSection'>
                         <table className='itm-table'>
@@ -310,11 +354,24 @@ export default function AggregateResults({ type }) {
                         <div className="aggregate-button-holder">
                             <button onClick={exportHumanSimToExcel} className='aggregateDownloadBtn'>Download Human Sim Data</button>
                         </div>
+
                     </div>
 
-                    
+                    <div className="selection-section">
+                        <h3 className='sidebar-title'>Evaluation</h3>
+                        <Select
+                            onChange={selectEvaluation}
+                            options={evalOptions}
+                            defaultValue={evalOptions[0]}
+                            placeholder="Select Evaluation"
+                            styles={{
+                                // Fixes the overlapping problem of the component
+                                menu: provided => ({ ...provided, zIndex: 9999 })
+                            }}
+                        />
+                    </div>                    
                 
-                    {aggregateData["groupedSim"]!== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) => 
+                    {aggregateData["groupedSim"]!== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) =>
                         <div className='chart-home-container' key={"container_" + key}>
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
