@@ -155,6 +155,7 @@ const typeDefs = gql`
     getUsers: JSON
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
+    getAllHistoryByEvalNumber(evalNumber: Float): [JSON]
     getAllHistoryByID(historyId: ID): JSON
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
@@ -208,6 +209,9 @@ const resolvers = {
     getAllHistory: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
     },
+    getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }).toArray().then(result => { return result; });
+    },    
     getAllHistoryByID: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
     },

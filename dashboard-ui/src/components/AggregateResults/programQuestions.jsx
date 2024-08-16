@@ -7,10 +7,15 @@ import { isDefined } from './DataFunctions';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
 
+// const GET_ADM_DATA = gql`
+//     query getAllHistory {
+//         getAllHistory
+//   }`;
+
 const GET_ADM_DATA = gql`
-    query getAllHistory {
-        getAllHistory
-  }`;
+    query getAllHistoryByEvalNumber($evalNumber: Float!) {
+        getAllHistoryByEvalNumber(evalNumber: $evalNumber)
+    }`;
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
@@ -115,8 +120,7 @@ const BASE_DATA_MD = [
 
 export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
     const { data } = useQuery(GET_ADM_DATA, {
-        // only pulls from network, never cached
-        fetchPolicy: 'network-only',
+        variables: {"evalNumber": 3},
     });
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
@@ -124,9 +128,9 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
     React.useEffect(() => {
         const admKdmas = {};
         const admAlign = {};
-        if (data?.getAllHistory) {
-            const rawData = data.getAllHistory.filter((x) => x.evalNumber === 3);
-            for (const x of rawData) {
+        if (data?.getAllHistoryByEvalNumber) {
+            console.log(data);
+            for (const x of data.getAllHistoryByEvalNumber) {
                 if (x.history.length > 0) {
                     const admName = x.history[0].parameters.adm_name;
                     let scenario = x.history[0].response.id;
