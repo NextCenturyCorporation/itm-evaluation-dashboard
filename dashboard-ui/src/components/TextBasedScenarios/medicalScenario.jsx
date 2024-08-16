@@ -82,6 +82,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       showModal: false,
       selectedImage: null,
       showSituationModal: false,
+      pageQuestions: []
     };
   }
 
@@ -124,6 +125,56 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   handleCloseSituationModal = () => {
     this.setState({ showSituationModal: false });
   };
+
+  componentDidMount() {
+    this.updatePageQuestions();
+    this.question.survey.onCurrentPageChanged.add(this.handlePageChange);
+  }
+
+  componentWillUnmount() {
+    this.question.survey.onCurrentPageChanged.remove(this.handlePageChange);
+  }
+
+  handlePageChange = (sender, options) => {
+    this.updatePageQuestions();
+  }
+
+  updatePageQuestions() {
+    const survey = this.question.survey;
+    const currentPage = survey.currentPage;
+    if (currentPage) {
+      const questions = currentPage.questions.map(q => ({
+        name: q.name,
+        title: q.title,
+        value: q.value,
+        type: q.getType(),
+        choices: this.getQuestionChoices(q)
+      }));
+      this.setState({ pageQuestions: questions });
+    }
+  }
+
+  getQuestionChoices(question) {
+    if (question.choices) {
+      return question.choices.map(choice => ({
+        value: choice.value,
+        text: choice.text || choice.value
+      }));
+    }
+    return null;
+  }
+
+  shouldVitalsBeVisible(patient) {
+    const id = patient.id.toLowerCase();
+    const name = patient.name.toLowerCase();
+  
+    return !this.state.pageQuestions.some(question => 
+      question.choices?.some(choice => 
+        choice.text?.toLowerCase().includes("assess") &&
+        (choice.text.toLowerCase().includes(id) || choice.text.toLowerCase().includes(name))
+      )
+    );
+  }
 
   renderElement() {
     return (
@@ -356,7 +407,6 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   }
 
   renderVitals(patient, vitals) {
-    console.log(vitals)
     const vitalIcons = {
       avpu: <FaEye />,
       ambulatory: <FaAmbulance />,
@@ -381,20 +431,27 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       return <div>No vitals data available</div>;
     }
 
+    const vitalsVisible = this.shouldVitalsBeVisible(patient);
+
     return (
       <div className="d-flex flex-column gap-1" style={{ minHeight: '200px', overflow: 'visible' }}>
-        {Object.entries(vitals).map(([key, value]) => (
-          <div key={key} className="d-flex align-items-center vital-item" style={{ minHeight: '24px', overflow: 'visible' }}>
-            <span className="vital-icon me-2" style={{ width: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {vitalIcons[key] || key} 
-            </span>
-            <span>
-              {vitalNames[key]}
-            </span>
-            <Badge bg={this.getVitalBadgeColor(key, value)} className="fs-7 mx-1">{value.toString()}</Badge>
-          </div>
-        ))}
-      </div>
+      {Object.entries(vitals).map(([key, value]) => (
+        <div key={key} className="d-flex align-items-center vital-item" style={{ minHeight: '24px', overflow: 'visible' }}>
+          <span className="vital-icon me-2" style={{ width: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {vitalIcons[key] || key} 
+          </span>
+          <span>
+            {vitalNames[key]}
+          </span>
+          <Badge 
+            bg={vitalsVisible ? this.getVitalBadgeColor(key, value) : 'info'} 
+            className="fs-7 mx-1"
+          >
+            {vitalsVisible ? value.toString() : "Unknown"}
+          </Badge>
+        </div>
+      ))}
+    </div>
     );
   }
 
