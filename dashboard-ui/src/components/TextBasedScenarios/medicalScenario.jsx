@@ -53,6 +53,14 @@ export class MedicalScenarioModel extends Question {
   set mission(mission) {
     this.setPropertyValue("mission", mission)
   }
+
+  get blockedVitals() {
+    return this.getPropertyValue("blockedVitals")
+  }
+
+  set blockedVitals(blockedVitals) {
+    this.setPropertyValue("blockedVitals", blockedVitals)
+  }
 }
 
 Serializer.addClass(
@@ -62,7 +70,8 @@ Serializer.addClass(
     { name: "supplies", default: [] },
     { name: "patients", default: [] },
     { name: "events", default: [] },
-    { name: 'mission', default: null}
+    { name: 'mission', default: null},
+    { name: 'blockedVitals', default: []}
   ],
   function () {
     return new MedicalScenarioModel("");
@@ -82,7 +91,6 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       showModal: false,
       selectedImage: null,
       showSituationModal: false,
-      pageQuestions: []
     };
   }
 
@@ -110,6 +118,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     return this.question.mission;
   }
 
+  get blockedVitals() {
+    return this.question.blockedVitals
+  }
+
   handleImageClick = (patient) => {
     this.setState({ showModal: true, selectedImage: patient.imgUrl, selectedPatient: patient });
   };
@@ -125,56 +137,6 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   handleCloseSituationModal = () => {
     this.setState({ showSituationModal: false });
   };
-
-  componentDidMount() {
-    this.updatePageQuestions();
-    this.question.survey.onCurrentPageChanged.add(this.handlePageChange);
-  }
-
-  componentWillUnmount() {
-    this.question.survey.onCurrentPageChanged.remove(this.handlePageChange);
-  }
-
-  handlePageChange = (sender, options) => {
-    this.updatePageQuestions();
-  }
-
-  updatePageQuestions() {
-    const survey = this.question.survey;
-    const currentPage = survey.currentPage;
-    if (currentPage) {
-      const questions = currentPage.questions.map(q => ({
-        name: q.name,
-        title: q.title,
-        value: q.value,
-        type: q.getType(),
-        choices: this.getQuestionChoices(q)
-      }));
-      this.setState({ pageQuestions: questions });
-    }
-  }
-
-  getQuestionChoices(question) {
-    if (question.choices) {
-      return question.choices.map(choice => ({
-        value: choice.value,
-        text: choice.text || choice.value
-      }));
-    }
-    return null;
-  }
-
-  shouldVitalsBeVisible(patient) {
-    const id = patient.id.toLowerCase();
-    const name = patient.name.toLowerCase();
-  
-    return !this.state.pageQuestions.some(question => 
-      question.choices?.some(choice => 
-        choice.text?.toLowerCase().includes("assess") &&
-        (choice.text.toLowerCase().includes(id) || choice.text.toLowerCase().includes(name))
-      )
-    );
-  }
 
   renderElement() {
     return (
@@ -431,8 +393,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       return <div>No vitals data available</div>;
     }
 
-    const vitalsVisible = this.shouldVitalsBeVisible(patient);
-
+    const vitalsVisible = !this.blockedVitals.includes(patient['id'])
     return (
       <div className="d-flex flex-column gap-1" style={{ minHeight: '200px', overflow: 'visible' }}>
       {Object.entries(vitals).map(([key, value]) => (
