@@ -12,7 +12,7 @@ const CUSTOM_TYPE = "medicalScenario";
 export class MedicalScenarioModel extends Question {
   getType() {
     return CUSTOM_TYPE;
-  } x
+  }
 
   get supplies() {
     return this.getPropertyValue("supplies");
