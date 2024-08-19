@@ -3,8 +3,9 @@ import queryString from 'query-string';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
-import {SurveyPage, SurveyPageWrapper} from '../Survey/survey';
-import TextBasedScenariosPage from '../TextBasedScenarios/TextBasedScenariosPage';
+import { SurveyPage, SurveyPageWrapper } from '../Survey/survey';
+import { TextBasedScenariosPage, TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
+import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
@@ -19,7 +20,7 @@ import ADMChartPage from '../AdmCharts/admChartPage';
 import gql from "graphql-tag";
 import { Query } from '@apollo/react-components';
 import store from '../../store/store';
-import { addConfig } from '../../store/slices/configSlice';
+import { addConfig, addTextBasedConfig } from '../../store/slices/configSlice';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -39,11 +40,15 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 
 const history = createBrowserHistory();
 
-const GET_SURVEY_CONFIG = gql`
-    query GetSurveyConfig {
+const GET_CONFIGS = gql`
+    query GetConfigs {
         getAllSurveyConfigs,
-        getAllImageUrls
+        getAllImageUrls,
+        getAllTextBasedConfigs,
+        getAllTextBasedImages
     }`;
+
+
 
 function Home({ newState }) {
     if (newState.currentUser == null) {
@@ -66,7 +71,7 @@ function Survey(currentUser) {
 }
 
 function TextBased() {
-    return <TextBasedScenariosPage />;
+    return <TextBasedScenariosPageWrapper />;
 }
 
 function TextBasedResults() {
@@ -103,6 +108,18 @@ function Admin({ newState, userLoginHandler }) {
     } else {
         if (newState.currentUser.admin === true) {
             return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
+function ReviewTextBased({ newState, userLoginHandler }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.admin === true || newState.currentUser.evaluator) {
+            return <ReviewTextBasedPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
         } else {
             return <Home newState={newState} />;
         }
@@ -173,21 +190,48 @@ export class App extends React.Component {
         }
     }
 
+    setupTextBasedConfig(data) {
+        if (data && data.getAllTextBasedConfigs) {
+            for (const config of data.getAllTextBasedConfigs) {
+                let tempConfig = JSON.parse(JSON.stringify(config))
+                for (const page of tempConfig.pages) {
+                    for (const el of page.elements) {
+                        if (Object.keys(el).includes("patients")) {
+                            for (const patient of el.patients) {
+                                const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId.toLowerCase() === patient.id.toLowerCase() && x.scenarioId === page.scenario_id));
+                                if (foundImg) {
+                                    patient.imgUrl = foundImg.imageByteCode
+                                }
+                            }
+                        }
+                    }
+                }
+                store.dispatch(addTextBasedConfig({ id: tempConfig._id, data: tempConfig }));
+            }
+        } else {
+            console.warn("No text-based configs found in Mongo");
+        }
+    }
+
+
     render() {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_SURVEY_CONFIG} fetchPolicy={'no-cache'}>
+                <Query query={GET_CONFIGS} fetchPolicy={'no-cache'}>
                     {
                         ({ loading, error, data }) => {
                             if (loading) {
                                 return;
                             }
                             if (error) {
-                                console.warn("Error getting survey config: ", error);
+                                console.error("Error fetching configs: ", error.message);
                                 return;
                             }
+                            // survey configs
                             this.setupConfigWithImages(data);
+                            // text based configs
+                            this.setupTextBasedConfig(data);
 
 
                             return (<div className="itm-app">
@@ -207,6 +251,12 @@ export class App extends React.Component {
                                                 <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
                                                     Complete Text Scenarios
                                                 </NavDropdown.Item>
+                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
+                                                        Review Text Scenarios
+                                                    </NavDropdown.Item>
+                                                )}
+
                                             </NavDropdown>
                                             {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
                                                 <>
@@ -297,6 +347,9 @@ export class App extends React.Component {
                                         </Route>
                                         <Route path="/survey-results">
                                             <SurveyResults />
+                                        </Route>
+                                        <Route path="/review-text-based">
+                                            <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
                                         </Route>
                                         <Route path="/text-based">
                                             <TextBased />

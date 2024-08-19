@@ -3,19 +3,22 @@ import { createSlice } from '@reduxjs/toolkit';
 const configSlice = createSlice({
     name: 'configs',
     initialState: {
-        surveyConfigs: null
+        surveyConfigs: {},
+        textBasedConfigs: {}
     },
     reducers: {
         addConfig: (state, action) => {
-            let payload = action.payload;
-            if (state.surveyConfigs === null) {
-                state.surveyConfigs = {};
-            }
-            state.surveyConfigs[payload.id] = payload.data.survey;
+            const { id, data } = action.payload
+            state.surveyConfigs[id] = data.survey;
+        },
+
+        addTextBasedConfig: (state, action) => {
+            const { id, data } = action.payload
+            state.textBasedConfigs[data.scenario_id] = data
         }
     }
 });
 
-export const { addConfig } = configSlice.actions;
+export const { addConfig, addTextBasedConfig } = configSlice.actions;
 export default configSlice.reducer;
 

@@ -2,6 +2,9 @@
     background-color: rgba(89, 38, 16, 1) !important;
     background-size: cover;
     padding: 0px 10px;
+    zoom: 0.8;
+    -moz-transform: scale(0.8);
+    -moz-transform-origin: 0 0;
 }
 
 .itm-app .itm-navbar .nav-link, .itm-app .itm-navbar .nav-link-home {

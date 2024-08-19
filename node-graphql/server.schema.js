@@ -155,6 +155,7 @@ const typeDefs = gql`
     getUsers: JSON
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
+    getAllHistoryByEvalNumber(evalNumber: Float): [JSON]
     getAllHistoryByID(historyId: ID): JSON
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
@@ -190,7 +191,9 @@ const typeDefs = gql`
     getEvalIdsForHumandResults: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
+    getAllTextBasedConfigs: [JSON],
     getAllImageUrls: [JSON],
+    getAllTextBasedImages: [JSON],
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int
   }
@@ -211,6 +214,9 @@ const resolvers = {
     getAllHistory: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
     },
+    getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }).toArray().then(result => { return result; });
+    },    
     getAllHistoryByID: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
     },
@@ -299,6 +305,9 @@ const resolvers = {
     },
     getAllImages: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
+    },
+    getAllTextBasedImages: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedImages').find().toArray().then(result => {return result;})
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
@@ -391,6 +400,9 @@ const resolvers = {
     },
     getAllImageUrls: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
+    },
+    getAllTextBasedConfigs: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedConfig').find().toArray().then(result => { return result; });
     },
     countHumanGroupFirst: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.humanGroupFirst": true });
