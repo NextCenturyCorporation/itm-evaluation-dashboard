@@ -511,6 +511,7 @@ export default function TextBasedResultsPage() {
                 options={evalOptions}
                 placeholder="Select Evaluation"
                 defaultValue={evalOptions[0]}
+                value={evalOptions[0]}
                 styles={{
                     // Fixes the overlapping problem of the component
                     menu: provided => ({ ...provided, zIndex: 9999 })
