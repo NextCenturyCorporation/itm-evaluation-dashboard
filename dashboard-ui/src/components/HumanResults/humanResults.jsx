@@ -44,10 +44,9 @@ export default function HumanResults() {
     React.useEffect(() => {
         evalOptions = [];
         if (evalIdOptionsRaw?.getEvalIdsForHumandResults) { 
-            evalOptions.push({value: 999, label:  "All"})
+            //evalOptions.push({value: 999, label:  "All"})
             for (const result of evalIdOptionsRaw.getEvalIdsForHumandResults) {
                 evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
-
             }
         }
          

@@ -156,6 +156,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
     getAllHistoryByEvalNumber(evalNumber: Float): [JSON]
+    getEvalIdsForAllHistory: [JSON],
     getAllHistoryByID(historyId: ID): JSON
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
@@ -184,6 +185,7 @@ const typeDefs = gql`
     getAllSurveyResultsByEval(evalNumber: Float): [JSON],
     getAllScenarioResults: [JSON],
     getAllScenarioResultsByEval(evalNumber: Float): [JSON],
+    getEvalIdsForAllScenarioResults: [JSON],
     getAllSimAlignment: [JSON],
     getAllSimAlignmentByEval(evalNumber: Float): [JSON],
     getEvalIdsForSimAlignment: [JSON],
@@ -216,6 +218,10 @@ const resolvers = {
     },
     getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }).toArray().then(result => { return result; });
+    },
+    getEvalIdsForAllHistory: async (obj, args, context, inflow) => {
+        return await dashboardDB.db.collection('test').aggregate( 
+          [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
     },    
     getAllHistoryByID: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
@@ -368,7 +374,11 @@ const resolvers = {
         "participantID": { $not: /test/i },
         "evalNumber": args["evalNumber"]
       }).toArray().then(result => { return result; });
-    },    
+    },
+    getEvalIdsForAllScenarioResults: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('userScenarioResults').aggregate( 
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
+    },
     getAllSimAlignment: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
     },

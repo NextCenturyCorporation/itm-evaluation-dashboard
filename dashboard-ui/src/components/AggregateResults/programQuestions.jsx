@@ -6,12 +6,18 @@ import { getBoxWhiskerData, getMean, getMedian, getStandDev, getStandardError } 
 import { isDefined } from './DataFunctions';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
+import Select from 'react-select';
+
+const get_eval_name_numbers = gql`
+    query getEvalIdsForAllHistory{
+        getEvalIdsForAllHistory
+  }`;
+let evalOptions = [];
 
 // const GET_ADM_DATA = gql`
 //     query getAllHistory {
 //         getAllHistory
 //   }`;
-
 const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!) {
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
@@ -117,19 +123,32 @@ const BASE_DATA_MD = [
     }
 ]
 
-
 export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
-    const { data } = useQuery(GET_ADM_DATA, {
-        variables: {"evalNumber": 3},
-    });
+    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
+    const [selectedEval, setSelectedEval] = React.useState(3);
+
+    const { data } = useQuery(GET_ADM_DATA, {
+        variables: {"evalNumber": selectedEval},
+    });
+
+    React.useEffect(() => {
+        evalOptions = [];
+        if (evalIdOptionsRaw?.getEvalIdsForAllHistory) { 
+            for (const result of evalIdOptionsRaw.getEvalIdsForAllHistory) {
+                if (result._id.evalNumber >= 3)
+                    evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+            }
+        }
+         
+    }, [evalIdOptionsRaw, evalOptions]);
 
     React.useEffect(() => {
         const admKdmas = {};
         const admAlign = {};
         if (data?.getAllHistoryByEvalNumber) {
-            console.log(data);
             for (const x of data.getAllHistoryByEvalNumber) {
                 if (x.history.length > 0) {
                     const admName = x.history[0].parameters.adm_name;
@@ -179,9 +198,11 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
 
     const getMeanAcrossAll = (obj, keys = 'all') => {
         const data = [];
-        for (const key of Object.keys(obj)) {
-            if (keys === 'all' || keys.includes(key)) {
-                data.push(...obj[key]);
+        if (obj != undefined) {
+           for (const key of Object.keys(obj)) {
+                if (keys === 'all' || keys.includes(key)) {
+                    data.push(...obj[key]);
+                }
             }
         }
         return getMean(data);
@@ -189,19 +210,23 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
 
     const getSeAcrossAll = (obj, keys = 'all') => {
         const data = [];
-        for (const key of Object.keys(obj)) {
-            if (keys === 'all' || keys.includes(key)) {
-                data.push(...obj[key]);
+        if (obj != undefined) {
+            for (const key of Object.keys(obj)) {
+                if (keys === 'all' || keys.includes(key)) {
+                    data.push(...obj[key]);
+                }
             }
         }
         return getStandardError(data);
     };
 
-    const getN = (obj, keys = 'all') => {
+    const   getN = (obj, keys = 'all') => {
         const data = [];
-        for (const key of Object.keys(obj)) {
-            if (keys === 'all' || keys.includes(key)) {
-                data.push(...obj[key]);
+        if (obj != undefined) {
+            for (const key of Object.keys(obj)) {
+                if (keys === 'all' || keys.includes(key)) {
+                    data.push(...obj[key]);
+                }
             }
         }
         return data.length;
@@ -209,7 +234,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
 
     const getDataPoints = (admName, att, ta1, yOffset = 0) => {
         const target = ta1 === 'A' ? ('ADEPT-metrics_eval-alignment-target-eval-' + (att === 1 ? 'HIGH' : 'LOW')) : ('maximization_' + (att === 1 ? 'high' : 'low'));
-        const j = admKdmas[admName][target][ta1 == 'A' ? 'MetricsEval.MD4-Jungle' : 'jungle-1'];
+        const j = admKdmas[admName][target][ta1 === 'A' ? 'MetricsEval.MD4-Jungle' : 'jungle-1'];
         const s = admKdmas[admName][target][ta1 === 'A' ? 'MetricsEval.MD6-Submarine' : 'submarine-1'];
         const d = admKdmas[admName][target][ta1 === 'A' ? 'MetricsEval.MD5-Desert' : 'desert-1'];
         const u = admKdmas[admName][target][ta1 === 'A' ? 'MetricsEval.MD1-Urban' : 'urban-1'];
@@ -223,9 +248,25 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
         return x;
     };
 
+    function selectEvaluation(target){
+        setSelectedEval(target.value);
+    }    
+    
     return (
         <div className="home-container">
             <div className='chart-home-container'>
+                <div className="selection-section">
+                    <Select
+                        onChange={selectEvaluation}
+                        options={evalOptions}
+                        placeholder="Select Evaluation"
+                        defaultValue={evalOptions[0]}
+                        styles={{
+                            // Fixes the overlapping problem of the component
+                            menu: provided => ({ ...provided, zIndex: 9999 })
+                        }}
+                    />
+                </div>                
                 <div className='chart-header'>
                     <div className='chart-header-label'>
                         <h4>1. Does alignment score correlate with trust?</h4>
