@@ -1,31 +1,36 @@
 .vital-item {
   position: relative;
+  display: flex;
+  align-items: center;
+  padding: 2px 0; 
 }
 .vital-icon {
   cursor: pointer;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
+  width: 20px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .vital-icon:hover {
   transform: scale(1.2);
 }
-.vital-name {
-  position: absolute;
-  right: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 1000;
+.vital-name-and-badge {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  margin-left: 4px; 
+  overflow: hidden;
 }
-.vital-icon:hover .vital-name {
-  opacity: 1;
+.vital-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vital-badge {
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 .vitals-card {
   display: flex;
@@ -34,13 +39,17 @@
 }
 .vitals-title {
   flex-shrink: 0;
+  font-weight: 600;
+  margin-bottom: 0.5rem; 
 }
 .vitals-container {
   position: relative;
   overflow: visible !important;
   display: flex;
   flex-direction: column;
+  gap: 2px; 
 }
+
 .card-body {
   overflow: visible !important;
 }

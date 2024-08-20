@@ -279,7 +279,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                       <Col md={5} className="d-flex flex-column">
                         <Card className="w-100 border-0 flex-grow-1 vitals-card" style={{ backgroundColor: '#e7f1ff', overflow: 'visible' }}>
                           <Card.Body className="p-2 d-flex flex-column" style={{ overflow: 'visible' }}>
-                            <Card.Title className="h4 mb-2 vitals-title">Vitals</Card.Title>
+                            <Card.Title className="h5 mb-2 vitals-title">Vitals</Card.Title>
                             <div className="vitals-container flex-grow-1">
                               {this.renderVitals(patient, patient.vitals)}
                             </div>
@@ -426,7 +426,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       mental_status: <FaBrain />,
       conscious: <BsPersonFillGear />
     };
-
+  
     const vitalNames = {
       avpu: "AVPU",
       ambulatory: "Ambulatory",
@@ -436,28 +436,30 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       mental_status: "Mental Status",
       conscious: "Conscious"
     };
-
+  
     if (!vitals) {
       return <div>No vitals data available</div>;
     }
-
+  
     const vitalsVisible = !this.blockedVitals.includes(patient['id'])
     return (
       <div className="d-flex flex-column gap-1" style={{ minHeight: '200px', overflow: 'visible' }}>
         {Object.entries(vitals).map(([key, value]) => (
-          <div key={key} className="d-flex align-items-center vital-item" style={{ minHeight: '24px', overflow: 'visible' }}>
-            <span className="vital-icon me-2" style={{ width: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div key={key} className="vital-item">
+            <span className="vital-icon">
               {vitalIcons[key] || key}
             </span>
-            <span>
-              {vitalNames[key]}
-            </span>
-            <Badge
-              bg={vitalsVisible ? this.getVitalBadgeColor(key, value) : 'info'}
-              className="fs-7 mx-1"
-            >
-              {vitalsVisible ? value.toString() : "Unknown"}
-            </Badge>
+            <div className="vital-name-and-badge">
+              <span className="vital-name">
+                {vitalNames[key]}
+              </span>
+              <Badge
+                bg={vitalsVisible ? this.getVitalBadgeColor(key, value) : 'info'}
+                className="vital-badge"
+              >
+                {vitalsVisible ? value.toString() : "Unknown"}
+              </Badge>
+            </div>
           </div>
         ))}
       </div>
