@@ -205,100 +205,100 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Card>
         ))}
         <Row className="mb-4">
-        <Col md={3} className="d-flex flex-column">
-          <Card className="border-0 shadow-sm mb-4">
-            <Card.Body>
-              <Card.Title className="mb-3">Supplies</Card.Title>
-              <ListGroup variant="flush">
-                {this.supplies
-                  .filter(supply => supply.quantity > 0)
-                  .map((supply, index) => (
-                    <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center py-2">
-                      <span style={{ fontSize: '1rem' }}>
-                        {supply.type}
-                      </span>
-                      <Badge bg="primary" pill style={{ fontSize: '0.9rem', marginLeft: '10px' }}>
-                        {supply.quantity} {supply.reusable ? "(Reusable)" : ""}
-                      </Badge>
-                    </ListGroup.Item>
-                  ))}
-              </ListGroup>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={9}>
-        <Row>
-            {this.patients.map((patient, index) => (
-              <Col md={6} key={index} className="mb-4">
-                <Card className="h-100 border-0 shadow-sm">
-                  <Card.Body style={{ overflow: 'visible' }}>
-                    <Card.Title className="h4 mb-1">
-                      {patient.name}
-                    </Card.Title>
-                    {patient.demographics.age &&
-                      <Card.Subtitle className="mb-2 text-muted">
-                        {patient.demographics.age} years old, {patient.demographics.sex == 'F' ? 'Female' : 'Male'}
-                      </Card.Subtitle>
-                    }
-                    <Card.Text className="mb-3 small">
-                      {patient.unstructured}
-                    </Card.Text>
-                    <Row className="mb-3">
-                      <Col md={7} className="d-flex mb-3 mb-md-0">
-                        <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px', overflow: 'hidden' }}>
-                          {patient.imgUrl ? (
-                            <img
-                              src={`data:image/png;base64,${patient.imgUrl}`}
-                              alt={`${patient.id}`}
+          <Col md={3} className="d-flex flex-column">
+            <Card className="border-0 shadow-sm mb-4">
+              <Card.Body>
+                <Card.Title className="mb-3">Supplies</Card.Title>
+                <ListGroup variant="flush">
+                  {this.supplies
+                    .filter(supply => supply.quantity > 0)
+                    .map((supply, index) => (
+                      <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center py-2">
+                        <span style={{ fontSize: '1rem' }}>
+                          {supply.type}
+                        </span>
+                        <Badge bg="primary" pill style={{ fontSize: '0.9rem', marginLeft: '10px' }}>
+                          {supply.quantity} {supply.reusable ? "(Reusable)" : ""}
+                        </Badge>
+                      </ListGroup.Item>
+                    ))}
+                </ListGroup>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={9}>
+            <Row>
+              {this.patients.map((patient, index) => (
+                <Col md={6} key={index} className="mb-4">
+                  <Card className="h-100 border-0 shadow-sm">
+                    <Card.Body style={{ overflow: 'visible' }}>
+                      <Card.Title className="h4 mb-1">
+                        {patient.name}
+                      </Card.Title>
+                      {patient.demographics.age &&
+                        <Card.Subtitle className="mb-2 text-muted">
+                          {patient.demographics.age} years old, {patient.demographics.sex == 'F' ? 'Female' : 'Male'}
+                        </Card.Subtitle>
+                      }
+                      <Card.Text className="mb-3 small">
+                        {patient.unstructured}
+                      </Card.Text>
+                      <Row className="mb-3">
+                        <Col md={7} className="d-flex mb-3 mb-md-0">
+                          <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px', overflow: 'hidden' }}>
+                            {patient.imgUrl ? (
+                              <img
+                                src={`data:image/png;base64,${patient.imgUrl}`}
+                                alt={`${patient.id}`}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                }}
+                              />
+                            ) : (
+                              "No image available"
+                            )}
+                            <ZoomInIcon
+                              className="magnifying-glass"
                               style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
                                 position: 'absolute',
-                                top: 0,
-                                left: 0,
+                                bottom: '8px',
+                                left: '8px',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                zIndex: 1,
                               }}
+                              onClick={() => this.handleImageClick(patient)}
                             />
-                          ) : (
-                            "No image available"
-                          )}
-                          <ZoomInIcon
-                            className="magnifying-glass"
-                            style={{
-                              position: 'absolute',
-                              bottom: '8px',
-                              left: '8px',
-                              fontSize: '24px',
-                              cursor: 'pointer',
-                              zIndex: 1,
-                            }}
-                            onClick={() => this.handleImageClick(patient)}
-                          />
-                        </div>
-                      </Col>
-                      <Col md={5} className="d-flex flex-column">
-                        <Card className="w-100 border-0 flex-grow-1 vitals-card" style={{ backgroundColor: '#e7f1ff', overflow: 'visible' }}>
-                          <Card.Body className="p-2 d-flex flex-column" style={{ overflow: 'visible' }}>
-                            <Card.Title className="h5 mb-2 vitals-title">Vitals</Card.Title>
-                            <div className="vitals-container flex-grow-1">
-                              {this.renderVitals(patient, patient.vitals)}
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    </Row>
-                    <Card className="mb-0 border-0" style={{ backgroundColor: '#fff0f0' }}>
-                      <Card.Body className="p-3">
-                        <Card.Title className="h4 mb-2">Injuries</Card.Title>
-                        {this.renderInjuries(patient.injuries)}
-                      </Card.Body>
-                    </Card>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
+                          </div>
+                        </Col>
+                        <Col md={5} className="d-flex flex-column">
+                          <Card className="w-100 border-0 flex-grow-1 vitals-card" style={{ backgroundColor: '#e7f1ff', overflow: 'visible' }}>
+                            <Card.Body className="p-2 d-flex flex-column" style={{ overflow: 'visible' }}>
+                              <Card.Title className="h5 mb-2 vitals-title">Vitals</Card.Title>
+                              <div className="vitals-container flex-grow-1">
+                                {this.renderVitals(patient, patient.vitals)}
+                              </div>
+                            </Card.Body>
+                          </Card>
+                        </Col>
+                      </Row>
+                      <Card className="mb-0 border-0" style={{ backgroundColor: '#fff0f0' }}>
+                        <Card.Body className="p-3">
+                          <Card.Title className="h4 mb-2">Injuries</Card.Title>
+                          {this.renderInjuries(patient.injuries)}
+                        </Card.Body>
+                      </Card>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
             </Row>
-        </Col>
+          </Col>
         </Row>
         <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="lg">
           <Modal.Header closeButton>
@@ -405,10 +405,23 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Modal.Header>
           <Modal.Body className="p-4">
             {this.transitionInfo && (
-              <>
-                <p>{this.transitionInfo.unstructured}</p>
-                <p><strong>You chose to:</strong> {this.transitionInfo.action}</p>
-              </>
+              <div className="transition-info-content">
+                <p className="mb-4">{this.transitionInfo.unstructured}</p>
+                {this.transitionInfo.events && this.transitionInfo.events.length > 0 && (
+                  <div className="mb-4">
+                    {this.transitionInfo.events.map((event, index) => (
+                      <div key={index} className="d-flex align-items-center mb-3">
+                        <FaBell className="me-3 text-primary" />
+                        <p className="mb-0">{event.unstructured}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="mb-0">
+                  <strong>You chose to:</strong> {this.transitionInfo.action}
+                </p>
+              </div>
             )}
           </Modal.Body>
         </Modal>
@@ -426,7 +439,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       mental_status: <FaBrain />,
       conscious: <BsPersonFillGear />
     };
-  
+
     const vitalNames = {
       avpu: "AVPU",
       ambulatory: "Ambulatory",
@@ -436,11 +449,11 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       mental_status: "Mental Status",
       conscious: "Conscious"
     };
-  
+
     if (!vitals) {
       return <div>No vitals data available</div>;
     }
-  
+
     const vitalsVisible = !this.blockedVitals.includes(patient['id'])
     return (
       <div className="d-flex flex-column gap-1" style={{ minHeight: '200px', overflow: 'visible' }}>
