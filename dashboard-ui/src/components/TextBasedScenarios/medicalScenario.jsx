@@ -229,7 +229,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
         <Col md={9}>
         <Row>
             {this.patients.map((patient, index) => (
-              <Col md={5} key={index} className="mb-4">
+              <Col md={6} key={index} className="mb-4">
                 <Card className="h-100 border-0 shadow-sm">
                   <Card.Body style={{ overflow: 'visible' }}>
                     <Card.Title className="h4 mb-1">
