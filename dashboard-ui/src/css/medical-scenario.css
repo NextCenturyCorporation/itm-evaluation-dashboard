@@ -118,12 +118,3 @@
 .scenario-info-modal .modal-content {
   border-radius: 0.5rem;
 }
-
-.scenario-info-modal .info-card {
-  transition: all 0.3s ease;
-}
-
-.scenario-info-modal .info-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-}
