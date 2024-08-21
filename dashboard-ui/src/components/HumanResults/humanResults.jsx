@@ -30,13 +30,13 @@ const ENV_MAP = {
 
 export default function HumanResults() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+    const [selectedEval, setSelectedEval] = React.useState(3);
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
     });
     const [dataByScene, setDataByScene] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
     const [teamSelected, setSelectedTeam] = React.useState('adept');
     const [selectedPID, setSelectedPID] = React.useState(null);
@@ -158,6 +158,8 @@ export default function HumanResults() {
                         onChange={selectEvaluation}
                         options={evalOptions}
                         placeholder="Select Evaluation"
+                        defaultValue={evalOptions[0]}
+                        value={evalOptions[0]}
                     />
                 </div>}
             {selectedEval &&                          
