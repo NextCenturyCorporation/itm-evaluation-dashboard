@@ -153,7 +153,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   };
 
   componentDidMount() {
-    if (this.transitionInfo) {
+    if (this.transitionInfo && !this.transitionEdgeCase()) {
       this.setState({ showTransitionModal: true });
     }
   }
@@ -161,6 +161,20 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   handleCloseTransitionModal = () => {
     this.setState({ showTransitionModal: false });
   };
+
+  transitionEdgeCase = () => {
+    const survey = this.question.survey
+    if (!survey) {
+      // should never happen
+      return
+    }
+
+    const probe = survey.getValue('probe Probe 4-B.1-B.1')
+    if (probe && probe == 'Do some treatment on US military member.') {
+      return true
+    }
+    return false
+  }
 
   renderElement() {
     return (
