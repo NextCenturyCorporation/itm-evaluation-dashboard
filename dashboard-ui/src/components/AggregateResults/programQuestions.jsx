@@ -14,10 +14,6 @@ const get_eval_name_numbers = gql`
   }`;
 let evalOptions = [];
 
-// const GET_ADM_DATA = gql`
-//     query getAllHistory {
-//         getAllHistory
-//   }`;
 const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!) {
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
@@ -125,10 +121,9 @@ const BASE_DATA_MD = [
 
 export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-
+    const [selectedEval, setSelectedEval] = React.useState(3);
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(3);
 
     const { data } = useQuery(GET_ADM_DATA, {
         variables: {"evalNumber": selectedEval},

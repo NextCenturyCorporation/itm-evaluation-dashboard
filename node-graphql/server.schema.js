@@ -221,7 +221,7 @@ const resolvers = {
     },
     getEvalIdsForAllHistory: async (obj, args, context, inflow) => {
         return await dashboardDB.db.collection('test').aggregate( 
-          [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
+          [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },    
     getAllHistoryByID: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
@@ -377,7 +377,7 @@ const resolvers = {
     },
     getEvalIdsForAllScenarioResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('userScenarioResults').aggregate( 
-        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },
     getAllSimAlignment: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
@@ -389,7 +389,7 @@ const resolvers = {
     },
     getEvalIdsForSimAlignment: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulator').aggregate( 
-        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },
     getEvalNameNumbers: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').aggregate( 
@@ -397,7 +397,7 @@ const resolvers = {
     },
     getEvalIdsForHumandResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulatorRaw').aggregate( 
-        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },
     getAllRawSimData: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });

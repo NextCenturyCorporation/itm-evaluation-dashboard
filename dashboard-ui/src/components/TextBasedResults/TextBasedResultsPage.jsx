@@ -14,17 +14,11 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import Select from 'react-select';
 
-
+let evalOptions = [];
 const get_eval_name_numbers = gql`
     query getEvalIdsForAllScenarioResults{
         getEvalIdsForAllScenarioResults
   }`;
-let evalOptions = [];
-
-// const GET_SCENARIO_RESULTS = gql`
-//     query GetScenarioResults{
-//         getAllScenarioResults
-//     }`;
 
 const GET_SCENARIO_RESULTS_BY_EVAL = gql`
     query getAllScenarioResultsByEval($evalNumber: Float!){
@@ -306,18 +300,17 @@ function ParticipantView({ data, scenarioName }) {
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const [scenarioChosen, setScenario] = React.useState(SCENARIO_OPTIONS[0]);
-
-    const [selectedEval, setSelectedEval] = React.useState(3);
-
-    const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
-        // only pulls from network, never cached
-        //fetchPolicy: 'network-only',
-        variables: {"evalNumber": selectedEval}
-    });
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
+    const [selectedEval, setSelectedEval] = React.useState(3);
+
+    const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
+        // only pulls from network, never cached
+        fetchPolicy: 'network-only',
+        variables: {"evalNumber": selectedEval}
+    });
 
     React.useEffect(() => {
         evalOptions = [];
@@ -501,23 +494,26 @@ export default function TextBasedResultsPage() {
 
     function selectEvaluation(target){
         setSelectedEval(target.value);
+        setScenario(null);
     }   
 
     return (<div className='text-results'>
         <div className='sidebar-options'>
             <h3 className='sidebar-title'>Evaluation</h3>
             <Select
-                onChange={selectEvaluation}
-                options={evalOptions}
-                placeholder="Select Evaluation"
-                defaultValue={evalOptions[0]}
-                value={evalOptions[0]}
+
                 styles={{
                     // Fixes the overlapping problem of the component
                     menu: provided => ({ ...provided, zIndex: 9999 })
                 }}
+                options={evalOptions}
+                onChange={selectEvaluation}
+                value={evalOptions.filter(function(option) {
+                  return option.value === selectedEval;
+                })}
+                label="Single select"                
             />
-        {selectedEval != -1 && <div>
+        {selectedEval && <div>
             <h3 className='sidebar-title'>Scenario</h3>
             <List className="nav-list" component="nav">
                 {SCENARIO_OPTIONS.map((item) =>

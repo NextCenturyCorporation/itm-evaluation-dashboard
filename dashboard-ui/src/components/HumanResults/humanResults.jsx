@@ -14,7 +14,6 @@ const get_eval_name_numbers = gql`
   }`;
 let evalOptions = [];
 
-
 const GET_HUMAN_RESULTS = gql`
     query getAllRawSimData {
         getAllRawSimData
@@ -34,7 +33,7 @@ export default function HumanResults() {
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         // only pulls from network, never cached
-        fetchPolicy: 'network-only',
+        //fetchPolicy: 'network-only',
     });
     const [dataByScene, setDataByScene] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
@@ -44,7 +43,6 @@ export default function HumanResults() {
     React.useEffect(() => {
         evalOptions = [];
         if (evalIdOptionsRaw?.getEvalIdsForHumandResults) { 
-            //evalOptions.push({value: 999, label:  "All"})
             for (const result of evalIdOptionsRaw.getEvalIdsForHumandResults) {
                 evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
             }
@@ -146,6 +144,7 @@ export default function HumanResults() {
 
     function selectEvaluation(target){
         setSelectedEval(target.value);
+        setSelectedScene(null);
         setSelectedPID(null);
     }
 
@@ -153,7 +152,9 @@ export default function HumanResults() {
         <div className="hr-nav">
             {dataByScene &&
                 <div className="selection-section">
-                    <h3 className='sidebar-title'>Evaluation</h3>
+                    <div className="nav-header">
+                        <span className="nav-header-text">Evaluation</span>
+                    </div>
                     <Select
                         onChange={selectEvaluation}
                         options={evalOptions}
@@ -162,14 +163,13 @@ export default function HumanResults() {
                         value={evalOptions[0]}
                     />
                 </div>}
-            {selectedEval &&                          
+            {selectedEval &&  dataByScene &&      
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Environment</span>
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {
-                            
                             Object.keys(dataByScene).map((item) =>
                                 <ListItem id={"scene_" + item} key={"scene_" + item}
                                     button
@@ -189,7 +189,7 @@ export default function HumanResults() {
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {Object.keys(dataByScene[selectedScene]).map((item) =>
                             {
-                                if (dataByScene[selectedScene][item].evalNumber === selectedEval || selectedEval === 999){
+                                if (dataByScene[selectedScene][item].evalNumber === selectedEval){
                                     return (
                                     <ListItem id={"pid_" + item} key={"pid_" + item}
                                         button
