@@ -156,6 +156,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     if (this.transitionInfo && !this.transitionEdgeCase()) {
       this.setState({ showTransitionModal: true });
     }
+    this.overideBlockedVitals();
   }
 
   handleCloseTransitionModal = () => {
@@ -174,6 +175,24 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       return true
     }
     return false
+  }
+
+  overideBlockedVitals = () => {
+    const survey = this.question.survey;
+    const currentPage = survey?.currentPage?.name;
+    const probe = survey.getValue('probe Probe 2');
+
+    if (!['Probe 2B-1', 'Probe 2A-1'].includes(currentPage) || !probe?.includes("Assess")) {
+      return;
+    }
+
+    const lowerResponse = probe.toLowerCase();
+    this.question.blockedVitals = this.question.blockedVitals.filter(
+      blockedID => !lowerResponse.includes(blockedID.toLowerCase())
+    );
+
+    // trick to re render by updating state (with nothing)
+    this.setState({});
   }
 
   renderElement() {
