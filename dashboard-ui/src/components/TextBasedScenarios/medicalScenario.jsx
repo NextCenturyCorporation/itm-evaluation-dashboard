@@ -340,13 +340,19 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           <Modal.Body>
             {this.state.selectedPatient?.unstructured}
             {this.state.selectedImage && (
-              <div style={{ minHeight: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{
+                height: '70vh',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden'
+              }}>
                 <img
                   src={`data:image/png;base64,${this.state.selectedImage}`}
                   alt="Patient"
                   style={{
-                    maxWidth: '100%',
-                    maxHeight: '70vh',
+                    width: '100%',
+                    height: '100%',
                     objectFit: 'contain'
                   }}
                 />
