@@ -177,9 +177,25 @@ export class App extends React.Component {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
                         for (const patient of el.patients) {
-                            const foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
+                            let foundImg = null;
+                            if (config.survey.version == 4) {
+                                let pName = patient.name;
+                                if (pName.includes('Casualty')) {
+                                    pName = 'casualty_' + pName.substring(pName.length - 1);
+                                }
+                                foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId.toLowerCase() === pName.toLowerCase() && x.scenarioId === page.scenarioIndex));
+                            }
+                            else {
+                                foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
+                            }
                             if (isDefined(foundImg)) {
-                                patient.imgUrl = foundImg.url;
+                                if (config.survey.version == 4) {
+                                    patient.imgUrl = foundImg.imageByteCode
+                                }
+                                else {
+                                    patient.imgUrl = foundImg.url;
+                                }
+
                             }
 
                         }
