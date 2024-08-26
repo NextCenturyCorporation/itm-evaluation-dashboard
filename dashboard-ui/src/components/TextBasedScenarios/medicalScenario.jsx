@@ -213,7 +213,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                     onClick={this.handleSituationClick}
                   >
                     <FaInfoCircle size={28} color="#17a2b8" />
-                    <span className="ms-2 small text-muted">More Info</span>
+                    <span className="ms-2 small text-muted">Click For More Info</span>
                   </div>
                 }
                 <Card.Title className="text-center mb-3 h4">Scenario</Card.Title>
@@ -338,7 +338,13 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             <Modal.Title>{this.state.selectedPatient?.name}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {this.state.selectedPatient?.unstructured}
+            {this.state.selectedPatient?.demographics.age && (
+              <p className="mb-2 text-muted">
+                {this.state.selectedPatient.demographics.age} years old, 
+                {this.state.selectedPatient.demographics.sex === 'F' ? 'Female' : 'Male'}
+              </p>
+            )}
+            <p className="mb-3">{this.state.selectedPatient?.unstructured}</p>
             {this.state.selectedImage && (
               <div style={{
                 height: '70vh',
@@ -482,7 +488,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     const vitalNames = {
       avpu: "AVPU",
       ambulatory: "Ambulatory",
-      breathing: "BR",
+      breathing: "RR",
       heart_rate: "HR",
       spo2: "SPO2",
       mental_status: "Mental Status",
@@ -509,7 +515,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                 bg={vitalsVisible ? this.getVitalBadgeColor(key, value) : 'info'}
                 className="vital-badge"
               >
-                {vitalsVisible ? value.toString() : "Unknown"}
+                {vitalsVisible ? value.toString().toUpperCase()  : "Unknown"}
               </Badge>
             </div>
           </div>
@@ -523,7 +529,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       <div key={i} className="mb-2">
         <strong>{this.capitalizeWords(injury.location)} {injury.name}</strong>
         <br />
-        Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{this.capitalizeWords(injury.severity)}</Badge>
+        Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{injury.severity.toUpperCase()}</Badge>
       </div>
     ));
   }
@@ -531,6 +537,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   capitalizeWords = (str) => {
     return str.replace(/\b\w/g, (char) => char.toUpperCase());
   };
+
+  firstLetterCapital = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+  }
 
   getVitalBadgeColor(key, value) {
     switch (key) {
