@@ -71,6 +71,11 @@ export function ReviewTextBasedPage() {
             try {
                 const surveyModel = new Model(config);
                 surveyModel.applyTheme(surveyTheme);
+                /*
+                * stops default behavior of highlighting first option when
+                * trying to progress without answering (ST request)
+                */
+                surveyModel.focusOnFirstError = false
                 setSelectedConfig(surveyModel);
             } catch (error) {
                 console.error('Error creating survey model:', error);
