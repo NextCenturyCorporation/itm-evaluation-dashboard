@@ -9,8 +9,8 @@ import { useQuery } from '@apollo/react-hooks';
 import Select from 'react-select';
 
 const get_eval_name_numbers = gql`
-    query getEvalIdsForAllHistory{
-        getEvalIdsForAllHistory
+    query getEvalIds{
+        getEvalIds
   }`;
 let evalOptions = [];
 
@@ -131,10 +131,10 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
 
     React.useEffect(() => {
         evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForAllHistory) { 
-            for (const result of evalIdOptionsRaw.getEvalIdsForAllHistory) {
-                if (result._id.evalNumber >= 3)
-                    evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+        if (evalIdOptionsRaw?.getEvalIds) { 
+            for (const result of evalIdOptionsRaw.getEvalIds) {
+                if (result.showMainPage )
+                    evalOptions.push({value: result.evalNumber, label:  result.evalName})
             }
         }
          

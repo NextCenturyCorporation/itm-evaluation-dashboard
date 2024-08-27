@@ -155,7 +155,8 @@ const typeDefs = gql`
     getUsers: JSON
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
-    getAllHistoryByEvalNumber(evalNumber: Float): [JSON]
+    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON]
+    getEvalIds: [JSON],
     getEvalIdsForAllHistory: [JSON],
     getAllHistoryByID(historyId: ID): JSON
     getScenario(scenarioId: ID): JSON
@@ -205,6 +206,7 @@ const typeDefs = gql`
     updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON
     uploadSurveyResults(surveyId: String, results: JSON): JSON
     uploadScenarioResults(results: [JSON]): JSON
+    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON
   }
 `;
 
@@ -219,6 +221,9 @@ const resolvers = {
     getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }).toArray().then(result => { return result; });
     },
+    getEvalIds: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('evaluationIDS').find().toArray().then(result => { return result; });
+    },    
     getEvalIdsForAllHistory: async (obj, args, context, inflow) => {
         return await dashboardDB.db.collection('test').aggregate( 
           [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
@@ -447,7 +452,20 @@ const resolvers = {
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await dashboardDB.db.collection('userScenarioResults').insertOne(result)
       }
+    },
+    updateEvalIdsByPage: async (obj, args, context, inflow) => {
+      // hmm can't do this with graphql?      
+      // var field = args["field"];
+      // var updateObj = {};
+      // updateObj[field] = args["value"]};
+
+      const filter = { evalNumber: args["evalNumber"]}
+      const update = { $set: { "showMainPage" : args["value"]}}
+      const options = { upsert: true}
+
+      return await dashboardDB.db.collection('evaluationIDS').updateOne(filter, update, options)
     }
+
   },
   StringOrFloat: new GraphQLScalarType({
     name: "StringOrFloat",
