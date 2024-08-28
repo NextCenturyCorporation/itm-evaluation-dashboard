@@ -5,7 +5,6 @@ import gql from 'graphql-tag';
 import '../../css/admin-page.css';
 import DualListBox from 'react-dual-listbox';
 import {useMutation} from 'react-apollo';
-import { useQuery } from '@apollo/react-hooks';
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -113,14 +112,6 @@ function EvaluatorInputBox({options, selectedOptions}) {
 
 function EvaluationIDSTable({data}){
     const [selectedEvals, setSelectedEvals] = useState([]);
-
-    // for (const record of data){
-    //     console.log(record);
-    //     if (record.showMainPage){
-    //         setSelectedEvals([...selectedEvals,record.evalNumber])
-    //     }
-    // }
-
     const [updateEvalIds] = useMutation(UPDATE_EVAL_IDS_BYPAGE);
 
     const updateShowMainPage = (newChecked) => {
@@ -155,7 +146,7 @@ function EvaluationIDSTable({data}){
                     <td>
                         <label htmlFor={`evalIds-checkbox-${index}`}>{ids.evalName}</label>
                     </td>
-                    <td>
+                    <td style={{'text-align': 'center'}}>
                         <input
                             type="checkbox"
                             id={`evalIds-showMainPage-${index}`}
@@ -169,15 +160,11 @@ function EvaluationIDSTable({data}){
             ))}
             </tbody>
         </table>
-
-
     )
 }
 
 
 class AdminPage extends React.Component {
-
-
 
     constructor(props) {
         super(props);
