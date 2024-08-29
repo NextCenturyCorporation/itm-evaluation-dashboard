@@ -153,7 +153,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   };
 
   componentDidMount() {
-    if (this.transitionInfo && !this.transitionEdgeCase()) {
+    if (this.transitionInfo && this.transitionEdgeCase()) {
       this.setState({ showTransitionModal: true });
     }
     this.overideBlockedVitals();
@@ -169,9 +169,13 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       // should never happen
       return
     }
+    
+    if (survey.title != "DryRunEval-MJ2-eval") { 
+      return true 
+    }
 
     const probe = survey.getValue('probe Probe 4-B.1-B.1')
-    return probe !== 'Do some treatment on US military member.'
+    return probe && probe == 'Do some treatment on US military member.'
   }
 
   overideBlockedVitals = () => {
