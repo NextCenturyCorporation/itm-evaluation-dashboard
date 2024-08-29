@@ -105,17 +105,20 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
                     <Accordion.Body className='scene'>
                         <Col md={3}>
-                    <Card>
-                        <Card.Header>Constraints / Resources</Card.Header>
+                            <Card>
+                                <Card.Header>Constraints / Resources</Card.Header>
                                 <Card.Body className='overflow-auto' style={{ maxHeight: '200px' }}>
                                     {sceneSupplies && sceneSupplies.map((supply, index) => (
-                                        <Card.Text key={supply.type}>
-                                            {supply.quantity ? supply.quantity : ""} {supply.type}
-                                </Card.Text>
-                            ))}
-                        </Card.Body>
-                    </Card>
-                </Col>
+                                        <>
+                                            {!isDefined(supply.quantity) || (isDefined(supply.quantity) && supply.quantity > 0) &&
+                                                <Card.Text key={supply.type}>
+                                                    {supply.quantity ? supply.quantity : ""} {supply.type}
+                                                </Card.Text>}
+                                        </>
+                                    ))}
+                                </Card.Body>
+                            </Card>
+                        </Col>
                         <Col md={9} style={{ 'marginLeft': '12px' }}>
                             <Accordion onSelect={handleAccordionSelect} defaultActiveKey="0">
                                 <Accordion.Item eventKey="0">
@@ -124,8 +127,8 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                         <ListGroup>
                                             {sceneActions && sceneActions.map((action, index) => (
                                                 <ListGroup.Item key={"action-" + index} style={{
-                                                    "fontWeight": action.includes('Update:') || action.includes('Note:') ? "700" : "500",
-                                                    "backgroundColor": action.includes('Update:') || action.includes('Note:') ? "#eee" : "#fff"
+                                                    "fontWeight": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
+                                                    "backgroundColor": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#eee" : "#fff"
                                                 }}>{action}</ListGroup.Item>
                                             ))}
                                         </ListGroup>
@@ -134,12 +137,12 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                             </Accordion>
 
                             <div style={{ marginBottom: '10px', marginTop: '10px' }}>
-                        {patientButtons}
-                    </div>
-                    <div className="card-container">
-                        {patientCards}
-                    </div>
-                </Col>
+                                {patientButtons}
+                            </div>
+                            <div className="card-container">
+                                {patientCards}
+                            </div>
+                        </Col>
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>);

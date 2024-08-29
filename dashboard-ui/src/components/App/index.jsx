@@ -6,6 +6,7 @@ import ScenarioPage from '../ScenarioPage/scenarioPage';
 import { SurveyPage, SurveyPageWrapper } from '../Survey/survey';
 import { TextBasedScenariosPage, TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
+import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
@@ -120,6 +121,18 @@ function ReviewTextBased({ newState, userLoginHandler }) {
     } else {
         if (newState.currentUser.admin === true || newState.currentUser.evaluator) {
             return <ReviewTextBasedPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
+function ReviewDelegation({ newState, userLoginHandler }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.admin === true || newState.currentUser.evaluator) {
+            return <ReviewDelegationPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
         } else {
             return <Home newState={newState} />;
         }
@@ -272,6 +285,11 @@ export class App extends React.Component {
                                                         Review Text Scenarios
                                                     </NavDropdown.Item>
                                                 )}
+                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
+                                                        Review Delegation Survey
+                                                    </NavDropdown.Item>
+                                                )}
 
                                             </NavDropdown>
                                             {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
@@ -366,6 +384,9 @@ export class App extends React.Component {
                                         </Route>
                                         <Route path="/review-text-based">
                                             <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                        </Route>
+                                        <Route path="/review-delegation">
+                                            <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
                                         </Route>
                                         <Route path="/text-based">
                                             <TextBased />
