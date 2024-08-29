@@ -169,9 +169,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       // should never happen
       return
     }
-
     const probe = survey.getValue('probe Probe 4-B.1-B.1')
-    return probe !== 'Do some treatment on US military member.'
+    return probe && probe !== 'Do some treatment on US military member.'
   }
 
   overideBlockedVitals = () => {
