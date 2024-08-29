@@ -33,23 +33,6 @@
               "Desert"
             ],
             "showNoneItem": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "scenarioOrder",
-            "title": "Pick a scenario:",
-            "isRequired": true,
-            "choices": [
-              "Urban VoL Fire Eval 1",
-              "Urban VoL Fire Eval 2",
-              "Urban VoL Fire Eval 3",
-              "Urban QoL Fire Eval 1",
-              "Urban QoL Fire Eval 2",
-              "Urban QoL Fire Eval 3",
-              "Shooter/Victim",
-              "IED",
-              "Fistfight"
-            ]
           }
         ]
       }

@@ -18,11 +18,18 @@ import { Prompt } from 'react-router-dom'
 import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
+import { useQuery } from '@apollo/react-hooks';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
+
+const GET_PARTICIPANT_LOG= gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }
+`
 
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
@@ -39,10 +46,16 @@ export const scenarioMappings = {
 export function TextBasedScenariosPageWrapper(props) {
     // grab configs
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const { loading, error, data } = useQuery(GET_PARTICIPANT_LOG);
 
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error</p>;
+
+    
     return <TextBasedScenariosPage 
         {...props} 
         textBasedConfigs={textBasedConfigs} 
+        participantLogs={data}
         />;
 }
 
@@ -313,6 +326,7 @@ class TextBasedScenariosPage extends Component {
     };
 
     render() {
+        console.log(this.props.participantLogs)
         return (
             <>
                 <style>
