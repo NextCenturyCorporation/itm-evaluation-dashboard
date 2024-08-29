@@ -270,7 +270,7 @@ class TextBasedScenariosPage extends Component {
 
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
-
+        this.survey.focusOnFirstError = false
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
 

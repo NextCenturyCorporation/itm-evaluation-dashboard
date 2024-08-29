@@ -153,14 +153,48 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   };
 
   componentDidMount() {
-    if (this.transitionInfo) {
+    if (this.transitionInfo && this.transitionEdgeCase()) {
       this.setState({ showTransitionModal: true });
     }
+    this.overideBlockedVitals();
   }
 
   handleCloseTransitionModal = () => {
     this.setState({ showTransitionModal: false });
   };
+
+  transitionEdgeCase = () => {
+    const survey = this.question.survey
+    if (!survey) {
+      // should never happen
+      return
+    }
+    
+    if (survey.title != "DryRunEval-MJ2-eval") { 
+      return true 
+    }
+
+    const probe = survey.getValue('probe Probe 4-B.1-B.1')
+    return probe && probe == 'Do some treatment on US military member.'
+  }
+
+  overideBlockedVitals = () => {
+    const survey = this.question.survey;
+    const currentPage = survey?.currentPage?.name;
+    const probe = survey.getValue('probe Probe 2');
+
+    if (!['Probe 2B-1', 'Probe 2A-1'].includes(currentPage) || !probe?.includes("Assess")) {
+      return;
+    }
+
+    const lowerResponse = probe.toLowerCase();
+    this.question.blockedVitals = this.question.blockedVitals.filter(
+      blockedID => !lowerResponse.includes(blockedID.toLowerCase())
+    );
+
+    // trick to re render by updating state (with nothing)
+    this.setState({});
+  }
 
   renderElement() {
     return (
@@ -180,7 +214,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                     onClick={this.handleSituationClick}
                   >
                     <FaInfoCircle size={28} color="#17a2b8" />
-                    <span className="ms-2 small text-muted">More Info</span>
+                    <span className="ms-2 small text-muted">Click For More Info</span>
                   </div>
                 }
                 <Card.Title className="text-center mb-3 h4">Scenario</Card.Title>
@@ -305,15 +339,27 @@ export class MedicalScenario extends SurveyQuestionElementBase {
             <Modal.Title>{this.state.selectedPatient?.name}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {this.state.selectedPatient?.unstructured}
+            {this.state.selectedPatient?.demographics.age && (
+              <p className="mb-2 text-muted">
+                {this.state.selectedPatient.demographics.age} years old, 
+                {this.state.selectedPatient.demographics.sex === 'F' ? 'Female' : 'Male'}
+              </p>
+            )}
+            <p className="mb-3">{this.state.selectedPatient?.unstructured}</p>
             {this.state.selectedImage && (
-              <div style={{ minHeight: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{
+                height: '70vh',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden'
+              }}>
                 <img
                   src={`data:image/png;base64,${this.state.selectedImage}`}
                   alt="Patient"
                   style={{
-                    maxWidth: '100%',
-                    maxHeight: '70vh',
+                    width: '100%',
+                    height: '100%',
                     objectFit: 'contain'
                   }}
                 />
@@ -443,7 +489,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     const vitalNames = {
       avpu: "AVPU",
       ambulatory: "Ambulatory",
-      breathing: "BR",
+      breathing: "RR",
       heart_rate: "HR",
       spo2: "SPO2",
       mental_status: "Mental Status",
@@ -470,7 +516,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                 bg={vitalsVisible ? this.getVitalBadgeColor(key, value) : 'info'}
                 className="vital-badge"
               >
-                {vitalsVisible ? value.toString() : "Unknown"}
+                {vitalsVisible ? value.toString().toUpperCase()  : "Unknown"}
               </Badge>
             </div>
           </div>
@@ -484,7 +530,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       <div key={i} className="mb-2">
         <strong>{this.capitalizeWords(injury.location)} {injury.name}</strong>
         <br />
-        Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{this.capitalizeWords(injury.severity)}</Badge>
+        Severity: <Badge bg={this.getInjurySeverityColor(injury.severity)}>{injury.severity.toUpperCase()}</Badge>
       </div>
     ));
   }
@@ -492,6 +538,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   capitalizeWords = (str) => {
     return str.replace(/\b\w/g, (char) => char.toUpperCase());
   };
+
+  firstLetterCapital = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+  }
 
   getVitalBadgeColor(key, value) {
     switch (key) {
