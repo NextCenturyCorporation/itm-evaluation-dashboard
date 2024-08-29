@@ -42,21 +42,18 @@ export const scenarioMappings = {
     "Adept Submarine": adeptSubConfig
 }
 
-// wrapper makes it much easier to grab textbased configs and just pass them to existing class based component
 export function TextBasedScenariosPageWrapper(props) {
-    // grab configs
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const { loading, error, data } = useQuery(GET_PARTICIPANT_LOG);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error</p>;
 
-    
     return <TextBasedScenariosPage 
         {...props} 
         textBasedConfigs={textBasedConfigs} 
         participantLogs={data}
-        />;
+    />;
 }
 
 class TextBasedScenariosPage extends Component {
@@ -69,7 +66,8 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: [],
             startTime: null,
             scenarios: [],
-            sanitizedData: null
+            sanitizedData: null,
+            matchedParticipantLog: null,
         };
 
         this.surveyData = {};
@@ -84,31 +82,47 @@ class TextBasedScenariosPage extends Component {
     }
 
     introSurveyComplete = (survey) => {
-        const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
+        const enteredParticipantID = survey.data["Participant ID"];
 
-        //const scenarioOrderArray = JSON.parse(scenarioOrderString);
-
-        // pull selected scenarios from prop
-        /* for multiple being concatenated onto each other. single for now
-        const scenarioConfigs = scenarioOrderArray.map(scenarioName => {
-            return this.props.textBasedConfigs.find(config => 
-                config.name === scenarioName && config.eval === 'dre'
-            );
-        });
-        */
+        // match entered participant id to log to determine scenario order
+        const matchedLog = this.props.participantLogs.getParticipantLog.find(
+            log => log['ParticipantID'] == enteredParticipantID
+        );
         
+        if (matchedLog) {
+            console.log("Matched participant log found:", matchedLog);
+
+        } else {
+            console.warn("No matching participant log found for ID:", enteredParticipantID);
+            const userChoice = window.confirm(
+                "No matching participant ID was found. Would you like to continue anyway?\n\n" +
+                "Click 'OK' to continue with the current ID.\n" +
+                "Click 'Cancel' to re-enter the participant ID."
+            );
+
+            if (!userChoice) {
+                this.introSurvey = new Model(introConfig);
+                this.introSurvey.onComplete.add(this.introSurveyComplete);
+                this.introSurvey.applyTheme(surveyTheme);
+                this.setState({ currentConfig: null }); // Force re-render
+                return;
+            }
+        }
+
+        /*
         let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config =>
             config.name === scenarioOrderString && config.eval === 'dre'
-        )];
+        )];*/
 
         this.setState({
-            scenarios: [scenarioOrderString],
-            participantID: survey.data["Participant ID"],
-            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
-        })
+            scenarios: [],
+            participantID: enteredParticipantID,
+            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
+            matchedParticipantLog: matchedLog
+        });
 
         let title = ""
-        this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
+        //this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
     }
 
     sanitizeKeys = (obj) => {
@@ -326,7 +340,6 @@ class TextBasedScenariosPage extends Component {
     };
 
     render() {
-        console.log(this.props.participantLogs)
         return (
             <>
                 <style>
