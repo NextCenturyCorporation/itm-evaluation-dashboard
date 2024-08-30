@@ -84,6 +84,7 @@ class TextBasedScenariosPage extends Component {
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true
+        this.handleKeyPress = this.handleKeyPress.bind(this);
     }
 
     introSurveyComplete = (survey) => {
@@ -173,6 +174,48 @@ class TextBasedScenariosPage extends Component {
             console.warn("No matched participant log found to retrieve Sim-1 and Sim-2");
             this.setState({ allScenariosCompleted: true });
         }
+    }
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.handleKeyPress);
+    }
+    
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.handleKeyPress);
+    }
+    
+    handleKeyPress(event) {
+        if (event.key === 'M' || event.key === 'm') {
+            if (this.state.allScenariosCompleted) {
+                this.resetState();
+            }
+        }
+    }
+
+    resetState() {
+        this.setState({
+            currentConfig: null,
+            uploadData: false,
+            participantID: "",
+            vrEnvCompleted: [],
+            startTime: null,
+            scenarios: [],
+            currentScenarioIndex: 0,
+            sanitizedData: null,
+            matchedParticipantLog: null,
+            allScenariosCompleted: false,
+            sim1: null,
+            sim2: null,
+        });
+    
+        this.surveyData = {};
+        this.surveyDataByScenario = [];
+        this.survey = null;
+        this.introSurvey = new Model(introConfig);
+        this.introSurvey.onComplete.add(this.introSurveyComplete);
+        this.introSurvey.applyTheme(surveyTheme);
+        this.pageStartTimes = {};
+        this.shouldBlockNavigation = true;
     }
 
     sanitizeKeys = (obj) => {
@@ -475,7 +518,7 @@ const simNameMappings = {
 const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
-  
+
     return (
       <Container className="mt-5">
         <Row className="justify-content-center">
@@ -503,12 +546,11 @@ const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
                     ))}
                   </ListGroup>
                 </Card>
+                <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
               </Card.Body>
             </Card>
           </Col>
         </Row>
       </Container>
     );
-  };  
-  
-
+  };
