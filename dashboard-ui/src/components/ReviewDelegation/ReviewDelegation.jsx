@@ -61,6 +61,7 @@ const customStyles = `
 export function ReviewDelegationPage() {
     const delegationConfigs = useSelector(state => state.configs.surveyConfigs);
     const [selectedConfig, setSelectedConfig] = useState(null);
+    const [reviewingText, setReviewingText] = useState(null);
 
     const handleSurveyComplete = (sender) => {
         const results = sender.data;
@@ -73,6 +74,7 @@ export function ReviewDelegationPage() {
                 const surveyModel = new Model(page);
                 surveyModel.applyTheme(surveyTheme);
                 setSelectedConfig(surveyModel);
+                setReviewingText(page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment']);
             } catch (error) {
                 console.error('Error creating survey model:', error);
             }
@@ -165,6 +167,7 @@ export function ReviewDelegationPage() {
                             &larr; Back to Config Selection
                         </Button>
                     </Container>
+                    <h5 className='subtitle'>Reviewing {reviewingText}</h5>
                     <div className="flex-grow-1 overflow-auto">
                         <Survey model={selectedConfig} onComplete={handleSurveyComplete} />
                     </div>
