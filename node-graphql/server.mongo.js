@@ -59,12 +59,12 @@ const accountsServer = new AccountsServer(
     },
     emailTemplates: {
       resetPassword: {
-        subject: (user) => `Verify your account email ${user.username}`,
+        subject: (user) => `Reset your account: email ${user.username}`,
         text: function (user, url) {
           let token = url.substring(url.lastIndexOf('/'));
           let new_url = RESET_PASSWORD_URL + token;
 
-          return `To verify your account email please click on this link: ${new_url}`;
+          return `To reset your account, please click on this link: ${new_url}`;
         },
         html: function(user, url) {
           let token = url.substring(url.lastIndexOf('/'));
