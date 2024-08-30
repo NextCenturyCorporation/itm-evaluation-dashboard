@@ -69,6 +69,9 @@ class TextBasedScenariosPage extends Component {
             currentScenarioIndex: 0,
             sanitizedData: null,
             matchedParticipantLog: null,
+            allScenariosCompleted: false,
+            sim1: null,
+            sim2: null,
         };
 
         this.surveyData = {};
@@ -153,6 +156,22 @@ class TextBasedScenariosPage extends Component {
         } else {
             console.log("All scenarios completed");
             // TODO: IMPLEMENT THE END SCREEN FOR MODERATOR
+            this.survey.completedHtml = "<h3>Thank you for completing the scenarios. Please ask the session moderator to advance the screen</h3>"
+            this.handleAllScenariosCompleted();
+        }
+    }
+
+    handleAllScenariosCompleted = () => {
+        const { matchedParticipantLog } = this.state;
+        if (matchedParticipantLog) {
+            this.setState({
+                allScenariosCompleted: true,
+                sim1: simNameMappings[matchedParticipantLog['Sim-1']],
+                sim2: simNameMappings[matchedParticipantLog['Sim-2']],
+            });
+        } else {
+            console.warn("No matched participant log found to retrieve Sim-1 and Sim-2");
+            this.setState({ allScenariosCompleted: true });
         }
     }
 
@@ -418,6 +437,13 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
+                {this.state.allScenariosCompleted && (
+                    <div>
+                        <h2>All scenarios completed</h2>
+                        <p>Sim-1: {this.state.sim1 || 'Not available'}</p>
+                        <p>Sim-2: {this.state.sim2 || 'Not available'}</p>
+                    </div>
+                )}
             </>
         )
     }
@@ -430,10 +456,19 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
 })
 
 const dreMappings = {
-    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
-    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
-    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
+    'AD-1': ['DryRunEval-MJ2-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
+    'AD-2': ['DryRunEval-MJ4-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
+    'AD-3': ['DryRunEval-MJ5-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
+    'ST-1': ['qol-dre-1-eval'/*, 'vol-dre-1-eval'*/],
+    'ST-2': ['qol-dre-2-eval'/*, 'vol-dre-2-eval'*/],
+    'ST-3': ['qol-dre-3-eval'/*, 'vol-dre-3-eval'*/],
+}
+
+const simNameMappings = {
+    'AD-1': ['Eval_Adept_Urban'],
+    'AD-2': ['Eval_Adept_Jungle'],
+    'AD-3': ['Eval-Adept_Desert'],
+    'ST-1': ['stq1', 'stv1'],
+    'ST-2': ['stq2', 'stv2'],
+    'ST-3': ['stq3', 'stv3'],
 }
