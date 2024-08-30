@@ -19,13 +19,14 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
+import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
 
-const GET_PARTICIPANT_LOG= gql`
+const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
     }
@@ -49,9 +50,9 @@ export function TextBasedScenariosPageWrapper(props) {
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error</p>;
 
-    return <TextBasedScenariosPage 
-        {...props} 
-        textBasedConfigs={textBasedConfigs} 
+    return <TextBasedScenariosPage
+        {...props}
+        textBasedConfigs={textBasedConfigs}
         participantLogs={data}
     />;
 }
@@ -87,26 +88,26 @@ class TextBasedScenariosPage extends Component {
 
     introSurveyComplete = (survey) => {
         const enteredParticipantID = survey.data["Participant ID"];
-    
+
         // match entered participant id to log to determine scenario order
         const matchedLog = this.props.participantLogs.getParticipantLog.find(
             log => log['ParticipantID'] == enteredParticipantID
         );
-    
+
         let scenarios = [];
-    
+
         if (matchedLog) {
             const text1 = matchedLog['Text-1'];
             const text2 = matchedLog['Text-2'];
-            
+
             const validOptions = Object.keys(dreMappings);
             if (!validOptions.includes(text1) || !validOptions.includes(text2)) {
                 console.error("Invalid Text-1 or Text-2 value in matched log");
-            } else {    
+            } else {
                 const text1Scenarios = this.scenariosFromLog(text1);
                 const text2Scenarios = this.scenariosFromLog(text2);
-    
-               
+
+
                 scenarios = [...text1Scenarios, ...text2Scenarios];
             }
         } else {
@@ -116,7 +117,7 @@ class TextBasedScenariosPage extends Component {
                 "Click 'OK' to continue with the current ID.\n" +
                 "Click 'Cancel' to re-enter the participant ID."
             );
-    
+
             if (!userChoice) {
                 // just reload intro survey
                 this.introSurvey = new Model(introConfig);
@@ -126,23 +127,23 @@ class TextBasedScenariosPage extends Component {
                 return;
             }
         }
-    
+
         this.setState({
             scenarios,
             participantID: enteredParticipantID,
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
             matchedParticipantLog: matchedLog,
-            currentScenarioIndex: 0 
+            currentScenarioIndex: 0
         }, () => {
             if (this.state.scenarios.length > 0) {
-                this.loadNextScenario(); 
+                this.loadNextScenario();
             }
         });
     }
 
     scenariosFromLog = (entry) => {
-        return dreMappings[entry].flatMap(scenarioId => 
-            Object.values(this.props.textBasedConfigs).filter(config => 
+        return dreMappings[entry].flatMap(scenarioId =>
+            Object.values(this.props.textBasedConfigs).filter(config =>
                 config.scenario_id === scenarioId
             )
         );
@@ -156,7 +157,6 @@ class TextBasedScenariosPage extends Component {
         } else {
             console.log("All scenarios completed");
             // TODO: IMPLEMENT THE END SCREEN FOR MODERATOR
-            this.survey.completedHtml = "<h3>Thank you for completing the scenarios. Please ask the session moderator to advance the screen</h3>"
             this.handleAllScenariosCompleted();
         }
     }
@@ -177,13 +177,13 @@ class TextBasedScenariosPage extends Component {
 
     sanitizeKeys = (obj) => {
         if (Array.isArray(obj)) {
-          return obj.map(this.sanitizeKeys);
+            return obj.map(this.sanitizeKeys);
         } else if (obj !== null && typeof obj === 'object') {
-          return Object.keys(obj).reduce((acc, key) => {
-            const newKey = key.replace(/\./g, '');
-            acc[newKey] = this.sanitizeKeys(obj[key]);
-            return acc;
-          }, {});
+            return Object.keys(obj).reduce((acc, key) => {
+                const newKey = key.replace(/\./g, '');
+                acc[newKey] = this.sanitizeKeys(obj[key]);
+                return acc;
+            }, {});
         }
         return obj;
     };
@@ -411,7 +411,7 @@ class TextBasedScenariosPage extends Component {
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
-                {this.state.currentConfig && (
+                {this.state.currentConfig && !this.state.allScenariosCompleted &&(
                     <>
                         <Survey model={this.survey} />
                         {this.shouldBlockNavigation && (
@@ -438,11 +438,10 @@ class TextBasedScenariosPage extends Component {
                     </Mutation>
                 )}
                 {this.state.allScenariosCompleted && (
-                    <div>
-                        <h2>All scenarios completed</h2>
-                        <p>Sim-1: {this.state.sim1 || 'Not available'}</p>
-                        <p>Sim-2: {this.state.sim2 || 'Not available'}</p>
-                    </div>
+                    <ScenarioCompletionScreen
+                        sim1={this.state.sim1}
+                        sim2={this.state.sim2}
+                    />
                 )}
             </>
         )
@@ -472,3 +471,44 @@ const simNameMappings = {
     'ST-2': ['stq2', 'stv2'],
     'ST-3': ['stq3', 'stv3'],
 }
+
+const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
+    const allScenarios = [...(sim1 || []), ...(sim2 || [])];
+    const customColor = "#b15e2f";
+  
+    return (
+      <Container className="mt-5">
+        <Row className="justify-content-center">
+          <Col md={10} lg={8}>
+            <Card className="border-0 shadow">
+              <Card.Body className="text-center p-5">
+                <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                <Card bg="light" className="p-4">
+                  <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                    Participant should complete the following scenarios in VR:
+                  </Card.Title>
+                  <Card.Subtitle className="mb-3 text-muted">
+                    Please complete the scenarios in the order listed below:
+                  </Card.Subtitle>
+                  <ListGroup variant="flush" className="border rounded">
+                    {allScenarios.map((scenario, index) => (
+                      <ListGroup.Item 
+                        key={index} 
+                        className="py-3 d-flex align-items-center"
+                      >
+                        <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                        <span className="fs-5">{scenario}</span>
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                </Card>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+    );
+  };  
+  
+
