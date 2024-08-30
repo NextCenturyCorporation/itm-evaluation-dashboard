@@ -267,7 +267,7 @@ class ResultsTable extends React.Component {
                                 </div>
                             </>
                         }
-                        {(this.state.evalNumber == 3 && this.state.scenario !== ""  && this.state.adm !== "")&&
+                        {(this.state.evalNumber >= 3 && this.state.scenario !== ""  && this.state.adm !== "")&&
                             <>
                                 <div className="nav-header">
                                     <span className="nav-header-text">Alignment Target</span>
@@ -310,7 +310,7 @@ class ResultsTable extends React.Component {
                     </div>
                     <div className="test-overview-area">
                         {((this.state.evalNumber < 3 && this.state.scenario !== "" && this.state.adm !== "") || (
-                            this.state.evalNumber === 3 && this.state.scenario !== "" && this.state.adm !== "" && this.state.alignmentTarget !== null) ) &&
+                            this.state.evalNumber >= 3 && this.state.scenario !== "" && this.state.adm !== "" && this.state.alignmentTarget !== null) ) &&
                             <Query query={test_by_adm_and_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm, "alignmentTarget": this.state.alignmentTarget}}>
                                 {
                                     ({ loading, error, data }) => {

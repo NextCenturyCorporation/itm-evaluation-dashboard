@@ -20,7 +20,7 @@ function formatTime(seconds) {
     return `${minutes}:${formatted_seconds}`
 }
 
-const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation', 'Order Log'];
+const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation', 'Order Log', 'Updated Order Log'];
 
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
@@ -67,10 +67,12 @@ export function ResultsTable({ data }) {
             }
 
             // Handle Order Log
-            if (Array.isArray(entry['orderLog'])) {
+            if (Array.isArray(entry['orderLog']) && Array.isArray(entry['updatedOrderLog'])) {
                 entryObj['Order Log'] = JSON.stringify(entry['orderLog']);
+                entryObj['Updated Order Log'] = JSON.stringify(entry['updatedOrderLog'])
             } else {
                 entryObj['Order Log'] = entry['orderLog'] || '-';
+                entryObj['Updated Order Log'] = entry['updatedOrderLog'] || '-';
             }
 
             for (const page of Object.keys(entry)) {
