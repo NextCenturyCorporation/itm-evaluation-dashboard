@@ -10,6 +10,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 
 const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs }) => {
     const [visiblePatients, setVisiblePatients] = useState({});
+    const [visibleVitals, setVisibleVitals] = useState({});
     const [showPatientModal, setShowPatientModal] = useState(false);
     const [activeImage, setActiveImage] = useState(null);
     const [activeTitle, setActiveTitle] = useState('');
@@ -35,6 +36,14 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         logAction(`Toggle patient visibility: ${patientName}`);
     };
 
+    const toggleVitalsVisibility = (patientName) => {
+        setVisibleVitals(prev => ({
+            ...prev,
+            [patientName]: !prev[patientName]
+        }));
+        logAction(`Toggle vitals visibility: ${patientName}`);
+    };
+
     const toggleImageModal = (imgUrl, title, description) => {
         setActiveImage(imgUrl);
         setActiveTitle(title);
@@ -55,23 +64,23 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         setShowSituationModal(true);
         logAction('Show situation modal');
     };
+
     const handleAccordionSelect = (eventKey) => {
         logAction(`Accordion toggle: ${eventKey !== null ? "expanded" : "collapsed"} Medic Actions`);
     };
-
 
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
             <div className="patient-buttons" key={patient.name}>{
                 sceneCharacters.includes(patient.name) &&
-                < Button
+                <Button
                     key={patient.name}
                     variant={visiblePatients[patient.name] ? "primary" : "secondary"}
                     onClick={() => togglePatientVisibility(patient.name)}
                     className="me-1"
                 >
                     {patient.name} {visiblePatients[patient.name] && <CheckCircleIcon />}
-                </Button >
+                </Button>
             }</div>
         ));
 
@@ -90,7 +99,12 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                 </div>
                             </Col>
                             <Col md={4}>
-                                <VitalsDropdown vitals={patient.vitals} logAction={logAction} patientName={patient.name} />
+                                <VitalsDropdown
+                                    vitals={patient.vitals}
+                                    patientName={patient.name}
+                                    isVisible={visibleVitals[patient.name]}
+                                    toggleVisibility={() => toggleVitalsVisibility(patient.name)}
+                                />
                             </Col>
                         </Row>
                     </Card>
@@ -99,6 +113,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 return null;
             }
         });
+
         return (
             <Accordion className='sceneAccordion' defaultActiveKey="0">
                 <Accordion.Item eventKey="0">
@@ -145,8 +160,9 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         </Col>
                     </Accordion.Body>
                 </Accordion.Item>
-            </Accordion>);
-    };
+            </Accordion>
+        );
+    }
 
     return (
         <div>
@@ -182,4 +198,3 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
 };
 
 export default Dynamic;
-

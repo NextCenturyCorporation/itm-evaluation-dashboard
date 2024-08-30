@@ -186,7 +186,8 @@ export class App extends React.Component {
         // and add the correct image urls back to them
         // then store them properly in localStorage
         for (const config of data.getAllSurveyConfigs) {
-            for (const page of config.survey.pages) {
+            let tempConfig = JSON.parse(JSON.stringify(config))
+            for (const page of tempConfig.survey.pages) {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
                         for (const patient of el.patients) {
@@ -215,7 +216,7 @@ export class App extends React.Component {
                     }
                 }
             }
-            store.dispatch(addConfig({ id: config._id, data: config }));
+            store.dispatch(addConfig({ id: tempConfig._id, data: tempConfig }));
         }
     }
 
