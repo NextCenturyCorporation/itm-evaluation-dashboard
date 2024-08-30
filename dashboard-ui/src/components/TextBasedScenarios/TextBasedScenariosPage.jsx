@@ -83,15 +83,29 @@ class TextBasedScenariosPage extends Component {
 
     introSurveyComplete = (survey) => {
         const enteredParticipantID = survey.data["Participant ID"];
-
+    
         // match entered participant id to log to determine scenario order
         const matchedLog = this.props.participantLogs.getParticipantLog.find(
             log => log['ParticipantID'] == enteredParticipantID
         );
-        
+    
+        let scenarios = [];
+    
         if (matchedLog) {
             console.log("Matched participant log found:", matchedLog);
-
+            const text1 = matchedLog['Text-1'];
+            const text2 = matchedLog['Text-2'];
+            
+            const validOptions = Object.keys(dreMappings);
+            if (!validOptions.includes(text1) || !validOptions.includes(text2)) {
+                console.error("Invalid Text-1 or Text-2 value in matched log");
+            } else {    
+                const text1Scenarios = this.scenariosFromLog(text1);
+                const text2Scenarios = this.scenariosFromLog(text2);
+    
+               
+                scenarios = [...text1Scenarios, ...text2Scenarios];
+            }
         } else {
             console.warn("No matching participant log found for ID:", enteredParticipantID);
             const userChoice = window.confirm(
@@ -99,8 +113,9 @@ class TextBasedScenariosPage extends Component {
                 "Click 'OK' to continue with the current ID.\n" +
                 "Click 'Cancel' to re-enter the participant ID."
             );
-
+    
             if (!userChoice) {
+                // just reload intro survey
                 this.introSurvey = new Model(introConfig);
                 this.introSurvey.onComplete.add(this.introSurveyComplete);
                 this.introSurvey.applyTheme(surveyTheme);
@@ -108,21 +123,25 @@ class TextBasedScenariosPage extends Component {
                 return;
             }
         }
-
-        /*
-        let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config =>
-            config.name === scenarioOrderString && config.eval === 'dre'
-        )];*/
-
+    
         this.setState({
-            scenarios: [],
+            scenarios,
             participantID: enteredParticipantID,
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
             matchedParticipantLog: matchedLog
+        }, () => {
+            if (this.state.scenarios.length > 0) {
+                this.loadSurveyConfig([this.state.scenarios[0]], this.state.scenarios[0].title);
+            }
         });
+    }
 
-        let title = ""
-        //this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
+    scenariosFromLog = (entry) => {
+        return dreMappings[entry].flatMap(scenarioId => 
+            Object.values(this.props.textBasedConfigs).filter(config => 
+                config.scenario_id === scenarioId
+            )
+        );
     }
 
     sanitizeKeys = (obj) => {
@@ -390,3 +409,12 @@ export default TextBasedScenariosPage;
 ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
     return React.createElement(MedicalScenario, props)
 })
+
+const dreMappings = {
+    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
+    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
+    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
+}
