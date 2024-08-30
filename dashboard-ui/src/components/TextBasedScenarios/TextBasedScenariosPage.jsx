@@ -66,6 +66,7 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: [],
             startTime: null,
             scenarios: [],
+            currentScenarioIndex: 0,
             sanitizedData: null,
             matchedParticipantLog: null,
         };
@@ -92,7 +93,6 @@ class TextBasedScenariosPage extends Component {
         let scenarios = [];
     
         if (matchedLog) {
-            console.log("Matched participant log found:", matchedLog);
             const text1 = matchedLog['Text-1'];
             const text2 = matchedLog['Text-2'];
             
@@ -128,10 +128,11 @@ class TextBasedScenariosPage extends Component {
             scenarios,
             participantID: enteredParticipantID,
             vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
-            matchedParticipantLog: matchedLog
+            matchedParticipantLog: matchedLog,
+            currentScenarioIndex: 0 
         }, () => {
             if (this.state.scenarios.length > 0) {
-                this.loadSurveyConfig([this.state.scenarios[0]], this.state.scenarios[0].title);
+                this.loadNextScenario(); 
             }
         });
     }
@@ -142,6 +143,17 @@ class TextBasedScenariosPage extends Component {
                 config.scenario_id === scenarioId
             )
         );
+    }
+
+    loadNextScenario = () => {
+        const { scenarios, currentScenarioIndex } = this.state;
+        if (currentScenarioIndex < scenarios.length) {
+            const currentScenario = scenarios[currentScenarioIndex];
+            this.loadSurveyConfig([currentScenario], currentScenario.title);
+        } else {
+            console.log("All scenarios completed");
+            // TODO: IMPLEMENT THE END SCREEN FOR MODERATOR
+        }
     }
 
     sanitizeKeys = (obj) => {
@@ -303,7 +315,14 @@ class TextBasedScenariosPage extends Component {
     }
 
     onSurveyComplete = (survey) => {
+        // start uploading results for this scenario 
         this.uploadResults(survey);
+        // move to the next scenario 
+        this.setState(prevState => ({
+            currentScenarioIndex: prevState.currentScenarioIndex + 1
+        }), () => {
+            this.loadNextScenario();
+        });
     }
 
     loadSurveyConfig = (scenarioConfigs, title) => {
@@ -316,7 +335,7 @@ class TextBasedScenariosPage extends Component {
 
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
-        this.survey.focusOnFirstError = false
+        this.survey.focusOnFirstError = false;
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
 
