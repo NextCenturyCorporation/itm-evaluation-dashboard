@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey } from "survey-react-ui";
-import { Alert, Button, Card, Container, Row, Col } from 'react-bootstrap';
+import { Accordion, Alert, Button, Card, Container, Row, Col } from 'react-bootstrap';
 
 const HEADER_COLOR = '#602414';
 const SUBHEADER_COLOR = '#8B4513';
@@ -37,6 +37,9 @@ const customStyles = `
     margin-bottom: 15px;
     border-radius: 4px;
   }
+  .scenarioName {
+    font-size: 20px;
+  }
   .miniheader {
     background-color: white;
     color: ${SUBHEADER_COLOR};
@@ -55,6 +58,9 @@ const customStyles = `
   }
   .sd-body.sd-body--static {
     max-width: none;
+  }
+  .accordion {
+    margin-bottom: 8px;
   }
 `;
 
@@ -98,29 +104,37 @@ export function ReviewDelegationPage() {
             }
         }
         const renderConfigGroup = (configs, title) => (
-            <div>
-                <h5 className="subheader">{title}</h5>
-
-                {Object.keys(configs).map(admName => {
-                    return (
-                        <Row xs={1} md={2} lg={3} key={admName + '-' + title} className="g-4">
-                            <h5 className="miniheader">{admName}</h5>
-                            {configs[admName].map(page => (
-                                <Col key={title + ' ' + admName + ' ' + page['admAlignment']}>
-                                    <Button
-                                        variant="outline-primary"
-                                        onClick={() => handleConfigSelect(page)}
-                                        className="text-start text-truncate custom-btn"
-                                    >
-                                        {page['admAlignment']}
-                                    </Button>
-                                </Col>
-
-                            ))}
-                        </Row>
-                    )
-                })}
-            </div>
+            <Accordion className="accordion">
+                <Accordion.Item eventKey="0">
+                    <Accordion.Header><strong className="scenarioName">{title}</strong></Accordion.Header>
+                    <Accordion.Body>
+                        {Object.keys(configs).map(admName => {
+                            return (
+                                <Accordion className="accordion" key={admName + '-' + title}>
+                                    <Accordion.Item eventKey="1">
+                                        <Accordion.Header>{admName}</Accordion.Header>
+                                        <Accordion.Body>
+                                            <Row xs={1} md={2} lg={2} className="g-4">
+                                                {configs[admName].map(page => (
+                                                    <Col key={title + ' ' + admName + ' ' + page['admAlignment']}>
+                                                        <Button
+                                                            variant="outline-primary"
+                                                            onClick={() => handleConfigSelect(page)}
+                                                            className="text-start text-truncate custom-btn"
+                                                        >
+                                                            {page['admAlignment']}
+                                                        </Button>
+                                                    </Col>
+                                                ))}
+                                            </Row>
+                                        </Accordion.Body>
+                                    </Accordion.Item>
+                                </Accordion>
+                            )
+                        })}
+                    </Accordion.Body>
+                </Accordion.Item>
+            </Accordion>
         );
 
         return (
