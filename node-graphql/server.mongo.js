@@ -20,7 +20,7 @@ let AWS = require('aws-sdk');
 // });
 
 let transporter = nodemailer.createTransport({
-  host: `10.205.16.13`,
+  host: '10.205.16.13',
   port: 25,
   secure: false
 });
