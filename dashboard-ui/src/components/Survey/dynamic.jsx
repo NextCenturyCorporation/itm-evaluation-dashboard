@@ -62,7 +62,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
 
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
-            <>{
+            <div className="patient-buttons" key={patient.name}>{
                 sceneCharacters.includes(patient.name) &&
                 < Button
                     key={patient.name}
@@ -72,7 +72,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 >
                     {patient.name} {visiblePatients[patient.name] && <CheckCircleIcon />}
                 </Button >
-            }</>
+            }</div>
         ));
 
         const patientCards = patients.map(patient => {
@@ -109,12 +109,12 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                 <Card.Header>Constraints / Resources</Card.Header>
                                 <Card.Body className='overflow-auto' style={{ maxHeight: '200px' }}>
                                     {sceneSupplies && sceneSupplies.map((supply, index) => (
-                                        <>
+                                        <div key={supply + '-' + index}>
                                             {!isDefined(supply.quantity) || (isDefined(supply.quantity) && supply.quantity > 0) &&
                                                 <Card.Text key={supply.type}>
                                                     {supply.quantity ? supply.quantity : ""} {supply.type}
                                                 </Card.Text>}
-                                        </>
+                                        </div>
                                     ))}
                                 </Card.Body>
                             </Card>

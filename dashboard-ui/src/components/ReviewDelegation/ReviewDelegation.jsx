@@ -53,6 +53,9 @@ const customStyles = `
     -moz-transform: scale(0.8);
     -moz-transform-origin: 0 0;
   }
+  .sd-body.sd-body--static {
+    max-width: none;
+  }
 `;
 
 export function ReviewDelegationPage() {
@@ -77,53 +80,43 @@ export function ReviewDelegationPage() {
     };
 
     const renderConfigButtons = () => {
-        const configs = { 'adept': {}, 'soartech': {} };
+        const scenarios = {};
 
 
         const config = delegationConfigs["delegation_v4.0"];
         for (const page of config['pages']) {
             if (Object.keys(page).includes('scenarioIndex')) {
-                if (page['scenarioIndex'].includes('dre')) {
-                    if (!Object.keys(configs['soartech']).includes(page['admName'])) {
-                        configs['soartech'][page['admName']] = { 'high': [], 'low': [] };
-                    }
-                    configs['soartech'][page['admName']][page['admAlignment']].push(page);
+                if (!Object.keys(scenarios).includes(page['scenarioIndex'])) {
+                    scenarios[page['scenarioIndex']] = {};
                 }
-                else {
-                    if (!Object.keys(configs['adept']).includes(page['admName'])) {
-                        configs['adept'][page['admName']] = { 'high': [], 'low': [] };
-                    }
-                    configs['adept'][page['admName']][page['admAlignment']].push(page);
+                if (!Object.keys(scenarios[page['scenarioIndex']]).includes(page['admName'])) {
+                    scenarios[page['scenarioIndex']][page['admName']] = [];
                 }
+                scenarios[page['scenarioIndex']][page['admName']].push(page);
             }
         }
-
-        const renderConfigGroup = (configs, title, labelFunction = null) => (
+        const renderConfigGroup = (configs, title) => (
             <div>
                 <h5 className="subheader">{title}</h5>
 
                 {Object.keys(configs).map(admName => {
-                    return Object.keys(configs[admName]).map(target => (
-                        <>
-                            {
-                                configs[admName][target].length > 0 ? <Row xs={1} md={2} lg={3} className="g-4">
-                                    <h5 className="miniheader">{admName} - {target}</h5>
-                                    {configs[admName][target].map(page => (
-                                        <Col key={page['admName'] + ' ' + page['admAlignment'] + ' ' + page['scenarioIndex']}>
-                                            <Button
-                                                variant="outline-primary"
-                                                onClick={() => handleConfigSelect(page)}
-                                                className="text-start text-truncate custom-btn"
-                                            >
-                                                {labelFunction ? labelFunction(page['scenarioIndex']) : page['scenarioIndex']}
-                                            </Button>
-                                        </Col>
+                    return (
+                        <Row xs={1} md={2} lg={3} key={admName + '-' + title} className="g-4">
+                            <h5 className="miniheader">{admName}</h5>
+                            {configs[admName].map(page => (
+                                <Col key={title + ' ' + admName + ' ' + page['admAlignment']}>
+                                    <Button
+                                        variant="outline-primary"
+                                        onClick={() => handleConfigSelect(page)}
+                                        className="text-start text-truncate custom-btn"
+                                    >
+                                        {page['admAlignment']}
+                                    </Button>
+                                </Col>
 
-                                    ))}
-                                </Row> : <></>
-                            }
-                        </>
-                    ))
+                            ))}
+                        </Row>
+                    )
                 })}
             </div>
         );
@@ -133,8 +126,11 @@ export function ReviewDelegationPage() {
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {renderConfigGroup(configs['adept'], "Adept")}
-                        {renderConfigGroup(configs['soartech'], "SoarTech")}
+                        {Object.keys(scenarios).map((scenarioName => (
+                            <div key={scenarioName}>
+                                {renderConfigGroup(scenarios[scenarioName], scenarioName)}
+                            </div>
+                        )))}
                     </Card.Body>
                 </Card>
             </>
@@ -143,10 +139,10 @@ export function ReviewDelegationPage() {
     };
 
     return (
-        <div className={`main-content min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
+        <div className={`min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
             <style>{customStyles}</style>
             {!selectedConfig && (
-                <Container className="py-4">
+                <Container className="py-4 main-content">
                     <Alert variant="warning" dismissible>
                         <Alert.Heading>Note:</Alert.Heading>
                         <p>This page is for reviewing materials only. No data will be collected.</p>
