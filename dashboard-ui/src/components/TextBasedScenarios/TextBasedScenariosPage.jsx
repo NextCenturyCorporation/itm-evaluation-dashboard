@@ -284,7 +284,7 @@ class TextBasedScenariosPage extends Component {
         if (scenario.scenario_id.includes('DryRun')) {
             await this.calcScore(scenario, 'adept')
         } else {
-            //await this.calcScore(scenario, 'soartech')
+            await this.calcScore(scenario, 'soartech')
         }
     }
 
@@ -345,7 +345,7 @@ class TextBasedScenariosPage extends Component {
                             ...(alignmentType === 'adept' ? { population: false } : {})
                         }
                     });
-                    console.log(response);
+
                     let result;
                     if (typeof response.data === 'string') {
                         result = JSON.parse(response.data.replace(/\bNaN\b/g, "null"));
@@ -359,15 +359,22 @@ class TextBasedScenariosPage extends Component {
                     scenario.alignmentData = await Promise.all(
                         alignmentIDs.adeptAlignmentIDs.map(targetId => getAlignmentData(targetId))
                     );
+                } else if (alignmentType === 'soartech') {
+                    let targetArray;
+                    if (scenario.scenario_id.includes('qol')) {
+                        targetArray = alignmentIDs.stQOL;
+                    } else if (scenario.scenario_id.includes('vol')) {
+                        targetArray = alignmentIDs.stVOL;
+                    } else {
+                        throw new Error('Invalid SoarTech scenario type');
+                    }
 
-                    console.log(scenario.alignmentData)
-                } else {
-                    const highTarget = "qol-synth-HighExtreme";
-                    const lowTarget = "qol-synth-LowExtreme";
-                    scenario.highAlignmentData = await getAlignmentData(highTarget);
-                    scenario.lowAlignmentData = await getAlignmentData(lowTarget);
+                    scenario.alignmentData = await Promise.all(
+                        targetArray.map(targetId => getAlignmentData(targetId))
+                    );
                 }
 
+                console.log(scenario.alignmentData);
                 scenario.serverSessionId = sessionId;
             }
         } catch (error) {

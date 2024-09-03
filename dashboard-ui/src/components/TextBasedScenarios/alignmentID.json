@@ -22,5 +22,39 @@
         "ADEPT-DryRun-Moral judgement-0.3",
         "ADEPT-DryRun-Moral judgement-0.2",
         "ADEPT-DryRun-Ingroup Bias-0.2"
+    ],
+    "stVOL": [
+        "vol-human-8022671-SplitHighMulti",
+        "vol-human-1774519-SplitHighMulti",
+        "vol-human-6403274-SplitEvenBinary",
+        "vol-human-8478698-SplitLowMulti",
+        "vol-human-3043871-SplitLowMulti",
+        "vol-human-2637411-SplitEvenMulti",
+        "vol-human-2932740-SplitEvenMulti",
+        "vol-human-5032922-SplitLowMulti",
+        "vol-human-7040555-SplitEvenBinary",
+        "vol-synth-LowExtreme",
+        "vol-synth-HighExtreme",
+        "vol-synth-HighCluster",
+        "vol-synth-LowCluster",
+        "vol-synth-SplitLowBinary"
+    ],
+    "stQOL": [
+        "qol-human-8022671-SplitLowMulti",
+        "qol-human-1774519-SplitEvenBinary",
+        "qol-human-6403274-SplitHighBinary",
+        "qol-human-3043871-SplitHighBinary",
+        "qol-human-2932740-HighExtreme",
+        "qol-human-6349649-SplitHighMulti",
+        "qol-human-9157688-SplitEvenBinary",
+        "qol-human-5032922-SplitLowMulti",
+        "qol-human-3447902-SplitHighMulti",
+        "qol-human-0000001-SplitEvenMulti",
+        "qol-human-7040555-SplitHighMulti",
+        "qol-synth-LowExtreme",
+        "qol-synth-HighExtreme",
+        "qol-synth-HighCluster",
+        "qol-synth-LowCluster",
+        "qol-synth-SplitLowBinary"
     ]
 }
