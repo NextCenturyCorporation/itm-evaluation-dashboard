@@ -92,27 +92,13 @@ class TextBasedScenariosPage extends Component {
         const enteredParticipantID = survey.data["Participant ID"];
 
         // match entered participant id to log to determine scenario order
-        const matchedLog = this.props.participantLogs.getParticipantLog.find(
+        let matchedLog = this.props.participantLogs.getParticipantLog.find(
             log => log['ParticipantID'] == enteredParticipantID
         );
 
         let scenarios = [];
 
-        if (matchedLog) {
-            const text1 = matchedLog['Text-1'];
-            const text2 = matchedLog['Text-2'];
-
-            const validOptions = Object.keys(dreMappings);
-            if (!validOptions.includes(text1) || !validOptions.includes(text2)) {
-                console.error("Invalid Text-1 or Text-2 value in matched log");
-            } else {
-                const text1Scenarios = this.scenariosFromLog(text1);
-                const text2Scenarios = this.scenariosFromLog(text2);
-
-
-                scenarios = [...text1Scenarios, ...text2Scenarios];
-            }
-        } else {
+        if (!matchedLog) {
             console.warn("No matching participant log found for ID:", enteredParticipantID);
             const userChoice = window.confirm(
                 "No matching participant ID was found. Would you like to continue anyway?\n\n" +
@@ -127,8 +113,17 @@ class TextBasedScenariosPage extends Component {
                 this.introSurvey.applyTheme(surveyTheme);
                 this.setState({ currentConfig: null }); // Force re-render
                 return;
+            } else {
+                // if you want to go through with a non-matched PID, giving default experience
+                matchedLog = {'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3'}
             }
         }
+
+        const text1Scenarios = this.scenariosFromLog(matchedLog['Text-1']);
+        const text2Scenarios = this.scenariosFromLog(matchedLog['Text-2']);
+
+
+        scenarios = [...text1Scenarios, ...text2Scenarios];
 
         this.setState({
             scenarios,
