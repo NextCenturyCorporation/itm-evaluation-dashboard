@@ -394,20 +394,27 @@ class TextBasedScenariosPage extends Component {
 
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
+        const currentTime = new Date();
         
         if (!this.state.startTime) {
             this.setState({
-                startTime: new Date().toString()
+                startTime: currentTime.toString()
             });
         }
     
-        // Call timerHelper to finalize timing for the previous page
-        if (Object.keys(this.pageStartTimes).length > 0) {
-            this.timerHelper();
+        // Calculate time spent on the previous page
+        if (this.survey.currentPageNo > 0) {
+            const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
+            const startTime = this.pageStartTimes[previousPageName];
+            if (startTime) {
+                const timeSpentInSeconds = (currentTime - startTime) / 1000;
+                this.surveyData[previousPageName] = this.surveyData[previousPageName] || {};
+                this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
+            }
         }
     
         // Set start time for the new page
-        this.pageStartTimes[pageName] = new Date();
+        this.pageStartTimes[pageName] = currentTime;
     }
 
     timerHelper = () => {
