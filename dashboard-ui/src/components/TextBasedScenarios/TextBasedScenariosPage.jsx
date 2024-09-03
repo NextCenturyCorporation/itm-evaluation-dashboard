@@ -20,6 +20,7 @@ import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
+import alignmentIDs from './alignmentID.json';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -115,7 +116,7 @@ class TextBasedScenariosPage extends Component {
                 return;
             } else {
                 // if you want to go through with a non-matched PID, giving default experience
-                matchedLog = {'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3'}
+                matchedLog = { 'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3' }
             }
         }
 
@@ -254,15 +255,17 @@ class TextBasedScenariosPage extends Component {
                 scenarioData[pageName].questions[questionName] = {
                     response: questionValue,
                     probe: question.probe_id || '',
-                    question_mapping: question.question_mapping || {}
+                    question_mapping: question.jsonObj['question_mapping'] || {}
                 };
             });
         });
 
+
+        await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
-        this.setState({ 
-            uploadData: true, 
+        this.setState({
+            uploadData: true,
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
@@ -281,7 +284,7 @@ class TextBasedScenariosPage extends Component {
         if (scenario.scenario_id.includes('DryRun')) {
             await this.calcScore(scenario, 'adept')
         } else {
-            await this.calcScore(scenario, 'soartech')
+            //await this.calcScore(scenario, 'soartech')
         }
     }
 
@@ -314,18 +317,14 @@ class TextBasedScenariosPage extends Component {
     }
 
     calcScore = async (scenario, alignmentType) => {
-        let url, highTarget, lowTarget, sessionEndpoint, alignmentEndpoint;
+        let url, sessionEndpoint, alignmentEndpoint;
 
         if (alignmentType === 'adept') {
             url = process.env.REACT_APP_ADEPT_URL;
-            highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH";
-            lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW";
             sessionEndpoint = '/api/v1/new_session';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else if (alignmentType === 'soartech') {
             url = process.env.REACT_APP_SOARTECH_URL;
-            highTarget = "79f47f55-qol-high";
-            lowTarget = "15d7b3ed-qol-low";
             sessionEndpoint = '/api/v1/new_session?user_id=default_user';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else {
@@ -346,11 +345,29 @@ class TextBasedScenariosPage extends Component {
                             ...(alignmentType === 'adept' ? { population: false } : {})
                         }
                     });
-                    return response.data;
+                    console.log(response);
+                    let result;
+                    if (typeof response.data === 'string') {
+                        result = JSON.parse(response.data.replace(/\bNaN\b/g, "null"));
+                    } else {
+                        result = response.data;
+                    }
+                    return { "target": response.config.params.target_id, "score": result.score }
                 };
 
-                scenario.highAlignmentData = await getAlignmentData(highTarget);
-                scenario.lowAlignmentData = await getAlignmentData(lowTarget);
+                if (alignmentType === 'adept') {
+                    scenario.alignmentData = await Promise.all(
+                        alignmentIDs.adeptAlignmentIDs.map(targetId => getAlignmentData(targetId))
+                    );
+
+                    console.log(scenario.alignmentData)
+                } else {
+                    const highTarget = "qol-synth-HighExtreme";
+                    const lowTarget = "qol-synth-LowExtreme";
+                    scenario.highAlignmentData = await getAlignmentData(highTarget);
+                    scenario.lowAlignmentData = await getAlignmentData(lowTarget);
+                }
+
                 scenario.serverSessionId = sessionId;
             }
         } catch (error) {
@@ -488,12 +505,12 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
 })
 
 const dreMappings = {
-    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-1': ['DryRunEval-MJ2-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
     'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
     'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
-    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
-    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
+    'ST-1': ['qol-dre-1-eval'/*, 'vol-dre-1-eval'*/],
+    'ST-2': ['qol-dre-2-eval'/*, 'vol-dre-2-eval'*/],
+    'ST-3': ['qol-dre-3-eval'/*, 'vol-dre-3-eval'*/],
 }
 
 const simNameMappings = {
