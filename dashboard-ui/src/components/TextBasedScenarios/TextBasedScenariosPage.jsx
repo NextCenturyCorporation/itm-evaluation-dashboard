@@ -179,11 +179,11 @@ class TextBasedScenariosPage extends Component {
     componentDidMount() {
         document.addEventListener('keydown', this.handleKeyPress);
     }
-    
+
     componentWillUnmount() {
         document.removeEventListener('keydown', this.handleKeyPress);
     }
-    
+
     handleKeyPress(event) {
         if (event.key === 'M' || event.key === 'm') {
             if (this.state.allScenariosCompleted) {
@@ -207,7 +207,7 @@ class TextBasedScenariosPage extends Component {
             sim1: null,
             sim2: null,
         });
-    
+
         this.surveyData = {};
         this.surveyDataByScenario = [];
         this.survey = null;
@@ -232,6 +232,9 @@ class TextBasedScenariosPage extends Component {
     };
 
     uploadResults = async (survey) => {
+        console.log("uploadResults called for scenario index:", this.state.currentScenarioIndex);
+        
+        // Call timerHelper to finalize timing for the last page
         this.timerHelper();
     
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
@@ -244,37 +247,39 @@ class TextBasedScenariosPage extends Component {
             startTime: this.state.startTime
         };
     
-        for (const pageName in this.pageStartTimes) {
-            if (this.pageStartTimes.hasOwnProperty(pageName)) {
-                const page = survey.getPageByName(pageName)?.jsonObj;
-                scenarioData[pageName] = {
-                    timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
-                    pageName: page?.name,
-                    questions: {}
-                };
+        // Get only the pages for the current scenario
+        const currentPages = survey.pages;
     
-                const pageQuestions = this.getPageQuestions(pageName);
-                pageQuestions.forEach((questionName, index) => {
-                    const questionValue = survey.valuesHash[questionName];
-                    const element = survey.getPageByName(pageName)?.jsonObj?.elements[index];
-                    scenarioData[pageName].questions[questionName] = {
-                        response: questionValue,
-                        probe: element?.probe_id || '',
-                        question_mapping: element?.question_mapping || {}
-                    };
-                });
-            }
-        }
+        currentPages.forEach(page => {
+            const pageName = page.name;
+            scenarioData[pageName] = {
+                timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage || 0,
+                pageName: page.name,
+                questions: {}
+            };
+    
+            page.questions.forEach(question => {
+                const questionName = question.name;
+                const questionValue = survey.data[questionName];
+                scenarioData[pageName].questions[questionName] = {
+                    response: questionValue,
+                    probe: question.probe_id || '',
+                    question_mapping: question.question_mapping || {}
+                };
+            });
+        });
     
         const sanitizedData = this.sanitizeKeys(scenarioData);
     
         this.setState({ uploadData: true, sanitizedData }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
-            } else {
-                console.log("Upload button ref is null");
-            }
+            } 
         });
+    
+        // Reset data for the next scenario
+        this.surveyData = {};
+        this.pageStartTimes = {};
         this.shouldBlockNavigation = false;
     }
 
@@ -388,32 +393,34 @@ class TextBasedScenariosPage extends Component {
     };
 
     onAfterRenderPage = (sender, options) => {
-        if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+        const pageName = options.page.name;
+        
+        if (!this.state.startTime) {
             this.setState({
-                firstPageCompleted: true,
                 startTime: new Date().toString()
             });
         }
-
-        const pageName = options.page.name;
-
+    
+        // Call timerHelper to finalize timing for the previous page
         if (Object.keys(this.pageStartTimes).length > 0) {
             this.timerHelper();
         }
-
+    
+        // Set start time for the new page
         this.pageStartTimes[pageName] = new Date();
     }
 
     timerHelper = () => {
-        const previousPageName = Object.keys(this.pageStartTimes).pop();
-        const endTime = new Date();
-        const startTime = this.pageStartTimes[previousPageName];
-        const timeSpentInSeconds = (endTime - startTime) / 1000;
-
-        // update time spent for the previous page
-        this.surveyData[previousPageName] = {};
-        this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
-        this.surveyData[previousPageName].questions = this.getPageQuestions(previousPageName);
+        const currentPageName = this.survey.currentPage.name;
+        const startTime = this.pageStartTimes[currentPageName];
+        if (startTime) {
+            const endTime = new Date();
+            const timeSpentInSeconds = (endTime - startTime) / 1000;
+    
+            // update time spent for the current page
+            this.surveyData[currentPageName] = this.surveyData[currentPageName] || {};
+            this.surveyData[currentPageName].timeSpentOnPage = timeSpentInSeconds;
+        }
     }
 
     getPageQuestions = (pageName) => {
@@ -437,7 +444,7 @@ class TextBasedScenariosPage extends Component {
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
-                {this.state.currentConfig && !this.state.allScenariosCompleted &&(
+                {this.state.currentConfig && !this.state.allScenariosCompleted && (
                     <>
                         <Survey model={this.survey} />
                         {this.shouldBlockNavigation && (
@@ -502,37 +509,37 @@ const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
     const customColor = "#b15e2f";
 
     return (
-      <Container className="mt-5">
-        <Row className="justify-content-center">
-          <Col md={10} lg={8}>
-            <Card className="border-0 shadow">
-              <Card.Body className="text-center p-5">
-                <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
-                <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
-                <Card bg="light" className="p-4">
-                  <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
-                    Participant should complete the following scenarios in VR:
-                  </Card.Title>
-                  <Card.Subtitle className="mb-3 text-muted">
-                    Please complete the scenarios in the order listed below:
-                  </Card.Subtitle>
-                  <ListGroup variant="flush" className="border rounded">
-                    {allScenarios.map((scenario, index) => (
-                      <ListGroup.Item 
-                        key={index} 
-                        className="py-3 d-flex align-items-center"
-                      >
-                        <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
-                        <span className="fs-5">{scenario}</span>
-                      </ListGroup.Item>
-                    ))}
-                  </ListGroup>
-                </Card>
-                <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
+        <Container className="mt-5">
+            <Row className="justify-content-center">
+                <Col md={10} lg={8}>
+                    <Card className="border-0 shadow">
+                        <Card.Body className="text-center p-5">
+                            <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                            <Card bg="light" className="p-4">
+                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                    Participant should complete the following scenarios in VR:
+                                </Card.Title>
+                                <Card.Subtitle className="mb-3 text-muted">
+                                    Please complete the scenarios in the order listed below:
+                                </Card.Subtitle>
+                                <ListGroup variant="flush" className="border rounded">
+                                    {allScenarios.map((scenario, index) => (
+                                        <ListGroup.Item
+                                            key={index}
+                                            className="py-3 d-flex align-items-center"
+                                        >
+                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                            <span className="fs-5">{scenario}</span>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            </Card>
+                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+        </Container>
     );
-  };
+};
