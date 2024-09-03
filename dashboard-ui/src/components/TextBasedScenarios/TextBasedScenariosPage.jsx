@@ -282,10 +282,11 @@ class TextBasedScenariosPage extends Component {
 
         const sanitizedData = this.sanitizeKeys(this.surveyDataByScenario);
 
+        /*
         // add alignment data for each of the scenarios
         for (const scenario of sanitizedData) {
             await this.getAlignmentScore(scenario)
-        }
+        }*/
 
         this.setState({ uploadData: true, sanitizedData }, () => {
             if (this.uploadButtonRef.current) {
