@@ -498,12 +498,12 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
 })
 
 const dreMappings = {
-    'AD-1': ['DryRunEval-MJ2-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
-    'AD-2': ['DryRunEval-MJ4-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
-    'AD-3': ['DryRunEval-MJ5-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
-    'ST-1': ['qol-dre-1-eval'/*, 'vol-dre-1-eval'*/],
-    'ST-2': ['qol-dre-2-eval'/*, 'vol-dre-2-eval'*/],
-    'ST-3': ['qol-dre-3-eval'/*, 'vol-dre-3-eval'*/],
+    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
+    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
+    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
 }
 
 const simNameMappings = {
