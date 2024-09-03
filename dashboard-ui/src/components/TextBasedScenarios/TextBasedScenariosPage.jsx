@@ -73,6 +73,7 @@ class TextBasedScenariosPage extends Component {
             allScenariosCompleted: false,
             sim1: null,
             sim2: null,
+            isUploadButtonEnabled: false,
         };
 
         this.surveyData = {};
@@ -156,8 +157,6 @@ class TextBasedScenariosPage extends Component {
             const currentScenario = scenarios[currentScenarioIndex];
             this.loadSurveyConfig([currentScenario], currentScenario.title);
         } else {
-            console.log("All scenarios completed");
-            // TODO: IMPLEMENT THE END SCREEN FOR MODERATOR
             this.handleAllScenariosCompleted();
         }
     }
@@ -171,7 +170,6 @@ class TextBasedScenariosPage extends Component {
                 sim2: simNameMappings[matchedParticipantLog['Sim-2']],
             });
         } else {
-            console.warn("No matched participant log found to retrieve Sim-1 and Sim-2");
             this.setState({ allScenariosCompleted: true });
         }
     }
@@ -206,6 +204,7 @@ class TextBasedScenariosPage extends Component {
             allScenariosCompleted: false,
             sim1: null,
             sim2: null,
+            isUploadButtonEnabled: false,
         });
 
         this.surveyData = {};
@@ -232,11 +231,8 @@ class TextBasedScenariosPage extends Component {
     };
 
     uploadResults = async (survey) => {
-        console.log("uploadResults called for scenario index:", this.state.currentScenarioIndex);
-        
-        // Call timerHelper to finalize timing for the last page
         this.timerHelper();
-    
+
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
         let scenarioData = {
             scenario_id: currentScenario.scenario_id,
@@ -246,10 +242,9 @@ class TextBasedScenariosPage extends Component {
             timeComplete: new Date().toString(),
             startTime: this.state.startTime
         };
-    
-        // Get only the pages for the current scenario
+
         const currentPages = survey.pages;
-    
+
         currentPages.forEach(page => {
             const pageName = page.name;
             scenarioData[pageName] = {
@@ -257,7 +252,7 @@ class TextBasedScenariosPage extends Component {
                 pageName: page.name,
                 questions: {}
             };
-    
+
             page.questions.forEach(question => {
                 const questionName = question.name;
                 const questionValue = survey.data[questionName];
@@ -268,15 +263,19 @@ class TextBasedScenariosPage extends Component {
                 };
             });
         });
-    
+
         const sanitizedData = this.sanitizeKeys(scenarioData);
-    
-        this.setState({ uploadData: true, sanitizedData }, () => {
+
+        this.setState({ 
+            uploadData: true, 
+            sanitizedData,
+            isUploadButtonEnabled: true
+        }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
-            } 
+            }
         });
-    
+
         // Reset data for the next scenario
         this.surveyData = {};
         this.pageStartTimes = {};
@@ -395,14 +394,13 @@ class TextBasedScenariosPage extends Component {
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
         const currentTime = new Date();
-        
+
         if (!this.state.startTime) {
             this.setState({
                 startTime: currentTime.toString()
             });
         }
-    
-        // Calculate time spent on the previous page
+
         if (this.survey.currentPageNo > 0) {
             const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
             const startTime = this.pageStartTimes[previousPageName];
@@ -412,8 +410,7 @@ class TextBasedScenariosPage extends Component {
                 this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
             }
         }
-    
-        // Set start time for the new page
+
         this.pageStartTimes[pageName] = currentTime;
     }
 
@@ -423,7 +420,7 @@ class TextBasedScenariosPage extends Component {
         if (startTime) {
             const endTime = new Date();
             const timeSpentInSeconds = (endTime - startTime) / 1000;
-    
+
             // update time spent for the current page
             this.surveyData[currentPageName] = this.surveyData[currentPageName] || {};
             this.surveyData[currentPageName].timeSpentOnPage = timeSpentInSeconds;
@@ -465,12 +462,14 @@ class TextBasedScenariosPage extends Component {
                 {this.state.uploadData && (
                     <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
                         {(uploadSurveyResults, { data }) => (
-                            <div>
-                                <button ref={this.uploadButtonRef} onClick={(e) => {
+                            <div style={{ display: 'none' }}>
+                                <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
                                     e.preventDefault();
-                                    uploadSurveyResults({
-                                        variables: { results: this.state.sanitizedData }
-                                    })
+                                    if (this.state.isUploadButtonEnabled) {
+                                        uploadSurveyResults({
+                                            variables: { results: this.state.sanitizedData }
+                                        })
+                                    }
                                 }}></button>
                             </div>
                         )}
