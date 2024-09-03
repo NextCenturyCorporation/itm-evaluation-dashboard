@@ -233,21 +233,31 @@ class TextBasedScenariosPage extends Component {
 
     uploadResults = async (survey) => {
         this.timerHelper();
-
+    
+        const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
+        let scenarioData = {
+            scenario_id: currentScenario.scenario_id,
+            participantID: this.state.participantID,
+            vrEnvCompleted: this.state.vrEnvCompleted,
+            title: currentScenario.title,
+            timeComplete: new Date().toString(),
+            startTime: this.state.startTime
+        };
+    
         for (const pageName in this.pageStartTimes) {
             if (this.pageStartTimes.hasOwnProperty(pageName)) {
-                const page = this.survey.getPageByName(pageName)?.jsonObj;
-                this.surveyData[pageName] = {
+                const page = survey.getPageByName(pageName)?.jsonObj;
+                scenarioData[pageName] = {
                     timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
                     pageName: page?.name,
                     questions: {}
                 };
-
+    
                 const pageQuestions = this.getPageQuestions(pageName);
                 pageQuestions.forEach((questionName, index) => {
                     const questionValue = survey.valuesHash[questionName];
                     const element = survey.getPageByName(pageName)?.jsonObj?.elements[index];
-                    this.surveyData[pageName].questions[questionName] = {
+                    scenarioData[pageName].questions[questionName] = {
                         response: questionValue,
                         probe: element?.probe_id || '',
                         question_mapping: element?.question_mapping || {}
@@ -255,45 +265,17 @@ class TextBasedScenariosPage extends Component {
                 });
             }
         }
-
-        this.surveyData.scenarioTitle = this.survey.title
-
-        for (const pageName in this.surveyData) {
-            const pageResponse = this.surveyData[pageName];
-            for (const scenario of this.state.scenarios) {
-                const scenarioIndex = this.state.scenarios.indexOf(scenario)
-                const page = this.survey.getPageByName(pageName)
-                if (page && scenario === page['jsonObj']['scenario_name']) {
-                    this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
-                    this.surveyDataByScenario[scenarioIndex]['scenario_id'] = page['jsonObj']['scenario_id']
-                    this.surveyDataByScenario[scenarioIndex][pageName] = pageResponse;
-                }
-            }
-        }
-
-        let temp = 0
-        for (const scenario of this.surveyDataByScenario) {
-            scenario.participantID = this.state.participantID
-            scenario.vrEnvCompleted = this.state.vrEnvCompleted
-            scenario.title = this.state.scenarios[temp++]
-            scenario.timeComplete = new Date().toString()
-            scenario.startTime = this.state.startTime
-        }
-
-        const sanitizedData = this.sanitizeKeys(this.surveyDataByScenario);
-
-        /*
-        // add alignment data for each of the scenarios
-        for (const scenario of sanitizedData) {
-            await this.getAlignmentScore(scenario)
-        }*/
-
+    
+        const sanitizedData = this.sanitizeKeys(scenarioData);
+    
         this.setState({ uploadData: true, sanitizedData }, () => {
             if (this.uploadButtonRef.current) {
                 this.uploadButtonRef.current.click();
+            } else {
+                console.log("Upload button ref is null");
             }
         });
-        this.shouldBlockNavigation = false
+        this.shouldBlockNavigation = false;
     }
 
     getAlignmentScore = async (scenario) => {
@@ -474,8 +456,7 @@ class TextBasedScenariosPage extends Component {
                                     e.preventDefault();
                                     uploadSurveyResults({
                                         variables: { results: this.state.sanitizedData }
-                                    });
-                                    this.setState({ uploadData: false });
+                                    })
                                 }}></button>
                             </div>
                         )}
