@@ -15,6 +15,7 @@ import { getUID, shuffle, survey3_0_groups } from './util';
 import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
+import { isDefined } from "../AggregateResults/DataFunctions";
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
@@ -33,6 +34,12 @@ const UPLOAD_SURVEY_RESULTS = gql`
     uploadSurveyResults(surveyId: $surveyId, results: $results)
   }`;
 
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }
+`
+
 class SurveyPage extends Component {
 
     constructor(props) {
@@ -49,7 +56,9 @@ class SurveyPage extends Component {
             isSurveyLoaded: false,
             firstGroup: [],
             secondGroup: [],
-            orderLog: []
+            orderLog: [],
+            pid: null,
+            validPid: false
         };
         this.surveyConfigClone = null;
 
@@ -73,6 +82,12 @@ class SurveyPage extends Component {
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true;
+        if (this.state.validPid) {
+            this.survey.currentPage = 2;
+        }
+        else {
+            this.survey.currentPage = 1;
+        }
         this.setState({
             isSurveyLoaded: true
         });
@@ -98,8 +113,19 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
+        if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
+            this.setState({
+                isSurveyLoaded: false
+            });
+        }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
-        this.applyPageRandomization(groupedDMs, comparisonPages, removed);
+        if (this.state.surveyVersion != 4.0) {
+            this.applyPageRandomization(groupedDMs, comparisonPages, removed);
+        } else if (this.state.pid != null) {
+            this.setState({
+                isSurveyLoaded: true
+            });
+        }
     }
 
     prepareSurveyInitialization = () => {
@@ -176,6 +202,63 @@ class SurveyPage extends Component {
             groupedDMs.forEach(group => {
                 comparisonPages.push(group[0].name + " vs " + group[1].name)
             });
+
+
+            return { groupedDMs, comparisonPages, removed }
+        }
+        else if (this.state.surveyVersion == 4.0 && this.state.pid == null) {
+            let pages = this.surveyConfigClone.pages
+            let removed = pages.slice(1, pages.length - 1);
+            let groupedDMs = []
+            let comparisonPages = []
+            this.surveyConfigClone.pages = [pages[0]];
+
+            return { groupedDMs, comparisonPages, removed }
+        }
+        else if (this.state.surveyVersion == 4.0) {
+            this.surveyConfigClone.pages[0].elements[0].data = this.state.pid;
+
+            let pages = this.surveyConfigClone.pages;
+            // const tmpSurveyConfigClone = JSON.parse(JSON.stringify(this.state.surveyConfig));
+            // this.surveyConfigClone.pages = [...this.surveyConfigClone.pages.slice(0), ...tmpSurveyConfigClone.pages.slice(this.state.validPid ? 2 : 1, tmpSurveyConfigClone.pages.length - 1)]
+            // let pages = this.surveyConfigClone.pages;
+            let removed = []
+            let groupedDMs = []
+            let comparisonPages = []
+            /* Get the ADMS for urban and sub that are aligned either high or low */
+            // const dms = pages.reduce((filtered, page) => {
+            //     if (page.scenarioName) {
+            //         if ((page.scenarioName.includes("Urban") || page.scenarioName.includes("Sub")) &&
+            //             (page.admType === 'aligned' || page.admType === 'other')) {
+            //             filtered.push(page);
+            //         } else {
+            //             removed.push(page);
+            //         }
+            //     }
+            //     return filtered;
+            // }, []);
+
+            // // matches adms with their counterparts (high matches to low)
+            // const dmMap = new Map();
+            // dms.forEach((dm) => {
+            //     const key = `${dm.admAuthor}-${dm.scenarioName}`;
+            //     if (!dmMap.has(key)) {
+            //         dmMap.set(key, []);
+            //     }
+            //     dmMap.get(key).push(dm);
+            // });
+
+            // survey3_0_groups.forEach(([author, scenario]) => {
+            //     const key = `${author}-${scenario}`;
+            //     if (dmMap.has(key)) {
+            //         groupedDMs.push(dmMap.get(key));
+            //     }
+            // });
+
+            // // keep track of relevant comparison pages of selected scenarios
+            // groupedDMs.forEach(group => {
+            //     comparisonPages.push(group[0].name + " vs " + group[1].name)
+            // });
 
 
             return { groupedDMs, comparisonPages, removed }
@@ -474,9 +557,30 @@ class SurveyPage extends Component {
         // final upload
         this.uploadSurveyData(survey, true);
         this.shouldBlockNavigation = false;
+        if (this.surveyConfigClone.pages.length < 3) {
+            if (this.state.surveyVersion == 4.0 && survey.valuesHash['Participant ID'] !== this.state.pid) {
+                this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
+                    const matchedLog = this.props.participantLog.getParticipantLog.find(
+                        log => log['ParticipantID'] == this.state.pid
+                    );
+                    this.setState({ validPid: matchedLog });
+                });
+            }
+            this.postConfigSetup();
+        }
     }
 
     onValueChanged = (sender, options) => {
+        if (this.state.surveyVersion == 4.0 && sender.valuesHash['Participant ID'] !== this.state.pid) {
+            this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
+                const matchedLog = this.props.participantLog.getParticipantLog.find(
+                    log => log['ParticipantID'] == this.state.pid
+                );
+                if (this.survey.getPageByName("PID Warning"))
+                    this.survey.getPageByName("PID Warning").visible = !isDefined(matchedLog);
+                this.setState({ validPid: isDefined(matchedLog) });
+            });
+        }
         // ensures partial data will be saved if someone needs to step away from the survey
         if (!this.state.surveyId) {
             this.setState({ surveyId: getUID() }, () => {
@@ -538,14 +642,17 @@ class SurveyPage extends Component {
 export const SurveyPageWrapper = (props) => {
     const { loading: loadingHumanGroupFirst, error: errorHumanGroupFirst, data: dataHumanGroupFirst } = useQuery(COUNT_HUMAN_GROUP_FIRST);
     const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst) return <p>Error :</p>;
+
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog) return <p>Error :</p>;
 
     return (
         <SurveyPage
             countHumanGroupFirst={dataHumanGroupFirst.countHumanGroupFirst}
             countAIGroupFirst={dataAIGroupFirst.countAIGroupFirst}
+            participantLog={dataParticipantLog}
             currentUser={props.currentUser}
         />)
 };
