@@ -197,7 +197,7 @@ export class App extends React.Component {
                                 if (pName.includes('Casualty')) {
                                     pName = 'casualty_' + pName.substring(pName.length - 1);
                                 }
-                                foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId.toLowerCase() === pName.toLowerCase() && x.scenarioId === page.scenarioIndex));
+                                foundImg = data.getAllTextBasedImages.find((x) => ((x.casualtyId.toLowerCase() === pName.toLowerCase() || (x.casualtyId === 'us_soldier' && pName === 'US Soldier')) && (x.scenarioId === page.scenarioIndex || x.scenarioId.replace('MJ', 'IO') === page.scenarioIndex)));
                             }
                             else {
                                 foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);

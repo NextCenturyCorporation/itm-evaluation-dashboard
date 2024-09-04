@@ -184,7 +184,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 actions={this.actions}
                 scenes={this.scenes}
                 explanation={this.explanation}
-                showModal={true}
+                showModal={false}
                 updateActionLogs={this.updateActionLogs}
             />
         )

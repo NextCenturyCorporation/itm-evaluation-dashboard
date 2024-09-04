@@ -89,7 +89,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 return (
                     <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
                         <Card.Header>
-                            <div>{patient.name} <Card.Text>{patient.description}</Card.Text></div>
+                            <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
                         </Card.Header>
                         <Row className="g-0">
                             <Col md={8} className="mr-4">
@@ -141,7 +141,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Accordion.Body>
                                         <ListGroup>
                                             {sceneActions && sceneActions.map((action, index) => (
-                                                <ListGroup.Item key={"action-" + index} style={{
+                                                <ListGroup.Item key={"action-" + index} className="action-item" style={{
                                                     "fontWeight": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
                                                     "backgroundColor": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#eee" : "#fff"
                                                 }}>{action}</ListGroup.Item>
