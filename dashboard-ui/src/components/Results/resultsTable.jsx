@@ -128,11 +128,17 @@ class ResultsTable extends React.Component {
             } else {
                 return ("Soartech: " + id);
             }
-        } else {
+        } else if (this.state.currentEval == 3) {
             if (id.toLowerCase().indexOf("metricseval") > -1) {
                 return ("ADEPT: " + id);
             } else {
                 return ("Soartech: " + id);
+            }
+        } else {
+            if(id.toLowerCase().includes("qol") || id.toLowerCase().includes("vol") ) {
+                return ("Soartech: " + id);
+            } else {
+                return ("Adept: " + id);
             }
         }
     }
