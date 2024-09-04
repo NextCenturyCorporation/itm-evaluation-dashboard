@@ -3,6 +3,7 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import './template.css'
 import Dynamic from "./dynamic";
+import { isDefined } from "../AggregateResults/DataFunctions";
 
 const CUSTOM_TYPE = "dynamic-template";
 
@@ -26,9 +27,16 @@ export class DynamicTemplateModel extends Question {
     get actions() {
         return this.getPropertyValue("actions")
     }
-
     set actions(actions) {
         this.setPropertyValue("actions", actions)
+    }
+
+    get scenes() {
+        return this.getPropertyValue("scenes")
+    }
+
+    set scenes(scenes) {
+        this.setPropertyValue("scenes", scenes)
     }
 
     get supplies() {
@@ -84,6 +92,10 @@ Serializer.addClass(
             default: []
         },
         {
+            name: "scenes",
+            default: null
+        },
+        {
             name: "supplies",
             default: []
         },
@@ -128,25 +140,28 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         return this.questionBase;
     }
     get dmName() {
-        return this.question.dmName
+        return this.question.dmName;
     }
     get actions() {
-        return this.question.actions
+        return this.question.actions;
     }
     get supplies() {
-        return this.question.supplies
+        return this.question.supplies;
     }
     get situation() {
-        return this.question.situation
+        return this.question.situation;
     }
     get patients() {
-        return this.question.patients
+        return this.question.patients;
     }
     get decision() {
-        return this.question.decision
+        return this.question.decision;
     }
     get explanation() {
-        return this.question.explanation
+        return this.question.explanation;
+    }
+    get scenes() {
+        return isDefined(this.question.scenes) ? this.question.scenes : null;
     }
 
     updateActionLogs = (newAction) => {
@@ -167,6 +182,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 decision={this.decision} 
                 dmName={this.dmName}
                 actions={this.actions}
+                scenes={this.scenes}
                 explanation={this.explanation}
                 showModal={true}
                 updateActionLogs={this.updateActionLogs}

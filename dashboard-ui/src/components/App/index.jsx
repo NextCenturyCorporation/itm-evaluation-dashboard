@@ -6,6 +6,7 @@ import ScenarioPage from '../ScenarioPage/scenarioPage';
 import { SurveyPage, SurveyPageWrapper } from '../Survey/survey';
 import { TextBasedScenariosPage, TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
+import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import { Router, Switch, Route, Link } from 'react-router-dom';
 import LoginApp from '../Account/login';
@@ -126,6 +127,18 @@ function ReviewTextBased({ newState, userLoginHandler }) {
     }
 }
 
+function ReviewDelegation({ newState, userLoginHandler }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.admin === true || newState.currentUser.evaluator) {
+            return <ReviewDelegationPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
 export class App extends React.Component {
 
     constructor(props) {
@@ -173,20 +186,37 @@ export class App extends React.Component {
         // and add the correct image urls back to them
         // then store them properly in localStorage
         for (const config of data.getAllSurveyConfigs) {
-            for (const page of config.survey.pages) {
+            let tempConfig = JSON.parse(JSON.stringify(config))
+            for (const page of tempConfig.survey.pages) {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
                         for (const patient of el.patients) {
-                            const foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
+                            let foundImg = null;
+                            if (config.survey.version == 4) {
+                                let pName = patient.name;
+                                if (pName.includes('Casualty')) {
+                                    pName = 'casualty_' + pName.substring(pName.length - 1);
+                                }
+                                foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId.toLowerCase() === pName.toLowerCase() && x.scenarioId === page.scenarioIndex));
+                            }
+                            else {
+                                foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
+                            }
                             if (isDefined(foundImg)) {
-                                patient.imgUrl = foundImg.url;
+                                if (config.survey.version == 4) {
+                                    patient.imgUrl = foundImg.imageByteCode
+                                }
+                                else {
+                                    patient.imgUrl = foundImg.url;
+                                }
+
                             }
 
                         }
                     }
                 }
             }
-            store.dispatch(addConfig({ id: config._id, data: config }));
+            store.dispatch(addConfig({ id: tempConfig._id, data: tempConfig }));
         }
     }
 
@@ -254,6 +284,11 @@ export class App extends React.Component {
                                                 {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
                                                         Review Text Scenarios
+                                                    </NavDropdown.Item>
+                                                )}
+                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
+                                                        Review Delegation Survey
                                                     </NavDropdown.Item>
                                                 )}
 
@@ -350,6 +385,9 @@ export class App extends React.Component {
                                         </Route>
                                         <Route path="/review-text-based">
                                             <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                        </Route>
+                                        <Route path="/review-delegation">
+                                            <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
                                         </Route>
                                         <Route path="/text-based">
                                             <TextBased />
