@@ -75,6 +75,9 @@ class TextBasedScenariosPage extends Component {
             sim1: null,
             sim2: null,
             isUploadButtonEnabled: false,
+            adeptSessionsCompleted: 0,
+            combinedSessionId: '',
+            adeptScenarios: []
         };
 
         this.surveyData = {};
@@ -201,6 +204,8 @@ class TextBasedScenariosPage extends Component {
             sim1: null,
             sim2: null,
             isUploadButtonEnabled: false,
+            adeptSessionsCompleted: 0,
+            combinedSessionId: ''
         });
 
         this.surveyData = {};
@@ -270,7 +275,10 @@ class TextBasedScenariosPage extends Component {
             isUploadButtonEnabled: true
         }, () => {
             if (this.uploadButtonRef.current) {
-                this.uploadButtonRef.current.click();
+                // don't upload adept scenarios until all 3 have run so we can get combined score
+                if (!sanitizedData.scenario_id.includes('DryRun')) {
+                    this.uploadButtonRef.current.click();
+                }
             }
         });
 
@@ -282,9 +290,75 @@ class TextBasedScenariosPage extends Component {
 
     getAlignmentScore = async (scenario) => {
         if (scenario.scenario_id.includes('DryRun')) {
+            if (!this.state.adeptSessionsCompleted === 0) {
+                await this.beginRunningSession(scenario)
+            } else {
+                await this.continueRunningSession(scenario)
+            }
             await this.calcScore(scenario, 'adept')
+
+            let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
+
+            this.setState(prevState => ({
+                adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
+                adeptScenarios: updatedAdeptScenarios
+            }), async () => {
+                if (this.state.adeptSessionsCompleted === 3) {
+                    await this.uploadAdeptScenarios(updatedAdeptScenarios)
+                }
+            });
+
         } else {
             await this.calcScore(scenario, 'soartech')
+        }
+    }
+
+    beginRunningSession = async (scenario) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+        const sessionEndpoint = '/api/v1/new_session';
+
+        try {
+            const session = await axios.post(`${url}${sessionEndpoint}`);
+            if (session.status === 200) {
+                this.setState({ combinedSessionId: session.data }, async () => {
+                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+                })
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    continueRunningSession = async (scenario) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+
+        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+    }
+
+    uploadAdeptScenarios = async (scenarios) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+        const alignmentEndpoint = '/api/v1/alignment/session'
+
+        const alignmentData = await Promise.all(
+            alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
+        );
+
+        for (let scenario of scenarios) {
+            scenario.combinedAlignmentData = alignmentData
+            const sanitizedData = this.sanitizeKeys(scenario)
+            await new Promise(resolve => {
+                this.setState({
+                    uploadData: true,
+                    sanitizedData,
+                    isUploadButtonEnabled: true
+                }, () => {
+                    if (this.uploadButtonRef.current) {
+                        this.uploadButtonRef.current.click();
+                        console.log('Uploading sanitized data:', sanitizedData);
+                    }
+                    resolve();
+                });
+            });
         }
     }
 
@@ -316,6 +390,24 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
+    getAlignmentData = async (targetId, url, alignmentEndpoint, sessionId, alignmentType) => {
+        const response = await axios.get(`${url}${alignmentEndpoint}`, {
+            params: {
+                session_id: sessionId,
+                target_id: targetId,
+                ...(alignmentType === 'adept' ? { population: false } : {})
+            }
+        });
+
+        let result;
+        if (typeof response.data === 'string') {
+            result = JSON.parse(response.data.replace(/\bNaN\b/g, "null"));
+        } else {
+            result = response.data;
+        }
+        return { "target": response.config.params.target_id, "score": result.score }
+    };
+
     calcScore = async (scenario, alignmentType) => {
         let url, sessionEndpoint, alignmentEndpoint;
 
@@ -337,27 +429,9 @@ class TextBasedScenariosPage extends Component {
                 const sessionId = session.data;
                 await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
 
-                const getAlignmentData = async (targetId) => {
-                    const response = await axios.get(`${url}${alignmentEndpoint}`, {
-                        params: {
-                            session_id: sessionId,
-                            target_id: targetId,
-                            ...(alignmentType === 'adept' ? { population: false } : {})
-                        }
-                    });
-
-                    let result;
-                    if (typeof response.data === 'string') {
-                        result = JSON.parse(response.data.replace(/\bNaN\b/g, "null"));
-                    } else {
-                        result = response.data;
-                    }
-                    return { "target": response.config.params.target_id, "score": result.score }
-                };
-
                 if (alignmentType === 'adept') {
                     scenario.alignmentData = await Promise.all(
-                        alignmentIDs.adeptAlignmentIDs.map(targetId => getAlignmentData(targetId))
+                        alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'adept'))
                     );
                 } else if (alignmentType === 'soartech') {
                     let targetArray;
@@ -370,7 +444,7 @@ class TextBasedScenariosPage extends Component {
                     }
 
                     scenario.alignmentData = await Promise.all(
-                        targetArray.map(targetId => getAlignmentData(targetId))
+                        targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
                     );
                 }
 
@@ -406,7 +480,7 @@ class TextBasedScenariosPage extends Component {
         this.survey.focusOnFirstError = false;
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
-
+        this.shouldBlockNavigation = true
         this.setState({ currentConfig: this.survey });
     };
 
@@ -512,12 +586,12 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
 })
 
 const dreMappings = {
-    'AD-1': ['DryRunEval-MJ2-eval'/*, 'DryRunEval.MJ1', 'DryRunEval.IO1'*/],
+    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
     'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
     'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'ST-1': ['qol-dre-1-eval'/*, 'vol-dre-1-eval'*/],
-    'ST-2': ['qol-dre-2-eval'/*, 'vol-dre-2-eval'*/],
-    'ST-3': ['qol-dre-3-eval'/*, 'vol-dre-3-eval'*/],
+    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
+    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
+    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
 }
 
 const simNameMappings = {
