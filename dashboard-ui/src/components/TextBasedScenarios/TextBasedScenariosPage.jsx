@@ -349,7 +349,7 @@ class TextBasedScenariosPage extends Component {
         for (let scenario of scenarios) {
             scenario.combinedAlignmentData = alignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
-            scenario.mostLeastAlgined = combinedMostLeastAligned
+            scenario.mostLeastAligned = combinedMostLeastAligned
             const sanitizedData = this.sanitizeKeys(scenario)
             await new Promise(resolve => {
                 this.setState({
