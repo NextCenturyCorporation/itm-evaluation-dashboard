@@ -343,6 +343,8 @@ class TextBasedScenariosPage extends Component {
             alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
         );
 
+        const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url)
+
         for (let scenario of scenarios) {
             scenario.combinedAlignmentData = alignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
@@ -360,6 +362,26 @@ class TextBasedScenariosPage extends Component {
                 });
             });
         }
+    }
+
+    mostLeastAlgined = async (sessionId, ta1, url) => {
+        let target = ''
+        const endpoint = '/api/v1/get_ordered_alignment'
+        if (ta1 === 'soartech') {
+
+        } else {
+            target = 'Moral judgement'
+        }
+
+        const response = await axios.get(`${url}${endpoint}`, {
+            params: {
+                session_id: sessionId,
+                kdma_id: target
+            }
+        });
+
+        console.log(response)
+        return response
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
