@@ -21,8 +21,6 @@ import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
-import { useQuery } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -292,7 +290,7 @@ class TextBasedScenariosPage extends Component {
 
     getAlignmentScore = async (scenario) => {
         if (scenario.scenario_id.includes('DryRun')) {
-            if (!this.state.adeptSessionsCompleted === 0) {
+            if (this.state.adeptSessionsCompleted === 0) {
                 await this.beginRunningSession(scenario)
             } else {
                 await this.continueRunningSession(scenario)
