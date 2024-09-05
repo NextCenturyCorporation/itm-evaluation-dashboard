@@ -31,9 +31,10 @@
     text-align: center;
     background-color: rgb(236, 236, 236);
     border-radius: 12px 12px 0px 0px;
-    padding: 12px 0px;
+    padding: 10px 0px;
     font-size: 20px;
     margin-bottom: 0px;
+    margin-top:5px;
 }
 
 .sidebar-options {

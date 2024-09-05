@@ -12,11 +12,18 @@ import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import { scenarioMappings } from '../TextBasedScenarios/TextBasedScenariosPage';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
+import Select from 'react-select';
 
-const GET_SCENARIO_RESULTS = gql`
-    query GetScenarioResults{
-        getAllScenarioResults
-    }`;
+let evalOptions = [];
+const get_eval_name_numbers = gql`
+    query getEvalIdsForAllScenarioResults{
+        getEvalIdsForAllScenarioResults
+  }`;
+
+const GET_SCENARIO_RESULTS_BY_EVAL = gql`
+    query getAllScenarioResultsByEval($evalNumber: Float!){
+        getAllScenarioResultsByEval(evalNumber: $evalNumber)
+  }`;    
 
 const SCENARIO_OPTIONS = [
     "Adept Urban",
@@ -28,6 +35,7 @@ const SCENARIO_OPTIONS = [
     "SoarTech Desert",
     "SoarTech Jungle"
 ];
+
 
 function shortenAnswer(answer) {
     // shortens an answer so the whole thing is visible and understandable without taking up too much screen real estate
@@ -200,7 +208,7 @@ function getQuestionText(qkey, scenario) {
 
 function ParticipantView({ data, scenarioName }) {
     const [organizedData, setOrganizedData] = React.useState(null);
-    const [excelData, setExcelData] = React.useState(null);
+    const [excelData, setExcelData] = React.useState(null); 
     const [orderedHeaders, setHeaders] = React.useState([]);
     React.useEffect(() => {
         const formatted = {};
@@ -212,7 +220,7 @@ function ParticipantView({ data, scenarioName }) {
             };
             formatted[page['_id']] = { ...obj };
 
-            for (const key of Object.keys(page)) {
+            for (const key of Object.keys(  )) {
                 if (key === 'highAlignmentData') {
                     if (!headers.includes('KDMA')) {
                         headers.push('KDMA')
@@ -290,15 +298,29 @@ function ParticipantView({ data, scenarioName }) {
 
 
 export default function TextBasedResultsPage() {
+    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const [scenarioChosen, setScenario] = React.useState(SCENARIO_OPTIONS[0]);
-    const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS, {
-        // only pulls from network, never cached
-        fetchPolicy: 'network-only',
-    });
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
+    const [selectedEval, setSelectedEval] = React.useState(3);
+
+    const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
+        // only pulls from network, never cached
+        fetchPolicy: 'network-only',
+        variables: {"evalNumber": selectedEval}
+    });
+
+    React.useEffect(() => {
+        evalOptions = [];
+        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) { 
+            for (const result of evalIdOptionsRaw.getEvalIdsForAllScenarioResults) {
+                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+
+            }
+        } 
+    }, [evalIdOptionsRaw, evalOptions]);
 
     React.useEffect(() => {
         // populate responsesByScenario with gql data
@@ -308,8 +330,8 @@ export default function TextBasedResultsPage() {
             tmpResponses[opt] = {};
             participants[opt] = [];
         }
-        if (data?.getAllScenarioResults) {
-            for (const result of data.getAllScenarioResults) {
+        if (data?.getAllScenarioResultsByEval) {
+            for (const result of data.getAllScenarioResultsByEval) {
                 let scenario = null;
 
                 for (const k of Object.keys(result)) {
@@ -470,8 +492,28 @@ export default function TextBasedResultsPage() {
         }
     };
 
+    function selectEvaluation(target){
+        setSelectedEval(target.value);
+        setScenario(null);
+    }   
+
     return (<div className='text-results'>
         <div className='sidebar-options'>
+            <h3 className='sidebar-title'>Evaluation</h3>
+            <Select
+
+                styles={{
+                    // Fixes the overlapping problem of the component
+                    menu: provided => ({ ...provided, zIndex: 9999 })
+                }}
+                options={evalOptions}
+                onChange={selectEvaluation}
+                value={evalOptions.filter(function(option) {
+                  return option.value === selectedEval;
+                })}
+                label="Single select"                
+            />
+        {selectedEval && <div>
             <h3 className='sidebar-title'>Scenario</h3>
             <List className="nav-list" component="nav">
                 {SCENARIO_OPTIONS.map((item) =>
@@ -483,6 +525,8 @@ export default function TextBasedResultsPage() {
                     </ListItem>
                 )}
             </List>
+            
+        </div>}
         </div>
         {scenarioChosen && <div className="result-display">
             <div className="text-based-header">

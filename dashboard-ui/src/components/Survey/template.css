@@ -3,6 +3,23 @@
   font-weight: bold;
 }
 
+.scene {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.patient-buttons {
+  display: inline;
+}
+
+.sceneAccordion {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
 .card {
   margin-bottom: 1rem;
   overflow-wrap: break-word;
@@ -22,7 +39,7 @@
 
 .patient-card {
   width: 33%;
-  margin-right: 0.33%; 
+  margin-right: 0.33%;
   display: inline-block;
   vertical-align: top;
 }
