@@ -62,6 +62,9 @@ const customStyles = `
   .accordion {
     margin-bottom: 8px;
   }
+  .action-item {
+    font-size: 14px;
+  }
 `;
 
 export function ReviewDelegationPage() {

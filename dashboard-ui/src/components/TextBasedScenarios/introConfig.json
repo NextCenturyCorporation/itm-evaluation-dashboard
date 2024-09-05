@@ -1,51 +1,44 @@
 {
     "logoPosition": "right",
     "completedHtml": "<h3>Thank you for completing the scenario</h3>",
-    "showCompletedPage": false,
     "pages": [
-        {
-            "name": "User Info",
-            "elements": [
-                {
-                    "type": "text",
-                    "name": "Participant ID",
-                    "title": "Enter Participant ID:",
-                    "isRequired": true
-                },
-                {
-                    "type": "checkbox",
-                    "name": "vrEnvironmentsCompleted",
-                    "title": "Select VR Environments you have ALREADY completed",
-                    "isRequired": true,
-                    "choices": [
-                        "Submarine",
-                        "Jungle",
-                        "Urban",
-                        "Desert"
-                    ],
-                    "showNoneItem": true
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "scenarioOrder",
-                    "title": "Pick a scenario:",
-                    "isRequired": true,
-                    "choices": [
-                        "Urban VoL Fire Eval 1",
-                        "Urban VoL Fire Eval 2",
-                        "Urban VoL Fire Eval 3",
-                        "Urban QoL Fire Eval 1",
-                        "Urban QoL Fire Eval 2",
-                        "Urban QoL Fire Eval 3",
-                        "Shooter/Victim",
-                        "IED",
-                        "Fistfight"
-                    ]
-                   }
+      {
+        "name": "User Info",
+        "elements": [
+          {
+            "type": "radiogroup",
+            "name": "Military or Civilian background",
+            "title": "Do you have a military or civilian background?",
+            "isRequired": true,
+            "choices": [
+              "Military Background",
+              "Civillian Background"
             ]
-        }
+          },
+          {
+            "type": "text",
+            "name": "Participant ID",
+            "title": "Enter Participant ID:",
+            "isRequired": true
+          },
+          {
+            "type": "checkbox",
+            "name": "vrEnvironmentsCompleted",
+            "title": "Select VR Environments you have ALREADY completed",
+            "isRequired": true,
+            "choices": [
+              "Submarine",
+              "Jungle",
+              "Urban",
+              "Desert"
+            ],
+            "showNoneItem": true
+          }
+        ]
+      }
     ],
     "showPrevButton": false,
+    "showCompletedPage": false,
     "showQuestionNumbers": "off",
     "widthMode": "responsive"
-}
+  }
