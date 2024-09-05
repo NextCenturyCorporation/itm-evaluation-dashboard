@@ -21,11 +21,19 @@ import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
+import { useQuery } from '@apollo/react-hooks';
+import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
+
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }
+`
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -50,7 +58,16 @@ export function TextBasedScenariosPageWrapper(props) {
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error</p>;
+    const { loading, error, data } = useQuery(GET_PARTICIPANT_LOG);
 
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error</p>;
+
+    return <TextBasedScenariosPage
+        {...props}
+        textBasedConfigs={textBasedConfigs}
+        participantLogs={data}
+    />;
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
@@ -89,6 +106,7 @@ class TextBasedScenariosPage extends Component {
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true
+        this.handleKeyPress = this.handleKeyPress.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
     }
 
@@ -219,13 +237,13 @@ class TextBasedScenariosPage extends Component {
 
     sanitizeKeys = (obj) => {
         if (Array.isArray(obj)) {
-            return obj.map(this.sanitizeKeys);
+              return obj.map(this.sanitizeKeys);
         } else if (obj !== null && typeof obj === 'object') {
-            return Object.keys(obj).reduce((acc, key) => {
-                const newKey = key.replace(/\./g, '');
-                acc[newKey] = this.sanitizeKeys(obj[key]);
-                return acc;
-            }, {});
+              return Object.keys(obj).reduce((acc, key) => {
+                    const newKey = key.replace(/\./g, '');
+                    acc[newKey] = this.sanitizeKeys(obj[key]);
+                    return acc;
+              }, {});
         }
         return obj;
     };
@@ -233,6 +251,25 @@ class TextBasedScenariosPage extends Component {
     uploadResults = async (survey) => {
         this.timerHelper();
 
+        const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
+        let scenarioData = {
+            scenario_id: currentScenario.scenario_id,
+            participantID: this.state.participantID,
+            vrEnvCompleted: this.state.vrEnvCompleted,
+            title: currentScenario.title,
+            timeComplete: new Date().toString(),
+            startTime: this.state.startTime
+        };
+
+        const currentPages = survey.pages;
+
+        currentPages.forEach(page => {
+            const pageName = page.name;
+            scenarioData[pageName] = {
+                timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage || 0,
+                pageName: page.name,
+                questions: {}
+            };
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
         let scenarioData = {
             scenario_id: currentScenario.scenario_id,
@@ -284,7 +321,11 @@ class TextBasedScenariosPage extends Component {
         // Reset data for the next scenario
         this.surveyData = {};
         this.pageStartTimes = {};
-        this.shouldBlockNavigation = false;
+
+        // Reset data for the next scenario
+        this.surveyData = {};
+        this.pageStartTimes = {};
+        this.shouldBlockNavigation = false;;
     }
 
     getAlignmentScore = async (scenario) => {
