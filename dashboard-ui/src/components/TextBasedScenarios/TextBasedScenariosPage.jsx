@@ -344,10 +344,12 @@ class TextBasedScenariosPage extends Component {
         );
 
         const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url)
+        console.log(combinedMostLeastAligned)
 
         for (let scenario of scenarios) {
             scenario.combinedAlignmentData = alignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
+            scenario.mostLeastAlgined = combinedMostLeastAligned
             const sanitizedData = this.sanitizeKeys(scenario)
             await new Promise(resolve => {
                 this.setState({
@@ -365,23 +367,26 @@ class TextBasedScenariosPage extends Component {
     }
 
     mostLeastAlgined = async (sessionId, ta1, url) => {
-        let target = ''
+        let targets = []
         const endpoint = '/api/v1/get_ordered_alignment'
         if (ta1 === 'soartech') {
-
+            targets = ['QualityOfLife', 'PerceivedQuantityOfLivesSaved']
         } else {
-            target = 'Moral judgement'
+            targets = ['Moral judgement', 'Ingroup Bias']
         }
 
-        const response = await axios.get(`${url}${endpoint}`, {
-            params: {
-                session_id: sessionId,
-                kdma_id: target
-            }
-        });
-
-        console.log(response)
-        return response
+        let responses = []
+        for (const target of targets) {
+            const response = await axios.get(`${url}${endpoint}`, {
+                params: {
+                    session_id: sessionId,
+                    kdma_id: target
+                }
+            });
+            console.log(response.data)
+            responses.push({'target': target, 'response': response.data})
+        }
+        return responses
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
