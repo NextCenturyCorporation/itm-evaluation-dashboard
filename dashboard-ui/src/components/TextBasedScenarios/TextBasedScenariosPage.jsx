@@ -35,12 +35,6 @@ const GET_PARTICIPANT_LOG = gql`
     }
 `
 
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }
-`
-
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
     "SoarTech Urban": stUrbanConfig,
@@ -58,16 +52,7 @@ export function TextBasedScenariosPageWrapper(props) {
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error</p>;
-    const { loading, error, data } = useQuery(GET_PARTICIPANT_LOG);
 
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error</p>;
-
-    return <TextBasedScenariosPage
-        {...props}
-        textBasedConfigs={textBasedConfigs}
-        participantLogs={data}
-    />;
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
@@ -270,25 +255,6 @@ class TextBasedScenariosPage extends Component {
                 pageName: page.name,
                 questions: {}
             };
-        const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
-        let scenarioData = {
-            scenario_id: currentScenario.scenario_id,
-            participantID: this.state.participantID,
-            vrEnvCompleted: this.state.vrEnvCompleted,
-            title: currentScenario.title,
-            timeComplete: new Date().toString(),
-            startTime: this.state.startTime
-        };
-
-        const currentPages = survey.pages;
-
-        currentPages.forEach(page => {
-            const pageName = page.name;
-            scenarioData[pageName] = {
-                timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage || 0,
-                pageName: page.name,
-                questions: {}
-            };
 
             page.questions.forEach(question => {
                 const questionName = question.name;
@@ -321,11 +287,7 @@ class TextBasedScenariosPage extends Component {
         // Reset data for the next scenario
         this.surveyData = {};
         this.pageStartTimes = {};
-
-        // Reset data for the next scenario
-        this.surveyData = {};
-        this.pageStartTimes = {};
-        this.shouldBlockNavigation = false;;
+        this.shouldBlockNavigation = false;
     }
 
     getAlignmentScore = async (scenario) => {
