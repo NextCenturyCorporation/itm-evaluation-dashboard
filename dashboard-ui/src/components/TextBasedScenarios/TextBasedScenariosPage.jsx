@@ -103,7 +103,6 @@ class TextBasedScenariosPage extends Component {
         let scenarios = [];
 
         if (!matchedLog) {
-            console.warn("No matching participant log found for ID:", enteredParticipantID);
             const userChoice = window.confirm(
                 "No matching participant ID was found. Would you like to continue anyway?\n\n" +
                 "Click 'OK' to continue with the current ID.\n" +
@@ -355,7 +354,6 @@ class TextBasedScenariosPage extends Component {
                 }, () => {
                     if (this.uploadButtonRef.current) {
                         this.uploadButtonRef.current.click();
-                        console.log('Uploading sanitized data:', sanitizedData);
                     }
                     resolve();
                 });
@@ -449,7 +447,6 @@ class TextBasedScenariosPage extends Component {
                     );
                 }
 
-                console.log(scenario.alignmentData);
                 scenario.serverSessionId = sessionId;
             }
         } catch (error) {
