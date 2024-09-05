@@ -79,7 +79,7 @@ class TextBasedScenariosPage extends Component {
             combinedSessionId: '',
             adeptScenarios: []
         };
-
+        console.log(process.env.REACT_APP_ADEPT_URL)
         this.surveyData = {};
         this.surveyDataByScenario = [];
         this.survey = null;
@@ -473,6 +473,9 @@ class TextBasedScenariosPage extends Component {
                     scenario.alignmentData = await Promise.all(
                         targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
                     );
+
+                    const mostLeastAlgined = this.mostLeastAlgined(sessionId, 'soartech', url)
+                    scenario.mostLeastAligned = mostLeastAlgined
                 }
 
                 scenario.serverSessionId = sessionId;
