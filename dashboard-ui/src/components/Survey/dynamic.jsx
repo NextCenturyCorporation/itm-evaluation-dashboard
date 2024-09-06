@@ -7,6 +7,8 @@ import VitalsDropdown from "./vitalsDropdown";
 import './template.css';
 import { renderSituation } from './util';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import Patient from '../TextBasedScenarios/patient';
+import Supplies from '../TextBasedScenarios/supplies';
 
 const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs }) => {
     const [visiblePatients, setVisiblePatients] = useState({});
@@ -65,10 +67,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         logAction('Show situation modal');
     };
 
-    const handleAccordionSelect = (eventKey) => {
-        logAction(`Accordion toggle: ${eventKey !== null ? "expanded" : "collapsed"} Medic Actions`);
-    };
-
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
             <div className="patient-buttons" key={patient.name}>{
@@ -87,6 +85,14 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         const patientCards = patients.map(patient => {
             if (visiblePatients[patient.name] && sceneCharacters.includes(patient.name)) {
                 return (
+                    <>{
+                        patient.demographics ? <div className='patient-card'>
+                            <Patient
+                                patient={patient}
+                                onImageClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)}
+                                blockedVitals={[]}
+                            />
+                        </div> : 
                     <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
                         <Card.Header>
                             <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
@@ -107,7 +113,8 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                 />
                             </Col>
                         </Row>
-                    </Card>
+                            </Card>
+                    }</>
                 );
             } else {
                 return null;
@@ -120,23 +127,11 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
                     <Accordion.Body className='scene'>
                         <Col md={3}>
-                            <Card>
-                                <Card.Header>Constraints / Resources</Card.Header>
-                                <Card.Body className='overflow-auto' style={{ maxHeight: '200px' }}>
-                                    {sceneSupplies && sceneSupplies.map((supply, index) => (
-                                        <div key={supply + '-' + index}>
-                                            {!isDefined(supply.quantity) || (isDefined(supply.quantity) && supply.quantity > 0) &&
-                                                <Card.Text key={supply.type}>
-                                                    {supply.quantity ? supply.quantity : ""} {supply.type}
-                                                </Card.Text>}
-                                        </div>
-                                    ))}
-                                </Card.Body>
-                            </Card>
+                            <Supplies supplies={sceneSupplies} />
                         </Col>
                         <Col md={9} style={{ 'marginLeft': '12px' }}>
-                            <Accordion onSelect={handleAccordionSelect} defaultActiveKey="0">
-                                <Accordion.Item eventKey="0">
+                            <Accordion defaultActiveKey="1">
+                                <Accordion.Item eventKey="1">
                                     <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
                                     <Accordion.Body>
                                         <ListGroup>

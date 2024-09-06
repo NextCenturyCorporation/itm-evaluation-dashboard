@@ -162,7 +162,7 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
               {patient.imgUrl ? (
                 <img
                   src={`data:image/png;base64,${patient.imgUrl}`}
-                  alt={`${patient.id}`}
+                  alt={`${patient.id ?? patient.name}`}
                   style={{
                     width: '100%',
                     height: '100%',

@@ -39,6 +39,10 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }
 `
+const GET_TEXT_RESULTS = gql`
+    query GetAllResults {
+        getAllScenarioResults
+    }`;
 
 const envMappingToText = {
     "AD-1": "Shooter/Victim (Urban)",
@@ -145,6 +149,7 @@ class SurveyPage extends Component {
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
+        this.survey.handlePageComplete = (this.finishFirstPage);
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true;
         if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
@@ -154,6 +159,7 @@ class SurveyPage extends Component {
             };
             if (this.state.validPid) {
                 this.survey.currentPage = 2;
+                this.survey.pages[1].visibleIf = "false";
             }
             else {
                 this.survey.currentPage = 1;
@@ -282,6 +288,40 @@ class SurveyPage extends Component {
         };
     }
 
+    getAdeptMostLeastv4 = (adeptList) => {
+        // takes in the list of adept targets and returns the most and least aligned for IO and MJ
+        let ioLeastVal = 1;
+        let ioMostVal = 0;
+        let ioLeast = 'ADEPT-DryRun-Ingroup Bias-0.0'; // default values for invalid pid
+        let ioMost = 'ADEPT-DryRun-Ingroup Bias-1.0';
+        let mjLeastVal = 1;
+        let mjMostVal = 0;
+        let mjLeast = 'ADEPT-DryRun-Moral judgement-0.0';
+        let mjMost = 'ADEPT-DryRun-Moral judgement-1.0';
+        for (const x of adeptList) {
+            if (x['target'].includes('Ingroup')) {
+                if (x['score'] < ioLeastVal) {
+                    ioLeastVal = x['score'];
+                    ioLeast = x['target'];
+                }
+                if (x['score'] > ioMostVal) {
+                    ioMostVal = x['score'];
+                    ioMost = x['target'];
+                }
+            }
+            else if (x['target'].includes('Moral')) {
+                if (x['score'] < mjLeastVal) {
+                    mjLeastVal = x['score'];
+                    mjLeast = x['target'];
+                }
+                if (x['score'] > mjMostVal) {
+                    mjMostVal = x['score'];
+                    mjMost = x['target'];
+                }
+            }
+        }
+        return { 'Ingroup': { 'Most': ioMost, 'Least': ioLeast }, 'Moral': { 'Most': mjMost, 'Least': mjLeast } };
+    }
 
     prepareSurveyInitialization = () => {
         if (this.state.surveyVersion == 2) {
@@ -367,7 +407,6 @@ class SurveyPage extends Component {
             return {};
         }
         else if (this.state.surveyVersion == 4.0) {
-            // this.surveyConfigClone.pages[0].elements[0].value = this.state.pid;
             const allPages = this.surveyConfigClone.pages;
             const pages = [...allPages.slice(0, 5)];
             const order = admOrderMapping[this.state.envsSeen['ADMOrder']];
@@ -375,15 +414,32 @@ class SurveyPage extends Component {
             const del1 = this.state.envsSeen['Del-1'];
             const stScenario = delEnvMapping[del1.includes("ST") ? del1 : this.state.envsSeen['Del-2']];
             const adScenario = delEnvMapping[del1.includes("AD") ? del1 : this.state.envsSeen['Del-2']];
+            // find most and least aligned adms for every attribute
+            const participantResults = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
+            const admLists = {
+                "qol": participantResults.findLast((el) => el['scenario_id'].includes('qol')) ?? undefined,
+                "vol": participantResults.findLast((el) => el['scenario_id'].includes('vol')) ?? undefined,
+                "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval')) ?? undefined
+            };
+            const adeptMostLeast = this.getAdeptMostLeastv4(admLists?.adept?.combinedAlignmentData ?? []);
+            const ioAlignedADM = adeptMostLeast['Ingroup']['Most'];
+            const mjAlignedADM = adeptMostLeast['Moral']['Most'];
+            const qolAlignedADM = admLists['qol'] ? admLists['qol']['mostLeastAligned'][0]['response'][0]['target'] : 'qol-synth-HighExtreme';
+            const volAlignedADM = admLists['vol'] ? admLists['vol']['mostLeastAligned'][0]['response'][0]['target'] : 'vol-synth-HighExtreme';
+            const ioMisalignedADM = adeptMostLeast['Ingroup']['Least'];
+            const mjMisalignedADM = adeptMostLeast['Moral']['Least'];
+            const qolMisalignedADM = admLists['qol'] ? admLists['qol']['mostLeastAligned'][0]['response'].slice(-1)[0]['target'] : 'qol-synth-LowExtreme';
+            const volMisalignedADM = admLists['vol'] ? admLists['vol']['mostLeastAligned'][0]['response'].slice(-1)[0]['target'] : 'vol-synth-LowExtreme';
             for (let x of order) {
-                // && x.admAlignment == ''
                 const expectedAuthor = (x['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                 const expectedScenario = x['TA1'] == 'ST' ? (x['Attribute'] == 'QOL' ? stScenario[0] : stScenario[1]) : (x['Attribute'] == 'MJ' ? adScenario[0] : adScenario[1]);
+                const alignedADMTarget = x['Attribute'] == 'QOL' ? qolAlignedADM : x['Attribute'] == 'VOL' ? volAlignedADM : x['Attribute'] == 'MJ' ? mjAlignedADM : ioAlignedADM;
+                const misalignedADMTarget = x['Attribute'] == 'QOL' ? qolMisalignedADM : x['Attribute'] == 'VOL' ? volMisalignedADM : x['Attribute'] == 'MJ' ? mjMisalignedADM : ioMisalignedADM;
                 const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline');
                 // aligned
-                const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned');
+                const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
                 // misaligned
-                const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned');
+                const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == misalignedADMTarget);
                 if (isDefined(baselineAdm)) {
                     pages.push(baselineAdm);
                 } else { console.warn("Missing Baseline ADM"); }
@@ -713,6 +769,12 @@ class SurveyPage extends Component {
         }
     }
 
+    finishFirstPage = (survey) => {
+        if (survey.currentPageNo == 0) {
+            this.postConfigSetup();
+        }
+    };
+
     onValueChanged = (sender, options) => {
         if (this.state.surveyVersion == 4.0 && sender.valuesHash['Participant ID'] !== this.state.pid) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
@@ -721,9 +783,7 @@ class SurveyPage extends Component {
                 );
                 if (this.survey.getPageByName("PID Warning"))
                     this.survey.getPageByName("PID Warning").visible = !isDefined(matchedLog);
-                this.setState({ validPid: isDefined(matchedLog), envsSeen: isDefined(matchedLog) ? matchedLog : this.state.envsSeen }, () => {
-                    this.postConfigSetup();
-                });
+                this.setState({ validPid: isDefined(matchedLog), envsSeen: isDefined(matchedLog) ? matchedLog : this.state.envsSeen });
             });
         }
         // ensures partial data will be saved if someone needs to step away from the survey
@@ -767,7 +827,7 @@ class SurveyPage extends Component {
                             <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
                                 {(uploadSurveyResults, { data }) => (
                                     <div>
-                                        <button ref={this.uploadButtonRef} onClick={(e) => {
+                                    <button ref={this.uploadButtonRef} hidden onClick={(e) => {
                                             e.preventDefault();
                                             uploadSurveyResults({
                                                 variables: { surveyId: this.state.surveyId, results: this.surveyData }
@@ -788,10 +848,10 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingHumanGroupFirst, error: errorHumanGroupFirst, data: dataHumanGroupFirst } = useQuery(COUNT_HUMAN_GROUP_FIRST);
     const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS);
 
-
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog) return <p>Error :</p>;
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults) return <p>Error :</p>;
 
     return (
         <SurveyPage
@@ -799,6 +859,7 @@ export const SurveyPageWrapper = (props) => {
             countAIGroupFirst={dataAIGroupFirst.countAIGroupFirst}
             participantLog={dataParticipantLog}
             currentUser={props.currentUser}
+            textResults={dataTextResults?.getAllScenarioResults}
         />)
 };
 

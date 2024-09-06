@@ -481,7 +481,6 @@ class TextBasedScenariosPage extends Component {
                     );
 
                     scenario.alignmentData.sort((a, b) => b.score - a.score);
-
                     const mostLeastAlgined = await this.mostLeastAlgined(sessionId, 'soartech', url, scenario)
                     scenario.mostLeastAligned = mostLeastAlgined
                 }
