@@ -220,13 +220,13 @@ class TextBasedScenariosPage extends Component {
 
     sanitizeKeys = (obj) => {
         if (Array.isArray(obj)) {
-              return obj.map(this.sanitizeKeys);
+            return obj.map(this.sanitizeKeys);
         } else if (obj !== null && typeof obj === 'object') {
-              return Object.keys(obj).reduce((acc, key) => {
-                    const newKey = key.replace(/\./g, '');
-                    acc[newKey] = this.sanitizeKeys(obj[key]);
-                    return acc;
-              }, {});
+            return Object.keys(obj).reduce((acc, key) => {
+                const newKey = key.replace(/\./g, '');
+                acc[newKey] = this.sanitizeKeys(obj[key]);
+                return acc;
+            }, {});
         }
         return obj;
     };
@@ -342,10 +342,13 @@ class TextBasedScenariosPage extends Component {
         const alignmentData = await Promise.all(
             alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
         );
+        const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
+        const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
 
         for (let scenario of scenarios) {
-            scenario.combinedAlignmentData = alignmentData
+            scenario.combinedAlignmentData = sortedAlignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
+            scenario.mostLeastAligned = combinedMostLeastAligned
             const sanitizedData = this.sanitizeKeys(scenario)
             await new Promise(resolve => {
                 this.setState({
@@ -360,6 +363,36 @@ class TextBasedScenariosPage extends Component {
                 });
             });
         }
+    }
+
+    mostLeastAlgined = async (sessionId, ta1, url, scenario) => {
+        let targets = []
+        const endpoint = '/api/v1/get_ordered_alignment'
+        if (ta1 === 'soartech') {
+            if (scenario.scenario_id.includes('qol')) {
+                targets = ['QualityOfLife']
+            } else {
+                targets = ['PerceivedQuantityOfLivesSaved']
+            }
+        } else {
+            targets = ['Moral judgement', 'Ingroup Bias']
+        }
+
+        let responses = []
+        try {
+            for (const target of targets) {
+                const response = await axios.get(`${url}${endpoint}`, {
+                    params: {
+                        session_id: sessionId,
+                        kdma_id: target
+                    }
+                });
+                responses.push({ 'target': target, 'response': response.data })
+            }
+        } catch (err) {
+            console.error(err)
+        }
+        return responses
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
@@ -446,6 +479,11 @@ class TextBasedScenariosPage extends Component {
                     scenario.alignmentData = await Promise.all(
                         targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
                     );
+
+                    scenario.alignmentData.sort((a, b) => b.score - a.score);
+
+                    const mostLeastAlgined = await this.mostLeastAlgined(sessionId, 'soartech', url, scenario)
+                    scenario.mostLeastAligned = mostLeastAlgined
                 }
 
                 scenario.serverSessionId = sessionId;
