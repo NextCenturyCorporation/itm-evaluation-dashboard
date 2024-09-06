@@ -342,11 +342,11 @@ class TextBasedScenariosPage extends Component {
         const alignmentData = await Promise.all(
             alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
         );
-
+        const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
         const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
 
         for (let scenario of scenarios) {
-            scenario.combinedAlignmentData = alignmentData
+            scenario.combinedAlignmentData = sortedAlignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
             scenario.mostLeastAligned = combinedMostLeastAligned
             const sanitizedData = this.sanitizeKeys(scenario)
@@ -480,6 +480,7 @@ class TextBasedScenariosPage extends Component {
                         targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
                     );
 
+                    scenario.alignmentData.sort((a, b) => b.score - a.score);
                     const mostLeastAlgined = await this.mostLeastAlgined(sessionId, 'soartech', url, scenario)
                     scenario.mostLeastAligned = mostLeastAlgined
                 }
