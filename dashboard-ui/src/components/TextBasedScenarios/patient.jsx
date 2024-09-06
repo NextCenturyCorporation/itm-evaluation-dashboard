@@ -107,7 +107,7 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
       return <div>No vitals data available</div>;
     }
 
-    const vitalsVisible = !blockedVitals.includes(patient.id);
+    const vitalsVisible = !blockedVitals?.includes(patient.id);
     return (
       <div className="d-flex flex-column gap-1" style={{ minHeight: '200px', overflow: 'visible' }}>
         {Object.entries(vitals).map(([key, value]) => (
