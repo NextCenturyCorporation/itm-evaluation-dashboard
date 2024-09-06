@@ -3,6 +3,10 @@
   font-weight: bold;
 }
 
+.patient-card {
+  width: 30%;
+}
+
 .scene {
   display: flex;
   flex-direction: row;
