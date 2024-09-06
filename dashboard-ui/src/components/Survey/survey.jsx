@@ -149,6 +149,7 @@ class SurveyPage extends Component {
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
+        this.survey.handlePageComplete = (this.finishFirstPage);
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true;
         if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
@@ -768,6 +769,12 @@ class SurveyPage extends Component {
         }
     }
 
+    finishFirstPage = (survey) => {
+        if (survey.currentPageNo == 0) {
+            this.postConfigSetup();
+        }
+    };
+
     onValueChanged = (sender, options) => {
         if (this.state.surveyVersion == 4.0 && sender.valuesHash['Participant ID'] !== this.state.pid) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
@@ -776,9 +783,7 @@ class SurveyPage extends Component {
                 );
                 if (this.survey.getPageByName("PID Warning"))
                     this.survey.getPageByName("PID Warning").visible = !isDefined(matchedLog);
-                this.setState({ validPid: isDefined(matchedLog), envsSeen: isDefined(matchedLog) ? matchedLog : this.state.envsSeen }, () => {
-                    this.postConfigSetup();
-                });
+                this.setState({ validPid: isDefined(matchedLog), envsSeen: isDefined(matchedLog) ? matchedLog : this.state.envsSeen });
             });
         }
         // ensures partial data will be saved if someone needs to step away from the survey
