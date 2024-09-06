@@ -67,10 +67,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         logAction('Show situation modal');
     };
 
-    const handleAccordionSelect = (eventKey) => {
-        logAction(`Accordion toggle: ${eventKey !== null ? "expanded" : "collapsed"} Medic Actions`);
-    };
-
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
             <div className="patient-buttons" key={patient.name}>{
@@ -134,8 +130,8 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                             <Supplies supplies={sceneSupplies} />
                         </Col>
                         <Col md={9} style={{ 'marginLeft': '12px' }}>
-                            <Accordion onSelect={handleAccordionSelect} defaultActiveKey="0">
-                                <Accordion.Item eventKey="0">
+                            <Accordion defaultActiveKey="1">
+                                <Accordion.Item eventKey="1">
                                     <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
                                     <Accordion.Body>
                                         <ListGroup>
