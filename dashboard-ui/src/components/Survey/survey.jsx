@@ -158,6 +158,7 @@ class SurveyPage extends Component {
             };
             if (this.state.validPid) {
                 this.survey.currentPage = 2;
+                this.survey.pages[1].visibleIf = "false";
             }
             else {
                 this.survey.currentPage = 1;
