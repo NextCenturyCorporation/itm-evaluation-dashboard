@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Accordion, Card, Row, Col, Button, ListGroup, Modal } from "react-bootstrap";
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
+import { FaInfoCircle } from 'react-icons/fa';
 import SituationModal from "./situationModal";
 import VitalsDropdown from "./vitalsDropdown";
 import './template.css';
@@ -9,6 +10,7 @@ import { renderSituation } from './util';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
+import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
 
 const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs }) => {
     const [visiblePatients, setVisiblePatients] = useState({});
@@ -18,6 +20,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const [activeTitle, setActiveTitle] = useState('');
     const [activeDescription, setActiveDescription] = useState('');
     const [showSituationModal, setShowSituationModal] = useState(showModal);
+    const [showMoreDetailsModal, setShowMoreDetailsModal] = useState(false);
     const [actionLogs, setActionLogs] = useState([]);
 
     // log actions
@@ -67,6 +70,16 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         logAction('Show situation modal');
     };
 
+    const handleShowMoreDetailsModal = () => {
+        setShowMoreDetailsModal(true);
+        logAction('Show more details modal');
+    };
+
+    const handleCloseMoreDetailsModal = () => {
+        setShowMoreDetailsModal(false);
+        logAction('Close more details modal');
+    };
+
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
             <div className="patient-buttons" key={patient.name}>{
@@ -92,27 +105,27 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                 onImageClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)}
                                 blockedVitals={[]}
                             />
-                        </div> : 
-                    <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
-                        <Card.Header>
-                            <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
-                        </Card.Header>
-                        <Row className="g-0">
-                            <Col md={8} className="mr-4">
-                                <div style={{ position: 'relative' }}>
-                                    <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
-                                    <ZoomInIcon className="magnifying-glass" onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
-                                </div>
-                            </Col>
-                            <Col md={4}>
-                                <VitalsDropdown
-                                    vitals={patient.vitals}
-                                    patientName={patient.name}
-                                    isVisible={visibleVitals[patient.name]}
-                                    toggleVisibility={() => toggleVitalsVisibility(patient.name)}
-                                />
-                            </Col>
-                        </Row>
+                        </div> :
+                            <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
+                                <Card.Header>
+                                    <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
+                                </Card.Header>
+                                <Row className="g-0">
+                                    <Col md={8} className="mr-4">
+                                        <div style={{ position: 'relative' }}>
+                                            <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
+                                            <ZoomInIcon className="magnifying-glass" onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
+                                        </div>
+                                    </Col>
+                                    <Col md={4}>
+                                        <VitalsDropdown
+                                            vitals={patient.vitals}
+                                            patientName={patient.name}
+                                            isVisible={visibleVitals[patient.name]}
+                                            toggleVisibility={() => toggleVitalsVisibility(patient.name)}
+                                        />
+                                    </Col>
+                                </Row>
                             </Card>
                     }</>
                 );
@@ -159,6 +172,11 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         );
     }
 
+    let mission = {}
+    mission.roe = 'test roe'
+    mission.medical_policies = ['policy1, policy2']
+    mission.unstructured = ['mission details']
+
     return (
         <div>
             {showSituationModal &&
@@ -168,8 +186,27 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     situation={situation} />
             }
             <Card className="mb-3">
-                <Card.Header>Situation <ZoomInIcon className="magnifying-glass-icon" onClick={handleShowSituationModal} /></Card.Header>
-                <Card.Body className='overflow-auto' style={{ maxHeight: '200px' }}>
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                    <div className="d-flex align-items-center">
+                        Situation
+                        <ZoomInIcon
+                            className="magnifying-glass-icon ms-2"
+                            onClick={handleShowSituationModal}
+                            style={{ cursor: 'pointer' }}
+                        />
+                    </div>
+                    {mission?.roe && mission.roe !== "" && (
+                        <div
+                            className="d-flex align-items-center scenario-info-icon"
+                            style={{ cursor: 'pointer' }}
+                            onClick={handleShowMoreDetailsModal}
+                        >
+                            <FaInfoCircle size={28} color="#17a2b8" />
+                            <span className="ms-2 small text-muted">Click For More Info</span>
+                        </div>
+                    )}
+                </Card.Header>
+                <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
                     {renderSituation(situation)}
                 </Card.Body>
             </Card>
@@ -188,6 +225,12 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     <img src={`data:image/jpeg;base64,${activeImage}`} alt="Enlarged view" style={{ width: '100%' }} />
                 </Modal.Body>
             </Modal>
+
+            <MoreDetailsModal
+                show={showMoreDetailsModal}
+                onHide={handleCloseMoreDetailsModal}
+                mission={mission}
+            />
         </div>
     );
 };
