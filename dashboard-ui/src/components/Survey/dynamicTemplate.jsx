@@ -77,6 +77,14 @@ export class DynamicTemplateModel extends Question {
     set explanation(explanation) {
         this.setPropertyValue("explanation", explanation)
     }
+
+    get mission() {
+        return this.getPropertyValue("mission")
+    }
+
+    set mission(mission) {
+        this.setPropertyValue("mission", mission)
+    }
 }
 
 // Add question type metadata for further serialization into JSON
@@ -114,6 +122,10 @@ Serializer.addClass(
         {
             name: "explanation",
             defualt: ""
+        },
+        {
+            name: "mission",
+            default: null
         }
     ],
     function () {
@@ -164,6 +176,10 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         return isDefined(this.question.scenes) ? this.question.scenes : null;
     }
 
+    get mission () {
+        return this.question.mission
+    }
+
     updateActionLogs = (newAction) => {
         this.setState( prevState => ({
             userActions: [...prevState.userActions, newAction]
@@ -184,6 +200,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 actions={this.actions}
                 scenes={this.scenes}
                 explanation={this.explanation}
+                mission={this.mission}
                 showModal={false}
                 updateActionLogs={this.updateActionLogs}
             />

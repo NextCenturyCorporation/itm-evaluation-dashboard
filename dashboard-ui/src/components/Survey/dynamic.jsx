@@ -12,7 +12,7 @@ import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
 import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
 
-const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs }) => {
+const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission }) => {
     const [visiblePatients, setVisiblePatients] = useState({});
     const [visibleVitals, setVisibleVitals] = useState({});
     const [showPatientModal, setShowPatientModal] = useState(false);
@@ -171,11 +171,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             </Accordion>
         );
     }
-
-    let mission = {}
-    mission.roe = 'test roe'
-    mission.medical_policies = ['policy1, policy2']
-    mission.unstructured = ['mission details']
 
     return (
         <div>
