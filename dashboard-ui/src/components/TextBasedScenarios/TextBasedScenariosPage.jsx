@@ -265,7 +265,7 @@ class TextBasedScenariosPage extends Component {
             });
         });
 
-
+        scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
