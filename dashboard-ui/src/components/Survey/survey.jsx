@@ -44,6 +44,11 @@ const GET_TEXT_RESULTS = gql`
         getAllScenarioResults
     }`;
 
+const GET_SURVEY_RESULTS = gql`
+    query GetAllResults {
+        getAllSurveyResults
+    }`;
+
 const envMappingToText = {
     "AD-1": "Shooter/Victim (Urban)",
     "AD-2": "IED (Jungle)",
@@ -197,9 +202,18 @@ class SurveyPage extends Component {
             this.survey.data = {
                 "Participant ID": this.state.pid
             };
+            // search to see if this pid has been used before and fully completed the survey
+            const pidExists = this.props.surveyResults.filter((res) => res.results?.surveyVersion == 4 && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && res.results['Post-Scenario Measures']);
             if (this.state.validPid) {
-                this.survey.currentPage = 2;
-                this.survey.pages[1].visibleIf = "false";
+                if (pidExists) {
+                    this.survey.currentPage = 1;
+                    this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
+                    this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
+                }
+                else {
+                    this.survey.currentPage = 2;
+                    this.survey.pages[1].visibleIf = "false";
+                }
             }
             else {
                 this.survey.currentPage = 1;
@@ -1219,9 +1233,10 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS);
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults) return <p>Error :</p>;
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
 
     return (
         <SurveyPage
@@ -1230,6 +1245,7 @@ export const SurveyPageWrapper = (props) => {
             participantLog={dataParticipantLog}
             currentUser={props.currentUser}
             textResults={dataTextResults?.getAllScenarioResults}
+            surveyResults={dataSurveyResults.getAllSurveyResults}
         />)
 };
 
