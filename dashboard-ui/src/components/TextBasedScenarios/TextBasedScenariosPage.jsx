@@ -18,11 +18,20 @@ import { Prompt } from 'react-router-dom'
 import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
+import { useQuery } from '@apollo/react-hooks';
+import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
+import alignmentIDs from './alignmentID.json';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
+
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }
+`
 
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
@@ -35,15 +44,18 @@ export const scenarioMappings = {
     "Adept Submarine": adeptSubConfig
 }
 
-// wrapper makes it much easier to grab textbased configs and just pass them to existing class based component
 export function TextBasedScenariosPageWrapper(props) {
-    // grab configs
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const { loading, error, data } = useQuery(GET_PARTICIPANT_LOG);
 
-    return <TextBasedScenariosPage 
-        {...props} 
-        textBasedConfigs={textBasedConfigs} 
-        />;
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error</p>;
+
+    return <TextBasedScenariosPage
+        {...props}
+        textBasedConfigs={textBasedConfigs}
+        participantLogs={data}
+    />;
 }
 
 class TextBasedScenariosPage extends Component {
@@ -56,7 +68,16 @@ class TextBasedScenariosPage extends Component {
             vrEnvCompleted: [],
             startTime: null,
             scenarios: [],
-            sanitizedData: null
+            currentScenarioIndex: 0,
+            sanitizedData: null,
+            matchedParticipantLog: null,
+            allScenariosCompleted: false,
+            sim1: null,
+            sim2: null,
+            isUploadButtonEnabled: false,
+            adeptSessionsCompleted: 0,
+            combinedSessionId: '',
+            adeptScenarios: []
         };
 
         this.surveyData = {};
@@ -68,45 +89,144 @@ class TextBasedScenariosPage extends Component {
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true
+        this.handleKeyPress = this.handleKeyPress.bind(this);
+        this.handleKeyPress = this.handleKeyPress.bind(this);
     }
 
     introSurveyComplete = (survey) => {
-        const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
+        const enteredParticipantID = survey.data["Participant ID"];
 
-        //const scenarioOrderArray = JSON.parse(scenarioOrderString);
+        // match entered participant id to log to determine scenario order
+        let matchedLog = this.props.participantLogs.getParticipantLog.find(
+            log => log['ParticipantID'] == enteredParticipantID
+        );
 
-        // pull selected scenarios from prop
-        /* for multiple being concatenated onto each other. single for now
-        const scenarioConfigs = scenarioOrderArray.map(scenarioName => {
-            return this.props.textBasedConfigs.find(config => 
-                config.name === scenarioName && config.eval === 'dre'
+        let scenarios = [];
+
+        if (!matchedLog) {
+            const userChoice = window.confirm(
+                "No matching participant ID was found. Would you like to continue anyway?\n\n" +
+                "Click 'OK' to continue with the current ID.\n" +
+                "Click 'Cancel' to re-enter the participant ID."
             );
-        });
-        */
-        
-        let scenarioConfigs = [Object.values(this.props.textBasedConfigs).find(config =>
-            config.name === scenarioOrderString && config.eval === 'dre'
-        )];
+
+            if (!userChoice) {
+                // just reload intro survey
+                this.introSurvey = new Model(introConfig);
+                this.introSurvey.onComplete.add(this.introSurveyComplete);
+                this.introSurvey.applyTheme(surveyTheme);
+                this.setState({ currentConfig: null }); // Force re-render
+                return;
+            } else {
+                // if you want to go through with a non-matched PID, giving default experience
+                matchedLog = { 'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3' }
+            }
+        }
+
+        const text1Scenarios = this.scenariosFromLog(matchedLog['Text-1']);
+        const text2Scenarios = this.scenariosFromLog(matchedLog['Text-2']);
+
+
+        scenarios = [...text1Scenarios, ...text2Scenarios];
 
         this.setState({
-            scenarios: [scenarioOrderString],
-            participantID: survey.data["Participant ID"],
-            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
-        })
+            scenarios,
+            participantID: enteredParticipantID,
+            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
+            matchedParticipantLog: matchedLog,
+            currentScenarioIndex: 0
+        }, () => {
+            if (this.state.scenarios.length > 0) {
+                this.loadNextScenario();
+            }
+        });
+    }
 
-        let title = ""
-        this.loadSurveyConfig(scenarioConfigs, title !== "" ? title : "")
+    scenariosFromLog = (entry) => {
+        return dreMappings[entry].flatMap(scenarioId =>
+            Object.values(this.props.textBasedConfigs).filter(config =>
+                config.scenario_id === scenarioId
+            )
+        );
+    }
+
+    loadNextScenario = () => {
+        const { scenarios, currentScenarioIndex } = this.state;
+        if (currentScenarioIndex < scenarios.length) {
+            const currentScenario = scenarios[currentScenarioIndex];
+            this.loadSurveyConfig([currentScenario], currentScenario.title);
+        } else {
+            this.handleAllScenariosCompleted();
+        }
+    }
+
+    handleAllScenariosCompleted = () => {
+        const { matchedParticipantLog } = this.state;
+        if (matchedParticipantLog) {
+            this.setState({
+                allScenariosCompleted: true,
+                sim1: simNameMappings[matchedParticipantLog['Sim-1']],
+                sim2: simNameMappings[matchedParticipantLog['Sim-2']],
+            });
+        } else {
+            this.setState({ allScenariosCompleted: true });
+        }
+    }
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.handleKeyPress);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.handleKeyPress);
+    }
+
+    handleKeyPress(event) {
+        if (event.key === 'M' || event.key === 'm') {
+            if (this.state.allScenariosCompleted) {
+                this.resetState();
+            }
+        }
+    }
+
+    resetState() {
+        this.setState({
+            currentConfig: null,
+            uploadData: false,
+            participantID: "",
+            vrEnvCompleted: [],
+            startTime: null,
+            scenarios: [],
+            currentScenarioIndex: 0,
+            sanitizedData: null,
+            matchedParticipantLog: null,
+            allScenariosCompleted: false,
+            sim1: null,
+            sim2: null,
+            isUploadButtonEnabled: false,
+            adeptSessionsCompleted: 0,
+            combinedSessionId: ''
+        });
+
+        this.surveyData = {};
+        this.surveyDataByScenario = [];
+        this.survey = null;
+        this.introSurvey = new Model(introConfig);
+        this.introSurvey.onComplete.add(this.introSurveyComplete);
+        this.introSurvey.applyTheme(surveyTheme);
+        this.pageStartTimes = {};
+        this.shouldBlockNavigation = true;
     }
 
     sanitizeKeys = (obj) => {
         if (Array.isArray(obj)) {
-          return obj.map(this.sanitizeKeys);
+            return obj.map(this.sanitizeKeys);
         } else if (obj !== null && typeof obj === 'object') {
-          return Object.keys(obj).reduce((acc, key) => {
-            const newKey = key.replace(/\./g, '');
-            acc[newKey] = this.sanitizeKeys(obj[key]);
-            return acc;
-          }, {});
+            return Object.keys(obj).reduce((acc, key) => {
+                const newKey = key.replace(/\./g, '');
+                acc[newKey] = this.sanitizeKeys(obj[key]);
+                return acc;
+            }, {});
         }
         return obj;
     };
@@ -114,73 +234,165 @@ class TextBasedScenariosPage extends Component {
     uploadResults = async (survey) => {
         this.timerHelper();
 
-        for (const pageName in this.pageStartTimes) {
-            if (this.pageStartTimes.hasOwnProperty(pageName)) {
-                const page = this.survey.getPageByName(pageName)?.jsonObj;
-                this.surveyData[pageName] = {
-                    timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
-                    pageName: page?.name,
-                    questions: {}
+        const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
+        let scenarioData = {
+            scenario_id: currentScenario.scenario_id,
+            participantID: this.state.participantID,
+            vrEnvCompleted: this.state.vrEnvCompleted,
+            title: currentScenario.title,
+            timeComplete: new Date().toString(),
+            startTime: this.state.startTime
+        };
+
+        const currentPages = survey.pages;
+
+        currentPages.forEach(page => {
+            const pageName = page.name;
+            scenarioData[pageName] = {
+                timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage || 0,
+                pageName: page.name,
+                questions: {}
+            };
+
+            page.questions.forEach(question => {
+                const questionName = question.name;
+                const questionValue = survey.data[questionName];
+                scenarioData[pageName].questions[questionName] = {
+                    response: questionValue,
+                    probe: question.probe_id || '',
+                    question_mapping: question.jsonObj['question_mapping'] || {}
                 };
+            });
+        });
 
-                const pageQuestions = this.getPageQuestions(pageName);
-                pageQuestions.forEach((questionName, index) => {
-                    const questionValue = survey.valuesHash[questionName];
-                    const element = survey.getPageByName(pageName)?.jsonObj?.elements[index];
-                    this.surveyData[pageName].questions[questionName] = {
-                        response: questionValue,
-                        probe: element?.probe_id || '',
-                        question_mapping: element?.question_mapping || {}
-                    };
-                });
-            }
-        }
 
-        this.surveyData.scenarioTitle = this.survey.title
+        await this.getAlignmentScore(scenarioData)
+        const sanitizedData = this.sanitizeKeys(scenarioData);
 
-        for (const pageName in this.surveyData) {
-            const pageResponse = this.surveyData[pageName];
-            for (const scenario of this.state.scenarios) {
-                const scenarioIndex = this.state.scenarios.indexOf(scenario)
-                const page = this.survey.getPageByName(pageName)
-                if (page && scenario === page['jsonObj']['scenario_name']) {
-                    this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
-                    this.surveyDataByScenario[scenarioIndex]['scenario_id'] = page['jsonObj']['scenario_id']
-                    this.surveyDataByScenario[scenarioIndex][pageName] = pageResponse;
+        this.setState({
+            uploadData: true,
+            sanitizedData,
+            isUploadButtonEnabled: true
+        }, () => {
+            if (this.uploadButtonRef.current) {
+                // don't upload adept scenarios until all 3 have run so we can get combined score
+                if (!sanitizedData.scenario_id.includes('DryRun')) {
+                    this.uploadButtonRef.current.click();
                 }
             }
-        }
-
-        let temp = 0
-        for (const scenario of this.surveyDataByScenario) {
-            scenario.participantID = this.state.participantID
-            scenario.vrEnvCompleted = this.state.vrEnvCompleted
-            scenario.title = this.state.scenarios[temp++]
-            scenario.timeComplete = new Date().toString()
-            scenario.startTime = this.state.startTime
-        }
-
-        const sanitizedData = this.sanitizeKeys(this.surveyDataByScenario);
-
-        // add alignment data for each of the scenarios
-        for (const scenario of sanitizedData) {
-            await this.getAlignmentScore(scenario)
-        }
-
-        this.setState({ uploadData: true, sanitizedData }, () => {
-            if (this.uploadButtonRef.current) {
-                this.uploadButtonRef.current.click();
-            }
         });
-        this.shouldBlockNavigation = false
+
+        // Reset data for the next scenario
+        this.surveyData = {};
+        this.pageStartTimes = {};
+        this.shouldBlockNavigation = false;
     }
 
     getAlignmentScore = async (scenario) => {
         if (scenario.scenario_id.includes('DryRun')) {
+            if (this.state.adeptSessionsCompleted === 0) {
+                await this.beginRunningSession(scenario)
+            } else {
+                await this.continueRunningSession(scenario)
+            }
             await this.calcScore(scenario, 'adept')
+
+            let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
+
+            this.setState(prevState => ({
+                adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
+                adeptScenarios: updatedAdeptScenarios
+            }), async () => {
+                if (this.state.adeptSessionsCompleted === 3) {
+                    await this.uploadAdeptScenarios(updatedAdeptScenarios)
+                }
+            });
+
         } else {
             await this.calcScore(scenario, 'soartech')
         }
+    }
+
+    beginRunningSession = async (scenario) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+        const sessionEndpoint = '/api/v1/new_session';
+
+        try {
+            const session = await axios.post(`${url}${sessionEndpoint}`);
+            if (session.status === 200) {
+                this.setState({ combinedSessionId: session.data }, async () => {
+                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+                })
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    continueRunningSession = async (scenario) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+
+        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+    }
+
+    uploadAdeptScenarios = async (scenarios) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+        const alignmentEndpoint = '/api/v1/alignment/session'
+
+        const alignmentData = await Promise.all(
+            alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
+        );
+        const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
+        const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
+
+        for (let scenario of scenarios) {
+            scenario.combinedAlignmentData = sortedAlignmentData
+            scenario.combinedSessionId = this.state.combinedSessionId
+            scenario.mostLeastAligned = combinedMostLeastAligned
+            const sanitizedData = this.sanitizeKeys(scenario)
+            await new Promise(resolve => {
+                this.setState({
+                    uploadData: true,
+                    sanitizedData,
+                    isUploadButtonEnabled: true
+                }, () => {
+                    if (this.uploadButtonRef.current) {
+                        this.uploadButtonRef.current.click();
+                    }
+                    resolve();
+                });
+            });
+        }
+    }
+
+    mostLeastAlgined = async (sessionId, ta1, url, scenario) => {
+        let targets = []
+        const endpoint = '/api/v1/get_ordered_alignment'
+        if (ta1 === 'soartech') {
+            if (scenario.scenario_id.includes('qol')) {
+                targets = ['QualityOfLife']
+            } else {
+                targets = ['PerceivedQuantityOfLivesSaved']
+            }
+        } else {
+            targets = ['Moral judgement', 'Ingroup Bias']
+        }
+
+        let responses = []
+        try {
+            for (const target of targets) {
+                const response = await axios.get(`${url}${endpoint}`, {
+                    params: {
+                        session_id: sessionId,
+                        kdma_id: target
+                    }
+                });
+                responses.push({ 'target': target, 'response': response.data })
+            }
+        } catch (err) {
+            console.error(err)
+        }
+        return responses
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
@@ -211,19 +423,33 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
+    getAlignmentData = async (targetId, url, alignmentEndpoint, sessionId, alignmentType) => {
+        const response = await axios.get(`${url}${alignmentEndpoint}`, {
+            params: {
+                session_id: sessionId,
+                target_id: targetId,
+                ...(alignmentType === 'adept' ? { population: false } : {})
+            }
+        });
+
+        let result;
+        if (typeof response.data === 'string') {
+            result = JSON.parse(response.data.replace(/\bNaN\b/g, "null"));
+        } else {
+            result = response.data;
+        }
+        return { "target": response.config.params.target_id, "score": result.score }
+    };
+
     calcScore = async (scenario, alignmentType) => {
-        let url, highTarget, lowTarget, sessionEndpoint, alignmentEndpoint;
+        let url, sessionEndpoint, alignmentEndpoint;
 
         if (alignmentType === 'adept') {
             url = process.env.REACT_APP_ADEPT_URL;
-            highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH";
-            lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW";
             sessionEndpoint = '/api/v1/new_session';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else if (alignmentType === 'soartech') {
             url = process.env.REACT_APP_SOARTECH_URL;
-            highTarget = "79f47f55-qol-high";
-            lowTarget = "15d7b3ed-qol-low";
             sessionEndpoint = '/api/v1/new_session?user_id=default_user';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else {
@@ -236,19 +462,29 @@ class TextBasedScenariosPage extends Component {
                 const sessionId = session.data;
                 await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
 
-                const getAlignmentData = async (targetId) => {
-                    const response = await axios.get(`${url}${alignmentEndpoint}`, {
-                        params: {
-                            session_id: sessionId,
-                            target_id: targetId,
-                            ...(alignmentType === 'adept' ? { population: false } : {})
-                        }
-                    });
-                    return response.data;
-                };
+                if (alignmentType === 'adept') {
+                    scenario.alignmentData = await Promise.all(
+                        alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'adept'))
+                    );
+                } else if (alignmentType === 'soartech') {
+                    let targetArray;
+                    if (scenario.scenario_id.includes('qol')) {
+                        targetArray = alignmentIDs.stQOL;
+                    } else if (scenario.scenario_id.includes('vol')) {
+                        targetArray = alignmentIDs.stVOL;
+                    } else {
+                        throw new Error('Invalid SoarTech scenario type');
+                    }
 
-                scenario.highAlignmentData = await getAlignmentData(highTarget);
-                scenario.lowAlignmentData = await getAlignmentData(lowTarget);
+                    scenario.alignmentData = await Promise.all(
+                        targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
+                    );
+
+                    scenario.alignmentData.sort((a, b) => b.score - a.score);
+                    const mostLeastAlgined = await this.mostLeastAlgined(sessionId, 'soartech', url, scenario)
+                    scenario.mostLeastAligned = mostLeastAlgined
+                }
+
                 scenario.serverSessionId = sessionId;
             }
         } catch (error) {
@@ -257,7 +493,14 @@ class TextBasedScenariosPage extends Component {
     }
 
     onSurveyComplete = (survey) => {
+        // start uploading results for this scenario 
         this.uploadResults(survey);
+        // move to the next scenario 
+        this.setState(prevState => ({
+            currentScenarioIndex: prevState.currentScenarioIndex + 1
+        }), () => {
+            this.loadNextScenario();
+        });
     }
 
     loadSurveyConfig = (scenarioConfigs, title) => {
@@ -270,40 +513,47 @@ class TextBasedScenariosPage extends Component {
 
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
-        this.survey.focusOnFirstError = false
+        this.survey.focusOnFirstError = false;
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
-
+        this.shouldBlockNavigation = true
         this.setState({ currentConfig: this.survey });
     };
 
     onAfterRenderPage = (sender, options) => {
-        if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+        const pageName = options.page.name;
+        const currentTime = new Date();
+
+        if (!this.state.startTime) {
             this.setState({
-                firstPageCompleted: true,
-                startTime: new Date().toString()
+                startTime: currentTime.toString()
             });
         }
 
-        const pageName = options.page.name;
-
-        if (Object.keys(this.pageStartTimes).length > 0) {
-            this.timerHelper();
+        if (this.survey.currentPageNo > 0) {
+            const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
+            const startTime = this.pageStartTimes[previousPageName];
+            if (startTime) {
+                const timeSpentInSeconds = (currentTime - startTime) / 1000;
+                this.surveyData[previousPageName] = this.surveyData[previousPageName] || {};
+                this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
+            }
         }
 
-        this.pageStartTimes[pageName] = new Date();
+        this.pageStartTimes[pageName] = currentTime;
     }
 
     timerHelper = () => {
-        const previousPageName = Object.keys(this.pageStartTimes).pop();
-        const endTime = new Date();
-        const startTime = this.pageStartTimes[previousPageName];
-        const timeSpentInSeconds = (endTime - startTime) / 1000;
+        const currentPageName = this.survey.currentPage.name;
+        const startTime = this.pageStartTimes[currentPageName];
+        if (startTime) {
+            const endTime = new Date();
+            const timeSpentInSeconds = (endTime - startTime) / 1000;
 
-        // update time spent for the previous page
-        this.surveyData[previousPageName] = {};
-        this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
-        this.surveyData[previousPageName].questions = this.getPageQuestions(previousPageName);
+            // update time spent for the current page
+            this.surveyData[currentPageName] = this.surveyData[currentPageName] || {};
+            this.surveyData[currentPageName].timeSpentOnPage = timeSpentInSeconds;
+        }
     }
 
     getPageQuestions = (pageName) => {
@@ -327,7 +577,7 @@ class TextBasedScenariosPage extends Component {
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
-                {this.state.currentConfig && (
+                {this.state.currentConfig && !this.state.allScenariosCompleted && (
                     <>
                         <Survey model={this.survey} />
                         {this.shouldBlockNavigation && (
@@ -341,17 +591,24 @@ class TextBasedScenariosPage extends Component {
                 {this.state.uploadData && (
                     <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
                         {(uploadSurveyResults, { data }) => (
-                            <div>
-                                <button ref={this.uploadButtonRef} onClick={(e) => {
+                            <div style={{ display: 'none' }}>
+                                <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
                                     e.preventDefault();
-                                    uploadSurveyResults({
-                                        variables: { results: this.state.sanitizedData }
-                                    });
-                                    this.setState({ uploadData: false });
+                                    if (this.state.isUploadButtonEnabled) {
+                                        uploadSurveyResults({
+                                            variables: { results: this.state.sanitizedData }
+                                        })
+                                    }
                                 }}></button>
                             </div>
                         )}
                     </Mutation>
+                )}
+                {this.state.allScenariosCompleted && (
+                    <ScenarioCompletionScreen
+                        sim1={this.state.sim1}
+                        sim2={this.state.sim2}
+                    />
                 )}
             </>
         )
@@ -363,3 +620,61 @@ export default TextBasedScenariosPage;
 ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
     return React.createElement(MedicalScenario, props)
 })
+
+const dreMappings = {
+    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
+    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
+    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
+}
+
+const simNameMappings = {
+    'AD-1': ['Eval_Adept_Urban'],
+    'AD-2': ['Eval_Adept_Jungle'],
+    'AD-3': ['Eval-Adept_Desert'],
+    'ST-1': ['stq1', 'stv1'],
+    'ST-2': ['stq2', 'stv2'],
+    'ST-3': ['stq3', 'stv3'],
+}
+
+const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
+    const allScenarios = [...(sim1 || []), ...(sim2 || [])];
+    const customColor = "#b15e2f";
+
+    return (
+        <Container className="mt-5">
+            <Row className="justify-content-center">
+                <Col md={10} lg={8}>
+                    <Card className="border-0 shadow">
+                        <Card.Body className="text-center p-5">
+                            <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                            <Card bg="light" className="p-4">
+                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                    Participant should complete the following scenarios in VR:
+                                </Card.Title>
+                                <Card.Subtitle className="mb-3 text-muted">
+                                    Please complete the scenarios in the order listed below:
+                                </Card.Subtitle>
+                                <ListGroup variant="flush" className="border rounded">
+                                    {allScenarios.map((scenario, index) => (
+                                        <ListGroup.Item
+                                            key={index}
+                                            className="py-3 d-flex align-items-center"
+                                        >
+                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                            <span className="fs-5">{scenario}</span>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            </Card>
+                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+        </Container>
+    );
+};

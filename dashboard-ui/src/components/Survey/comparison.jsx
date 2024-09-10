@@ -141,6 +141,7 @@ export class Comparison extends SurveyQuestionElementBase {
                                 patients={this.dm.patients}
                                 situation={this.dm.situation}
                                 supplies={this.dm.supplies}
+                                scenes={this.dm.scenes}
                                 decision={this.dm.decision}
                                 dmName={this.dm.dmName}
                                 actions={this.dm.actions}
