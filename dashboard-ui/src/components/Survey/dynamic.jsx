@@ -98,7 +98,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         const patientCards = patients.map(patient => {
             if (visiblePatients[patient.name] && sceneCharacters.includes(patient.name)) {
                 return (
-                    <>{
+                    <Col md={6}>{
                         patient.demographics ? <div className='patient-card'>
                             <Patient
                                 patient={patient}
@@ -127,7 +127,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     </Col>
                                 </Row>
                             </Card>
-                    }</>
+                    }</Col>
                 );
             } else {
                 return null;
@@ -163,7 +163,9 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                 {patientButtons}
                             </div>
                             <div className="card-container">
-                                {patientCards}
+                                <Row>
+                                    {patientCards}
+                                </Row>
                             </div>
                         </Col>
                     </Accordion.Body>
