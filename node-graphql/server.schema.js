@@ -220,7 +220,14 @@ const resolvers = {
       return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
     },
     getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }).toArray().then(result => { return result; });
+      return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }, {projection:{
+        "history.parameters.adm_name": 1, 
+        "history.response.id": 1, 
+        "history.parameters.target_id": 1,
+        "history.response.kdma_values.value": 1,
+        "history.parameters.target_id": 1,
+        "history.response.score": 1
+      }}).toArray().then(result => { return result; });
     },
     getEvalIds: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('evaluationIDS').find().toArray().then(result => { return result; });
@@ -230,7 +237,7 @@ const resolvers = {
           [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },    
     getAllHistoryByID: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
+      return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId },{ projection:{"history.parameters.adm_name":1, "history.response.score":1}}).toArray().then(result => { return result; });
     },
     getScenario: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').findOne({ "id": args["scenarioId"] }).then(result => { return result; });

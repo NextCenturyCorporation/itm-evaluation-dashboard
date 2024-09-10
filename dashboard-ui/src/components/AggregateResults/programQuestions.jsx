@@ -147,7 +147,11 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
             for (const x of data.getAllHistoryByEvalNumber) {
                 if (x.history.length > 0) {
                     const admName = x.history[0].parameters.adm_name;
-                    let scenario = x.history[0].response.id;
+                    let scenario;
+                    if (!x.history[0].hasOwnProperty('response'))
+                        scenario = false;
+                    else
+                        scenario = x.history[0].response.id;
                     if (!scenario) {
                         scenario = x.history[1].response.id;
                     }
