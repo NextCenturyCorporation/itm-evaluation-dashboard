@@ -19,6 +19,12 @@ let AWS = require('aws-sdk');
 //   })
 // });
 
+let transporter = nodemailer.createTransport({
+  host: '10.205.16.13',
+  port: 25,
+  secure: false
+});
+
 // We connect mongoose to our local mongodb database
 const connection = mongoose.connect('mongodb://dashboard-mongo:27030/dashboard', {
         useNewUrlParser: true,
@@ -39,7 +45,7 @@ const accountsServer = new AccountsServer(
     db: dashboardDB,
     tokenSecret: 'dashboardPassword',
     sendMail: ({ from, subject, to, text, html }) => {
-      from = "patronus.engineering@gmail.com";
+      from = "phi.le@caci.com";
       transporter.sendMail({
         from,
         to,
@@ -53,12 +59,12 @@ const accountsServer = new AccountsServer(
     },
     emailTemplates: {
       resetPassword: {
-        subject: (user) => `Verify your account email ${user.username}`,
+        subject: (user) => `Reset your account: email ${user.username}`,
         text: function (user, url) {
           let token = url.substring(url.lastIndexOf('/'));
           let new_url = RESET_PASSWORD_URL + token;
 
-          return `To verify your account email please click on this link: ${new_url}`;
+          return `To reset your account, please click on this link: ${new_url}`;
         },
         html: function(user, url) {
           let token = url.substring(url.lastIndexOf('/'));
