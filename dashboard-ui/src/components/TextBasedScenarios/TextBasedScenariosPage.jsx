@@ -429,20 +429,25 @@ class TextBasedScenariosPage extends Component {
                 if (question.response && !questionName.includes("Follow Up")) {
                     const mapping = question.question_mapping[question.response]
                     const responseUrl = `${urlBase}/api/v1/response`
-                    const responsePayload = {
-                        "response": {
-                            "choice": mapping['choice'],
-                            "justification": "justification",
-                            "probe_id": mapping['probe_id'],
-                            "scenario_id": scenarioID,
-                        },
-                        "session_id": sessionID
-                    }
-                    try {
-                        const response = await axios.post(responseUrl, responsePayload)
-                    } catch (err) {
-                        console.log(err)
-                        continue
+                    
+                    const choices = Array.isArray(mapping['choice']) ? mapping['choice'] : [mapping['choice']]
+                    
+                    for (const choice of choices) {
+                        const responsePayload = {
+                            "response": {
+                                "choice": choice,
+                                "justification": "justification",
+                                "probe_id": mapping['probe_id'],
+                                "scenario_id": scenarioID,
+                            },
+                            "session_id": sessionID
+                        }
+                        try {
+                            const response = await axios.post(responseUrl, responsePayload)
+                        } catch (err) {
+                            console.log(err)
+                            continue
+                        }
                     }
                 }
             }
