@@ -161,6 +161,7 @@ class SurveyPage extends Component {
             orderLog: [],
             pid: null,
             validPid: false,
+            lastTimeCalled: 0,
             envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 }
         };
         this.surveyConfigClone = null;
@@ -194,7 +195,7 @@ class SurveyPage extends Component {
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
-        this.survey.handlePageComplete = (this.finishFirstPage);
+        this.survey.onCurrentPageChanging.add(this.finishFirstPage);
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true;
         if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
@@ -203,12 +204,18 @@ class SurveyPage extends Component {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const pidExists = this.props.surveyResults.filter((res) => res.results?.surveyVersion == 4 && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && res.results['Post-Scenario Measures']);
+            const pidExists = this.props.surveyResults.filter((res) => res.results?.surveyVersion == 4 && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid) {
-                if (pidExists) {
+                if (pidExists.length > 0) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
+                }
+                else if (completedTextSurvey.length == 0) {
+                    this.survey.currentPage = 1;
+                    this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
+                    this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
                 }
                 else {
                     this.survey.currentPage = 2;
@@ -805,14 +812,14 @@ class SurveyPage extends Component {
                 let adms = null;
 
                 if (expectedAuthor == 'kitware') {
-                    if (this.state.validPid) {
+                    if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
                         adms = this.getKitwareAdms(expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
                         adms = this.getKitwareAdms(expectedScenario, null, null, null, null);
                     }
                 }
                 else {
-                    if (this.state.validPid) {
+                    if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
                         adms = this.getParallaxAdms(expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
                         adms = this.getKitwareAdms(expectedScenario, null, null, null, null);
@@ -827,14 +834,20 @@ class SurveyPage extends Component {
                 // misaligned
                 const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == misalignedADMTarget);
                 if (isDefined(baselineAdm)) {
+                    baselineAdm['alignment'] = 'baseline';
+                    baselineAdm['target'] = baselineADMTarget;
                     pages.push(baselineAdm);
                 } else { console.warn("Missing Baseline ADM"); }
                 if (isDefined(alignedAdm)) {
                     alignedAdm['admStatus'] = adms['alignedStatus'];
+                    alignedAdm['alignment'] = 'aligned';
+                    alignedAdm['target'] = alignedADMTarget;
                     pages.push(alignedAdm);
                 } else { console.warn("Missing Aligned ADM"); }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
+                    misalignedAdm['alignment'] = 'misaligned';
+                    misalignedAdm['target'] = misalignedADMTarget;
                     pages.push(misalignedAdm);
                 } else { console.warn("Missing Misaligned ADM"); }
                 pages.push(this.generateComparisonPagev4(baselineAdm, alignedAdm, misalignedAdm));
@@ -1086,6 +1099,9 @@ class SurveyPage extends Component {
                     scenarioIndex: page?.scenarioIndex,
                     pageType: page?.pageType,
                     pageName: page?.name,
+                    admTarget: page?.target,
+                    admAlignment: page?.alignment,
+                    admChoiceProcess: page?.admStatus,
                     questions: {}
                 };
 
@@ -1154,8 +1170,10 @@ class SurveyPage extends Component {
     }
 
     finishFirstPage = (survey) => {
-        if (survey.currentPageNo == 0) {
-            this.postConfigSetup();
+        if (survey.currentPageNo == 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
+            this.setState({ lastTimeCalled: new Date() }, () => {
+                this.postConfigSetup();
+            });
         }
     };
 
