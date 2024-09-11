@@ -1142,6 +1142,11 @@ class SurveyPage extends Component {
             }
         }
 
+        if (this.state.surveyVersion == 4.0) {
+            this.surveyData['evalNumber'] = 4
+            this.surveyData['evalName'] = 'Dry Run Evaluation'
+        }
+
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
             if (this.uploadButtonRef.current) {
