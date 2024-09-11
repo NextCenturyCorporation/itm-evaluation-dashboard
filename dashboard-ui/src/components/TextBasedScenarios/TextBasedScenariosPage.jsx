@@ -27,6 +27,13 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`
 
+const GET_ALL_SCENARIO_RESULTS = gql`
+    query GetAllScenarioResults {
+        getAllScenarioResults
+    }
+`
+
+
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -46,15 +53,17 @@ export const scenarioMappings = {
 
 export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    const { loading, error, data } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
 
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error</p>;
+    if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
+    if (participantLogError || scenarioResultsError) return <p>Error</p>;
 
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
-        participantLogs={data}
+        participantLogs={participantLogData}
+        scenarioResults={scenarioResultsData.getAllScenarioResults}
     />;
 }
 
@@ -93,23 +102,37 @@ class TextBasedScenariosPage extends Component {
         this.handleKeyPress = this.handleKeyPress.bind(this);
     }
 
+    duplicatePid = (pid) => {
+        if (!this.props.scenarioResults || !Array.isArray(this.props.scenarioResults)) {
+            return false;
+        }
+        return this.props.scenarioResults.some(result => result.participantID === pid);
+    }
+
     introSurveyComplete = (survey) => {
         const enteredParticipantID = survey.data["Participant ID"];
-
+    
+        // Check for duplicate participant ID
+        const isDuplicate = this.duplicatePid(enteredParticipantID);
+    
         // match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
             log => log['ParticipantID'] == enteredParticipantID
         );
-
+    
         let scenarios = [];
-
-        if (!matchedLog) {
-            const userChoice = window.confirm(
-                "No matching participant ID was found. Would you like to continue anyway?\n\n" +
+    
+        if (!matchedLog || isDuplicate) {
+            let message = "No matching participant ID was found.";
+            if (isDuplicate) {
+                message = "This participant ID has already been used.";
+            }
+            message += " Would you like to continue anyway?\n\n" +
                 "Click 'OK' to continue with the current ID.\n" +
-                "Click 'Cancel' to re-enter the participant ID."
-            );
-
+                "Click 'Cancel' to re-enter the participant ID.";
+    
+            const userChoice = window.confirm(message);
+    
             if (!userChoice) {
                 // just reload intro survey
                 this.introSurvey = new Model(introConfig);
@@ -118,17 +141,18 @@ class TextBasedScenariosPage extends Component {
                 this.setState({ currentConfig: null }); // Force re-render
                 return;
             } else {
-                // if you want to go through with a non-matched PID, giving default experience
-                matchedLog = { 'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3' }
+                // if you want to go through with a non-matched or duplicate PID, giving default experience
+                if (!matchedLog && !isDuplicate) {
+                    matchedLog = { 'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3' }
+                }
             }
         }
-
+    
         const text1Scenarios = this.scenariosFromLog(matchedLog['Text-1']);
         const text2Scenarios = this.scenariosFromLog(matchedLog['Text-2']);
-
-
+    
         scenarios = [...text1Scenarios, ...text2Scenarios];
-
+    
         this.setState({
             scenarios,
             participantID: enteredParticipantID,
@@ -265,7 +289,7 @@ class TextBasedScenariosPage extends Component {
             });
         });
 
-
+        scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
