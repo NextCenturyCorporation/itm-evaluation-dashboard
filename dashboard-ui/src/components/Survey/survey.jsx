@@ -852,7 +852,7 @@ class SurveyPage extends Component {
                 } else { console.warn("Missing Misaligned ADM"); }
                 pages.push(this.generateComparisonPagev4(baselineAdm, alignedAdm, misalignedAdm));
             }
-
+            pages.push(allPages.slice(-1)[0]);
             this.surveyConfigClone.pages = pages;
 
             return {};
