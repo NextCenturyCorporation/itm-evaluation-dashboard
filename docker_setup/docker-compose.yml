@@ -9,8 +9,7 @@ services:
     container_name: dashboard-nginx
     volumes:
       - ./resources/nginx.conf:/etc/nginx/nginx.conf
-      - ./ServerCertificate.crt:/certs/ServerCertificate.crt
-      - ./darpaitm.key:/certs/darpaitm.key  
+      - ./certs:/certs
     ports:
       - "80:80"
       - "443:443"
