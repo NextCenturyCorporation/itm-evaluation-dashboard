@@ -406,10 +406,10 @@ class SurveyPage extends Component {
             "name": bname + ' vs ' + aname + ' vs ' + mname,
             "scenarioIndex": baselineAdm['scenarioIndex'],
             "pageType": "comparison",
-            'admAuthor': baselineAdm['admAuthor'],
-            'baselineName': baselineAdm['admName'],
-            'alignedName': alignedAdm['admnName'],
-            'misalignedName': misalignedAdm['admName'],
+            'admAuthor': baselineAdm?.admAuthor,
+            'baselineName': baselineAdm?.admName,
+            'alignedName': alignedAdm?.admName,
+            'misalignedName': misalignedAdm?.admName,
             "elements": elements,
             "alignment": secondName == '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName == aname ? "aligned" : "misaligned"))
         };
