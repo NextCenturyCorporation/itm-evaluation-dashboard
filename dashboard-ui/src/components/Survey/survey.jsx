@@ -411,11 +411,6 @@ class SurveyPage extends Component {
             'baselineTarget': baselineAdm?.target,
             'alignedTarget': alignedAdm?.target,
             'misalignedTarget': misalignedAdm?.target,
-            'admAuthor': baselineAdm?.admAuthor,
-            'baselineName': baselineAdm?.admName,
-            'baselineTarget': baselineAdm?.target,
-            'alignedTarget': alignedAdm?.target,
-            'misalignedTarget': misalignedAdm?.target,
             "elements": elements,
             "alignment": secondName == '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName == aname ? "aligned" : "misaligned"))
         };
@@ -864,9 +859,7 @@ class SurveyPage extends Component {
                     }
                     pages.push(alignedAdm);
                 } else {
-                    
                     console.warn("Missing Aligned ADM"); 
-               
                 }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
@@ -1101,21 +1094,10 @@ class SurveyPage extends Component {
                     admTarget: page?.target,
                     admName: page?.admName,
                     admAuthor: page?.admAuthor,
-                    admName: page?.admName,
-                    admAuthor: page?.admAuthor,
                     admAlignment: page?.alignment,
                     admChoiceProcess: page?.admStatus,
                     questions: {}
                 };
-
-                //comparison page
-                if (page?.name?.includes('vs')) {
-                    this.surveyData[pageName]['baselineName'] = page?.baselineName
-                    this.surveyData[pageName]['baselineTarget'] = page?.baselineTarget
-                    this.surveyData[pageName]['alignedTarget'] = page?.alignedTarget
-                    this.surveyData[pageName]['misalignedTarget'] = page?.misalignedTarget
-                    this.surveyData[pageName]['admAuthor'] = page?.admAuthor
-                }
 
                 //comparison page
                 if (page?.name?.includes('vs')) {
@@ -1277,8 +1259,6 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
-        fetchPolicy: 'no-cache'
-    }, {
         fetchPolicy: 'no-cache'
       });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
