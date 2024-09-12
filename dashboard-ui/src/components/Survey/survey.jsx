@@ -408,8 +408,9 @@ class SurveyPage extends Component {
             "pageType": "comparison",
             'admAuthor': baselineAdm?.admAuthor,
             'baselineName': baselineAdm?.admName,
-            'alignedName': alignedAdm?.admName,
-            'misalignedName': misalignedAdm?.admName,
+            'baselineTarget': baselineAdm?.target,
+            'alignedTarget': alignedAdm?.target,
+            'misalignedTarget': misalignedAdm?.target,
             "elements": elements,
             "alignment": secondName == '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName == aname ? "aligned" : "misaligned"))
         };
@@ -1092,8 +1093,9 @@ class SurveyPage extends Component {
                 //comparison page
                 if (page?.name?.includes('vs')) {
                     this.surveyData[pageName]['baselineName'] = page?.baselineName
-                    this.surveyData[pageName]['alignedName'] = page?.alignedName
-                    this.surveyData[pageName]['misalignedName'] = page?.misalignedName
+                    this.surveyData[pageName]['baselineTarget'] = page?.baselineTarget
+                    this.surveyData[pageName]['alignedTarget'] = page?.alignedTarget
+                    this.surveyData[pageName]['misalignedTarget'] = page?.misalignedTarget
                     this.surveyData[pageName]['admAuthor'] = page?.admAuthor
                 }
 
