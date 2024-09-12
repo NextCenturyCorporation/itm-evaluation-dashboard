@@ -406,6 +406,11 @@ class SurveyPage extends Component {
             "name": bname + ' vs ' + aname + ' vs ' + mname,
             "scenarioIndex": baselineAdm['scenarioIndex'],
             "pageType": "comparison",
+            'admAuthor': baselineAdm?.admAuthor,
+            'baselineName': baselineAdm?.admName,
+            'baselineTarget': baselineAdm?.target,
+            'alignedTarget': alignedAdm?.target,
+            'misalignedTarget': misalignedAdm?.target,
             "elements": elements,
             "alignment": secondName == '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName == aname ? "aligned" : "misaligned"))
         };
@@ -704,6 +709,7 @@ class SurveyPage extends Component {
             default:
                 break;
         }
+
         return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
     }
 
@@ -810,7 +816,6 @@ class SurveyPage extends Component {
                 const expectedAuthor = (x['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                 const expectedScenario = x['TA1'] == 'ST' ? (x['Attribute'] == 'QOL' ? stScenario[0] : stScenario[1]) : (x['Attribute'] == 'MJ' ? adScenario[0] : adScenario[1]);
                 let adms = null;
-
                 if (expectedAuthor == 'kitware') {
                     if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
                         adms = this.getKitwareAdms(expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
@@ -825,6 +830,7 @@ class SurveyPage extends Component {
                         adms = this.getKitwareAdms(expectedScenario, null, null, null, null);
                     }
                 }
+
                 const alignedADMTarget = adms['aligned'];
                 const misalignedADMTarget = adms['misaligned'];
                 const baselineADMTarget = x['TA2'] == 'Kitware' ? kitwareBaselineMapping[expectedScenario] : tadBaselineMapping[expectedScenario];
@@ -843,7 +849,9 @@ class SurveyPage extends Component {
                     alignedAdm['alignment'] = 'aligned';
                     alignedAdm['target'] = alignedADMTarget;
                     pages.push(alignedAdm);
-                } else { console.warn("Missing Aligned ADM"); }
+                } else { 
+                    console.warn("Missing Aligned ADM"); 
+                }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
                     misalignedAdm['alignment'] = 'misaligned';
@@ -940,31 +948,6 @@ class SurveyPage extends Component {
             this.setState({ orderLog: orderLog })
 
             return;
-            /* commenting out for now because this is not the logic we need for 7-16
-            // only select omnibus pages we want
-            omnibusPages = [];
-            const sets = shuffle(this.surveyConfigClone.validOmniSets);
-            const chosen = shuffle(sets.slice(0));
-            const namesSelected = [];
-            for (const group of chosen[0]) {
-                for (const medic of group) {
-                    // get single omnibus medics
-                    omnibusPages.push(this.surveyConfigClone.pages.filter(page => page.name.includes(medic))[0]);
-                    namesSelected.push(medic);
-                }
-                // get comparison omnibus medics
-                const tmpPage = this.surveyConfigClone.pages.filter(page => page.name.includes('Omnibus') && page.name.includes(group[0]) && page.name.includes(group[1]))[0];
-                omnibusPages.push(tmpPage);
-                namesSelected.push(tmpPage.name);
-            }
-            // remove all other omnibus pages
-            for (const page of this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"))) {
-                if (!namesSelected.includes(page.name)) {
-                    removedPages.push(page.name);
-                }
-            }
-            */
-
         }
         //filter out pages to be added after randomized portion
         this.surveyConfigClone.pages = this.surveyConfigClone.pages.filter(page => page.name !== "Post-Scenario Measures");
@@ -1100,10 +1083,21 @@ class SurveyPage extends Component {
                     pageType: page?.pageType,
                     pageName: page?.name,
                     admTarget: page?.target,
+                    admName: page?.admName,
+                    admAuthor: page?.admAuthor,
                     admAlignment: page?.alignment,
                     admChoiceProcess: page?.admStatus,
                     questions: {}
                 };
+
+                //comparison page
+                if (page?.name?.includes('vs')) {
+                    this.surveyData[pageName]['baselineName'] = page?.baselineName
+                    this.surveyData[pageName]['baselineTarget'] = page?.baselineTarget
+                    this.surveyData[pageName]['alignedTarget'] = page?.alignedTarget
+                    this.surveyData[pageName]['misalignedTarget'] = page?.misalignedTarget
+                    this.surveyData[pageName]['admAuthor'] = page?.admAuthor
+                }
 
                 const pageQuestions = this.getPageQuestions(pageName);
 
@@ -1255,7 +1249,9 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingHumanGroupFirst, error: errorHumanGroupFirst, data: dataHumanGroupFirst } = useQuery(COUNT_HUMAN_GROUP_FIRST);
     const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS);
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
+        fetchPolicy: 'no-cache'
+      });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
     if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
