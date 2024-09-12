@@ -1089,7 +1089,7 @@ class SurveyPage extends Component {
                 };
 
                 //comparison page
-                if (page?.name?.contains('vs')) {
+                if (page?.name?.includes('vs')) {
                     this.surveyData[pageName]['baselineName'] = page?.['baselineName']
                     this.surveyData[pageName]['alignedName'] = page?.['alignedName']
                     this.surveyData[pageName]['misalignedName'] = page?.['misalignedName']
