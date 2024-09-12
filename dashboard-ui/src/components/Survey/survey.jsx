@@ -270,6 +270,7 @@ class SurveyPage extends Component {
         // IO 4 and 5 in parallax only have 2 adms. Generally, this function will generate a comparison page
         // with 3 adms - baseline vs aligned and aligned vs misaligned. If there are only two adms, it will only
         // compare baseline with the available adm (which can be either aligned or misaligned)
+        console.log(baselineAdm)
         const bname = baselineAdm['name'];
         let aname = '';
         let mname = '';
@@ -406,9 +407,10 @@ class SurveyPage extends Component {
             "name": bname + ' vs ' + aname + ' vs ' + mname,
             "scenarioIndex": baselineAdm['scenarioIndex'],
             "pageType": "comparison",
-            'baselineName': bname,
-            'alignedName': aname,
-            'misalignedName': mname,
+            'admAuthor': baselineAdm['admAuthor'],
+            'baselineName': baselineAdm['admName'],
+            'alignedName': alignedAdm['admnName'],
+            'misalignedName': misalignedAdm['admName'],
             "elements": elements,
             "alignment": secondName == '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName == aname ? "aligned" : "misaligned"))
         };
@@ -1090,9 +1092,10 @@ class SurveyPage extends Component {
 
                 //comparison page
                 if (page?.name?.includes('vs')) {
-                    this.surveyData[pageName]['baselineName'] = page?.['baselineName']
-                    this.surveyData[pageName]['alignedName'] = page?.['alignedName']
-                    this.surveyData[pageName]['misalignedName'] = page?.['misalignedName']
+                    this.surveyData[pageName]['baselineName'] = page?.baselineName
+                    this.surveyData[pageName]['alignedName'] = page?.alignedName
+                    this.surveyData[pageName]['misalignedName'] = page?.misalignedName
+                    this.surveyData[pageName]['admAuthor'] = page?.admAuthor
                 }
 
                 const pageQuestions = this.getPageQuestions(pageName);
