@@ -704,6 +704,7 @@ class SurveyPage extends Component {
             default:
                 break;
         }
+
         return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
     }
 
@@ -819,13 +820,12 @@ class SurveyPage extends Component {
                 }
                 else {
                     if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
-                        console.log('hit 823')
                         adms = this.getParallaxAdms(expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
                         adms = this.getKitwareAdms(expectedScenario, null, null, null, null);
                     }
                 }
-                console.log(adms)
+
                 const alignedADMTarget = adms['aligned'];
                 const misalignedADMTarget = adms['misaligned'];
                 const baselineADMTarget = x['TA2'] == 'Kitware' ? kitwareBaselineMapping[expectedScenario] : tadBaselineMapping[expectedScenario];
@@ -840,17 +840,11 @@ class SurveyPage extends Component {
                     pages.push(baselineAdm);
                 } else { console.warn("Missing Baseline ADM"); }
                 if (isDefined(alignedAdm)) {
-                    console.log(alignedAdm)
                     alignedAdm['admStatus'] = adms['alignedStatus'];
                     alignedAdm['alignment'] = 'aligned';
                     alignedAdm['target'] = alignedADMTarget;
                     pages.push(alignedAdm);
                 } else { 
-                    console.log(expectedAuthor)
-                    console.log(expectedScenario)
-                    console.log(alignedADMTarget)
-                    console.log(alignedAdm)
-                    console.log(isDefined(alignedAdm))
                     console.warn("Missing Aligned ADM"); 
                 }
                 if (isDefined(misalignedAdm)) {
@@ -1249,7 +1243,6 @@ export const SurveyPageWrapper = (props) => {
     if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
     if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
 
-    console.log(dataTextResults)
     return (
         <SurveyPage
             countHumanGroupFirst={dataHumanGroupFirst.countHumanGroupFirst}
