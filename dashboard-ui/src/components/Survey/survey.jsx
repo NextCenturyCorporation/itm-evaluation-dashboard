@@ -1100,6 +1100,8 @@ class SurveyPage extends Component {
                     pageType: page?.pageType,
                     pageName: page?.name,
                     admTarget: page?.target,
+                    admName: page?.admName,
+                    admAuthor: page?.admAuthor,
                     admAlignment: page?.alignment,
                     admChoiceProcess: page?.admStatus,
                     questions: {}
