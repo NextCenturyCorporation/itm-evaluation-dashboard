@@ -270,7 +270,6 @@ class SurveyPage extends Component {
         // IO 4 and 5 in parallax only have 2 adms. Generally, this function will generate a comparison page
         // with 3 adms - baseline vs aligned and aligned vs misaligned. If there are only two adms, it will only
         // compare baseline with the available adm (which can be either aligned or misaligned)
-        console.log(baselineAdm)
         const bname = baselineAdm['name'];
         let aname = '';
         let mname = '';
