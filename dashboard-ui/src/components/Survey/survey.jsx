@@ -411,6 +411,11 @@ class SurveyPage extends Component {
             'baselineTarget': baselineAdm?.target,
             'alignedTarget': alignedAdm?.target,
             'misalignedTarget': misalignedAdm?.target,
+            'admAuthor': baselineAdm?.admAuthor,
+            'baselineName': baselineAdm?.admName,
+            'baselineTarget': baselineAdm?.target,
+            'alignedTarget': alignedAdm?.target,
+            'misalignedTarget': misalignedAdm?.target,
             "elements": elements,
             "alignment": secondName == '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName == aname ? "aligned" : "misaligned"))
         };
@@ -542,7 +547,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'qol-dre-1-eval':
-                cols1to3 = ['qol-human-1774519-SplitEvenBinary', 'qol-human-9157688-SplitEvenBinary'];
+                cols1to3 = ['qol-human-1774519-SplitEvenBinary'];
                 set1 = ['qol-synth-HighCluster', 'qol-human-3447902-SplitHighMulti'];
                 validAdms = this.getValidADM(ALL_QOL_TARGETS, qolTargets, cols1to3, set1, [], []);
                 alignedTarget = validAdms['aligned'];
@@ -551,7 +556,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'qol-dre-2-eval':
-                cols1to3 = ['qol-human-1774519-SplitEvenBinary', 'qol-human-9157688-SplitEvenBinary'];
+                cols1to3 = ['qol-human-1774519-SplitEvenBinary'];
                 set1 = ['qol-synth-HighExtreme', 'qol-human-2932740-HighExtreme', 'qol-human-6403274-SplitHighBinary'];
                 validAdms = this.getValidADM(ALL_QOL_TARGETS, qolTargets, cols1to3, set1, [], []);
                 alignedTarget = validAdms['aligned'];
@@ -560,7 +565,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'qol-dre-3-eval':
-                cols1to3 = ['qol-human-6403274-SplitHighBinary', 'qol-human-3043871-SplitHighBinary', 'qol-human-9157688-SplitEvenBinary', 'qol-human-1774519-SplitEvenBinary'];
+                cols1to3 = ['qol-human-6403274-SplitHighBinary', 'qol-human-9157688-SplitEvenBinary', 'qol-human-1774519-SplitEvenBinary'];
                 set1 = ['qol-synth-HighExtreme', 'qol-synth-HighCluster'];
                 validAdms = this.getValidADM(ALL_QOL_TARGETS, qolTargets, cols1to3, set1, [], []);
                 alignedTarget = validAdms['aligned'];
@@ -569,7 +574,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'vol-dre-1-eval':
-                cols1to3 = ['vol-human-7040555-SplitEvenBinary', 'vol-human-6403274-SplitEvenBinary', 'vol-synth-HighCluster'];
+                cols1to3 = ['vol-human-7040555-SplitEvenBinary', 'vol-synth-HighCluster'];
                 set1 = ['vol-human-8478698-SplitLowMulti', 'vol-synth-LowCluster', 'vol-synth-LowExtreme'];
                 validAdms = this.getValidADM(ALL_VOL_TARGETS, volTargets, cols1to3, set1, [], []);
                 alignedTarget = validAdms['aligned'];
@@ -578,7 +583,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'vol-dre-2-eval':
-                cols1to3 = ['vol-human-7040555-SplitEvenBinary', 'vol-human-6403274-SplitEvenBinary'];
+                cols1to3 = ['vol-human-7040555-SplitEvenBinary'];
                 set1 = ['vol-synth-LowExtreme', 'vol-synth-LowCluster'];
                 set2 = ['vol-human-1774519-SplitHighMulti', 'vol-human-6403274-SplitEvenBinary', 'vol-synth-HighExtreme'];
                 validAdms = this.getValidADM(ALL_VOL_TARGETS, volTargets, cols1to3, set1, set2, []);
@@ -588,7 +593,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'vol-dre-3-eval':
-                cols1to3 = ['vol-human-6403274-SplitEvenBinary', 'vol-human-7040555-SplitEvenBinary'];
+                cols1to3 = ['vol-human-6403274-SplitEvenBinary'];
                 set1 = ['vol-synth-HighCluster', 'vol-synth-HighExtreme'];
                 validAdms = this.getValidADM(ALL_VOL_TARGETS, volTargets, cols1to3, set1, [], []);
                 alignedTarget = validAdms['aligned'];
@@ -670,7 +675,7 @@ class SurveyPage extends Component {
                 }
                 break;
             case 'qol-dre-1-eval':
-                cols1to3 = ['qol-human-3447902-SplitHighMulti', 'qol-human-6349649-SplitHighMulti', 'qol-human-7040555-SplitHighMulti'];
+                cols1to3 = ['qol-human-3447902-SplitHighMulti'];
                 set1 = ['qol-human-2932740-HighExtreme', 'qol-synth-HighCluster'];
                 set2 = ['qol-human-1774519-SplitEvenBinary', 'qol-human-9157688-SplitEvenBinary']
                 validAdms = this.getValidADM(ALL_QOL_TARGETS, qolTargets, cols1to3, set1, set2, []);
@@ -680,7 +685,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'qol-dre-2-eval':
-                cols1to3 = ['qol-human-8022671-SplitLowMulti', 'qol-human-5032922-SplitLowMulti'];
+                cols1to3 = ['qol-human-8022671-SplitLowMulti'];
                 set1 = ['qol-human-3043871-SplitHighBinary', 'qol-human-6349649-SplitHighMulti'];
                 validAdms = this.getValidADM(ALL_QOL_TARGETS, qolTargets, cols1to3, set1, [], []);
                 alignedTarget = validAdms['aligned'];
@@ -689,7 +694,7 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'qol-dre-3-eval':
-                cols1to3 = ['qol-human-6349649-SplitHighMulti', 'qol-human-6349649-SplitHighMulti', 'qol-human-3447902-SplitHighMulti', 'qol-human-7040555-SplitHighMulti'];
+                cols1to3 = ['qol-human-6349649-SplitHighMulti'];
                 validAdms = this.getValidADM(ALL_QOL_TARGETS, qolTargets, cols1to3, [], [], []);
                 alignedTarget = validAdms['aligned'];
                 misalignedTarget = validAdms['misaligned'];
@@ -699,7 +704,7 @@ class SurveyPage extends Component {
             case 'vol-dre-1-eval':
             case 'vol-dre-2-eval':
             case 'vol-dre-3-eval':
-                cols1to3 = ['vol-human-3043871-SplitLowMulti', 'vol-human-5032922-SplitLowMulti'];
+                cols1to3 = ['vol-human-3043871-SplitLowMulti'];
                 validAdms = this.getValidADM(ALL_VOL_TARGETS, volTargets, cols1to3, [], [], []);
                 alignedTarget = validAdms['aligned'];
                 misalignedTarget = validAdms['misaligned'];
@@ -709,6 +714,7 @@ class SurveyPage extends Component {
             default:
                 break;
         }
+
 
         return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
     }
@@ -858,7 +864,9 @@ class SurveyPage extends Component {
                     }
                     pages.push(alignedAdm);
                 } else {
-                    console.warn("Missing Aligned ADM");
+                    
+                    console.warn("Missing Aligned ADM"); 
+               
                 }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
@@ -1093,10 +1101,21 @@ class SurveyPage extends Component {
                     admTarget: page?.target,
                     admName: page?.admName,
                     admAuthor: page?.admAuthor,
+                    admName: page?.admName,
+                    admAuthor: page?.admAuthor,
                     admAlignment: page?.alignment,
                     admChoiceProcess: page?.admStatus,
                     questions: {}
                 };
+
+                //comparison page
+                if (page?.name?.includes('vs')) {
+                    this.surveyData[pageName]['baselineName'] = page?.baselineName
+                    this.surveyData[pageName]['baselineTarget'] = page?.baselineTarget
+                    this.surveyData[pageName]['alignedTarget'] = page?.alignedTarget
+                    this.surveyData[pageName]['misalignedTarget'] = page?.misalignedTarget
+                    this.surveyData[pageName]['admAuthor'] = page?.admAuthor
+                }
 
                 //comparison page
                 if (page?.name?.includes('vs')) {
@@ -1259,7 +1278,9 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
-    });
+    }, {
+        fetchPolicy: 'no-cache'
+      });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
     if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
