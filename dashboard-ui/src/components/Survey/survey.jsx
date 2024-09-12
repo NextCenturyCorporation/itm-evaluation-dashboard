@@ -318,25 +318,25 @@ class SurveyPage extends Component {
                 ],
                 "isRequired": true
             },
-                {
-                    "type": "radiogroup",
-                    "name": secondName + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
-                    "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                    "choices": [
-                        "Not confident at all",
-                        "Not confident",
-                        "Somewhat confident",
-                        "Confident",
-                        "Completely confident"
-                    ],
-                    "isRequired": true
-                },
-                {
-                    "type": "comment",
-                    "name": secondName + " vs " + bname + ": Explain your response to the delegation preference question",
-                    "title": "Explain your response to the delegation preference question:",
-                    "isRequired": true
-                }
+            {
+                "type": "radiogroup",
+                "name": secondName + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": secondName + " vs " + bname + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            }
             ]
         }
         else {
@@ -351,54 +351,54 @@ class SurveyPage extends Component {
                 ],
                 "isRequired": true
             },
-                {
-                    "type": "radiogroup",
-                    "name": aname + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
-                    "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                    "choices": [
-                        "Not confident at all",
-                        "Not confident",
-                        "Somewhat confident",
-                        "Confident",
-                        "Completely confident"
-                    ],
-                    "isRequired": true
-                },
-                {
-                    "type": "comment",
-                    "name": aname + " vs " + bname + ": Explain your response to the delegation preference question",
-                    "title": "Explain your response to the delegation preference question:",
-                    "isRequired": true
-                },
-                {
-                    "type": "radiogroup",
-                    "name": aname + " vs " + mname + ": Forced Choice",
-                    "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-                    "choices": [
-                        aname,
-                        mname
-                    ],
-                    "isRequired": true
-                },
-                {
-                    "type": "radiogroup",
-                    "name": aname + " vs " + mname + ": Rate your confidence about the delegation decision indicated in the previous question",
-                    "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                    "choices": [
-                        "Not confident at all",
-                        "Not confident",
-                        "Somewhat confident",
-                        "Confident",
-                        "Completely confident"
-                    ],
-                    "isRequired": true
-                },
-                {
-                    "type": "comment",
-                    "name": aname + " vs " + mname + ": Explain your response to the delegation preference question",
-                    "title": "Explain your response to the delegation preference question:",
-                    "isRequired": true
-                },
+            {
+                "type": "radiogroup",
+                "name": aname + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": aname + " vs " + bname + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": aname + " vs " + mname + ": Forced Choice",
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [
+                    aname,
+                    mname
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": aname + " vs " + mname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": aname + " vs " + mname + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            },
             ]
         }
 
@@ -845,12 +845,21 @@ class SurveyPage extends Component {
                     pages.push(baselineAdm);
                 } else { console.warn("Missing Baseline ADM"); }
                 if (isDefined(alignedAdm)) {
-                    alignedAdm['admStatus'] = adms['alignedStatus'];
-                    alignedAdm['alignment'] = 'aligned';
-                    alignedAdm['target'] = alignedADMTarget;
+                    if ((alignedAdm['scenarioIndex'] == "DryRunEval-IO5-eval" || alignedAdm['scenarioIndex'] == "DryRunEval-IO4-eval") &&
+                            alignedAdm['admAuthor'] == 'TAD' && adms['alignedStatus'].includes("overlapped with baseline")) {
+                        console.log('hit')
+                        // edge case for IO4 and IO5 parallax where overlap needs to be labeled misaligned
+                        alignedAdm['admStatus'] = adms['alignedStatus'];
+                        alignedAdm['alignment'] = 'misaligned';
+                        alignedAdm['target'] = alignedADMTarget;
+                    } else {
+                        alignedAdm['admStatus'] = adms['alignedStatus'];
+                        alignedAdm['alignment'] = 'aligned';
+                        alignedAdm['target'] = alignedADMTarget;
+                    }
                     pages.push(alignedAdm);
-                } else { 
-                    console.warn("Missing Aligned ADM"); 
+                } else {
+                    console.warn("Missing Aligned ADM");
                 }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
@@ -1228,7 +1237,7 @@ class SurveyPage extends Component {
                             <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
                                 {(uploadSurveyResults, { data }) => (
                                     <div>
-                                    <button ref={this.uploadButtonRef} hidden onClick={(e) => {
+                                        <button ref={this.uploadButtonRef} hidden onClick={(e) => {
                                             e.preventDefault();
                                             uploadSurveyResults({
                                                 variables: { surveyId: this.state.surveyId, results: this.surveyData }
@@ -1251,7 +1260,7 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
-      });
+    });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
     if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
