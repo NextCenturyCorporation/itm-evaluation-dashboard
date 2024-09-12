@@ -847,7 +847,6 @@ class SurveyPage extends Component {
                 if (isDefined(alignedAdm)) {
                     if ((alignedAdm['scenarioIndex'] == "DryRunEval-IO5-eval" || alignedAdm['scenarioIndex'] == "DryRunEval-IO4-eval") &&
                             alignedAdm['admAuthor'] == 'TAD' && adms['alignedStatus'].includes("overlapped with baseline")) {
-                        console.log('hit')
                         // edge case for IO4 and IO5 parallax where overlap needs to be labeled misaligned
                         alignedAdm['admStatus'] = adms['alignedStatus'];
                         alignedAdm['alignment'] = 'misaligned';
