@@ -1,6 +1,7 @@
 .card-header {
   background-color: #f7f7f7;
   font-weight: bold;
+  font-size: 16px;
 }
 
 .patient-card {
@@ -32,7 +33,7 @@
 
 .card-text {
   font-weight: normal;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .card-container {
@@ -54,22 +55,22 @@
 }
 
 .list-group {
-  font-size: 10px;
+  font-size: 14px; 
 }
 
 .modal-body {
-  font-size: 12px;
+  font-size: 14px;  
 }
 
 .accordion-body {
   white-space: normal;
   word-break: break-word;
-  font-size: 12px;
+  font-size: 14px; 
 }
 
 .magnifying-glass-icon:hover {
   transform: scale(1.25);
-  cursor: 'pointer';
+  cursor: pointer;
   transition: transform 0.5s ease-in-out;
 }
 
@@ -85,7 +86,7 @@
 
 .magnifying-glass:hover {
   transform: scale(1.5);
-  cursor: 'pointer';
+  cursor: pointer;
   transition: transform 0.5s ease-in-out;
 }
 
@@ -100,8 +101,22 @@
 
 .accordion-button {
   background-color: rgb(217, 216, 216) !important;
+  font-size: 16px;  
 }
 
 .accordion-button:not(.collapsed) {
   color: #212529;
+}
+
+.action-item {
+  font-size: 14px; 
+  padding: 10px 15px; 
+}
+
+.scenario-info-icon {
+  font-size: 14px;  
+}
+
+body, button, input, select, textarea {
+  font-size: 14px;
 }

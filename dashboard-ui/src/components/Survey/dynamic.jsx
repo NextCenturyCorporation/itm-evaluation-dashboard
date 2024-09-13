@@ -13,7 +13,13 @@ import Supplies from '../TextBasedScenarios/supplies';
 import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
 
 const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission }) => {
-    const [visiblePatients, setVisiblePatients] = useState({});
+    const [visiblePatients, setVisiblePatients] = useState(() => {
+        const initialVisibility = {};
+        patients.forEach(patient => {
+            initialVisibility[patient.name] = true;
+        });
+        return initialVisibility;
+    });
     const [visibleVitals, setVisibleVitals] = useState({});
     const [showPatientModal, setShowPatientModal] = useState(false);
     const [activeImage, setActiveImage] = useState(null);

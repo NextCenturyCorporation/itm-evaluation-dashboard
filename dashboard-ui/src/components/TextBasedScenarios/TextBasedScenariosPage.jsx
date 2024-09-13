@@ -541,7 +541,7 @@ class TextBasedScenariosPage extends Component {
         };
 
         config.title = title;
-
+        config.showTitle = false;
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
         this.survey.focusOnFirstError = false;
@@ -596,15 +596,6 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
-                <style>
-                    {`
-                    .main-content {
-                        zoom: 0.8;
-                        -moz-transform: scale(0.8);
-                        -moz-transform-origin: 0 0;
-                        }
-                    `}
-                </style>
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
