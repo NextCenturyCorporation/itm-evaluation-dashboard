@@ -51,11 +51,6 @@ const customStyles = `
     border-radius: 4px;
     width: 95%;
   }
-  .main-content {
-    zoom: 0.8;
-    -moz-transform: scale(0.8);
-    -moz-transform-origin: 0 0;
-  }
   .sd-body.sd-body--static {
     max-width: none;
   }
@@ -161,7 +156,7 @@ export function ReviewDelegationPage() {
         <div className={`min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
             <style>{customStyles}</style>
             {!selectedConfig && (
-                <Container className="py-4 main-content">
+                <Container className="py-4">
                     <Alert variant="warning" dismissible>
                         <Alert.Heading>Note:</Alert.Heading>
                         <p>This page is for reviewing materials only. No data will be collected.</p>
