@@ -25,6 +25,11 @@ const GET_SCENARIO_RESULTS_BY_EVAL = gql`
         getAllScenarioResultsByEval(evalNumber: $evalNumber)
   }`;    
 
+  const GET_ALL_TEXT_SCENARIOS_DRE = gql`
+  query getAllTextScenariosDRE{
+      getAllTextScenariosDRE
+  }`;    
+
 const SCENARIO_OPTIONS = [
     "Adept Urban",
     "Adept Submarine",
@@ -299,12 +304,14 @@ function ParticipantView({ data, scenarioName }) {
 
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+
+    const [selectedEval, setSelectedEval] = React.useState(4);
+
     const [scenarioChosen, setScenario] = React.useState(SCENARIO_OPTIONS[0]);
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(3);
 
     const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
         // only pulls from network, never cached

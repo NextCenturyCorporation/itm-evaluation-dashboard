@@ -186,6 +186,7 @@ const typeDefs = gql`
     getAllSurveyResultsByEval(evalNumber: Float): [JSON],
     getAllScenarioResults: [JSON],
     getAllScenarioResultsByEval(evalNumber: Float): [JSON],
+    getAllTextScenariosDRE: [JSON],
     getEvalIdsForAllScenarioResults: [JSON],
     getAllSimAlignment: [JSON],
     getAllSimAlignmentByEval(evalNumber: Float): [JSON],
@@ -387,6 +388,12 @@ const resolvers = {
         "participantID": { $not: /test/i },
         "evalNumber": args["evalNumber"]
       }).toArray().then(result => { return result; });
+    },
+    getAllTextScenariosDRE: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('userScenarioResults').distinct(
+        "scenario_id",
+        {"evalNumber":4}
+      ).toArray().then(result => { return result; });
     },
     getEvalIdsForAllScenarioResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('userScenarioResults').aggregate( 
