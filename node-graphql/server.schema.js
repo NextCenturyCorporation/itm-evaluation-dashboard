@@ -155,6 +155,9 @@ const typeDefs = gql`
     getUsers: JSON
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
+    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON]
+    getEvalIds: [JSON],
+    getEvalIdsForAllHistory: [JSON],
     getAllHistoryByID(historyId: ID): JSON
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
@@ -180,14 +183,23 @@ const typeDefs = gql`
     getAllHumanRuns: [JSON]
     getAllImages: [JSON],
     getAllSurveyResults: [JSON],
+    getAllSurveyResultsByEval(evalNumber: Float): [JSON],
     getAllScenarioResults: [JSON],
+    getAllScenarioResultsByEval(evalNumber: Float): [JSON],
+    getEvalIdsForAllScenarioResults: [JSON],
     getAllSimAlignment: [JSON],
+    getAllSimAlignmentByEval(evalNumber: Float): [JSON],
+    getEvalIdsForSimAlignment: [JSON],
     getEvalNameNumbers: [JSON],
+    getEvalIdsForHumandResults: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
+    getAllTextBasedConfigs: [JSON],
     getAllImageUrls: [JSON],
+    getAllTextBasedImages: [JSON],
     countHumanGroupFirst: Int,
-    countAIGroupFirst: Int
+    countAIGroupFirst: Int,
+    getParticipantLog: [JSON]
   }
 
   type Mutation {
@@ -195,6 +207,7 @@ const typeDefs = gql`
     updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON
     uploadSurveyResults(surveyId: String, results: JSON): JSON
     uploadScenarioResults(results: [JSON]): JSON
+    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON
   }
 `;
 
@@ -206,8 +219,25 @@ const resolvers = {
     getAllHistory: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
     },
+    getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }, {projection:{
+        "history.parameters.adm_name": 1, 
+        "history.response.id": 1, 
+        "history.parameters.target_id": 1,
+        "history.response.kdma_values.value": 1,
+        "history.parameters.target_id": 1,
+        "history.response.score": 1
+      }}).toArray().then(result => { return result; });
+    },
+    getEvalIds: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('evaluationIDS').find().toArray().then(result => { return result; });
+    },    
+    getEvalIdsForAllHistory: async (obj, args, context, inflow) => {
+        return await dashboardDB.db.collection('test').aggregate( 
+          [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
+    },    
     getAllHistoryByID: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }).toArray().then(result => { return result; });
+      return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId },{ projection:{"history.parameters.adm_name":1, "history.response.score":1}}).toArray().then(result => { return result; });
     },
     getScenario: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').findOne({ "id": args["scenarioId"] }).then(result => { return result; });
@@ -295,6 +325,9 @@ const resolvers = {
     getAllImages: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
     },
+    getAllTextBasedImages: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedImages').find().toArray().then(result => {return result;})
+    },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
 
@@ -319,17 +352,65 @@ const resolvers = {
         $and: [excludeTestID, surveyVersionFilter]
       }).toArray().then(result => { return result; });
     },
+    getAllSurveyResultsByEval: async (obj, args, context, inflow) => {
+      // return all survey results except for those containing "test" in participant ID
+
+      const excludeTestID = {
+        "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
+      };
+    
+      // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
+      const surveyVersionFilter = {
+        $or: [
+          { "results.surveyVersion": { $ne: 2 } }, 
+          { $and: [ 
+            { "results.surveyVersion": 2 },
+            { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
+          ]}
+        ]
+      };
+      return await dashboardDB.db.collection('surveyResults').find({
+        $and: [excludeTestID, surveyVersionFilter, {"evalNumber": args["evalNumber"]}]
+        
+      }).toArray().then(result => { return result; });
+    },
     getAllScenarioResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('userScenarioResults').find({
         "participantID": { $not: /test/i }
       }).toArray().then(result => { return result; });
     },
+    getAllScenarioResultsByEval: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('userScenarioResults').find({
+        "participantID": { $not: /test/i },
+        "evalNumber": args["evalNumber"]
+      }).toArray().then(result => { return result; });
+    },
+    getEvalIdsForAllScenarioResults: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('userScenarioResults').aggregate( 
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
+    },
     getAllSimAlignment: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
+    },
+    getAllSimAlignmentByEval: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('humanSimulator').find(
+        {"evalNumber": args["evalNumber"]}
+      ).toArray().then(result => { return result; });
+    },
+    getEvalIdsForSimAlignment: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('humanSimulator').aggregate( 
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },
     getEvalNameNumbers: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').aggregate( 
         [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
+    },
+    getEvalIdsForHumandResults: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('humanSimulatorRaw').aggregate( 
+        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },
     getAllRawSimData: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });
@@ -343,11 +424,17 @@ const resolvers = {
     getAllImageUrls: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('delegationMedia').find().toArray().then(result => { return result; });
     },
+    getAllTextBasedConfigs: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('textBasedConfig').find().toArray().then(result => { return result; });
+    },
     countHumanGroupFirst: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.humanGroupFirst": true });
     },
     countAIGroupFirst: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.aiGroupFirst": true });
+    },
+    getParticipantLog: async (obj, args, context, info) => {
+      return await dashboardDB.db.collection('participantLog').find().toArray().then(result => {return result});
     }
   },
   Mutation: {
@@ -376,7 +463,20 @@ const resolvers = {
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await dashboardDB.db.collection('userScenarioResults').insertOne(result)
       }
+    },
+    updateEvalIdsByPage: async (obj, args, context, inflow) => {
+      // hmm can't do this with graphql?      
+      // var field = args["field"];
+      // var updateObj = {};
+      // updateObj[field] = args["value"]};
+
+      const filter = { evalNumber: args["evalNumber"]}
+      const update = { $set: { "showMainPage" : args["value"]}}
+      const options = { upsert: true}
+
+      return await dashboardDB.db.collection('evaluationIDS').updateOne(filter, update, options)
     }
+
   },
   StringOrFloat: new GraphQLScalarType({
     name: "StringOrFloat",

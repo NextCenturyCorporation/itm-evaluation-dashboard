@@ -1,32 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import './template.css';
 
-const VitalsDropdown = ({ vitals, patientName, logAction }) => {
-    const [visible, setVisible] = useState(false);
-
-    const toggleVisibility = () => {
-        if (!visible) {
-            logAction(`Vitals expanded: ${patientName}`);
-        } else {
-            logAction(`Vitals collapsed: ${patientName}`);
-        }
-        
-        setVisible(!visible);
-    };
-
+const VitalsDropdown = ({ vitals, patientName, isVisible, toggleVisibility }) => {
     return (
         <ListGroup className="ms-1 vitals-list-group">
             <ListGroup.Item action variant="light" onClick={toggleVisibility}>
                 <strong>
                 Vitals
                 </strong>
-                {visible ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                {isVisible ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </ListGroup.Item>
 
-            {visible && (
+            {isVisible && (
                 vitals.map((vital, index) => (
                     <ListGroup.Item key={index}>
                         <strong>{vital.name}:</strong> {vital.value}

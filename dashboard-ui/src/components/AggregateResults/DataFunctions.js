@@ -102,7 +102,7 @@ const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation':
 function getTextKDMA(data) {
     const alignmentMap = {};
     // get all recorded kdmas by participant id
-    for (const res of data.getAllScenarioResults) {
+    for (const res of data.getAllScenarioResultsByEval) {
         if (res.participantID && res.highAlignmentData?.kdma_values) {
             // recover from typos in pids
             switch (res.participantID) {
@@ -175,7 +175,7 @@ function getTextKDMA(data) {
 function getTextAlignment(data) {
     const alignmentMap = {};
     // get all recorded kdmas by participant id
-    for (const res of data.getAllScenarioResults) {
+    for (const res of data.getAllScenarioResultsByEval) {
         if (res.participantID) {
             // recover from typos in pids
             let pid = res.participantID;
@@ -522,9 +522,9 @@ function populateHumanDataRow(rowObject) {
 
 function populateDataSet(data) {
     let simAlign = null;
-    if (data.getAllSimAlignment) {
-        simAlign = getSimAlignment(data.getAllSimAlignment);
-        let tempGroupHumanSimData = Object.groupBy(data.getAllSimAlignment, ({env}) => env);
+    if (data.getAllSimAlignmentByEval) {
+        simAlign = getSimAlignment(data.getAllSimAlignmentByEval);
+        let tempGroupHumanSimData = Object.groupBy(data.getAllSimAlignmentByEval, ({env}) => env);
         Object.keys(tempGroupHumanSimData).forEach (key => {
             tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({pid}) => pid);
             let tempGroupPidArray = [];
@@ -541,7 +541,7 @@ function populateDataSet(data) {
     const txtAlign = getTextKDMA(data);
     const txtScores = getTextAlignment(data);
     const allResults = [];
-    for (const res of data.getAllSurveyResults) {
+    for (const res of data.getAllSurveyResultsByEval) {
         // if survey instructions does not exist, we don't want the entry
         if (res.results?.surveyVersion === 2 && Object.keys(res.results).includes('Survey Introduction')) {
             // use this result!

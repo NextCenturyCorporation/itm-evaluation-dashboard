@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
-import { Model } from 'survey-core'
+import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
 import adeptJungleConfig from './adeptJungleConfig.json';
 import adeptSubConfig from './adeptSubConfig.json';
@@ -11,19 +11,34 @@ import stDesertConfig from './stDesertConfig.json'
 import stJungleConfig from './stJungleConfig.json'
 import stSubConfig from './stSubConfig.json'
 import introConfig from './introConfig.json'
-import problemProbes from './problemProbes.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import { AdeptVitals } from './adeptTemplate'
-import { STVitals } from './stTemplate'
 import { Prompt } from 'react-router-dom'
 import axios from 'axios';
+import { MedicalScenario } from './medicalScenario';
+import { useSelector } from 'react-redux';
+import { useQuery } from '@apollo/react-hooks';
+import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
+import alignmentIDs from './alignmentID.json';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
     }`
+
+const GET_ALL_SCENARIO_RESULTS = gql`
+    query GetAllScenarioResults {
+        getAllScenarioResults
+    }
+`
+
+
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }
+`
 
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
@@ -36,28 +51,42 @@ export const scenarioMappings = {
     "Adept Submarine": adeptSubConfig
 }
 
-const scenarioNameToID = {
-    "Adept Submarine": "MetricsEval.MD6-Submarine",
-    "Adept Desert": "MetricsEval.MD5-Desert",
-    "Adept Urban": "MetricsEval.MD1-Urban",
-    "Adept Jungle": "MetricsEval.MD4-Jungle",
-    "SoarTech Urban": "urban-1",
-    "SoarTech Submarine": "submarine-1",
-    "SoarTech Desert": "desert-1",
-    "SoarTech Jungle": "jungle-1"
-}
-class TextBasedScenariosPage extends Component {
+export function TextBasedScenariosPageWrapper(props) {
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
 
+    if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
+    if (participantLogError || scenarioResultsError) return <p>Error</p>;
+
+    return <TextBasedScenariosPage
+        {...props}
+        textBasedConfigs={textBasedConfigs}
+        participantLogs={participantLogData}
+        scenarioResults={scenarioResultsData.getAllScenarioResults}
+    />;
+}
+
+class TextBasedScenariosPage extends Component {
     constructor(props) {
         super(props);
-
         this.state = {
             currentConfig: null,
             uploadData: false,
             participantID: "",
             vrEnvCompleted: [],
             startTime: null,
-            scenarios: []
+            scenarios: [],
+            currentScenarioIndex: 0,
+            sanitizedData: null,
+            matchedParticipantLog: null,
+            allScenariosCompleted: false,
+            sim1: null,
+            sim2: null,
+            isUploadButtonEnabled: false,
+            adeptSessionsCompleted: 0,
+            combinedSessionId: '',
+            adeptScenarios: []
         };
 
         this.surveyData = {};
@@ -69,152 +98,327 @@ class TextBasedScenariosPage extends Component {
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true
+        this.handleKeyPress = this.handleKeyPress.bind(this);
+        this.handleKeyPress = this.handleKeyPress.bind(this);
+    }
+
+    duplicatePid = (pid) => {
+        if (!this.props.scenarioResults || !Array.isArray(this.props.scenarioResults)) {
+            return false;
+        }
+        return this.props.scenarioResults.some(result => result.participantID === pid);
     }
 
     introSurveyComplete = (survey) => {
-        const scenarioOrderString = survey.data.scenarioOrder.replace(/\\/g, "");
-        const scenarioOrderArray = JSON.parse(scenarioOrderString);
-
+        const enteredParticipantID = survey.data["Participant ID"];
+    
+        // Check for duplicate participant ID
+        const isDuplicate = this.duplicatePid(enteredParticipantID);
+    
+        // match entered participant id to log to determine scenario order
+        let matchedLog = this.props.participantLogs.getParticipantLog.find(
+            log => log['ParticipantID'] == enteredParticipantID
+        );
+    
+        let scenarios = [];
+    
+        if (!matchedLog || isDuplicate) {
+            let message = "No matching participant ID was found.";
+            if (isDuplicate) {
+                message = "This participant ID has already been used.";
+            }
+            message += " Would you like to continue anyway?\n\n" +
+                "Click 'OK' to continue with the current ID.\n" +
+                "Click 'Cancel' to re-enter the participant ID.";
+    
+            const userChoice = window.confirm(message);
+    
+            if (!userChoice) {
+                // just reload intro survey
+                this.introSurvey = new Model(introConfig);
+                this.introSurvey.onComplete.add(this.introSurveyComplete);
+                this.introSurvey.applyTheme(surveyTheme);
+                this.setState({ currentConfig: null }); // Force re-render
+                return;
+            } else {
+                // if you want to go through with a non-matched or duplicate PID, giving default experience
+                if (!matchedLog && !isDuplicate) {
+                    matchedLog = { 'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3' }
+                }
+            }
+        }
+    
+        const text1Scenarios = this.scenariosFromLog(matchedLog['Text-1']);
+        const text2Scenarios = this.scenariosFromLog(matchedLog['Text-2']);
+    
+        scenarios = [...text1Scenarios, ...text2Scenarios];
+    
         this.setState({
-            scenarios: scenarioOrderArray,
-            participantID: survey.data["Participant ID"],
-            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"]
-        })
-
-        const selectedScenarios = []
-        for (const scenario of scenarioOrderArray) {
-            // make deep copies of json files to be sure the originals are not unintentionally tampered with
-            selectedScenarios.push(JSON.parse(JSON.stringify(scenarioMappings[scenario])))
-        }
-
-        let title = ""
-        if (scenarioOrderArray.includes("SoarTech Desert")) {
-            title = "Desert/Urban Text Scenarios"
-        } else if (scenarioOrderArray.includes("SoarTech Jungle")) {
-            title = "Jungle/Submarine Text Scenarios"
-        }
-        this.loadSurveyConfig(selectedScenarios, title !== "" ? title : "")
+            scenarios,
+            participantID: enteredParticipantID,
+            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
+            matchedParticipantLog: matchedLog,
+            currentScenarioIndex: 0
+        }, () => {
+            if (this.state.scenarios.length > 0) {
+                this.loadNextScenario();
+            }
+        });
     }
 
+    scenariosFromLog = (entry) => {
+        return dreMappings[entry].flatMap(scenarioId =>
+            Object.values(this.props.textBasedConfigs).filter(config =>
+                config.scenario_id === scenarioId
+            )
+        );
+    }
+
+    loadNextScenario = () => {
+        const { scenarios, currentScenarioIndex } = this.state;
+        if (currentScenarioIndex < scenarios.length) {
+            const currentScenario = scenarios[currentScenarioIndex];
+            this.loadSurveyConfig([currentScenario], currentScenario.title);
+        } else {
+            this.handleAllScenariosCompleted();
+        }
+    }
+
+    handleAllScenariosCompleted = () => {
+        const { matchedParticipantLog } = this.state;
+        if (matchedParticipantLog) {
+            this.setState({
+                allScenariosCompleted: true,
+                sim1: simNameMappings[matchedParticipantLog['Sim-1']],
+                sim2: simNameMappings[matchedParticipantLog['Sim-2']],
+            });
+        } else {
+            this.setState({ allScenariosCompleted: true });
+        }
+    }
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.handleKeyPress);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.handleKeyPress);
+    }
+
+    handleKeyPress(event) {
+        if (event.key === 'M' || event.key === 'm') {
+            if (this.state.allScenariosCompleted) {
+                this.resetState();
+            }
+        }
+    }
+
+    resetState() {
+        this.setState({
+            currentConfig: null,
+            uploadData: false,
+            participantID: "",
+            vrEnvCompleted: [],
+            startTime: null,
+            scenarios: [],
+            currentScenarioIndex: 0,
+            sanitizedData: null,
+            matchedParticipantLog: null,
+            allScenariosCompleted: false,
+            sim1: null,
+            sim2: null,
+            isUploadButtonEnabled: false,
+            adeptSessionsCompleted: 0,
+            combinedSessionId: ''
+        });
+
+        this.surveyData = {};
+        this.surveyDataByScenario = [];
+        this.survey = null;
+        this.introSurvey = new Model(introConfig);
+        this.introSurvey.onComplete.add(this.introSurveyComplete);
+        this.introSurvey.applyTheme(surveyTheme);
+        this.pageStartTimes = {};
+        this.shouldBlockNavigation = true;
+    }
+
+    sanitizeKeys = (obj) => {
+        if (Array.isArray(obj)) {
+            return obj.map(this.sanitizeKeys);
+        } else if (obj !== null && typeof obj === 'object') {
+            return Object.keys(obj).reduce((acc, key) => {
+                const newKey = key.replace(/\./g, '');
+                acc[newKey] = this.sanitizeKeys(obj[key]);
+                return acc;
+            }, {});
+        }
+        return obj;
+    };
 
     uploadResults = async (survey) => {
         this.timerHelper();
 
-        for (const pageName in this.pageStartTimes) {
-            if (this.pageStartTimes.hasOwnProperty(pageName)) {
-                const page = this.survey.getPageByName(pageName)?.jsonObj;
-                this.surveyData[pageName] = {
-                    timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage,
-                    pageName: page?.name,
-                    questions: {}
+        const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
+        let scenarioData = {
+            scenario_id: currentScenario.scenario_id,
+            participantID: this.state.participantID,
+            vrEnvCompleted: this.state.vrEnvCompleted,
+            title: currentScenario.title,
+            timeComplete: new Date().toString(),
+            startTime: this.state.startTime
+        };
+
+        const currentPages = survey.pages;
+
+        currentPages.forEach(page => {
+            const pageName = page.name;
+            scenarioData[pageName] = {
+                timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage || 0,
+                pageName: page.name,
+                questions: {}
+            };
+
+            page.questions.forEach(question => {
+                const questionName = question.name;
+                const questionValue = survey.data[questionName];
+                scenarioData[pageName].questions[questionName] = {
+                    response: questionValue,
+                    probe: question.probe_id || '',
+                    question_mapping: question.jsonObj['question_mapping'] || {}
                 };
+            });
+        });
 
-                const pageQuestions = this.getPageQuestions(pageName);
-                let index = 0;
-                pageQuestions.forEach(questionName => {
-                    const questionValue = survey.valuesHash[questionName];
-                    this.surveyData[pageName].questions[questionName] = {
-                        response: questionValue,
-                        probe: survey.getPageByName(pageName).jsonObj.elements[index++].probe
-                    };
-                });
-            }
-        }
+        scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
+        scenarioData.evalNumber = 4
+        scenarioData.evalName = 'Dry Run Evaluation'
+        await this.getAlignmentScore(scenarioData)
+        const sanitizedData = this.sanitizeKeys(scenarioData);
 
-        this.surveyData.scenarioTitle = this.survey.title
-
-        for (const pageName in this.surveyData) {
-            const pageData = this.surveyData[pageName];
-
-            for (const scenario of this.state.scenarios) {
-                const scenarioIndex = this.state.scenarios.indexOf(scenario)
-                if (pageName.includes(scenario) || Object.values(pageData).some(value => value?.toString().includes(scenario))) {
-                    this.surveyDataByScenario[scenarioIndex] = this.surveyDataByScenario[scenarioIndex] || {};
-                    this.surveyDataByScenario[scenarioIndex][pageName] = pageData;
+        this.setState({
+            uploadData: true,
+            sanitizedData,
+            isUploadButtonEnabled: true
+        }, () => {
+            if (this.uploadButtonRef.current) {
+                // don't upload adept scenarios until all 3 have run so we can get combined score
+                if (!sanitizedData.scenario_id.includes('DryRun')) {
+                    this.uploadButtonRef.current.click();
                 }
             }
-        }
-
-        let temp = 0
-        for (const scenario of this.surveyDataByScenario) {
-            scenario.participantID = this.state.participantID
-            scenario.vrEnvCompleted = this.state.vrEnvCompleted
-            scenario.title = this.state.scenarios[temp++]
-            scenario.timeComplete = new Date().toString()
-            scenario.startTime = this.state.startTime
-        }
-
-        // add alignment data for each of the scenarios
-        for (const scenario of this.surveyDataByScenario) {
-            await this.getAlignmentScore(scenario)
-        }
-
-        this.setState({ uploadData: true }, () => {
-            if (this.uploadButtonRef.current) {
-                this.uploadButtonRef.current.click();
-            }
         });
-        this.shouldBlockNavigation = false
+
+        // Reset data for the next scenario
+        this.surveyData = {};
+        this.pageStartTimes = {};
+        this.shouldBlockNavigation = false;
     }
 
     getAlignmentScore = async (scenario) => {
-        this.mapAnswers(scenario)
-        if (scenario.title.includes('SoarTech')) {
-            await this.getSoarTechAlignment(scenario)
-        } else if (scenario.title.includes('Adept')) {
-            await this.getAdeptAlignment(scenario)
-        }
-    }
-
-    mapAnswers = (scenario) => {
-        const scenarioTitle = scenario.title
-        const scenarioConfig = scenarioMappings[scenarioTitle];
-        if (!scenarioConfig) { return };
-
-        for (const [fieldName, fieldValue] of Object.entries(scenario)) {
-            if (fieldValue && fieldValue.questions) {
-                for (const [questionName, question] of Object.entries(fieldValue.questions)) {
-                    if (question && question.probe) {
-                        const page = scenarioConfig.pages.find(p => p.name === fieldName);
-                        if (page) {
-                            const pageQuestion = page.elements.find(e => e.name === questionName);
-                            if (pageQuestion) {
-                                try {
-                                    const indexOfAnswer = pageQuestion.choices.indexOf(question.response);
-                                    let choice;
-                                    if (scenarioTitle.startsWith("Adept")) {
-                                        choice = `${question.probe}.${String.fromCharCode(65 + indexOfAnswer)}`;
-                                    } else {
-                                        choice = `choice-${indexOfAnswer}`;
-                                    }
-                                    question.choice = choice;
-                                } catch (err) {
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
+        if (scenario.scenario_id.includes('DryRun')) {
+            if (this.state.adeptSessionsCompleted === 0) {
+                await this.beginRunningSession(scenario)
+            } else {
+                await this.continueRunningSession(scenario)
             }
-        }
-    };
+            await this.calcScore(scenario, 'adept')
 
-    isProblemProbe = (question, scenarioTitle) => {
-        //Check if a probe is a known problem probe and get the mapping if it is.
-        //problem probes specific to this scenario
-        const scenarioProblemProbes = problemProbes[scenarioTitle]
-        if (!scenarioProblemProbes) { return false }
-        return scenarioProblemProbes[question['probe']]
+            let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
+
+            this.setState(prevState => ({
+                adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
+                adeptScenarios: updatedAdeptScenarios
+            }), async () => {
+                if (this.state.adeptSessionsCompleted === 3) {
+                    await this.uploadAdeptScenarios(updatedAdeptScenarios)
+                }
+            });
+
+        } else {
+            await this.calcScore(scenario, 'soartech')
+        }
     }
 
-    fixProblemProbe = (question, mapping) => {
-        // tries to map user choice on problem probe to valid choice id if possible
-        const mappedChoice = mapping[question['choice']]
-        if (mappedChoice) {
-            question['choice'] = mappedChoice
-            return true
+    beginRunningSession = async (scenario) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+        const sessionEndpoint = '/api/v1/new_session';
+
+        try {
+            const session = await axios.post(`${url}${sessionEndpoint}`);
+            if (session.status === 200) {
+                this.setState({ combinedSessionId: session.data }, async () => {
+                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+                })
+            }
+        } catch (e) {
+            console.error(e)
         }
-        return false
+    }
+
+    continueRunningSession = async (scenario) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+
+        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+    }
+
+    uploadAdeptScenarios = async (scenarios) => {
+        const url = process.env.REACT_APP_ADEPT_URL;
+        const alignmentEndpoint = '/api/v1/alignment/session'
+
+        const alignmentData = await Promise.all(
+            alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
+        );
+        const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
+        const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
+
+        for (let scenario of scenarios) {
+            scenario.combinedAlignmentData = sortedAlignmentData
+            scenario.combinedSessionId = this.state.combinedSessionId
+            scenario.mostLeastAligned = combinedMostLeastAligned
+            const sanitizedData = this.sanitizeKeys(scenario)
+            await new Promise(resolve => {
+                this.setState({
+                    uploadData: true,
+                    sanitizedData,
+                    isUploadButtonEnabled: true
+                }, () => {
+                    if (this.uploadButtonRef.current) {
+                        this.uploadButtonRef.current.click();
+                    }
+                    resolve();
+                });
+            });
+        }
+    }
+
+    mostLeastAlgined = async (sessionId, ta1, url, scenario) => {
+        let targets = []
+        const endpoint = '/api/v1/get_ordered_alignment'
+        if (ta1 === 'soartech') {
+            if (scenario.scenario_id.includes('qol')) {
+                targets = ['QualityOfLife']
+            } else {
+                targets = ['PerceivedQuantityOfLivesSaved']
+            }
+        } else {
+            targets = ['Moral judgement', 'Ingroup Bias']
+        }
+
+        let responses = []
+        try {
+            for (const target of targets) {
+                const response = await axios.get(`${url}${endpoint}`, {
+                    params: {
+                        session_id: sessionId,
+                        kdma_id: target
+                    }
+                });
+                responses.push({ 'target': target, 'response': response.data })
+            }
+        } catch (err) {
+            console.error(err)
+        }
+        return responses
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
@@ -222,116 +426,165 @@ class TextBasedScenariosPage extends Component {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
                 if (typeof question !== 'object') { continue }
-                if (question.response && !questionName.includes("Follow Up") && question.probe && question.choice) {
-                    const problemProbe = this.isProblemProbe(question, scenario.title)
-                    if (problemProbe) {
-                        if (!this.fixProblemProbe(question, problemProbe)) { continue }
-                    }
+                if (question.response && !questionName.includes("Follow Up")) {
+                    const mapping = question.question_mapping[question.response]
                     const responseUrl = `${urlBase}/api/v1/response`
-                    const responsePayload = {
-                        "response": {
-                            "choice": question.choice,
-                            "justification": "justification",
-                            "probe_id": question.probe,
-                            "scenario_id": scenarioID,
-                        },
-                        "session_id": sessionID
-                    }
-                    try {
-                        const response = await axios.post(responseUrl, responsePayload)
-                    } catch (err) {
-                        console.log(err)
-                        continue
+                    
+                    const choices = Array.isArray(mapping['choice']) ? mapping['choice'] : [mapping['choice']]
+                    
+                    for (const choice of choices) {
+                        const responsePayload = {
+                            "response": {
+                                "choice": choice,
+                                "justification": "justification",
+                                "probe_id": mapping['probe_id'],
+                                "scenario_id": scenarioID,
+                            },
+                            "session_id": sessionID
+                        }
+                        try {
+                            const response = await axios.post(responseUrl, responsePayload)
+                        } catch (err) {
+                            console.log(err)
+                            continue
+                        }
                     }
                 }
             }
         }
     }
 
-    getAdeptAlignment = async (scenario) => {
-        const adeptUrl = process.env.REACT_APP_ADEPT_URL
-        const highTarget = "ADEPT-metrics_eval-alignment-target-eval-HIGH"
-        const lowTarget = "ADEPT-metrics_eval-alignment-target-eval-LOW"
-        const session = await axios.post(`${adeptUrl}/api/v1/new_session`)
-        if (session.status == 200) {
-            const sessionId = session.data
-            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], adeptUrl, sessionId)
-            const highAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}&population=false`)
-            scenario.highAlignmentData = highAlignmentData.data
-            const lowAlignmentData = await axios.get(`${adeptUrl}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}&population=false`)
-            scenario.lowAlignmentData = lowAlignmentData.data
-            scenario.serverSessionId = sessionId
-        }
-    }
+    getAlignmentData = async (targetId, url, alignmentEndpoint, sessionId, alignmentType) => {
+        const response = await axios.get(`${url}${alignmentEndpoint}`, {
+            params: {
+                session_id: sessionId,
+                target_id: targetId,
+                ...(alignmentType === 'adept' ? { population: false } : {})
+            }
+        });
 
-    getSoarTechAlignment = async (scenario) => {
-        const stURL = process.env.REACT_APP_SOARTECH_URL
-        const highTarget = "maximization_high"
-        const lowTarget = "maximization_low"
-        const session = await axios.post(`${stURL}/api/v1/new_session?user_id=default_user`)
-        if (session.status == 201) {
-            const sessionId = session.data
-            const responses = await this.submitResponses(scenario, scenarioNameToID[scenario.title], stURL, sessionId)
-            const highAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${highTarget}`)
-            scenario.highAlignmentData = highAlignmentData.data
-            const lowAlignmentData = await axios.get(`${stURL}/api/v1/alignment/session?session_id=${sessionId}&target_id=${lowTarget}`)
-            scenario.lowAlignmentData = lowAlignmentData.data
-            scenario.serverSessionId = sessionId
+        let result;
+        if (typeof response.data === 'string') {
+            result = JSON.parse(response.data.replace(/\bNaN\b/g, "null"));
+        } else {
+            result = response.data;
+        }
+        return { "target": response.config.params.target_id, "score": result.score }
+    };
+
+    calcScore = async (scenario, alignmentType) => {
+        let url, sessionEndpoint, alignmentEndpoint;
+
+        if (alignmentType === 'adept') {
+            url = process.env.REACT_APP_ADEPT_URL;
+            sessionEndpoint = '/api/v1/new_session';
+            alignmentEndpoint = '/api/v1/alignment/session';
+        } else if (alignmentType === 'soartech') {
+            url = process.env.REACT_APP_SOARTECH_URL;
+            sessionEndpoint = '/api/v1/new_session?user_id=default_user';
+            alignmentEndpoint = '/api/v1/alignment/session';
+        } else {
+            throw new Error('Invalid alignment type');
+        }
+
+        try {
+            const session = await axios.post(`${url}${sessionEndpoint}`);
+            if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
+                const sessionId = session.data;
+                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
+
+                if (alignmentType === 'adept') {
+                    scenario.alignmentData = await Promise.all(
+                        alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'adept'))
+                    );
+                } else if (alignmentType === 'soartech') {
+                    let targetArray;
+                    if (scenario.scenario_id.includes('qol')) {
+                        targetArray = alignmentIDs.stQOL;
+                    } else if (scenario.scenario_id.includes('vol')) {
+                        targetArray = alignmentIDs.stVOL;
+                    } else {
+                        throw new Error('Invalid SoarTech scenario type');
+                    }
+
+                    scenario.alignmentData = await Promise.all(
+                        targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
+                    );
+
+                    scenario.alignmentData.sort((a, b) => b.score - a.score);
+                    const mostLeastAlgined = await this.mostLeastAlgined(sessionId, 'soartech', url, scenario)
+                    scenario.mostLeastAligned = mostLeastAlgined
+                }
+
+                scenario.serverSessionId = sessionId;
+            }
+        } catch (error) {
+            console.error(`Error in ${alignmentType} alignment:`, error);
         }
     }
 
     onSurveyComplete = (survey) => {
+        // start uploading results for this scenario 
         this.uploadResults(survey);
+        // move to the next scenario 
+        this.setState(prevState => ({
+            currentScenarioIndex: prevState.currentScenarioIndex + 1
+        }), () => {
+            this.loadNextScenario();
+        });
     }
 
-    loadSurveyConfig = (selectedScenarios, title) => {
-        let config = selectedScenarios[0]
+    loadSurveyConfig = (scenarioConfigs, title) => {
+        let config = {
+            ...scenarioConfigs[0],
+            pages: [...scenarioConfigs[0].pages]
+        };
 
-        for (const scenario of selectedScenarios.slice(1)) {
-            config.pages = (config.pages).concat(scenario.pages)
-        }
-
-        config.title = title
-
+        config.title = title;
+        config.showTitle = false;
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
-
+        this.survey.focusOnFirstError = false;
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
-
-        // function for uploading data
-        this.survey.onComplete.add(this.onSurveyComplete);
-
+        this.shouldBlockNavigation = true
         this.setState({ currentConfig: this.survey });
     };
 
     onAfterRenderPage = (sender, options) => {
-        if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+        const pageName = options.page.name;
+        const currentTime = new Date();
+
+        if (!this.state.startTime) {
             this.setState({
-                firstPageCompleted: true,
-                startTime: new Date().toString()
+                startTime: currentTime.toString()
             });
         }
 
-        const pageName = options.page.name;
-
-        if (Object.keys(this.pageStartTimes).length > 0) {
-            this.timerHelper();
+        if (this.survey.currentPageNo > 0) {
+            const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
+            const startTime = this.pageStartTimes[previousPageName];
+            if (startTime) {
+                const timeSpentInSeconds = (currentTime - startTime) / 1000;
+                this.surveyData[previousPageName] = this.surveyData[previousPageName] || {};
+                this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
+            }
         }
 
-        this.pageStartTimes[pageName] = new Date();
+        this.pageStartTimes[pageName] = currentTime;
     }
 
     timerHelper = () => {
-        const previousPageName = Object.keys(this.pageStartTimes).pop();
-        const endTime = new Date();
-        const startTime = this.pageStartTimes[previousPageName];
-        const timeSpentInSeconds = (endTime - startTime) / 1000;
+        const currentPageName = this.survey.currentPage.name;
+        const startTime = this.pageStartTimes[currentPageName];
+        if (startTime) {
+            const endTime = new Date();
+            const timeSpentInSeconds = (endTime - startTime) / 1000;
 
-        // update time spent for the previous page
-        this.surveyData[previousPageName] = {};
-        this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
-        this.surveyData[previousPageName].questions = this.getPageQuestions(previousPageName);
+            // update time spent for the current page
+            this.surveyData[currentPageName] = this.surveyData[currentPageName] || {};
+            this.surveyData[currentPageName].timeSpentOnPage = timeSpentInSeconds;
+        }
     }
 
     getPageQuestions = (pageName) => {
@@ -346,7 +599,7 @@ class TextBasedScenariosPage extends Component {
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
-                {this.state.currentConfig && (
+                {this.state.currentConfig && !this.state.allScenariosCompleted && (
                     <>
                         <Survey model={this.survey} />
                         {this.shouldBlockNavigation && (
@@ -360,20 +613,25 @@ class TextBasedScenariosPage extends Component {
                 {this.state.uploadData && (
                     <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
                         {(uploadSurveyResults, { data }) => (
-                            <div>
-                                <button ref={this.uploadButtonRef} onClick={(e) => {
+                            <div style={{ display: 'none' }}>
+                                <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
                                     e.preventDefault();
-                                    uploadSurveyResults({
-                                        variables: { results: this.surveyDataByScenario }
-                                    });
-                                    // uploads data 
-                                    this.setState({ uploadData: false });
+                                    if (this.state.isUploadButtonEnabled) {
+                                        uploadSurveyResults({
+                                            variables: { results: this.state.sanitizedData }
+                                        })
+                                    }
                                 }}></button>
                             </div>
                         )}
                     </Mutation>
-                )
-                }
+                )}
+                {this.state.allScenariosCompleted && (
+                    <ScenarioCompletionScreen
+                        sim1={this.state.sim1}
+                        sim2={this.state.sim2}
+                    />
+                )}
             </>
         )
     }
@@ -381,10 +639,64 @@ class TextBasedScenariosPage extends Component {
 
 export default TextBasedScenariosPage;
 
-ReactQuestionFactory.Instance.registerQuestion("adeptVitals", (props) => {
-    return React.createElement(AdeptVitals, props)
+ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
+    return React.createElement(MedicalScenario, props)
 })
 
-ReactQuestionFactory.Instance.registerQuestion("stVitals", (props) => {
-    return React.createElement(STVitals, props)
-})
+const dreMappings = {
+    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
+    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
+    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
+    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
+}
+
+const simNameMappings = {
+    'AD-1': ['Eval_Adept_Urban'],
+    'AD-2': ['Eval_Adept_Jungle'],
+    'AD-3': ['Eval-Adept_Desert'],
+    'ST-1': ['stq1', 'stv1'],
+    'ST-2': ['stq2', 'stv2'],
+    'ST-3': ['stq3', 'stv3'],
+}
+
+const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
+    const allScenarios = [...(sim1 || []), ...(sim2 || [])];
+    const customColor = "#b15e2f";
+
+    return (
+        <Container className="mt-5">
+            <Row className="justify-content-center">
+                <Col md={10} lg={8}>
+                    <Card className="border-0 shadow">
+                        <Card.Body className="text-center p-5">
+                            <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                            <Card bg="light" className="p-4">
+                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                    Participant should complete the following scenarios in VR:
+                                </Card.Title>
+                                <Card.Subtitle className="mb-3 text-muted">
+                                    Please complete the scenarios in the order listed below:
+                                </Card.Subtitle>
+                                <ListGroup variant="flush" className="border rounded">
+                                    {allScenarios.map((scenario, index) => (
+                                        <ListGroup.Item
+                                            key={index}
+                                            className="py-3 d-flex align-items-center"
+                                        >
+                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                            <span className="fs-5">{scenario}</span>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            </Card>
+                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+        </Container>
+    );
+};

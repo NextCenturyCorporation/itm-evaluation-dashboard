@@ -1,0 +1,129 @@
+.vital-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 2px 0; 
+}
+.vital-icon {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  width: 20px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.vital-icon:hover {
+  transform: scale(1.2);
+}
+.vital-name-and-badge {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  margin-left: 4px; 
+  overflow: hidden;
+}
+.vital-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vital-badge {
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+.vitals-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.vitals-title {
+  flex-shrink: 0;
+  font-weight: 600;
+  margin-bottom: 0.5rem; 
+}
+.vitals-container {
+  position: relative;
+  overflow: visible !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px; 
+}
+
+.card-body {
+  overflow: visible !important;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.new-event {
+  animation: fadeIn 1.5s ease-out;
+}
+
+.event-card {
+  background-color: #e8f4fd;
+  border-left: 4px solid #007bff;
+  background-image: linear-gradient(45deg, #f1f9ff 25%, transparent 25%, transparent 75%, #f1f9ff 75%, #f1f9ff),
+                    linear-gradient(45deg, #f1f9ff 25%, transparent 25%, transparent 75%, #f1f9ff 75%, #f1f9ff);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+.event-icon-wrapper {
+  background-color: #007bff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.event-icon {
+  color: white;
+  font-size: 1.2rem;
+}
+
+.event-message {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.text-muted {
+  font-size: 0.9rem;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important; 
+}
+.modal {
+  z-index: 1055 !important;
+}
+.bg-orange {
+  background-color: #fd7e14 !important;
+}
+
+.scenario-info-icon {
+  transition: transform 0.3s ease;
+}
+
+.scenario-info-icon:hover {
+  transform: scale(1.1);
+}
+
+@keyframes subtlePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.scenario-info-icon {
+  animation: subtlePulse 3s infinite ease-in-out;
+}
+
+.scenario-info-modal .modal-content {
+  border-radius: 0.5rem;
+}
