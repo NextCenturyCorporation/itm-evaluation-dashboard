@@ -541,7 +541,7 @@ class TextBasedScenariosPage extends Component {
         };
 
         config.title = title;
-
+        config.showTitle = false;
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
         this.survey.focusOnFirstError = false;

@@ -64,6 +64,7 @@ export function ReviewTextBasedPage() {
 
         if (config) {
             try {
+                config.showTitle = false;
                 const surveyModel = new Model(config);
                 surveyModel.applyTheme(surveyTheme);
                 /*
