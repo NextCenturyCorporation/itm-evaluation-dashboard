@@ -660,7 +660,7 @@ class SurveyPage extends Component {
             case 'DryRunEval-IO5-eval':
                 // NOTE: Only 1 adm to be found here!! Special case!!
                 target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
-                if (parseFloat(ioTargets[ioTargets.length - 1].target.split('Bias-')[1]) > 0.4) {
+                if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
                     alignedTarget = target;
                     misalignedTarget = null;
                 }
