@@ -29,11 +29,6 @@ const customStyles = `
     margin-bottom: 15px;
     border-radius: 4px;
   }
-  .main-content {
-    zoom: 0.8;
-    -moz-transform: scale(0.8);
-    -moz-transform-origin: 0 0;
-  }
 `;
 
 export function ReviewTextBasedPage() {
@@ -69,6 +64,7 @@ export function ReviewTextBasedPage() {
 
         if (config) {
             try {
+                config.showTitle = false;
                 const surveyModel = new Model(config);
                 surveyModel.applyTheme(surveyTheme);
                 /*
@@ -171,7 +167,7 @@ export function ReviewTextBasedPage() {
     };
 
     return (
-        <div className={`main-content min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
+        <div className={`min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
             <style>{customStyles}</style>
             {!selectedConfig && (
                 <Container className="py-4">
