@@ -15,6 +15,8 @@ import XLSX from 'sheetjs-style';
 import Select from 'react-select';
 
 let evalOptions = [];
+let DREScenarioOptions = [];
+
 const get_eval_name_numbers = gql`
     query getEvalIdsForAllScenarioResults{
         getEvalIdsForAllScenarioResults
@@ -25,12 +27,24 @@ const GET_SCENARIO_RESULTS_BY_EVAL = gql`
         getAllScenarioResultsByEval(evalNumber: $evalNumber)
   }`;    
 
-  const GET_ALL_TEXT_SCENARIOS_DRE = gql`
-  query getAllTextScenariosDRE{
-      getAllTextScenariosDRE
-  }`;    
+const GET_ALL_TEXT_SCENARIOS_DRE = gql`
+query getAllTextScenariosDRE{
+    getAllTextScenariosDRE
+}`;    
 
-const SCENARIO_OPTIONS = [
+const SCENARIO_OPTIONS_MRE = [
+    "Adept Urban",
+    "Adept Submarine",
+    "Adept Desert",
+    "Adept Jungle",
+    "SoarTech Urban",
+    "SoarTech Submarine",
+    "SoarTech Desert",
+    "SoarTech Jungle"
+];
+
+
+let SCENARIO_OPTIONS = [
     "Adept Urban",
     "Adept Submarine",
     "Adept Desert",
@@ -304,9 +318,8 @@ function ParticipantView({ data, scenarioName }) {
 
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-
+    const { loading: loadingDRESCenarios, error: errorDREScenarios, data: DREScenariosRaw } = useQuery(GET_ALL_TEXT_SCENARIOS_DRE);
     const [selectedEval, setSelectedEval] = React.useState(4);
-
     const [scenarioChosen, setScenario] = React.useState(SCENARIO_OPTIONS[0]);
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
@@ -328,6 +341,19 @@ export default function TextBasedResultsPage() {
             }
         } 
     }, [evalIdOptionsRaw, evalOptions]);
+
+    React.useEffect(() => {
+        DREScenarioOptions = [];
+        if (DREScenariosRaw?.getAllTextScenariosDRE) { 
+            for (const result of DREScenariosRaw.getAllTextScenariosDRE) {
+                DREScenarioOptions.push({value: result.scenario_id, label:  result.scenario_id});
+                console.log(result)
+            }
+        }
+        ;
+    }, [DREScenarioOptions]);
+
+    console.log(DREScenarioOptions);
 
     React.useEffect(() => {
         // populate responsesByScenario with gql data
@@ -501,6 +527,11 @@ export default function TextBasedResultsPage() {
 
     function selectEvaluation(target){
         setSelectedEval(target.value);
+
+        if (selectedEval === 3)
+            SCENARIO_OPTIONS = SCENARIO_OPTIONS_MRE;
+        else if  (selectedEval === 4)
+            SCENARIO_OPTIONS = DREScenarioOptions;
         setScenario(null);
     }   
 

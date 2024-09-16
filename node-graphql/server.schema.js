@@ -393,7 +393,7 @@ const resolvers = {
       return await dashboardDB.db.collection('userScenarioResults').distinct(
         "scenario_id",
         {"evalNumber":4}
-      ).toArray().then(result => { return result; });
+    ).then(result => { return result; });
     },
     getEvalIdsForAllScenarioResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('userScenarioResults').aggregate( 
