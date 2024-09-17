@@ -42,21 +42,22 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 const history = createBrowserHistory();
 
 
-const GET_CONFIGS = process.env.REACT_APP_SURVEY_VERSION == 4.0 ?
-    gql`
-query GetConfigs {
-    getAllSurveyConfigs,
-    getAllTextBasedConfigs,
-    getAllTextBasedImages
-}`
-    : gql`
+const GET_CONFIGS = process.env.REACT_APP_SURVEY_VERSION === '4.0'
+  ? gql`
     query GetConfigs {
-        getAllSurveyConfigs,
-        getAllImageUrls,
-        getAllTextBasedConfigs,
-        getAllTextBasedImages
-    }`;
-
+      getAllSurveyConfigs
+      getAllTextBasedConfigs
+      getAllTextBasedImages
+    }
+  `
+  : gql`
+    query GetConfigs {
+      getAllSurveyConfigs
+      getAllImageUrls
+      getAllTextBasedConfigs
+      getAllTextBasedImages
+    }
+  `;
 
 
 function Home({ newState }) {
