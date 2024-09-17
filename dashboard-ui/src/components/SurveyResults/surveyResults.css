@@ -58,12 +58,13 @@
 
 .singletons {
     display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
+    flex-direction: row ;
+    justify-content: space-around;
+    flex-flow: wrap;
 }
 
 .singletons>* {
-    width: 50%;
+    width: 50%; 
     border-right: 1px solid black;
     padding: 8px;
 }

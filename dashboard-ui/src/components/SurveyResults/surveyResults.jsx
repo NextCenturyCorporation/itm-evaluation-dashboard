@@ -62,6 +62,7 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
             const singleData = [];
             const comparisonData = [];
             for (const k of Object.keys(data)) {
+                
                 if (k.includes('singleMedic')) {
                     singleData.push(data[k]);
                 }
@@ -75,7 +76,7 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
     }, [data]);
 
     return (<div className='scenario-group'>
-        <h2 className='scenario-header'>{scenarioIndices[scenario]}</h2>
+        <h2 className='scenario-header'>{scenarioIndices[String(scenario)]}</h2>
         <div className='singletons'>
             {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton} version={version}></SingleGraph> })}
         </div>
@@ -96,7 +97,18 @@ function SingleGraph({ data, version }) {
         if (data.length > 0) {
             setPageName(data[0].pageName + ": Survey Results");
             // create a survey config based off of answers in the survey data
-            const surveyJson = getQuestionAnswerSets(data[0].pageName, version === 1 ? surveys['delegation_v1.0'] : surveys['delegation_v2.0']);
+            
+            // this never worked for 3?
+            let surveyJson =[];
+            if (version === 1)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v1.0']);
+            else if (version === 2)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v2.0']);
+            else if (version === 3)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v3.0']);
+            else if (version === 4)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
+
             const curResults = [];
             for (const entry of data) {
                 const entryResults = {};
@@ -150,13 +162,15 @@ export function SurveyResults() {
         fetchPolicy: 'network-only',
     });
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
-    const [selectedScenario, setSelectedScenario] = React.useState(-1);
+    const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
     const [filterBySurveyVersion, setVersionOption] = React.useState("");
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
+
+    console.log(selectedScenario);
 
     React.useEffect(() => {
         // component did mount
@@ -187,20 +201,21 @@ export function SurveyResults() {
             let scenarios = {}
             for (const result of filteredData) {
                 if (result.results) {
+                    
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
-                            const scenarioIndex = result.results[x].scenarioIndex;
+                            const scenarioIndex = String(result.results[x].scenarioIndex);
                             const scenarioName = result.results[x]?.scenarioName || `Scenario ${scenarioIndex}`;
                             scenarios[scenarioIndex] = scenarioName;
                         }
                     }
                 }
             }
-            
             setScenarioIndices(scenarios);
+            console.log(scenarioIndices);
 
             if (Object.keys(scenarios).length > 0) {
-                setSelectedScenario(0);
+                setSelectedScenario("");
             }
         }
     }, [filterBySurveyVersion, data]);
@@ -215,7 +230,7 @@ export function SurveyResults() {
                 }
                 for (const x of Object.keys(obj)) {
                     const res = obj[x];
-                    if (res?.scenarioIndex === selectedScenario) {
+                    if (String(res?.scenarioIndex) === String(selectedScenario)) {
                         const indexBy = res.pageType + '_' + res.pageName;
                         if (Object.keys(separatedData).includes(indexBy)) {
                             separatedData[indexBy].push(res);
@@ -274,7 +289,7 @@ export function SurveyResults() {
                             <ListItem id={"version_" + item} key={"version_" + item}
                                 button
                                 selected={filterBySurveyVersion === item}
-                                onClick={() => { setVersionOption(item); setSelectedScenario(-1); }}>
+                                onClick={() => { setVersionOption(item); setSelectedScenario(""); }}>
                                 <ListItemText primary={item + '.x'} />
                             </ListItem>
                         )}
@@ -289,9 +304,9 @@ export function SurveyResults() {
                             {Object.entries(scenarioIndices).map(([index, name]) =>
                                 <ListItem id={"scenario_" + index} key={"scenario_" + index}
                                     button
-                                    selected={selectedScenario === index}
+                                    selected={String(selectedScenario) === String(index)}
                                     onClick={() => { 
-                                        setSelectedScenario(Number(index)); 
+                                        setSelectedScenario(String(index)); 
                                         }}>
                                     <ListItemText primary={name} />
                                 </ListItem>
@@ -299,7 +314,7 @@ export function SurveyResults() {
                         </List>
                     </div>}
             </div>
-            {filterBySurveyVersion && selectedScenario > 0 ?
+            {filterBySurveyVersion && selectedScenario != "" ?
                 <div className="graph-section">
                     <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
                     <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
