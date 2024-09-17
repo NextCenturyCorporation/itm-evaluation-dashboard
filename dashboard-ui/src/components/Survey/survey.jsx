@@ -179,10 +179,10 @@ class SurveyPage extends Component {
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
-        this.survey.onCurrentPageChanging.add(this.finishFirstPage);
         this.uploadButtonRef = React.createRef();
         this.shouldBlockNavigation = true;
         if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
+            this.survey.onCurrentPageChanging.add(this.finishFirstPage);
             this.setSeenScenarios();
             this.survey.data = {
                 "Participant ID": this.state.pid
