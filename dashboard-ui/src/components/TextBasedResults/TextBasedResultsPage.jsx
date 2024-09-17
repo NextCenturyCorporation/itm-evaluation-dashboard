@@ -44,16 +44,7 @@ const SCENARIO_OPTIONS_MRE = [
 ];
 
 
-let SCENARIO_OPTIONS = [
-    "Adept Urban",
-    "Adept Submarine",
-    "Adept Desert",
-    "Adept Jungle",
-    "SoarTech Urban",
-    "SoarTech Submarine",
-    "SoarTech Desert",
-    "SoarTech Jungle"
-];
+let SCENARIO_OPTIONS = [];
 
 
 function shortenAnswer(answer) {
@@ -346,14 +337,16 @@ export default function TextBasedResultsPage() {
         DREScenarioOptions = [];
         if (DREScenariosRaw?.getAllTextScenariosDRE) { 
             for (const result of DREScenariosRaw.getAllTextScenariosDRE) {
-                DREScenarioOptions.push({value: result.scenario_id, label:  result.scenario_id});
-                console.log(result)
+                DREScenarioOptions.push(result);
             }
         }
         ;
-    }, [DREScenarioOptions]);
+    }, [DREScenariosRaw, DREScenarioOptions]);
 
-    console.log(DREScenarioOptions);
+    if (selectedEval === 3)
+        SCENARIO_OPTIONS = SCENARIO_OPTIONS_MRE;
+    else if (selectedEval === 4)
+        SCENARIO_OPTIONS = DREScenarioOptions;
 
     React.useEffect(() => {
         // populate responsesByScenario with gql data
@@ -367,17 +360,25 @@ export default function TextBasedResultsPage() {
             for (const result of data.getAllScenarioResultsByEval) {
                 let scenario = null;
 
-                for (const k of Object.keys(result)) {
-                    // find matching scenario for this set
-                    scenario = SCENARIO_OPTIONS.filter((x) => k.toLowerCase().includes(x.toLowerCase()));
-                    if (scenario.length > 0) {
-                        scenario = scenario[0];
-                        break;
-                    }
-                    else {
-                        scenario = null;
+                if (selectedEval === 3){
+                    for (const k of Object.keys(result)) {
+                            // find matching scenario for this set
+                            scenario = SCENARIO_OPTIONS.filter((x) => k.toLowerCase().includes(x.toLowerCase()));
+                            if (scenario.length > 0) {
+                                scenario = scenario[0];
+                                break;
+                            }
+                            else {
+                                scenario = null;
+                            }
                     }
                 }
+                if (selectedEval === 4){
+                    scenario = result.scenario_id;  
+                }
+
+                console.log("scenario")
+                console.log(scenario)
                 if (scenario) {
                     participants[scenario].push(result);
                     // once the scenario is found, start populating object with data
@@ -386,59 +387,125 @@ export default function TextBasedResultsPage() {
                     let qs = [];
                     for (const k of Object.keys(result)) {
                         // if it is an object and has a questions array...
-                        if (typeof (result[k]) === 'object' && result[k]?.questions) {
-                            // go through the questions object and find all that has responses
-                            for (const q of Object.keys(result[k].questions)) {
-                                // start by getting *all* possible responses to the question
-                                for (const page of pagesForScenario) {
-                                    for (const res of page['elements']) {
-                                        if (res['name'] === q && res['choices']) {
-                                            for (const choice of res['choices']) {
-                                                if (!Object.keys(tmpResponses[scenario]).includes(q)) {
-                                                    tmpResponses[scenario][q] = {};
+                        if (selectedEval === 3) {
+                            // console.log("result[k]");
+                            // console.log(result[k]);
+                            if (typeof (result[k]) === 'object' && result[k]?.questions) {
+                                // go through the questions object and find all that has responses
+                                for (const q of Object.keys(result[k].questions)) {
+                                    // start by getting *all* possible responses to the question
+                                    for (const page of pagesForScenario) {
+                                        for (const res of page['elements']) {
+                                            if (res['name'] === q && res['choices']) {
+                                                for (const choice of res['choices']) {
+                                                    if (!Object.keys(tmpResponses[scenario]).includes(q)) {
+                                                        tmpResponses[scenario][q] = {};
+                                                    }
+                                                    if (!Object.keys(tmpResponses[scenario][q]).includes(choice)) {
+                                                        tmpResponses[scenario][q][choice] = 0;
+                                                    }
+                                                    // set title name
+                                                    tmpResponses[scenario][q]['question'] = res['title'];
                                                 }
-                                                if (!Object.keys(tmpResponses[scenario][q]).includes(choice)) {
-                                                    tmpResponses[scenario][q][choice] = 0;
-                                                }
-                                                // set title name
-                                                tmpResponses[scenario][q]['question'] = res['title'];
                                             }
                                         }
-                                    }
 
-                                }
-                                if (result[k].questions[q].response) {
-                                    const answer = result[k].questions[q].response;
-                                    // for each response found, log the response and the key
-                                    if (Object.keys(tmpResponses[scenario]).includes(q)) {
-                                        if (Object.keys(tmpResponses[scenario][q]).includes(answer)) {
-                                            tmpResponses[scenario][q][answer] += 1;
+                                    }
+                                    if (result[k].questions[q].response) {
+                                        const answer = result[k].questions[q].response;
+                                        // for each response found, log the response and the key
+                                        if (Object.keys(tmpResponses[scenario]).includes(q)) {
+                                            if (Object.keys(tmpResponses[scenario][q]).includes(answer)) {
+                                                tmpResponses[scenario][q][answer] += 1;
+                                            }
+                                            else {
+                                                tmpResponses[scenario][q][answer] = 1;
+                                            }
                                         }
                                         else {
+                                            tmpResponses[scenario][q] = {};
                                             tmpResponses[scenario][q][answer] = 1;
                                         }
-                                    }
-                                    else {
-                                        tmpResponses[scenario][q] = {};
-                                        tmpResponses[scenario][q][answer] = 1;
-                                    }
-                                    if (Object.keys(tmpResponses[scenario][q]).includes('total')) {
-                                        tmpResponses[scenario][q]['total'] += 1;
-                                    }
-                                    else {
-                                        tmpResponses[scenario][q]['total'] = 1;
-                                    }
+                                        if (Object.keys(tmpResponses[scenario][q]).includes('total')) {
+                                            tmpResponses[scenario][q]['total'] += 1;
+                                        }
+                                        else {
+                                            tmpResponses[scenario][q]['total'] = 1;
+                                        }
 
-                                }
-                                if (Object.keys(tmpResponses[scenario]).includes(q) && Object.keys(tmpResponses[scenario][q]).includes('question')) {
-                                    // if duplicate questions are present, precede with "After inject"
-                                    if (qs.includes(tmpResponses[scenario][q]['question'])) {
-                                        tmpResponses[scenario][q]['question'] = 'After inject, ' + tmpResponses[scenario][q]['question'];
-                                        qs = [];
                                     }
-                                    qs.push(tmpResponses[scenario][q]['question']);
+                                    if (Object.keys(tmpResponses[scenario]).includes(q) && Object.keys(tmpResponses[scenario][q]).includes('question')) {
+                                        // if duplicate questions are present, precede with "After inject"
+                                        if (qs.includes(tmpResponses[scenario][q]['question'])) {
+                                            tmpResponses[scenario][q]['question'] = 'After inject, ' + tmpResponses[scenario][q]['question'];
+                                            qs = [];
+                                        }
+                                        qs.push(tmpResponses[scenario][q]['question']);
+                                    }
                                 }
                             }
+                            // console.log("qs");                              
+                            // console.log(qs);    
+                        } else if (selectedEval === 4) {
+                        ///////////////////////////////////////////////////////////
+                            console.log("result[k]");
+                            console.log(result[k]);
+                            if (typeof (result[k]) === 'object' && result[k]?.questions) {
+                                // go through the questions object and find all that has responses
+                                for (const q of Object.keys(result[k].questions)) {
+                                    // start by getting *all* possible responses to the question
+                                    for (const page of pagesForScenario) {
+                                        for (const res of page['elements']) {
+                                            if (res['name'] === q && res['choices']) {
+                                                for (const choice of res['choices']) {
+                                                    if (!Object.keys(tmpResponses[scenario]).includes(q)) {
+                                                        tmpResponses[scenario][q] = {};
+                                                    }
+                                                    if (!Object.keys(tmpResponses[scenario][q]).includes(choice)) {
+                                                        tmpResponses[scenario][q][choice] = 0;
+                                                    }
+                                                    // set title name
+                                                    tmpResponses[scenario][q]['question'] = res['title'];
+                                                }
+                                            }
+                                        }
+
+                                    }
+                                    if (result[k].questions[q].response) {
+                                        const answer = result[k].questions[q].response;
+                                        // for each response found, log the response and the key
+                                        if (Object.keys(tmpResponses[scenario]).includes(q)) {
+                                            if (Object.keys(tmpResponses[scenario][q]).includes(answer)) {
+                                                tmpResponses[scenario][q][answer] += 1;
+                                            }
+                                            else {
+                                                tmpResponses[scenario][q][answer] = 1;
+                                            }
+                                        }
+                                        else {
+                                            tmpResponses[scenario][q] = {};
+                                            tmpResponses[scenario][q][answer] = 1;
+                                        }
+                                        if (Object.keys(tmpResponses[scenario][q]).includes('total')) {
+                                            tmpResponses[scenario][q]['total'] += 1;
+                                        }
+                                        else {
+                                            tmpResponses[scenario][q]['total'] = 1;
+                                        }
+
+                                    }
+                                    if (Object.keys(tmpResponses[scenario]).includes(q) && Object.keys(tmpResponses[scenario][q]).includes('question')) {
+                                        // if duplicate questions are present, precede with "After inject"
+                                        if (qs.includes(tmpResponses[scenario][q]['question'])) {
+                                            tmpResponses[scenario][q]['question'] = 'After inject, ' + tmpResponses[scenario][q]['question'];
+                                            qs = [];
+                                        }
+                                        qs.push(tmpResponses[scenario][q]['question']);
+                                    }
+                                }
+                            }
+
+                        ///////////////////////////////////////////////////////////
                         }
 
                     }
@@ -451,6 +518,9 @@ export default function TextBasedResultsPage() {
 
     React.useEffect(() => {
         // only display results concerning the chosen scenario
+        // console.log(scenarioChosen);
+        // console.log(responsesByScenario);
+
         if (scenarioChosen && responsesByScenario && responsesByScenario[scenarioChosen]) {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
@@ -527,11 +597,6 @@ export default function TextBasedResultsPage() {
 
     function selectEvaluation(target){
         setSelectedEval(target.value);
-
-        if (selectedEval === 3)
-            SCENARIO_OPTIONS = SCENARIO_OPTIONS_MRE;
-        else if  (selectedEval === 4)
-            SCENARIO_OPTIONS = DREScenarioOptions;
         setScenario(null);
     }   
 
