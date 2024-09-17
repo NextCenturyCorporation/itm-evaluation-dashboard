@@ -41,7 +41,15 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 
 const history = createBrowserHistory();
 
-const GET_CONFIGS = gql`
+
+const GET_CONFIGS = process.env.REACT_APP_SURVEY_VERSION == 4.0 ?
+    gql`
+query GetConfigs {
+    getAllSurveyConfigs,
+    getAllTextBasedConfigs,
+    getAllTextBasedImages
+}`
+    : gql`
     query GetConfigs {
         getAllSurveyConfigs,
         getAllImageUrls,
@@ -200,7 +208,7 @@ export class App extends React.Component {
                                 foundImg = data.getAllTextBasedImages.find((x) => ((x.casualtyId.toLowerCase() === pName.toLowerCase() || (x.casualtyId === 'us_soldier' && pName === 'US Soldier')) && (x.scenarioId === page.scenarioIndex || x.scenarioId.replace('MJ', 'IO') === page.scenarioIndex)));
                             }
                             else {
-                                foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
+                                foundImg = data.getAllImageUrls?.find((x) => x._id === patient.imgUrl);
                             }
                             if (isDefined(foundImg)) {
                                 if (config.survey.version == 4) {
@@ -248,7 +256,7 @@ export class App extends React.Component {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_CONFIGS} fetchPolicy={'no-cache'}>
+                <Query query={GET_CONFIGS} fetchPolicy={'cache-first'}>
                     {
                         ({ loading, error, data }) => {
                             if (loading) {
