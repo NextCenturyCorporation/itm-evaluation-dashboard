@@ -9,10 +9,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { VisualizationPanel } from 'survey-analytics';
 import { Model } from 'survey-core';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
-import { scenarioMappings } from '../TextBasedScenarios/TextBasedScenariosPage';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import Select from 'react-select';
+import { useSelector } from 'react-redux';
 
 let evalOptions = [];
 const get_eval_name_numbers = gql`
@@ -23,19 +23,7 @@ const get_eval_name_numbers = gql`
 const GET_SCENARIO_RESULTS_BY_EVAL = gql`
     query getAllScenarioResultsByEval($evalNumber: Float!){
         getAllScenarioResultsByEval(evalNumber: $evalNumber)
-  }`;    
-
-const SCENARIO_OPTIONS = [
-    "Adept Urban",
-    "Adept Submarine",
-    "Adept Desert",
-    "Adept Jungle",
-    "SoarTech Urban",
-    "SoarTech Submarine",
-    "SoarTech Desert",
-    "SoarTech Jungle"
-];
-
+  }`;
 
 function shortenAnswer(answer) {
     // shortens an answer so the whole thing is visible and understandable without taking up too much screen real estate
@@ -193,7 +181,7 @@ function SingleGraph({ data, pageName }) {
 
 
 function getQuestionText(qkey, scenario) {
-    const pagesForScenario = scenarioMappings[scenario]['pages'];
+    const pagesForScenario = textBasedConfigs[scenario]['pages'];
     for (const page of pagesForScenario) {
         for (const res of page['elements']) {
             if (res['name'] === qkey && res['choices']) {
@@ -208,7 +196,7 @@ function getQuestionText(qkey, scenario) {
 
 function ParticipantView({ data, scenarioName }) {
     const [organizedData, setOrganizedData] = React.useState(null);
-    const [excelData, setExcelData] = React.useState(null); 
+    const [excelData, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
     React.useEffect(() => {
         const formatted = {};
@@ -220,7 +208,7 @@ function ParticipantView({ data, scenarioName }) {
             };
             formatted[page['_id']] = { ...obj };
 
-            for (const key of Object.keys(  )) {
+            for (const key of Object.keys()) {
                 if (key === 'highAlignmentData') {
                     if (!headers.includes('KDMA')) {
                         headers.push('KDMA')
@@ -299,57 +287,59 @@ function ParticipantView({ data, scenarioName }) {
 
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [scenarioChosen, setScenario] = React.useState(SCENARIO_OPTIONS[0]);
+    const [scenarioChosen, setScenario] = React.useState(null);
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(3);
+    const [selectedEval, setSelectedEval] = React.useState(null);
+    const [evalOptions, setEvalOptions] = React.useState([]);
+    const [scenarioOptions, setScenarioOptions] = React.useState([]);
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    console.log(textBasedConfigs)
 
     const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
-        variables: {"evalNumber": selectedEval}
+        variables: { "evalNumber": selectedEval },
+        skip: !selectedEval
     });
 
-    React.useEffect(() => {
-        evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) { 
-            for (const result of evalIdOptionsRaw.getEvalIdsForAllScenarioResults) {
-                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+    console.log(data)
 
-            }
-        } 
-    }, [evalIdOptionsRaw, evalOptions]);
+    React.useEffect(() => {
+        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
+            const options = evalIdOptionsRaw.getEvalIdsForAllScenarioResults.map(result => ({
+                value: result._id.evalNumber,
+                label: result._id.evalName
+            }));
+            setEvalOptions(options);
+        }
+    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         // populate responsesByScenario with gql data
         const tmpResponses = {};
         const participants = {};
-        for (let opt of SCENARIO_OPTIONS) {
-            tmpResponses[opt] = {};
-            participants[opt] = [];
-        }
+        const uniqueScenarios = new Set();
+
         if (data?.getAllScenarioResultsByEval) {
             for (const result of data.getAllScenarioResultsByEval) {
-                let scenario = null;
-
-                for (const k of Object.keys(result)) {
-                    // find matching scenario for this set
-                    scenario = SCENARIO_OPTIONS.filter((x) => k.toLowerCase().includes(x.toLowerCase()));
-                    if (scenario.length > 0) {
-                        scenario = scenario[0];
-                        break;
-                    }
-                    else {
-                        scenario = null;
-                    }
+                if (result.scenario_id) {
+                    uniqueScenarios.add(result.scenario_id)
                 }
+
+                let scenario = result.scenario_id;
                 if (scenario) {
+                    if (!tmpResponses[scenario]) {
+                        tmpResponses[scenario] = {}
+                        participants[scenario] = [] 
+                    }
+
                     participants[scenario].push(result);
                     // once the scenario is found, start populating object with data
                     // go through each item in the result object
-                    const pagesForScenario = scenarioMappings[result['title']]['pages'];
+                    const pagesForScenario = textBasedConfigs[result['title']]['pages'];
                     let qs = [];
                     for (const k of Object.keys(result)) {
                         // if it is an object and has a questions array...
@@ -413,6 +403,7 @@ export default function TextBasedResultsPage() {
             }
             setByScenario(tmpResponses);
             setParticipantBased(participants);
+            setScenarioOptions(Array.from(uniqueScenarios));
         }
     }, [data]);
 
@@ -492,10 +483,10 @@ export default function TextBasedResultsPage() {
         }
     };
 
-    function selectEvaluation(target){
-        setSelectedEval(target.value);
+    function selectEvaluation(option) {
+        setSelectedEval(option.value);
         setScenario(null);
-    }   
+    }
 
     return (<div className='text-results'>
         <div className='sidebar-options'>
@@ -508,25 +499,29 @@ export default function TextBasedResultsPage() {
                 }}
                 options={evalOptions}
                 onChange={selectEvaluation}
-                value={evalOptions.filter(function(option) {
-                  return option.value === selectedEval;
-                })}
-                label="Single select"                
+                value={evalOptions.find(option => option.value === selectedEval)}
+                label="Single select"
+                isLoading={loadingEvalNames}
             />
-        {selectedEval && <div>
-            <h3 className='sidebar-title'>Scenario</h3>
-            <List className="nav-list" component="nav">
-                {SCENARIO_OPTIONS.map((item) =>
-                    <ListItem className="nav-list-item" id={"scenario_" + item} key={"scenario_" + item}
-                        button
-                        selected={scenarioChosen === item}
-                        onClick={() => setScenario(item)}>
-                        <ListItemText primary={item} />
-                    </ListItem>
-                )}
-            </List>
-            
-        </div>}
+            {selectedEval && scenarioOptions.length > 0 && (
+                <div>
+                    <h3 className='sidebar-title'>Scenario</h3>
+                    <List className="nav-list" component="nav">
+                        {scenarioOptions.map((item) =>
+                            <ListItem
+                                className="nav-list-item"
+                                id={"scenario_" + item}
+                                key={"scenario_" + item}
+                                button
+                                selected={scenarioChosen === item}
+                                onClick={() => setScenario(item)}
+                            >
+                                <ListItemText primary={item} />
+                            </ListItem>
+                        )}
+                    </List>
+                </div>
+            )}
         </div>
         {scenarioChosen && <div className="result-display">
             <div className="text-based-header">
