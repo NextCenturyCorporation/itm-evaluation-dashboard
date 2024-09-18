@@ -88,31 +88,33 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
 
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
-            <div className="patient-buttons" key={patient.name}>{
-                sceneCharacters.includes(patient.name) &&
-                <Button
-                    key={patient.name}
-                    variant={visiblePatients[patient.name] ? "primary" : "secondary"}
-                    onClick={() => togglePatientVisibility(patient.name)}
-                    className="me-1"
-                >
-                    {patient.name} {visiblePatients[patient.name] && <CheckCircleIcon />}
-                </Button>
-            }</div>
+            sceneCharacters.includes(patient.name) && (
+                <div className="patient-buttons" key={`button-${patient.name}`}>
+                    <Button
+                        variant={visiblePatients[patient.name] ? "primary" : "secondary"}
+                        onClick={() => togglePatientVisibility(patient.name)}
+                        className="me-1"
+                    >
+                        {patient.name} {visiblePatients[patient.name] && <CheckCircleIcon />}
+                    </Button>
+                </div>
+            )
         ));
 
         const patientCards = patients.map(patient => {
             if (visiblePatients[patient.name] && sceneCharacters.includes(patient.name)) {
                 return (
-                    <Col md={6}>{
-                        patient.demographics ? <div className='patient-card'>
-                            <Patient
-                                patient={patient}
-                                onImageClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)}
-                                blockedVitals={[]}
-                            />
-                        </div> :
-                            <Card key={patient.name} className="patient-card" style={{ display: 'inline-block' }}>
+                    <Col md={6} key={`card-${patient.name}`}>
+                        {patient.demographics ? (
+                            <div className='patient-card'>
+                                <Patient
+                                    patient={patient}
+                                    onImageClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)}
+                                    blockedVitals={[]}
+                                />
+                            </div>
+                        ) : (
+                            <Card className="patient-card" style={{ display: 'inline-block' }}>
                                 <Card.Header>
                                     <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
                                 </Card.Header>
@@ -133,11 +135,11 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     </Col>
                                 </Row>
                             </Card>
-                    }</Col>
+                        )}
+                    </Col>
                 );
-            } else {
-                return null;
             }
+            return null;
         });
 
         return (
@@ -155,7 +157,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Accordion.Body>
                                         <ListGroup>
                                             {sceneActions && sceneActions.map((action, index) => (
-                                                <ListGroup.Item key={"action-" + index} className="action-item" style={{
+                                                <ListGroup.Item key={`action-${index}`} className="action-item" style={{
                                                     "fontWeight": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
                                                     "backgroundColor": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#eee" : "#fff"
                                                 }}>{action}</ListGroup.Item>
@@ -214,10 +216,22 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 </Card.Body>
             </Card>
             {isDefined(scenes) ?
-                scenes.map((scene) => {
-                    return <Scene key={scene.id} sceneId={scene.id} sceneActions={scene.actions} sceneSupplies={scene.supplies} sceneCharacters={scene.char_ids} />
-                })
-                : <Scene sceneId='Scene 1' sceneActions={actions} sceneSupplies={supplies} sceneCharacters={patients.map((p) => p.name)} />}
+                scenes.map((scene) => (
+                    <Scene 
+                        key={scene.id}
+                        sceneId={scene.id} 
+                        sceneActions={scene.actions} 
+                        sceneSupplies={scene.supplies} 
+                        sceneCharacters={scene.char_ids} 
+                    />
+                ))
+                : <Scene 
+                    sceneId='Scene 1' 
+                    sceneActions={actions} 
+                    sceneSupplies={supplies} 
+                    sceneCharacters={patients.map((p) => p.name)} 
+                />
+            }
 
             <Modal show={showPatientModal} onHide={() => toggleImageModal("", activeTitle, "")}>
                 <Modal.Header closeButton>

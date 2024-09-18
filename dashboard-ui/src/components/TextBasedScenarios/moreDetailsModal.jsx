@@ -3,6 +3,30 @@ import { Modal, Row, Col, Card, ListGroup } from 'react-bootstrap';
 import { FaInfoCircle, FaBook, FaMedkit, FaClipboardList, FaMapMarkedAlt } from 'react-icons/fa';
 
 const MoreDetailsModal = ({ show, onHide, mission }) => {
+  const renderMedicalPolicies = () => {
+    if (!mission.medical_policies) return null;
+
+    if (typeof mission.medical_policies === 'string') {
+      return (
+        <ListGroup.Item className="border-0 ps-0">
+          <FaClipboardList className="me-2 text-muted" />
+          {mission.medical_policies}
+        </ListGroup.Item>
+      );
+    }
+
+    if (Array.isArray(mission.medical_policies)) {
+      return mission.medical_policies.map((policy, index) => (
+        <ListGroup.Item key={index} className="border-0 ps-0">
+          <FaClipboardList className="me-2 text-muted" />
+          {policy}
+        </ListGroup.Item>
+      ));
+    }
+
+    return null;
+  };
+
   return (
     <Modal
       show={show}
@@ -33,7 +57,7 @@ const MoreDetailsModal = ({ show, onHide, mission }) => {
                 </Card>
               </Col>
             )}
-            {mission.medical_policies && mission.medical_policies.length > 0 && (
+            {mission.medical_policies && (
               <Col md={6} className="mb-4">
                 <Card className="border-0 shadow-sm h-100 info-card">
                   <Card.Body>
@@ -42,19 +66,14 @@ const MoreDetailsModal = ({ show, onHide, mission }) => {
                       Medical Policies
                     </h5>
                     <ListGroup variant="flush">
-                      {mission.medical_policies.map((policy, index) => (
-                        <ListGroup.Item key={index} className="border-0 ps-0">
-                          <FaClipboardList className="me-2 text-muted" />
-                          {policy}
-                        </ListGroup.Item>
-                      ))}
+                      {renderMedicalPolicies()}
                     </ListGroup>
                   </Card.Body>
                 </Card>
               </Col>
             )}
             {mission.unstructured && (
-              <Col md={mission.medical_policies && mission.medical_policies.length > 0 ? 6 : 12} className="mb-4">
+              <Col md={mission.medical_policies ? 6 : 12} className="mb-4">
                 <Card className="border-0 shadow-sm h-100 info-card">
                   <Card.Body>
                     <h5 className="card-title">
