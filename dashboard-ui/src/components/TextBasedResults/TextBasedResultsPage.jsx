@@ -180,7 +180,7 @@ function SingleGraph({ data, pageName }) {
 }
 
 
-function getQuestionText(qkey, scenario) {
+function getQuestionText(qkey, scenario, textBasedConfigs) {
     const pagesForScenario = textBasedConfigs[scenario]['pages'];
     for (const page of pagesForScenario) {
         for (const res of page['elements']) {
@@ -194,7 +194,7 @@ function getQuestionText(qkey, scenario) {
 }
 
 
-function ParticipantView({ data, scenarioName }) {
+function ParticipantView({ data, scenarioName, textBasedConfigs }) {
     const [organizedData, setOrganizedData] = React.useState(null);
     const [excelData, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
@@ -236,7 +236,7 @@ function ParticipantView({ data, scenarioName }) {
                                     headers.push(q);
                                 }
                                 formatted[page['_id']][q] = page[key]['questions'][q]['response'];
-                                obj[getQuestionText(q, scenarioName)] = page[key]['questions'][q]['response'];
+                                obj[getQuestionText(q, scenarioName, textBasedConfigs)] = page[key]['questions'][q]['response'];
                             }
                         }
                     }
@@ -266,7 +266,7 @@ function ParticipantView({ data, scenarioName }) {
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
-                            return <th key={scenarioName + "_" + key}>{getQuestionText(key, scenarioName)}</th>
+                            return <th key={scenarioName + "_" + key}>{getQuestionText(key, scenarioName, textBasedConfigs)}</th>
                         })}
                     </tr>
                 </thead>
@@ -330,7 +330,7 @@ export default function TextBasedResultsPage() {
                 }
 
                 let scenario = result.scenario_id;
-                if (scenario) {
+                if (scenario && textBasedConfigs[scenario]) {
                     if (!tmpResponses[scenario]) {
                         tmpResponses[scenario] = {}
                         participants[scenario] = [] 
@@ -399,13 +399,15 @@ export default function TextBasedResultsPage() {
                         }
 
                     }
+                } else {
+                    console.error(`No configuration found for scenario: ${scenario}`);
                 }
             }
             setByScenario(tmpResponses);
             setParticipantBased(participants);
             setScenarioOptions(Array.from(uniqueScenarios));
         }
-    }, [data]);
+    }, [data, textBasedConfigs]);
 
     React.useEffect(() => {
         // only display results concerning the chosen scenario
@@ -533,7 +535,7 @@ export default function TextBasedResultsPage() {
                     <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
                 </ToggleButtonGroup>
             </div>
-            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} /> : <ChartedResultsSection />}
+            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen}  textBasedConfigs={textBasedConfigs}/> : <ChartedResultsSection />}
         </div>}
     </div>);
 }
