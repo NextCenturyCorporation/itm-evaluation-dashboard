@@ -62,7 +62,6 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
             const singleData = [];
             const comparisonData = [];
             for (const k of Object.keys(data)) {
-                
                 if (k.includes('singleMedic')) {
                     singleData.push(data[k]);
                 }
@@ -93,13 +92,20 @@ function SingleGraph({ data, version }) {
     const [surveyResults, setSurveyResults] = React.useState([]);
     const surveys = useSelector((state) => state.configs.surveyConfigs);
 
+
+    //console.log(surveys)
+
     React.useEffect(() => {
         if (data.length > 0) {
             setPageName(data[0].pageName + ": Survey Results");
             // create a survey config based off of answers in the survey data
-            
-            // this never worked for 3?
-            let surveyJson =[];
+
+            // console.log(version);
+            // console.log(data[0].pageName);
+
+
+
+            let surveyJson = [];
             if (version === 1)
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v1.0']);
             else if (version === 2)
@@ -108,6 +114,8 @@ function SingleGraph({ data, version }) {
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v3.0']);
             else if (version === 4)
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
+
+            //console.log(surveyJson);
 
             const curResults = [];
             for (const entry of data) {
@@ -121,6 +129,9 @@ function SingleGraph({ data, version }) {
                 }
                 curResults.push(entryResults);
             }
+            // console.log(version);
+            // console.log([...curResults]);
+            // console.log(surveyJson);
             setSurveyResults([...curResults]);
             const survey = new Model(surveyJson);
             setSurvey(survey);
@@ -170,8 +181,6 @@ export function SurveyResults() {
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
 
-    console.log(selectedScenario);
-
     React.useEffect(() => {
         // component did mount
         window.addEventListener('scroll', toggleVisibility);
@@ -212,7 +221,6 @@ export function SurveyResults() {
                 }
             }
             setScenarioIndices(scenarios);
-            console.log(scenarioIndices);
 
             if (Object.keys(scenarios).length > 0) {
                 setSelectedScenario("");
@@ -230,6 +238,11 @@ export function SurveyResults() {
                 }
                 for (const x of Object.keys(obj)) {
                     const res = obj[x];
+                    // console.log("index")
+                    // console.log(res?.scenarioIndex)
+                    // console.log("Scenario")
+                    // console.log(selectedScenario)
+                    // console.log(res?.pageType)
                     if (String(res?.scenarioIndex) === String(selectedScenario)) {
                         const indexBy = res.pageType + '_' + res.pageName;
                         if (Object.keys(separatedData).includes(indexBy)) {
@@ -238,7 +251,9 @@ export function SurveyResults() {
                             separatedData[indexBy] = [res];
                         }
                     }
+
                 }
+                //console.log(separatedData)
             }
             setResultData(separatedData);
         }

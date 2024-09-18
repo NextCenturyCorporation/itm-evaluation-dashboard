@@ -188,6 +188,7 @@ export class App extends React.Component {
         for (const config of data.getAllSurveyConfigs) {
             let tempConfig = JSON.parse(JSON.stringify(config))
             for (const page of tempConfig.survey.pages) {
+                console.log(tempConfig.survey)
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
                         for (const patient of el.patients) {
