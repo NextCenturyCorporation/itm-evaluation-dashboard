@@ -38,17 +38,30 @@ import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
 import HumanResults from '../HumanResults/humanResults';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import { RQ1 } from '../DRE-Research/RQ1';
+import { RQ2 } from '../DRE-Research/RQ2';
+import { RQ3 } from '../DRE-Research/RQ3';
+
 
 const history = createBrowserHistory();
 
-const GET_CONFIGS = gql`
-    query GetConfigs {
-        getAllSurveyConfigs,
-        getAllImageUrls,
-        getAllTextBasedConfigs,
-        getAllTextBasedImages
-    }`;
 
+const GET_CONFIGS = process.env.REACT_APP_SURVEY_VERSION === '4.0'
+  ? gql`
+    query GetConfigs {
+      getAllSurveyConfigs
+      getAllTextBasedConfigs
+      getAllTextBasedImages
+    }
+  `
+  : gql`
+    query GetConfigs {
+      getAllSurveyConfigs
+      getAllImageUrls
+      getAllTextBasedConfigs
+      getAllTextBasedImages
+    }
+  `;
 
 
 function Home({ newState }) {
@@ -200,7 +213,7 @@ export class App extends React.Component {
                                 foundImg = data.getAllTextBasedImages.find((x) => ((x.casualtyId.toLowerCase() === pName.toLowerCase() || (x.casualtyId === 'us_soldier' && pName === 'US Soldier')) && (x.scenarioId === page.scenarioIndex || x.scenarioId.replace('MJ', 'IO') === page.scenarioIndex)));
                             }
                             else {
-                                foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
+                                foundImg = data.getAllImageUrls?.find((x) => x._id === patient.imgUrl);
                             }
                             if (isDefined(foundImg)) {
                                 if (config.survey.version == 4) {
@@ -248,7 +261,7 @@ export class App extends React.Component {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_CONFIGS} fetchPolicy={'no-cache'}>
+                <Query query={GET_CONFIGS} fetchPolicy={'cache-first'}>
                     {
                         ({ loading, error, data }) => {
                             if (loading) {
@@ -318,6 +331,17 @@ export class App extends React.Component {
                                                         </NavDropdown.Item>
                                                         <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
                                                             ADM Alignment Results
+                                                        </NavDropdown.Item>
+                                                    </NavDropdown>
+                                                    <NavDropdown title="Data Analysis">
+                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
+                                                            RQ1
+                                                        </NavDropdown.Item>
+                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq2">
+                                                            RQ2
+                                                        </NavDropdown.Item>
+                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq3">
+                                                            RQ3
                                                         </NavDropdown.Item>
                                                     </NavDropdown>
                                                 </>
@@ -400,6 +424,15 @@ export class App extends React.Component {
                                         </Route>
                                         <Route path="/human-results">
                                             <HumanResults />
+                                        </Route>
+                                        <Route path="/dre-results/rq1">
+                                            <RQ1 />
+                                        </Route>
+                                        <Route path="/dre-results/rq2">
+                                            <RQ2 />
+                                        </Route>
+                                        <Route path="/dre-results/rq3">
+                                            <RQ3 />
                                         </Route>
                                     </Switch>
                                 </div>
