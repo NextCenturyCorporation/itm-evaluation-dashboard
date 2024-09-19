@@ -1,0 +1,51 @@
+.section-container {
+    -moz-box-shadow: 0 0 3px #ccc;
+    -webkit-box-shadow: 0 0 3px #ccc;
+    box-shadow: 0 0 3px #ccc;
+    border-radius: 15px;
+    background-color: #ffffff;
+    margin: 10px 25px;
+    min-height: 150px;
+    padding: 10px;
+}
+
+.section-container h2 {
+    margin: 20px 12px 24px 12px;
+    border-bottom: 3px solid black;
+    padding-bottom: 4px;
+}
+
+.section-container p, ul {
+    margin-left: 24px;
+}
+
+.section-container .indented {
+    margin-left: 48px;
+    margin-right: 24px;
+}
+
+.section-container .buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.section-container button {
+    border-radius: 8px;
+    border: 1px solid grey;
+    padding: 4px 8px;
+}
+
+.section-container button:hover {
+    filter: brightness(85%);
+}
+
+.section-container button:active {
+    filter: brightness(80%);
+}
+
+h3 {
+    margin-left: 32px;
+    margin-top: 24px;
+}
