@@ -1,5 +1,6 @@
 import { RQ2223 } from "./tables/rq22-rq23";
 import './dre-rq.css';
+import { RQ21 } from "./tables/rq21";
 
 export function RQ2() {
     return (<>
@@ -27,7 +28,7 @@ export function RQ2() {
         <h3>RQ2 Analysis 2.1: Alignable ADM tuned within largest cluster of human attributes</h3>
         <div className="section-container">
             <h2>RQ2.1 Data</h2>
-            <p>TODO</p>
+            <RQ21 />
 
         </div>
         <h3>RQ2 Analysis 2.2: T-tests comparing Alignable ADM versus Baseline ADM on group-aligned targets</h3>
