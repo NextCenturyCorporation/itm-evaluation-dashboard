@@ -139,7 +139,10 @@ export function RQ13() {
                         entryObj['ADM Order'] = logData['ADMOrder'];
                         entryObj['Delegator_ID'] = pid;
                         entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : 'Military';
-                        entryObj['Delegator_Role'] = res.results['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'].join('; ') ?? '-';
+                        entryObj['Delegator_Role'] = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'] ?? '-'
+                        if (Array.isArray(entryObj['Delegator_Role'])) {
+                            entryObj['Delegator_Role'] = entryObj['Delegator_Role'].join('; ');
+                        }
                         entryObj['TA1_Name'] = entry['TA1'];
                         entryObj['Trial_ID'] = trial_num;
                         trial_num += 1;
