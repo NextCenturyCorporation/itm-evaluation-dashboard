@@ -38,6 +38,10 @@ import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
 import HumanResults from '../HumanResults/humanResults';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import { RQ1 } from '../DRE-Research/RQ1';
+import { RQ2 } from '../DRE-Research/RQ2';
+import { RQ3 } from '../DRE-Research/RQ3';
+
 
 const history = createBrowserHistory();
 
@@ -320,6 +324,17 @@ export class App extends React.Component {
                                                             ADM Alignment Results
                                                         </NavDropdown.Item>
                                                     </NavDropdown>
+                                                    <NavDropdown title="Data Analysis">
+                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
+                                                            RQ1
+                                                        </NavDropdown.Item>
+                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq2">
+                                                            RQ2
+                                                        </NavDropdown.Item>
+                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq3">
+                                                            RQ3
+                                                        </NavDropdown.Item>
+                                                    </NavDropdown>
                                                 </>
                                             )}
                                         </ul>
@@ -400,6 +415,15 @@ export class App extends React.Component {
                                         </Route>
                                         <Route path="/human-results">
                                             <HumanResults />
+                                        </Route>
+                                        <Route path="/dre-results/rq1">
+                                            <RQ1 />
+                                        </Route>
+                                        <Route path="/dre-results/rq2">
+                                            <RQ2 />
+                                        </Route>
+                                        <Route path="/dre-results/rq3">
+                                            <RQ3 />
                                         </Route>
                                     </Switch>
                                 </div>
