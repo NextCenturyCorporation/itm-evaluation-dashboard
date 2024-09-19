@@ -823,16 +823,17 @@ class SurveyPage extends Component {
                 const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
                 // misaligned
                 const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == misalignedADMTarget);
+                const pagesToShuffle = [];
                 if (isDefined(baselineAdm)) {
                     baselineAdm['alignment'] = 'baseline';
                     baselineAdm['target'] = baselineADMTarget;
-                    pages.push(baselineAdm);
+                    pagesToShuffle.push(baselineAdm);
                 } else { console.warn("Missing Baseline ADM"); }
                 if (isDefined(alignedAdm)) {
                     alignedAdm['admStatus'] = adms['alignedStatus'];
                     alignedAdm['alignment'] = 'aligned';
                     alignedAdm['target'] = alignedADMTarget;
-                    pages.push(alignedAdm);
+                    pagesToShuffle.push(alignedAdm);
                 } else { 
                     console.warn("Missing Aligned ADM"); 
                 }
@@ -840,12 +841,19 @@ class SurveyPage extends Component {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
                     misalignedAdm['alignment'] = 'misaligned';
                     misalignedAdm['target'] = misalignedADMTarget;
-                    pages.push(misalignedAdm);
+                    pagesToShuffle.push(misalignedAdm);
                 } else { console.warn("Missing Misaligned ADM"); }
+                shuffle(pagesToShuffle);
+                pages.push(...pagesToShuffle);
                 pages.push(this.generateComparisonPagev4(baselineAdm, alignedAdm, misalignedAdm));
             }
             pages.push(allPages.slice(-1)[0]);
             this.surveyConfigClone.pages = pages;
+            const pageOrder = [];
+            for (let x of pages) {
+                pageOrder.push(x.name);
+            }
+            this.setState({ orderLog: pageOrder });
 
             return {};
         }
@@ -1103,26 +1111,27 @@ class SurveyPage extends Component {
         // attach user data to results
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
-        this.surveyData.startTime = this.state.startTime
-        this.surveyData.surveyVersion = this.state.surveyVersion
-        this.surveyData.browserInfo = this.state.browserInfo
+        this.surveyData.startTime = this.state.startTime;
+        this.surveyData.surveyVersion = this.state.surveyVersion;
+        this.surveyData.browserInfo = this.state.browserInfo;
 
         // 7-16 data collect. Log info about order, agent, and DM 
         if (this.state.surveyVersion == 3.0 || this.state.surveyVersion == 2.1) {
-            this.surveyData['firstGroup'] = this.state.firstGroup
-            this.surveyData['secondGroup'] = this.state.secondGroup
-            this.surveyData['orderLog'] = this.state.orderLog
+            this.surveyData['firstGroup'] = this.state.firstGroup;
+            this.surveyData['secondGroup'] = this.state.secondGroup;
+            this.surveyData['orderLog'] = this.state.orderLog;
             // only record human or ai group first if the survey is fully complete
             if (finalUpload) {
-                const humanGroupFirst = this.state.firstGroup.includes('Treat as Human')
-                this.surveyData['humanGroupFirst'] = humanGroupFirst
-                this.surveyData['aiGroupFirst'] = !humanGroupFirst
+                const humanGroupFirst = this.state.firstGroup.includes('Treat as Human');
+                this.surveyData['humanGroupFirst'] = humanGroupFirst;
+                this.surveyData['aiGroupFirst'] = !humanGroupFirst;
             }
         }
 
         if (this.state.surveyVersion == 4.0) {
-            this.surveyData['evalNumber'] = 4
-            this.surveyData['evalName'] = 'Dry Run Evaluation'
+            this.surveyData['evalNumber'] = 4;
+            this.surveyData['evalName'] = 'Dry Run Evaluation';
+            this.surveyData['orderLog'] = this.state.orderLog;
         }
 
         // upload the results to mongoDB
