@@ -107,6 +107,9 @@ function shortenAnswer(answer) {
             if (answer.includes("until you get updated info on the capabilities of the embassy")) {
                 return 'Hold until info on embassy capabilities';
             }
+            if (answer.toLowerCase().includes('because')) {
+                return answer.substring(answer.toLowerCase().indexOf('because'));
+            }
             return answer;
     }
 }
@@ -144,10 +147,10 @@ function SingleGraph({ data, pageName }) {
 
     const vizPanelOptions = {
         allowHideQuestions: false,
-        defaultChartType: "bar",
+        defaultChartType: "vbar",
         labelTruncateLength: -1,
         showPercentages: true,
-        allowDragDrop: false
+        allowDragDrop: false,
     }
 
     if (!vizPanel && !!survey) {
@@ -296,7 +299,6 @@ export default function TextBasedResultsPage() {
     const [evalOptions, setEvalOptions] = React.useState([]);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    console.log(textBasedConfigs)
 
     const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
         // only pulls from network, never cached
@@ -304,8 +306,6 @@ export default function TextBasedResultsPage() {
         variables: { "evalNumber": selectedEval },
         skip: !selectedEval
     });
-
-    console.log(data)
 
     React.useEffect(() => {
         if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
@@ -324,80 +324,65 @@ export default function TextBasedResultsPage() {
         const uniqueScenarios = new Set();
 
         if (data?.getAllScenarioResultsByEval) {
+            // Initialize the structure for each scenario
+            Object.keys(textBasedConfigs).forEach(scenario => {
+                tmpResponses[scenario] = {};
+                textBasedConfigs[scenario].pages.forEach(page => {
+                    page.elements.forEach(element => {
+                        if (element.choices) {
+                            tmpResponses[scenario][element.name] = {
+                                question: element.title,
+                                total: 0
+                            };
+                            element.choices.forEach(choice => {
+                                tmpResponses[scenario][element.name][choice.text] = 0;
+                            });
+                        }
+                    });
+                });
+            });
+            
+
+            // Process the results
             for (const result of data.getAllScenarioResultsByEval) {
                 if (result.scenario_id) {
-                    uniqueScenarios.add(result.scenario_id)
+                    uniqueScenarios.add(result.scenario_id);
                 }
 
                 let scenario = result.scenario_id;
                 if (scenario && textBasedConfigs[scenario]) {
-                    if (!tmpResponses[scenario]) {
-                        tmpResponses[scenario] = {}
-                        participants[scenario] = [] 
+                    if (!participants[scenario]) {
+                        participants[scenario] = [];
                     }
-
                     participants[scenario].push(result);
-                    // once the scenario is found, start populating object with data
-                    // go through each item in the result object
-                    const pagesForScenario = textBasedConfigs[result['title']]['pages'];
-                    let qs = [];
-                    for (const k of Object.keys(result)) {
-                        // if it is an object and has a questions array...
-                        if (typeof (result[k]) === 'object' && result[k]?.questions) {
-                            // go through the questions object and find all that has responses
-                            for (const q of Object.keys(result[k].questions)) {
-                                // start by getting *all* possible responses to the question
-                                for (const page of pagesForScenario) {
-                                    for (const res of page['elements']) {
-                                        if (res['name'] === q && res['choices']) {
-                                            for (const choice of res['choices']) {
-                                                if (!Object.keys(tmpResponses[scenario]).includes(q)) {
-                                                    tmpResponses[scenario][q] = {};
-                                                }
-                                                if (!Object.keys(tmpResponses[scenario][q]).includes(choice)) {
-                                                    tmpResponses[scenario][q][choice] = 0;
-                                                }
-                                                // set title name
-                                                tmpResponses[scenario][q]['question'] = res['title'];
-                                            }
-                                        }
-                                    }
 
-                                }
-                                if (result[k].questions[q].response) {
-                                    const answer = result[k].questions[q].response;
-                                    // for each response found, log the response and the key
-                                    if (Object.keys(tmpResponses[scenario]).includes(q)) {
-                                        if (Object.keys(tmpResponses[scenario][q]).includes(answer)) {
-                                            tmpResponses[scenario][q][answer] += 1;
-                                        }
-                                        else {
-                                            tmpResponses[scenario][q][answer] = 1;
-                                        }
-                                    }
-                                    else {
-                                        tmpResponses[scenario][q] = {};
+                    let qs = []; // Array to keep track of questions for "After inject" logic
+                    for (const k of Object.keys(result)) {
+                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) { continue; }
+
+                        for (const q of Object.keys(result[k].questions)) {
+                            if (result[k].questions[q].response) {
+                                const answer = typeof result[k].questions[q].response === 'object'
+                                    ? JSON.stringify(result[k].questions[q].response)
+                                    : result[k].questions[q].response;
+
+                                if (tmpResponses[scenario][q]) {
+                                    if (tmpResponses[scenario][q][answer] !== undefined) {
+                                        tmpResponses[scenario][q][answer] += 1;
+                                    } else {
                                         tmpResponses[scenario][q][answer] = 1;
                                     }
-                                    if (Object.keys(tmpResponses[scenario][q]).includes('total')) {
-                                        tmpResponses[scenario][q]['total'] += 1;
-                                    }
-                                    else {
-                                        tmpResponses[scenario][q]['total'] = 1;
-                                    }
+                                    tmpResponses[scenario][q].total += 1;
 
-                                }
-                                if (Object.keys(tmpResponses[scenario]).includes(q) && Object.keys(tmpResponses[scenario][q]).includes('question')) {
-                                    // if duplicate questions are present, precede with "After inject"
-                                    if (qs.includes(tmpResponses[scenario][q]['question'])) {
-                                        tmpResponses[scenario][q]['question'] = 'After inject, ' + tmpResponses[scenario][q]['question'];
+                                    // "After inject" logic
+                                    if (qs.includes(tmpResponses[scenario][q].question)) {
+                                        tmpResponses[scenario][q].question = 'After inject, ' + tmpResponses[scenario][q].question;
                                         qs = [];
                                     }
-                                    qs.push(tmpResponses[scenario][q]['question']);
+                                    qs.push(tmpResponses[scenario][q].question);
                                 }
                             }
                         }
-
                     }
                 } else {
                     console.error(`No configuration found for scenario: ${scenario}`);
@@ -535,7 +520,7 @@ export default function TextBasedResultsPage() {
                     <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
                 </ToggleButtonGroup>
             </div>
-            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen}  textBasedConfigs={textBasedConfigs}/> : <ChartedResultsSection />}
+            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={textBasedConfigs} /> : <ChartedResultsSection />}
         </div>}
     </div>);
 }
