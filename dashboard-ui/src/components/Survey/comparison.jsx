@@ -75,7 +75,6 @@ export class Comparison extends SurveyQuestionElementBase {
         let decisionMakers = this.decisionMakers;
         // in case of duplicates somehow
         decisionMakers = [...new Set(decisionMakers)];
-        console.log(decisionMakers);
         let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
         let dmDetails = relevantPages.map(page => page.elements[0]);
         //extra cleansing of any potential duplicates
