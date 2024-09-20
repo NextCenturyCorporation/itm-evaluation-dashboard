@@ -309,7 +309,9 @@ export default function TextBasedResultsPage() {
 
     React.useEffect(() => {
         if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
-            const options = evalIdOptionsRaw.getEvalIdsForAllScenarioResults.map(result => ({
+            const options = evalIdOptionsRaw.getEvalIdsForAllScenarioResults
+            .filter(result => result && result._id && result._id.evalNumber !== undefined && result._id.evalName)
+            .map(result => ({
                 value: result._id.evalNumber,
                 label: result._id.evalName
             }));
@@ -413,13 +415,17 @@ export default function TextBasedResultsPage() {
         }
     }, [scenarioChosen, responsesByScenario]);
 
+    const cleanTitle = (title) => {
+        return title.replace('probe', '').trim();
+    };
+
     const TextResultsSection = () => {
         // display the results for the chosen scenario
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey, ind) => {
                     return (<div className='result-section' key={qkey + '_' + ind}>
-                        <h3 className='question-header'>{qkey} (N={questionAnswerSets[qkey]['total']})</h3>
+                        <h3 className='question-header'>{cleanTitle(qkey)} (N={questionAnswerSets[qkey]['total']})</h3>
                         <p>{questionAnswerSets[qkey]['question']}</p>
                         <table className="itm-table text-result-table">
                             <thead>
