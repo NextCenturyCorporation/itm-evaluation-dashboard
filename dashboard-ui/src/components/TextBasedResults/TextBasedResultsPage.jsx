@@ -230,7 +230,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                                 temp += `${alignment.target}: ${alignment.score},`
                                 temp += '\n'
                             }
-                            formatted[page['_id']]['Alignment Data'] = temp;
+                            formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
                             obj['Alignment Data'] = temp;
                         }
                     } else if (key !== 'lowAlignmentData') {
