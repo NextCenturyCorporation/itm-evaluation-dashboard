@@ -114,6 +114,10 @@ function shortenAnswer(answer) {
     }
 }
 
+const cleanTitle = (title) => {
+    return title.replace(/^probe\s*/i, '').trim();
+};
+
 function SingleGraph({ data, pageName }) {
     const [survey, setSurvey] = React.useState(null);
     const [vizPanel, setVizPanel] = React.useState(null);
@@ -176,7 +180,7 @@ function SingleGraph({ data, pageName }) {
 
     return (
         <div className='graph-section'>
-            <h3 className='question-header'>{pageName} (N={data['total']})</h3>
+            <h3 className='question-header'>{cleanTitle(pageName)} (N={data['total']})</h3>
             <div id={"viz_" + pageName} className='full-width-graph' />
         </div>
     );
@@ -188,6 +192,7 @@ function getQuestionText(qkey, scenario, textBasedConfigs) {
     for (const page of pagesForScenario) {
         for (const res of page['elements']) {
             if (res['name'] === qkey && res['choices']) {
+                qkey = cleanTitle(qkey)
                 // set title name
                 return res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey);
             }
@@ -201,56 +206,63 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
     const [organizedData, setOrganizedData] = React.useState(null);
     const [excelData, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
+
     React.useEffect(() => {
         const formatted = {};
         const headers = ['Participant ID'];
         const excel = [];
+
         for (const page of data) {
             const obj = {
                 'Participant ID': page['participantID']
             };
             formatted[page['_id']] = { ...obj };
 
-            for (const key of Object.keys()) {
-                if (key === 'highAlignmentData') {
-                    if (!headers.includes('KDMA')) {
-                        headers.push('KDMA')
-                    }
-                    formatted[page['_id']]['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
-                    obj['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
-                    continue;
-                }
-                if (key === 'alignmentData' || key === 'lowAlignmentData') {
-                    continue;
-                }
-                // top level pages with timing
-                const time_key = key + ' time (s)';
-                if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
-                    if (!headers.includes(time_key)) {
-                        headers.push(time_key);
-                    }
+            // Check if page is defined before using Object.keys
+            if (page) {
+                Object.keys(page).forEach(key => {
+                    if (key === 'highAlignmentData') {
+                        if (!headers.includes('KDMA')) {
+                            headers.push('KDMA')
+                        }
+                        if (page[key] && page[key]['kdma_values'] && page[key]['kdma_values'][0]) {
+                            const kdmaValue = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
+                            formatted[page['_id']]['KDMA'] = kdmaValue;
+                            obj['KDMA'] = kdmaValue;
+                        }
+                    } else if (key !== 'alignmentData' && key !== 'lowAlignmentData') {
+                        // top level pages with timing
+                        const time_key = key + ' time (s)';
+                        if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
+                            if (!headers.includes(time_key)) {
+                                headers.push(time_key);
+                            }
 
-                    formatted[page['_id']][time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
-                    obj[time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
-                    if (Object.keys(page[key]).includes('questions')) {
-                        for (const q of Object.keys(page[key]['questions'])) {
-                            if (Object.keys(page[key]['questions'][q]).includes('response')) {
-                                if (!headers.includes(q)) {
-                                    headers.push(q);
-                                }
-                                formatted[page['_id']][q] = page[key]['questions'][q]['response'];
-                                obj[getQuestionText(q, scenarioName, textBasedConfigs)] = page[key]['questions'][q]['response'];
+                            formatted[page['_id']][time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
+                            obj[time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
+
+                            if (page[key] && page[key].questions) {
+                                Object.keys(page[key].questions).forEach(q => {
+                                    if (page[key].questions[q] && page[key].questions[q].response !== undefined) {
+                                        if (!headers.includes(q)) {
+                                            headers.push(q);
+                                        }
+                                        formatted[page['_id']][q] = page[key].questions[q].response;
+                                        obj[getQuestionText(q, scenarioName, textBasedConfigs)] = page[key].questions[q].response;
+                                    }
+                                });
                             }
                         }
                     }
-                }
+                });
             }
             excel.push(obj);
         }
+
         setOrganizedData(formatted);
         setHeaders(headers);
         setExcelData(excel);
-    }, [data, scenarioName]);
+    }, [data, scenarioName, textBasedConfigs]);
 
     const exportToExcel = async () => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -414,10 +426,6 @@ export default function TextBasedResultsPage() {
             setResults(null);
         }
     }, [scenarioChosen, responsesByScenario]);
-
-    const cleanTitle = (title) => {
-        return title.replace('probe', '').trim();
-    };
 
     const TextResultsSection = () => {
         // display the results for the chosen scenario
