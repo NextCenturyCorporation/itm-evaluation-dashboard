@@ -115,7 +115,7 @@ function shortenAnswer(answer) {
 }
 
 const cleanTitle = (title) => {
-    return title.replace(/^probe\s*/i, '').trim();
+    return title.replace(/probe\s*/, '').trim();
 };
 
 function SingleGraph({ data, pageName }) {
@@ -192,13 +192,12 @@ function getQuestionText(qkey, scenario, textBasedConfigs) {
     for (const page of pagesForScenario) {
         for (const res of page['elements']) {
             if (res['name'] === qkey && res['choices']) {
-                qkey = cleanTitle(qkey)
                 // set title name
-                return res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey);
+                return cleanTitle(res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey));
             }
         }
     }
-    return qkey;
+    return cleanTitle(qkey);
 }
 
 
