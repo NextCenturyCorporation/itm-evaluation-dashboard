@@ -220,7 +220,8 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
             // Check if page is defined before using Object.keys
             if (page) {
                 Object.keys(page).forEach(key => {
-                    if (key === 'highAlignmentData') {
+                    if (key === 'alignmentData') {
+                        console.log('hit')
                         if (!headers.includes('KDMA')) {
                             headers.push('KDMA')
                         }
@@ -229,7 +230,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                             formatted[page['_id']]['KDMA'] = kdmaValue;
                             obj['KDMA'] = kdmaValue;
                         }
-                    } else if (key !== 'alignmentData' && key !== 'lowAlignmentData') {
+                    } else if (key !== 'lowAlignmentData') {
                         // top level pages with timing
                         const time_key = key + ' time (s)';
                         if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
@@ -321,11 +322,11 @@ export default function TextBasedResultsPage() {
     React.useEffect(() => {
         if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
             const options = evalIdOptionsRaw.getEvalIdsForAllScenarioResults
-            .filter(result => result && result._id && result._id.evalNumber !== undefined && result._id.evalName)
-            .map(result => ({
-                value: result._id.evalNumber,
-                label: result._id.evalName
-            }));
+                .filter(result => result && result._id && result._id.evalNumber !== undefined && result._id.evalName)
+                .map(result => ({
+                    value: result._id.evalNumber,
+                    label: result._id.evalName
+                }));
             setEvalOptions(options);
         }
     }, [evalIdOptionsRaw]);
@@ -354,7 +355,7 @@ export default function TextBasedResultsPage() {
                     });
                 });
             });
-            
+
 
             // Process the results
             for (const result of data.getAllScenarioResultsByEval) {
@@ -449,16 +450,16 @@ export default function TextBasedResultsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {Object.keys(questionAnswerSets[qkey]).map((answer) => {
-                                    if (answer !== 'total' && answer !== 'question') {
-                                        return (<tr key={qkey + '_' + answer}>
+                                {Object.keys(questionAnswerSets[qkey])
+                                    .filter(answer => answer !== 'total' && answer !== 'question')
+                                    .map((answer) => (
+                                        <tr key={qkey + '_' + answer}>
                                             <td className="answer-column">{shortenAnswer(answer)}</td>
                                             <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
                                             <td className="count-column"><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
-                                        </tr>);
-                                    }
-                                    return <></>;
-                                })}
+                                        </tr>
+                                    ))
+                                }
                             </tbody>
                         </table>
                     </div>);
