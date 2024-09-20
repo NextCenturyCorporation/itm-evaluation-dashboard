@@ -221,14 +221,17 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
             if (page) {
                 Object.keys(page).forEach(key => {
                     if (key === 'alignmentData') {
-                        console.log('hit')
-                        if (!headers.includes('KDMA')) {
-                            headers.push('KDMA')
+                        if (!headers.includes('Alignment Data')) {
+                            headers.push('Alignment Data')
                         }
-                        if (page[key] && page[key]['kdma_values'] && page[key]['kdma_values'][0]) {
-                            const kdmaValue = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
-                            formatted[page['_id']]['KDMA'] = kdmaValue;
-                            obj['KDMA'] = kdmaValue;
+                        if (page[key]) {
+                            let temp = ''
+                            for (const alignment of page[key]) {
+                                temp += `${alignment.target}: ${alignment.score},`
+                                temp += '\n'
+                            }
+                            formatted[page['_id']]['Alignment Data'] = temp;
+                            obj['Alignment Data'] = temp;
                         }
                     } else if (key !== 'lowAlignmentData') {
                         // top level pages with timing
