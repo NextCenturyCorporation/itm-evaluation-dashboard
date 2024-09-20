@@ -80,6 +80,28 @@ export function RQ2223() {
 
                 }
             }
+            // sort by TA2, then TA1, then scenario, then attribute, then trial
+            allObjs.sort((a, b) => {
+                // Compare TA2
+                if (a.TA2_Name < b.TA2_Name) return -1;
+                if (a.TA2_Name > b.TA2_Name) return 1;
+
+                // If TA2 is equal, compare TA1
+                if (a.TA1_Name < b.TA1_Name) return -1;
+                if (a.TA1_Name > b.TA1_Name) return 1;
+
+                // If TA1 is equal, compare Scenario
+                if (a.Scenario < b.Scenario) return -1;
+                if (a.Scenario > b.Scenario) return 1;
+
+                // if Scenario is equal, compare attribute
+                if (a.Attribute < b.Attribute) return -1;
+                if (a.Attribute > b.Attribute) return 1;
+
+                // If attribute is equal, compare Trial_ID
+                return a.Trial_ID - b.Trial_ID;
+            });
+
             setFormattedData(allObjs);
         }
     }, [data]);

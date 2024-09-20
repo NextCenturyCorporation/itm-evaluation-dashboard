@@ -34,6 +34,15 @@ const delEnvMapping = {
     "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
 }
 
+const RATING_MAP = {
+    "Strongly disagree": 1,
+    "Disagree": 2,
+    "Neither agree nor disagree": 3,
+    "Agree": 4,
+    "Strongly agree": 5,
+    '-': '-'
+};
+
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -159,7 +168,8 @@ export function RQ13() {
                         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
                         entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
                         entryObj['Alignment score (Delegator|Observed_ADM (target))'] = '-';
-                        entryObj['Trust_Rating'] = '-';
+
+                        entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
                         if (t == 'comparison') {
                             const adms = page['pageName'].split(' vs ');
                             const alignedAdm = adms[1];
@@ -170,14 +180,31 @@ export function RQ13() {
 
                             entryObj['Delegation preference (A/B)'] = qAB == '-' ? '-' : (qAB == alignedAdm ? 'A' : 'B');
                             entryObj['Delegation preference (A/M)'] = qAM == '-' ? '-' : (qAM == alignedAdm ? 'A' : 'M');
+                            // need to back-populate previous rows with which was chosen
+                            for (let i = 0; i < 3; i++) {
+                                switch (allObjs[allObjs.length - 1 - i]['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                                    case 'aligned':
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] == 'A' ? 'y' : 'n';
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] == 'A' ? 'y' : 'n';
+                                        break
+                                    case 'baseline':
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] == 'B' ? 'y' : 'n';
+                                        break
+                                    case 'misaligned':
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] == 'M' ? 'y' : 'n';
+                                        break
+                                    default:
+                                        break
+                                }
+                            }
                         }
                         else {
                             entryObj['Delegation preference (A/B)'] = '-';
                             entryObj['Delegation preference (A/M)'] = '-';
                         }
-                        entryObj['Trustworthy_Rating'] = '-';
-                        entryObj['Agreement_Rating'] = '-';
-                        entryObj['SRAlign_Rating'] = '-';
+                        entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': This medic is trustworthy']?.['response'] ?? '-' : '-'];
+                        entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decisions that this medic made?']?.['response'] ?? '-' : '-'];
+                        entryObj['SRAlign_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': The way this medic makes medical decisions is how I make decisions']?.['response'] ?? '-' : '-'];
                         allObjs.push(entryObj);
                     }
                 }
