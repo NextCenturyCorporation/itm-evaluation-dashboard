@@ -2,7 +2,11 @@ import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
-
+import { RQDefinitionTable } from "../variables/rq-variables";
+import CloseIcon from '@material-ui/icons/Close';
+import { Modal } from "@mui/material";
+import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
+import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
 
 
 const HEADERS = ['TA1_Name', 'TA2_Name', 'Attribute', 'Scenario', 'Group_Target', 'Participant_ID', 'Decision_Maker', 'Alignment score (Individual|Group_target) or (ADM|group_target)']
@@ -11,6 +15,7 @@ const HEADERS = ['TA1_Name', 'TA2_Name', 'Attribute', 'Scenario', 'Group_Target'
 export function RQ21() {
 
     const [formattedData, setFormattedData] = React.useState([{ 'TA1_Name': '-', 'TA2_Name': '-', 'Attribute': '-', 'Scenario': '-', 'Group_Target': '-', 'Participant_ID': '-', 'Decision_Maker': '-', 'Alignment score (Individual|Group_target) or (ADM|group_target)': '-' }]);
+    const [showDefinitions, setShowDefinitions] = React.useState(false);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
@@ -33,11 +38,19 @@ export function RQ21() {
         FileSaver.saveAs(data, 'RQ-22_and_RQ-23 data' + fileExtension);
     };
 
+    const openModal = () => {
+        setShowDefinitions(true);
+    }
+
+    const closeModal = () => {
+        setShowDefinitions(false);
+    }
 
     return (<>
         <section className='tableHeader'>
             <div className="option-section">
                 <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+                <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
         <div className='resultTableSection'>
@@ -64,5 +77,11 @@ export function RQ21() {
                 </tbody>
             </table>
         </div>
+        <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
+            <div className='modal-body'>
+                <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
+                <RQDefinitionTable downloadName={'Definitions_RQ21.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+            </div>
+        </Modal>
     </>);
 }
