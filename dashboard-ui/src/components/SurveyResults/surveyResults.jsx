@@ -42,6 +42,56 @@ function getQuestionAnswerSets(pageName, config) {
         }
         return surveyJson;
     }
+    else if (pageName.includes('vs') && config.version == 4) {
+        // comparison pages are created during runtime in version 4, so we need to handle them differently
+        const surveyJson = { elements: [] };
+        const bname = pageName.split(' vs ')[0].trim();
+        const aname = pageName.split(' vs ')[1].trim();
+        const mname = pageName.split(' vs ')[2].trim();
+        if (aname != '' && mname != '') {
+            surveyJson.elements.push({
+                name: aname + " vs " + bname + ": Forced Choice",
+                title: aname + " vs " + bname + ": Forced Choice",
+                type: "radiogroup",
+                choices: [aname, bname]
+            });
+            surveyJson.elements.push({
+                name: aname + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                title: "Delegation Confidence",
+                type: "radiogroup",
+                choices: ["Not confident at all", "Not confident", "Somewhat confident", "Confident", "Completely confident"]
+            });
+            surveyJson.elements.push({
+                name: aname + " vs " + mname + ": Forced Choice",
+                title: aname + " vs " + mname + ": Forced Choice",
+                type: "radiogroup",
+                choices: [aname, mname]
+            });
+            surveyJson.elements.push({
+                name: aname + " vs " + mname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                title: "Delegation Confidence",
+                type: "radiogroup",
+                choices: ["Not confident at all", "Not confident", "Somewhat confident", "Confident", "Completely confident"]
+            });
+        }
+        else {
+            const secondName = mname == '' ? aname : mname;
+            surveyJson.elements.push({
+                name: secondName + " vs " + bname + ": Forced Choice",
+                title: secondName + " vs " + bname + ": Forced Choice",
+                type: "radiogroup",
+                choices: [secondName, bname]
+            });
+            surveyJson.elements.push({
+                name: secondName + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                title: "Delegation Confidence",
+                type: "radiogroup",
+                choices: ["Not confident at all", "Not confident", "Somewhat confident", "Confident", "Completely confident"]
+            });
+        }
+
+        return surveyJson;
+    }
     return {};
 }
 
@@ -103,7 +153,7 @@ function SingleGraph({ data, version }) {
             else if (version === 3)
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v3.0']);
             else if (version === 4)
-                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0'], data[0].admAlignment);
 
             const curResults = [];
             for (const entry of data) {
@@ -147,7 +197,7 @@ function SingleGraph({ data, version }) {
 
 
     return (<div>
-        <h3 className="page-name">{pageName}</h3>
+        <h3 className="page-name">{pageName.split(':')[0].slice(-3) == 'vs ' ? pageName.replace(' vs :', ':') : pageName.replace('vs  vs', 'vs')}</h3>
         <div id={"viz_" + pageName} />
     </div>);
 }
