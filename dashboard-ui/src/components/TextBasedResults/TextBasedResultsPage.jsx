@@ -221,6 +221,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
             if (page) {
                 Object.keys(page).forEach(key => {
                     if (key === 'alignmentData') {
+                        console.log('hit')
                         if (!headers.includes('Alignment Data')) {
                             headers.push('Alignment Data')
                         }
@@ -233,7 +234,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                             formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
                             obj['Alignment Data'] = temp;
                         }
-                    } else if (key !== 'lowAlignmentData') {
+                    } else if (key !== 'lowAlignmentData' && key !== 'highAlignmentData') {
                         // top level pages with timing
                         const time_key = key + ' time (s)';
                         if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
@@ -258,6 +259,12 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                         }
                     }
                 });
+                if (page['evalNumber'] == 3) {
+                    formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                    let temp = `${page['highAlignmentData']['alignment_target_id']}: ${page['highAlignmentData']['score']},\n`
+                    temp +=  `${page['lowAlignmentData']['alignment_target_id']}: ${page['lowAlignmentData']['score']}`
+                    obj['Alignment Data'] = temp;
+                }
             }
             excel.push(obj);
         }
