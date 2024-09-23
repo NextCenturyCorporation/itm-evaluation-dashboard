@@ -362,8 +362,8 @@ export default function TextBasedResultsPage() {
 
             // Process the results
             for (const result of data.getAllScenarioResultsByEval) {
-                if (result.scenario_id) {
-                    uniqueScenarios.add(result.scenario_id);
+                if (result.scenario_id || result.title) {
+                    uniqueScenarios.add(result.scenario_id ? result.scenario_id : result.title);
                 }
 
                 let scenario = result.scenario_id;
