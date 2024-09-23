@@ -153,7 +153,7 @@ function SingleGraph({ data, version }) {
             else if (version === 3)
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v3.0']);
             else if (version === 4)
-                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0'], data[0].admAlignment);
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
 
             const curResults = [];
             for (const entry of data) {
