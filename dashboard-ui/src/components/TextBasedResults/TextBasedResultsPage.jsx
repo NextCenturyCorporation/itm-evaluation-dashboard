@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import 'survey-core/defaultV2.min.css';
 import './TextResults.css';
 import gql from "graphql-tag";
@@ -314,6 +314,23 @@ export default function TextBasedResultsPage() {
     const [evalOptions, setEvalOptions] = React.useState([]);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const filteredTextBasedConfigs = useMemo(() => {
+        return Object.fromEntries(
+            Object.entries(textBasedConfigs)
+                .filter(([key, value]) => value['eval'] !== 'mre')
+                .map(([key, value]) => {
+                    if (value['eval'] === 'mre-eval') {
+                        let newKey = key.replace(/ Scenario$/, '');
+                        newKey = newKey.replace(/\w+/g, function(word) {
+                            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                        });
+                        newKey = newKey.replace(/Soartech/, 'SoarTech');
+                        return [newKey, value];
+                    }
+                    return [key, value];
+                })
+        );
+    }, [textBasedConfigs]);
 
     const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
         // only pulls from network, never cached
@@ -342,9 +359,9 @@ export default function TextBasedResultsPage() {
 
         if (data?.getAllScenarioResultsByEval) {
             // Initialize the structure for each scenario
-            Object.keys(textBasedConfigs).forEach(scenario => {
+            Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
-                textBasedConfigs[scenario].pages.forEach(page => {
+                filteredTextBasedConfigs[scenario].pages.forEach(page => {
                     page.elements.forEach(element => {
                         if (element.choices) {
                             tmpResponses[scenario][element.name] = {
@@ -362,12 +379,12 @@ export default function TextBasedResultsPage() {
 
             // Process the results
             for (const result of data.getAllScenarioResultsByEval) {
-                if (result.scenario_id || result.title) {
-                    uniqueScenarios.add(result.scenario_id ? result.scenario_id : result.title);
+                const scenario = result.scenario_id || result.title;
+                if (scenario) {
+                    uniqueScenarios.add(scenario);
                 }
 
-                let scenario = result.scenario_id;
-                if (scenario && textBasedConfigs[scenario]) {
+                if (scenario && filteredTextBasedConfigs[scenario]) {
                     if (!participants[scenario]) {
                         participants[scenario] = [];
                     }
@@ -402,6 +419,9 @@ export default function TextBasedResultsPage() {
                         }
                     }
                 } else {
+                    console.log(scenario)
+                    console.log(filteredTextBasedConfigs)
+                    console.log(filteredTextBasedConfigs[scenario])
                     console.error(`No configuration found for scenario: ${scenario}`);
                 }
             }
@@ -409,7 +429,7 @@ export default function TextBasedResultsPage() {
             setParticipantBased(participants);
             setScenarioOptions(Array.from(uniqueScenarios));
         }
-    }, [data, textBasedConfigs]);
+    }, [data, filteredTextBasedConfigs]);
 
     React.useEffect(() => {
         // only display results concerning the chosen scenario
@@ -537,7 +557,7 @@ export default function TextBasedResultsPage() {
                     <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
                 </ToggleButtonGroup>
             </div>
-            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={textBasedConfigs} /> : <ChartedResultsSection />}
+            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} /> : <ChartedResultsSection />}
         </div>}
     </div>);
 }
