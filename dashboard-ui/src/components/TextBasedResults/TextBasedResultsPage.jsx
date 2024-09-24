@@ -260,8 +260,8 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                 });
                 if (page['evalNumber'] == 3) {
                     formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
-                    let temp = `${page['highAlignmentData']['alignment_target_id']}: ${page['highAlignmentData']['score']},\n`
-                    temp +=  `${page['lowAlignmentData']['alignment_target_id']}: ${page['lowAlignmentData']['score']}`
+                    let temp = `${page.highAlignmentData?.alignment_target_id}: ${page.highAlignmentData?.score},\n`
+                    temp +=  `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
                     obj['Alignment Data'] = temp;
                 }
             }
