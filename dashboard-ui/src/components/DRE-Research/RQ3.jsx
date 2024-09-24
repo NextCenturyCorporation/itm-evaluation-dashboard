@@ -2,7 +2,7 @@ import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
 
 export function RQ3() {
-    return (<>
+    return (<div className="researchQuestion">
         <div className="section-container">
             <h2>RQ3: Does alignment affect delegation preference for ADMs?</h2>
             <p className='indented'>
@@ -60,5 +60,5 @@ export function RQ3() {
                 <li>Trust_Rating</li>
             </ul>
         </div>
-    </>);
+    </div>);
 }
