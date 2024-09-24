@@ -108,7 +108,8 @@ function shortenAnswer(answer) {
                 return 'Hold until info on embassy capabilities';
             }
             if (answer.toLowerCase().includes('because')) {
-                return answer.substring(answer.toLowerCase().indexOf('because'));
+                let substring = answer.substring(answer.toLowerCase().indexOf('because'));
+                return substring.charAt(0).toUpperCase() + substring.slice(1);
             }
             return answer;
     }
@@ -131,7 +132,9 @@ function SingleGraph({ data, pageName }) {
                     name: pageName,
                     title: data['question'],
                     type: "radiogroup",
-                    choices: Object.keys(data).filter((x) => x !== 'total' && x !== 'question').map((x) => shortenAnswer(x))
+                    choices: Object.keys(data)
+                        .filter((x) => x !== 'total' && x !== 'question' && x !== 'undefined')
+                        .map((x) => shortenAnswer(x))
                 }]
             };
             const survey = new Model(surveyJson);
@@ -261,7 +264,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                 if (page['evalNumber'] == 3) {
                     formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
                     let temp = `${page.highAlignmentData?.alignment_target_id}: ${page.highAlignmentData?.score},\n`
-                    temp +=  `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
+                    temp += `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
                     obj['Alignment Data'] = temp;
                 }
             }
@@ -327,7 +330,7 @@ export default function TextBasedResultsPage() {
                 .map(([key, value]) => {
                     if (value['eval'] === 'mre-eval') {
                         let newKey = key.replace(/ Scenario$/, '');
-                        newKey = newKey.replace(/\w+/g, function(word) {
+                        newKey = newKey.replace(/\w+/g, function (word) {
                             return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
                         });
                         newKey = newKey.replace(/Soartech/, 'SoarTech');
@@ -398,8 +401,8 @@ export default function TextBasedResultsPage() {
 
                     let qs = []; // Array to keep track of questions for "After inject" logic
                     for (const k of Object.keys(result)) {
-                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) { 
-                            continue; 
+                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
+                            continue;
                         }
 
                         for (const q of Object.keys(result[k].questions)) {
@@ -479,7 +482,7 @@ export default function TextBasedResultsPage() {
                             </thead>
                             <tbody>
                                 {Object.keys(questionAnswerSets[qkey])
-                                    .filter(answer => answer !== 'total' && answer !== 'question')
+                                    .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined')
                                     .map((answer) => (
                                         <tr key={qkey + '_' + answer}>
                                             <td className="answer-column">{shortenAnswer(answer)}</td>
