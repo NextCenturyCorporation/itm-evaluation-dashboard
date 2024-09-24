@@ -438,6 +438,7 @@ export default function TextBasedResultsPage() {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
                 if (Object.keys(responsesByScenario[scenarioChosen][k]).length > 0) {
+                    console.log(responsesByScenario[scenarioChosen])
                     setResults(responsesByScenario[scenarioChosen]);
                     found = true;
                     break;
@@ -452,7 +453,6 @@ export default function TextBasedResultsPage() {
     }, [scenarioChosen, responsesByScenario]);
 
     const TextResultsSection = () => {
-        // display the results for the chosen scenario
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey, ind) => {
@@ -462,15 +462,9 @@ export default function TextBasedResultsPage() {
                         <table className="itm-table text-result-table">
                             <thead>
                                 <tr>
-                                    <th className="answer-column">
-                                        Answer
-                                    </th>
-                                    <th className="count-column">
-                                        Count
-                                    </th>
-                                    <th className="count-column">
-                                        Percentage
-                                    </th>
+                                    <th className="answer-column">Answer</th>
+                                    <th className="count-column">Count</th>
+                                    <th className="count-column">Percentage</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -480,7 +474,13 @@ export default function TextBasedResultsPage() {
                                         <tr key={qkey + '_' + answer}>
                                             <td className="answer-column">{shortenAnswer(answer)}</td>
                                             <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
-                                            <td className="count-column"><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
+                                            <td className="count-column">
+                                                <b>
+                                                    {questionAnswerSets[qkey]['total'] > 0 
+                                                        ? `${Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%`
+                                                        : '-'}
+                                                </b>
+                                            </td>
                                         </tr>
                                     ))
                                 }
