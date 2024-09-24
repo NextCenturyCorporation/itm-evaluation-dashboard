@@ -399,7 +399,6 @@ export default function TextBasedResultsPage() {
                     }
                     participants[scenario].push(result);
 
-                    let qs = []; // Array to keep track of questions for "After inject" logic
                     for (const k of Object.keys(result)) {
                         if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
                             continue;
@@ -419,12 +418,6 @@ export default function TextBasedResultsPage() {
                                     }
                                     tmpResponses[scenario][q].total += 1;
 
-                                    // "After inject" logic
-                                    if (qs.includes(tmpResponses[scenario][q].question)) {
-                                        tmpResponses[scenario][q].question = 'After inject, ' + tmpResponses[scenario][q].question;
-                                        qs = [];
-                                    }
-                                    qs.push(tmpResponses[scenario][q].question);
                                 }
                             }
                         }
