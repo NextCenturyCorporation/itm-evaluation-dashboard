@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import 'survey-core/defaultV2.min.css';
 import './TextResults.css';
 import gql from "graphql-tag";
@@ -9,10 +9,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { VisualizationPanel } from 'survey-analytics';
 import { Model } from 'survey-core';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
-import { scenarioMappings } from '../TextBasedScenarios/TextBasedScenariosPage';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import Select from 'react-select';
+import { useSelector } from 'react-redux';
 
 let evalOptions = [];
 const get_eval_name_numbers = gql`
@@ -23,19 +23,7 @@ const get_eval_name_numbers = gql`
 const GET_SCENARIO_RESULTS_BY_EVAL = gql`
     query getAllScenarioResultsByEval($evalNumber: Float!){
         getAllScenarioResultsByEval(evalNumber: $evalNumber)
-  }`;    
-
-const SCENARIO_OPTIONS = [
-    "Adept Urban",
-    "Adept Submarine",
-    "Adept Desert",
-    "Adept Jungle",
-    "SoarTech Urban",
-    "SoarTech Submarine",
-    "SoarTech Desert",
-    "SoarTech Jungle"
-];
-
+  }`;
 
 function shortenAnswer(answer) {
     // shortens an answer so the whole thing is visible and understandable without taking up too much screen real estate
@@ -119,9 +107,16 @@ function shortenAnswer(answer) {
             if (answer.includes("until you get updated info on the capabilities of the embassy")) {
                 return 'Hold until info on embassy capabilities';
             }
+            if (answer.toLowerCase().includes('because')) {
+                return answer.substring(answer.toLowerCase().indexOf('because'));
+            }
             return answer;
     }
 }
+
+const cleanTitle = (title) => {
+    return title.replace(/probe\s*/, '').trim();
+};
 
 function SingleGraph({ data, pageName }) {
     const [survey, setSurvey] = React.useState(null);
@@ -156,10 +151,10 @@ function SingleGraph({ data, pageName }) {
 
     const vizPanelOptions = {
         allowHideQuestions: false,
-        defaultChartType: "bar",
+        defaultChartType: "vbar",
         labelTruncateLength: -1,
         showPercentages: true,
-        allowDragDrop: false
+        allowDragDrop: false,
     }
 
     if (!vizPanel && !!survey) {
@@ -185,81 +180,99 @@ function SingleGraph({ data, pageName }) {
 
     return (
         <div className='graph-section'>
-            <h3 className='question-header'>{pageName} (N={data['total']})</h3>
+            <h3 className='question-header'>{cleanTitle(pageName)} (N={data['total']})</h3>
             <div id={"viz_" + pageName} className='full-width-graph' />
         </div>
     );
 }
 
 
-function getQuestionText(qkey, scenario) {
-    const pagesForScenario = scenarioMappings[scenario]['pages'];
+function getQuestionText(qkey, scenario, textBasedConfigs) {
+    const pagesForScenario = textBasedConfigs[scenario]['pages'];
     for (const page of pagesForScenario) {
         for (const res of page['elements']) {
             if (res['name'] === qkey && res['choices']) {
                 // set title name
-                return res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey);
+                return cleanTitle(res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey));
             }
         }
     }
-    return qkey;
+    return cleanTitle(qkey);
 }
 
 
-function ParticipantView({ data, scenarioName }) {
+function ParticipantView({ data, scenarioName, textBasedConfigs }) {
     const [organizedData, setOrganizedData] = React.useState(null);
-    const [excelData, setExcelData] = React.useState(null); 
+    const [excelData, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
+
     React.useEffect(() => {
         const formatted = {};
         const headers = ['Participant ID'];
         const excel = [];
+
         for (const page of data) {
             const obj = {
                 'Participant ID': page['participantID']
             };
             formatted[page['_id']] = { ...obj };
 
-            for (const key of Object.keys(  )) {
-                if (key === 'highAlignmentData') {
-                    if (!headers.includes('KDMA')) {
-                        headers.push('KDMA')
-                    }
-                    formatted[page['_id']]['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
-                    obj['KDMA'] = page[key]['kdma_values'][0]['kdma'] + ' - ' + page[key]['kdma_values'][0]['value'].toFixed(2).toString();
-                    continue;
-                }
-                if (key === 'alignmentData' || key === 'lowAlignmentData') {
-                    continue;
-                }
-                // top level pages with timing
-                const time_key = key + ' time (s)';
-                if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
-                    if (!headers.includes(time_key)) {
-                        headers.push(time_key);
-                    }
+            // Check if page is defined before using Object.keys
+            if (page) {
+                Object.keys(page).forEach(key => {
+                    if (key === 'alignmentData') {
+                        console.log('hit')
+                        if (!headers.includes('Alignment Data')) {
+                            headers.push('Alignment Data')
+                        }
+                        if (page[key]) {
+                            let temp = ''
+                            for (const alignment of page[key]) {
+                                temp += `${alignment.target}: ${alignment.score},`
+                                temp += '\n'
+                            }
+                            formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                            obj['Alignment Data'] = temp;
+                        }
+                    } else if (key !== 'lowAlignmentData' && key !== 'highAlignmentData') {
+                        // top level pages with timing
+                        const time_key = key + ' time (s)';
+                        if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
+                            if (!headers.includes(time_key)) {
+                                headers.push(time_key);
+                            }
 
-                    formatted[page['_id']][time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
-                    obj[time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
-                    if (Object.keys(page[key]).includes('questions')) {
-                        for (const q of Object.keys(page[key]['questions'])) {
-                            if (Object.keys(page[key]['questions'][q]).includes('response')) {
-                                if (!headers.includes(q)) {
-                                    headers.push(q);
-                                }
-                                formatted[page['_id']][q] = page[key]['questions'][q]['response'];
-                                obj[getQuestionText(q, scenarioName)] = page[key]['questions'][q]['response'];
+                            formatted[page['_id']][time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
+                            obj[time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
+
+                            if (page[key] && page[key].questions) {
+                                Object.keys(page[key].questions).forEach(q => {
+                                    if (page[key].questions[q] && page[key].questions[q].response !== undefined) {
+                                        if (!headers.includes(q)) {
+                                            headers.push(q);
+                                        }
+                                        formatted[page['_id']][q] = page[key].questions[q].response;
+                                        obj[getQuestionText(q, scenarioName, textBasedConfigs)] = page[key].questions[q].response;
+                                    }
+                                });
                             }
                         }
                     }
+                });
+                if (page['evalNumber'] == 3) {
+                    formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                    let temp = `${page['highAlignmentData']['alignment_target_id']}: ${page['highAlignmentData']['score']},\n`
+                    temp +=  `${page['lowAlignmentData']['alignment_target_id']}: ${page['lowAlignmentData']['score']}`
+                    obj['Alignment Data'] = temp;
                 }
             }
             excel.push(obj);
         }
+
         setOrganizedData(formatted);
         setHeaders(headers);
         setExcelData(excel);
-    }, [data, scenarioName]);
+    }, [data, scenarioName, textBasedConfigs]);
 
     const exportToExcel = async () => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -278,7 +291,7 @@ function ParticipantView({ data, scenarioName }) {
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
-                            return <th key={scenarioName + "_" + key}>{getQuestionText(key, scenarioName)}</th>
+                            return <th key={scenarioName + "_" + key}>{getQuestionText(key, scenarioName, textBasedConfigs)}</th>
                         })}
                     </tr>
                 </thead>
@@ -299,122 +312,131 @@ function ParticipantView({ data, scenarioName }) {
 
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [scenarioChosen, setScenario] = React.useState(SCENARIO_OPTIONS[0]);
+    const [scenarioChosen, setScenario] = React.useState(null);
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(3);
+    const [selectedEval, setSelectedEval] = React.useState(null);
+    const [evalOptions, setEvalOptions] = React.useState([]);
+    const [scenarioOptions, setScenarioOptions] = React.useState([]);
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const filteredTextBasedConfigs = useMemo(() => {
+        return Object.fromEntries(
+            Object.entries(textBasedConfigs)
+                .filter(([key, value]) => value['eval'] !== 'mre')
+                .map(([key, value]) => {
+                    if (value['eval'] === 'mre-eval') {
+                        let newKey = key.replace(/ Scenario$/, '');
+                        newKey = newKey.replace(/\w+/g, function(word) {
+                            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                        });
+                        newKey = newKey.replace(/Soartech/, 'SoarTech');
+                        return [newKey, value];
+                    }
+                    return [key, value];
+                })
+        );
+    }, [textBasedConfigs]);
 
     const { loading, error, data } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL, {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
-        variables: {"evalNumber": selectedEval}
+        variables: { "evalNumber": selectedEval },
+        skip: !selectedEval
     });
 
     React.useEffect(() => {
-        evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) { 
-            for (const result of evalIdOptionsRaw.getEvalIdsForAllScenarioResults) {
-                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
-
-            }
-        } 
-    }, [evalIdOptionsRaw, evalOptions]);
+        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
+            const options = evalIdOptionsRaw.getEvalIdsForAllScenarioResults
+                .filter(result => result && result._id && result._id.evalNumber !== undefined && result._id.evalName)
+                .map(result => ({
+                    value: result._id.evalNumber,
+                    label: result._id.evalName
+                }));
+            setEvalOptions(options);
+        }
+    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         // populate responsesByScenario with gql data
         const tmpResponses = {};
         const participants = {};
-        for (let opt of SCENARIO_OPTIONS) {
-            tmpResponses[opt] = {};
-            participants[opt] = [];
-        }
+        const uniqueScenarios = new Set();
+
         if (data?.getAllScenarioResultsByEval) {
+            // Initialize the structure for each scenario
+            Object.keys(filteredTextBasedConfigs).forEach(scenario => {
+                tmpResponses[scenario] = {};
+                filteredTextBasedConfigs[scenario].pages.forEach(page => {
+                    page.elements.forEach(element => {
+                        if (element.choices) {
+                            tmpResponses[scenario][element.name] = {
+                                question: element.title,
+                                total: 0
+                            };
+                            element.choices.forEach(choice => {
+                                tmpResponses[scenario][element.name][choice.text] = 0;
+                            });
+                        }
+                    });
+                });
+            });
+
+
+            // Process the results
             for (const result of data.getAllScenarioResultsByEval) {
-                let scenario = null;
-
-                for (const k of Object.keys(result)) {
-                    // find matching scenario for this set
-                    scenario = SCENARIO_OPTIONS.filter((x) => k.toLowerCase().includes(x.toLowerCase()));
-                    if (scenario.length > 0) {
-                        scenario = scenario[0];
-                        break;
-                    }
-                    else {
-                        scenario = null;
-                    }
-                }
+                const scenario = result.scenario_id || result.title;
                 if (scenario) {
-                    participants[scenario].push(result);
-                    // once the scenario is found, start populating object with data
-                    // go through each item in the result object
-                    const pagesForScenario = scenarioMappings[result['title']]['pages'];
-                    let qs = [];
-                    for (const k of Object.keys(result)) {
-                        // if it is an object and has a questions array...
-                        if (typeof (result[k]) === 'object' && result[k]?.questions) {
-                            // go through the questions object and find all that has responses
-                            for (const q of Object.keys(result[k].questions)) {
-                                // start by getting *all* possible responses to the question
-                                for (const page of pagesForScenario) {
-                                    for (const res of page['elements']) {
-                                        if (res['name'] === q && res['choices']) {
-                                            for (const choice of res['choices']) {
-                                                if (!Object.keys(tmpResponses[scenario]).includes(q)) {
-                                                    tmpResponses[scenario][q] = {};
-                                                }
-                                                if (!Object.keys(tmpResponses[scenario][q]).includes(choice)) {
-                                                    tmpResponses[scenario][q][choice] = 0;
-                                                }
-                                                // set title name
-                                                tmpResponses[scenario][q]['question'] = res['title'];
-                                            }
-                                        }
-                                    }
+                    uniqueScenarios.add(scenario);
+                }
 
-                                }
-                                if (result[k].questions[q].response) {
-                                    const answer = result[k].questions[q].response;
-                                    // for each response found, log the response and the key
-                                    if (Object.keys(tmpResponses[scenario]).includes(q)) {
-                                        if (Object.keys(tmpResponses[scenario][q]).includes(answer)) {
-                                            tmpResponses[scenario][q][answer] += 1;
-                                        }
-                                        else {
-                                            tmpResponses[scenario][q][answer] = 1;
-                                        }
-                                    }
-                                    else {
-                                        tmpResponses[scenario][q] = {};
+                if (scenario && filteredTextBasedConfigs[scenario]) {
+                    if (!participants[scenario]) {
+                        participants[scenario] = [];
+                    }
+                    participants[scenario].push(result);
+
+                    let qs = []; // Array to keep track of questions for "After inject" logic
+                    for (const k of Object.keys(result)) {
+                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) { continue; }
+
+                        for (const q of Object.keys(result[k].questions)) {
+                            if (result[k].questions[q].response) {
+                                const answer = typeof result[k].questions[q].response === 'object'
+                                    ? JSON.stringify(result[k].questions[q].response)
+                                    : result[k].questions[q].response;
+
+                                if (tmpResponses[scenario][q]) {
+                                    if (tmpResponses[scenario][q][answer] !== undefined) {
+                                        tmpResponses[scenario][q][answer] += 1;
+                                    } else {
                                         tmpResponses[scenario][q][answer] = 1;
                                     }
-                                    if (Object.keys(tmpResponses[scenario][q]).includes('total')) {
-                                        tmpResponses[scenario][q]['total'] += 1;
-                                    }
-                                    else {
-                                        tmpResponses[scenario][q]['total'] = 1;
-                                    }
+                                    tmpResponses[scenario][q].total += 1;
 
-                                }
-                                if (Object.keys(tmpResponses[scenario]).includes(q) && Object.keys(tmpResponses[scenario][q]).includes('question')) {
-                                    // if duplicate questions are present, precede with "After inject"
-                                    if (qs.includes(tmpResponses[scenario][q]['question'])) {
-                                        tmpResponses[scenario][q]['question'] = 'After inject, ' + tmpResponses[scenario][q]['question'];
+                                    // "After inject" logic
+                                    if (qs.includes(tmpResponses[scenario][q].question)) {
+                                        tmpResponses[scenario][q].question = 'After inject, ' + tmpResponses[scenario][q].question;
                                         qs = [];
                                     }
-                                    qs.push(tmpResponses[scenario][q]['question']);
+                                    qs.push(tmpResponses[scenario][q].question);
                                 }
                             }
                         }
-
                     }
+                } else {
+                    console.log(scenario)
+                    console.log(filteredTextBasedConfigs)
+                    console.log(filteredTextBasedConfigs[scenario])
+                    console.error(`No configuration found for scenario: ${scenario}`);
                 }
             }
             setByScenario(tmpResponses);
             setParticipantBased(participants);
+            setScenarioOptions(Array.from(uniqueScenarios));
         }
-    }, [data]);
+    }, [data, filteredTextBasedConfigs]);
 
     React.useEffect(() => {
         // only display results concerning the chosen scenario
@@ -441,7 +463,7 @@ export default function TextBasedResultsPage() {
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey, ind) => {
                     return (<div className='result-section' key={qkey + '_' + ind}>
-                        <h3 className='question-header'>{qkey} (N={questionAnswerSets[qkey]['total']})</h3>
+                        <h3 className='question-header'>{cleanTitle(qkey)} (N={questionAnswerSets[qkey]['total']})</h3>
                         <p>{questionAnswerSets[qkey]['question']}</p>
                         <table className="itm-table text-result-table">
                             <thead>
@@ -458,16 +480,16 @@ export default function TextBasedResultsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {Object.keys(questionAnswerSets[qkey]).map((answer) => {
-                                    if (answer !== 'total' && answer !== 'question') {
-                                        return (<tr key={qkey + '_' + answer}>
+                                {Object.keys(questionAnswerSets[qkey])
+                                    .filter(answer => answer !== 'total' && answer !== 'question')
+                                    .map((answer) => (
+                                        <tr key={qkey + '_' + answer}>
                                             <td className="answer-column">{shortenAnswer(answer)}</td>
                                             <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
                                             <td className="count-column"><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
-                                        </tr>);
-                                    }
-                                    return <></>;
-                                })}
+                                        </tr>
+                                    ))
+                                }
                             </tbody>
                         </table>
                     </div>);
@@ -492,10 +514,10 @@ export default function TextBasedResultsPage() {
         }
     };
 
-    function selectEvaluation(target){
-        setSelectedEval(target.value);
+    function selectEvaluation(option) {
+        setSelectedEval(option.value);
         setScenario(null);
-    }   
+    }
 
     return (<div className='text-results'>
         <div className='sidebar-options'>
@@ -508,25 +530,29 @@ export default function TextBasedResultsPage() {
                 }}
                 options={evalOptions}
                 onChange={selectEvaluation}
-                value={evalOptions.filter(function(option) {
-                  return option.value === selectedEval;
-                })}
-                label="Single select"                
+                value={evalOptions.find(option => option.value === selectedEval)}
+                label="Single select"
+                isLoading={loadingEvalNames}
             />
-        {selectedEval && <div>
-            <h3 className='sidebar-title'>Scenario</h3>
-            <List className="nav-list" component="nav">
-                {SCENARIO_OPTIONS.map((item) =>
-                    <ListItem className="nav-list-item" id={"scenario_" + item} key={"scenario_" + item}
-                        button
-                        selected={scenarioChosen === item}
-                        onClick={() => setScenario(item)}>
-                        <ListItemText primary={item} />
-                    </ListItem>
-                )}
-            </List>
-            
-        </div>}
+            {selectedEval && scenarioOptions.length > 0 && (
+                <div>
+                    <h3 className='sidebar-title'>Scenario</h3>
+                    <List className="nav-list" component="nav">
+                        {scenarioOptions.map((item) =>
+                            <ListItem
+                                className="nav-list-item"
+                                id={"scenario_" + item}
+                                key={"scenario_" + item}
+                                button
+                                selected={scenarioChosen === item}
+                                onClick={() => setScenario(item)}
+                            >
+                                <ListItemText primary={item} />
+                            </ListItem>
+                        )}
+                    </List>
+                </div>
+            )}
         </div>
         {scenarioChosen && <div className="result-display">
             <div className="text-based-header">
@@ -538,7 +564,7 @@ export default function TextBasedResultsPage() {
                     <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
                 </ToggleButtonGroup>
             </div>
-            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} /> : <ChartedResultsSection />}
+            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} /> : <ChartedResultsSection />}
         </div>}
     </div>);
 }

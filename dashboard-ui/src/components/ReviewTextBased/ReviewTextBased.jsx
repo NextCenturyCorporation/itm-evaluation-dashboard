@@ -84,7 +84,6 @@ export function ReviewTextBasedPage() {
         const dreSoarTechConfigs = [];
         const mreAdeptConfigs = [];
         const mreSoarTechConfigs = [];
-        const otherConfigs = [];
 
         Object.entries(textBasedConfigs).forEach(([configName, config]) => {
             if (config.eval === 'dre') {
@@ -99,8 +98,6 @@ export function ReviewTextBasedPage() {
                 } else {
                     mreSoarTechConfigs.push(configName);
                 }
-            } else {
-                otherConfigs.push(configName);
             }
         });
 
@@ -153,15 +150,6 @@ export function ReviewTextBasedPage() {
                         {renderConfigGroup(mreSoarTechConfigs, "SoarTech", getSoarTechLabel)}
                     </Card.Body>
                 </Card>
-
-                {otherConfigs.length > 0 && (
-                    <Card className="mb-4 border-0 shadow-sm">
-                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Misc Scenarios</Card.Header>
-                        <Card.Body className="bg-light">
-                            {renderConfigGroup(otherConfigs, "")}
-                        </Card.Body>
-                    </Card>
-                )}
             </>
         );
     };
