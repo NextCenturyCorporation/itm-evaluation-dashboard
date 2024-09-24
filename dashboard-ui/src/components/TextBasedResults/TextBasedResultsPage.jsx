@@ -221,7 +221,6 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
             if (page) {
                 Object.keys(page).forEach(key => {
                     if (key === 'alignmentData') {
-                        console.log('hit')
                         if (!headers.includes('Alignment Data')) {
                             headers.push('Alignment Data')
                         }
@@ -399,7 +398,9 @@ export default function TextBasedResultsPage() {
 
                     let qs = []; // Array to keep track of questions for "After inject" logic
                     for (const k of Object.keys(result)) {
-                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) { continue; }
+                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) { 
+                            continue; 
+                        }
 
                         for (const q of Object.keys(result[k].questions)) {
                             if (result[k].questions[q].response) {
@@ -426,9 +427,6 @@ export default function TextBasedResultsPage() {
                         }
                     }
                 } else {
-                    console.log(scenario)
-                    console.log(filteredTextBasedConfigs)
-                    console.log(filteredTextBasedConfigs[scenario])
                     console.error(`No configuration found for scenario: ${scenario}`);
                 }
             }
