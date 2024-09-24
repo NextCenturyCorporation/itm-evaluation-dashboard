@@ -9,8 +9,8 @@ import './humanResults.css';
 import Select from 'react-select';
 
 const get_eval_name_numbers = gql`
-    query getEvalIdsForHumandResults{
-        getEvalIdsForHumandResults
+    query getEvalIdsForHumanResults{
+        getEvalIdsForHumanResults
   }`;
 let evalOptions = [];
 
@@ -27,9 +27,21 @@ const ENV_MAP = {
     "sim-desert": "Desert"
 }
 
+const DRE_SCENARIOS = [
+    "DryRunEval-MJ2-eval",
+    "DryRunEval-MJ4-eval",
+    "DryRunEval-MJ5-eval",
+    "qol-dre-1-eval",
+    "qol-dre-2-eval",
+    "qol-dre-3-eval",
+    "vol-dre-1-eval",
+    "vol-dre-2-eval",
+    "vol-dre-3-eval"
+];
+
 export default function HumanResults() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [selectedEval, setSelectedEval] = React.useState(3);
+    const [selectedEval, setSelectedEval] = React.useState(4);
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         // only pulls from network, never cached
@@ -42,8 +54,8 @@ export default function HumanResults() {
     
     React.useEffect(() => {
         evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForHumandResults) { 
-            for (const result of evalIdOptionsRaw.getEvalIdsForHumandResults) {
+        if (evalIdOptionsRaw?.getEvalIdsForHumanResults) {
+            for (const result of evalIdOptionsRaw.getEvalIdsForHumanResults) {
                 evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
             }
         }
@@ -54,10 +66,11 @@ export default function HumanResults() {
         if (data?.getAllRawSimData && data?.getAllSimAlignment) {
             const organized = {};
             for (const entry of data.getAllRawSimData) {
-                const scene = entry.data?.configData?.scene;
+                const version = entry.evalNumber;
+                const scene = version == 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
-                    const probes = data.getAllSimAlignment.filter((x) => pid === x.pid && ENV_MAP[scene].toLowerCase() === x.env);
+                    const probes = data.getAllSimAlignment.filter((x) => pid === x.pid && (version == 3 ? ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
                     // go through the scene to find where each scenario starts/ends
                     entry['adept'] = [];
                     entry['soartech'] = [];
@@ -113,10 +126,10 @@ export default function HumanResults() {
                                 break;
                             }
                         }
-                        if (soartech_start !== -1 && soartech_end === -1) {
+                        if (soartech_start !== -1 && soartech_end === -1 || (version == 4 && (scene.includes('qol') || scene.includes('vol')))) {
                             entry['soartech'].push(action);
                         }
-                        if (adept_start !== -1 && adept_end === -1) {
+                        if (adept_start !== -1 && adept_end === -1 || (version == 4 && scene.includes('DryRunEval'))) {
                             entry['adept'].push(action);
                         }
                         if (freeform_start !== -1) {
@@ -135,6 +148,15 @@ export default function HumanResults() {
             setDataByScene(organized);
         }
     }, [data]);
+
+    React.useEffect(() => {
+        if (selectedScene?.includes('vol') || selectedScene?.includes('qol')) {
+            setSelectedTeam('soartech');
+        }
+        else if (selectedScene?.includes('DryRunEval')) {
+            setSelectedTeam('adept');
+        }
+    }, [selectedScene]);
 
     const handleTeamChange = (selected) => {
         if (selected.length === 2) {
@@ -160,10 +182,10 @@ export default function HumanResults() {
                         options={evalOptions}
                         placeholder="Select Evaluation"
                         defaultValue={evalOptions[0]}
-                        value={evalOptions[0]}
+                        value={evalOptions.find(option => option.value === selectedEval)}
                     />
                 </div>}
-            {selectedEval &&  dataByScene &&      
+            {selectedEval && selectedEval != 4 && dataByScene &&      
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Environment</span>
@@ -176,6 +198,24 @@ export default function HumanResults() {
                                     selected={selectedScene === item}
                                     onClick={() => { setSelectedScene(item); setSelectedPID(null); }}>
                                     <ListItemText primary={ENV_MAP[item]} />
+                                </ListItem>
+                            )
+                        }
+                    </List>
+                </div>}
+            {selectedEval == 4 &&
+                <div className="selection-section">
+                    <div className="nav-header">
+                        <span className="nav-header-text">Scenario</span>
+                    </div>
+                    <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
+                        {
+                            DRE_SCENARIOS.map((item) =>
+                                <ListItem id={"scene_" + item} key={"scene_" + item}
+                                    button
+                                    selected={selectedScene === item}
+                                    onClick={() => { setSelectedScene(item); setSelectedPID(null); }}>
+                                    <ListItemText primary={item} />
                                 </ListItem>
                             )
                         }
@@ -206,11 +246,11 @@ export default function HumanResults() {
         </div>
         {selectedPID ?
             <div className="sim-participant">
-                <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
+                {selectedEval == 3 && <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
                     <ToggleButton variant="secondary" id='choose-adept' value={"adept"}>ADEPT</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-freeform' value={"freeform"}>Freeform</ToggleButton>
-                </ToggleButtonGroup>
+                </ToggleButtonGroup>}
                 <div className="table-container">
                     <table className="action-list">
                         <thead>
@@ -240,6 +280,7 @@ export default function HumanResults() {
                                                     {isStringDefined(action.successfulTreatment) && action.actionType === 'Treatment' && <tr><td>Successful Treatment:</td><td>{action.successfulTreatment.toString()}</td></tr>}
                                                     {isStringDefined(action.tagColor) && <tr><td>Tag Color:</td><td>{action.tagColor}</td></tr>}
                                                     {isStringDefined(action.tagType) && <tr><td>Tag Type:</td><td>{action.tagType}</td></tr>}
+                                                    {isStringDefined(action.note) && <tr><td>Note:</td><td>{action.note}</td></tr>}
                                                 </tbody>
                                             </table>
 
@@ -253,7 +294,7 @@ export default function HumanResults() {
                                                     {isStringDefined(action.probe.action_type) && <tr><td>Action Type:</td><td>{action.probe.action_type}</td></tr>}
                                                     {isStringDefined(action.probe.character_id) && <tr><td>Character ID:</td><td>{action.probe.character_id}</td></tr>}
                                                     {isStringDefined(action.probe.choice) && <tr><td>Choice:</td><td>{action.probe.choice}</td></tr>}
-                                                    {isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
+                                                    {selectedEval != 4 && isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
                                                 </tbody>
                                             </table>}
                                         </td>}
