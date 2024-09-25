@@ -126,23 +126,29 @@ function SingleGraph({ data, pageName }) {
 
     React.useEffect(() => {
         if (data) {
+           
+            const filteredData = Object.fromEntries(
+                Object.entries(data).filter(([key]) =>
+                    !['originalKey', 'total', 'question', 'undefined'].includes(key)
+                )
+            );
+
             // set survey question for graph
             const surveyJson = {
                 elements: [{
                     name: pageName,
                     title: data['question'],
                     type: "radiogroup",
-                    choices: Object.keys(data)
-                        .filter((x) => x !== 'total' && x !== 'question' && x !== 'undefined')
-                        .map((x) => shortenAnswer(x))
+                    choices: Object.keys(filteredData).map((x) => shortenAnswer(x))
                 }]
             };
             const survey = new Model(surveyJson);
             setSurvey(survey);
+
             // get results ready for graph
             const curResults = [];
-            for (const answer of Object.keys(data)) {
-                for (let i = 0; i < data[answer]; i++) {
+            for (const answer of Object.keys(filteredData)) {
+                for (let i = 0; i < filteredData[answer]; i++) {
                     const tmpResult = {};
                     tmpResult[pageName] = shortenAnswer(answer);
                     curResults.push(tmpResult);
@@ -360,72 +366,80 @@ export default function TextBasedResultsPage() {
         }
     }, [evalIdOptionsRaw]);
 
+    const normalizeKey = (key) => {
+        return key.replace(/\./g, '');
+    }
+
     React.useEffect(() => {
-        // populate responsesByScenario with gql data
         const tmpResponses = {};
         const participants = {};
         const uniqueScenarios = new Set();
 
         if (data?.getAllScenarioResultsByEval) {
-            // Initialize the structure for each scenario
             Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
                 filteredTextBasedConfigs[scenario].pages.forEach(page => {
                     page.elements.forEach(element => {
                         if (element.choices) {
-                            tmpResponses[scenario][element.name] = {
+                            const normalizedName = normalizeKey(element.name);
+                            tmpResponses[scenario][normalizedName] = {
                                 question: element.title,
-                                total: 0
+                                total: 0,
+                                originalKey: element.name
                             };
+
                             element.choices.forEach(choice => {
-                                tmpResponses[scenario][element.name][choice.text] = 0;
+                                tmpResponses[scenario][normalizedName][choice.text] = 0;
                             });
+
                         }
                     });
                 });
             });
 
-
-            // Process the results
             for (const result of data.getAllScenarioResultsByEval) {
-                const scenario = result.scenario_id || result.title;
-                if (scenario) {
-                    uniqueScenarios.add(scenario);
-                }
-
-                if (scenario && filteredTextBasedConfigs[scenario]) {
-                    if (!participants[scenario]) {
-                        participants[scenario] = [];
+                try {
+                    const scenario = result.scenario_id || result.title;
+                    if (scenario) {
+                        uniqueScenarios.add(scenario);
                     }
-                    participants[scenario].push(result);
 
-                    for (const k of Object.keys(result)) {
-                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
-                            continue;
+                    if (scenario && filteredTextBasedConfigs[scenario]) {
+                        if (!participants[scenario]) {
+                            participants[scenario] = [];
                         }
+                        participants[scenario].push(result);
 
-                        for (const q of Object.keys(result[k].questions)) {
-                            if (result[k].questions[q].response) {
-                                const answer = typeof result[k].questions[q].response === 'object'
-                                    ? JSON.stringify(result[k].questions[q].response)
-                                    : result[k].questions[q].response;
+                        for (const k of Object.keys(result)) {
+                            if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
+                                continue;
+                            }
+                            for (const q of Object.keys(result[k].questions)) {
+                                const normalizedQ = normalizeKey(q);
+                                if (result[k].questions[q].response) {
+                                    const answer = typeof result[k].questions[q].response === 'object'
+                                        ? JSON.stringify(result[k].questions[q].response)
+                                        : result[k].questions[q].response;
 
-                                if (tmpResponses[scenario][q]) {
-                                    if (tmpResponses[scenario][q][answer] !== undefined) {
-                                        tmpResponses[scenario][q][answer] += 1;
-                                    } else {
-                                        tmpResponses[scenario][q][answer] = 1;
+                                    if (tmpResponses[scenario][normalizedQ]) {
+                                        if (tmpResponses[scenario][normalizedQ][answer] !== undefined) {
+                                            tmpResponses[scenario][normalizedQ][answer] += 1;
+                                        } else {
+                                            
+                                            tmpResponses[scenario][normalizedQ][answer] = 1;
+                                        }
+                                        tmpResponses[scenario][normalizedQ].total += 1;
                                     }
-                                    tmpResponses[scenario][q].total += 1;
-
                                 }
                             }
                         }
-                    }
-                } else {
-                    console.error(`No configuration found for scenario: ${scenario}`);
+                    } 
+                } catch (error) {
+                    console.error(`Error processing result:`, error);
+                    console.log('Problematic result:', result);
                 }
             }
+
             setByScenario(tmpResponses);
             setParticipantBased(participants);
             setScenarioOptions(Array.from(uniqueScenarios));
@@ -438,7 +452,6 @@ export default function TextBasedResultsPage() {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
                 if (Object.keys(responsesByScenario[scenarioChosen][k]).length > 0) {
-                    console.log(responsesByScenario[scenarioChosen])
                     setResults(responsesByScenario[scenarioChosen]);
                     found = true;
                     break;
@@ -456,8 +469,9 @@ export default function TextBasedResultsPage() {
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey, ind) => {
-                    return (<div className='result-section' key={qkey + '_' + ind}>
-                        <h3 className='question-header'>{cleanTitle(qkey)} (N={questionAnswerSets[qkey]['total']})</h3>
+                    const displayKey = questionAnswerSets[qkey].originalKey || qkey;
+                    return (<div className='result-section' key={displayKey + '_' + ind}>
+                        <h3 className='question-header'>{cleanTitle(displayKey)} (N={questionAnswerSets[qkey]['total']})</h3>
                         <p>{questionAnswerSets[qkey]['question']}</p>
                         <table className="itm-table text-result-table">
                             <thead>
@@ -469,14 +483,14 @@ export default function TextBasedResultsPage() {
                             </thead>
                             <tbody>
                                 {Object.keys(questionAnswerSets[qkey])
-                                    .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined')
+                                    .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined' && answer !== 'originalKey')
                                     .map((answer) => (
-                                        <tr key={qkey + '_' + answer}>
+                                        <tr key={displayKey + '_' + answer}>
                                             <td className="answer-column">{shortenAnswer(answer)}</td>
                                             <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
                                             <td className="count-column">
                                                 <b>
-                                                    {questionAnswerSets[qkey]['total'] > 0 
+                                                    {questionAnswerSets[qkey]['total'] > 0
                                                         ? `${Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%`
                                                         : '-'}
                                                 </b>
