@@ -305,7 +305,7 @@ export default function HumanResults() {
                     </table>
                 </div>
             </div>
-            : <h2 className="not-found">Please select an environment and participant to view results</h2>
+            : <h2 className="not-found">Please select {selectedEval == 4 ? "a scenario" : "an environment"} and participant to view results</h2>
         }
     </div >);
 }
