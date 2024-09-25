@@ -192,7 +192,7 @@ const typeDefs = gql`
     getAllSimAlignmentByEval(evalNumber: Float): [JSON],
     getEvalIdsForSimAlignment: [JSON],
     getEvalNameNumbers: [JSON],
-    getEvalIdsForHumandResults: [JSON],
+    getEvalIdsForHumanResults: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
     getAllTextBasedConfigs: [JSON],
@@ -415,7 +415,7 @@ const resolvers = {
       return await dashboardDB.db.collection('test').aggregate( 
         [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
     },
-    getEvalIdsForHumandResults: async (obj, args, context, inflow) => {
+    getEvalIdsForHumanResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulatorRaw').aggregate( 
         [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },

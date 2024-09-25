@@ -45,7 +45,7 @@
     filter: brightness(80%);
 }
 
-h3 {
+.researchQuestion h3 {
     margin-left: 32px;
     margin-top: 24px;
 }

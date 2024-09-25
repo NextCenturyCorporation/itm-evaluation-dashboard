@@ -305,7 +305,7 @@ export default function AggregateResults({ type }) {
                             options={evalOptions}
                             placeholder="Select Evaluation"
                             defaultValue={evalOptions[0]}
-                            value={evalOptions[0]}
+                            value={evalOptions.find(option => option.value === selectedEval)}
                             styles={{
                                 // Fixes the overlapping problem of the component
                                 menu: provided => ({ ...provided, zIndex: 9999 })
@@ -359,6 +359,7 @@ export default function AggregateResults({ type }) {
                             options={evalOptions}
                             defaultValue={evalOptions[0]}
                             placeholder="Select Evaluation"
+                            value={evalOptions.find(option => option.value === selectedEval)}
                             styles={{
                                 // Fixes the overlapping problem of the component
                                 menu: provided => ({ ...provided, zIndex: 9999 })
