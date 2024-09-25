@@ -131,6 +131,7 @@ export function ResultsTable({ data }) {
                 }
             }
         }
+        allObjs.sort((a, b) => a['Participant Id'] - b['Participant Id']);
         setFormattedData(allObjs);
         setHeaders(found_headers);
         setVersions(tmpVersion);

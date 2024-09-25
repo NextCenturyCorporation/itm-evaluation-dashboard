@@ -191,3 +191,7 @@
     cursor: pointer;
     background-color: rgb(195, 193, 193);
 }
+
+.selection-section .scenario-list {
+    max-height: 500px !important;
+}
