@@ -10,6 +10,7 @@ services:
     volumes:
       - ./resources/nginx.conf:/etc/nginx/nginx.conf
       - ./certs:/certs
+      - ./nginxpwd:/nginxpwd
     ports:
       - "80:80"
       - "443:443"

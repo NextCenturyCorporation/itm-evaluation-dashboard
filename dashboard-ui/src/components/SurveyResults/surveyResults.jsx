@@ -5,7 +5,7 @@ import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
-import { FormControlLabel, Modal, Switch } from "@mui/material";
+import { FormControlLabel, Modal, Radio, RadioGroup } from "@mui/material";
 import { ResultsTable } from './resultsTable';
 import CloseIcon from '@material-ui/icons/Close';
 import List from '@material-ui/core/List';
@@ -100,7 +100,9 @@ const vizPanelOptions = {
     defaultChartType: "bar",
     labelTruncateLength: -1,
     showPercentages: true,
-    allowDragDrop: false
+    allowDragDrop: false,
+    minWidth: "100%",
+    allowSelection: false
 }
 
 function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
@@ -127,10 +129,16 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
     return (<div className='scenario-group'>
         <h2 className='scenario-header'>{scenarioIndices[String(scenario)]}</h2>
         <div className='singletons'>
-            {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton} version={version}></SingleGraph> })}
-        </div>
-        <div className={version == 4 ? 'singletons' : 'comparisons'}>
-            {comparisons?.map((comparison) => { return <SingleGraph key={comparison[0].pageName} data={comparison} version={version}></SingleGraph> })}
+            {singles?.map((singleton) => (
+                <div className="graph-container" key={singleton[0].pageName}>
+                    <SingleGraph data={singleton} version={version} />
+                </div>
+            ))}
+            {comparisons?.map((comparison) => (
+                <div className="graph-container" key={comparison[0].pageName}>
+                    <SingleGraph data={comparison} version={version} />
+                </div>
+            ))}
         </div>
     </div>);
 }
@@ -192,6 +200,12 @@ function SingleGraph({ data, version }) {
     React.useEffect(() => {
         if (vizPanel) {
             vizPanel.render("viz_" + pageName);
+            
+            // Resize graphs after a short delay to ensure they're fully rendered
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+    
             return () => {
                 if (document.getElementById("viz_" + pageName))
                     document.getElementById("viz_" + pageName).innerHTML = "";
@@ -252,7 +266,7 @@ export function SurveyResults() {
             let scenarios = {}
             for (const result of filteredData) {
                 if (result.results) {
-                    
+
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
                             const scenarioIndex = String(result.results[x].scenarioIndex);
@@ -357,7 +371,7 @@ export function SurveyResults() {
     };
 
     const toggleGeneralizability = (event) => {
-        setGeneralization(event.target.checked);
+        setGeneralization(event.target.value == 'Alignment');
     }
 
     return (<div className="delegation-results">
@@ -385,14 +399,14 @@ export function SurveyResults() {
                         <div className="nav-header">
                             <span className="nav-header-text">Scenario</span>
                         </div>
-                        <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
+                        <List component="nav" className="nav-list scenario-list" aria-label="secondary mailbox folder">
                             {Object.entries(scenarioIndices).map(([index, name]) =>
                                 <ListItem id={"scenario_" + index} key={"scenario_" + index}
                                     button
                                     selected={String(selectedScenario) === String(index)}
-                                    onClick={() => { 
-                                        setSelectedScenario(String(index)); 
-                                        }}>
+                                    onClick={() => {
+                                        setSelectedScenario(String(index));
+                                    }}>
                                     <ListItemText primary={name} />
                                 </ListItem>
                             )}
@@ -403,7 +417,10 @@ export function SurveyResults() {
                 <div className="graph-section">
                     <div className="options">
                         {filterBySurveyVersion == 4 &&
-                            <FormControlLabel className='prettyToggle' labelPlacement='top' control={<Switch defaultChecked onChange={toggleGeneralizability} />} label="Generalize Data" />}
+                            <FormControlLabel className='prettyToggle' labelPlacement='top' control={<RadioGroup row defaultValue="Alignment" onChange={toggleGeneralizability}>
+                                <FormControlLabel value="Alignment" control={<Radio />} label="Alignment" />
+                                <FormControlLabel value="Medic" control={<Radio />} label="Medic" />
+                            </RadioGroup>} label="View By:" />}
                         <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
                     </div>
                     <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
