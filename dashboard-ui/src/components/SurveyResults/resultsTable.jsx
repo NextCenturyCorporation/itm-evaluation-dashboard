@@ -24,7 +24,7 @@ const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End
 
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
-    const [filterBySurveyVersion, setVersionOption] = React.useState(['2']);
+    const [filterBySurveyVersion, setVersionOption] = React.useState(['4']);
     const [versions, setVersions] = React.useState(['All']);
     const [selectAll, setSelectAll] = React.useState(false);
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
@@ -128,6 +128,7 @@ export function ResultsTable({ data }) {
                 }
             }
         }
+        allObjs.sort((a, b) => a['Participant Id'] - b['Participant Id']);
         setFormattedData(allObjs);
         setHeaders(found_headers);
         setVersions(tmpVersion);

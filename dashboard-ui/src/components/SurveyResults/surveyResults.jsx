@@ -345,7 +345,7 @@ export function SurveyResults() {
                         <div className="nav-header">
                             <span className="nav-header-text">Scenario</span>
                         </div>
-                        <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
+                        <List component="nav" className="nav-list scenario-list" aria-label="secondary mailbox folder">
                             {Object.entries(scenarioIndices).map(([index, name]) =>
                                 <ListItem id={"scenario_" + index} key={"scenario_" + index}
                                     button

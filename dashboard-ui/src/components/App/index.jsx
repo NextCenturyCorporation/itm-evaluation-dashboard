@@ -241,7 +241,7 @@ export class App extends React.Component {
                     for (const el of page.elements) {
                         if (Object.keys(el).includes("patients")) {
                             for (const patient of el.patients) {
-                                const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId.toLowerCase() === patient.id.toLowerCase() && x.scenarioId === page.scenario_id));
+                                const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId?.toLowerCase() === patient.id?.toLowerCase() && x.scenarioId === page.scenario_id));
                                 if (foundImg) {
                                     patient.imgUrl = foundImg.imageByteCode
                                 }
