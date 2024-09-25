@@ -108,7 +108,8 @@ function shortenAnswer(answer) {
                 return 'Hold until info on embassy capabilities';
             }
             if (answer.toLowerCase().includes('because')) {
-                return answer.substring(answer.toLowerCase().indexOf('because'));
+                let substring = answer.substring(answer.toLowerCase().indexOf('because'));
+                return substring.charAt(0).toUpperCase() + substring.slice(1);
             }
             return answer;
     }
@@ -125,21 +126,29 @@ function SingleGraph({ data, pageName }) {
 
     React.useEffect(() => {
         if (data) {
+           
+            const filteredData = Object.fromEntries(
+                Object.entries(data).filter(([key]) =>
+                    !['originalKey', 'total', 'question', 'undefined'].includes(key)
+                )
+            );
+
             // set survey question for graph
             const surveyJson = {
                 elements: [{
                     name: pageName,
                     title: data['question'],
                     type: "radiogroup",
-                    choices: Object.keys(data).filter((x) => x !== 'total' && x !== 'question').map((x) => shortenAnswer(x))
+                    choices: Object.keys(filteredData).map((x) => shortenAnswer(x))
                 }]
             };
             const survey = new Model(surveyJson);
             setSurvey(survey);
+
             // get results ready for graph
             const curResults = [];
-            for (const answer of Object.keys(data)) {
-                for (let i = 0; i < data[answer]; i++) {
+            for (const answer of Object.keys(filteredData)) {
+                for (let i = 0; i < filteredData[answer]; i++) {
                     const tmpResult = {};
                     tmpResult[pageName] = shortenAnswer(answer);
                     curResults.push(tmpResult);
@@ -221,7 +230,6 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
             if (page) {
                 Object.keys(page).forEach(key => {
                     if (key === 'alignmentData') {
-                        console.log('hit')
                         if (!headers.includes('Alignment Data')) {
                             headers.push('Alignment Data')
                         }
@@ -261,8 +269,8 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                 });
                 if (page['evalNumber'] == 3) {
                     formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
-                    let temp = `${page['highAlignmentData']['alignment_target_id']}: ${page['highAlignmentData']['score']},\n`
-                    temp +=  `${page['lowAlignmentData']['alignment_target_id']}: ${page['lowAlignmentData']['score']}`
+                    let temp = `${page.highAlignmentData?.alignment_target_id}: ${page.highAlignmentData?.score},\n`
+                    temp += `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
                     obj['Alignment Data'] = temp;
                 }
             }
@@ -328,7 +336,7 @@ export default function TextBasedResultsPage() {
                 .map(([key, value]) => {
                     if (value['eval'] === 'mre-eval') {
                         let newKey = key.replace(/ Scenario$/, '');
-                        newKey = newKey.replace(/\w+/g, function(word) {
+                        newKey = newKey.replace(/\w+/g, function (word) {
                             return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
                         });
                         newKey = newKey.replace(/Soartech/, 'SoarTech');
@@ -358,80 +366,80 @@ export default function TextBasedResultsPage() {
         }
     }, [evalIdOptionsRaw]);
 
+    const normalizeKey = (key) => {
+        return key.replace(/\./g, '');
+    }
+
     React.useEffect(() => {
-        // populate responsesByScenario with gql data
         const tmpResponses = {};
         const participants = {};
         const uniqueScenarios = new Set();
 
         if (data?.getAllScenarioResultsByEval) {
-            // Initialize the structure for each scenario
             Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
                 filteredTextBasedConfigs[scenario].pages.forEach(page => {
                     page.elements.forEach(element => {
                         if (element.choices) {
-                            tmpResponses[scenario][element.name] = {
+                            const normalizedName = normalizeKey(element.name);
+                            tmpResponses[scenario][normalizedName] = {
                                 question: element.title,
-                                total: 0
+                                total: 0,
+                                originalKey: element.name
                             };
+
                             element.choices.forEach(choice => {
-                                tmpResponses[scenario][element.name][choice.text] = 0;
+                                tmpResponses[scenario][normalizedName][choice.text] = 0;
                             });
+
                         }
                     });
                 });
             });
 
-
-            // Process the results
             for (const result of data.getAllScenarioResultsByEval) {
-                const scenario = result.scenario_id || result.title;
-                if (scenario) {
-                    uniqueScenarios.add(scenario);
-                }
-
-                if (scenario && filteredTextBasedConfigs[scenario]) {
-                    if (!participants[scenario]) {
-                        participants[scenario] = [];
+                try {
+                    const scenario = result.scenario_id || result.title;
+                    if (scenario) {
+                        uniqueScenarios.add(scenario);
                     }
-                    participants[scenario].push(result);
 
-                    let qs = []; // Array to keep track of questions for "After inject" logic
-                    for (const k of Object.keys(result)) {
-                        if (typeof (result[k]) !== 'object' || !result[k]?.questions) { continue; }
+                    if (scenario && filteredTextBasedConfigs[scenario]) {
+                        if (!participants[scenario]) {
+                            participants[scenario] = [];
+                        }
+                        participants[scenario].push(result);
 
-                        for (const q of Object.keys(result[k].questions)) {
-                            if (result[k].questions[q].response) {
-                                const answer = typeof result[k].questions[q].response === 'object'
-                                    ? JSON.stringify(result[k].questions[q].response)
-                                    : result[k].questions[q].response;
+                        for (const k of Object.keys(result)) {
+                            if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
+                                continue;
+                            }
+                            for (const q of Object.keys(result[k].questions)) {
+                                const normalizedQ = normalizeKey(q);
+                                if (result[k].questions[q].response) {
+                                    const answer = typeof result[k].questions[q].response === 'object'
+                                        ? JSON.stringify(result[k].questions[q].response)
+                                        : result[k].questions[q].response;
 
-                                if (tmpResponses[scenario][q]) {
-                                    if (tmpResponses[scenario][q][answer] !== undefined) {
-                                        tmpResponses[scenario][q][answer] += 1;
-                                    } else {
-                                        tmpResponses[scenario][q][answer] = 1;
+                                    if (tmpResponses[scenario][normalizedQ]) {
+                                        if (tmpResponses[scenario][normalizedQ][answer] !== undefined) {
+                                            tmpResponses[scenario][normalizedQ][answer] += 1;
+                                        } else {
+                                            
+                                            tmpResponses[scenario][normalizedQ][answer] = 1;
+                                        }
+                                        tmpResponses[scenario][normalizedQ].total += 1;
                                     }
-                                    tmpResponses[scenario][q].total += 1;
-
-                                    // "After inject" logic
-                                    if (qs.includes(tmpResponses[scenario][q].question)) {
-                                        tmpResponses[scenario][q].question = 'After inject, ' + tmpResponses[scenario][q].question;
-                                        qs = [];
-                                    }
-                                    qs.push(tmpResponses[scenario][q].question);
                                 }
                             }
                         }
-                    }
-                } else {
-                    console.log(scenario)
-                    console.log(filteredTextBasedConfigs)
-                    console.log(filteredTextBasedConfigs[scenario])
-                    console.error(`No configuration found for scenario: ${scenario}`);
+                    } 
+                } catch (error) {
+                    console.error(`Error processing result:`, error);
+                    console.log('Problematic result:', result);
                 }
             }
+
             setByScenario(tmpResponses);
             setParticipantBased(participants);
             setScenarioOptions(Array.from(uniqueScenarios));
@@ -458,35 +466,35 @@ export default function TextBasedResultsPage() {
     }, [scenarioChosen, responsesByScenario]);
 
     const TextResultsSection = () => {
-        // display the results for the chosen scenario
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets).map((qkey, ind) => {
-                    return (<div className='result-section' key={qkey + '_' + ind}>
-                        <h3 className='question-header'>{cleanTitle(qkey)} (N={questionAnswerSets[qkey]['total']})</h3>
+                    const displayKey = questionAnswerSets[qkey].originalKey || qkey;
+                    return (<div className='result-section' key={displayKey + '_' + ind}>
+                        <h3 className='question-header'>{cleanTitle(displayKey)} (N={questionAnswerSets[qkey]['total']})</h3>
                         <p>{questionAnswerSets[qkey]['question']}</p>
                         <table className="itm-table text-result-table">
                             <thead>
                                 <tr>
-                                    <th className="answer-column">
-                                        Answer
-                                    </th>
-                                    <th className="count-column">
-                                        Count
-                                    </th>
-                                    <th className="count-column">
-                                        Percentage
-                                    </th>
+                                    <th className="answer-column">Answer</th>
+                                    <th className="count-column">Count</th>
+                                    <th className="count-column">Percentage</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {Object.keys(questionAnswerSets[qkey])
-                                    .filter(answer => answer !== 'total' && answer !== 'question')
+                                    .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined' && answer !== 'originalKey')
                                     .map((answer) => (
-                                        <tr key={qkey + '_' + answer}>
+                                        <tr key={displayKey + '_' + answer}>
                                             <td className="answer-column">{shortenAnswer(answer)}</td>
                                             <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
-                                            <td className="count-column"><b>{Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%</b></td>
+                                            <td className="count-column">
+                                                <b>
+                                                    {questionAnswerSets[qkey]['total'] > 0
+                                                        ? `${Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%`
+                                                        : '-'}
+                                                </b>
+                                            </td>
                                         </tr>
                                     ))
                                 }
