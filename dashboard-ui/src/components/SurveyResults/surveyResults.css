@@ -59,7 +59,8 @@
 .singletons {
     display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
+    justify-content: space-around;
+    flex-flow: wrap;
 }
 
 .singletons>* {
@@ -176,4 +177,8 @@
 .close-icon:active {
     cursor: pointer;
     background-color: rgb(195, 193, 193);
+}
+
+.selection-section .scenario-list {
+    max-height: 500px !important;
 }
