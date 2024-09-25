@@ -518,6 +518,13 @@ function populateHumanDataRow(rowObject, version) {
             }
         }
     }
+    else if (version == 4) {
+        console.log(rowObject);
+        returnObj = {
+            "Participant": rowObject[0].pid,
+            "Scenario": rowObject[0].scenario_id
+        };
+    }
 
     return returnObj;
 }

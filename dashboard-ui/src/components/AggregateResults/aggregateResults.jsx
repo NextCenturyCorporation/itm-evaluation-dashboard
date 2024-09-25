@@ -182,7 +182,8 @@ const HEADER = [
     'AD_Low_AlignSR_Omni'
 ]
 
-const HEADER_SIM_DATA = [
+const HEADER_SIM_DATA = {
+    3: [
     "Participant",
     "SimEnv",
     "SimOrder",
@@ -210,7 +211,12 @@ const HEADER_SIM_DATA = [
     "ST_KDMA_Env",
     "AD_KDMA",
     "ST_KDMA"
-]
+    ],
+    4: [
+        "Participant",
+        "Scenario",
+    ]
+}
 
 export default function AggregateResults({ type }) {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
@@ -222,7 +228,7 @@ export default function AggregateResults({ type }) {
     const [kdmaScatter, setKdmaScatter] = React.useState(null);
     const [chartData, setChartData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(3);
+    const [selectedEval, setSelectedEval] = React.useState(4);
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
         variables: {"evalNumber": selectedEval}
@@ -345,7 +351,7 @@ export default function AggregateResults({ type }) {
                 <div className="home-container">
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
-                            <div className="evaluation-selector-label"><h2>Human Simulator Probe by Environment</h2></div>
+                            <div className="evaluation-selector-label sim-probe-title"><h2>Human Simulator Probe by Environment</h2></div>
                         </div>
                         <div className="aggregate-button-holder">
                             <button onClick={exportHumanSimToExcel} className='aggregateDownloadBtn'>Download Human Sim Data</button>
@@ -353,7 +359,7 @@ export default function AggregateResults({ type }) {
 
                     </div>
 
-                    <div className="selection-section">
+                    <div className="selection-section-probes">
                         <Select
                             onChange={selectEvaluation}
                             options={evalOptions}
@@ -379,13 +385,13 @@ export default function AggregateResults({ type }) {
                                 <table key={"table_" + objectKey} className="itm-table">
                                     <thead>
                                         <tr>
-                                            {HEADER_SIM_DATA.map((item) => (<th key={"header_"+item}>{item}</th>))}
+                                            {HEADER_SIM_DATA[selectedEval]?.map((item) => (<th key={"header_" + item}>{item}</th>))}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {aggregateData["groupedSim"][objectKey].map((rowObj, rowKey) => (
                                             <tr key={"tr_" + rowKey}>
-                                                {HEADER_SIM_DATA.map((item, itemKey) => (<td key={"row_"+item+itemKey}>{rowObj !== undefined ? rowObj[item] : ""}</td>))}
+                                                {HEADER_SIM_DATA[selectedEval]?.map((item, itemKey) => (<td key={"row_" + item + itemKey}>{rowObj !== undefined ? rowObj[item] : ""}</td>))}
                                             </tr>
                                         ))}
                                     </tbody>
