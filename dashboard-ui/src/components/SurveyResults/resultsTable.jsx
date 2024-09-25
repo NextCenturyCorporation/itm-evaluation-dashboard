@@ -24,7 +24,10 @@ const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End
 
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
-    const [filterBySurveyVersion, setVersionOption] = React.useState(['4']);
+    const defaultVersion = process.env.REACT_APP_SURVEY_VERSION.endsWith('.0') ?
+        process.env.REACT_APP_SURVEY_VERSION.slice(0, -2) :
+        process.env.REACT_APP_SURVEY_VERSION;
+    const [filterBySurveyVersion, setVersionOption] = React.useState([defaultVersion]);
     const [versions, setVersions] = React.useState(['All']);
     const [selectAll, setSelectAll] = React.useState(false);
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
@@ -140,7 +143,7 @@ export function ResultsTable({ data }) {
         const ws = XLSX.utils.json_to_sheet(formattedData);
 
         // Adjust column widths
-        const colWidths = headers.map(header => ({wch: Math.max(header.length, 20)}));
+        const colWidths = headers.map(header => ({ wch: Math.max(header.length, 20) }));
         ws['!cols'] = colWidths;
 
         // Add the worksheet to the workbook
@@ -169,7 +172,7 @@ export function ResultsTable({ data }) {
             else {
                 setSelectAll(false);
                 if (selected.target.value === 'All') {
-                    setVersionOption(['2']);
+                    setVersionOption([]);
                 }
                 else {
                     setVersionOption(filterBySurveyVersion.filter((x) => x !== selected.target.value));
