@@ -5,7 +5,7 @@ import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
-import { FormControlLabel, Modal, Switch } from "@mui/material";
+import { FormControlLabel, Modal, Radio, RadioGroup } from "@mui/material";
 import { ResultsTable } from './resultsTable';
 import CloseIcon from '@material-ui/icons/Close';
 import List from '@material-ui/core/List';
@@ -357,7 +357,7 @@ export function SurveyResults() {
     };
 
     const toggleGeneralizability = (event) => {
-        setGeneralization(event.target.checked);
+        setGeneralization(event.target.value == 'Alignment');
     }
 
     return (<div className="delegation-results">
@@ -403,7 +403,10 @@ export function SurveyResults() {
                 <div className="graph-section">
                     <div className="options">
                         {filterBySurveyVersion == 4 &&
-                            <FormControlLabel className='prettyToggle' labelPlacement='top' control={<Switch defaultChecked onChange={toggleGeneralizability} />} label="Generalize Data" />}
+                            <FormControlLabel className='prettyToggle' labelPlacement='top' control={<RadioGroup row defaultValue="Alignment" onChange={toggleGeneralizability}>
+                                <FormControlLabel value="Alignment" control={<Radio />} label="Alignment" />
+                                <FormControlLabel value="Medic" control={<Radio />} label="Medic" />
+                            </RadioGroup>} label="View By:" />}
                         <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
                     </div>
                     <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
