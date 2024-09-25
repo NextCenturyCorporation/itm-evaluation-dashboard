@@ -186,12 +186,13 @@ const typeDefs = gql`
     getAllSurveyResultsByEval(evalNumber: Float): [JSON],
     getAllScenarioResults: [JSON],
     getAllScenarioResultsByEval(evalNumber: Float): [JSON],
+    getAllTextScenariosDRE: [JSON],
     getEvalIdsForAllScenarioResults: [JSON],
     getAllSimAlignment: [JSON],
     getAllSimAlignmentByEval(evalNumber: Float): [JSON],
     getEvalIdsForSimAlignment: [JSON],
     getEvalNameNumbers: [JSON],
-    getEvalIdsForHumandResults: [JSON],
+    getEvalIdsForHumanResults: [JSON],
     getAllRawSimData: [JSON],
     getAllSurveyConfigs: [JSON],
     getAllTextBasedConfigs: [JSON],
@@ -388,6 +389,12 @@ const resolvers = {
         "evalNumber": args["evalNumber"]
       }).toArray().then(result => { return result; });
     },
+    getAllTextScenariosDRE: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('userScenarioResults').distinct(
+        "scenario_id",
+        {"evalNumber":4}
+    ).then(result => { return result; });
+    },
     getEvalIdsForAllScenarioResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('userScenarioResults').aggregate( 
         [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
@@ -408,7 +415,7 @@ const resolvers = {
       return await dashboardDB.db.collection('test').aggregate( 
         [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
     },
-    getEvalIdsForHumandResults: async (obj, args, context, inflow) => {
+    getEvalIdsForHumanResults: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulatorRaw').aggregate( 
         [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
     },

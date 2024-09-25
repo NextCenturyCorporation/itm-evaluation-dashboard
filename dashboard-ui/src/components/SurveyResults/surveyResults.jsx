@@ -5,7 +5,7 @@ import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
-import { Modal } from "@mui/material";
+import { FormControlLabel, Modal, Radio, RadioGroup } from "@mui/material";
 import { ResultsTable } from './resultsTable';
 import CloseIcon from '@material-ui/icons/Close';
 import List from '@material-ui/core/List';
@@ -21,7 +21,7 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResults
     }`;
 
-function getQuestionAnswerSets(pageName, config) {
+function getQuestionAnswerSets(pageName, config, genericName = null) {
     const pagesFound = config.pages.filter((page) => page.name === pageName);
     if (pagesFound.length > 0) {
         const page = pagesFound[0];
@@ -33,13 +33,63 @@ function getQuestionAnswerSets(pageName, config) {
                     override = true;
                 }
                 surveyJson.elements.push({
-                    name: el.name,
-                    title: override ? "Given the information provided, I would prefer" : el.name,
+                    name: (genericName ? (genericName.split(':')[0] + ':' + el.name.slice(9)).replace('::', ':') : el.name),
+                    title: override ? "Given the information provided, I would prefer" : (genericName ? (genericName.split(':')[0] + ':' + el.name.slice(9)).replace('::', ':') : el.name),
                     type: "radiogroup",
                     choices: override ? el.choices.map((choice) => choice.substr(15)) : el.choices
                 });
             }
         }
+        return surveyJson;
+    }
+    else if (pageName.includes('vs') && config.version == 4) {
+        // comparison pages are created during runtime in version 4, so we need to handle them differently
+        const surveyJson = { elements: [] };
+        const bname = pageName.split(' vs ')[0].trim();
+        const aname = pageName.split(' vs ')[1].trim();
+        const mname = pageName.split(' vs ')[2].trim();
+        if (aname != '' && mname != '') {
+            surveyJson.elements.push({
+                name: genericName ? "Aligned vs Baseline: Forced Choice" : aname + " vs " + bname + ": Forced Choice",
+                title: genericName ? "Aligned vs Baseline: Forced Choice" : aname + " vs " + bname + ": Forced Choice",
+                type: "radiogroup",
+                choices: genericName ? ["Aligned", "Baseline"] : [aname, bname]
+            });
+            surveyJson.elements.push({
+                name: (genericName ? "Aligned vs Baseline" : aname + " vs " + bname) + ": Rate your confidence about the delegation decision indicated in the previous question",
+                title: genericName ? "Aligned vs Baseline: Delegation Confidence" : aname + " vs " + bname + ": Delegation Confidence",
+                type: "radiogroup",
+                choices: ["Not confident at all", "Not confident", "Somewhat confident", "Confident", "Completely confident"]
+            });
+            surveyJson.elements.push({
+                name: genericName ? "Aligned vs Misaligned: Forced Choice" : aname + " vs " + mname + ": Forced Choice",
+                title: genericName ? "Aligned vs Misaligned: Forced Choice" : aname + " vs " + mname + ": Forced Choice",
+                type: "radiogroup",
+                choices: genericName ? ["Aligned", "Misaligned"] : [aname, mname]
+            });
+            surveyJson.elements.push({
+                name: (genericName ? "Aligned vs Baseline" : aname + " vs " + mname) + ": Rate your confidence about the delegation decision indicated in the previous question",
+                title: genericName ? "Aligned vs Misaligned: Delegation Confidence" : aname + " vs " + mname + ": Delegation Confidence",
+                type: "radiogroup",
+                choices: ["Not confident at all", "Not confident", "Somewhat confident", "Confident", "Completely confident"]
+            });
+        }
+        else {
+            const secondName = mname == '' ? aname : mname;
+            surveyJson.elements.push({
+                name: genericName ? ((secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
+                title: genericName ? ((secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
+                type: "radiogroup",
+                choices: genericName ? [secondName == mname ? "Misaligned" : "Aligned", "Baseline"] : [secondName, bname]
+            });
+            surveyJson.elements.push({
+                name: (genericName ? (secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") : (secondName + " vs " + bname)) + ": Rate your confidence about the delegation decision indicated in the previous question",
+                title: genericName ? ((secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Delegation Confidence") : (secondName + " vs " + bname + ": Delegation Confidence"),
+                type: "radiogroup",
+                choices: ["Not confident at all", "Not confident", "Somewhat confident", "Confident", "Completely confident"]
+            });
+        }
+
         return surveyJson;
     }
     return {};
@@ -50,7 +100,9 @@ const vizPanelOptions = {
     defaultChartType: "bar",
     labelTruncateLength: -1,
     showPercentages: true,
-    allowDragDrop: false
+    allowDragDrop: false,
+    minWidth: "100%",
+    allowSelection: false
 }
 
 function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
@@ -75,12 +127,18 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
     }, [data]);
 
     return (<div className='scenario-group'>
-        <h2 className='scenario-header'>{scenarioIndices[scenario]}</h2>
+        <h2 className='scenario-header'>{scenarioIndices[String(scenario)]}</h2>
         <div className='singletons'>
-            {singles?.map((singleton) => { return <SingleGraph key={singleton[0].pageName} data={singleton} version={version}></SingleGraph> })}
-        </div>
-        <div className='comparisons'>
-            {comparisons?.map((comparison) => { return <SingleGraph key={comparison[0].pageName} data={comparison} version={version}></SingleGraph> })}
+            {singles?.map((singleton) => (
+                <div className="graph-container" key={singleton[0].pageName}>
+                    <SingleGraph data={singleton} version={version} />
+                </div>
+            ))}
+            {comparisons?.map((comparison) => (
+                <div className="graph-container" key={comparison[0].pageName}>
+                    <SingleGraph data={comparison} version={version} />
+                </div>
+            ))}
         </div>
     </div>);
 }
@@ -95,8 +153,20 @@ function SingleGraph({ data, version }) {
     React.useEffect(() => {
         if (data.length > 0) {
             setPageName(data[0].pageName + ": Survey Results");
-            // create a survey config based off of answers in the survey data
-            const surveyJson = getQuestionAnswerSets(data[0].pageName, version === 1 ? surveys['delegation_v1.0'] : surveys['delegation_v2.0']);
+            let surveyJson = [];
+            if (version === 1)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v1.0']);
+            else if (version === 2)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v2.0']);
+            else if (version === 3)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v3.0']);
+            else if (version === 4 && data[0].v4Name) {
+                surveyJson = getQuestionAnswerSets(data[0].origName, surveys['delegation_v4.0'], data[0].v4Name);
+                setPageName((data[0].v4Name + ": Survey Results").replace('vs aligned vs misaligned', 'vs Aligned vs Misaligned'));
+            }
+            else if (version === 4)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
+
             const curResults = [];
             for (const entry of data) {
                 const entryResults = {};
@@ -109,6 +179,7 @@ function SingleGraph({ data, version }) {
                 }
                 curResults.push(entryResults);
             }
+
             setSurveyResults([...curResults]);
             const survey = new Model(surveyJson);
             setSurvey(survey);
@@ -129,6 +200,12 @@ function SingleGraph({ data, version }) {
     React.useEffect(() => {
         if (vizPanel) {
             vizPanel.render("viz_" + pageName);
+            
+            // Resize graphs after a short delay to ensure they're fully rendered
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+    
             return () => {
                 if (document.getElementById("viz_" + pageName))
                     document.getElementById("viz_" + pageName).innerHTML = "";
@@ -138,7 +215,7 @@ function SingleGraph({ data, version }) {
 
 
     return (<div>
-        <h3 className="page-name">{pageName}</h3>
+        <h3 className="page-name">{pageName.split(':')[0].slice(-3) == 'vs ' ? pageName.replace(' vs :', ':') : pageName.replace('vs  vs', 'vs')}</h3>
         <div id={"viz_" + pageName} />
     </div>);
 }
@@ -150,13 +227,14 @@ export function SurveyResults() {
         fetchPolicy: 'network-only',
     });
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
-    const [selectedScenario, setSelectedScenario] = React.useState(-1);
+    const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
     const [filterBySurveyVersion, setVersionOption] = React.useState("");
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
+    const [generalizePages, setGeneralization] = React.useState(true);
 
     React.useEffect(() => {
         // component did mount
@@ -175,6 +253,7 @@ export function SurveyResults() {
         }
     };
 
+
     React.useEffect(() => {
         if (data && filterBySurveyVersion) {
             const filteredData = data.getAllSurveyResults.filter(result => {
@@ -187,23 +266,24 @@ export function SurveyResults() {
             let scenarios = {}
             for (const result of filteredData) {
                 if (result.results) {
+
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
-                            const scenarioIndex = result.results[x].scenarioIndex;
+                            const scenarioIndex = String(result.results[x].scenarioIndex);
                             const scenarioName = result.results[x]?.scenarioName || `Scenario ${scenarioIndex}`;
                             scenarios[scenarioIndex] = scenarioName;
                         }
                     }
                 }
             }
-            
             setScenarioIndices(scenarios);
 
             if (Object.keys(scenarios).length > 0) {
-                setSelectedScenario(0);
+                setSelectedScenario("");
             }
         }
     }, [filterBySurveyVersion, data]);
+
 
     React.useEffect(() => {
         if (filteredData) {
@@ -215,19 +295,49 @@ export function SurveyResults() {
                 }
                 for (const x of Object.keys(obj)) {
                     const res = obj[x];
-                    if (res?.scenarioIndex === selectedScenario) {
-                        const indexBy = res.pageType + '_' + res.pageName;
+                    if (String(res?.scenarioIndex) === String(selectedScenario)) {
+                        const resCopy = structuredClone(res);
+                        const indexBy = (filterBySurveyVersion != 4 || !generalizePages) ? resCopy.pageType + '_' + resCopy.pageName : resCopy.pageType + '_' + resCopy.admAuthor + '_' + resCopy.admAlignment;
+                        if (filterBySurveyVersion == 4 && generalizePages) {
+                            resCopy.v4Name = resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware') + ' ' + resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1);
+                            resCopy.origName = resCopy.pageName;
+                            resCopy.pageName = resCopy.v4Name;
+                            // update question names for generalizing data
+                            if (resCopy.questions) {
+                                for (const q of Object.keys(resCopy.questions)) {
+                                    if (resCopy.pageType.includes('single')) {
+                                        const newQ = (resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware') + ' ' + resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1) + ':' + q.slice(9)).replace('::', ':');
+                                        resCopy.questions[newQ] = resCopy.questions[q];
+                                    }
+                                    else {
+                                        const pageADMs = resCopy.origName.split(' vs ');
+                                        const qADMs = q.split(':')[0].split(' vs ');
+                                        const newQ = (qADMs[0] == pageADMs[1] ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] == pageADMs[0] ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
+                                        if (q.includes('Forced')) {
+                                            resCopy.questions[newQ] = { 'response': resCopy.questions[q].response == pageADMs[0] ? 'Baseline' : resCopy.questions[q].response == pageADMs[1] ? 'Aligned' : 'Misaligned' };
+                                        }
+                                        else {
+                                            resCopy.questions[newQ] = resCopy.questions[q];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            resCopy.v4Name = undefined;
+                        }
                         if (Object.keys(separatedData).includes(indexBy)) {
-                            separatedData[indexBy].push(res);
+                            separatedData[indexBy].push(resCopy);
                         } else {
-                            separatedData[indexBy] = [res];
+                            separatedData[indexBy] = [resCopy];
                         }
                     }
+
                 }
             }
             setResultData(separatedData);
         }
-    }, [selectedScenario, filterBySurveyVersion, filteredData]);
+    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages]);
 
     // detect survey versions in data set
     React.useEffect(() => {
@@ -260,6 +370,10 @@ export function SurveyResults() {
         });
     };
 
+    const toggleGeneralizability = (event) => {
+        setGeneralization(event.target.value == 'Alignment');
+    }
+
     return (<div className="delegation-results">
         {loading && <p>Loading</p>}
         {error && <p>Error</p>}
@@ -274,7 +388,7 @@ export function SurveyResults() {
                             <ListItem id={"version_" + item} key={"version_" + item}
                                 button
                                 selected={filterBySurveyVersion === item}
-                                onClick={() => { setVersionOption(item); setSelectedScenario(-1); }}>
+                                onClick={() => { setVersionOption(item); setSelectedScenario(""); }}>
                                 <ListItemText primary={item + '.x'} />
                             </ListItem>
                         )}
@@ -285,23 +399,30 @@ export function SurveyResults() {
                         <div className="nav-header">
                             <span className="nav-header-text">Scenario</span>
                         </div>
-                        <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
+                        <List component="nav" className="nav-list scenario-list" aria-label="secondary mailbox folder">
                             {Object.entries(scenarioIndices).map(([index, name]) =>
                                 <ListItem id={"scenario_" + index} key={"scenario_" + index}
                                     button
-                                    selected={selectedScenario === index}
-                                    onClick={() => { 
-                                        setSelectedScenario(Number(index)); 
-                                        }}>
+                                    selected={String(selectedScenario) === String(index)}
+                                    onClick={() => {
+                                        setSelectedScenario(String(index));
+                                    }}>
                                     <ListItemText primary={name} />
                                 </ListItem>
                             )}
                         </List>
                     </div>}
             </div>
-            {filterBySurveyVersion && selectedScenario > 0 ?
+            {filterBySurveyVersion && selectedScenario != "" ?
                 <div className="graph-section">
-                    <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                    <div className="options">
+                        {filterBySurveyVersion == 4 &&
+                            <FormControlLabel className='prettyToggle' labelPlacement='top' control={<RadioGroup row defaultValue="Alignment" onChange={toggleGeneralizability}>
+                                <FormControlLabel value="Alignment" control={<Radio />} label="Alignment" />
+                                <FormControlLabel value="Medic" control={<Radio />} label="Medic" />
+                            </RadioGroup>} label="View By:" />}
+                        <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
+                    </div>
                     <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
                 </div>
                 :

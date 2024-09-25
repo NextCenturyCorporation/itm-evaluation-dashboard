@@ -2,7 +2,7 @@ import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
 
 export function RQ1() {
-    return (<>
+    return (<div className="researchQuestion">
         <div className="section-container">
             <h2>RQ1: Does alignment score predict measures of trust?</h2>
             <p className='indented'>
@@ -55,5 +55,5 @@ export function RQ1() {
                 <button>View R Syntax</button>
             </div>
         </div>
-    </>);
+    </div>);
 }

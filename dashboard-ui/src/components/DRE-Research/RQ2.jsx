@@ -3,7 +3,7 @@ import './dre-rq.css';
 import { RQ21 } from "./tables/rq21";
 
 export function RQ2() {
-    return (<>
+    return (<div className="researchQuestion">
         <div className="section-container">
             <h2>RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?</h2>
             <p className='indented'>
@@ -38,5 +38,5 @@ export function RQ2() {
             <RQ2223 />
 
         </div>
-    </>);
+    </div>);
 }
