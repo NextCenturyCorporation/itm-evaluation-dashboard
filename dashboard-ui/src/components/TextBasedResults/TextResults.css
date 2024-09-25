@@ -19,7 +19,7 @@
 .result-section {
     margin-left: 12px;
     height: fit-content;
-    width: fit-content;
+    width: 100%; 
 }
 
 .text-results {
@@ -50,19 +50,24 @@
 
 .text-scenario-results {
     width: 100%;
-    display: grid;
-    grid-template-columns: 50% 50%;
+    display: flex;
+    flex-direction: column;  
 }
 
 .chart-scenario-results {
     width: 100%;
-    display: grid;
-    grid-template-columns: 50% 50%;
+    display: flex;
+    flex-direction: column;  
 }
 
 .no-data {
     margin-left: 12px;
     margin-top: 12px;
+}
+
+.full-width-graph {
+    width: 100% !important;
+    margin-bottom: 30px; 
 }
 
 .full-width-graph * {
@@ -95,9 +100,9 @@
 }
 
 .answer-column {
-    width: 350px;
-    min-width: 350px;
-    max-width: 350px;
+    width: auto;  
+    min-width: 200px;
+    max-width: none;  
 }
 
 .graph-section .question-header {
@@ -106,7 +111,7 @@
 }
 
 .text-result-table {
-    width: fit-content;
+    width: 100%;  
 }
 
 .text-result-table thead {
@@ -145,4 +150,17 @@
 
 .participant-text-results button:active {
     filter: brightness(80%);
+}
+
+.full-width-chart-container {
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.sa-visualizer__chart {
+    overflow: visible !important;
+}
+
+.sa-visualizer__chart-axis text {
+    text-anchor: end;
 }

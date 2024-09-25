@@ -47,14 +47,14 @@ const history = createBrowserHistory();
 
 
 const GET_CONFIGS = process.env.REACT_APP_SURVEY_VERSION === '4.0'
-  ? gql`
+    ? gql`
     query GetConfigs {
       getAllSurveyConfigs
       getAllTextBasedConfigs
       getAllTextBasedImages
     }
   `
-  : gql`
+    : gql`
     query GetConfigs {
       getAllSurveyConfigs
       getAllImageUrls
@@ -234,9 +234,14 @@ export class App extends React.Component {
     }
 
     setupTextBasedConfig(data) {
-        if (data && data.getAllTextBasedConfigs) {
-            for (const config of data.getAllTextBasedConfigs) {
-                let tempConfig = JSON.parse(JSON.stringify(config))
+        if (!data || !data.getAllTextBasedConfigs) {
+            console.warn("No text-based configs found in Mongo");
+            return;
+        }
+        for (const config of data.getAllTextBasedConfigs) {
+            // don't try to match images to old mre text based
+            let tempConfig = JSON.parse(JSON.stringify(config))
+            if (tempConfig.eval != 'mre-eval') {
                 for (const page of tempConfig.pages) {
                     for (const el of page.elements) {
                         if (Object.keys(el).includes("patients")) {
@@ -249,10 +254,8 @@ export class App extends React.Component {
                         }
                     }
                 }
-                store.dispatch(addTextBasedConfig({ id: tempConfig._id, data: tempConfig }));
             }
-        } else {
-            console.warn("No text-based configs found in Mongo");
+            store.dispatch(addTextBasedConfig({ id: tempConfig._id, data: tempConfig }));
         }
     }
 
