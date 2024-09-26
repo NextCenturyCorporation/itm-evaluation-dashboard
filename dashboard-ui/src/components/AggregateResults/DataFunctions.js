@@ -519,11 +519,78 @@ function populateHumanDataRow(rowObject, version) {
         }
     }
     else if (version == 4) {
-        console.log(rowObject);
         returnObj = {
-            "Participant": rowObject[0].pid,
-            "Scenario": rowObject[0].scenario_id
+            "Participant": rowObject[0].pid
         };
+        const adept_mapping = { 'MJ2': 1, 'MJ4': 2, 'MJ5': 3 };
+        if (rowObject[0].scenario_id.includes('ol')) {
+            returnObj['ST_Scenario'] = rowObject[0].scenario_id.split('ol-dre-')[1].split('-')[0];
+        }
+        else {
+            returnObj['ADEPT_Scenario'] = adept_mapping[rowObject[0].scenario_id.split('-')[1].split('-')[0]];
+        }
+
+        const mj2ProbeIds = ["Probe 2", "Probe 2A-1", "Probe 2B-1", "Probe 3-B.2", "Probe 4", "Probe 4-B.1", "Probe 4-B.1-B.1", "Probe 5", "Probe 5-A.1", "Probe 5-B.1", "Probe 6", "Probe 7", "Probe 8", "Probe 9", "Probe 9-A.1", "Probe 9-B.1", "Probe 10"];
+        const mj4ProbeIds = ["Probe 1", "Probe 2 kicker", "Probe 2 passerby", "Probe 2-A.1", "Probe 2-D.1", "Probe 2-D.1-B.1", "Probe 3", "Probe 3-A.1", "Probe 3-B.1", "Probe 6", "Probe 7", "Probe 8", "Probe 9", "Probe 10", "Probe 10-A.1", "Probe 10-A.1-B.1", "Probe 10-B.1", "Probe 10-C.1"];
+        const mj5ProbeIds = ["Probe 1", "Probe 1-A.1", "Probe 1-B.1", "Probe 2", "Probe 2-A.1", "Probe 2-A.1-A.1", "Probe 2-A.1-B.1", "Probe 2-A.1-B.1-A.1", "Probe 2-B.1", "Probe 2-B.1-A.1", "Probe 2-B.1-B.1", "Probe 2-B.1-B.1-A.1", "Probe 3", "Probe 4", "Probe 4.5", "Probe 7", "Probe 8", "Probe 8-A.1", "Probe 8-A.1-A.1", "Probe 9", "Probe 9-A.1", "Probe 9-B.1", "Probe 9-C.1"];
+
+        const qol1ProbeIds = ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "qol-dre-train2-Probe-11", "12"];
+        const qolProbeIds = ["qol-dre-?-eval-Probe-1", "qol-dre-?-eval-Probe-2", "qol-dre-?-eval-Probe-3", "qol-dre-?-eval-Probe-4", "qol-dre-?-eval-Probe-5", "qol-dre-?-eval-Probe-6", "qol-dre-?-eval-Probe-7", "qol-dre-?-eval-Probe-8", "qol-dre-?-eval-Probe-9", "qol-dre-?-eval-Probe-10", "qol-dre-?-eval-Probe-11", "qol-dre-?-eval-Probe-12"];
+        const volProbeIds = ["vol-dre-?-eval-Probe-1", "vol-dre-?-eval-Probe-2", "vol-dre-?-eval-Probe-3", "vol-dre-?-eval-Probe-4", "vol-dre-?-eval-Probe-5", "vol-dre-?-eval-Probe-6", "vol-dre-?-eval-Probe-7", "vol-dre-?-eval-Probe-8", "vol-dre-?-eval-Probe-9", "vol-dre-?-eval-Probe-10", "vol-dre-?-eval-Probe-11", "vol-dre-?-eval-Probe-12"];
+        const vol1ProbeIds = ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "vol-dre-train2-Probe-11", "vol-dre-train2-Probe-12"];
+
+        for (let i = 0; i < rowObject[0].data.data.length; i++) {
+            if (rowObject[0]['scenario_id'].includes('qol') || rowObject[0]['scenario_id'].includes('vol')) {
+                for (let j = 0; j < qolProbeIds.length; j++) {
+                    if (rowObject[0].data.data[i].found_match !== false) {
+                        if (rowObject[0]['scenario_id'].includes('qol') && rowObject[0].data.data[i].probe_id.indexOf(qol1ProbeIds[j]) > -1) {
+                            returnObj["QOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["QualityOfLife"] ?? '-';
+                        }
+                        else if (rowObject[0]['scenario_id'].includes('qol') && (rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 3)) > -1)) {
+                            returnObj["QOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["QualityOfLife"] ?? '-';
+                        }
+                        else if (rowObject[0]['scenario_id'].includes('vol') && rowObject[0].data.data[i].probe_id.indexOf(vol1ProbeIds[j]) > -1) {
+                            returnObj["VOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["PerceivedQuantityOfLivesSaved"] ?? '-';
+                        }
+                        else if (rowObject[0]['scenario_id'].includes('vol') && (rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 3)) > -1)) {
+                            returnObj["VOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["PerceivedQuantityOfLivesSaved"] ?? '-';
+                        }
+                    }
+                }
+            }
+            else {
+                if (rowObject[0]['scenario_id'].includes('MJ2')) {
+                    for (let j = 0; j < mj2ProbeIds.length; j++) {
+                        if (rowObject[0].data.data[i].found_match !== false) {
+                            if (rowObject[0].data.data[i].probe_id.indexOf(mj2ProbeIds[j]) > -1) {
+                                returnObj["MJ_" + mj2ProbeIds[j].split('Probe ')[1].replace(' ', '_')] = rowObject[0].data.data[i].probe.kdma_association?.["Moral judgement"] ?? '-';
+                                returnObj["IO_" + mj2ProbeIds[j].split('Probe ')[1].replace(' ', '_')] = rowObject[0].data.data[i].probe.kdma_association?.["Ingroup Bias"] ?? '-';
+                            }
+                        }
+                    }
+                }
+                else if (rowObject[0]['scenario_id'].includes('MJ4')) {
+                    for (let j = 0; j < mj4ProbeIds.length; j++) {
+                        if (rowObject[0].data.data[i].found_match !== false) {
+                            if (rowObject[0].data.data[i].probe_id.indexOf(mj4ProbeIds[j]) > -1) {
+                                returnObj["MJ_" + mj4ProbeIds[j].split('Probe ')[1].replace(' ', '_')] = rowObject[0].data.data[i].probe.kdma_association?.["Moral judgement"] ?? '-';
+                                returnObj["IO_" + mj4ProbeIds[j].split('Probe ')[1].replace(' ', '_')] = rowObject[0].data.data[i].probe.kdma_association?.["Ingroup Bias"] ?? '-';
+                            }
+                        }
+                    }
+                }
+                else if (rowObject[0]['scenario_id'].includes('MJ5')) {
+                    for (let j = 0; j < mj5ProbeIds.length; j++) {
+                        if (rowObject[0].data.data[i].found_match !== false) {
+                            if (rowObject[0].data.data[i].probe_id.indexOf(mj5ProbeIds[j]) > -1) {
+                                returnObj["MJ_" + mj5ProbeIds[j].split('Probe ')[1].replace(' ', '_')] = rowObject[0].data.data[i].probe.kdma_association?.["Moral judgement"] ?? '-';
+                                returnObj["IO_" + mj5ProbeIds[j].split('Probe ')[1].replace(' ', '_')] = rowObject[0].data.data[i].probe.kdma_association?.["Ingroup Bias"] ?? '-';
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     return returnObj;
@@ -532,20 +599,37 @@ function populateHumanDataRow(rowObject, version) {
 function populateDataSet(data) {
     let simAlign = null;
     if (data.getAllSimAlignmentByEval) {
+        const version = data.getAllSimAlignmentByEval[0]?.evalNumber;
         simAlign = getSimAlignment(data.getAllSimAlignmentByEval);
-        let tempGroupHumanSimData = Object.groupBy(data.getAllSimAlignmentByEval, ({env}) => env);
-        Object.keys(tempGroupHumanSimData).forEach (key => {
-            tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({pid}) => pid);
-            let tempGroupPidArray = [];
-            Object.keys(tempGroupHumanSimData[key]).forEach (keyPid => {
-                if(keyPid.indexOf(" ") === -1) {
-                    tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid], data.getAllSimAlignmentByEval[0].evalNumber));
+        let tempGroupHumanSimData = version == 3 ? Object.groupBy(data.getAllSimAlignmentByEval, ({ env }) => env) : Object.groupBy(data.getAllSimAlignmentByEval, ({ pid }) => pid);
+        Object.keys(tempGroupHumanSimData).forEach(key => {
+            if (version == 3) {
+                tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({ pid }) => pid);
+                let tempGroupPidArray = [];
+                Object.keys(tempGroupHumanSimData[key]).forEach(keyPid => {
+                    if (keyPid.indexOf(" ") === -1) {
+                        tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid], data.getAllSimAlignmentByEval[0].evalNumber));
+                    }
+                });
+                tempGroupHumanSimData[key] = tempGroupPidArray;
+            }
+            else {
+                tempGroupHumanSimData[key] = tempGroupHumanSimData[key].map((x) => populateHumanDataRow([x], version));
+                let combinedObj = {};
+                for (const x of tempGroupHumanSimData[key]) {
+                    combinedObj = { ...combinedObj, ...x };
                 }
-            });
-            tempGroupHumanSimData[key] = tempGroupPidArray;
+                tempGroupHumanSimData[key] = [combinedObj];
+            }
         });
+        // for version 4, we will only separate by ADEPT, since they have different probes and we want to combine ST and Adept into one row per participant
+        if (version == 4) {
+            tempGroupHumanSimData = Object.values(tempGroupHumanSimData).flat();
+            const adept_mapping = { 1: ["DryRunEval-MJ2-eval"], 2: ["DryRunEval-MJ4-eval"], 3: ["DryRunEval-MJ5-eval"] }
+            tempGroupHumanSimData = Object.groupBy(tempGroupHumanSimData, ({ ADEPT_Scenario }) => adept_mapping[ADEPT_Scenario]);
+        }
         
-        AGGREGATED_DATA["groupedSim"] = tempGroupHumanSimData
+        AGGREGATED_DATA["groupedSim"] = tempGroupHumanSimData;
     }
     const txtAlign = getTextKDMA(data);
     const txtScores = getTextAlignment(data);
