@@ -149,6 +149,7 @@ class SurveyPage extends Component {
             envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 }
         };
         this.surveyConfigClone = null;
+        this.pageStartTimes = {};
 
         if (this.state.surveyConfig) {
             this.postConfigSetup();
@@ -174,7 +175,6 @@ class SurveyPage extends Component {
         this.survey = new Model(this.surveyConfigClone);
         this.survey.applyTheme(surveyTheme);
 
-        this.pageStartTimes = {};
         this.surveyData = {};
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onValueChanged.add(this.onValueChanged)
