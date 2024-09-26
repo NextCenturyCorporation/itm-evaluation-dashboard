@@ -1,95 +1,36 @@
 .admin-page {
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 2rem auto;
     padding: 2rem;
-    font-family: 'Arial', sans-serif;
-    background-color: #f5f5f5;
-  }
-  
-  .admin-container {
+}
+
+.admin-header {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.admin-container {
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     padding: 2rem;
     margin-bottom: 2rem;
-  }
-  
-  .admin-container h3 {
-    color: #333;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid #3498db;
+}
+
+.admin-container h3 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
     padding-bottom: 0.5rem;
-  }
-  
-  .admin-description {
+    margin-bottom: 1rem;
+}
+
+.admin-description {
     color: #666;
     margin-bottom: 1.5rem;
-  }
-  
-  .modify-admins-header h5 {
-    color: #3498db;
-    font-size: 1.2rem;
+}
+
+.modify-admins-header h5 {
+    color: var(--primary-color);
     margin: 1.5rem 0 1rem;
-  }
-  
-  .dual-input-container {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .rdl-control-container {
-    width: 100% !important;
-    height: 300px !important;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-  }
-  
-  .rdl-control {
-    border: none !important;
-    box-shadow: none !important;
-  }
-  
-  .rdl-btn {
-    background-color: #3498db !important;
-    color: white !important;
-    border: none !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 4px !important;
-    transition: background-color 0.3s ease;
-  }
-  
-  .rdl-btn:hover {
-    background-color: #2980b9 !important;
-  }
-  
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-  }
-  
-  th, td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  th {
-    background-color: #f8f8f8;
-    font-weight: bold;
-    color: #333;
-  }
-  
-  input[type="checkbox"] {
-    transform: scale(1.2);
-  }
-  
-  .survey-version-select {
-    margin-bottom: 1rem;
-    padding: 0.5rem;
-    font-size: 1rem;
-    border-radius: 4px;
-    border: 1px solid #e0e0e0;
-    width: 200px;
-  }
+}

@@ -4,8 +4,8 @@ import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 import DualListBox from 'react-dual-listbox';
 import { useMutation } from 'react-apollo';
+import { Button, Modal } from 'react-bootstrap';
 import '../../css/admin-page.css';
-
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
     query getUsers{
@@ -142,7 +142,7 @@ function EvaluationIDSTable({ data }) {
     }
 
     return (
-        <table>
+        <table className="table">
             <thead>
                 <tr>
                     <th>Evaluation</th>
@@ -174,17 +174,54 @@ function EvaluationIDSTable({ data }) {
     )
 }
 
+function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
+    return (
+        <Modal show={show} onHide={onCancel} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Confirm Action</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>{message}</Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={onCancel}>
+                    Cancel
+                </Button>
+                <Button variant="primary" onClick={onConfirm}>
+                    Confirm
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+}
+
 function AdminPage({ currentUser }) {
     const [surveyVersion, setSurveyVersion] = useState('1');
+    const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+
+    const handleSurveyVersionChange = (event) => {
+        const newVersion = event.target.value;
+        setPendingSurveyVersion(newVersion);
+        setShowConfirmation(true);
+    };
+
+    const confirmSurveyVersionChange = () => {
+        setSurveyVersion(pendingSurveyVersion);
+        setShowConfirmation(false);
+    };
+
+    const cancelSurveyVersionChange = () => {
+        setPendingSurveyVersion(null);
+        setShowConfirmation(false);
+    };
 
     return (
         <div className="admin-page">
             <div className="admin-header">
                 <h2>Admin Dashboard</h2>
                 <select
-                    className="survey-version-select"
+                    className="form-select survey-version-select"
                     value={surveyVersion}
-                    onChange={(e) => setSurveyVersion(e.target.value)}
+                    onChange={handleSurveyVersionChange}
                 >
                     <option value="1">Survey Version 1</option>
                     <option value="2">Survey Version 2</option>
@@ -192,6 +229,13 @@ function AdminPage({ currentUser }) {
                     <option value="4">Survey Version 4</option>
                 </select>
             </div>
+
+            <ConfirmationDialog
+                show={showConfirmation}
+                onConfirm={confirmSurveyVersionChange}
+                onCancel={cancelSurveyVersionChange}
+                message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
+            />
 
             <Query query={GET_USERS} fetchPolicy={'no-cache'}>
                 {({ loading, error, data }) => {
