@@ -160,7 +160,7 @@ function SingleGraph({ data, pageName }) {
 
     const vizPanelOptions = {
         allowHideQuestions: false,
-        defaultChartType: "vbar",
+        defaultChartType: "bar",
         labelTruncateLength: -1,
         showPercentages: true,
         allowDragDrop: false,
