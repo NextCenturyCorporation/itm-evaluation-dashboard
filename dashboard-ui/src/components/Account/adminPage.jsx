@@ -1,36 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Query } from 'react-apollo';
+import { Query, useQuery, useMutation } from 'react-apollo';
 import gql from 'graphql-tag';
 import DualListBox from 'react-dual-listbox';
-import { useMutation } from 'react-apollo';
-import { Button, Modal } from 'react-bootstrap';
+import { Button, Modal, Form } from 'react-bootstrap';
 import '../../css/admin-page.css';
+import { useSelector } from "react-redux";
+
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
-    query getUsers{
+    query getUsers {
         getUsers
-    }`;
+    }
+`;
 
 const GET_EVAL_IDS = gql`
-    query getEvalIds{
+    query getEvalIds {
         getEvalIds
-    }`;
+    }
+`;
 
 const UPDATE_EVAL_IDS_BYPAGE = gql`
-    mutation updateEvalIdsByPage($evalNumber: Int!, $field: String!, $value: Boolean!){
+    mutation updateEvalIdsByPage($evalNumber: Int!, $field: String!, $value: Boolean!) {
         updateEvalIdsByPage(evalNumber: $evalNumber, field: $field, value: $value) 
-    }`;
+    }
+`;
 
 const UPDATE_ADMIN_USER = gql`
-    mutation updateAdminUser($username: String!, $isAdmin: Boolean!){
+    mutation updateAdminUser($username: String!, $isAdmin: Boolean!) {
         updateAdminUser(username: $username, isAdmin: $isAdmin) 
-    }`;
+    }
+`;
 
 const UPDATE_EVALUATOR_USER = gql`
-    mutation updateEvaluatorUser($username: String!, $isEvaluator: Boolean!){
+    mutation updateEvaluatorUser($username: String!, $isEvaluator: Boolean!) {
         updateEvaluatorUser(username: $username, isEvaluator: $isEvaluator) 
-    }`;
+    }
+`;
+
+const GET_CURRENT_SURVEY_VERSION = gql`
+    query getCurrentSurveyVersion {
+        getCurrentSurveyVersion
+    }
+`;
+
+const UPDATE_SURVEY_VERSION = gql`
+    mutation updateSurveyVersion($version: String!) {
+        updateSurveyVersion(version: $version)
+    }
+`;
 
 function AdminInputBox({ options, selectedOptions }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
@@ -194,9 +212,30 @@ function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
 }
 
 function AdminPage({ currentUser }) {
-    const [surveyVersion, setSurveyVersion] = useState('1');
+    const [surveyVersion, setSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
+    const [surveyVersions, setSurveyVersions] = useState([]);
+
+    const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION);
+    const [updateSurveyVersion] = useMutation(UPDATE_SURVEY_VERSION);
+    console.log(surveyVersionData)
+
+    useEffect(() => {
+        if (surveyVersionData && surveyVersionData.getCurrentSurveyVersion) {
+            setSurveyVersion(surveyVersionData.getCurrentSurveyVersion);
+        }
+    }, [surveyVersionData]);
+
+    useEffect(() => {
+        if (surveyConfigs) {
+            const versions = Object.values(surveyConfigs).map(config => config.version);
+            const uniqueVersions = [...new Set(versions)].sort((a, b) => a - b);
+            setSurveyVersions(uniqueVersions);
+            console.log("Survey Versions:", uniqueVersions);
+        }
+    }, [surveyConfigs]);
 
     const handleSurveyVersionChange = (event) => {
         const newVersion = event.target.value;
@@ -204,30 +243,49 @@ function AdminPage({ currentUser }) {
         setShowConfirmation(true);
     };
 
-    const confirmSurveyVersionChange = () => {
-        setSurveyVersion(pendingSurveyVersion);
-        setShowConfirmation(false);
-    };
+    const confirmSurveyVersionChange = async () => {
+        try {
+          const { data } = await updateSurveyVersion({ 
+            variables: { version: pendingSurveyVersion }
+          });
+          if (data && data.updateSurveyVersion) {
+            setSurveyVersion(data.updateSurveyVersion);
+            setShowConfirmation(false);
+          } else {
+            throw new Error("Failed to update survey version");
+          }
+        } catch (error) {
+          console.error("Error updating survey version:", error);
+          // Show error message to the user
+          alert("Failed to update survey version. Please try again.");
+        }
+      };
 
     const cancelSurveyVersionChange = () => {
         setPendingSurveyVersion(null);
         setShowConfirmation(false);
     };
 
+    if (surveyVersionLoading) return <div className="loading">Loading survey version...</div>;
+    if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
+
     return (
         <div className="admin-page">
             <div className="admin-header">
                 <h2>Admin Dashboard</h2>
-                <select
-                    className="form-select survey-version-select"
+                <h3>Survey Versions</h3>
+                <p>Current Survey Version: {surveyVersion || 'Not set'}</p>
+                <Form.Select 
                     value={surveyVersion}
                     onChange={handleSurveyVersionChange}
                 >
-                    <option value="1">Survey Version 1</option>
-                    <option value="2">Survey Version 2</option>
-                    <option value="3">Survey Version 3</option>
-                    <option value="4">Survey Version 4</option>
-                </select>
+                    <option value="">Select survey version</option>
+                    {surveyVersions.map((version) => (
+                        <option key={version} value={version}>
+                            Version {version}
+                        </option>
+                    ))}
+                </Form.Select>
             </div>
 
             <ConfirmationDialog

@@ -200,7 +200,8 @@ const typeDefs = gql`
     getAllTextBasedImages: [JSON],
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int,
-    getParticipantLog: [JSON]
+    getParticipantLog: [JSON],
+    getCurrentSurveyVersion: String
   }
 
   type Mutation {
@@ -209,6 +210,7 @@ const typeDefs = gql`
     uploadSurveyResults(surveyId: String, results: JSON): JSON
     uploadScenarioResults(results: [JSON]): JSON
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON
+    updateSurveyVersion(version: String!): String
   }
 `;
 
@@ -442,7 +444,11 @@ const resolvers = {
     },
     getParticipantLog: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('participantLog').find().toArray().then(result => {return result});
-    }
+    },
+    getCurrentSurveyVersion: async () => {
+      const result = await dashboardDB.db.collection('surveyVersion').findOne();
+      return result;
+    },
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
@@ -482,6 +488,14 @@ const resolvers = {
       const options = { upsert: true}
 
       return await dashboardDB.db.collection('evaluationIDS').updateOne(filter, update, options)
+    },
+    updateSurveyVersion: async (obj, args, context, inflow) => {
+      const result = await dashboardDB.db.collection('surveyVersion').findOneAndUpdate(
+        {},
+        { $set: { version: args['version'] } },
+        { upsert: true }
+      );
+      return result.value.version;
     }
 
   },
