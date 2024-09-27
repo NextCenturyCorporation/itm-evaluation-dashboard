@@ -444,7 +444,7 @@ function getOverallTrust(res) {
     // gets the overall trust level of a participant
     let val = 0;
     let tally = 0;
-    if (res.results.evalNumber == 3) {
+    if (res.results.evalNumber != 4) {
         const adMedics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
         const stMedics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
 
@@ -809,7 +809,7 @@ function populateDataSet(data) {
             tmpSet['AD_AttribGrp_Text'] = adAttribute;
             // get sim attribute alignment
             tmpSet['AD_AttribGrp_Sim'] = tmpSet['AD_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
-            if (res.results.evalNumber == 3) {
+            if (res.results.evalNumber != 4) {
                 for (let i = 0; i < 2; i++) {
                     const suffix = i === 0 ? "_Text" : "_Sim";
                     adAttribute = i === 0 ? tmpSet['AD_AttribGrp_Text'] : tmpSet['AD_AttribGrp_Sim'];
