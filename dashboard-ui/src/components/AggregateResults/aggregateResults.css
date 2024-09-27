@@ -150,6 +150,12 @@
     background-color: white;
 }
 
+.selection-section-probes {
+    margin-left: 24px;
+    max-width: 300px;
+    padding-top: 5px;
+}
+
 .q2-adms h3 {
     text-align: center;
     width: 100%;
@@ -157,6 +163,18 @@
 
 .home-container .result-table-section-override {
     margin: 5px 20px;
+}
+
+.home-navigation-container .evaluation-selector-container {
+    margin-left: 12px;
+}
+
+.home-container .selection-section {
+    margin-left: 12px;
+}
+
+.sim-probe-title {
+    margin-left: 12px !important;
 }
 
 .subtitle {
