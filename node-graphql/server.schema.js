@@ -446,8 +446,7 @@ const resolvers = {
       return await dashboardDB.db.collection('participantLog').find().toArray().then(result => {return result});
     },
     getCurrentSurveyVersion: async () => {
-      const result = await dashboardDB.db.collection('surveyVersion').findOne();
-      return result;
+      return await dashboardDB.db.collection('surveyVersion').findOne().then(result => {return result.version});
     },
   },
   Mutation: {

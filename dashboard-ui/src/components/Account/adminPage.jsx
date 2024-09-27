@@ -156,7 +156,6 @@ function EvaluationIDSTable({ data }) {
         } else {
             setSelectedEvals(selectedEvals.filter(id => id !== checkedId))
         }
-        console.log(selectedEvals);
     }
 
     return (
@@ -220,7 +219,6 @@ function AdminPage({ currentUser }) {
 
     const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION);
     const [updateSurveyVersion] = useMutation(UPDATE_SURVEY_VERSION);
-    console.log(surveyVersionData)
 
     useEffect(() => {
         if (surveyVersionData && surveyVersionData.getCurrentSurveyVersion) {
@@ -233,33 +231,33 @@ function AdminPage({ currentUser }) {
             const versions = Object.values(surveyConfigs).map(config => config.version);
             const uniqueVersions = [...new Set(versions)].sort((a, b) => a - b);
             setSurveyVersions(uniqueVersions);
-            console.log("Survey Versions:", uniqueVersions);
         }
     }, [surveyConfigs]);
 
     const handleSurveyVersionChange = (event) => {
+        event.preventDefault(); // Prevent form submission
         const newVersion = event.target.value;
-        setPendingSurveyVersion(newVersion);
-        setShowConfirmation(true);
+        if (newVersion !== '') {
+            setPendingSurveyVersion(newVersion);
+            setShowConfirmation(true);
+        }
     };
 
     const confirmSurveyVersionChange = async () => {
         try {
-          const { data } = await updateSurveyVersion({ 
-            variables: { version: pendingSurveyVersion }
-          });
-          if (data && data.updateSurveyVersion) {
-            setSurveyVersion(data.updateSurveyVersion);
-            setShowConfirmation(false);
-          } else {
-            throw new Error("Failed to update survey version");
-          }
+            const { data } = await updateSurveyVersion({ 
+                variables: { version: pendingSurveyVersion }
+            });
+            if (data && data.updateSurveyVersion) {
+                setSurveyVersion(pendingSurveyVersion);
+                setShowConfirmation(false);
+            } else {
+                throw new Error("Failed to update survey version");
+            }
         } catch (error) {
-          console.error("Error updating survey version:", error);
-          // Show error message to the user
-          alert("Failed to update survey version. Please try again.");
+            alert("Failed to update survey version. Please try again.");
         }
-      };
+    };
 
     const cancelSurveyVersionChange = () => {
         setPendingSurveyVersion(null);
@@ -276,10 +274,10 @@ function AdminPage({ currentUser }) {
                 <h3>Survey Versions</h3>
                 <p>Current Survey Version: {surveyVersion || 'Not set'}</p>
                 <Form.Select 
-                    value={surveyVersion}
+                    value=''
                     onChange={handleSurveyVersionChange}
                 >
-                    <option value="">Select survey version</option>
+                    <option value="" disabled>Select survey version</option>
                     {surveyVersions.map((version) => (
                         <option key={version} value={version}>
                             Version {version}
