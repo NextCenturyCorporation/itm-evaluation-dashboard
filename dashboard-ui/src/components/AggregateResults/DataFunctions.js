@@ -755,18 +755,22 @@ function populateDataSet(data) {
                 tmpSet['MJ_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
                 tmpSet['IO_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
                 const qol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.sid;
-                tmpSet['QOL_KDMA_Sim'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores`;
+                const qol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
+                tmpSet['QOL_KDMA_Sim'] = qol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-';
                 const vol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.sid;
-                tmpSet['VOL_KDMA_Sim'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores`;
+                const vol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved');
+                tmpSet['VOL_KDMA_Sim'] = vol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores` : '-';
                 const adept_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('DryRun'))?.kdmas;
                 if (Array.isArray(adept_text_kdmas)) {
                     tmpSet['MJ_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
                     tmpSet['IO_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
                 }
                 const qol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.serverSessionId;
-                tmpSet['QOL_KDMA_Text'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores`;
+                const qol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('qol'))?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
+                tmpSet['QOL_KDMA_Text'] = qol_text_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores` : '-';
                 const vol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.serverSessionId;
-                tmpSet['VOL_KDMA_Text'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores`;
+                const vol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('vol'))?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved');
+                tmpSet['VOL_KDMA_Text'] = vol_text_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores` : '-';
             }
 
 
