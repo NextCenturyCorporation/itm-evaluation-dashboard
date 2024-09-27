@@ -741,9 +741,9 @@ function populateDataSet(data) {
 
             if (res.results.evalNumber == 4) {
 
-                tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('adept'))] ?? '-';
-                tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('qol'))] ?? '-';
-                tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('vol'))] ?? '-';
+                tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('adept'))] ?? '-';
+                tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('qol'))] ?? '-';
+                tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('vol'))] ?? '-';
 
                 const text_scenarios = data.getAllScenarioResultsByEval.filter((x) => x.participantID == pid);
 
