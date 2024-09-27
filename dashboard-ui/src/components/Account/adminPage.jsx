@@ -217,7 +217,9 @@ function AdminPage({ currentUser }) {
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
     const [surveyVersions, setSurveyVersions] = useState([]);
 
-    const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION);
+    const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION, {
+        fetchPolicy: 'no-cache'
+    });
     const [updateSurveyVersion] = useMutation(UPDATE_SURVEY_VERSION);
 
     useEffect(() => {
