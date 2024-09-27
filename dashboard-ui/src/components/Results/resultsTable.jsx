@@ -376,7 +376,6 @@ class ResultsTable extends React.Component {
 
 function ActionRow({ item, index }) {
     const [open, setOpen] = React.useState(false);
-    console.log(item)
 
     const renderNestedItems= (item) => {
         if (isObject(item)) {

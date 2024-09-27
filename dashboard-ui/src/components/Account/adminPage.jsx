@@ -128,7 +128,6 @@ function EvaluationIDSTable({data}){
         }else{
             setSelectedEvals(selectedEvals.filter(id=>id !== checkedId))
         }
-        console.log(selectedEvals);
     }
     
     return(
