@@ -15,7 +15,7 @@ const SIM_MAP = {
     "dryrun-soartech-eval-qol3": 3,
     "dryrun-soartech-eval-vol1": 1,
     "dryrun-soartech-eval-vol2": 2,
-    "dryrun-soartech-eval-vol3": 3,
+    "dryrun-soartech-eval-vol3": 3
 }
 
 const MED_ROLE_MAP = {
