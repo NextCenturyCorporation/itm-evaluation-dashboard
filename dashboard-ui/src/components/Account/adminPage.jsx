@@ -3,9 +3,9 @@ import { withRouter } from 'react-router-dom';
 import { Query, useQuery, useMutation } from 'react-apollo';
 import gql from 'graphql-tag';
 import DualListBox from 'react-dual-listbox';
-import { Button, Modal, Form } from 'react-bootstrap';
-import '../../css/admin-page.css';
+import { Button, Modal, Form, Container, Row, Col, Card } from 'react-bootstrap';
 import { useSelector } from "react-redux";
+import '../../css/admin-page.css';
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -235,7 +235,7 @@ function AdminPage({ currentUser }) {
     }, [surveyConfigs]);
 
     const handleSurveyVersionChange = (event) => {
-        event.preventDefault(); // Prevent form submission
+        event.preventDefault();
         const newVersion = event.target.value;
         if (newVersion !== '') {
             setPendingSurveyVersion(newVersion);
@@ -268,23 +268,39 @@ function AdminPage({ currentUser }) {
     if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
 
     return (
-        <div className="admin-page">
-            <div className="admin-header">
-                <h2>Admin Dashboard</h2>
-                <h3>Survey Versions</h3>
-                <p>Current Survey Version: {surveyVersion || 'Not set'}</p>
-                <Form.Select 
-                    value=''
-                    onChange={handleSurveyVersionChange}
-                >
-                    <option value="" disabled>Select survey version</option>
-                    {surveyVersions.map((version) => (
-                        <option key={version} value={version}>
-                            Version {version}
-                        </option>
-                    ))}
-                </Form.Select>
-            </div>
+        <Container className="admin-page">
+            <Row className="mb-4">
+                <Col>
+                    <h1 className="admin-header">Admin Dashboard</h1>
+                </Col>
+            </Row>
+
+            <Row className="mb-4">
+                <Col md={6}>
+                    <Card>
+                        <Card.Header as="h5">Survey Version</Card.Header>
+                        <Card.Body>
+                            <Card.Text>
+                                Current Survey Version: <strong>{surveyVersion || 'Not set'}</strong>
+                            </Card.Text>
+                            <Form.Group>
+                                <Form.Label>Change Survey Version:</Form.Label>
+                                <Form.Select 
+                                    value=''
+                                    onChange={handleSurveyVersionChange}
+                                >
+                                    <option value="" disabled>Select survey version</option>
+                                    {surveyVersions.map((version) => (
+                                        <option key={version} value={version}>
+                                            Version {version}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            </Form.Group>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
 
             <ConfirmationDialog
                 show={showConfirmation}
@@ -319,27 +335,35 @@ function AdminPage({ currentUser }) {
 
                     return (
                         <>
-                            <div className="admin-container">
-                                <h3>Administrator</h3>
-                                <div className="admin-description">
-                                    Manage administrator settings.
-                                </div>
-                                <div className="modify-admins-header">
-                                    <h5>Modify Current Admins</h5>
-                                </div>
-                                <AdminInputBox options={options} selectedOptions={selectedOptions} />
-                            </div>
+                            <Row className="mb-4">
+                                <Col>
+                                    <Card>
+                                        <Card.Header as="h5">Administrator</Card.Header>
+                                        <Card.Body>
+                                            <Card.Text>
+                                                Manage administrator settings.
+                                            </Card.Text>
+                                            <h6>Modify Current Admins</h6>
+                                            <AdminInputBox options={options} selectedOptions={selectedOptions} />
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            </Row>
 
-                            <div className="admin-container">
-                                <h3>Evaluators</h3>
-                                <div className="admin-description">
-                                    Manage evaluator settings.
-                                </div>
-                                <div className="modify-admins-header">
-                                    <h5>Modify Current Evaluators</h5>
-                                </div>
-                                <EvaluatorInputBox options={evaluatorOptions} selectedOptions={evaluatorSelectedOptions} />
-                            </div>
+                            <Row className="mb-4">
+                                <Col>
+                                    <Card>
+                                        <Card.Header as="h5">Evaluators</Card.Header>
+                                        <Card.Body>
+                                            <Card.Text>
+                                                Manage evaluator settings.
+                                            </Card.Text>
+                                            <h6>Modify Current Evaluators</h6>
+                                            <EvaluatorInputBox options={evaluatorOptions} selectedOptions={evaluatorSelectedOptions} />
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            </Row>
                         </>
                     );
                 }}
@@ -351,20 +375,24 @@ function AdminPage({ currentUser }) {
                     if (error) return <div className="error">Error: {error.message}</div>;
 
                     return (
-                        <div className="admin-container">
-                            <h3>Visible Evaluation Options By Page</h3>
-                            <div className="admin-description">
-                                Control values populated in the Evaluation Dropdown list
-                            </div>
-                            <div className="modify-admins-header">
-                                <h5>Modify Visible Evaluation Options</h5>
-                            </div>
-                            <EvaluationIDSTable data={data["getEvalIds"]} />
-                        </div>
+                        <Row>
+                            <Col>
+                                <Card>
+                                    <Card.Header as="h5">Visible Evaluation Options By Page</Card.Header>
+                                    <Card.Body>
+                                        <Card.Text>
+                                            Control values populated in the Evaluation Dropdown list
+                                        </Card.Text>
+                                        <h6>Modify Visible Evaluation Options</h6>
+                                        <EvaluationIDSTable data={data["getEvalIds"]} />
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
                     );
                 }}
             </Query>
-        </div>
+        </Container>
     );
 }
 

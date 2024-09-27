@@ -1,36 +1,64 @@
 .admin-page {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 2rem;
-}
-
-.admin-header {
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--primary-color);
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  .admin-header {
+    color: #333;
+    border-bottom: 2px solid rgba(89, 38, 16, 1);
     padding-bottom: 0.5rem;
-}
-
-.admin-container {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    margin-bottom: 2rem;
-}
-
-.admin-container h3 {
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.admin-description {
-    color: #666;
     margin-bottom: 1.5rem;
-}
-
-.modify-admins-header h5 {
-    color: var(--primary-color);
-    margin: 1.5rem 0 1rem;
-}
+  }
+  
+  .card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  
+  .card:hover {
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .loading, .error {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+    color: #6c757d;
+  }
+  
+  .error {
+    color: #dc3545;
+  }
+  
+  .table {
+    background-color: white;
+  }
+  
+  .table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+  }
+  
+  .dual-listbox {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .dual-listbox .dual-listbox__container {
+    width: 45%;
+  }
+  
+  .dual-listbox .dual-listbox__buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .dual-listbox .dual-listbox__button {
+    margin: 5px 0;
+  }
