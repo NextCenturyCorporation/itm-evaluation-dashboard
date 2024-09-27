@@ -29,6 +29,12 @@ const COUNT_AI_GROUP_FIRST = gql`
   }
 `;
 
+const GET_CURRENT_SURVEY_VERSION = gql`
+    query getCurrentSurveyVersion {
+        getCurrentSurveyVersion
+    }
+`;
+
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
     uploadSurveyResults(surveyId: $surveyId, results: $results)
@@ -220,10 +226,10 @@ class SurveyPage extends Component {
         useEffect(() => {
             if (reducer) {
                 this.setState({
-                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
+                    surveyConfig: reducer['delegation_v' + this.props.surveyVersion]
                 }, () => {
                     this.setState({
-                        surveyVersion: this.state.surveyConfig['version']
+                        surveyVersion: this.props.surveyVersion
                     }, () => {
                         this.postConfigSetup();
                     })
@@ -1245,10 +1251,15 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
       });
+      const { loading: loadingSurveyVersion, error: errorSurveyVersion, data: dataSurveyVersion } = useQuery(GET_CURRENT_SURVEY_VERSION, {
+        fetchPolicy: 'no-cache'
+      })
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults || loadingSurveyVersion) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults || errorSurveyVersion) return <p>Error :</p>;
+
+    const formattedSurveyVersion = Number(dataSurveyVersion.getCurrentSurveyVersion).toFixed(1);
 
     return (
         <SurveyPage
@@ -1258,6 +1269,7 @@ export const SurveyPageWrapper = (props) => {
             currentUser={props.currentUser}
             textResults={dataTextResults?.getAllScenarioResults}
             surveyResults={dataSurveyResults.getAllSurveyResults}
+            surveyVersion={formattedSurveyVersion}
         />)
 };
 
