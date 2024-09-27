@@ -442,15 +442,32 @@ function getOverallDelRate(res) {
 
 function getOverallTrust(res) {
     // gets the overall trust level of a participant
-    const adMedics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
-    const stMedics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
     let val = 0;
     let tally = 0;
-    for (let medic of [...adMedics, ...stMedics]) {
-        const comfort = safeGet(res, ['results', medic, 'questions', medic + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it', 'response']);
-        if (isDefined(comfort)) {
-            val += RESPONSIBILITY_MAP[comfort];
-            tally += 1;
+    if (res.results.evalNumber == 3) {
+        const adMedics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
+        const stMedics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
+
+        for (let medic of [...adMedics, ...stMedics]) {
+            const comfort = safeGet(res, ['results', medic, 'questions', medic + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it', 'response']);
+            if (isDefined(comfort)) {
+                val += RESPONSIBILITY_MAP[comfort];
+                tally += 1;
+            }
+        }
+    }
+    else {
+        for (const page of Object.keys(res.results)) {
+            if (!page.includes('Medic') || page.includes(' vs ')) {
+                continue;
+            }
+            else {
+                const comfort = safeGet(res, ['results', page, 'questions', page + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it', 'response']);
+                if (isDefined(comfort)) {
+                    val += RESPONSIBILITY_MAP[comfort];
+                    tally += 1;
+                }
+            }
         }
     }
     return tally > 0 ? val / tally : null;
@@ -655,7 +672,6 @@ function populateDataSet(data) {
     for (const res of data.getAllSurveyResultsByEval) {
         // if survey instructions does not exist, we don't want the entry
         if ([2, 4].includes(res.results?.surveyVersion) && Object.keys(res.results).includes('Survey Introduction')) {
-            console.log(res);
             // use this result!
             const tmpSet = {};
 
@@ -731,12 +747,11 @@ function populateDataSet(data) {
 
             if (res.results.evalNumber == 4) {
 
-                tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('adept'))] ?? '-';;
-                tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('qol'))] ?? '-';;
-                tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('vol'))] ?? '-';;
+                tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('adept'))] ?? '-';
+                tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('qol'))] ?? '-';
+                tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid].find((x) => x.includes('vol'))] ?? '-';
 
                 const text_scenarios = data.getAllScenarioResultsByEval.filter((x) => x.participantID == pid);
-                console.log(text_scenarios);
 
                 tmpSet['AD_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('DryRunEval-MJ'))?.scenario_id] ?? '-';
                 tmpSet['QOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
@@ -745,19 +760,19 @@ function populateDataSet(data) {
                 const adept_sim_kdmas = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('DryRun'))?.data?.alignment?.kdmas;
                 tmpSet['MJ_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
                 tmpSet['IO_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
-                const qol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.kdmas?.computed_kdma_profile;
-                tmpSet['QOL_KDMA_Sim'] = qol_sim_kdma?.find((x) => x.kdma == 'QualityOfLife')?.value;
-                const vol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.kdmas?.computed_kdma_profile;
-                tmpSet['VOL_KDMA_Sim'] = vol_sim_kdma?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved')?.value;
+                const qol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.sid;
+                tmpSet['QOL_KDMA_Sim'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores`;
+                const vol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.sid;
+                tmpSet['VOL_KDMA_Sim'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores`;
                 const adept_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('DryRun'))?.kdmas;
                 if (Array.isArray(adept_text_kdmas)) {
                     tmpSet['MJ_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
                     tmpSet['IO_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
                 }
-                const qol_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.kdmas?.computed_kdma_profile;
-                tmpSet['QOL_KDMA_Text'] = qol_text_kdmas?.find((x) => x.kdma == 'QualityOfLife')?.value;
-                const vol_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.kdmas?.computed_kdma_profile;
-                tmpSet['VOL_KDMA_Text'] = vol_text_kdmas?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved')?.value;
+                const qol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.serverSessionId;
+                tmpSet['QOL_KDMA_Text'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores`;
+                const vol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.serverSessionId;
+                tmpSet['VOL_KDMA_Text'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores`;
             }   
 
             // verify sim order according to document

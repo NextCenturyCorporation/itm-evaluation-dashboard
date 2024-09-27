@@ -289,6 +289,9 @@ export default function AggregateResults({ type }) {
     const [chartData, setChartData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [selectedEval, setSelectedEval] = React.useState(4);
+    const [iframeLink, setIframeLink] = React.useState(null);
+    const [showIframe, setShowIframe] = React.useState(false);
+    const [iframeTitle, setIframeTitle] = React.useState(null);
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
         variables: {"evalNumber": selectedEval}
@@ -378,10 +381,29 @@ export default function AggregateResults({ type }) {
         return [...headers.slice(0, splitPoint), ...ADEPT_HEADERS_DRE[adeptScenario] ?? [], ...headers.slice(splitPoint + 1)];
     }
 
+    const showGraph = (url, name) => {
+        setIframeLink(url);
+        setShowIframe(true);
+        setIframeTitle(name);
+    }
+
+    const closeIframe = () => {
+        setShowIframe(false);
+    }
+
     return (
         <div className='aggregatePage'>
             {type === 'HumanSimParticipant' && 
                 <div className="home-container">
+                    <Modal className='table-modal' open={showIframe} onClose={closeIframe}>
+                        <div className='modal-body'>
+                            <span className='close-icon' onClick={closeIframe}><CloseIcon /></span>
+                            <div className='graph-popup'>
+                                <h3>{iframeTitle ?? 'KDMA Graph'}</h3>
+                                <iframe src={iframeLink} />
+                            </div>
+                        </div>
+                    </Modal>
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
                             <div className="evaluation-selector-label"><h2>{selectedEval == 3 ? "Human Participant Data: Within-Subjects Analysis" : "Participant-Level Data"}</h2></div>
@@ -420,7 +442,9 @@ export default function AggregateResults({ type }) {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
                                         {HEADER[selectedEval]?.map((val) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
-                                                {dataSet[val] ?? '-'}
+                                                {(typeof dataSet?.[val] === 'string' && dataSet[val].includes('link:') ?
+                                                    <a onClick={() => showGraph(dataSet[val].split('link:')[1], dataSet['ParticipantID'] + ' ' + val)}>View Graph</a>
+                                                    : dataSet[val]) ?? '-'}
                                             </td>);
                                         })}
                                     </tr>);
