@@ -324,11 +324,20 @@ export default function AggregateResults({ type }) {
     }, [data, error, loading]);
 
     const exportToExcel = async () => {
-        const ws = XLSX.utils.json_to_sheet(fullData);
+        const dataCopy = structuredClone(fullData);
+        for (let pid of Object.keys(dataCopy)) {
+            for (let k of Object.keys(dataCopy[pid])) {
+                if (typeof dataCopy[pid][k] === 'string' && dataCopy[pid][k].includes('link:')) {
+                    dataCopy[pid][k] = dataCopy[pid][k].split('link:')[1];
+                }
+            }
+
+        }
+        const ws = XLSX.utils.json_to_sheet(dataCopy);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'participant_data' + fileExtension);
+        FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'participant_data' + fileExtension);
     };
 
     const exportHumanSimToExcel = async () => {
@@ -341,7 +350,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data' + fileExtension);
+            FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'human_sim_data' + fileExtension);
         }
         else {
             // because of different headers, create a different sheet for each adept environment

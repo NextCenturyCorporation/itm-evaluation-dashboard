@@ -114,7 +114,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 }};
+const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
 function getTextKDMA(data) {
@@ -505,7 +505,7 @@ function getAttributeAlignment(res, att, medics, q, trans) {
 function populateHumanDataRow(rowObject, version) {
     let adept = 0;
     let soartech = 1;
-    if(rowObject[0]._id.indexOf("_st_") > -1) {
+    if (rowObject[0]._id.indexOf("_st_") > -1) {
         adept = 1;
         soartech = 0;
     }
@@ -548,7 +548,7 @@ function populateHumanDataRow(rowObject, version) {
                 if (rowObject[soartech].data.data[i].found_match !== false) {
                     if (rowObject[soartech].data.data[i].probe_id.indexOf(soartechProbeIds[j]) > -1) {
                         returnObj["ST_" + soartechProbeIds[j]] = rowObject[soartech].data.data[i].probe.kdma_association["maximization"];
-                    } 
+                    }
                 }
             }
         }
@@ -663,7 +663,7 @@ function populateDataSet(data) {
             const adept_mapping = { 1: ["DryRunEval-MJ2-eval"], 2: ["DryRunEval-MJ4-eval"], 3: ["DryRunEval-MJ5-eval"] }
             tempGroupHumanSimData = Object.groupBy(tempGroupHumanSimData, ({ ADEPT_Scenario }) => adept_mapping[ADEPT_Scenario]);
         }
-        
+
         AGGREGATED_DATA["groupedSim"] = tempGroupHumanSimData;
     }
     const txtAlign = getTextKDMA(data);
@@ -678,7 +678,7 @@ function populateDataSet(data) {
             // get participant id. two different versions exist: one with Participant ID and the other with Participant ID Page
             let pid = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
             if (!pid || pid === '42' || pid === '019') {
-            // ignore some pids
+                // ignore some pids
                 continue;
             }
             // fix typo
@@ -736,14 +736,8 @@ function populateDataSet(data) {
             // get post vr state. 
             tmpSet['PostVRstate'] = COMFORT_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'VR Comfort Level', 'response'], ['results', 'Participant ID', 'questions', 'VR Comfort Level', 'response'])] ?? '-';
             allResults.push(tmpSet);
-
-            // get order of text based
             const textOrder = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
-            tmpSet['TextOrder'] = textOrder;
 
-            // get sim session order from sim files (date-time-based)
-            tmpSet['Sim1'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][0]] : null;
-            tmpSet['Sim2'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][1]] ?? null : null;
 
             if (res.results.evalNumber == 4) {
 
@@ -773,43 +767,52 @@ function populateDataSet(data) {
                 tmpSet['QOL_KDMA_Text'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores`;
                 const vol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.serverSessionId;
                 tmpSet['VOL_KDMA_Text'] = 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores`;
-            }   
-
-            // verify sim order according to document
-            const sims = [tmpSet['Sim1'], tmpSet['Sim2']]
-            tmpSet['SimOrder'] = sims.includes(1) ? Number(sims.includes(2)) : sims.includes(3) ? Number(sims.includes(4)) : 0;
-
-            // make sure sim and text were different
-            // cannot have textOrder 1,2 with sim 1,2, cannot have textOrder 3,4 with sim 3,4
-            tmpSet['TextSimDiff'] = Number(!sims.includes(textOrder));
+            }
 
 
-            // get alignment for text responses from ta1 server (ST)
-            // for now, hard code st to maximization
-            tmpSet['ST_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['maximization'] ? txtAlign[pid]['maximization'] : null : null;
-
-            // get alignment for sim from ta1 server (ST). Hardcode maximization for now
-            tmpSet['ST_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
-
-            // get high/low maximization attribute (ST)
-            let stAttribute = tmpSet['ST_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
-            tmpSet['ST_AttribGrp_Text'] = stAttribute;
-            // get sim attribute alignment
-            tmpSet['ST_AttribGrp_Sim'] = tmpSet['ST_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
-
-            // get alignment for text responses from ta1 server (AD)
-            // for now, hard code adept to moral desert
-            tmpSet['AD_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
-
-            // get alignment for sim from ta1 server (AD). for now hardcode moral desert
-            tmpSet['AD_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
-
-            // get high/low moral deserts attribute (AD)
-            let adAttribute = tmpSet['AD_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
-            tmpSet['AD_AttribGrp_Text'] = adAttribute;
-            // get sim attribute alignment
-            tmpSet['AD_AttribGrp_Sim'] = tmpSet['AD_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
             if (res.results.evalNumber != 4) {
+                // get order of text based
+                tmpSet['TextOrder'] = textOrder;
+
+                // get sim session order from sim files (date-time-based)
+                tmpSet['Sim1'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][0]] : null;
+                tmpSet['Sim2'] = SIM_ORDER[pid] ? SIM_MAP[SIM_ORDER[pid][1]] ?? null : null;
+
+                // verify sim order according to document
+                const sims = [tmpSet['Sim1'], tmpSet['Sim2']]
+                tmpSet['SimOrder'] = sims.includes(1) ? Number(sims.includes(2)) : sims.includes(3) ? Number(sims.includes(4)) : 0;
+
+                // make sure sim and text were different
+                // cannot have textOrder 1,2 with sim 1,2, cannot have textOrder 3,4 with sim 3,4
+                tmpSet['TextSimDiff'] = Number(!sims.includes(textOrder));
+
+
+                // get alignment for text responses from ta1 server (ST)
+                // for now, hard code st to maximization
+                tmpSet['ST_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['maximization'] ? txtAlign[pid]['maximization'] : null : null;
+
+                // get alignment for sim from ta1 server (ST). Hardcode maximization for now
+                tmpSet['ST_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['maximization'] : null : null;
+
+                // get high/low maximization attribute (ST)
+                let stAttribute = tmpSet['ST_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+                tmpSet['ST_AttribGrp_Text'] = stAttribute;
+                // get sim attribute alignment
+                tmpSet['ST_AttribGrp_Sim'] = tmpSet['ST_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['maximization'] ? 1 : 0;
+
+                // get alignment for text responses from ta1 server (AD)
+                // for now, hard code adept to moral desert
+                tmpSet['AD_KDMA_Text'] = txtAlign[pid] ? txtAlign[pid]['MoralDesert'] ? txtAlign[pid]['MoralDesert'] : null : null;
+
+                // get alignment for sim from ta1 server (AD). for now hardcode moral desert
+                tmpSet['AD_KDMA_Sim'] = simAlign ? simAlign[pid] ? simAlign[pid]['MoralDesert'] : null : null;
+
+                // get high/low moral deserts attribute (AD)
+                let adAttribute = tmpSet['AD_KDMA_Text'] > TEXT_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
+                tmpSet['AD_AttribGrp_Text'] = adAttribute;
+                // get sim attribute alignment
+                tmpSet['AD_AttribGrp_Sim'] = tmpSet['AD_KDMA_Sim'] > SIM_MEDIAN_ALIGNMENT_VALUES['MoralDesert'] ? 1 : 0;
+
                 for (let i = 0; i < 2; i++) {
                     const suffix = i === 0 ? "_Text" : "_Sim";
                     adAttribute = i === 0 ? tmpSet['AD_AttribGrp_Text'] : tmpSet['AD_AttribGrp_Sim'];
