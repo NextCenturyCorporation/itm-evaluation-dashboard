@@ -701,6 +701,13 @@ function populateDataSet(data) {
                 // ignore some pids
                 continue;
             }
+            if (res.results.evalNumber == 4) {
+                const valid_ids = data?.getParticipantLog?.map((x) => x?.ParticipantID?.toString());
+                if (!valid_ids.includes(pid)) {
+                    // only include valid ids for survey version 4
+                    continue;
+                }
+            }
             // fix typo
             if (pid === '20234204') {
                 pid = '2024204';

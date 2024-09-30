@@ -17,13 +17,14 @@ const get_eval_name_numbers = gql`
   }`;
 let evalOptions = [];
 
-
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults($evalNumber: Float!){
         getAllSurveyResultsByEval(evalNumber: $evalNumber),
         getAllScenarioResultsByEval(evalNumber: $evalNumber),
-        getAllSimAlignmentByEval(evalNumber: $evalNumber)
+        getAllSimAlignmentByEval(evalNumber: $evalNumber),
+        getParticipantLog
     }`;
+
 
 const HEADER = {
     3: [
@@ -311,8 +312,8 @@ export default function AggregateResults({ type }) {
     }, [evalIdOptionsRaw, evalOptions]);
 
     React.useEffect(() => {
-        // only get survey version 2!!
-        if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval) {
+        // only get chosen survey version!!
+        if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
             const full = populateDataSet(data);
             setFullData(full);
             setAggregateData(getAggregatedData());
