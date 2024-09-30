@@ -89,10 +89,10 @@ export function RQ2223() {
                         entryObj['Target_Type (Group/Individual)'] = 'Individual';
                         const aligned = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
-                        entryObj['Aligned Server Session ID'] = aligned?.adm.history.find((x) => x.command == 'TA1 Session Alignment').parameters?.session_id ?? '-';
+                        entryObj['Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                         const baseline = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-severity-baseline' : "ALIGN-ADM-OutlinesBaseline"];
                         entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
-                        entryObj['Baseline Server Session ID'] = baseline?.adm.history.find((x) => x.command == 'TA1 Session Alignment').parameters?.session_id ?? '-';
+                        entryObj['Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                         allObjs.push(entryObj);
                     }
 
