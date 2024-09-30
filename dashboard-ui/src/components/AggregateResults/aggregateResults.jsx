@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { getAggregatedData, populateDataSet, getChartData } from './DataFunctions';
+import { getAggregatedData, populateDataSet } from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
@@ -281,14 +281,12 @@ const HEADER_SIM_DATA = {
 };
 
 export default function AggregateResults({ type }) {
-    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+    const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
     const [fullData, setFullData] = React.useState([]);
     const [aggregateData, setAggregateData] = React.useState(null);
-    const [kdmaScatter, setKdmaScatter] = React.useState(null);
-    const [chartData, setChartData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [selectedEval, setSelectedEval] = React.useState(4);
     const [iframeLink, setIframeLink] = React.useState(null);
@@ -318,9 +316,6 @@ export default function AggregateResults({ type }) {
             const full = populateDataSet(data);
             setFullData(full);
             setAggregateData(getAggregatedData());
-            const xtraData = getChartData(full);
-            setChartData(xtraData);
-            setKdmaScatter(xtraData.scatter);
         }
         
     }, [data, error, loading]);
@@ -467,7 +462,7 @@ export default function AggregateResults({ type }) {
                 </div>
             }
 
-            {type === 'Program' && <ProgramQuestions chartData={chartData} kdmaScatter={kdmaScatter} allData={fullData} />}
+            {type === 'Program' && <ProgramQuestions />}
             {(type === 'HumanProbeData' && aggregateData) && 
                 <div className="home-container">
                     <div className="home-navigation-container">

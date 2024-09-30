@@ -3,10 +3,11 @@ import './aggregateResults.css';
 import { ScatterChart } from '@mui/x-charts';
 import CanvasJSReact from '@canvasjs/react-charts';
 import { getBoxWhiskerData, getMean, getMedian, getStandDev, getStandardError } from './statistics';
-import { isDefined } from './DataFunctions';
+import { isDefined, getAggregatedData, populateDataSet, getChartData } from './DataFunctions';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
 import Select from 'react-select';
+
 
 const get_eval_name_numbers = gql`
     query getEvalIds{
@@ -17,6 +18,13 @@ let evalOptions = [];
 const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!) {
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
+    }`;
+
+const GET_SURVEY_RESULTS = gql`
+    query GetAllResults($evalNumber: Float!){
+        getAllSurveyResultsByEval(evalNumber: $evalNumber),
+        getAllScenarioResultsByEval(evalNumber: $evalNumber),
+        getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
@@ -119,15 +127,19 @@ const BASE_DATA_MD = [
     }
 ]
 
-export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
-    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+export default function ProgramQuestions() {
+    const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const [selectedEval, setSelectedEval] = React.useState(3);
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
+    const [fullData, setFullData] = React.useState([]);
+    const [kdmaScatter, setKdmaScatter] = React.useState(null);
+    const [chartData, setChartData] = React.useState(null);
 
     const { data } = useQuery(GET_ADM_DATA, {
         variables: {"evalNumber": selectedEval},
     });
+    const { loading, error, data: allData } = useQuery(GET_SURVEY_RESULTS, { variables: { "evalNumber": selectedEval } });
 
     React.useEffect(() => {
         evalOptions = [];
@@ -139,6 +151,17 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
         }
          
     }, [evalIdOptionsRaw, evalOptions]);
+
+    React.useEffect(() => {
+        if (!loading && !error && allData?.getAllSurveyResultsByEval && allData?.getAllScenarioResultsByEval) {
+            const full = populateDataSet(allData);
+            setFullData(full);
+            const xtraData = getChartData(full);
+            setChartData(xtraData);
+            setKdmaScatter(xtraData.scatter);
+        }
+
+    }, [loading, error, allData]);
 
     React.useEffect(() => {
         const admKdmas = {};
@@ -182,12 +205,12 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
     }, [data]);
 
     const getMeanAtt = (att) => {
-        const data = allData.map((x) => x[att]);
+        const data = fullData.map((x) => x[att]);
         return getMean(data);
     };
 
     const getSeAtt = (att) => {
-        const data = allData.map((x) => x[att]);
+        const data = fullData.map((x) => x[att]);
         return getStandardError(data);
     };
 
@@ -219,7 +242,7 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
         return getStandardError(data);
     };
 
-    const   getN = (obj, keys = 'all') => {
+    const getN = (obj, keys = 'all') => {
         const data = [];
         if (obj != undefined) {
             for (const key of Object.keys(obj)) {
@@ -328,8 +351,8 @@ export default function ProgramQuestions({ allData, kdmaScatter, chartData }) {
 
                 </div>}
 
-                <CorrelationTables ta1="ADEPT" data={allData} />
-                <CorrelationTables ta1="SoarTech" data={allData} />
+                <CorrelationTables ta1="ADEPT" data={fullData} />
+                <CorrelationTables ta1="SoarTech" data={fullData} />
 
                 {kdmaScatter &&
                     <div className="scatters">
