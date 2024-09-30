@@ -863,29 +863,17 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else {
-            const sets = shuffle(this.surveyConfigClone.validSingleSets);
-            const groupedDMs = shuffle(sets.slice(0));
-            let removed = [];
-            for (const x of sets.slice(1)) {
-                for (const e of x) {
-                    removed.push(e)
-                }
-            }
+        else if (this.state.surveyVersion == 1){
+            let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
+            // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
+            let removed = groupedDMs.pop();
+            // comparison page name to be removed
+            removed.push(`${removed[0]} vs ${removed[1]}`);
 
-            // keep track of pages to ignore in surveyConfig
-            let removedComparisonPages = []
-            removed.forEach(group => {
-                removedComparisonPages.push(group[0] + " vs " + group[1])
-            })
-            removed = removed.flat().concat(removedComparisonPages)
+            let comparisonPages = { ...this.surveyConfigClone.comparisonPages };
+            delete comparisonPages[`${removed[0]}${removed[1]}`];
 
-            // keep track of relevant comparison pages of selected scenarios
-            const comparisonPages = []
-            groupedDMs.forEach(group => {
-                comparisonPages.push(group[0] + " vs " + group[1])
-            });
-            return { groupedDMs, comparisonPages, removed };
+            return { groupedDMs, removed, comparisonPages };
         }
     }
 
