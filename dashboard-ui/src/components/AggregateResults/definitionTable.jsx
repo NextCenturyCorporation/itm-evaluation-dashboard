@@ -1,14 +1,16 @@
 import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
-import xlFile from './Metrics_Eval_Variables.xlsx';
-import wordFile from './Metrics_Evaluation_Human_Dataset_Variables_Dashboard.docx'
+import mreXlFile from './MRE_Variables.xlsx';
+import mreWordFile from './MRE_Human_Dataset_Variables_Dashboard.docx';
+import dreXlFile from './DRE_Variables.xlsx';
+import dreWordFile from './DRE_Human_Dataset_Variables_Dashboard.docx';
 
-
-export function DefinitionTable() {
+export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
+        const xlFile = evalNumber == 4 ? dreXlFile : mreXlFile; 
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
@@ -31,7 +33,8 @@ export function DefinitionTable() {
     }, []);
 
     const exportWordDoc = () => {
-        FileSaver.saveAs(wordFile, 'Definitions.docx');
+        const wordFile = evalNumber == 4 ? dreWordFile : mreWordFile;
+        FileSaver.saveAs(wordFile, (evalNumber == 4 ? 'dre_' : 'mre_') + 'Definitions.docx');
     };
 
     return (<>

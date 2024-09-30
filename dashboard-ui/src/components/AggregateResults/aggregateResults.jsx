@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { getAggregatedData, populateDataSet, getChartData } from './DataFunctions';
+import { getAggregatedData, populateDataSet, getChartData, isDefined } from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
@@ -400,6 +400,26 @@ export default function AggregateResults({ type }) {
         setShowIframe(false);
     }
 
+    const formatData = (dataSet, key) => {
+        const v = dataSet[key];
+        if (isDefined(v)) {
+            if (typeof v === 'string' && v.includes('link:')) {
+                // show View Graph link that opens up iframe
+                return <a onClick={() => showGraph(v.split('link:')[1], dataSet['ParticipantID'] + ' ' + key)}>View Graph</a>
+            }
+            else if (typeof v === 'number') {
+                // round to 4 decimals when displaying (full value will still show in download)
+                return Math.floor(v * 10000) / 10000;
+            }
+            else {
+                return v;
+            }
+        }
+        else {
+            return '-';
+        }
+    }
+
     return (
         <div className='aggregatePage'>
             {type === 'HumanSimParticipant' && 
@@ -451,9 +471,7 @@ export default function AggregateResults({ type }) {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
                                         {HEADER[selectedEval]?.map((val) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
-                                                {(typeof dataSet?.[val] === 'string' && dataSet[val].includes('link:') ?
-                                                    <a onClick={() => showGraph(dataSet[val].split('link:')[1], dataSet['ParticipantID'] + ' ' + val)}>View Graph</a>
-                                                    : dataSet[val]) ?? '-'}
+                                                {formatData(dataSet, val)}
                                             </td>);
                                         })}
                                     </tr>);
@@ -529,7 +547,7 @@ export default function AggregateResults({ type }) {
             {type === 'HumanSimParticipant' && <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
                 <div className='modal-body'>
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                    <DefinitionTable />
+                    <DefinitionTable evalNumber={selectedEval} />
                 </div>
             </Modal>}
         </div>
