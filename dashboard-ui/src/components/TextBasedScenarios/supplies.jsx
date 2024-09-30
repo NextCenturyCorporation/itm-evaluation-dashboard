@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, ListGroup, Badge } from 'react-bootstrap';
 
 const Supplies = ({ supplies }) => {
-  console.log(supplies)
   return (
     <Card className="border-0 shadow-sm mb-4">
       <Card.Body>

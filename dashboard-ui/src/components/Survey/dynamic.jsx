@@ -29,8 +29,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const [showMoreDetailsModal, setShowMoreDetailsModal] = useState(false);
     const [actionLogs, setActionLogs] = useState([]);
 
-    console.log(supplies)
-
     // log actions
     const logAction = (actionName) => {
         const newLog = { dmName, actionName, timestamp: new Date().toISOString() };
