@@ -25,162 +25,190 @@ const GET_SURVEY_RESULTS = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-const HEADER = [
-    'ParticipantID',
-    'MedRole',
-    'MedExp',
-    'MilitaryExp',
-    'YrsMilExp',
-    'PropTrust',
-    'Delegation',
-    'Trust',
-    'PostVRstate',
-    'TextOrder',
-    'Sim1',
-    'Sim2',
-    'SimOrder',
-    'TextSimDiff',
-    'ST_KDMA_Text',
-    'ST_KDMA_Sim',
-    'ST_AttribGrp_Text',
-    'ST_AttribGrp_Sim',
-    'AD_KDMA_Text',
-    'AD_KDMA_Sim',
-    'AD_AttribGrp_Text',
-    'AD_AttribGrp_Sim',
-    'ST_Del_Text',
-    'ST_ConfFC_Text',
-    'ST_Del_Omni_Text',
-    'ST_ConfFC_Omni_Text',
-    'ST_Align_DelC_Text',
-    'ST_Align_DelFC_Text',
-    'ST_Align_DelC_Omni_Text',
-    'ST_Align_DelFC_Omni_Text',
-    'ST_Align_Trust_Text',
-    'ST_Misalign_Trust_Text',
-    'ST_Align_Agree_Text',
-    'ST_Misalign_Agree_Text',
-    'ST_Align_Trustworthy_Text',
-    'ST_Misalign_Trustworthy_Text',
-    'ST_Align_AlignSR_Text',
-    'ST_Misalign_AlignSR_Text',
-    'ST_Align_Trust_Omni_Text',
-    'ST_Misalign_Trust_Omni_Text',
-    'ST_Align_Agree_Omni_Text',
-    'ST_Misalign_Agree_Omni_Text',
-    'ST_Align_Trustworthy_Omni_Text',
-    'ST_Misalign_Trustworthy_Omni_Text',
-    'ST_Align_AlignSR_Omni_Text',
-    'ST_Misalign_AlignSR_Omni_Text',
-    'AD_Del_Text',
-    'AD_ConfFC_Text',
-    'AD_Del_Omni_Text',
-    'AD_ConfFC_Omni_Text',
-    'AD_Align_DelC_Text',
-    'AD_Align_DelFC_Text',
-    'AD_Align_DelC_Omni_Text',
-    'AD_Align_DelFC_Omni_Text',
-    'AD_Align_Trust_Text',
-    'AD_Misalign_Trust_Text',
-    'AD_Align_Agree_Text',
-    'AD_Misalign_Agree_Text',
-    'AD_Align_Trustworthy_Text',
-    'AD_Misalign_Trustworthy_Text',
-    'AD_Align_AlignSR_Text',
-    'AD_Misalign_AlignSR_Text',
-    'AD_Align_Trust_Omni_Text',
-    'AD_Misalign_Trust_Omni_Text',
-    'AD_Align_Agree_Omni_Text',
-    'AD_Misalign_Agree_Omni_Text',
-    'AD_Align_Trustworthy_Omni_Text',
-    'AD_Misalign_Trustworthy_Omni_Text',
-    'AD_Align_AlignSR_Omni_Text',
-    'AD_Misalign_AlignSR_Omni_Text',
-    'ST_Del_Sim',
-    'ST_ConfFC_Sim',
-    'ST_Del_Omni_Sim',
-    'ST_ConfFC_Omni_Sim',
-    'ST_Align_DelC_Sim',
-    'ST_Align_DelFC_Sim',
-    'ST_Align_DelC_Omni_Sim',
-    'ST_Align_DelFC_Omni_Sim',
-    'ST_Align_Trust_Sim',
-    'ST_Misalign_Trust_Sim',
-    'ST_Align_Agree_Sim',
-    'ST_Misalign_Agree_Sim',
-    'ST_Align_Trustworthy_Sim',
-    'ST_Misalign_Trustworthy_Sim',
-    'ST_Align_AlignSR_Sim',
-    'ST_Misalign_AlignSR_Sim',
-    'ST_Align_Trust_Omni_Sim',
-    'ST_Misalign_Trust_Omni_Sim',
-    'ST_Align_Agree_Omni_Sim',
-    'ST_Misalign_Agree_Omni_Sim',
-    'ST_Align_Trustworthy_Omni_Sim',
-    'ST_Misalign_Trustworthy_Omni_Sim',
-    'ST_Align_AlignSR_Omni_Sim',
-    'ST_Misalign_AlignSR_Omni_Sim',
-    'AD_Del_Sim',
-    'AD_ConfFC_Sim',
-    'AD_Del_Omni_Sim',
-    'AD_ConfFC_Omni_Sim',
-    'AD_Align_DelC_Sim',
-    'AD_Align_DelFC_Sim',
-    'AD_Align_DelC_Omni_Sim',
-    'AD_Align_DelFC_Omni_Sim',
-    'AD_Align_Trust_Sim',
-    'AD_Misalign_Trust_Sim',
-    'AD_Align_Agree_Sim',
-    'AD_Misalign_Agree_Sim',
-    'AD_Align_Trustworthy_Sim',
-    'AD_Misalign_Trustworthy_Sim',
-    'AD_Align_AlignSR_Sim',
-    'AD_Misalign_AlignSR_Sim',
-    'AD_Align_Trust_Omni_Sim',
-    'AD_Misalign_Trust_Omni_Sim',
-    'AD_Align_Agree_Omni_Sim',
-    'AD_Misalign_Agree_Omni_Sim',
-    'AD_Align_Trustworthy_Omni_Sim',
-    'AD_Misalign_Trustworthy_Omni_Sim',
-    'AD_Align_AlignSR_Omni_Sim',
-    'AD_Misalign_AlignSR_Omni_Sim',
-    "ST_High_Trust",
-    "ST_High_Agree",
-    "ST_High_Trustworthy",
-    'ST_High_AlignSR',
-    'ST_Low_Trust',
-    'ST_Low_Agree',
-    'ST_Low_Trustworthy',
-    'ST_Low_AlignSR',
-    'ST_AlignScore_High',
-    'ST_AlignScore_Low',
-    "ST_High_Trust_Omni",
-    "ST_High_Agree_Omni",
-    "ST_High_Trustworthy_Omni",
-    'ST_High_AlignSR_Omni',
-    'ST_Low_Trust_Omni',
-    'ST_Low_Agree_Omni',
-    'ST_Low_Trustworthy_Omni',
-    'ST_Low_AlignSR_Omni',
-    "AD_High_Trust",
-    "AD_High_Agree",
-    "AD_High_Trustworthy",
-    'AD_High_AlignSR',
-    'AD_Low_Trust',
-    'AD_Low_Agree',
-    'AD_Low_Trustworthy',
-    'AD_Low_AlignSR',
-    'AD_AlignScore_High',
-    'AD_AlignScore_Low',
-    "AD_High_Trust_Omni",
-    "AD_High_Agree_Omni",
-    "AD_High_Trustworthy_Omni",
-    'AD_High_AlignSR_Omni',
-    'AD_Low_Trust_Omni',
-    'AD_Low_Agree_Omni',
-    'AD_Low_Trustworthy_Omni',
-    'AD_Low_AlignSR_Omni'
-];
+const HEADER = {
+    3: [
+        'ParticipantID',
+        'MedRole',
+        'MedExp',
+        'MilitaryExp',
+        'YrsMilExp',
+        'PropTrust',
+        'Delegation',
+        'Trust',
+        'PostVRstate',
+        'TextOrder',
+        'Sim1',
+        'Sim2',
+        'SimOrder',
+        'TextSimDiff',
+        'ST_KDMA_Text',
+        'ST_KDMA_Sim',
+        'ST_AttribGrp_Text',
+        'ST_AttribGrp_Sim',
+        'AD_KDMA_Text',
+        'AD_KDMA_Sim',
+        'AD_AttribGrp_Text',
+        'AD_AttribGrp_Sim',
+        'ST_Del_Text',
+        'ST_ConfFC_Text',
+        'ST_Del_Omni_Text',
+        'ST_ConfFC_Omni_Text',
+        'ST_Align_DelC_Text',
+        'ST_Align_DelFC_Text',
+        'ST_Align_DelC_Omni_Text',
+        'ST_Align_DelFC_Omni_Text',
+        'ST_Align_Trust_Text',
+        'ST_Misalign_Trust_Text',
+        'ST_Align_Agree_Text',
+        'ST_Misalign_Agree_Text',
+        'ST_Align_Trustworthy_Text',
+        'ST_Misalign_Trustworthy_Text',
+        'ST_Align_AlignSR_Text',
+        'ST_Misalign_AlignSR_Text',
+        'ST_Align_Trust_Omni_Text',
+        'ST_Misalign_Trust_Omni_Text',
+        'ST_Align_Agree_Omni_Text',
+        'ST_Misalign_Agree_Omni_Text',
+        'ST_Align_Trustworthy_Omni_Text',
+        'ST_Misalign_Trustworthy_Omni_Text',
+        'ST_Align_AlignSR_Omni_Text',
+        'ST_Misalign_AlignSR_Omni_Text',
+        'AD_Del_Text',
+        'AD_ConfFC_Text',
+        'AD_Del_Omni_Text',
+        'AD_ConfFC_Omni_Text',
+        'AD_Align_DelC_Text',
+        'AD_Align_DelFC_Text',
+        'AD_Align_DelC_Omni_Text',
+        'AD_Align_DelFC_Omni_Text',
+        'AD_Align_Trust_Text',
+        'AD_Misalign_Trust_Text',
+        'AD_Align_Agree_Text',
+        'AD_Misalign_Agree_Text',
+        'AD_Align_Trustworthy_Text',
+        'AD_Misalign_Trustworthy_Text',
+        'AD_Align_AlignSR_Text',
+        'AD_Misalign_AlignSR_Text',
+        'AD_Align_Trust_Omni_Text',
+        'AD_Misalign_Trust_Omni_Text',
+        'AD_Align_Agree_Omni_Text',
+        'AD_Misalign_Agree_Omni_Text',
+        'AD_Align_Trustworthy_Omni_Text',
+        'AD_Misalign_Trustworthy_Omni_Text',
+        'AD_Align_AlignSR_Omni_Text',
+        'AD_Misalign_AlignSR_Omni_Text',
+        'ST_Del_Sim',
+        'ST_ConfFC_Sim',
+        'ST_Del_Omni_Sim',
+        'ST_ConfFC_Omni_Sim',
+        'ST_Align_DelC_Sim',
+        'ST_Align_DelFC_Sim',
+        'ST_Align_DelC_Omni_Sim',
+        'ST_Align_DelFC_Omni_Sim',
+        'ST_Align_Trust_Sim',
+        'ST_Misalign_Trust_Sim',
+        'ST_Align_Agree_Sim',
+        'ST_Misalign_Agree_Sim',
+        'ST_Align_Trustworthy_Sim',
+        'ST_Misalign_Trustworthy_Sim',
+        'ST_Align_AlignSR_Sim',
+        'ST_Misalign_AlignSR_Sim',
+        'ST_Align_Trust_Omni_Sim',
+        'ST_Misalign_Trust_Omni_Sim',
+        'ST_Align_Agree_Omni_Sim',
+        'ST_Misalign_Agree_Omni_Sim',
+        'ST_Align_Trustworthy_Omni_Sim',
+        'ST_Misalign_Trustworthy_Omni_Sim',
+        'ST_Align_AlignSR_Omni_Sim',
+        'ST_Misalign_AlignSR_Omni_Sim',
+        'AD_Del_Sim',
+        'AD_ConfFC_Sim',
+        'AD_Del_Omni_Sim',
+        'AD_ConfFC_Omni_Sim',
+        'AD_Align_DelC_Sim',
+        'AD_Align_DelFC_Sim',
+        'AD_Align_DelC_Omni_Sim',
+        'AD_Align_DelFC_Omni_Sim',
+        'AD_Align_Trust_Sim',
+        'AD_Misalign_Trust_Sim',
+        'AD_Align_Agree_Sim',
+        'AD_Misalign_Agree_Sim',
+        'AD_Align_Trustworthy_Sim',
+        'AD_Misalign_Trustworthy_Sim',
+        'AD_Align_AlignSR_Sim',
+        'AD_Misalign_AlignSR_Sim',
+        'AD_Align_Trust_Omni_Sim',
+        'AD_Misalign_Trust_Omni_Sim',
+        'AD_Align_Agree_Omni_Sim',
+        'AD_Misalign_Agree_Omni_Sim',
+        'AD_Align_Trustworthy_Omni_Sim',
+        'AD_Misalign_Trustworthy_Omni_Sim',
+        'AD_Align_AlignSR_Omni_Sim',
+        'AD_Misalign_AlignSR_Omni_Sim',
+        "ST_High_Trust",
+        "ST_High_Agree",
+        "ST_High_Trustworthy",
+        'ST_High_AlignSR',
+        'ST_Low_Trust',
+        'ST_Low_Agree',
+        'ST_Low_Trustworthy',
+        'ST_Low_AlignSR',
+        'ST_AlignScore_High',
+        'ST_AlignScore_Low',
+        "ST_High_Trust_Omni",
+        "ST_High_Agree_Omni",
+        "ST_High_Trustworthy_Omni",
+        'ST_High_AlignSR_Omni',
+        'ST_Low_Trust_Omni',
+        'ST_Low_Agree_Omni',
+        'ST_Low_Trustworthy_Omni',
+        'ST_Low_AlignSR_Omni',
+        "AD_High_Trust",
+        "AD_High_Agree",
+        "AD_High_Trustworthy",
+        'AD_High_AlignSR',
+        'AD_Low_Trust',
+        'AD_Low_Agree',
+        'AD_Low_Trustworthy',
+        'AD_Low_AlignSR',
+        'AD_AlignScore_High',
+        'AD_AlignScore_Low',
+        "AD_High_Trust_Omni",
+        "AD_High_Agree_Omni",
+        "AD_High_Trustworthy_Omni",
+        'AD_High_AlignSR_Omni',
+        'AD_Low_Trust_Omni',
+        'AD_Low_Agree_Omni',
+        'AD_Low_Trustworthy_Omni',
+        'AD_Low_AlignSR_Omni'
+    ],
+    4: [
+        "ParticipantID",
+        "Date",
+        "MedRole",
+        "MedExp",
+        "MilitaryExp",
+        "YrsMilExp",
+        "PropTrust",
+        "Delegation",
+        "Trust",
+        "PostVRstate",
+        "AD_Scenario_Text",
+        "AD_Scenario_Sim",
+        "QOL_Scenario_Text",
+        "QOL_Scenario_Sim",
+        "VOL_Scenario_Text",
+        "VOL_Scenario_Sim",
+        "QOL_KDMA_Text",
+        "QOL_KDMA_Sim",
+        "VOL_KDMA_Text",
+        "VOL_KDMA_Sim",
+        "MJ_KDMA_Text",
+        "MJ_KDMA_Sim",
+        "IO_KDMA_Text",
+        "IO_KDMA_Sim"
+    ]
+};
 
 const ADEPT_HEADERS_DRE = {
     'DryRunEval-MJ2-eval': ["MJ_2", "IO_2", "MJ_2A-1", "IO_2A-1", "MJ_2B-1", "IO_2B-1", "MJ_3-B.2", "IO_3-B.2", "MJ_4", "IO_4", "MJ_4-B.1", "IO_4-B.1", "MJ_4-B.1-B.1", "IO_4-B.1-B.1", "MJ_5", "IO_5", "MJ_5-A.1", "IO_5-A.1", "MJ_5-B.1", "IO_5-B.1", "MJ_6", "IO_6", "MJ_7", "IO_7", "MJ_8", "IO_8", "MJ_9", "IO_9", "MJ_9-A.1", "IO_9-A.1", "MJ_9-B.1", "IO_9-B.1", "MJ_10", "IO_10",],
@@ -263,6 +291,9 @@ export default function AggregateResults({ type }) {
     const [chartData, setChartData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [selectedEval, setSelectedEval] = React.useState(4);
+    const [iframeLink, setIframeLink] = React.useState(null);
+    const [showIframe, setShowIframe] = React.useState(false);
+    const [iframeTitle, setIframeTitle] = React.useState(null);
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
         variables: {"evalNumber": selectedEval}
@@ -295,11 +326,20 @@ export default function AggregateResults({ type }) {
     }, [data, error, loading]);
 
     const exportToExcel = async () => {
-        const ws = XLSX.utils.json_to_sheet(fullData);
+        const dataCopy = structuredClone(fullData);
+        for (let pid of Object.keys(dataCopy)) {
+            for (let k of Object.keys(dataCopy[pid])) {
+                if (typeof dataCopy[pid][k] === 'string' && dataCopy[pid][k].includes('link:')) {
+                    dataCopy[pid][k] = dataCopy[pid][k].split('link:')[1];
+                }
+            }
+
+        }
+        const ws = XLSX.utils.json_to_sheet(dataCopy);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'participant_data' + fileExtension);
+        FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'participant_data' + fileExtension);
     };
 
     const exportHumanSimToExcel = async () => {
@@ -312,7 +352,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data' + fileExtension);
+            FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'human_sim_data' + fileExtension);
         }
         else {
             // because of different headers, create a different sheet for each adept environment
@@ -352,13 +392,32 @@ export default function AggregateResults({ type }) {
         return [...headers.slice(0, splitPoint), ...ADEPT_HEADERS_DRE[adeptScenario] ?? [], ...headers.slice(splitPoint)];
     }
 
+    const showGraph = (url, name) => {
+        setIframeLink(url);
+        setShowIframe(true);
+        setIframeTitle(name);
+    }
+
+    const closeIframe = () => {
+        setShowIframe(false);
+    }
+
     return (
         <div className='aggregatePage'>
             {type === 'HumanSimParticipant' && 
                 <div className="home-container">
+                    <Modal className='table-modal' open={showIframe} onClose={closeIframe}>
+                        <div className='modal-body'>
+                            <span className='close-icon' onClick={closeIframe}><CloseIcon /></span>
+                            <div className='graph-popup'>
+                                <h3>{iframeTitle ?? 'KDMA Graph'}</h3>
+                                <iframe src={iframeLink} />
+                            </div>
+                        </div>
+                    </Modal>
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
-                            <div className="evaluation-selector-label"><h2>Human Participant Data: Within-Subjects Analysis</h2></div>
+                            <div className="evaluation-selector-label"><h2>{selectedEval == 3 ? "Human Participant Data: Within-Subjects Analysis" : "Participant-Level Data"}</h2></div>
                         </div>
                         <div className="aggregate-button-holder">
                             <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
@@ -382,7 +441,7 @@ export default function AggregateResults({ type }) {
                         <table className='itm-table'>
                             <thead>
                                 <tr>
-                                    {HEADER.map((val, index) => {
+                                    {HEADER[selectedEval]?.map((val, index) => {
                                         return (<th key={'header-' + index}>
                                             {val}
                                         </th>);
@@ -392,9 +451,11 @@ export default function AggregateResults({ type }) {
                             <tbody>
                                 {fullData.map((dataSet, index) => {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
-                                        {HEADER.map((val) => {
+                                        {HEADER[selectedEval]?.map((val) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
-                                                {dataSet[val] ?? '-'}
+                                                {(typeof dataSet?.[val] === 'string' && dataSet[val].includes('link:') ?
+                                                    <a onClick={() => showGraph(dataSet[val].split('link:')[1], dataSet['ParticipantID'] + ' ' + val)}>View Graph</a>
+                                                    : dataSet[val]) ?? '-'}
                                             </td>);
                                         })}
                                     </tr>);

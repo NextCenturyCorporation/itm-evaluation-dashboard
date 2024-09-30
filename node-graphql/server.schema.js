@@ -376,7 +376,9 @@ const resolvers = {
         ]
       };
       return await dashboardDB.db.collection('surveyResults').find({
-        $and: [excludeTestID, surveyVersionFilter, {"evalNumber": args["evalNumber"]}]
+        $and: [excludeTestID, surveyVersionFilter, {
+          $or: [{ "evalNumber": args["evalNumber"] }, { "results.evalNumber": args["evalNumber"] }]
+        }]
         
       }).toArray().then(result => { return result; });
     },
