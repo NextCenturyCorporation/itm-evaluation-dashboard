@@ -231,10 +231,12 @@ function AdminPage({ currentUser }) {
     useEffect(() => {
         if (surveyConfigs) {
             const versions = Object.values(surveyConfigs).map(config => config.version);
-            const uniqueVersions = [...new Set(versions)].sort((a, b) => a - b);
+            const uniqueVersions = [...new Set(versions)]
+                .sort((a, b) => a - b)
+                .filter(version => version != surveyVersion);
             setSurveyVersions(uniqueVersions);
         }
-    }, [surveyConfigs]);
+    }, [surveyConfigs, surveyVersion]);
 
     const handleSurveyVersionChange = (event) => {
         event.preventDefault();
@@ -247,7 +249,7 @@ function AdminPage({ currentUser }) {
 
     const confirmSurveyVersionChange = async () => {
         try {
-            const { data } = await updateSurveyVersion({ 
+            const { data } = await updateSurveyVersion({
                 variables: { version: pendingSurveyVersion }
             });
             if (data && data.updateSurveyVersion) {
@@ -287,7 +289,7 @@ function AdminPage({ currentUser }) {
                             </Card.Text>
                             <Form.Group>
                                 <Form.Label>Change Survey Version:</Form.Label>
-                                <Form.Select 
+                                <Form.Select
                                     value=''
                                     onChange={handleSurveyVersionChange}
                                 >
