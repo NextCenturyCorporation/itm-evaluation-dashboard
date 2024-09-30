@@ -433,10 +433,30 @@ function getStDelRate(res, forced = false) {
 
 function getOverallDelRate(res) {
     // gets the overall delegation rate (1=delegated, 0=no delegation) for a participant
-    const st = getStDelRate(res);
-    const ad = getAdDelRate(res);
-    const val = st['val'] + ad['val'];
-    const tally = st['tally'] + ad['tally'];
+    let val = 0;
+    let tally = 0;
+    if (res.results.evalNumber != 4) {
+        const st = getStDelRate(res);
+        const ad = getAdDelRate(res);
+        val = st['val'] + ad['val'];
+        tally = st['tally'] + ad['tally'];
+    }
+    else {
+        // 1 for choosing aligned, 0 for not choosing aligned
+        for (const pageName of Object.keys(res.results)) {
+            if (pageName.includes(' vs ')) {
+                for (const q of Object.keys(res.results[pageName].questions)) {
+                    // ignore parallax runs where it's only misaligned vs baseline
+                    if (q.includes("Forced Choice") && res.results[pageName]['admAlignment'].includes(' aligned')) {
+                        tally += 1;
+                        const response = res.results[pageName].questions[q].response;
+                        const aligned = q.split(' vs ')[0]; // aligned is always listed first in forced choice questions
+                        val += response == aligned ? 1 : 0;
+                    }
+                }
+            }
+        }
+    }
     return tally > 0 ? val / tally : null;
 }
 
@@ -683,6 +703,13 @@ function populateDataSet(data) {
                 // ignore some pids
                 continue;
             }
+            if (res.results.evalNumber == 4) {
+                const valid_ids = data?.getParticipantLog?.map((x) => x?.ParticipantID?.toString());
+                if (!valid_ids.includes(pid)) {
+                    // only include valid ids for survey version 4
+                    continue;
+                }
+            }
             // fix typo
             if (pid === '20234204') {
                 pid = '2024204';
@@ -691,8 +718,6 @@ function populateDataSet(data) {
 
             // get date. see if start time exists. If not, use end time
             tmpSet['Date'] = new Date(safeGet(res, ['results', 'startTime'], ['results', 'timeComplete'])).toLocaleDateString();
-
-            // TODO: GET GENDER!!
 
             // get med role. if more than one, choose other. Ignore military experience (also becomes "other"=6)
             const medRoles = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role (choose all that apply):', 'response']);
@@ -1110,7 +1135,7 @@ function populateDataSet(data) {
         }
     }
 
-    return allResults;
+    return allResults.filter((x) => isDefined(x['Date']));
 }
 
 function getAggregatedData() {
