@@ -15,7 +15,7 @@ const getAdmData = gql`
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
 
-const HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 'Scenario', 'Target_Type (Group/Individual)', 'Aligned ADM Alignment score (ADM|target)', 'Baseline ADM Alignment score (ADM|target)'];
+const HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 'Scenario', 'Target_Type (Group/Individual)', 'Aligned ADM Alignment score (ADM|target)', 'Aligned Server Session ID', 'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'];
 
 const ADM_NAME_MAP = {
     "TAD-aligned": "Parallax",
@@ -66,7 +66,7 @@ export function RQ2223() {
                 if (!Object.keys(organized_adms[ta2][scenario]).includes(target)) {
                     organized_adms[ta2][scenario][target] = {};
                 }
-                organized_adms[ta2][scenario][target][admName] = alignment;
+                organized_adms[ta2][scenario][target][admName] = { 'alignment': alignment, 'adm': adm };
             }
             for (const ta2 of Object.keys(organized_adms)) {
                 for (const scenario of Object.keys(organized_adms[ta2])) {
@@ -87,8 +87,12 @@ export function RQ2223() {
                         entryObj['Target'] = target;
                         entryObj['Scenario'] = scenario;
                         entryObj['Target_Type (Group/Individual)'] = 'Individual';
-                        entryObj['Aligned ADM Alignment score (ADM|target)'] = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
-                        entryObj['Baseline ADM Alignment score (ADM|target)'] = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-severity-baseline' : "ALIGN-ADM-OutlinesBaseline"];
+                        const aligned = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
+                        entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
+                        entryObj['Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                        const baseline = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-severity-baseline' : "ALIGN-ADM-OutlinesBaseline"];
+                        entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
+                        entryObj['Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                         allObjs.push(entryObj);
                     }
 

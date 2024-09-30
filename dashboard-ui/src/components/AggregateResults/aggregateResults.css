@@ -150,6 +150,12 @@
     background-color: white;
 }
 
+.selection-section-probes {
+    margin-left: 24px;
+    max-width: 300px;
+    padding-top: 5px;
+}
+
 .q2-adms h3 {
     text-align: center;
     width: 100%;
@@ -159,7 +165,50 @@
     margin: 5px 20px;
 }
 
+.home-navigation-container .evaluation-selector-container {
+    margin-left: 12px;
+}
+
+.home-container .selection-section {
+    margin-left: 12px;
+}
+
+.sim-probe-title {
+    margin-left: 12px !important;
+}
+
 .subtitle {
     margin-top: 18px;
     text-align: center;
+}
+
+.graph-popup {
+    margin: auto;
+    width: 70%;
+    height: 100%;
+    min-height: 350px;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+}
+
+.graph-popup iframe {
+    width: 50%;
+    margin-left: 30%;
+    min-height: 350px;
+}
+
+.graph-popup h3 {
+    width: 100%;
+    text-align: center;
+}
+
+td a:hover {
+    cursor: pointer;
+}
+
+td a {
+    text-decoration: underline !important;
+    color: rgb(88, 88, 115) !important;
 }

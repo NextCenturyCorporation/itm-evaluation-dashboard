@@ -227,7 +227,9 @@ const resolvers = {
         "history.parameters.target_id": 1,
         "history.response.kdma_values.value": 1,
         "history.parameters.target_id": 1,
-        "history.response.score": 1
+        "history.response.score": 1,
+        "history.parameters.session_id": 1,
+        "history.command": 1
       }}).toArray().then(result => { return result; });
     },
     getEvalIds: async (obj, args, context, inflow) => {
@@ -374,7 +376,9 @@ const resolvers = {
         ]
       };
       return await dashboardDB.db.collection('surveyResults').find({
-        $and: [excludeTestID, surveyVersionFilter, {"evalNumber": args["evalNumber"]}]
+        $and: [excludeTestID, surveyVersionFilter, {
+          $or: [{ "evalNumber": args["evalNumber"] }, { "results.evalNumber": args["evalNumber"] }]
+        }]
         
       }).toArray().then(result => { return result; });
     },
