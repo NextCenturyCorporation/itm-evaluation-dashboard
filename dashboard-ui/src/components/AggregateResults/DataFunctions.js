@@ -525,9 +525,11 @@ function populateHumanDataRow(rowObject, version) {
         const adept_mapping = { 'MJ2': 1, 'MJ4': 2, 'MJ5': 3 };
         if (rowObject[0].scenario_id.includes('ol')) {
             returnObj['ST_Scenario'] = rowObject[0].scenario_id.split('ol-dre-')[1].split('-')[0];
+            returnObj[rowObject[0].scenario_id.split('ol')[0] == 'q' ? 'QOL_Session_Id' : 'VOL_Session_Id'] = rowObject[0].data.alignment['sid'];
         }
         else {
             returnObj['ADEPT_Scenario'] = adept_mapping[rowObject[0].scenario_id.split('-')[1].split('-')[0]];
+            returnObj['ADEPT_Session_Id'] = rowObject[0].data.alignment['sid'].replaceAll('"', '');
         }
 
         const mj2ProbeIds = ["Probe 2", "Probe 2A-1", "Probe 2B-1", "Probe 3-B.2", "Probe 4", "Probe 4-B.1", "Probe 4-B.1-B.1", "Probe 5", "Probe 5-A.1", "Probe 5-B.1", "Probe 6", "Probe 7", "Probe 8", "Probe 9", "Probe 9-A.1", "Probe 9-B.1", "Probe 10"];

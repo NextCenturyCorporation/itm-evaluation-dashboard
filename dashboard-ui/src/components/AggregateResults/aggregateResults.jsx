@@ -234,7 +234,8 @@ const HEADER_SIM_DATA = {
         "QOL_10",
         "QOL_11",
         "QOL_12",
-        "ADEPT",
+        "QOL_Session_Id",
+        "ADEPT_Session_Id",
         "VOL_1",
         "VOL_2",
         "VOL_3",
@@ -247,6 +248,7 @@ const HEADER_SIM_DATA = {
         "VOL_10",
         "VOL_11",
         "VOL_12",
+        "VOL_Session_Id"
     ]
 };
 
@@ -333,7 +335,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: sheets, SheetNames: names };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data' + fileExtension);
+            FileSaver.saveAs(data, 'human_sim_data_' + (selectedEval == 3 ? 'mre' : 'dre') + fileExtension);
         }
     };
 
@@ -346,8 +348,8 @@ export default function AggregateResults({ type }) {
     }    
 
     const getHeadersEval4 = (headers, adeptScenario) => {
-        const splitPoint = headers.indexOf('ADEPT');
-        return [...headers.slice(0, splitPoint), ...ADEPT_HEADERS_DRE[adeptScenario] ?? [], ...headers.slice(splitPoint + 1)];
+        const splitPoint = headers.indexOf('ADEPT_Session_Id');
+        return [...headers.slice(0, splitPoint), ...ADEPT_HEADERS_DRE[adeptScenario] ?? [], ...headers.slice(splitPoint)];
     }
 
     return (
