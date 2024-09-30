@@ -272,7 +272,7 @@ export function RQ13() {
                         return (<tr key={dataSet['ParticipantId'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['ParticipantId'] + '-' + val}>
-                                    {dataSet[val]}
+                                    {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val]}
                                 </td>);
                             })}
                         </tr>);
