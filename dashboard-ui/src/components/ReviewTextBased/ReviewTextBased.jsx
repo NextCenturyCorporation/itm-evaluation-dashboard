@@ -37,7 +37,6 @@ export function ReviewTextBasedPage() {
 
     const handleSurveyComplete = (sender) => {
         const results = sender.data;
-        console.log("Survey results:", results);
     };
 
     const ensureStringProperties = (obj) => {
