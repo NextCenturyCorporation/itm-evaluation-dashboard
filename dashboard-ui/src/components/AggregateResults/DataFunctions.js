@@ -717,8 +717,6 @@ function populateDataSet(data) {
             // get date. see if start time exists. If not, use end time
             tmpSet['Date'] = new Date(safeGet(res, ['results', 'startTime'], ['results', 'timeComplete'])).toLocaleDateString();
 
-            // TODO: GET GENDER!!
-
             // get med role. if more than one, choose other. Ignore military experience (also becomes "other"=6)
             const medRoles = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role (choose all that apply):', 'response']);
             if (!medRoles) {
@@ -1135,7 +1133,7 @@ function populateDataSet(data) {
         }
     }
 
-    return allResults;
+    return allResults.filter((x) => isDefined(x['Date']));
 }
 
 function getAggregatedData() {

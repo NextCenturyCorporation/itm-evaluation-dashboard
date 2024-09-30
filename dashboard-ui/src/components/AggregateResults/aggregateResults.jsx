@@ -315,6 +315,7 @@ export default function AggregateResults({ type }) {
         // only get chosen survey version!!
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
             const full = populateDataSet(data);
+            full.sort((a, b) => a['ParticipantID'] - b['ParticipantID']);
             setFullData(full);
             setAggregateData(getAggregatedData());
             const xtraData = getChartData(full);
