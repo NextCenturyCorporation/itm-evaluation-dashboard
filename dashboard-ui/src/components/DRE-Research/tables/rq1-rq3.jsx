@@ -7,7 +7,7 @@ import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
-import { Modal } from "@mui/material";
+import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
 
@@ -83,6 +83,15 @@ export function RQ13() {
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    const [ta1s, setTA1s] = React.useState([]);
+    const [ta2s, setTA2s] = React.useState([]);
+    const [scenarios, setScenarios] = React.useState([]);
+    const [targets, setTargets] = React.useState([]);
+    const [ta1Filters, setTA1Filters] = React.useState([]);
+    const [ta2Filters, setTA2Filters] = React.useState([]);
+    const [scenarioFilters, setScenarioFilters] = React.useState([]);
+    const [targetFilters, setTargetFilters] = React.useState([]);
+    const [filteredData, setFilteredData] = React.useState([]);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
@@ -101,6 +110,10 @@ export function RQ13() {
             const textResults = dataTextResults.getAllScenarioResults;
             const admData = dataADMs.getAllHistoryByEvalNumber;
             const allObjs = [];
+            const allTA1s = [];
+            const allTA2s = [];
+            const allScenarios = [];
+            const allTargets = [];
 
             // find participants that have completed the delegation survey
             const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
@@ -167,13 +180,19 @@ export function RQ13() {
                             entryObj['Delegator_Role'] = entryObj['Delegator_Role'].join('; ');
                         }
                         entryObj['TA1_Name'] = entry['TA1'];
+                        allTA1s.push(entry['TA1']);
                         entryObj['Trial_ID'] = trial_num;
                         trial_num += 1;
                         entryObj['Attribute'] = entry['Attribute'];
                         entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
+                        allScenarios.push(entryObj['Scenario']);
                         entryObj['TA2_Name'] = entry['TA2'];
+                        allTA2s.push(entry['TA2']);
                         entryObj['ADM_Type'] = t == 'comparison' ? 'comparison' : ['misaligned', 'aligned'].includes(t) ? 'aligned' : 'baseline';
                         entryObj['Target'] = page['admTarget'] ?? '-';
+                        if (entryObj['Target'] != '-') {
+                            allTargets.push(entryObj['Target']);
+                        }
                         const foundADM = admData.find((adm) => adm.history[0].parameters.adm_name == page['admName'] && (adm.history[0].response?.id ?? adm.history[1].response?.id) == page['scenarioIndex'].replace('IO', 'MJ') &&
                             adm.history[adm.history.length - 1].parameters.target_id == page['admTarget']);
                         const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
@@ -225,6 +244,11 @@ export function RQ13() {
                 }
             }
             setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            setTA1s(Array.from(new Set(allTA1s)));
+            setTA2s(Array.from(new Set(allTA2s)));
+            setScenarios(Array.from(new Set(allScenarios)));
+            setTargets(Array.from(new Set(allTargets)));
         }
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs]);
 
@@ -246,11 +270,78 @@ export function RQ13() {
         FileSaver.saveAs(data, 'RQ-1_and_RQ-3 data' + fileExtension);
     };
 
+    React.useEffect(() => {
+        setFilteredData(formattedData.filter((x) =>
+            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+            (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+            (targetFilters.length == 0 || targetFilters.includes(x['Target']))
+        ));
+    }, [ta1Filters, ta2Filters, scenarioFilters, targetFilters]);
+
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs) return <p>Error :</p>;
 
     return (<>
         <section className='tableHeader'>
+            <div className="filters">
+                <Autocomplete
+                    multiple
+                    options={ta1s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA1"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA1Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={ta2s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA2"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA2Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={scenarios}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Scenario"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setScenarioFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={targets}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Targets"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTargetFilters(newVal)}
+                />
+            </div>
             <div className="option-section">
                 <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
@@ -268,7 +359,7 @@ export function RQ13() {
                     </tr>
                 </thead>
                 <tbody>
-                    {formattedData.map((dataSet, index) => {
+                    {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['ParticipantId'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['ParticipantId'] + '-' + val}>

@@ -94,3 +94,20 @@
 .checkboxes li {
     padding: 0 5px;
 }
+
+.filters {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.filters>* {
+    min-width: 120px;
+    max-width: 400px;
+}
+
+.filters button {
+    border: none !important;
+    padding: 0px !important;
+}
