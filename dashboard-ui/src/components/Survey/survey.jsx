@@ -16,6 +16,7 @@ import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { Badge } from 'react-bootstrap';
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
@@ -1220,7 +1221,23 @@ class SurveyPage extends Component {
                                 )}
                             </Mutation>
                         )
-                        } </>}
+                        }
+                        <div style={{
+                            position: 'fixed',
+                            bottom: '1rem',
+                            right: '1rem',
+                            backgroundColor: '#592610',
+                            color: 'white',
+                            padding: '0.5em 0.7em',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                        }}>
+                            Survey v{this.state.surveyVersion}
+                        </div>
+                </>
+                }
             </>
         )
     }

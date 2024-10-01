@@ -239,10 +239,8 @@ function AdminPage({ currentUser }) {
     const [getConfigs, { loading: configsLoading, error: configsError, data: configsData }] = useLazyQuery(GET_CONFIGS, {
         fetchPolicy: 'no-cache',
         onCompleted: async (data) => {
-            console.log("GetConfigs completed:", data);
             try {
                 await setupConfigWithImages(data);
-                console.log(data.getAllSurveyConfigs)
             } finally {
                 setIsLoading(false);
             }

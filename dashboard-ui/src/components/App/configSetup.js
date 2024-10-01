@@ -3,7 +3,6 @@ import { addConfig, addTextBasedConfig, setCurrentSurveyVersion } from '../../st
 import { isDefined } from '../AggregateResults/DataFunctions';
 
 export function setupConfigWithImages(data) {
-    console.log(data.getAllTextBasedImages[0]._id)
     for (const config of data.getAllSurveyConfigs) {
         let tempConfig = JSON.parse(JSON.stringify(config));
         for (const page of tempConfig.survey.pages) {
@@ -19,7 +18,6 @@ export function setupConfigWithImages(data) {
                             foundImg = data.getAllTextBasedImages.find((x) => ((x.casualtyId.toLowerCase() === pName.toLowerCase() || (x.casualtyId === 'us_soldier' && pName === 'US Soldier')) && (x.scenarioId === page.scenarioIndex || x.scenarioId.replace('MJ', 'IO') === page.scenarioIndex)));
                         }
                         else {
-                            console.log(patient.imgUrl)
                             foundImg = data.getAllImageUrls?.find((x) => x._id == patient.imgUrl);
                         }
                         if (isDefined(foundImg)) {
@@ -27,7 +25,6 @@ export function setupConfigWithImages(data) {
                                 patient.imgUrl = foundImg.imageByteCode;
                             }
                             else {
-                                console.log(foundImg)
                                 patient.imgUrl = foundImg.url;
                             }
                         }

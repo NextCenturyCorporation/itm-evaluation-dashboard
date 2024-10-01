@@ -89,7 +89,6 @@ export class Comparison extends SurveyQuestionElementBase {
     ConfigGetter = () => {
         const reducer = useSelector((state) => state?.configs?.surveyConfigs);
         const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
-        console.log('delegation_v' + currentSurveyVersion)
         useEffect(() => {
             if (reducer) {
                 this.setState({
