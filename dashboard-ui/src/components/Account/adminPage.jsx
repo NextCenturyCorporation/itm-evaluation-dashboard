@@ -242,7 +242,7 @@ function AdminPage({ currentUser }) {
             console.log("GetConfigs completed:", data);
             try {
                 await setupConfigWithImages(data);
-                await setupTextBasedConfig(data);
+                console.log(data.getAllSurveyConfigs)
             } finally {
                 setIsLoading(false);
             }

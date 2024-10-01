@@ -20,7 +20,7 @@ import { createBrowserHistory } from 'history';
 import ADMChartPage from '../AdmCharts/admChartPage';
 import gql from "graphql-tag";
 import { Query } from '@apollo/react-components';
-import { setupConfigWithImages, setupTextBasedConfig } from './configSetup';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion } from './configSetup';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -45,20 +45,13 @@ import { RQ3 } from '../DRE-Research/RQ3';
 const history = createBrowserHistory();
 
 
-const GET_CONFIGS = process.env.REACT_APP_SURVEY_VERSION === '4.0'
-    ? gql`
-    query GetConfigs {
-      getAllSurveyConfigs
-      getAllTextBasedConfigs
-      getAllTextBasedImages
-    }
-  `
-    : gql`
+const GET_CONFIGS = gql`
     query GetConfigs {
       getAllSurveyConfigs
       getAllImageUrls
       getAllTextBasedConfigs
       getAllTextBasedImages
+      getCurrentSurveyVersion
     }
   `;
 
@@ -211,7 +204,8 @@ export class App extends React.Component {
                             setupConfigWithImages(data);
                             // text based configs
                             setupTextBasedConfig(data);
-
+                            // set current survey version 
+                            setSurveyVersion(data.getCurrentSurveyVersion)
 
                             return (<div className="itm-app">
                                 {currentUser &&
