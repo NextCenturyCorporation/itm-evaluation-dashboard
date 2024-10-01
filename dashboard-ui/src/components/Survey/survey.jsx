@@ -29,12 +29,6 @@ const COUNT_AI_GROUP_FIRST = gql`
   }
 `;
 
-const GET_CURRENT_SURVEY_VERSION = gql`
-    query getCurrentSurveyVersion {
-        getCurrentSurveyVersion
-    }
-`;
-
 const UPLOAD_SURVEY_RESULTS = gql`
   mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
     uploadSurveyResults(surveyId: $surveyId, results: $results)
@@ -1239,15 +1233,11 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
       });
-      const { loading: loadingSurveyVersion, error: errorSurveyVersion, data: dataSurveyVersion } = useQuery(GET_CURRENT_SURVEY_VERSION, {
-        fetchPolicy: 'no-cache'
-      })
+    const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults || loadingSurveyVersion) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults || errorSurveyVersion) return <p>Error :</p>;
-
-    const formattedSurveyVersion = Number(dataSurveyVersion.getCurrentSurveyVersion).toFixed(1);
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults ) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults ) return <p>Error :</p>;
 
     return (
         <SurveyPage
@@ -1257,7 +1247,7 @@ export const SurveyPageWrapper = (props) => {
             currentUser={props.currentUser}
             textResults={dataTextResults?.getAllScenarioResults}
             surveyResults={dataSurveyResults.getAllSurveyResults}
-            surveyVersion={formattedSurveyVersion}
+            surveyVersion={currentSurveyVersion}
         />)
 };
 

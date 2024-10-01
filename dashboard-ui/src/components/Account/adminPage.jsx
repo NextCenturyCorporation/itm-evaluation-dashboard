@@ -6,7 +6,7 @@ import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useSelector, useDispatch } from "react-redux";
 import '../../css/admin-page.css';
-import { setupConfigWithImages, setupTextBasedConfig } from '../App/configSetup';
+import { setSurveyVersion, setupConfigWithImages } from '../App/configSetup';
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -212,7 +212,7 @@ function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
 }
 
 function AdminPage({ currentUser }) {
-    const [surveyVersion, setSurveyVersion] = useState('');
+    const [surveyVersion, setLocalSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
@@ -251,7 +251,7 @@ function AdminPage({ currentUser }) {
 
     useEffect(() => {
         if (surveyVersionData && surveyVersionData.getCurrentSurveyVersion) {
-            setSurveyVersion(surveyVersionData.getCurrentSurveyVersion);
+            setLocalSurveyVersion(surveyVersionData.getCurrentSurveyVersion);
         }
     }, [surveyVersionData]);
 
@@ -281,7 +281,10 @@ function AdminPage({ currentUser }) {
                 variables: { version: pendingSurveyVersion }
             });
             if (data && data.updateSurveyVersion) {
-                setSurveyVersion(pendingSurveyVersion);
+                // local for ui
+                setLocalSurveyVersion(pendingSurveyVersion);
+                // redux store
+                setSurveyVersion(pendingSurveyVersion)
                 await getConfigs();
                 setShowConfirmation(false);
             } else {
