@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Query, useQuery, useMutation } from 'react-apollo';
+import { Query, useQuery, useMutation, useLazyQuery } from 'react-apollo';
 import gql from 'graphql-tag';
 import DualListBox from 'react-dual-listbox';
-import { Button, Modal, Form, Container, Row, Col, Card } from 'react-bootstrap';
-import { useSelector } from "react-redux";
+import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
+import { useSelector, useDispatch } from "react-redux";
 import '../../css/admin-page.css';
+import { setupConfigWithImages, setupTextBasedConfig } from '../App/configSetup';
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -216,11 +217,37 @@ function AdminPage({ currentUser }) {
     const [showConfirmation, setShowConfirmation] = useState(false);
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
     const [surveyVersions, setSurveyVersions] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION, {
         fetchPolicy: 'no-cache'
     });
     const [updateSurveyVersion] = useMutation(UPDATE_SURVEY_VERSION);
+
+    const GET_CONFIGS = useMemo(() => {
+        return gql`
+            query GetConfigs {
+                getAllSurveyConfigs
+                getAllTextBasedConfigs
+                getAllTextBasedImages
+                ${pendingSurveyVersion !== '4' ? 'getAllImageUrls' : ''}
+            }
+        `;
+    }, [pendingSurveyVersion]);
+
+
+    const [getConfigs, { loading: configsLoading, error: configsError, data: configsData }] = useLazyQuery(GET_CONFIGS, {
+        fetchPolicy: 'no-cache',
+        onCompleted: async (data) => {
+            console.log("GetConfigs completed:", data);
+            try {
+                await setupConfigWithImages(data);
+                await setupTextBasedConfig(data);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    });
 
     useEffect(() => {
         if (surveyVersionData && surveyVersionData.getCurrentSurveyVersion) {
@@ -249,17 +276,24 @@ function AdminPage({ currentUser }) {
 
     const confirmSurveyVersionChange = async () => {
         try {
+            setIsLoading(true);
             const { data } = await updateSurveyVersion({
                 variables: { version: pendingSurveyVersion }
             });
             if (data && data.updateSurveyVersion) {
                 setSurveyVersion(pendingSurveyVersion);
+                await getConfigs();
                 setShowConfirmation(false);
             } else {
                 throw new Error("Failed to update survey version");
             }
         } catch (error) {
+            console.error(error);
             alert("Failed to update survey version. Please try again.");
+        } finally {
+            if (!configsLoading) {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -273,6 +307,24 @@ function AdminPage({ currentUser }) {
 
     return (
         <Container className="admin-page">
+            {isLoading && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    zIndex: 9999
+                }}>
+                    <Spinner animation="border" role="status" variant="light">
+                        <span className="sr-only">Loading...</span>
+                    </Spinner>
+                </div>
+            )}
             <Row className="mb-4">
                 <Col>
                     <h1 className="admin-header">Admin Dashboard</h1>
