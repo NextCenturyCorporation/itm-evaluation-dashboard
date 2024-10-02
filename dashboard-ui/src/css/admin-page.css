@@ -1,30 +1,64 @@
-.admin-container {
+.admin-page {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  .admin-header {
+    color: #333;
+    border-bottom: 2px solid rgba(89, 38, 16, 1);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  
+  .card:hover {
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .loading, .error {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+    color: #6c757d;
+  }
+  
+  .error {
+    color: #dc3545;
+  }
+  
+  .table {
+    background-color: white;
+  }
+  
+  .table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+  }
+  
+  .dual-listbox {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .dual-listbox .dual-listbox__container {
+    width: 45%;
+  }
+  
+  .dual-listbox .dual-listbox__buttons {
     display: flex;
     flex-direction: column;
-    padding: 10px 25px 0 25px;
-}
-
-.admin-container * {
-    margin-bottom: 5px;
-}
-
-.admin-description {
-    margin-bottom: 15px;
-}
-
-.modify-admins-header {
-    margin: 15px 0 5px 0;
-}
-
-.dual-input-container {
-    display: flex;
-}
-
-.dual-input-container .rdl-control-container {
-    width: 400px;
-    height: 250px;
-}
-
-.dual-input-container .rdl-move-all {
-    visibility: hidden;
-}
+    justify-content: center;
+  }
+  
+  .dual-listbox .dual-listbox__button {
+    margin: 5px 0;
+  }

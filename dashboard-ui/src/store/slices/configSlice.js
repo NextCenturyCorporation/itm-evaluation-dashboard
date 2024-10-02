@@ -4,7 +4,8 @@ const configSlice = createSlice({
     name: 'configs',
     initialState: {
         surveyConfigs: {},
-        textBasedConfigs: {}
+        textBasedConfigs: {},
+        currentSurveyVersion: null
     },
     reducers: {
         addConfig: (state, action) => {
@@ -15,10 +16,14 @@ const configSlice = createSlice({
         addTextBasedConfig: (state, action) => {
             const { id, data } = action.payload
             state.textBasedConfigs[data.scenario_id] = data
+        },
+
+        setCurrentSurveyVersion: (state, action) => {
+            state.currentSurveyVersion = action.payload;
         }
     }
 });
 
-export const { addConfig, addTextBasedConfig } = configSlice.actions;
+export const { addConfig, addTextBasedConfig, setCurrentSurveyVersion } = configSlice.actions;
 export default configSlice.reducer;
 
