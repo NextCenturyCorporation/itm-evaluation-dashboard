@@ -191,6 +191,7 @@ export function RQ2223() {
     if (error) return <p>Error :</p>;
 
     return (<>
+        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -279,8 +280,9 @@ export function RQ2223() {
                     onChange={(_, newVal) => setTargetTypeFilters(newVal)}
                 />
             </div>
+
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>

@@ -111,3 +111,7 @@
     border: none !important;
     padding: 0px !important;
 }
+
+.filteredText {
+    margin-left: 12px !important;
+}
