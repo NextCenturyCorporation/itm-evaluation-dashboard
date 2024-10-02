@@ -20,8 +20,7 @@ import { createBrowserHistory } from 'history';
 import ADMChartPage from '../AdmCharts/admChartPage';
 import gql from "graphql-tag";
 import { Query } from '@apollo/react-components';
-import store from '../../store/store';
-import { addConfig, addTextBasedConfig } from '../../store/slices/configSlice';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion } from './configSetup';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -45,23 +44,21 @@ import { RQ3 } from '../DRE-Research/RQ3';
 
 const history = createBrowserHistory();
 
+const GET_SURVEY_VERSION = gql`
+  query GetSurveyVersion {
+    getCurrentSurveyVersion
+  }
+`;
 
-const GET_CONFIGS = process.env.REACT_APP_SURVEY_VERSION === '4.0'
-    ? gql`
-    query GetConfigs {
-      getAllSurveyConfigs
-      getAllTextBasedConfigs
-      getAllTextBasedImages
-    }
-  `
-    : gql`
-    query GetConfigs {
-      getAllSurveyConfigs
-      getAllImageUrls
-      getAllTextBasedConfigs
-      getAllTextBasedImages
-    }
-  `;
+
+const GET_CONFIGS = gql`
+  query GetConfigs($includeImageUrls: Boolean!) {
+    getAllSurveyConfigs
+    getAllImageUrls @include(if: $includeImageUrls)
+    getAllTextBasedConfigs
+    getAllTextBasedImages
+  }
+`;
 
 
 function Home({ newState }) {
@@ -194,259 +191,206 @@ export class App extends React.Component {
         this.setState({ currentUser: userObject });
     }
 
-    setupConfigWithImages(data) {
-        // Get the survey configs one by one, since they are all needed for the results pages
-        // and add the correct image urls back to them
-        // then store them properly in localStorage
-        for (const config of data.getAllSurveyConfigs) {
-            let tempConfig = JSON.parse(JSON.stringify(config))
-            for (const page of tempConfig.survey.pages) {
-                for (const el of page.elements) {
-                    if (Object.keys(el).includes("patients")) {
-                        for (const patient of el.patients) {
-                            let foundImg = null;
-                            if (config.survey.version == 4) {
-                                let pName = patient.name;
-                                if (pName.includes('Casualty')) {
-                                    pName = 'casualty_' + pName.substring(pName.length - 1);
-                                }
-                                foundImg = data.getAllTextBasedImages.find((x) => ((x.casualtyId.toLowerCase() === pName.toLowerCase() || (x.casualtyId === 'us_soldier' && pName === 'US Soldier')) && (x.scenarioId === page.scenarioIndex || x.scenarioId.replace('MJ', 'IO') === page.scenarioIndex)));
-                            }
-                            else {
-                                foundImg = data.getAllImageUrls?.find((x) => x._id === patient.imgUrl);
-                            }
-                            if (isDefined(foundImg)) {
-                                if (config.survey.version == 4) {
-                                    patient.imgUrl = foundImg.imageByteCode
-                                }
-                                else {
-                                    patient.imgUrl = foundImg.url;
-                                }
-
-                            }
-
-                        }
-                    }
-                }
-            }
-            store.dispatch(addConfig({ id: tempConfig._id, data: tempConfig }));
-        }
-    }
-
-    setupTextBasedConfig(data) {
-        if (!data || !data.getAllTextBasedConfigs) {
-            console.warn("No text-based configs found in Mongo");
-            return;
-        }
-        for (const config of data.getAllTextBasedConfigs) {
-            // don't try to match images to old mre text based
-            let tempConfig = JSON.parse(JSON.stringify(config))
-            if (tempConfig.eval != 'mre-eval') {
-                for (const page of tempConfig.pages) {
-                    for (const el of page.elements) {
-                        if (Object.keys(el).includes("patients")) {
-                            for (const patient of el.patients) {
-                                const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId?.toLowerCase() === patient.id?.toLowerCase() && x.scenarioId === page.scenario_id));
-                                if (foundImg) {
-                                    patient.imgUrl = foundImg.imageByteCode
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            store.dispatch(addTextBasedConfig({ id: tempConfig._id, data: tempConfig }));
-        }
-    }
-
-
     render() {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_CONFIGS} fetchPolicy={'cache-first'}>
-                    {
-                        ({ loading, error, data }) => {
-                            if (loading) {
-                                return;
-                            }
-                            if (error) {
-                                console.error("Error fetching configs: ", error.message);
-                                return;
-                            }
-                            // survey configs
-                            this.setupConfigWithImages(data);
-                            // text based configs
-                            this.setupTextBasedConfig(data);
+                <Query query={GET_SURVEY_VERSION}>
+                    {({ loading: versionLoading, error: versionError, data: versionData }) => {
+                        if (versionLoading) return <div>Loading...</div>;
+                        if (versionError) return <div>Error fetching survey version</div>;
 
+                        const surveyVersion = versionData.getCurrentSurveyVersion;
+                        const includeImageUrls = surveyVersion < 4;
 
-                            return (<div className="itm-app">
-                                {currentUser &&
-                                    <nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
-                                        <a className="navbar-brand" href="/">
-                                            <img className="nav-brand-itm" src={brandImage} alt="" />ITM
-                                        </a>
-                                        <ul className="navbar-nav custom-nav">
-                                            <li className="nav-item">
-                                                <Link className="nav-link" to="/">Home</Link>
-                                            </li>
-                                            <NavDropdown title="Data Collection">
-                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
-                                                    Take Delegation Survey
-                                                </NavDropdown.Item>
-                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
-                                                    Complete Text Scenarios
-                                                </NavDropdown.Item>
-                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
-                                                        Review Text Scenarios
-                                                    </NavDropdown.Item>
-                                                )}
-                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
-                                                        Review Delegation Survey
-                                                    </NavDropdown.Item>
-                                                )}
+                        return (
+                            <Query
+                                query={GET_CONFIGS}
+                                variables={{ includeImageUrls }}
+                                fetchPolicy={'cache-first'}
+                            >
+                                {({ loading, error, data }) => {
+                                    if (loading) return <div>Loading configs...</div>;
+                                    if (error) {
+                                        console.error("Error fetching configs: ", error.message);
+                                        return <div>Error fetching configs</div>;
+                                    }
 
-                                            </NavDropdown>
-                                            {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
-                                                <>
-                                                    <NavDropdown title="Human Evaluation Segments">
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
-                                                            Delegation Survey Results
-                                                        </NavDropdown.Item>
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
-                                                            Text Scenario Results
-                                                        </NavDropdown.Item>
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/humanSimParticipant">
-                                                            Human Participant Data: Within-Subjects Analysis
-                                                        </NavDropdown.Item>
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
-                                                            Human Sim Probe Values
-                                                        </NavDropdown.Item>
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
-                                                            Play by Play: Humans in Sim
-                                                        </NavDropdown.Item>
-                                                    </NavDropdown>
-                                                    <NavDropdown title="ADM Evaluation Segments">
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
-                                                            ADM Data
-                                                        </NavDropdown.Item>
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
-                                                            ADM Alignment Results
-                                                        </NavDropdown.Item>
-                                                    </NavDropdown>
-                                                    <NavDropdown title="Data Analysis">
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
-                                                            RQ1
-                                                        </NavDropdown.Item>
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq2">
-                                                            RQ2
-                                                        </NavDropdown.Item>
-                                                        <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq3">
-                                                            RQ3
-                                                        </NavDropdown.Item>
-                                                    </NavDropdown>
-                                                </>
-                                            )}
-                                        </ul>
-                                        <ul className="navbar-nav ml-auto">
-                                            <li className="login-user">
-                                                <div className="login-user-content">
-                                                    <img className="nav-login-icon" src={userImage} alt="" />
-                                                    <NavDropdown
-                                                        title={currentUser.emails[0].address}
-                                                        id="basic-nav-dropdown"
-                                                        show={this.state.menuIsOpened}
-                                                        onToggle={this.handleToggle}
-                                                    >
-                                                        <Link className="dropdown-item" to="/myaccount" onClick={this.handleToggle}>
-                                                            My Account
-                                                        </Link>
-                                                        {this.state.currentUser.admin === true && (
-                                                            <Link className="dropdown-item" to="/admin" onClick={this.handleToggle}>
-                                                                Administrator
-                                                            </Link>
+                                    // Setup configs
+                                    setupConfigWithImages(data);
+                                    setupTextBasedConfig(data);
+                                    setSurveyVersion(surveyVersion);
+
+                                    return (
+                                        <div className="itm-app">
+                                            {currentUser &&
+                                                <nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
+                                                    <a className="navbar-brand" href="/">
+                                                        <img className="nav-brand-itm" src={brandImage} alt="" />ITM
+                                                    </a>
+                                                    <ul className="navbar-nav custom-nav">
+                                                        <li className="nav-item">
+                                                            <Link className="nav-link" to="/">Home</Link>
+                                                        </li>
+                                                        <NavDropdown title="Data Collection">
+                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
+                                                                Take Delegation Survey
+                                                            </NavDropdown.Item>
+                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
+                                                                Complete Text Scenarios
+                                                            </NavDropdown.Item>
+                                                            {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
+                                                                    Review Text Scenarios
+                                                                </NavDropdown.Item>
+                                                            )}
+                                                            {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
+                                                                    Review Delegation Survey
+                                                                </NavDropdown.Item>
+                                                            )}
+                                                        </NavDropdown>
+                                                        {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
+                                                            <>
+                                                                <NavDropdown title="Human Evaluation Segments">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
+                                                                        Delegation Survey Results
+                                                                    </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
+                                                                        Text Scenario Results
+                                                                    </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanSimParticipant">
+                                                                        Human Participant Data: Within-Subjects Analysis
+                                                                    </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
+                                                                        Human Sim Probe Values
+                                                                    </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
+                                                                        Play by Play: Humans in Sim
+                                                                    </NavDropdown.Item>
+                                                                </NavDropdown>
+                                                                <NavDropdown title="ADM Evaluation Segments">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
+                                                                        ADM Data
+                                                                    </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
+                                                                        ADM Alignment Results
+                                                                    </NavDropdown.Item>
+                                                                </NavDropdown>
+                                                                <NavDropdown title="Data Analysis">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
+                                                                        RQ1
+                                                                    </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq2">
+                                                                        RQ2
+                                                                    </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq3">
+                                                                        RQ3
+                                                                    </NavDropdown.Item>
+                                                                </NavDropdown>
+                                                            </>
                                                         )}
-                                                        <Link className="dropdown-item" to={{}} onClick={this.logout}>
-                                                            Logout
-                                                        </Link>
-                                                    </NavDropdown>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                }
-                                <div className="main-content">
-                                    <Switch>
-                                        <Route exact path="/">
-                                            <Home newState={this.state} />
-                                        </Route>
-                                        <Route exact path="/results">
-                                            <Results />
-                                        </Route>
-                                        <Route exact path="/adm-results">
-                                            <AdmResults />
-                                        </Route>
-                                        <Route exact path="/humanSimParticipant">
-                                            <AggregateResults type="HumanSimParticipant" />
-                                        </Route>
-                                        <Route exact path="/scenarios">
-                                            <Scenarios />
-                                        </Route>
-                                        <Route path="/login">
-                                            <Login newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                        </Route>
-                                        <Route path="/reset-password/:token" component={ResetPassPage} />
-                                        <Route path="/myaccount">
-                                            <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                        </Route>
-                                        <Route path="/admin">
-                                            <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                        </Route>
-                                        <Route path="/survey">
-                                            <Survey currentUser={this.state.currentUser} />
-                                        </Route>
-                                        <Route path="/survey-results">
-                                            <SurveyResults />
-                                        </Route>
-                                        <Route path="/review-text-based">
-                                            <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                        </Route>
-                                        <Route path="/review-delegation">
-                                            <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                        </Route>
-                                        <Route path="/text-based">
-                                            <TextBased />
-                                        </Route>
-                                        <Route path="/text-based-results">
-                                            <TextBasedResults />
-                                        </Route>
-                                        <Route path="/humanProbeData">
-                                            <AggregateResults type="HumanProbeData" />
-                                        </Route>
-                                        <Route path="/human-results">
-                                            <HumanResults />
-                                        </Route>
-                                        <Route path="/dre-results/rq1">
-                                            <RQ1 />
-                                        </Route>
-                                        <Route path="/dre-results/rq2">
-                                            <RQ2 />
-                                        </Route>
-                                        <Route path="/dre-results/rq3">
-                                            <RQ3 />
-                                        </Route>
-                                    </Switch>
-                                </div>
+                                                    </ul>
+                                                    <ul className="navbar-nav ml-auto">
+                                                        <li className="login-user">
+                                                            <div className="login-user-content">
+                                                                <img className="nav-login-icon" src={userImage} alt="" />
+                                                                <NavDropdown
+                                                                    title={currentUser.emails[0].address}
+                                                                    id="basic-nav-dropdown"
+                                                                    show={this.state.menuIsOpened}
+                                                                    onToggle={this.handleToggle}
+                                                                >
+                                                                    <Link className="dropdown-item" to="/myaccount" onClick={this.handleToggle}>
+                                                                        My Account
+                                                                    </Link>
+                                                                    {this.state.currentUser.admin === true && (
+                                                                        <Link className="dropdown-item" to="/admin" onClick={this.handleToggle}>
+                                                                            Administrator
+                                                                        </Link>
+                                                                    )}
+                                                                    <Link className="dropdown-item" to={{}} onClick={this.logout}>
+                                                                        Logout
+                                                                    </Link>
+                                                                </NavDropdown>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </nav>
+                                            }
+                                            <div className="main-content">
+                                                <Switch>
+                                                    <Route exact path="/">
+                                                        <Home newState={this.state} />
+                                                    </Route>
+                                                    <Route exact path="/results">
+                                                        <Results />
+                                                    </Route>
+                                                    <Route exact path="/adm-results">
+                                                        <AdmResults />
+                                                    </Route>
+                                                    <Route exact path="/humanSimParticipant">
+                                                        <AggregateResults type="HumanSimParticipant" />
+                                                    </Route>
+                                                    <Route exact path="/scenarios">
+                                                        <Scenarios />
+                                                    </Route>
+                                                    <Route path="/login">
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/reset-password/:token" component={ResetPassPage} />
+                                                    <Route path="/myaccount">
+                                                        <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/admin">
+                                                        <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/survey">
+                                                        <Survey currentUser={this.state.currentUser} />
+                                                    </Route>
+                                                    <Route path="/survey-results">
+                                                        <SurveyResults />
+                                                    </Route>
+                                                    <Route path="/review-text-based">
+                                                        <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/review-delegation">
+                                                        <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/text-based">
+                                                        <TextBased />
+                                                    </Route>
+                                                    <Route path="/text-based-results">
+                                                        <TextBasedResults />
+                                                    </Route>
+                                                    <Route path="/humanProbeData">
+                                                        <AggregateResults type="HumanProbeData" />
+                                                    </Route>
+                                                    <Route path="/human-results">
+                                                        <HumanResults />
+                                                    </Route>
+                                                    <Route path="/dre-results/rq1">
+                                                        <RQ1 />
+                                                    </Route>
+                                                    <Route path="/dre-results/rq2">
+                                                        <RQ2 />
+                                                    </Route>
+                                                    <Route path="/dre-results/rq3">
+                                                        <RQ3 />
+                                                    </Route>
+                                                </Switch>
+                                            </div>
 
-                                <div className="itm-footer">
-                                    <div className="footer-text">This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.</div>
-                                    <div className="footer-link"><a href="https://www.darpa.mil/program/in-the-moment" target="_blank" rel="noopener noreferrer">DARPA's In the Moment (ITM) Program Page</a></div>
-                                </div>
-                            </div>)
-                        }
-                    }
+                                            <div className="itm-footer">
+                                                <div className="footer-text">This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.</div>
+                                                <div className="footer-link"><a href="https://www.darpa.mil/program/in-the-moment" target="_blank" rel="noopener noreferrer">DARPA's In the Moment (ITM) Program Page</a></div>
+                                            </div>
+                                        </div>
+                                    );
+                                }}
+                            </Query>
+                        );
+                    }}
                 </Query>
             </Router>
         );
