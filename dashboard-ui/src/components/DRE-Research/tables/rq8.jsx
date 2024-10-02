@@ -11,23 +11,20 @@ import definitionPDFFile from '../variables/Variable Definitions RQ8.pdf';
 
 const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Delegator KDMA', 'Alignment score (Delegator|selected target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
     'Triage_time_patient', 'Engage_patient', 'Tag_ACC', 'Tag_Expectant',
-    'Patient1_time', 'Patient1_order', 'Patient1_evac', 'Patient1_assess', 'Patient1_treat', 'Patient1_evac', 'Patient1_tag',
-    'Patient2_time', 'Patient2_order', 'Patient2_evac', 'Patient2_assess', 'Patient2_treat', 'Patient2_evac', 'Patient2_tag',
-    'Patient3_time', 'Patient3_order', 'Patient3_evac', 'Patient3_assess', 'Patient3_treat', 'Patient3_evac', 'Patient3_tag',
-    'Patient4_time', 'Patient4_order', 'Patient4_evac', 'Patient4_assess', 'Patient4_treat', 'Patient4_evac', 'Patient4_tag',
-    'Patient5_time', 'Patient5_order', 'Patient5_evac', 'Patient5_assess', 'Patient5_treat', 'Patient5_evac', 'Patient5_tag',
-    'Patient6_time', 'Patient6_order', 'Patient6_evac', 'Patient6_assess', 'Patient6_treat', 'Patient6_evac', 'Patient6_tag',
-    'Patient7_time', 'Patient7_order', 'Patient7_evac', 'Patient7_assess', 'Patient7_treat', 'Patient7_evac', 'Patient7_tag',
-    'Patient8_time', 'Patient8_order', 'Patient8_evac', 'Patient8_assess', 'Patient8_treat', 'Patient8_evac', 'Patient8_tag'
+    'Patient1_time', 'Patient1_order', 'Patient1_evac', 'Patient1_assess', 'Patient1_treat', 'Patient1_tag',
+    'Patient2_time', 'Patient2_order', 'Patient2_evac', 'Patient2_assess', 'Patient2_treat', 'Patient2_tag',
+    'Patient3_time', 'Patient3_order', 'Patient3_evac', 'Patient3_assess', 'Patient3_treat', 'Patient3_tag',
+    'Patient4_time', 'Patient4_order', 'Patient4_evac', 'Patient4_assess', 'Patient4_treat', 'Patient4_tag',
+    'Patient5_time', 'Patient5_order', 'Patient5_evac', 'Patient5_assess', 'Patient5_treat', 'Patient5_tag',
+    'Patient6_time', 'Patient6_order', 'Patient6_evac', 'Patient6_assess', 'Patient6_treat', 'Patient6_tag',
+    'Patient7_time', 'Patient7_order', 'Patient7_evac', 'Patient7_assess', 'Patient7_treat', 'Patient7_tag',
+    'Patient8_time', 'Patient8_order', 'Patient8_evac', 'Patient8_assess', 'Patient8_treat', 'Patient8_tag'
 ]
 
 
 export function RQ8() {
-    const tmpData = {};
-    for (let x of HEADERS) {
-        tmpData[x] = '-';
-    }
-    const [formattedData, setFormattedData] = React.useState([tmpData]);
+
+    const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);
@@ -67,12 +64,22 @@ export function RQ8() {
     }
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
-            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
-        ));
-    }, [ta1Filters, scenarioFilters, attributeFilters]);
+        // for temporary display purposes only!
+        if (filteredData.length == 0) {
+            const tmpData = {};
+            for (let x of HEADERS) {
+                tmpData[x] = '-';
+            }
+            const data = [tmpData];
+            setFilteredData(data);
+            setFormattedData(data);
+        }
+        // setFilteredData(formattedData.filter((x) =>
+        //     (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+        //     (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+        //     (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
+        // ));
+    }, [ta1Filters, scenarioFilters, attributeFilters, filteredData, formattedData]);
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
@@ -139,9 +146,9 @@ export function RQ8() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['ParticipantId'] + '-' + index}>
+                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['ParticipantId'] + '-' + val}>
+                                return (<td key={dataSet['Delegator_ID'] + '-' + val + '-' + index}>
                                     {dataSet[val]}
                                 </td>);
                             })}

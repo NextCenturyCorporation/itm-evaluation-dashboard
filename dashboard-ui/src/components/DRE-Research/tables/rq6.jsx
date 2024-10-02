@@ -189,9 +189,9 @@ export function RQ6() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['ParticipantId'] + '-' + index}>
+                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['ParticipantId'] + '-' + val}>
+                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
                                     {dataSet[val]}
                                 </td>);
                             })}

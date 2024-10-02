@@ -74,7 +74,7 @@ export function ExploratoryAnalysis() {
         <div className="section-container">
             <h2>RQ6: Does attribute assessment in different formats produce the same results?</h2>
             <p className='indented'>
-                <b>H<sub>1</sub></b> = The human delegator probe responses in the text scenarios should be highly aligned ({'>'}.6) to the same delegator’s probe responses in the simulated scenario.
+                <b>H<sub>1</sub></b> = The human delegator probe responses in the text scenarios should be highly aligned to the same delegator’s probe responses in the simulated scenario.
             </p>
             <p className='indented'>
                 <b>H<sub>0</sub></b> = The human delegator probe responses in the text scenarios should not be aligned to the same delegator’s probe responses in the simulated scenario.
