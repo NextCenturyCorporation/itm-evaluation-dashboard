@@ -200,7 +200,8 @@ const typeDefs = gql`
     getAllTextBasedImages: [JSON],
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int,
-    getParticipantLog: [JSON]
+    getParticipantLog: [JSON],
+    getHumanToADMComparison: [JSON]
   }
 
   type Mutation {
@@ -446,6 +447,9 @@ const resolvers = {
     },
     getParticipantLog: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('participantLog').find().toArray().then(result => {return result});
+    },
+    getHumanToADMComparison: async (obj, args, context, info) => {
+      return await dashboardDB.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
     }
   },
   Mutation: {
