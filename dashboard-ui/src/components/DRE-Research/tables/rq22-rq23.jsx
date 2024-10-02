@@ -6,7 +6,7 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
-import { Modal } from "@mui/material";
+import { Autocomplete, TextField, Modal } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ2.2_2.3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ2.2_2.3.pdf';
 
@@ -28,9 +28,25 @@ export function RQ2223() {
     const { loading: loading, error: error, data: data } = useQuery(getAdmData, {
         variables: { "evalNumber": 4 }
     });
-
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    // all options for filters
+    const [ta1s, setTA1s] = React.useState([]);
+    const [ta2s, setTA2s] = React.useState([]);
+    const [attributes, setAttributes] = React.useState([]);
+    const [scenarios, setScenarios] = React.useState([]);
+    const [targets, setTargets] = React.useState([]);
+    const [targetType, setTargetType] = React.useState(['Group', 'Individual']);
+    // filter options that have been chosen
+    const [ta1Filters, setTA1Filters] = React.useState([]);
+    const [ta2Filters, setTA2Filters] = React.useState([]);
+    const [attributeFilters, setAttributeFilters] = React.useState([]);
+    const [scenarioFilters, setScenarioFilters] = React.useState([]);
+    const [targetFilters, setTargetFilters] = React.useState([]);
+    const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
+    // data with filters applied
+    const [filteredData, setFilteredData] = React.useState([]);
+
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
@@ -47,6 +63,12 @@ export function RQ2223() {
             const admData = data.getAllHistoryByEvalNumber;
             const organized_adms = {};
             const allObjs = [];
+            const allTA1s = [];
+            const allTA2s = [];
+            const allScenarios = [];
+            const allTargets = [];
+            const allAttributes = [];
+
             for (const adm of admData) {
                 const admName = adm.history[0].parameters.adm_name;
                 const scenario = adm.history[0].response?.id ?? adm.history[1].response?.id;
@@ -82,10 +104,15 @@ export function RQ2223() {
                         entryObj['Trial_ID'] = trial;
                         trial += 1;
                         entryObj['TA2_Name'] = ta2;
+                        allTA2s.push(ta2);
                         entryObj['TA1_Name'] = scenario.includes('qol') || scenario.includes('vol') ? 'SoarTech' : 'Adept';
+                        allTA1s.push(entryObj['TA1_Name']);
                         entryObj['Attribute'] = attribute;
+                        allAttributes.push(attribute);
                         entryObj['Target'] = target;
+                        allTargets.push(target);
                         entryObj['Scenario'] = scenario;
+                        allScenarios.push(scenario);
                         entryObj['Target_Type (Group/Individual)'] = 'Individual';
                         const aligned = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
@@ -121,6 +148,12 @@ export function RQ2223() {
             });
 
             setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            setTA1s(Array.from(new Set(allTA1s)));
+            setTA2s(Array.from(new Set(allTA2s)));
+            setAttributes(Array.from(new Set(allAttributes)));
+            setScenarios(Array.from(new Set(allScenarios)));
+            setTargets(Array.from(new Set(allTargets)));
         }
     }, [data]);
 
@@ -142,13 +175,114 @@ export function RQ2223() {
         FileSaver.saveAs(data, 'RQ-22_and_RQ-23 data' + fileExtension);
     };
 
+    React.useEffect(() => {
+        setFilteredData(formattedData.filter((x) =>
+            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+            (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+            (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
+            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+            (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target_Type (Group/Individual)']))
+        ));
+    }, [ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, targetTypeFilters]);
+
+
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error :</p>;
 
     return (<>
+        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
+            <div className="filters">
+                <Autocomplete
+                    multiple
+                    options={ta1s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA1"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA1Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={ta2s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA2"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA2Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={attributes}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Attributes"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setAttributeFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={targets}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Targets"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTargetFilters(newVal)}
+                />
+
+                <Autocomplete
+                    multiple
+                    options={scenarios}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Scenarios"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setScenarioFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={targetType}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Target Type"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTargetTypeFilters(newVal)}
+                />
+            </div>
+
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
@@ -164,7 +298,7 @@ export function RQ2223() {
                     </tr>
                 </thead>
                 <tbody>
-                    {formattedData.map((dataSet, index) => {
+                    {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['ParticipantId'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['ParticipantId'] + '-' + val}>
