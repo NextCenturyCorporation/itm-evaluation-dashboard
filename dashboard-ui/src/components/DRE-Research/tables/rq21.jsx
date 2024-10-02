@@ -19,11 +19,13 @@ export function RQ21() {
     const [ta2s, setTA2s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);
+    const [groupTargets, setGroupTargets] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [ta1Filters, setTA1Filters] = React.useState([]);
     const [ta2Filters, setTA2Filters] = React.useState([]);
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
+    const [groupTargetFilters, setGroupTargetFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
@@ -60,9 +62,10 @@ export function RQ21() {
             (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
             (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
             (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
+            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+            (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
         ));
-    }, [ta1Filters, ta2Filters, scenarioFilters, attributeFilters]);
+    }, [ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
 
     return (<>
         <section className='tableHeader'>
@@ -122,6 +125,20 @@ export function RQ21() {
                         />
                     )}
                     onChange={(_, newVal) => setScenarioFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={groupTargets}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Group Targets"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setGroupTargetFilters(newVal)}
                 />
             </div>
             <div className="option-section">

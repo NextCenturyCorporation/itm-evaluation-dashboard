@@ -189,7 +189,8 @@ export function RQ13() {
                         entryObj['Delegator_ID'] = pid;
                         entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : 'Military';
                         const roles = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'];
-                        entryObj['Delegator_mil'] = roles?.includes('Military Background') ? 'yes' : 'no';
+                        // override 102, who is military
+                        entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid == '202409102' ? 'yes' : 'no';
                         entryObj['Delegator_Role'] = roles ?? '-'
                         if (Array.isArray(entryObj['Delegator_Role'])) {
                             entryObj['Delegator_Role'] = entryObj['Delegator_Role'].join('; ');
