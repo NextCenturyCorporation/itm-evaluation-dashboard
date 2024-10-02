@@ -5,8 +5,8 @@ import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
+import definitionXLFile from '../variables/Variable Definitions RQ6.xlsx';
+import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
 
 
 const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Delegator_Text|Delegator_Sim)']
@@ -42,7 +42,7 @@ export function RQ6() {
         // Generate Excel file
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-22_and_RQ-23 data' + fileExtension);
+        FileSaver.saveAs(data, 'RQ-6 data' + fileExtension);
     };
 
     const openModal = () => {
@@ -139,7 +139,7 @@ export function RQ6() {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ21.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={'Definitions_RQ6.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
             </div>
         </Modal>
     </>);

@@ -5,8 +5,8 @@ import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
+import definitionXLFile from '../variables/Variable Definitions RQ5.xlsx';
+import definitionPDFFile from '../variables/Variable Definitions RQ5.pdf';
 
 
 const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Delegator|Most aligned target)', 'Alignment score (Delegator|Least aligned target)', 'Group target', 'Alignment score (Delegator|group target)', 'TA2_Name', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
@@ -49,7 +49,7 @@ export function RQ5() {
         // Generate Excel file
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-22_and_RQ-23 data' + fileExtension);
+        FileSaver.saveAs(data, 'RQ-5 data' + fileExtension);
     };
 
     const openModal = () => {
@@ -176,7 +176,7 @@ export function RQ5() {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ21.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={'Definitions_RQ5.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
             </div>
         </Modal>
     </>);
