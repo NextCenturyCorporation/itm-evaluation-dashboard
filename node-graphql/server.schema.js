@@ -201,7 +201,8 @@ const typeDefs = gql`
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int,
     getParticipantLog: [JSON],
-    getHumanToADMComparison: [JSON]
+    getHumanToADMComparison: [JSON],
+    getCurrentSurveyVersion: String
   }
 
   type Mutation {
@@ -210,6 +211,7 @@ const typeDefs = gql`
     uploadSurveyResults(surveyId: String, results: JSON): JSON
     uploadScenarioResults(results: [JSON]): JSON
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON
+    updateSurveyVersion(version: String!): String
   }
 `;
 
@@ -450,6 +452,9 @@ const resolvers = {
     },
     getHumanToADMComparison: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
+    },
+    getCurrentSurveyVersion: async () => {
+      return await dashboardDB.db.collection('surveyVersion').findOne().then(result => {return result.version});
     }
   },
   Mutation: {
@@ -490,6 +495,14 @@ const resolvers = {
       const options = { upsert: true}
 
       return await dashboardDB.db.collection('evaluationIDS').updateOne(filter, update, options)
+    },
+    updateSurveyVersion: async (obj, args, context, inflow) => {
+      const result = await dashboardDB.db.collection('surveyVersion').findOneAndUpdate(
+        {},
+        { $set: { version: args['version'] } },
+        { upsert: true }
+      );
+      return result.value.version;
     }
 
   },

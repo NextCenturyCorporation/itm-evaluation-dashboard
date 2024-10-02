@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
+import { useSelector } from "react-redux";
 
 /* A list of names that are not pages to record in the excel sheet */
 const NON_PAGES = ['user', 'surveyVersion', 'startTime', 'timeComplete', 'Participant ID'];
@@ -24,9 +25,10 @@ const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End
 
 export function ResultsTable({ data }) {
     const [formattedData, setFormattedData] = React.useState([]);
-    const defaultVersion = process.env.REACT_APP_SURVEY_VERSION.endsWith('.0') ?
-        process.env.REACT_APP_SURVEY_VERSION.slice(0, -2) :
-        process.env.REACT_APP_SURVEY_VERSION;
+    let defaultVersion = useSelector(state => state?.configs?.currentSurveyVersion);
+    defaultVersion = defaultVersion.endsWith('.0') ?
+        defaultVersion.slice(0, -2) :
+        defaultVersion
     const [filterBySurveyVersion, setVersionOption] = React.useState([defaultVersion]);
     const [versions, setVersions] = React.useState(['All']);
     const [selectAll, setSelectAll] = React.useState(false);
