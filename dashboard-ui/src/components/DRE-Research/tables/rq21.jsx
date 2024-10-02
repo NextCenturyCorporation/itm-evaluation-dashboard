@@ -4,7 +4,7 @@ import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
-import { Modal } from "@mui/material";
+import { Modal, Autocomplete, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
 
@@ -15,7 +15,18 @@ const HEADERS = ['TA1_Name', 'TA2_Name', 'Attribute', 'Scenario', 'Group_Target'
 export function RQ21() {
 
     const [formattedData, setFormattedData] = React.useState([{ 'TA1_Name': '-', 'TA2_Name': '-', 'Attribute': '-', 'Scenario': '-', 'Group_Target': '-', 'Participant_ID': '-', 'Decision_Maker': '-', 'Alignment score (Individual|Group_target) or (ADM|group_target)': '-' }]);
+    const [ta1s, setTA1s] = React.useState([]);
+    const [ta2s, setTA2s] = React.useState([]);
+    const [attributes, setAttributes] = React.useState([]);
+    const [scenarios, setScenarios] = React.useState([]);
+    const [groupTargets, setGroupTargets] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    const [ta1Filters, setTA1Filters] = React.useState([]);
+    const [ta2Filters, setTA2Filters] = React.useState([]);
+    const [scenarioFilters, setScenarioFilters] = React.useState([]);
+    const [attributeFilters, setAttributeFilters] = React.useState([]);
+    const [groupTargetFilters, setGroupTargetFilters] = React.useState([]);
+    const [filteredData, setFilteredData] = React.useState([]);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
@@ -46,10 +57,93 @@ export function RQ21() {
         setShowDefinitions(false);
     }
 
+    React.useEffect(() => {
+        setFilteredData(formattedData.filter((x) =>
+            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+            (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+            (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
+        ));
+    }, [ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
+
     return (<>
+        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
+            <div className="filters">
+                <Autocomplete
+                    multiple
+                    options={ta1s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA1"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA1Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={ta2s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA2"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA2Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={attributes}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Attributes"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setAttributeFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={scenarios}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Scenarios"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setScenarioFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={groupTargets}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Group Targets"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setGroupTargetFilters(newVal)}
+                />
+            </div>
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
@@ -65,7 +159,7 @@ export function RQ21() {
                     </tr>
                 </thead>
                 <tbody>
-                    {formattedData.map((dataSet, index) => {
+                    {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['ParticipantId'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['ParticipantId'] + '-' + val}>
