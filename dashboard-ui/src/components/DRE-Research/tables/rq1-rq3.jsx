@@ -12,7 +12,6 @@ import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
 import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
-
 const RATING_MAP = {
     "Strongly disagree": 1,
     "Disagree": 2,
@@ -42,8 +41,15 @@ const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
+    
+const GET_COMPARISON_DATA = gql`
+    query getHumanToADMComparison {
+        getHumanToADMComparison
+    }`;
 
 const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+
+
 
 export function RQ13() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -54,6 +60,7 @@ export function RQ13() {
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
     });
+    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -90,11 +97,12 @@ export function RQ13() {
     }
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison) {
             const surveyResults = dataSurveyResults.getAllSurveyResults;
             const participantLog = dataParticipantLog.getParticipantLog;
             const textResults = dataTextResults.getAllScenarioResults;
             const admData = dataADMs.getAllHistoryByEvalNumber;
+            const comparisons = comparisonData.getHumanToADMComparison;
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -113,20 +121,7 @@ export function RQ13() {
                 if (!logData) {
                     continue;
                 }
-                const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
-                const alignments = [];
-                let addedMJ = false;
-                for (const textRes of textResultsForPID) {
-                    if (Object.keys(textRes).includes("combinedAlignmentData")) {
-                        if (!addedMJ) {
-                            alignments.push(...textRes['combinedAlignmentData']);
-                            addedMJ = true;
-                        }
-                    }
-                    else {
-                        alignments.push(...textRes['alignmentData'])
-                    }
-                }
+                const {textResultsForPID, alignments} = getAlignments(textResults, pid);
                 // set up object to store participant data
                 const admOrder = admOrderMapping[logData['ADMOrder']];
                 let trial_num = 1;
@@ -192,7 +187,9 @@ export function RQ13() {
                         entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
                         entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
-                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = '-';
+
+                        const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && delEnvMapping[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = comparison_entry?.score ?? '-';
 
                         entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
                         if (t == 'comparison') {
@@ -242,7 +239,7 @@ export function RQ13() {
             setScenarios(Array.from(new Set(allScenarios)));
             setTargets(Array.from(new Set(allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData]);
 
     const exportToExcel = async () => {
         // Create a new workbook and worksheet
@@ -275,8 +272,9 @@ export function RQ13() {
         ));
     }, [ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs) return <p>Error :</p>;
+
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
@@ -431,4 +429,23 @@ export function RQ13() {
             </div>
         </Modal>
     </>);
+}
+
+
+export function getAlignments(textResults, pid) {
+    const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
+    const alignments = [];
+    let addedMJ = false;
+    for (const textRes of textResultsForPID) {
+        if (Object.keys(textRes).includes("combinedAlignmentData")) {
+            if (!addedMJ) {
+                alignments.push(...textRes['combinedAlignmentData']);
+                addedMJ = true;
+            }
+        }
+        else {
+            alignments.push(...textRes['alignmentData'])
+        }
+    }
+    return { textResultsForPID, alignments };
 }

@@ -23,8 +23,11 @@ const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Delegator
 
 
 export function RQ8() {
-
-    const [formattedData, setFormattedData] = React.useState([]);
+    const tmpData = {};
+    for (let x of HEADERS) {
+        tmpData[x] = '-';
+    }
+    const [formattedData, setFormattedData] = React.useState([tmpData]);
     const [ta1s, setTA1s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);

@@ -6,7 +6,7 @@ import { RQ6 } from "./tables/rq6";
 
 export function ExploratoryAnalysis() {
     return (<div className="researchQuestion">
-        {/* <div className="section-container">
+        <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
             <p className='indented'>
                 <b>H<sub>1</sub></b> = Alignment score calculated between the responses of one human on attribute-driven
@@ -36,7 +36,7 @@ export function ExploratoryAnalysis() {
                 <li>Alignment Score (Delegator | Observed_ADM (target))</li>
                 <li>SRAlign_Rating</li>
             </ul>
-        </div> */}
+        </div>
 
         <div className="section-container">
             <h2>RQ5: To what extent does alignment score predict identical behavior at the probe level in patterns of real human behavior?</h2>

@@ -7,14 +7,28 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ6.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
+import { useQuery } from 'react-apollo'
+import gql from "graphql-tag";
+import { isDefined } from "../../AggregateResults/DataFunctions";
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }`;
+
+const GET_SURVEY_RESULTS = gql`
+    query GetAllResults {
+        getAllSurveyResults
+    }`;
 
 const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Delegator_Text|Delegator_Sim)']
 
 
 export function RQ6() {
-
-    const [formattedData, setFormattedData] = React.useState([{ 'Delegator_ID': '-', 'TA1_Name': '-', 'Attribute': '-', 'Scenario': '-', 'Alignment score (Delegator_Text|Delegator_Sim)': '-' }]);
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);
@@ -25,6 +39,52 @@ export function RQ6() {
     const [filteredData, setFilteredData] = React.useState([]);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
+
+    React.useEffect(() => {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog) {
+            const surveyResults = dataSurveyResults.getAllSurveyResults;
+            const participantLog = dataParticipantLog.getParticipantLog;
+            const allObjs = [];
+            const allTA1s = [];
+            const allScenarios = [];
+            const allAttributes = [];
+
+            // find participants that have completed the delegation survey
+            const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
+            for (const res of completed_surveys) {
+                const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
+                // see if participant is in the participantLog
+                const logData = participantLog.find(
+                    log => log['ParticipantID'] == pid
+                );
+                if (!logData) {
+                    continue;
+                }
+                const admOrder = admOrderMapping[logData['ADMOrder']];
+                const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
+                const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+
+
+                for (const entry of admOrder) {
+                    const entryObj = {};
+                    entryObj['Delegator_ID'] = pid;
+                    entryObj['TA1_Name'] = entry['TA1'].replace('ST', 'SoarTech').replace('Adept', 'ADEPT');
+                    allTA1s.push(entryObj['TA1_Name']);
+                    entryObj['Attribute'] = entry['Attribute'];
+                    allAttributes.push(entryObj['Attribute']);
+                    entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
+                    allScenarios.push(entryObj['Scenario']);
+
+                    allObjs.push(entryObj);
+                }
+            }
+            setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            setTA1s(Array.from(new Set(allTA1s)));
+            setAttributes(Array.from(new Set(allAttributes)));
+            setScenarios(Array.from(new Set(allScenarios)));
+        }
+    }, [dataParticipantLog, dataSurveyResults]);
 
 
     const exportToExcel = async () => {
@@ -60,6 +120,9 @@ export function RQ6() {
             (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
         ));
     }, [ta1Filters, scenarioFilters, attributeFilters]);
+
+    if (loadingParticipantLog || loadingSurveyResults) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}

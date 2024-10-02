@@ -11,8 +11,8 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
+import { getAlignments } from "./rq1-rq3";
 
-const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most aligned target', 'Least aligned target', 'Alignment score (Delegator|Most aligned target)', 'Alignment score (Delegator|Least aligned target)', 'Group target', 'Alignment score (Delegator|group target)', 'TA2_Name', 'Alignment score (Delegator|ADM(most))', 'Alignment score (Delegator|ADM(least))', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -28,6 +28,12 @@ const GET_TEXT_RESULTS = gql`
         getAllScenarioResults
     }`;
 
+const GET_COMPARISON_DATA = gql`
+    query getHumanToADMComparison {
+        getHumanToADMComparison
+    }`;
+
+const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most aligned target', 'Least aligned target', 'Alignment score (Delegator|Most aligned target)', 'Alignment score (Delegator|Least aligned target)', 'Group target', 'Alignment score (Delegator|group target)', 'TA2_Name', 'Alignment score (Delegator|ADM(most))', 'Alignment score (Delegator|ADM(least))', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
 
 export function RQ5() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -35,6 +41,7 @@ export function RQ5() {
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
     });
+    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
@@ -53,10 +60,11 @@ export function RQ5() {
     const fileExtension = '.xlsx';
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison) {
             const surveyResults = dataSurveyResults.getAllSurveyResults;
             const participantLog = dataParticipantLog.getParticipantLog;
             const textResults = dataTextResults.getAllScenarioResults;
+            const comparisons = comparisonData.getHumanToADMComparison;
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -79,20 +87,7 @@ export function RQ5() {
                 const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
                 const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
 
-                const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
-                const alignments = [];
-                let addedMJ = false;
-                for (const textRes of textResultsForPID) {
-                    if (Object.keys(textRes).includes("combinedAlignmentData")) {
-                        if (!addedMJ) {
-                            alignments.push(...textRes['combinedAlignmentData']);
-                            addedMJ = true;
-                        }
-                    }
-                    else {
-                        alignments.push(...textRes['alignmentData'])
-                    }
-                }
+                const { _, alignments } = getAlignments(textResults, pid);
 
                 for (const entry of admOrder) {
                     const entryObj = {};
@@ -128,11 +123,14 @@ export function RQ5() {
                             // likely from missing misaligned/aligned for those few parallax adms
                             entryObj[(t == 'aligned' ? 'Most' : 'Least') + ' aligned target'] = '-';
                             entryObj['Alignment score (Delegator|' + (t == 'aligned' ? 'Most' : 'Least') + ' aligned target)'] = '-';
+                            entryObj['Alignment score (Delegator|ADM(' + (t == 'aligned' ? 'most' : 'least') + '))'] = '-';
                             continue;
                         }
                         page = res.results[page];
                         entryObj[(t == 'aligned' ? 'Most' : 'Least') + ' aligned target'] = page['admTarget'];
                         entryObj['Alignment score (Delegator|' + (t == 'aligned' ? 'Most' : 'Least') + ' aligned target)'] = alignments.find((x) => x.target == page['admTarget'])?.score ?? '-';
+                        const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && delEnvMapping[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                        entryObj['Alignment score (Delegator|ADM(' + (t == 'aligned' ? 'most' : 'least') + '))'] = comparison_entry?.score ?? '-';
                     }
                     allObjs.push(entryObj);
                 }
@@ -145,7 +143,7 @@ export function RQ5() {
             setScenarios(Array.from(new Set(allScenarios)));
             setGroupTargets(Array.from(new Set(allGroupTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, comparisonData]);
 
     const exportToExcel = async () => {
         // Create a new workbook and worksheet
@@ -183,8 +181,8 @@ export function RQ5() {
         ));
     }, [ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingComparisonData) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorComparisonData) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
