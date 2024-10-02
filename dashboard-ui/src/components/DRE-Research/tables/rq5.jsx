@@ -7,17 +7,36 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ5.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ5.pdf';
+import { useQuery } from 'react-apollo'
+import gql from "graphql-tag";
+import { isDefined } from "../../AggregateResults/DataFunctions";
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
+const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most aligned target', 'Least aligned target', 'Alignment score (Delegator|Most aligned target)', 'Alignment score (Delegator|Least aligned target)', 'Group target', 'Alignment score (Delegator|group target)', 'TA2_Name', 'Alignment score (Delegator|ADM(most))', 'Alignment score (Delegator|ADM(least))', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }`;
 
-const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Delegator|Most aligned target)', 'Alignment score (Delegator|Least aligned target)', 'Group target', 'Alignment score (Delegator|group target)', 'TA2_Name', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
+const GET_SURVEY_RESULTS = gql`
+    query GetAllResults {
+        getAllSurveyResults
+    }`;
+
+const GET_TEXT_RESULTS = gql`
+    query GetAllResults {
+        getAllScenarioResults
+    }`;
 
 
 export function RQ5() {
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
+        fetchPolicy: 'no-cache'
+    });
 
-    const [formattedData, setFormattedData] = React.useState([{
-        'Delegator_ID': '-', 'TA1_Name': '-', 'Attribute': '-', 'Scenario': '-', 'Alignment score (Delegator|Most aligned target)': '-', 'Alignment score (Delegator|Least aligned target)': '-',
-        'Group target': '-', 'Alignment score (Delegator|group target)': '-', 'TA2_Name': '-', 'Match_MostAligned': '-', 'Match_LeastAligned': '-', 'Match_GrpMembers': '-'
-    }]);
+    const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
@@ -33,6 +52,100 @@ export function RQ5() {
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
+    React.useEffect(() => {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults) {
+            const surveyResults = dataSurveyResults.getAllSurveyResults;
+            const participantLog = dataParticipantLog.getParticipantLog;
+            const textResults = dataTextResults.getAllScenarioResults;
+            const allObjs = [];
+            const allTA1s = [];
+            const allTA2s = [];
+            const allScenarios = [];
+            const allGroupTargets = [];
+            const allAttributes = [];
+
+            // find participants that have completed the delegation survey
+            const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
+            for (const res of completed_surveys) {
+                const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
+                // see if participant is in the participantLog
+                const logData = participantLog.find(
+                    log => log['ParticipantID'] == pid
+                );
+                if (!logData) {
+                    continue;
+                }
+                const admOrder = admOrderMapping[logData['ADMOrder']];
+                const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
+                const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+
+                const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
+                const alignments = [];
+                let addedMJ = false;
+                for (const textRes of textResultsForPID) {
+                    if (Object.keys(textRes).includes("combinedAlignmentData")) {
+                        if (!addedMJ) {
+                            alignments.push(...textRes['combinedAlignmentData']);
+                            addedMJ = true;
+                        }
+                    }
+                    else {
+                        alignments.push(...textRes['alignmentData'])
+                    }
+                }
+
+                for (const entry of admOrder) {
+                    const entryObj = {};
+                    entryObj['Delegator_ID'] = pid;
+                    entryObj['TA1_Name'] = entry['TA1'].replace('ST', 'SoarTech').replace('Adept', 'ADEPT');
+                    allTA1s.push(entryObj['TA1_Name']);
+                    entryObj['Attribute'] = entry['Attribute'];
+                    allAttributes.push(entryObj['Attribute']);
+                    entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
+                    allScenarios.push(entryObj['Scenario']);
+                    entryObj['TA2_Name'] = entry['TA2'];
+                    allTA2s.push(entry['TA2']);
+                    // get most/least aligned targets
+                    const types = ['aligned', 'misaligned'];
+                    for (const t of types) {
+                        let page = Object.keys(res.results).find((k) => {
+                            const obj = res.results[k];
+                            const alignMatches = obj['admAlignment'] == t;
+                            const ta2Matches = obj['admAuthor'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
+                            let scenario = false;
+                            if (entry['TA1'] == 'Adept') {
+                                scenario = entry['Attribute'] == 'MJ' ? delEnvMapping[ad_scenario][0] : delEnvMapping[ad_scenario][1];
+                            }
+                            else {
+                                scenario = entry['Attribute'] == 'QOL' ? delEnvMapping[st_scenario][0] : delEnvMapping[st_scenario][1];
+                            }
+
+                            const scenarioMatches = obj['scenarioIndex'] == scenario;
+
+                            return alignMatches && ta2Matches && scenarioMatches;
+                        });
+                        if (!page) {
+                            // likely from missing misaligned/aligned for those few parallax adms
+                            entryObj[(t == 'aligned' ? 'Most' : 'Least') + ' aligned target'] = '-';
+                            entryObj['Alignment score (Delegator|' + (t == 'aligned' ? 'Most' : 'Least') + ' aligned target)'] = '-';
+                            continue;
+                        }
+                        page = res.results[page];
+                        entryObj[(t == 'aligned' ? 'Most' : 'Least') + ' aligned target'] = page['admTarget'];
+                        entryObj['Alignment score (Delegator|' + (t == 'aligned' ? 'Most' : 'Least') + ' aligned target)'] = alignments.find((x) => x.target == page['admTarget'])?.score ?? '-';
+                    }
+                    allObjs.push(entryObj);
+                }
+            }
+            setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            setTA1s(Array.from(new Set(allTA1s)));
+            setTA2s(Array.from(new Set(allTA2s)));
+            setAttributes(Array.from(new Set(allAttributes)));
+            setScenarios(Array.from(new Set(allScenarios)));
+            setGroupTargets(Array.from(new Set(allGroupTargets)));
+        }
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults]);
 
     const exportToExcel = async () => {
         // Create a new workbook and worksheet
@@ -69,6 +182,9 @@ export function RQ5() {
             (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
         ));
     }, [ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
+
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}

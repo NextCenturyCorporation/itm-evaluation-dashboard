@@ -58,7 +58,7 @@ const envMappingToText = {
     "ST-3": "QOL-3 and VOL-3",
 }
 
-const delEnvMapping = {
+export const delEnvMapping = {
     "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
     "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
     "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
@@ -67,7 +67,7 @@ const delEnvMapping = {
     "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
 }
 
-const admOrderMapping = {
+export const admOrderMapping = {
     1: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
         { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
         { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },

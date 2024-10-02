@@ -10,34 +10,8 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
-const admOrderMapping = {
-    1: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" },],
-    2: [{ "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" }],
-    3: [{ "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" }],
-    4: [{ "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }]
-}
-
-const delEnvMapping = {
-    "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
-    "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
-    "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-    "ST-1": ["qol-dre-1-eval", "vol-dre-1-eval"],
-    "ST-2": ["qol-dre-2-eval", "vol-dre-2-eval"],
-    "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
-}
 
 const RATING_MAP = {
     "Strongly disagree": 1,
