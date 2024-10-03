@@ -30,7 +30,8 @@ const GET_TEXT_RESULTS = gql`
 
 const GET_COMPARISON_DATA = gql`
     query getHumanToADMComparison {
-        getHumanToADMComparison
+        getHumanToADMComparison,
+        getADMTextProbeMatches
     }`;
 
 const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most aligned target', 'Least aligned target', 'Alignment score (Delegator|Most aligned target)', 'Alignment score (Delegator|Least aligned target)', 'Group target', 'Alignment score (Delegator|group target)', 'TA2_Name', 'Alignment score (Delegator|ADM(most))', 'Alignment score (Delegator|ADM(least))', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
@@ -60,11 +61,12 @@ export function RQ5() {
     const fileExtension = '.xlsx';
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
             const surveyResults = dataSurveyResults.getAllSurveyResults;
             const participantLog = dataParticipantLog.getParticipantLog;
             const textResults = dataTextResults.getAllScenarioResults;
             const comparisons = comparisonData.getHumanToADMComparison;
+            const matches = comparisonData.getADMTextProbeMatches;
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -124,13 +126,16 @@ export function RQ5() {
                             entryObj[(t == 'aligned' ? 'Most' : 'Least') + ' aligned target'] = '-';
                             entryObj['Alignment score (Delegator|' + (t == 'aligned' ? 'Most' : 'Least') + ' aligned target)'] = '-';
                             entryObj['Alignment score (Delegator|ADM(' + (t == 'aligned' ? 'most' : 'least') + '))'] = '-';
+                            entryObj['Match_' + (t == 'aligned' ? 'Most' : 'Least') + 'Aligned'] = '-';
                             continue;
                         }
                         page = res.results[page];
                         entryObj[(t == 'aligned' ? 'Most' : 'Least') + ' aligned target'] = page['admTarget'];
                         entryObj['Alignment score (Delegator|' + (t == 'aligned' ? 'Most' : 'Least') + ' aligned target)'] = alignments.find((x) => x.target == page['admTarget'])?.score ?? '-';
-                        const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && delEnvMapping[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                        const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && delEnvMapping[entryObj['Scenario']].includes(x['adm_scenario']) && admAuthorMatch(entry, x) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
                         entryObj['Alignment score (Delegator|ADM(' + (t == 'aligned' ? 'most' : 'least') + '))'] = comparison_entry?.score ?? '-';
+                        const probe_matches = matches.find((x) => x['adm_type'] == t && x['pid'] == pid && admAuthorMatch(entry, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                        entryObj['Match_' + (t == 'aligned' ? 'Most' : 'Least') + 'Aligned'] = probe_matches?.score ?? '-';
                     }
                     allObjs.push(entryObj);
                 }
@@ -144,6 +149,11 @@ export function RQ5() {
             setGroupTargets(Array.from(new Set(allGroupTargets)));
         }
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, comparisonData]);
+
+    const admAuthorMatch = (entry1, entry2) => {
+        return ((entry1['TA2'] == 'Parallax' && entry2['adm_author'] == 'TAD') || (entry1['TA2'] == 'Kitware' && entry2['adm_author'] == 'kitware'));
+    };
+
 
     const exportToExcel = async () => {
         // Create a new workbook and worksheet
@@ -180,6 +190,22 @@ export function RQ5() {
             (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
         ));
     }, [ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
+
+    const formatData = (dataSet, key) => {
+        const v = dataSet[key];
+        if (isDefined(v)) {
+            if (typeof v === 'number') {
+                // round to 4 decimals when displaying (full value will still show in download)
+                return Math.floor(v * 10000) / 10000;
+            }
+            else {
+                return v;
+            }
+        }
+        else {
+            return '-';
+        }
+    }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingComparisonData) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorComparisonData) return <p>Error :</p>;
@@ -280,7 +306,7 @@ export function RQ5() {
                         return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['Delegator_ID'] + '-' + val}>
-                                    {dataSet[val]}
+                                    {formatData(dataSet, val)}
                                 </td>);
                             })}
                         </tr>);
