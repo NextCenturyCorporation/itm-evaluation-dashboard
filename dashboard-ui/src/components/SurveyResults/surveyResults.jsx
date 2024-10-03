@@ -230,7 +230,7 @@ export function SurveyResults() {
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
-    const [filterBySurveyVersion, setVersionOption] = React.useState("");
+    const [filterBySurveyVersion, setVersionOption] = React.useState(parseInt(useSelector(state => state?.configs?.currentSurveyVersion)));
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
@@ -270,13 +270,16 @@ export function SurveyResults() {
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
                             const scenarioIndex = String(result.results[x].scenarioIndex);
-                            const scenarioName = result.results[x]?.scenarioName || `Scenario ${scenarioIndex}`;
+                            const scenarioName = result.results[x]?.scenarioName || `${scenarioIndex}`;
                             scenarios[scenarioIndex] = scenarioName;
                         }
                     }
                 }
             }
-            setScenarioIndices(scenarios);
+            const sortedScenarios = Object.fromEntries(
+                Object.entries(scenarios).sort(([,a],[,b]) => a.localeCompare(b))
+            );
+            setScenarioIndices(sortedScenarios);
 
             if (Object.keys(scenarios).length > 0) {
                 setSelectedScenario("");
@@ -357,6 +360,7 @@ export function SurveyResults() {
         detectedVersions = detectedVersions.map(str => parseInt(str, 10))
 
         setVersions(detectedVersions);
+        console.log(detectedVersions)
     }, [data]);
 
     const closeModal = () => {
