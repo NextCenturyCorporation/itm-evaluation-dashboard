@@ -360,7 +360,6 @@ export function SurveyResults() {
         detectedVersions = detectedVersions.map(str => parseInt(str, 10))
 
         setVersions(detectedVersions);
-        console.log(detectedVersions)
     }, [data]);
 
     const closeModal = () => {
