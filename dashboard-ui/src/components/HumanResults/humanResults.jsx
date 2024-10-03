@@ -164,6 +164,14 @@ export default function HumanResults() {
         }
     };
 
+    const getScenarioName = () => {
+        if (selectedEval === 4) {
+            return selectedScene
+        } else {
+            return ENV_MAP[selectedScene] || selectedScene
+        }
+    }
+
     function selectEvaluation(target){
         setSelectedEval(target.value);
         setSelectedScene(null);
@@ -246,6 +254,9 @@ export default function HumanResults() {
         </div>
         {selectedPID ?
             <div className="sim-participant">
+                <h2 className="participant-title">
+                    {`${getScenarioName()} - Participant ${selectedPID}`}
+                </h2>
                 {selectedEval == 3 && <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
                     <ToggleButton variant="secondary" id='choose-adept' value={"adept"}>ADEPT</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
