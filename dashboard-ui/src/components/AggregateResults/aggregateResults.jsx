@@ -281,6 +281,18 @@ const HEADER_SIM_DATA = {
     ]
 };
 
+const adept_dre_names = {
+    '1': 'DryRunEval-MJ2-eval',
+    '2': 'DryRunEval-MJ4-eval',
+    '3': 'DryRunEval-MJ5-eval'
+}
+
+const st_dre_names = {
+    '1': 'QOL/VOL-1',
+    '2': 'QOL/VOL-2',
+    '3': 'QOL/VOL-3'
+}
+
 export default function AggregateResults({ type }) {
     const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -312,7 +324,9 @@ export default function AggregateResults({ type }) {
     }, [evalIdOptionsRaw, evalOptions]);
 
     const getGroupKey = (row) => {
-        return `${row.ADEPT_Scenario}_${row.ST_Scenario}`;
+        const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
+        const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
+        return `${adeptName}_${stName}`;
     }
 
     React.useEffect(() => {
@@ -324,6 +338,7 @@ export default function AggregateResults({ type }) {
             const grouped = getAggregatedData();
             if (grouped.groupedSim) {
                 const newGroupedSim = {};
+                console.log(grouped.groupedSim)
                 Object.values(grouped.groupedSim).flat().forEach(row => {
                     const key = getGroupKey(row);
                     if (!newGroupedSim[key]) {
@@ -367,7 +382,6 @@ export default function AggregateResults({ type }) {
             FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'human_sim_data' + fileExtension);
         }
         else {
-            // create a different sheet for each ADEPT_Scenario and ST_Scenario combination
             const sheets = {};
             const names = [];
             for (const objKey in aggregateData['groupedSim']) {
@@ -526,13 +540,12 @@ export default function AggregateResults({ type }) {
                 
                     {aggregateData["groupedSim"]!== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) =>
                     {
-                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], objectKey.split('_')[0]);
-                        console.log(objectKey)
-                        console.log(key)
+                        const [adeptScenario, stScenario] = objectKey.split('_');
+                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], adeptScenario);
                         return (<div className='chart-home-container' key={"container_" + key}>
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
-                                    <h4 key={"header_" + objectKey}>ADEPT: {objectKey.split('_')[0]}, SoarTech: {objectKey.split('_')[1]}</h4>
+                                <h4 key={"header_" + objectKey}>ADEPT: {adeptScenario}, SoarTech: {stScenario}</h4>
                                 </div>
                             </div>
                             <div key={"container_" + key} className='resultTableSection result-table-section-override'>
