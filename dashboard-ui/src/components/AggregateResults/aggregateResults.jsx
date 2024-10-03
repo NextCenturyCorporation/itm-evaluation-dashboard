@@ -338,7 +338,6 @@ export default function AggregateResults({ type }) {
             const grouped = getAggregatedData();
             if (grouped.groupedSim) {
                 const newGroupedSim = {};
-                console.log(grouped.groupedSim)
                 Object.values(grouped.groupedSim).flat().forEach(row => {
                     const key = getGroupKey(row);
                     if (!newGroupedSim[key]) {
