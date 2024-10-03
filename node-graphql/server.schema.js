@@ -202,7 +202,8 @@ const typeDefs = gql`
     countAIGroupFirst: Int,
     getParticipantLog: [JSON],
     getHumanToADMComparison: [JSON],
-    getCurrentSurveyVersion: String
+    getCurrentSurveyVersion: String,
+    getADMTextProbeMatches: [JSON]
   }
 
   type Mutation {
@@ -455,6 +456,9 @@ const resolvers = {
     },
     getCurrentSurveyVersion: async () => {
       return await dashboardDB.db.collection('surveyVersion').findOne().then(result => {return result.version});
+    },
+    getADMTextProbeMatches: async (obj, args, context, info) => {
+      return await dashboardDB.db.collection('admVsTextProbeMatches').find().toArray().then(result => { return result });
     }
   },
   Mutation: {
