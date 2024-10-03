@@ -201,6 +201,7 @@ const typeDefs = gql`
     countHumanGroupFirst: Int,
     countAIGroupFirst: Int,
     getParticipantLog: [JSON],
+    getHumanToADMComparison: [JSON],
     getCurrentSurveyVersion: String
   }
 
@@ -449,9 +450,12 @@ const resolvers = {
     getParticipantLog: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('participantLog').find().toArray().then(result => {return result});
     },
+    getHumanToADMComparison: async (obj, args, context, info) => {
+      return await dashboardDB.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
+    },
     getCurrentSurveyVersion: async () => {
       return await dashboardDB.db.collection('surveyVersion').findOne().then(result => {return result.version});
-    },
+    }
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {

@@ -40,6 +40,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import { RQ1 } from '../DRE-Research/RQ1';
 import { RQ2 } from '../DRE-Research/RQ2';
 import { RQ3 } from '../DRE-Research/RQ3';
+import { ExploratoryAnalysis } from '../DRE-Research/ExploratoryAnalysis';
 
 
 const history = createBrowserHistory();
@@ -287,6 +288,9 @@ export class App extends React.Component {
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq3">
                                                                         RQ3
                                                                     </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/exploratory-analysis">
+                                                                        Exploratory Analysis
+                                                                    </NavDropdown.Item>
                                                                 </NavDropdown>
                                                             </>
                                                         )}
@@ -377,6 +381,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/dre-results/rq3">
                                                         <RQ3 />
+                                                    </Route>
+                                                    <Route path="/dre-results/exploratory-analysis">
+                                                        <ExploratoryAnalysis />
                                                     </Route>
                                                 </Switch>
                                             </div>
