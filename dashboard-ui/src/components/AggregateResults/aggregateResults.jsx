@@ -288,9 +288,9 @@ const adept_dre_names = {
 }
 
 const st_dre_names = {
-    '1': 'QOL/VOL-1',
-    '2': 'QOL/VOL-2',
-    '3': 'QOL/VOL-3'
+    '1': 'QOL-VOL-1',
+    '2': 'QOL-VOL-2',
+    '3': 'QOL-VOL-3'
 }
 
 export default function AggregateResults({ type }) {
@@ -545,7 +545,7 @@ export default function AggregateResults({ type }) {
                         return (<div className='chart-home-container' key={"container_" + key}>
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
-                                <h4 key={"header_" + objectKey}>ADEPT: {adeptScenario}, SoarTech: {stScenario}</h4>
+                                    <h4 key={"header_" + objectKey}>ADEPT: {adeptScenario}, SoarTech: {stScenario}</h4>
                                 </div>
                             </div>
                             <div key={"container_" + key} className='resultTableSection result-table-section-override'>
