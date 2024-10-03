@@ -10,34 +10,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
-
-const admOrderMapping = {
-    1: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" },],
-    2: [{ "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" }],
-    3: [{ "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" }],
-    4: [{ "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }]
-}
-
-const delEnvMapping = {
-    "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
-    "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
-    "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-    "ST-1": ["qol-dre-1-eval", "vol-dre-1-eval"],
-    "ST-2": ["qol-dre-2-eval", "vol-dre-2-eval"],
-    "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
-}
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
 const RATING_MAP = {
     "Strongly disagree": 1,
@@ -68,13 +41,14 @@ const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
-
+    
 const GET_COMPARISON_DATA = gql`
     query getHumanToADMComparison {
         getHumanToADMComparison
     }`;
 
 const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+
 
 export function RQ13() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -146,20 +120,7 @@ export function RQ13() {
                 if (!logData) {
                     continue;
                 }
-                const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
-                const alignments = [];
-                let addedMJ = false;
-                for (const textRes of textResultsForPID) {
-                    if (Object.keys(textRes).includes("combinedAlignmentData")) {
-                        if (!addedMJ) {
-                            alignments.push(...textRes['combinedAlignmentData']);
-                            addedMJ = true;
-                        }
-                    }
-                    else {
-                        alignments.push(...textRes['alignmentData'])
-                    }
-                }
+                const {textResultsForPID, alignments} = getAlignments(textResults, pid);
                 // set up object to store participant data
                 const admOrder = admOrderMapping[logData['ADMOrder']];
                 let trial_num = 1;
@@ -296,7 +257,6 @@ export function RQ13() {
         const data = new Blob([excelBuffer], { type: fileType });
         FileSaver.saveAs(data, 'RQ-1_and_RQ-3 data' + fileExtension);
     };
-
 
     React.useEffect(() => {
         setFilteredData(formattedData.filter((x) =>
@@ -449,9 +409,9 @@ export function RQ13() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['ParticipantId'] + '-' + index}>
+                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['ParticipantId'] + '-' + val}>
+                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val]}
                                 </td>);
                             })}
@@ -467,4 +427,23 @@ export function RQ13() {
             </div>
         </Modal>
     </>);
+}
+
+
+export function getAlignments(textResults, pid) {
+    const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
+    const alignments = [];
+    let addedMJ = false;
+    for (const textRes of textResultsForPID) {
+        if (Object.keys(textRes).includes("combinedAlignmentData")) {
+            if (!addedMJ) {
+                alignments.push(...textRes['combinedAlignmentData']);
+                addedMJ = true;
+            }
+        }
+        else {
+            alignments.push(...textRes['alignmentData'])
+        }
+    }
+    return { textResultsForPID, alignments };
 }
