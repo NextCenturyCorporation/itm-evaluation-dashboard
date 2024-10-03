@@ -182,14 +182,16 @@ export function RQ5() {
     }
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
-            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-            (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-            (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
-        ));
-    }, [ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
+        if (formattedData.length > 0) {
+            setFilteredData(formattedData.filter((x) =>
+                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
+            ));
+        }
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
 
     const formatData = (dataSet, key) => {
         const v = dataSet[key];

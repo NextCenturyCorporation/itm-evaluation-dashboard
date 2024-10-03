@@ -259,17 +259,19 @@ export function RQ13() {
     };
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
-            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-            (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-            (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
-            (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
-            (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil']))
-        ));
-    }, [ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
+        if (formattedData.length > 0) {
+            setFilteredData(formattedData.filter((x) =>
+                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
+                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+                (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
+                (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
+                (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil']))
+            ));
+        }
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData) return <p>Error :</p>;

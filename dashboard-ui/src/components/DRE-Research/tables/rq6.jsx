@@ -114,12 +114,14 @@ export function RQ6() {
     }
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
-            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
-        ));
-    }, [ta1Filters, scenarioFilters, attributeFilters]);
+        if (formattedData.length > 0) {
+            setFilteredData(formattedData.filter((x) =>
+                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
+            ));
+        }
+    }, [formattedData, ta1Filters, scenarioFilters, attributeFilters]);
 
     if (loadingParticipantLog || loadingSurveyResults) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults) return <p>Error :</p>;

@@ -176,15 +176,17 @@ export function RQ2223() {
     };
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
-            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-            (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-            (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target_Type (Group/Individual)']))
-        ));
-    }, [ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, targetTypeFilters]);
+        if (formattedData.length > 0) {
+            setFilteredData(formattedData.filter((x) =>
+                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
+                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+                (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target_Type (Group/Individual)']))
+            ));
+        }
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, targetTypeFilters]);
 
 
     if (loading) return <p>Loading...</p>;
