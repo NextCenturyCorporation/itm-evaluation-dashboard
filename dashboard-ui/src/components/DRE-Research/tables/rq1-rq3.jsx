@@ -7,37 +7,10 @@ import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
-import { Modal } from "@mui/material";
+import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
-
-const admOrderMapping = {
-    1: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" },],
-    2: [{ "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" }],
-    3: [{ "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" }],
-    4: [{ "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }]
-}
-
-const delEnvMapping = {
-    "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
-    "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
-    "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-    "ST-1": ["qol-dre-1-eval", "vol-dre-1-eval"],
-    "ST-2": ["qol-dre-2-eval", "vol-dre-2-eval"],
-    "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
-}
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
 const RATING_MAP = {
     "Strongly disagree": 1,
@@ -68,8 +41,14 @@ const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
+    
+const GET_COMPARISON_DATA = gql`
+    query getHumanToADMComparison {
+        getHumanToADMComparison
+    }`;
 
-const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+
 
 export function RQ13() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -80,9 +59,31 @@ export function RQ13() {
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
     });
+    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    // all options for filters
+    const [ta1s, setTA1s] = React.useState([]);
+    const [ta2s, setTA2s] = React.useState([]);
+    const [scenarios, setScenarios] = React.useState([]);
+    const [targets, setTargets] = React.useState([]);
+    const [attributes, setAttributes] = React.useState([]);
+    const [admTypes, setAdmTypes] = React.useState(['baseline', 'aligned', 'comparison']);
+    const [delGrps, setDelGrps] = React.useState(['Civilian', 'Military']);
+    const [delMils, setDelMils] = React.useState(['yes', 'no']);
+    // filter options that have been chosen
+    const [ta1Filters, setTA1Filters] = React.useState([]);
+    const [ta2Filters, setTA2Filters] = React.useState([]);
+    const [scenarioFilters, setScenarioFilters] = React.useState([]);
+    const [targetFilters, setTargetFilters] = React.useState([]);
+    const [attributeFilters, setAttributeFilters] = React.useState([]);
+    const [admTypeFilters, setAdmTypeFilters] = React.useState([]);
+    const [delGrpFilters, setDelGrpFilters] = React.useState([]);
+    const [delMilFilters, setDelMilFilters] = React.useState([]);
+    // data with filters applied
+    const [filteredData, setFilteredData] = React.useState([]);
+
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
@@ -95,12 +96,18 @@ export function RQ13() {
     }
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison) {
             const surveyResults = dataSurveyResults.getAllSurveyResults;
             const participantLog = dataParticipantLog.getParticipantLog;
             const textResults = dataTextResults.getAllScenarioResults;
             const admData = dataADMs.getAllHistoryByEvalNumber;
+            const comparisons = comparisonData.getHumanToADMComparison;
             const allObjs = [];
+            const allTA1s = [];
+            const allTA2s = [];
+            const allScenarios = [];
+            const allTargets = [];
+            const allAttributes = [];
 
             // find participants that have completed the delegation survey
             const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
@@ -113,20 +120,7 @@ export function RQ13() {
                 if (!logData) {
                     continue;
                 }
-                const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
-                const alignments = [];
-                let addedMJ = false;
-                for (const textRes of textResultsForPID) {
-                    if (Object.keys(textRes).includes("combinedAlignmentData")) {
-                        if (!addedMJ) {
-                            alignments.push(...textRes['combinedAlignmentData']);
-                            addedMJ = true;
-                        }
-                    }
-                    else {
-                        alignments.push(...textRes['alignmentData'])
-                    }
-                }
+                const {textResultsForPID, alignments} = getAlignments(textResults, pid);
                 // set up object to store participant data
                 const admOrder = admOrderMapping[logData['ADMOrder']];
                 let trial_num = 1;
@@ -162,18 +156,28 @@ export function RQ13() {
                         entryObj['ADM Order'] = logData['ADMOrder'];
                         entryObj['Delegator_ID'] = pid;
                         entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : 'Military';
-                        entryObj['Delegator_Role'] = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'] ?? '-'
+                        const roles = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'];
+                        // override 102, who is military
+                        entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid == '202409102' ? 'yes' : 'no';
+                        entryObj['Delegator_Role'] = roles ?? '-'
                         if (Array.isArray(entryObj['Delegator_Role'])) {
                             entryObj['Delegator_Role'] = entryObj['Delegator_Role'].join('; ');
                         }
                         entryObj['TA1_Name'] = entry['TA1'];
+                        allTA1s.push(entry['TA1']);
                         entryObj['Trial_ID'] = trial_num;
                         trial_num += 1;
                         entryObj['Attribute'] = entry['Attribute'];
+                        allAttributes.push(entryObj['Attribute']);
                         entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
+                        allScenarios.push(entryObj['Scenario']);
                         entryObj['TA2_Name'] = entry['TA2'];
+                        allTA2s.push(entry['TA2']);
                         entryObj['ADM_Type'] = t == 'comparison' ? 'comparison' : ['misaligned', 'aligned'].includes(t) ? 'aligned' : 'baseline';
                         entryObj['Target'] = page['admTarget'] ?? '-';
+                        if (entryObj['Target'] != '-') {
+                            allTargets.push(entryObj['Target']);
+                        }
                         const foundADM = admData.find((adm) => adm.history[0].parameters.adm_name == page['admName'] && (adm.history[0].response?.id ?? adm.history[1].response?.id) == page['scenarioIndex'].replace('IO', 'MJ') &&
                             adm.history[adm.history.length - 1].parameters.target_id == page['admTarget']);
                         const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
@@ -182,7 +186,9 @@ export function RQ13() {
                         entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
                         entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
-                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = '-';
+
+                        const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && delEnvMapping[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = comparison_entry?.score ?? '-';
 
                         entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
                         if (t == 'comparison') {
@@ -225,8 +231,14 @@ export function RQ13() {
                 }
             }
             setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            setTA1s(Array.from(new Set(allTA1s)));
+            setTA2s(Array.from(new Set(allTA2s)));
+            setAttributes(Array.from(new Set(allAttributes)));
+            setScenarios(Array.from(new Set(allScenarios)));
+            setTargets(Array.from(new Set(allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData]);
 
     const exportToExcel = async () => {
         // Create a new workbook and worksheet
@@ -246,13 +258,143 @@ export function RQ13() {
         FileSaver.saveAs(data, 'RQ-1_and_RQ-3 data' + fileExtension);
     };
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs) return <p>Error :</p>;
+    React.useEffect(() => {
+        if (formattedData.length > 0) {
+            setFilteredData(formattedData.filter((x) =>
+                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
+                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+                (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
+                (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
+                (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil']))
+            ));
+        }
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
+
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData) return <p>Error :</p>;
 
     return (<>
+        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
+            <div className="filters">
+                <Autocomplete
+                    multiple
+                    options={ta1s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA1"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA1Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={ta2s}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="TA2"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTA2Filters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={scenarios}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Scenarios"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setScenarioFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={targets}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Targets"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setTargetFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={attributes}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Attributes"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setAttributeFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={admTypes}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="ADM Types"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setAdmTypeFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={delGrps}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Delegator_grp"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setDelGrpFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={delMils}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Delegator_mil"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setDelMilFilters(newVal)}
+                />
+            </div>
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download Data</button>
+                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
@@ -268,10 +410,10 @@ export function RQ13() {
                     </tr>
                 </thead>
                 <tbody>
-                    {formattedData.map((dataSet, index) => {
-                        return (<tr key={dataSet['ParticipantId'] + '-' + index}>
+                    {filteredData.map((dataSet, index) => {
+                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['ParticipantId'] + '-' + val}>
+                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val]}
                                 </td>);
                             })}
@@ -287,4 +429,23 @@ export function RQ13() {
             </div>
         </Modal>
     </>);
+}
+
+
+export function getAlignments(textResults, pid) {
+    const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
+    const alignments = [];
+    let addedMJ = false;
+    for (const textRes of textResultsForPID) {
+        if (Object.keys(textRes).includes("combinedAlignmentData")) {
+            if (!addedMJ) {
+                alignments.push(...textRes['combinedAlignmentData']);
+                addedMJ = true;
+            }
+        }
+        else {
+            alignments.push(...textRes['alignmentData'])
+        }
+    }
+    return { textResultsForPID, alignments };
 }

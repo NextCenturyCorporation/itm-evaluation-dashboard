@@ -5,27 +5,33 @@ import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
+import definitionXLFile from '../variables/Variable Definitions RQ8.xlsx';
+import definitionPDFFile from '../variables/Variable Definitions RQ8.pdf';
 
 
-const HEADERS = ['TA1_Name', 'TA2_Name', 'Attribute', 'Scenario', 'Group_Target', 'Participant_ID', 'Decision_Maker', 'Alignment score (Individual|Group_target) or (ADM|group_target)']
+const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Delegator KDMA', 'Alignment score (Delegator|selected target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
+    'Triage_time_patient', 'Engage_patient', 'Tag_ACC', 'Tag_Expectant',
+    'Patient1_time', 'Patient1_order', 'Patient1_evac', 'Patient1_assess', 'Patient1_treat', 'Patient1_tag',
+    'Patient2_time', 'Patient2_order', 'Patient2_evac', 'Patient2_assess', 'Patient2_treat', 'Patient2_tag',
+    'Patient3_time', 'Patient3_order', 'Patient3_evac', 'Patient3_assess', 'Patient3_treat', 'Patient3_tag',
+    'Patient4_time', 'Patient4_order', 'Patient4_evac', 'Patient4_assess', 'Patient4_treat', 'Patient4_tag',
+    'Patient5_time', 'Patient5_order', 'Patient5_evac', 'Patient5_assess', 'Patient5_treat', 'Patient5_tag',
+    'Patient6_time', 'Patient6_order', 'Patient6_evac', 'Patient6_assess', 'Patient6_treat', 'Patient6_tag',
+    'Patient7_time', 'Patient7_order', 'Patient7_evac', 'Patient7_assess', 'Patient7_treat', 'Patient7_tag',
+    'Patient8_time', 'Patient8_order', 'Patient8_evac', 'Patient8_assess', 'Patient8_treat', 'Patient8_tag'
+]
 
 
-export function RQ21() {
+export function RQ8() {
 
-    const [formattedData, setFormattedData] = React.useState([{ 'TA1_Name': '-', 'TA2_Name': '-', 'Attribute': '-', 'Scenario': '-', 'Group_Target': '-', 'Participant_ID': '-', 'Decision_Maker': '-', 'Alignment score (Individual|Group_target) or (ADM|group_target)': '-' }]);
+    const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
-    const [ta2s, setTA2s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);
-    const [groupTargets, setGroupTargets] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [ta1Filters, setTA1Filters] = React.useState([]);
-    const [ta2Filters, setTA2Filters] = React.useState([]);
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
-    const [groupTargetFilters, setGroupTargetFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
@@ -46,7 +52,7 @@ export function RQ21() {
         // Generate Excel file
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-22_and_RQ-23 data' + fileExtension);
+        FileSaver.saveAs(data, 'RQ-8 data' + fileExtension);
     };
 
     const openModal = () => {
@@ -58,16 +64,22 @@ export function RQ21() {
     }
 
     React.useEffect(() => {
-        if (formattedData.length > 0) {
-            setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
-            ));
+        // for temporary display purposes only!
+        if (filteredData.length == 0) {
+            const tmpData = {};
+            for (let x of HEADERS) {
+                tmpData[x] = '-';
+            }
+            const data = [tmpData];
+            setFilteredData(data);
+            setFormattedData(data);
         }
-    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
+        // setFilteredData(formattedData.filter((x) =>
+        //     (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+        //     (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+        //     (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
+        // ));
+    }, [ta1Filters, scenarioFilters, attributeFilters, filteredData, formattedData]);
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
@@ -86,20 +98,6 @@ export function RQ21() {
                         />
                     )}
                     onChange={(_, newVal) => setTA1Filters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={ta2s}
-                    filterSelectedOptions
-                    size="small"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="TA2"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setTA2Filters(newVal)}
                 />
                 <Autocomplete
                     multiple
@@ -129,20 +127,6 @@ export function RQ21() {
                     )}
                     onChange={(_, newVal) => setScenarioFilters(newVal)}
                 />
-                <Autocomplete
-                    multiple
-                    options={groupTargets}
-                    filterSelectedOptions
-                    size="small"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Group Targets"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setGroupTargetFilters(newVal)}
-                />
             </div>
             <div className="option-section">
                 <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
@@ -164,7 +148,7 @@ export function RQ21() {
                     {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
+                                return (<td key={dataSet['Delegator_ID'] + '-' + val + '-' + index}>
                                     {dataSet[val]}
                                 </td>);
                             })}
@@ -176,7 +160,7 @@ export function RQ21() {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ21.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={'Definitions_RQ8.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
             </div>
         </Modal>
     </>);

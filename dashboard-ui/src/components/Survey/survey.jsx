@@ -16,6 +16,7 @@ import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { Badge } from 'react-bootstrap';
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
@@ -58,7 +59,7 @@ const envMappingToText = {
     "ST-3": "QOL-3 and VOL-3",
 }
 
-const delEnvMapping = {
+export const delEnvMapping = {
     "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
     "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
     "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
@@ -67,7 +68,7 @@ const delEnvMapping = {
     "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
 }
 
-const admOrderMapping = {
+export const admOrderMapping = {
     1: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
         { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
         { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
@@ -220,10 +221,10 @@ class SurveyPage extends Component {
         useEffect(() => {
             if (reducer) {
                 this.setState({
-                    surveyConfig: reducer['delegation_v' + process.env.REACT_APP_SURVEY_VERSION.toString()]
+                    surveyConfig: reducer['delegation_v' + this.props.surveyVersion]
                 }, () => {
                     this.setState({
-                        surveyVersion: this.state.surveyConfig['version']
+                        surveyVersion: this.props.surveyVersion
                     }, () => {
                         this.postConfigSetup();
                     })
@@ -698,7 +699,7 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        if (this.state.surveyVersion == 2) {
+        if (this.state.surveyVersion == 2 || this.state.surveyVersion == 0) {
             // randomize order of soarTech scenarios and adept scenarios
             let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
             let adept = shuffle(this.surveyConfigClone.adeptDMs)
@@ -857,29 +858,17 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else {
-            const sets = shuffle(this.surveyConfigClone.validSingleSets);
-            const groupedDMs = shuffle(sets.slice(0));
-            let removed = [];
-            for (const x of sets.slice(1)) {
-                for (const e of x) {
-                    removed.push(e)
-                }
-            }
+        else if (this.state.surveyVersion == 1){
+            let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
+            // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
+            let removed = groupedDMs.pop();
+            // comparison page name to be removed
+            removed.push(`${removed[0]} vs ${removed[1]}`);
 
-            // keep track of pages to ignore in surveyConfig
-            let removedComparisonPages = []
-            removed.forEach(group => {
-                removedComparisonPages.push(group[0] + " vs " + group[1])
-            })
-            removed = removed.flat().concat(removedComparisonPages)
+            let comparisonPages = { ...this.surveyConfigClone.comparisonPages };
+            delete comparisonPages[`${removed[0]}${removed[1]}`];
 
-            // keep track of relevant comparison pages of selected scenarios
-            const comparisonPages = []
-            groupedDMs.forEach(group => {
-                comparisonPages.push(group[0] + " vs " + group[1])
-            });
-            return { groupedDMs, comparisonPages, removed };
+            return { groupedDMs, removed, comparisonPages };
         }
     }
 
@@ -1232,7 +1221,23 @@ class SurveyPage extends Component {
                                 )}
                             </Mutation>
                         )
-                        } </>}
+                        }
+                        <div style={{
+                            position: 'fixed',
+                            bottom: '1rem',
+                            right: '1rem',
+                            backgroundColor: '#592610',
+                            color: 'white',
+                            padding: '0.5em 0.7em',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                        }}>
+                            Survey v{this.state.surveyVersion}
+                        </div>
+                </>
+                }
             </>
         )
     }
@@ -1245,10 +1250,11 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
       });
+    const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults ) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults ) return <p>Error :</p>;
 
     return (
         <SurveyPage
@@ -1258,6 +1264,7 @@ export const SurveyPageWrapper = (props) => {
             currentUser={props.currentUser}
             textResults={dataTextResults?.getAllScenarioResults}
             surveyResults={dataSurveyResults.getAllSurveyResults}
+            surveyVersion={currentSurveyVersion}
         />)
 };
 

@@ -5,30 +5,86 @@ import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
+import definitionXLFile from '../variables/Variable Definitions RQ6.xlsx';
+import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
+import { useQuery } from 'react-apollo'
+import gql from "graphql-tag";
+import { isDefined } from "../../AggregateResults/DataFunctions";
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
+
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }`;
+
+const GET_SURVEY_RESULTS = gql`
+    query GetAllResults {
+        getAllSurveyResults
+    }`;
+
+const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Delegator_Text|Delegator_Sim)']
 
 
-const HEADERS = ['TA1_Name', 'TA2_Name', 'Attribute', 'Scenario', 'Group_Target', 'Participant_ID', 'Decision_Maker', 'Alignment score (Individual|Group_target) or (ADM|group_target)']
-
-
-export function RQ21() {
-
-    const [formattedData, setFormattedData] = React.useState([{ 'TA1_Name': '-', 'TA2_Name': '-', 'Attribute': '-', 'Scenario': '-', 'Group_Target': '-', 'Participant_ID': '-', 'Decision_Maker': '-', 'Alignment score (Individual|Group_target) or (ADM|group_target)': '-' }]);
+export function RQ6() {
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
-    const [ta2s, setTA2s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);
-    const [groupTargets, setGroupTargets] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [ta1Filters, setTA1Filters] = React.useState([]);
-    const [ta2Filters, setTA2Filters] = React.useState([]);
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
-    const [groupTargetFilters, setGroupTargetFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
+
+    React.useEffect(() => {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog) {
+            const surveyResults = dataSurveyResults.getAllSurveyResults;
+            const participantLog = dataParticipantLog.getParticipantLog;
+            const allObjs = [];
+            const allTA1s = [];
+            const allScenarios = [];
+            const allAttributes = [];
+
+            // find participants that have completed the delegation survey
+            const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
+            for (const res of completed_surveys) {
+                const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
+                // see if participant is in the participantLog
+                const logData = participantLog.find(
+                    log => log['ParticipantID'] == pid
+                );
+                if (!logData) {
+                    continue;
+                }
+                const admOrder = admOrderMapping[logData['ADMOrder']];
+                const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
+                const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+
+
+                for (const entry of admOrder) {
+                    const entryObj = {};
+                    entryObj['Delegator_ID'] = pid;
+                    entryObj['TA1_Name'] = entry['TA1'].replace('ST', 'SoarTech').replace('Adept', 'ADEPT');
+                    allTA1s.push(entryObj['TA1_Name']);
+                    entryObj['Attribute'] = entry['Attribute'];
+                    allAttributes.push(entryObj['Attribute']);
+                    entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
+                    allScenarios.push(entryObj['Scenario']);
+
+                    allObjs.push(entryObj);
+                }
+            }
+            setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            setTA1s(Array.from(new Set(allTA1s)));
+            setAttributes(Array.from(new Set(allAttributes)));
+            setScenarios(Array.from(new Set(allScenarios)));
+        }
+    }, [dataParticipantLog, dataSurveyResults]);
 
 
     const exportToExcel = async () => {
@@ -46,7 +102,7 @@ export function RQ21() {
         // Generate Excel file
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-22_and_RQ-23 data' + fileExtension);
+        FileSaver.saveAs(data, 'RQ-6 data' + fileExtension);
     };
 
     const openModal = () => {
@@ -61,13 +117,14 @@ export function RQ21() {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
                 (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
+                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
             ));
         }
-    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
+    }, [formattedData, ta1Filters, scenarioFilters, attributeFilters]);
+
+    if (loadingParticipantLog || loadingSurveyResults) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
@@ -86,20 +143,6 @@ export function RQ21() {
                         />
                     )}
                     onChange={(_, newVal) => setTA1Filters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={ta2s}
-                    filterSelectedOptions
-                    size="small"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="TA2"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setTA2Filters(newVal)}
                 />
                 <Autocomplete
                     multiple
@@ -128,20 +171,6 @@ export function RQ21() {
                         />
                     )}
                     onChange={(_, newVal) => setScenarioFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={groupTargets}
-                    filterSelectedOptions
-                    size="small"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Group Targets"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setGroupTargetFilters(newVal)}
                 />
             </div>
             <div className="option-section">
@@ -176,7 +205,7 @@ export function RQ21() {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ21.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={'Definitions_RQ6.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
             </div>
         </Modal>
     </>);
