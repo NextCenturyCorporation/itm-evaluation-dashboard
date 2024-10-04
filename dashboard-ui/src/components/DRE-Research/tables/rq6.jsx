@@ -10,7 +10,7 @@ import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
-import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
+import { admOrderMapping } from "../../Survey/survey";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -22,12 +22,18 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResults
     }`;
 
+const GET_SIM_DATA = gql`
+    query GetSimAlignment($evalNumber: Float!){
+        getAllSimAlignmentByEval(evalNumber: $evalNumber)
+    }`;
+
 const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Delegator_Text|Delegator_Sim)']
 
 
 export function RQ6() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
     const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
@@ -41,9 +47,10 @@ export function RQ6() {
     const fileExtension = '.xlsx';
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog, dataSim?.getAllSimAlignmentByEval) {
             const surveyResults = dataSurveyResults.getAllSurveyResults;
             const participantLog = dataParticipantLog.getParticipantLog;
+            const simData = dataSim.getAllSimAlignmentByEval;
             const allObjs = [];
             const allTA1s = [];
             const allScenarios = [];
@@ -74,6 +81,9 @@ export function RQ6() {
                     allAttributes.push(entryObj['Attribute']);
                     entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
                     allScenarios.push(entryObj['Scenario']);
+                    entryObj['Alignment score (Delegator_Text|Delegator_Sim)'] = simData.find((x) => x.pid == pid &&
+                        (['QOL', 'VOL'].includes(entry['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
+                        x.scenario_id.toUpperCase().includes(entry['Attribute'].replace('IO', 'MJ')))?.data?.alignment?.vr_vs_text;
 
                     allObjs.push(entryObj);
                 }
@@ -84,7 +94,7 @@ export function RQ6() {
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataParticipantLog, dataSurveyResults]);
+    }, [dataParticipantLog, dataSurveyResults, dataSim]);
 
 
     const exportToExcel = async () => {
@@ -123,8 +133,8 @@ export function RQ6() {
         }
     }, [formattedData, ta1Filters, scenarioFilters, attributeFilters]);
 
-    if (loadingParticipantLog || loadingSurveyResults) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingSurveyResults || loadingSim) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorSim) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
