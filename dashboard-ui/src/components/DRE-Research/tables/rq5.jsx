@@ -66,13 +66,15 @@ export function RQ5() {
             const allGroupTargets = [];
             const allAttributes = [];
             const pids = [];
-            // find participants that have completed the delegation survey
+            const recorded = {};
 
             for (const res of textResults) {
                 const pid = res['participantID'];
                 if (pids.includes(pid)) {
                     continue;
                 }
+                recorded[pid] = [];
+
                 const { textResultsForPID, alignments } = getAlignments(textResults, pid);
 
                 // see if participant is in the participantLog
@@ -85,6 +87,13 @@ export function RQ5() {
                 const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
                 const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
                 for (const entry of textResultsForPID) {
+                    // don't include duplicate entries
+                    if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                        continue;
+                    }
+                    else {
+                        recorded[pid].push(entry['serverSessionId']);
+                    }
                     // ignore training scenarios
                     if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
                         continue;
@@ -130,7 +139,23 @@ export function RQ5() {
                     pids.push(pid);
                 }
             }
+            // sort
+            allObjs.sort((a, b) => {
+                // Compare PID
+                if (Number(a['Participant_ID']) < Number(b['Participant_ID'])) return -1;
+                if (Number(a['Participant_ID']) > Number(b['Participant_ID'])) return 1;
 
+                // If PID is equal, compare TA1
+                if (a.TA1_Name < b.TA1_Name) return -1;
+                if (a.TA1_Name > b.TA1_Name) return 1;
+
+                // if Scenario is equal, compare attribute
+                if (a.Attribute < b.Attribute) return -1;
+                if (a.Attribute > b.Attribute) return 1;
+
+                // if attribute is equal, compare TA2
+                return a.TA2_Name - b.TA2_Name;
+            });
             setFormattedData(allObjs);
             setFilteredData(allObjs);
             setTA1s(Array.from(new Set(allTA1s)));
