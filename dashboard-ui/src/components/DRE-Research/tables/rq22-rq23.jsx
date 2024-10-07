@@ -160,7 +160,15 @@ export function RQ2223() {
     const exportToExcel = async () => {
         // Create a new workbook and worksheet
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(formattedData);
+        const dataCopy = structuredClone(formattedData);
+        for (let pid of Object.keys(dataCopy)) {
+            for (let k of Object.keys(dataCopy[pid])) {
+                if (dataCopy[pid][k] == '-') {
+                    dataCopy[pid][k] = '';
+                }
+            }
+        }
+        const ws = XLSX.utils.json_to_sheet(dataCopy);
 
         // Adjust column widths
         const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
