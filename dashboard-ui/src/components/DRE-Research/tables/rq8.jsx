@@ -27,7 +27,7 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Participant KDMA', 'Alignment score (Participant|selected target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
+const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Participant KDMA', 'Alignment score (Participant|high target)', 'Alignment score (Participant|low target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
     'Triage_time_patient', 'Engage_patient', 'Tag_ACC', 'Tag_Expectant',
     'Patient1_time', 'Patient1_order', 'Patient1_evac', 'Patient1_assess', 'Patient1_treat', 'Patient1_tag',
     'Patient2_time', 'Patient2_order', 'Patient2_evac', 'Patient2_assess', 'Patient2_treat', 'Patient2_tag',
@@ -84,7 +84,7 @@ export function RQ8() {
                     continue;
                 }
 
-                const { textResultsForPID, _ } = getAlignments(textResults, pid);
+                const { textResultsForPID, alignments } = getAlignments(textResults, pid);
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
@@ -127,7 +127,8 @@ export function RQ8() {
                         entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
                         allScenarios.push(entryObj['Scenario']);
                         entryObj['Participant KDMA'] = entryObj['TA1_Name'] == 'ADEPT' ? entry['kdmas'].find((x) => x['kdma'] == (att == 'MJ' ? 'Moral judgement' : 'Ingroup Bias'))?.value ?? '-' : '-';
-
+                        entryObj['Alignment score (Participant|high target)'] = alignments.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
+                        entryObj['Alignment score (Participant|low target)'] = alignments.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
                         allObjs.push(entryObj);
                     }
                     pids.push(pid);
