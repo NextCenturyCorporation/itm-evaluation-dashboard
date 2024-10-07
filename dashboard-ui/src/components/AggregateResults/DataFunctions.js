@@ -761,7 +761,7 @@ function populateDataSet(data) {
             AGGREGATED_DATA['Trust']['count'] += 1;
 
             // get post vr state. 
-            tmpSet['PostVRstate'] = COMFORT_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'VR Comfort Level', 'response'], ['results', 'Participant ID', 'questions', 'VR Comfort Level', 'response'])] ?? '-';
+            tmpSet['PostVRstate'] = COMFORT_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'VR Comfort Level', 'response'], ['results', 'VR Page', 'questions', 'VR Comfort Level', 'response'])] ?? '-';
             allResults.push(tmpSet);
             const textOrder = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
 
