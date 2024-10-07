@@ -59,7 +59,7 @@ export function RQ6() {
                 }
                 recorded[pid] = [];
 
-                const { textResultsForPID, alignments } = getAlignments(textResults, pid);
+                const { textResultsForPID, _ } = getAlignments(textResults, pid);
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
@@ -115,7 +115,7 @@ export function RQ6() {
                 if (a.TA1_Name < b.TA1_Name) return -1;
                 if (a.TA1_Name > b.TA1_Name) return 1;
 
-                // if Scenario is equal, compare attribute
+                // if TA1 is equal, compare attribute
                 return a.Attribute - b.Attribute;
             });
             setFormattedData(allObjs);

@@ -342,9 +342,9 @@ export function RQ5() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
+                        return (<tr key={dataSet['Participant_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
+                                return (<td key={dataSet['Participant_ID'] + '-' + val}>
                                     {formatData(dataSet, val)}
                                 </td>);
                             })}
