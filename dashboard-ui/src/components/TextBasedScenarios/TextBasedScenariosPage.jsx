@@ -379,7 +379,7 @@ class TextBasedScenariosPage extends Component {
             alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
         );
         const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
-        const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
+        const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
     
         for (let scenario of scenarios) {
             if (!this.state.uploadedScenarios.has(scenario.scenario_id)) {
