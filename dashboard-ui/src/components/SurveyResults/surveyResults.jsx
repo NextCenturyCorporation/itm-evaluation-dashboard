@@ -235,6 +235,7 @@ export function SurveyResults() {
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
     const [generalizePages, setGeneralization] = React.useState(true);
+    const surveys = useSelector((state) => state.configs.surveyConfigs);
 
     React.useEffect(() => {
         // component did mount
@@ -252,6 +253,13 @@ export function SurveyResults() {
             setShowScrollButton(false);
         }
     };
+
+    const indexToScenarioName = (index) => {
+        if (filterBySurveyVersion == 4) { return index }
+        const currentSurvey = Object.values(surveys).find(survey => survey.version == filterBySurveyVersion);
+        const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex == index);
+        return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
+    }
 
 
     React.useEffect(() => {
@@ -410,7 +418,7 @@ export function SurveyResults() {
                                     onClick={() => {
                                         setSelectedScenario(String(index));
                                     }}>
-                                    <ListItemText primary={name} />
+                                    <ListItemText primary={indexToScenarioName(index)} />
                                 </ListItem>
                             )}
                         </List>
