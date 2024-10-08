@@ -13,7 +13,7 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import Select from 'react-select';
 import { useSelector } from 'react-redux';
-
+import NoSelection from './NoSelection';
 let evalOptions = [];
 const get_eval_name_numbers = gql`
     query getEvalIdsForAllScenarioResults{
@@ -325,7 +325,7 @@ export default function TextBasedResultsPage() {
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(null);
+    const [selectedEval, setSelectedEval] = React.useState(4);
     const [evalOptions, setEvalOptions] = React.useState([]);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
@@ -440,9 +440,13 @@ export default function TextBasedResultsPage() {
                 }
             }
 
+            const sortedScenarios = Array.from(uniqueScenarios).sort((a, b) => 
+                a.localeCompare(b, undefined, { sensitivity: 'base' })
+            );
+
             setByScenario(tmpResponses);
             setParticipantBased(participants);
-            setScenarioOptions(Array.from(uniqueScenarios));
+            setScenarioOptions(Array.from(sortedScenarios));
         }
     }, [data, filteredTextBasedConfigs]);
 
@@ -562,7 +566,8 @@ export default function TextBasedResultsPage() {
                 </div>
             )}
         </div>
-        {scenarioChosen && <div className="result-display">
+        {scenarioChosen ? ( 
+            <div className="result-display">
             <div className="text-based-header">
                 <div />
                 <h2>{scenarioChosen}</h2>
@@ -573,6 +578,8 @@ export default function TextBasedResultsPage() {
                 </ToggleButtonGroup>
             </div>
             {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} /> : <ChartedResultsSection />}
-        </div>}
+        </div>) : (
+            <NoSelection/>
+        )}
     </div>);
 }

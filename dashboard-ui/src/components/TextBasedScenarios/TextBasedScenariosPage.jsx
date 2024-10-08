@@ -369,7 +369,7 @@ class TextBasedScenariosPage extends Component {
             alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
         );
         const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
-        const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
+        const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
 
         for (let scenario of scenarios) {
             scenario.combinedAlignmentData = sortedAlignmentData
@@ -391,7 +391,7 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    mostLeastAlgined = async (sessionId, ta1, url, scenario) => {
+    mostLeastAligned = async (sessionId, ta1, url, scenario) => {
         let targets = []
         const endpoint = '/api/v1/get_ordered_alignment'
         if (ta1 === 'soartech') {
@@ -512,8 +512,8 @@ class TextBasedScenariosPage extends Component {
                     );
 
                     scenario.alignmentData.sort((a, b) => b.score - a.score);
-                    const mostLeastAlgined = await this.mostLeastAlgined(sessionId, 'soartech', url, scenario)
-                    scenario.mostLeastAligned = mostLeastAlgined
+                    const mostLeastAligned = await this.mostLeastAligned(sessionId, 'soartech', url, scenario)
+                    scenario.mostLeastAligned = mostLeastAligned
                 }
 
                 scenario.serverSessionId = sessionId;

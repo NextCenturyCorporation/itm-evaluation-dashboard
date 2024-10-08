@@ -230,11 +230,12 @@ export function SurveyResults() {
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
-    const [filterBySurveyVersion, setVersionOption] = React.useState("");
+    const [filterBySurveyVersion, setVersionOption] = React.useState(parseInt(useSelector(state => state?.configs?.currentSurveyVersion)));
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
     const [generalizePages, setGeneralization] = React.useState(true);
+    const surveys = useSelector((state) => state.configs.surveyConfigs);
 
     React.useEffect(() => {
         // component did mount
@@ -253,6 +254,13 @@ export function SurveyResults() {
         }
     };
 
+    const indexToScenarioName = (index) => {
+        if (filterBySurveyVersion == 4) { return index }
+        const currentSurvey = Object.values(surveys).find(survey => survey.version == filterBySurveyVersion);
+        const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex == index);
+        return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
+    }
+
 
     React.useEffect(() => {
         if (data && filterBySurveyVersion) {
@@ -270,13 +278,16 @@ export function SurveyResults() {
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
                             const scenarioIndex = String(result.results[x].scenarioIndex);
-                            const scenarioName = result.results[x]?.scenarioName || `Scenario ${scenarioIndex}`;
+                            const scenarioName = indexToScenarioName(scenarioIndex)
                             scenarios[scenarioIndex] = scenarioName;
                         }
                     }
                 }
             }
-            setScenarioIndices(scenarios);
+            const sortedScenarios = Object.fromEntries(
+                Object.entries(scenarios).sort(([,a],[,b]) => a.localeCompare(b))
+            );
+            setScenarioIndices(sortedScenarios);
 
             if (Object.keys(scenarios).length > 0) {
                 setSelectedScenario("");
