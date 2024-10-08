@@ -278,7 +278,7 @@ export function SurveyResults() {
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
                             const scenarioIndex = String(result.results[x].scenarioIndex);
-                            const scenarioName = result.results[x]?.scenarioName || `${scenarioIndex}`;
+                            const scenarioName = indexToScenarioName(scenarioIndex)
                             scenarios[scenarioIndex] = scenarioName;
                         }
                     }
@@ -418,7 +418,7 @@ export function SurveyResults() {
                                     onClick={() => {
                                         setSelectedScenario(String(index));
                                     }}>
-                                    <ListItemText primary={indexToScenarioName(index)} />
+                                    <ListItemText primary={name} />
                                 </ListItem>
                             )}
                         </List>
