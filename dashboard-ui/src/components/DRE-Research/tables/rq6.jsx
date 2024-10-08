@@ -8,25 +8,25 @@ import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { exportToExcel, getAlignments } from "../utils";
-import { admOrderMapping } from "../../Survey/survey";
-import { isDefined } from "../../AggregateResults/DataFunctions";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
     }`;
 
-const GET_SURVEY_RESULTS = gql`
+const GET_TEXT_RESULTS = gql`
     query GetAllResults {
-        getAllSurveyResults
+        getAllScenarioResults
     }`;
 
-const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Delegator_Text|Delegator_Sim)']
+const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Participant_Text|Participant_Sim)']
 
 
 export function RQ6() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
+        fetchPolicy: 'no-cache'
+    });    
     const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
@@ -38,18 +38,25 @@ export function RQ6() {
     const [filteredData, setFilteredData] = React.useState([]);
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog) {
-            const surveyResults = dataSurveyResults.getAllSurveyResults;
+        if (dataTextResults?.getAllScenarioResults && dataParticipantLog?.getParticipantLog) {
+            const textResults = dataTextResults.getAllScenarioResults;
             const participantLog = dataParticipantLog.getParticipantLog;
             const allObjs = [];
             const allTA1s = [];
             const allScenarios = [];
             const allAttributes = [];
+            const pids = [];
+            const recorded = {};
 
-            // find participants that have completed the delegation survey
-            const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
-            for (const res of completed_surveys) {
-                const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
+            for (const res of textResults) {
+                const pid = res['participantID'];
+                if (pids.includes(pid)) {
+                    continue;
+                }
+                recorded[pid] = [];
+
+                const { textResultsForPID, _ } = getAlignments(textResults, pid);
+
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
                     log => log['ParticipantID'] == pid
@@ -57,31 +64,63 @@ export function RQ6() {
                 if (!logData) {
                     continue;
                 }
-                const admOrder = admOrderMapping[logData['ADMOrder']];
-                const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
-                const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+                const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
+                const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
 
+                for (const entry of textResultsForPID) {
+                    // don't include duplicate entries
+                    if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                        continue;
+                    }
+                    else {
+                        recorded[pid].push(entry['serverSessionId']);
+                    }
+                    // ignore training scenarios
+                    if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                        continue;
+                    }
+                    let attributes = ['MJ', 'IO'];
+                    if (entry['scenario_id'].includes('qol')) {
+                        attributes = ['QOL'];
+                    }
+                    else if (entry['scenario_id'].includes('vol')) {
+                        attributes = ['VOL'];
+                    }
+                    for (const att of attributes) {
+                        const entryObj = {};
+                        entryObj['Participant_ID'] = pid;
+                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') ? 'ADEPT' : 'SoarTech';
+                        allTA1s.push(entryObj['TA1_Name']);
+                        entryObj['Attribute'] = att;
+                        allAttributes.push(att);
+                        entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                        allScenarios.push(entryObj['Scenario']);
 
-                for (const entry of admOrder) {
-                    const entryObj = {};
-                    entryObj['Delegator_ID'] = pid;
-                    entryObj['TA1_Name'] = entry['TA1'].replace('ST', 'SoarTech').replace('Adept', 'ADEPT');
-                    allTA1s.push(entryObj['TA1_Name']);
-                    entryObj['Attribute'] = entry['Attribute'];
-                    allAttributes.push(entryObj['Attribute']);
-                    entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
-                    allScenarios.push(entryObj['Scenario']);
-
-                    allObjs.push(entryObj);
+                        allObjs.push(entryObj);
+                    }
+                    pids.push(pid);
                 }
             }
+            // sort
+            allObjs.sort((a, b) => {
+                // Compare PID
+                if (Number(a['Participant_ID']) < Number(b['Participant_ID'])) return -1;
+                if (Number(a['Participant_ID']) > Number(b['Participant_ID'])) return 1;
+
+                // If PID is equal, compare TA1
+                if (a.TA1_Name < b.TA1_Name) return -1;
+                if (a.TA1_Name > b.TA1_Name) return 1;
+
+                // if TA1 is equal, compare attribute
+                return a.Attribute - b.Attribute;
+            });
             setFormattedData(allObjs);
             setFilteredData(allObjs);
             setTA1s(Array.from(new Set(allTA1s)));
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataParticipantLog, dataSurveyResults]);
+    }, [dataParticipantLog, dataTextResults]);
 
 
     const openModal = () => {
@@ -102,8 +141,8 @@ export function RQ6() {
         }
     }, [formattedData, ta1Filters, scenarioFilters, attributeFilters]);
 
-    if (loadingParticipantLog || loadingSurveyResults) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingTextResults) return <p>Loading...</p>;
+    if (errorParticipantLog || errorTextResults) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
@@ -170,9 +209,9 @@ export function RQ6() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
+                        return (<tr key={dataSet['Participant_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
+                                return (<td key={dataSet['Participant_ID'] + '-' + val}>
                                     {dataSet[val]}
                                 </td>);
                             })}

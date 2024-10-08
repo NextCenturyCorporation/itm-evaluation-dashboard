@@ -6,7 +6,7 @@ import { RQ6 } from "./tables/rq6";
 
 export function ExploratoryAnalysis() {
     return (<div className="researchQuestion">
-        <div className="section-container">
+        {/* <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
             <p className='indented'>
                 <b>H<sub>1</sub></b> = Alignment score calculated between the responses of one human on attribute-driven
@@ -65,7 +65,7 @@ export function ExploratoryAnalysis() {
             <p>
                 <b>Dependent variables:</b> Alignment score and % matching probe responses
             </p>
-        </div>
+        </div> */}
         <div className="section-container">
             <h2>RQ5 Data</h2>
             <RQ5 />

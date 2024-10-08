@@ -152,7 +152,6 @@ export function RQ2223() {
         }
     }, [data]);
 
-
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
