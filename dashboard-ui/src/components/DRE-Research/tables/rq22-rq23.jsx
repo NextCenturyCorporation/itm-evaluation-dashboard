@@ -1,6 +1,4 @@
 import React from "react";
-import * as FileSaver from 'file-saver';
-import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
@@ -9,6 +7,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ2.2_2.3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ2.2_2.3.pdf';
+import { ADM_NAME_MAP, exportToExcel } from "../utils";
 
 const getAdmData = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
@@ -17,12 +16,6 @@ const getAdmData = gql`
 
 const HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 'Scenario', 'Target_Type (Group/Individual)', 'Aligned ADM Alignment score (ADM|target)', 'Aligned Server Session ID', 'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'];
 
-const ADM_NAME_MAP = {
-    "TAD-aligned": "Parallax",
-    "TAD-severity-baseline": "Parallax",
-    "ALIGN-ADM-ComparativeRegression-ICL-Template": "Kitware",
-    "ALIGN-ADM-OutlinesBaseline": "Kitware"
-};
 
 export function RQ2223() {
     const { loading: loading, error: error, data: data } = useQuery(getAdmData, {
@@ -47,8 +40,6 @@ export function RQ2223() {
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
 
-    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-    const fileExtension = '.xlsx';
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -113,7 +104,7 @@ export function RQ2223() {
                         allTargets.push(target);
                         entryObj['Scenario'] = scenario;
                         allScenarios.push(scenario);
-                        entryObj['Target_Type (Group/Individual)'] = 'Individual';
+                        entryObj['Target_Type (Group/Individual)'] = target.toLowerCase().includes('-group') ? 'Group' : 'Individual';
                         const aligned = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
                         entryObj['Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
@@ -143,6 +134,10 @@ export function RQ2223() {
                 if (a.Attribute < b.Attribute) return -1;
                 if (a.Attribute > b.Attribute) return 1;
 
+                // if attribute is equal, compare group/individual
+                if (a['Target_Type (Group/Individual)'] < b['Target_Type (Group/Individual)']) return 1;
+                if (a['Target_Type (Group/Individual)'] > b['Target_Type (Group/Individual)']) return -1;
+
                 // If attribute is equal, compare Trial_ID
                 return a.Trial_ID - b.Trial_ID;
             });
@@ -157,23 +152,6 @@ export function RQ2223() {
         }
     }, [data]);
 
-    const exportToExcel = async () => {
-        // Create a new workbook and worksheet
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(formattedData);
-
-        // Adjust column widths
-        const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
-        ws['!cols'] = colWidths;
-
-        // Add the worksheet to the workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Survey Data');
-
-        // Generate Excel file
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-22_and_RQ-23 data' + fileExtension);
-    };
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
@@ -284,7 +262,7 @@ export function RQ2223() {
             </div>
 
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
+                <button className='downloadBtn' onClick={() => exportToExcel('RQ-22_and_RQ-23 data', formattedData, HEADERS)}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>

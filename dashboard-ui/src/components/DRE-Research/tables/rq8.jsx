@@ -1,6 +1,4 @@
 import React from "react";
-import * as FileSaver from 'file-saver';
-import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
@@ -9,8 +7,8 @@ import definitionXLFile from '../variables/Variable Definitions RQ8.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ8.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { isDefined } from "../../AggregateResults/DataFunctions";
-import { admOrderMapping } from "../../Survey/survey";
+import { exportToExcel, getAlignments } from "../utils";
+
 
 const GET_HUMAN_RESULTS = gql`
     query getAllRawSimData {
@@ -53,8 +51,6 @@ export function RQ8() {
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
-    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-    const fileExtension = '.xlsx';
 
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataRawSim?.getAllRawSimData && dataParticipantLog?.getParticipantLog) {
@@ -110,24 +106,6 @@ export function RQ8() {
         }
     }, [dataRawSim, dataSurveyResults, dataParticipantLog]);
 
-
-    const exportToExcel = async () => {
-        // Create a new workbook and worksheet
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(formattedData);
-
-        // Adjust column widths
-        const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
-        ws['!cols'] = colWidths;
-
-        // Add the worksheet to the workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Survey Data');
-
-        // Generate Excel file
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-8 data' + fileExtension);
-    };
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -196,7 +174,7 @@ export function RQ8() {
                 />
             </div>
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
+                <button className='downloadBtn' onClick={() => exportToExcel('RQ-8 data', formattedData, HEADERS)}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
