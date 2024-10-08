@@ -9,6 +9,7 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { exportToExcel, getAlignments } from "../utils";
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {

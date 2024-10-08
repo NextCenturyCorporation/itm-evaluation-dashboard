@@ -8,6 +8,8 @@ import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { exportToExcel, getAlignments } from "../utils";
+import { admOrderMapping } from "../../Survey/survey";
+import { isDefined } from "../../AggregateResults/DataFunctions";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
