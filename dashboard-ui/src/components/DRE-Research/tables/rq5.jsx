@@ -9,7 +9,6 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { exportToExcel, getAlignments } from "../utils";
-import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -26,6 +25,13 @@ const GET_COMPARISON_DATA = gql`
         getHumanToADMComparison,
         getADMTextProbeMatches
     }`;
+
+const ATTRIBUTE_MAPPING = {
+    'Moral judgement': 'MJ',
+    'Ingroup Bias': 'IO',
+    'QualityOfLife': 'QOL',
+    'PerceivedQuantityOfLivesSaved': 'VOL'
+};
 
 const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most aligned target', 'Least aligned target', 'Alignment score (Participant|Most aligned target)', 'Alignment score (Participant|Least aligned target)', 'Group target', 'Alignment score (Participant|group target)', 'TA2_Name', 'Alignment score (Participant|ADM(most))', 'Alignment score (Participant|ADM(least))', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
 
@@ -121,6 +127,7 @@ export function RQ5() {
                                     if ((t.includes('Moral') && att == 'MJ') || (t.includes('qol') && att == 'QOL') ||
                                         (t.includes('vol') && att == 'VOL') || (t.includes('Ingroup') && att == 'IO')) {
                                         entryObj['Group target'] = t;
+                                        allGroupTargets.push(t);
                                         entryObj['Alignment score (Participant|group target)'] = group_targets[t];
                                         break;
                                     }
@@ -137,10 +144,14 @@ export function RQ5() {
                             entryObj['Alignment score (Participant|ADM(most))'] = comparison_entry_most?.score ?? '-';
                             const comparison_entry_least = comparisons?.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
                             entryObj['Alignment score (Participant|ADM(least))'] = comparison_entry_least?.score ?? '-';
-                            const probe_matches_most = matches.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                            const probe_matches_most = matches.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
                             entryObj['Match_MostAligned'] = probe_matches_most?.score ?? '-';
-                            const probe_matches_least = matches.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                            const probe_matches_least = matches.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
                             entryObj['Match_LeastAligned'] = probe_matches_least?.score ?? '-';
+                            if (isDefined(entryObj['Group target'])) {
+                                const group_matches = matches.find((x) => x['adm_type'] == 'group target' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                entryObj['Match_GrpMembers'] = group_matches?.score ?? '-';
+                            }
                             allObjs.push(entryObj);
                         }
                     }
@@ -215,7 +226,7 @@ export function RQ5() {
                 (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
                 (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
+                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group target']))
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
