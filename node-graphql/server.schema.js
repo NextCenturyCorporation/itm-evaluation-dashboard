@@ -155,7 +155,8 @@ const typeDefs = gql`
     getUsers: JSON
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
-    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON]
+    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON],
+    getGroupAdmAlignmentEval4: [JSON],
     getEvalIds: [JSON],
     getEvalIdsForAllHistory: [JSON],
     getAllHistoryByID(historyId: ID): JSON
@@ -225,26 +226,59 @@ const resolvers = {
       return await dashboardDB.db.collection('test').find().toArray().then(result => { return result; });
     },
     getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }, {projection:{
-        "history.parameters.adm_name": 1, 
-        "history.response.id": 1, 
-        "history.parameters.target_id": 1,
-        "history.response.kdma_values.value": 1,
-        "history.parameters.target_id": 1,
-        "history.response.score": 1,
-        "history.parameters.session_id": 1,
-        "history.command": 1
-      }}).toArray().then(result => { return result; });
+      return await dashboardDB.db.collection('test').find({ "evalNumber": args["evalNumber"] }, {
+        projection: {
+          "history.parameters.adm_name": 1,
+          "history.response.id": 1,
+          "history.parameters.target_id": 1,
+          "history.response.kdma_values.value": 1,
+          "history.parameters.target_id": 1,
+          "history.response.score": 1,
+          "history.parameters.session_id": 1,
+          "history.command": 1
+        }
+      }).toArray().then(result => { return result; });
+    },
+    getGroupAdmAlignmentEval4: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('test').find({
+        "evalNumber": 4,
+        $expr: {
+          $in: [
+            { $arrayElemAt: ["$history.parameters.target_id", -1] },
+            [
+              "ADEPT-DryRun-Ingroup Bias-Group-High",
+              "ADEPT-DryRun-Ingroup Bias-Group-Low",
+              "ADEPT-DryRun-Moral judgement-Group-High",
+              "ADEPT-DryRun-Moral judgement-Group-Low",
+              "qol-group-target-dre-1",
+              "qol-group-target-dre-2",
+              "vol-group-target-dre-1",
+              "vol-group-target-dre-2"]
+          ]
+        }
+      },
+        {
+          projection: {
+            "history.parameters.adm_name": 1,
+            "history.response.id": 1,
+            "history.parameters.target_id": 1,
+            "history.response.kdma_values.value": 1,
+            "history.parameters.target_id": 1,
+            "history.response.score": 1,
+            "history.parameters.session_id": 1,
+            "history.command": 1
+          }
+        }).toArray().then(result => { return result; });
     },
     getEvalIds: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('evaluationIDS').find().toArray().then(result => { return result; });
-    },    
+    },
     getEvalIdsForAllHistory: async (obj, args, context, inflow) => {
-        return await dashboardDB.db.collection('test').aggregate( 
-          [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
-    },    
+      return await dashboardDB.db.collection('test').aggregate(
+        [{ "$group": { "_id": { evalNumber: "$evalNumber", evalName: "$evalName" } } }]).sort({ 'evalNumber': -1 }).toArray().then(result => { return result });
+    },
     getAllHistoryByID: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId },{ projection:{"history.parameters.adm_name":1, "history.response.score":1}}).toArray().then(result => { return result; });
+      return await dashboardDB.db.collection('test').find({ "history.response.id": args.historyId }, { projection: { "history.parameters.adm_name": 1, "history.response.score": 1 } }).toArray().then(result => { return result; });
     },
     getScenario: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').findOne({ "id": args["scenarioId"] }).then(result => { return result; });
@@ -254,14 +288,14 @@ const resolvers = {
         .toArray().then(result => { return result });
     },
     getScenarioNamesByEval: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('scenarios').aggregate([{$match: {"evalNumber": args["evalNumber"]}},{ $group: { _id: { "id": '$id', "name": '$name' } } }])
+      return await dashboardDB.db.collection('scenarios').aggregate([{ $match: { "evalNumber": args["evalNumber"] } }, { $group: { _id: { "id": '$id', "name": '$name' } } }])
         .toArray().then(result => { return result });
     },
     getPerformerADMsForScenario: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').distinct(args["admQueryStr"], { "history.response.id": args["scenarioID"] }).then(result => { return result });
     },
     getAlignmentTargetsPerScenario: async (obj, args, context, inflow) => {
-      let alignmentTargets = await dashboardDB.db.collection('test').distinct("history.response.id", { "history.response.id": args["scenarioID"], "evalNumber": args["evalNumber"]}).then(result => { return result });
+      let alignmentTargets = await dashboardDB.db.collection('test').distinct("history.response.id", { "history.response.id": args["scenarioID"], "evalNumber": args["evalNumber"] }).then(result => { return result });
       // The scenarioID still comes back in this distinct because of the way the JSON is configured, remove it before sending the array
       const indexOfScenario = alignmentTargets.indexOf(args["scenarioID"]);
       alignmentTargets.splice(indexOfScenario, 1);
@@ -270,12 +304,12 @@ const resolvers = {
     getTestByADMandScenario: async (obj, args, context, inflow) => {
       // NOTE: We might need to add evalNumber to this query in the future
       let queryObj = {};
-      if( args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") { 
+      if (args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") {
         queryObj[args["admQueryStr"]] = args["admName"];
         queryObj["history.response.id"] = args["scenarioID"];
       } else {
         queryObj = {
-          $and: [{"history.response.id": args["alignmentTarget"]}, {"history.response.id": args["scenarioID"]}],
+          $and: [{ "history.response.id": args["alignmentTarget"] }, { "history.response.id": args["scenarioID"] }],
         };
         queryObj[args["admQueryStr"]] = args["admName"];
       }
@@ -333,7 +367,7 @@ const resolvers = {
       return await dashboardDB.db.collection('humanRuns').find({ "bytes": { $exists: true } }).toArray().then(result => { return result; });
     },
     getAllTextBasedImages: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('textBasedImages').find().toArray().then(result => {return result;})
+      return await dashboardDB.db.collection('textBasedImages').find().toArray().then(result => { return result; })
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
@@ -344,15 +378,17 @@ const resolvers = {
         "Participant ID.questions.Participant ID.response": { $not: /test/i },
         "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       };
-    
+
       // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
       const surveyVersionFilter = {
         $or: [
-          { "results.surveyVersion": { $ne: 2 } }, 
-          { $and: [ 
-            { "results.surveyVersion": 2 },
-            { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
-          ]}
+          { "results.surveyVersion": { $ne: 2 } },
+          {
+            $and: [
+              { "results.surveyVersion": 2 },
+              { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
+            ]
+          }
         ]
       };
       return await dashboardDB.db.collection('surveyResults').find({
@@ -368,22 +404,24 @@ const resolvers = {
         "Participant ID.questions.Participant ID.response": { $not: /test/i },
         "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       };
-    
+
       // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
       const surveyVersionFilter = {
         $or: [
-          { "results.surveyVersion": { $ne: 2 } }, 
-          { $and: [ 
-            { "results.surveyVersion": 2 },
-            { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
-          ]}
+          { "results.surveyVersion": { $ne: 2 } },
+          {
+            $and: [
+              { "results.surveyVersion": 2 },
+              { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
+            ]
+          }
         ]
       };
       return await dashboardDB.db.collection('surveyResults').find({
         $and: [excludeTestID, surveyVersionFilter, {
           $or: [{ "evalNumber": args["evalNumber"] }, { "results.evalNumber": args["evalNumber"] }]
         }]
-        
+
       }).toArray().then(result => { return result; });
     },
     getAllScenarioResults: async (obj, args, context, inflow) => {
@@ -400,38 +438,38 @@ const resolvers = {
     getAllTextScenariosDRE: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('userScenarioResults').distinct(
         "scenario_id",
-        {"evalNumber":4}
-    ).then(result => { return result; });
+        { "evalNumber": 4 }
+      ).then(result => { return result; });
     },
     getEvalIdsForAllScenarioResults: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('userScenarioResults').aggregate( 
-        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
+      return await dashboardDB.db.collection('userScenarioResults').aggregate(
+        [{ "$group": { "_id": { evalNumber: "$evalNumber", evalName: "$evalName" } } }]).sort({ 'evalNumber': -1 }).toArray().then(result => { return result });
     },
     getAllSimAlignment: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulator').find().toArray().then(result => { return result; });
     },
     getAllSimAlignmentByEval: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulator').find(
-        {"evalNumber": args["evalNumber"]}
+        { "evalNumber": args["evalNumber"] }
       ).toArray().then(result => { return result; });
     },
     getEvalIdsForSimAlignment: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('humanSimulator').aggregate( 
-        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
+      return await dashboardDB.db.collection('humanSimulator').aggregate(
+        [{ "$group": { "_id": { evalNumber: "$evalNumber", evalName: "$evalName" } } }]).sort({ 'evalNumber': -1 }).toArray().then(result => { return result });
     },
     getEvalNameNumbers: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('test').aggregate( 
-        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).toArray().then(result => {return result});
+      return await dashboardDB.db.collection('test').aggregate(
+        [{ "$group": { "_id": { evalNumber: "$evalNumber", evalName: "$evalName" } } }]).toArray().then(result => { return result });
     },
     getEvalIdsForHumanResults: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('humanSimulatorRaw').aggregate( 
-        [{"$group": {"_id": {evalNumber: "$evalNumber", evalName: "$evalName"}}}]).sort({'evalNumber': -1}).toArray().then(result => {return result});
+      return await dashboardDB.db.collection('humanSimulatorRaw').aggregate(
+        [{ "$group": { "_id": { evalNumber: "$evalNumber", evalName: "$evalName" } } }]).sort({ 'evalNumber': -1 }).toArray().then(result => { return result });
     },
     getAllRawSimData: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });
     },
-    getUsers: async(obj, args, context, infow) => {
-      return await dashboardDB.db.collection('users').find().project({"services":0, "createdAt":0, "updatedAt": 0}).toArray().then(result => {return result});
+    getUsers: async (obj, args, context, infow) => {
+      return await dashboardDB.db.collection('users').find().project({ "services": 0, "createdAt": 0, "updatedAt": 0 }).toArray().then(result => { return result });
     },
     getAllSurveyConfigs: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('delegationConfig').find().toArray().then(result => { return result; });
@@ -449,13 +487,13 @@ const resolvers = {
       return await dashboardDB.db.collection('surveyResults').countDocuments({ "results.aiGroupFirst": true });
     },
     getParticipantLog: async (obj, args, context, info) => {
-      return await dashboardDB.db.collection('participantLog').find().toArray().then(result => {return result});
+      return await dashboardDB.db.collection('participantLog').find().toArray().then(result => { return result });
     },
     getHumanToADMComparison: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
     },
     getCurrentSurveyVersion: async () => {
-      return await dashboardDB.db.collection('surveyVersion').findOne().then(result => {return result.version});
+      return await dashboardDB.db.collection('surveyVersion').findOne().then(result => { return result.version });
     },
     getADMTextProbeMatches: async (obj, args, context, info) => {
       return await dashboardDB.db.collection('admVsTextProbeMatches').find().toArray().then(result => { return result });
@@ -475,9 +513,9 @@ const resolvers = {
       );
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {
-      const filter = { surveyId: args.surveyId}
-      const update = { $set: {results: args.results}}
-      const options = { upsert: true}
+      const filter = { surveyId: args.surveyId }
+      const update = { $set: { results: args.results } }
+      const options = { upsert: true }
 
       return await dashboardDB.db.collection('surveyResults').updateOne(filter, update, options)
     },
@@ -494,9 +532,9 @@ const resolvers = {
       // var updateObj = {};
       // updateObj[field] = args["value"]};
 
-      const filter = { evalNumber: args["evalNumber"]}
-      const update = { $set: { "showMainPage" : args["value"]}}
-      const options = { upsert: true}
+      const filter = { evalNumber: args["evalNumber"] }
+      const update = { $set: { "showMainPage": args["value"] } }
+      const options = { upsert: true }
 
       return await dashboardDB.db.collection('evaluationIDS').updateOne(filter, update, options)
     },

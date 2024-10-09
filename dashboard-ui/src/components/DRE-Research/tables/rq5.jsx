@@ -1,6 +1,4 @@
 import React from "react";
-import * as FileSaver from 'file-saver';
-import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
@@ -10,7 +8,7 @@ import definitionPDFFile from '../variables/Variable Definitions RQ5.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
-import { getAlignments } from "./rq1-rq3";
+import { exportToExcel, getAlignments } from "../utils";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -27,6 +25,13 @@ const GET_COMPARISON_DATA = gql`
         getHumanToADMComparison,
         getADMTextProbeMatches
     }`;
+
+const ATTRIBUTE_MAPPING = {
+    'Moral judgement': 'MJ',
+    'Ingroup Bias': 'IO',
+    'QualityOfLife': 'QOL',
+    'PerceivedQuantityOfLivesSaved': 'VOL'
+};
 
 const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most aligned target', 'Least aligned target', 'Alignment score (Participant|Most aligned target)', 'Alignment score (Participant|Least aligned target)', 'Group target', 'Alignment score (Participant|group target)', 'TA2_Name', 'Alignment score (Participant|ADM(most))', 'Alignment score (Participant|ADM(least))', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
 
@@ -50,8 +55,6 @@ export function RQ5() {
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [groupTargetFilters, setGroupTargetFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
-    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-    const fileExtension = '.xlsx';
 
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
@@ -118,6 +121,18 @@ export function RQ5() {
                             allAttributes.push(att);
                             entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
                             allScenarios.push(entryObj['Scenario']);
+                            const group_targets = entry['group_targets'];
+                            if (isDefined(group_targets)) {
+                                for (const t of Object.keys(group_targets)) {
+                                    if ((t.includes('Moral') && att == 'MJ') || (t.includes('qol') && att == 'QOL') ||
+                                        (t.includes('vol') && att == 'VOL') || (t.includes('Ingroup') && att == 'IO')) {
+                                        entryObj['Group target'] = t;
+                                        allGroupTargets.push(t);
+                                        entryObj['Alignment score (Participant|group target)'] = group_targets[t];
+                                        break;
+                                    }
+                                }
+                            }
 
                             // get most/least aligned targets
                             const { most, least } = getMostLeastTarget(alignments, entryObj['Attribute']);
@@ -129,10 +144,14 @@ export function RQ5() {
                             entryObj['Alignment score (Participant|ADM(most))'] = comparison_entry_most?.score ?? '-';
                             const comparison_entry_least = comparisons?.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
                             entryObj['Alignment score (Participant|ADM(least))'] = comparison_entry_least?.score ?? '-';
-                            const probe_matches_most = matches.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                            const probe_matches_most = matches.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
                             entryObj['Match_MostAligned'] = probe_matches_most?.score ?? '-';
-                            const probe_matches_least = matches.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                            const probe_matches_least = matches.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
                             entryObj['Match_LeastAligned'] = probe_matches_least?.score ?? '-';
+                            if (isDefined(entryObj['Group target'])) {
+                                const group_matches = matches.find((x) => x['adm_type'] == 'group target' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                entryObj['Match_GrpMembers'] = group_matches?.score ?? '-';
+                            }
                             allObjs.push(entryObj);
                         }
                     }
@@ -192,32 +211,6 @@ export function RQ5() {
         return { most, least };
     }
 
-    const exportToExcel = async () => {
-        // Create a new workbook and worksheet
-        const wb = XLSX.utils.book_new();
-        const dataCopy = structuredClone(formattedData);
-        for (let pid of Object.keys(dataCopy)) {
-            for (let k of Object.keys(dataCopy[pid])) {
-                if (dataCopy[pid][k] == '-') {
-                    dataCopy[pid][k] = '';
-                }
-            }
-        }
-        const ws = XLSX.utils.json_to_sheet(dataCopy);
-
-        // Adjust column widths
-        const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
-        ws['!cols'] = colWidths;
-
-        // Add the worksheet to the workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Survey Data');
-
-        // Generate Excel file
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-5 data' + fileExtension);
-    };
-
     const openModal = () => {
         setShowDefinitions(true);
     }
@@ -233,7 +226,7 @@ export function RQ5() {
                 (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
                 (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target']))
+                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group target']))
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
@@ -333,7 +326,7 @@ export function RQ5() {
                 />
             </div>
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
+                <button className='downloadBtn' onClick={() => exportToExcel('RQ-5 data', formattedData, HEADERS)}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
