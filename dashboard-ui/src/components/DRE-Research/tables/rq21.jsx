@@ -80,7 +80,6 @@ export function RQ21() {
                 allGroupTargets.push(target);
                 entryObj['Scenario'] = scenario;
                 allScenarios.push(scenario);
-                entryObj['Participant_ID'] = '-';
                 entryObj['Decision_Maker'] = admName.toLowerCase().includes('baseline') ? 'Baseline ADM' : 'Aligned ADM';
                 allDecisionMakers.push(entryObj['Decision_Maker']);
                 entryObj['Alignment score (Individual|Group_target) or (ADM|group_target)'] = alignment;
