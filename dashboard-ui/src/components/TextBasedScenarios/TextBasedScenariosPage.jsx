@@ -179,7 +179,11 @@ class TextBasedScenariosPage extends Component {
         const { scenarios, currentScenarioIndex } = this.state;
         if (currentScenarioIndex < scenarios.length) {
             const currentScenario = scenarios[currentScenarioIndex];
-            this.loadSurveyConfig([currentScenario], currentScenario.title);
+            const newStartTime = new Date().toString();
+            
+            this.setState({ startTime: newStartTime }, () => {
+                this.loadSurveyConfig([currentScenario], currentScenario.title);
+            });
         } else {
             this.handleAllScenariosCompleted();
         }
@@ -569,13 +573,7 @@ class TextBasedScenariosPage extends Component {
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
         const currentTime = new Date();
-
-        if (!this.state.startTime) {
-            this.setState({
-                startTime: currentTime.toString()
-            });
-        }
-
+    
         if (this.survey.currentPageNo > 0) {
             const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
             const startTime = this.pageStartTimes[previousPageName];
@@ -585,7 +583,7 @@ class TextBasedScenariosPage extends Component {
                 this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
             }
         }
-
+    
         this.pageStartTimes[pageName] = currentTime;
     }
 
