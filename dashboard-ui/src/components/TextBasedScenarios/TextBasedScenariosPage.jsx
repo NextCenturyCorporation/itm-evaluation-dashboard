@@ -87,7 +87,7 @@ class TextBasedScenariosPage extends Component {
             adeptSessionsCompleted: 0,
             combinedSessionId: '',
             adeptScenarios: [],
-            uploadedScenarios: new Set()
+            uploadedScenarios: new Set(),
         };
 
         this.surveyData = {};
@@ -263,7 +263,6 @@ class TextBasedScenariosPage extends Component {
     };
 
     uploadResults = async (survey) => {
-        this.setState({ isUploading: true})
         this.timerHelper();
 
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
@@ -314,16 +313,10 @@ class TextBasedScenariosPage extends Component {
             }, () => {
                 if (this.uploadButtonRef.current && !scenarioId.includes('DryRun')) {
                     this.uploadButtonRef.current.click();
-                    this.setState(prevState => ({
-                        uploadedScenarios: new Set(prevState.uploadedScenarios).add(scenarioId)
-                    }));
-                } else {
-                    this.setState({ isUploading: false })
-                }
+                } 
             });
         } else {
             console.error(`Scenario ${scenarioId} has already been uploaded. Skipping upload.`);
-            this.setState({ isUploading: false })
         }
 
         // Reset data for the next scenario
@@ -396,16 +389,14 @@ class TextBasedScenariosPage extends Component {
                 scenario.mostLeastAligned = combinedMostLeastAligned
                 const sanitizedData = this.sanitizeKeys(scenario)
                 await new Promise(resolve => {
-                    this.setState({
+                    this.setState(prevState => ({
                         uploadData: true,
                         sanitizedData,
-                        isUploadButtonEnabled: true
-                    }, () => {
+                        isUploadButtonEnabled: true,
+                        uploadedScenarios: new Set(prevState.uploadedScenarios).add(this.state.sanitizedData['scenario_id'])
+                    }), () => {
                         if (this.uploadButtonRef.current) {
                             this.uploadButtonRef.current.click();
-                            this.setState(prevState => ({
-                                uploadedScenarios: new Set(prevState.uploadedScenarios).add(scenario.scenario_id)
-                            }));
                         }
                         resolve();
                     });
@@ -629,7 +620,13 @@ class TextBasedScenariosPage extends Component {
                 {this.state.uploadData && (
                     <Mutation 
                         mutation={UPLOAD_SCENARIO_RESULTS}
-                        onCompleted={() => this.setState({ isUploading: false})}
+                        onCompleted={() => {
+                            this.setState(prevState => ({
+                                uploadedScenarios: new Set(prevState.uploadedScenarios).add(this.state.sanitizedData['scenario_id'])
+                            }));
+                           
+                        }
+                    }
                         >
                         {(uploadSurveyResults, { data }) => (
                             <div style={{ display: 'none' }}>
@@ -645,7 +642,7 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
-                {this.state.isUploading && this.state.allScenariosCompleted && (
+                {this.state.allScenariosCompleted && (this.state.uploadedScenarios.size != this.state.scenarios.length) && (
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
                         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
                             <Spinner animation="border" role="status">
@@ -655,7 +652,7 @@ class TextBasedScenariosPage extends Component {
                         </div>
                     </div>
                 )}
-                {this.state.allScenariosCompleted && !this.state.isUploading &&(
+                {this.state.allScenariosCompleted && this.state.uploadedScenarios.size === this.state.scenarios.length && (
                     <ScenarioCompletionScreen
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}
