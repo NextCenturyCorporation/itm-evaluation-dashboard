@@ -19,7 +19,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
@@ -263,6 +263,7 @@ class TextBasedScenariosPage extends Component {
     };
 
     uploadResults = async (survey) => {
+        this.setState({ isUploading: true})
         this.timerHelper();
 
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
@@ -316,10 +317,13 @@ class TextBasedScenariosPage extends Component {
                     this.setState(prevState => ({
                         uploadedScenarios: new Set(prevState.uploadedScenarios).add(scenarioId)
                     }));
+                } else {
+                    this.setState({ isUploading: false })
                 }
             });
         } else {
             console.error(`Scenario ${scenarioId} has already been uploaded. Skipping upload.`);
+            this.setState({ isUploading: false })
         }
 
         // Reset data for the next scenario
@@ -450,7 +454,6 @@ class TextBasedScenariosPage extends Component {
                     const responseUrl = `${urlBase}/api/v1/response`
                     
                     const choices = Array.isArray(mapping['choice']) ? mapping['choice'] : [mapping['choice']]
-                    
                     for (const choice of choices) {
                         const responsePayload = {
                             "response": {
@@ -624,7 +627,10 @@ class TextBasedScenariosPage extends Component {
                     </>
                 )}
                 {this.state.uploadData && (
-                    <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
+                    <Mutation 
+                        mutation={UPLOAD_SCENARIO_RESULTS}
+                        onCompleted={() => this.setState({ isUploading: false})}
+                        >
                         {(uploadSurveyResults, { data }) => (
                             <div style={{ display: 'none' }}>
                                 <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
@@ -639,7 +645,17 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
-                {this.state.allScenariosCompleted && (
+                {this.state.isUploading && this.state.allScenariosCompleted && (
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+                            <Spinner animation="border" role="status">
+                                <span className="sr-only">Loading...</span>
+                            </Spinner>
+                            <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                        </div>
+                    </div>
+                )}
+                {this.state.allScenariosCompleted && !this.state.isUploading &&(
                     <ScenarioCompletionScreen
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}
