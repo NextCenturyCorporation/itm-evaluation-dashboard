@@ -19,7 +19,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup } from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
@@ -86,7 +86,8 @@ class TextBasedScenariosPage extends Component {
             isUploadButtonEnabled: false,
             adeptSessionsCompleted: 0,
             combinedSessionId: '',
-            adeptScenarios: []
+            adeptScenarios: [],
+            uploadedScenarios: new Set(),
         };
 
         this.surveyData = {};
@@ -178,7 +179,11 @@ class TextBasedScenariosPage extends Component {
         const { scenarios, currentScenarioIndex } = this.state;
         if (currentScenarioIndex < scenarios.length) {
             const currentScenario = scenarios[currentScenarioIndex];
-            this.loadSurveyConfig([currentScenario], currentScenario.title);
+            const newStartTime = new Date().toString();
+            
+            this.setState({ startTime: newStartTime }, () => {
+                this.loadSurveyConfig([currentScenario], currentScenario.title);
+            });
         } else {
             this.handleAllScenariosCompleted();
         }
@@ -229,7 +234,9 @@ class TextBasedScenariosPage extends Component {
             sim2: null,
             isUploadButtonEnabled: false,
             adeptSessionsCompleted: 0,
-            combinedSessionId: ''
+            combinedSessionId: '',
+            adeptScenarios: [],
+            uploadedScenarios: new Set()
         });
 
         this.surveyData = {};
@@ -295,18 +302,22 @@ class TextBasedScenariosPage extends Component {
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
-        this.setState({
-            uploadData: true,
-            sanitizedData,
-            isUploadButtonEnabled: true
-        }, () => {
-            if (this.uploadButtonRef.current) {
-                // don't upload adept scenarios until all 3 have run so we can get combined score
-                if (!sanitizedData.scenario_id.includes('DryRun')) {
+        const scenarioId = currentScenario.scenario_id;
+
+        // duplicate check
+        if (!this.state.uploadedScenarios.has(scenarioId)) {
+            this.setState({
+                uploadData: true,
+                sanitizedData,
+                isUploadButtonEnabled: true
+            }, () => {
+                if (this.uploadButtonRef.current && !scenarioId.includes('DryRun')) {
                     this.uploadButtonRef.current.click();
-                }
-            }
-        });
+                } 
+            });
+        } else {
+            console.error(`Scenario ${scenarioId} has already been uploaded. Skipping upload.`);
+        }
 
         // Reset data for the next scenario
         this.surveyData = {};
@@ -364,30 +375,33 @@ class TextBasedScenariosPage extends Component {
     uploadAdeptScenarios = async (scenarios) => {
         const url = process.env.REACT_APP_ADEPT_URL;
         const alignmentEndpoint = '/api/v1/alignment/session'
-
+    
         const alignmentData = await Promise.all(
             alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
         );
         const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
         const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
-
+    
         for (let scenario of scenarios) {
-            scenario.combinedAlignmentData = sortedAlignmentData
-            scenario.combinedSessionId = this.state.combinedSessionId
-            scenario.mostLeastAligned = combinedMostLeastAligned
-            const sanitizedData = this.sanitizeKeys(scenario)
-            await new Promise(resolve => {
-                this.setState({
-                    uploadData: true,
-                    sanitizedData,
-                    isUploadButtonEnabled: true
-                }, () => {
-                    if (this.uploadButtonRef.current) {
-                        this.uploadButtonRef.current.click();
-                    }
-                    resolve();
+            if (!this.state.uploadedScenarios.has(scenario.scenario_id)) {
+                scenario.combinedAlignmentData = sortedAlignmentData
+                scenario.combinedSessionId = this.state.combinedSessionId
+                scenario.mostLeastAligned = combinedMostLeastAligned
+                const sanitizedData = this.sanitizeKeys(scenario)
+                await new Promise(resolve => {
+                    this.setState(prevState => ({
+                        uploadData: true,
+                        sanitizedData,
+                        isUploadButtonEnabled: true,
+                        uploadedScenarios: new Set(prevState.uploadedScenarios).add(this.state.sanitizedData['scenario_id'])
+                    }), () => {
+                        if (this.uploadButtonRef.current) {
+                            this.uploadButtonRef.current.click();
+                        }
+                        resolve();
+                    });
                 });
-            });
+            }
         }
     }
 
@@ -431,7 +445,6 @@ class TextBasedScenariosPage extends Component {
                     const responseUrl = `${urlBase}/api/v1/response`
                     
                     const choices = Array.isArray(mapping['choice']) ? mapping['choice'] : [mapping['choice']]
-                    
                     for (const choice of choices) {
                         const responsePayload = {
                             "response": {
@@ -554,13 +567,7 @@ class TextBasedScenariosPage extends Component {
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
         const currentTime = new Date();
-
-        if (!this.state.startTime) {
-            this.setState({
-                startTime: currentTime.toString()
-            });
-        }
-
+    
         if (this.survey.currentPageNo > 0) {
             const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
             const startTime = this.pageStartTimes[previousPageName];
@@ -570,7 +577,7 @@ class TextBasedScenariosPage extends Component {
                 this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
             }
         }
-
+    
         this.pageStartTimes[pageName] = currentTime;
     }
 
@@ -611,7 +618,16 @@ class TextBasedScenariosPage extends Component {
                     </>
                 )}
                 {this.state.uploadData && (
-                    <Mutation mutation={UPLOAD_SCENARIO_RESULTS}>
+                    <Mutation 
+                        mutation={UPLOAD_SCENARIO_RESULTS}
+                        onCompleted={() => {
+                            this.setState(prevState => ({
+                                uploadedScenarios: new Set(prevState.uploadedScenarios).add(this.state.sanitizedData['scenario_id'])
+                            }));
+                           
+                        }
+                    }
+                        >
                         {(uploadSurveyResults, { data }) => (
                             <div style={{ display: 'none' }}>
                                 <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
@@ -626,7 +642,17 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
-                {this.state.allScenariosCompleted && (
+                {this.state.allScenariosCompleted && (this.state.uploadedScenarios.size != this.state.scenarios.length) && (
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+                            <Spinner animation="border" role="status">
+                                <span className="sr-only">Loading...</span>
+                            </Spinner>
+                            <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                        </div>
+                    </div>
+                )}
+                {this.state.allScenariosCompleted && this.state.uploadedScenarios.size === this.state.scenarios.length && (
                     <ScenarioCompletionScreen
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}
