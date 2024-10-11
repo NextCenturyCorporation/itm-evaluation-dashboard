@@ -221,7 +221,7 @@ export default function HumanResults() {
                         }
                     </List>
                 </div>}
-            {selectedScene &&
+            {selectedScene && dataByScene && Object.keys(dataByScene).includes(selectedScene) && 
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Participant ID</span>
