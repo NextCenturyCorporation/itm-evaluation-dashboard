@@ -112,17 +112,17 @@ class TextBasedScenariosPage extends Component {
 
     introSurveyComplete = (survey) => {
         const enteredParticipantID = survey.data["Participant ID"];
-    
+
         // Check for duplicate participant ID
         const isDuplicate = this.duplicatePid(enteredParticipantID);
-    
+
         // match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
             log => log['ParticipantID'] == enteredParticipantID
         );
-    
+
         let scenarios = [];
-    
+
         if (!matchedLog || isDuplicate) {
             let message = "No matching participant ID was found.";
             if (isDuplicate) {
@@ -131,9 +131,9 @@ class TextBasedScenariosPage extends Component {
             message += " Would you like to continue anyway?\n\n" +
                 "Click 'OK' to continue with the current ID.\n" +
                 "Click 'Cancel' to re-enter the participant ID.";
-    
+
             const userChoice = window.confirm(message);
-    
+
             if (!userChoice) {
                 // just reload intro survey
                 this.introSurvey = new Model(introConfig);
@@ -148,12 +148,12 @@ class TextBasedScenariosPage extends Component {
                 }
             }
         }
-    
+
         const text1Scenarios = this.scenariosFromLog(matchedLog['Text-1']);
         const text2Scenarios = this.scenariosFromLog(matchedLog['Text-2']);
-    
+
         scenarios = [...text1Scenarios, ...text2Scenarios];
-    
+
         this.setState({
             scenarios,
             participantID: enteredParticipantID,
@@ -180,7 +180,7 @@ class TextBasedScenariosPage extends Component {
         if (currentScenarioIndex < scenarios.length) {
             const currentScenario = scenarios[currentScenarioIndex];
             const newStartTime = new Date().toString();
-            
+
             this.setState({ startTime: newStartTime }, () => {
                 this.loadSurveyConfig([currentScenario], currentScenario.title);
             });
@@ -313,7 +313,7 @@ class TextBasedScenariosPage extends Component {
             }, () => {
                 if (this.uploadButtonRef.current && !scenarioId.includes('DryRun')) {
                     this.uploadButtonRef.current.click();
-                } 
+                }
             });
         } else {
             console.error(`Scenario ${scenarioId} has already been uploaded. Skipping upload.`);
@@ -375,13 +375,13 @@ class TextBasedScenariosPage extends Component {
     uploadAdeptScenarios = async (scenarios) => {
         const url = process.env.REACT_APP_ADEPT_URL;
         const alignmentEndpoint = '/api/v1/alignment/session'
-    
+
         const alignmentData = await Promise.all(
             alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
         );
         const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
         const combinedMostLeastAligned = await this.mostLeastAlgined(this.state.combinedSessionId, 'adept', url, null)
-    
+
         for (let scenario of scenarios) {
             if (!this.state.uploadedScenarios.has(scenario.scenario_id)) {
                 scenario.combinedAlignmentData = sortedAlignmentData
@@ -389,12 +389,12 @@ class TextBasedScenariosPage extends Component {
                 scenario.mostLeastAligned = combinedMostLeastAligned
                 const sanitizedData = this.sanitizeKeys(scenario)
                 await new Promise(resolve => {
-                    this.setState(prevState => ({
+                    this.setState({
                         uploadData: true,
                         sanitizedData,
                         isUploadButtonEnabled: true,
-                        uploadedScenarios: new Set(prevState.uploadedScenarios).add(this.state.sanitizedData['scenario_id'])
-                    }), () => {
+                        currentUploadingScenarioId: scenario.scenario_id
+                    }, () => {
                         if (this.uploadButtonRef.current) {
                             this.uploadButtonRef.current.click();
                         }
@@ -443,7 +443,7 @@ class TextBasedScenariosPage extends Component {
                 if (question.response && !questionName.includes("Follow Up")) {
                     const mapping = question.question_mapping[question.response]
                     const responseUrl = `${urlBase}/api/v1/response`
-                    
+
                     const choices = Array.isArray(mapping['choice']) ? mapping['choice'] : [mapping['choice']]
                     for (const choice of choices) {
                         const responsePayload = {
@@ -567,7 +567,7 @@ class TextBasedScenariosPage extends Component {
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
         const currentTime = new Date();
-    
+
         if (this.survey.currentPageNo > 0) {
             const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
             const startTime = this.pageStartTimes[previousPageName];
@@ -577,7 +577,7 @@ class TextBasedScenariosPage extends Component {
                 this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
             }
         }
-    
+
         this.pageStartTimes[pageName] = currentTime;
     }
 
@@ -618,16 +618,15 @@ class TextBasedScenariosPage extends Component {
                     </>
                 )}
                 {this.state.uploadData && (
-                    <Mutation 
+                    <Mutation
                         mutation={UPLOAD_SCENARIO_RESULTS}
                         onCompleted={() => {
                             this.setState(prevState => ({
-                                uploadedScenarios: new Set(prevState.uploadedScenarios).add(this.state.sanitizedData['scenario_id'])
+                                uploadedScenarios: new Set(prevState.uploadedScenarios).add(prevState.currentUploadingScenarioId),
+                                currentUploadingScenarioId: null
                             }));
-                           
-                        }
-                    }
-                        >
+                        }}
+                    >
                         {(uploadSurveyResults, { data }) => (
                             <div style={{ display: 'none' }}>
                                 <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
