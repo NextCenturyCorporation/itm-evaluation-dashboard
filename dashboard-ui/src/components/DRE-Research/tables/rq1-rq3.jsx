@@ -192,7 +192,7 @@ export function RQ13() {
                         const simEntry = simData.find((x) => x.pid == pid &&
                             (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
                             x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
-                        const alignmentData = simEntry?.data?.alignment?.adms_vs_text?.[simEntry['scenario_id']];
+                        const alignmentData = simEntry?.data?.alignment?.adms_vs_text;
                         entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD')) &&
                             x['adm_alignment'] == entryObj['ADM_Type'])?.score ?? '-';
                         entryObj['Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'])?.score ?? '-';
