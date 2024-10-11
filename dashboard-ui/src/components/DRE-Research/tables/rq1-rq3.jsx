@@ -1,6 +1,4 @@
 import React from "react";
-import * as FileSaver from 'file-saver';
-import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
@@ -11,6 +9,7 @@ import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
 import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
+import { exportToExcel, getAlignments } from "../utils";
 
 const RATING_MAP = {
     "Strongly disagree": 1,
@@ -84,8 +83,6 @@ export function RQ13() {
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
 
-    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-    const fileExtension = '.xlsx';
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -240,31 +237,6 @@ export function RQ13() {
         }
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData]);
 
-    const exportToExcel = async () => {
-        // Create a new workbook and worksheet
-        const wb = XLSX.utils.book_new();
-        const dataCopy = structuredClone(formattedData);
-        for (let pid of Object.keys(dataCopy)) {
-            for (let k of Object.keys(dataCopy[pid])) {
-                if (dataCopy[pid][k] == '-') {
-                    dataCopy[pid][k] = '';
-                }
-            }
-        }
-        const ws = XLSX.utils.json_to_sheet(dataCopy);
-
-        // Adjust column widths
-        const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
-        ws['!cols'] = colWidths;
-
-        // Add the worksheet to the workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Survey Data');
-
-        // Generate Excel file
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-1_and_RQ-3 data' + fileExtension);
-    };
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
@@ -402,7 +374,7 @@ export function RQ13() {
                 />
             </div>
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
+                <button className='downloadBtn' onClick={() => exportToExcel('RQ-1_and_RQ-3 data', formattedData, HEADERS)}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
@@ -440,20 +412,3 @@ export function RQ13() {
 }
 
 
-export function getAlignments(textResults, pid) {
-    const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
-    const alignments = [];
-    let addedMJ = false;
-    for (const textRes of textResultsForPID) {
-        if (Object.keys(textRes).includes("combinedAlignmentData")) {
-            if (!addedMJ) {
-                alignments.push(...textRes['combinedAlignmentData']);
-                addedMJ = true;
-            }
-        }
-        else {
-            alignments.push(...textRes['alignmentData'])
-        }
-    }
-    return { textResultsForPID, alignments };
-}

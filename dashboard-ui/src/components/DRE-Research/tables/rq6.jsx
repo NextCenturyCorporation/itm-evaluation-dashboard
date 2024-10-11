@@ -1,6 +1,4 @@
 import React from "react";
-import * as FileSaver from 'file-saver';
-import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
@@ -9,7 +7,7 @@ import definitionXLFile from '../variables/Variable Definitions RQ6.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { getAlignments } from "./rq1-rq3";
+import { exportToExcel, getAlignments } from "../utils";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -38,8 +36,6 @@ export function RQ6() {
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
-    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-    const fileExtension = '.xlsx';
 
     React.useEffect(() => {
         if (dataTextResults?.getAllScenarioResults && dataParticipantLog?.getParticipantLog) {
@@ -127,32 +123,6 @@ export function RQ6() {
     }, [dataParticipantLog, dataTextResults]);
 
 
-    const exportToExcel = async () => {
-        // Create a new workbook and worksheet
-        const wb = XLSX.utils.book_new();
-        const dataCopy = structuredClone(formattedData);
-        for (let pid of Object.keys(dataCopy)) {
-            for (let k of Object.keys(dataCopy[pid])) {
-                if (dataCopy[pid][k] == '-') {
-                    dataCopy[pid][k] = '';
-                }
-            }
-        }
-        const ws = XLSX.utils.json_to_sheet(dataCopy);
-
-        // Adjust column widths
-        const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
-        ws['!cols'] = colWidths;
-
-        // Add the worksheet to the workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Survey Data');
-
-        // Generate Excel file
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-6 data' + fileExtension);
-    };
-
     const openModal = () => {
         setShowDefinitions(true);
     }
@@ -222,7 +192,7 @@ export function RQ6() {
                 />
             </div>
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
+                <button className='downloadBtn' onClick={() => exportToExcel('RQ-6 data', formattedData, HEADERS)}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
