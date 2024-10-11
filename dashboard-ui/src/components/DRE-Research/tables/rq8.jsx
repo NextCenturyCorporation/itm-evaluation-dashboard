@@ -122,9 +122,9 @@ export function RQ8() {
                         allAttributes.push(att);
                         entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
                         allScenarios.push(entryObj['Scenario']);
-                        entryObj['Participant KDMA'] = entryObj['TA1_Name'] == 'ADEPT' ? entry['kdmas'].find((x) => x['kdma'] == (att == 'MJ' ? 'Moral judgement' : 'Ingroup Bias'))?.value ?? '-' : '-';
-                        entryObj['Alignment score (Participant|high target)'] = alignments.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
-                        entryObj['Alignment score (Participant|low target)'] = alignments.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
+                        entryObj['Participant KDMA'] = entryObj['TA1_Name'] == 'ADEPT' ? entry['kdmas']?.find((x) => x['kdma'] == (att == 'MJ' ? 'Moral judgement' : 'Ingroup Bias'))?.value ?? '-' : '-';
+                        entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
+                        entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
                         allObjs.push(entryObj);
                     }
                     pids.push(pid);

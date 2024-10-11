@@ -19,11 +19,17 @@ const GET_TEXT_RESULTS = gql`
         getAllScenarioResults
     }`;
 
+const GET_SIM_DATA = gql`
+    query GetSimAlignment($evalNumber: Float!){
+        getAllSimAlignmentByEval(evalNumber: $evalNumber)
+    }`;
+
 const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Participant_Text|Participant_Sim)']
 
 
 export function RQ6() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
     });    
@@ -38,9 +44,10 @@ export function RQ6() {
     const [filteredData, setFilteredData] = React.useState([]);
 
     React.useEffect(() => {
-        if (dataTextResults?.getAllScenarioResults && dataParticipantLog?.getParticipantLog) {
+        if (dataTextResults?.getAllScenarioResults && dataParticipantLog?.getParticipantLog && dataSim?.getAllSimAlignmentByEval) {
             const textResults = dataTextResults.getAllScenarioResults;
             const participantLog = dataParticipantLog.getParticipantLog;
+            const simData = dataSim.getAllSimAlignmentByEval;
             const allObjs = [];
             const allTA1s = [];
             const allScenarios = [];
@@ -95,10 +102,13 @@ export function RQ6() {
                         allAttributes.push(att);
                         entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
                         allScenarios.push(entryObj['Scenario']);
-
+                        entryObj['Alignment score (Participant_Text|Participant_Sim)'] = simData.find((x) => x.pid == pid &&
+                            (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
+                            x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')))?.data?.alignment?.vr_vs_text;
                         allObjs.push(entryObj);
                     }
                     pids.push(pid);
+
                 }
             }
             // sort
@@ -120,7 +130,7 @@ export function RQ6() {
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataParticipantLog, dataTextResults]);
+    }, [dataParticipantLog, dataTextResults, dataSim]);
 
 
     const openModal = () => {
@@ -141,8 +151,8 @@ export function RQ6() {
         }
     }, [formattedData, ta1Filters, scenarioFilters, attributeFilters]);
 
-    if (loadingParticipantLog || loadingTextResults) return <p>Loading...</p>;
-    if (errorParticipantLog || errorTextResults) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingTextResults || loadingSim) return <p>Loading...</p>;
+    if (errorParticipantLog || errorTextResults || errorSim) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
