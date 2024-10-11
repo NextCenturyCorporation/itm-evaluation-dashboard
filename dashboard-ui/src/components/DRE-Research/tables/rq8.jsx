@@ -9,17 +9,17 @@ import definitionXLFile from '../variables/Variable Definitions RQ8.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ8.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { isDefined } from "../../AggregateResults/DataFunctions";
-import { admOrderMapping } from "../../Survey/survey";
+import { getAlignments } from "./rq1-rq3";
+
 
 const GET_HUMAN_RESULTS = gql`
     query getAllRawSimData {
         getAllRawSimData
   }`;
 
-const GET_SURVEY_RESULTS = gql`
+const GET_TEXT_RESULTS = gql`
     query GetAllResults {
-        getAllSurveyResults
+        getAllScenarioResults
     }`;
 
 const GET_PARTICIPANT_LOG = gql`
@@ -27,7 +27,7 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Delegator KDMA', 'Alignment score (Delegator|selected target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
+const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Participant KDMA', 'Alignment score (Participant|high target)', 'Alignment score (Participant|low target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
     'Triage_time_patient', 'Engage_patient', 'Tag_ACC', 'Tag_Expectant',
     'Patient1_time', 'Patient1_order', 'Patient1_evac', 'Patient1_assess', 'Patient1_treat', 'Patient1_tag',
     'Patient2_time', 'Patient2_order', 'Patient2_evac', 'Patient2_assess', 'Patient2_treat', 'Patient2_tag',
@@ -42,7 +42,9 @@ const HEADERS = ['Delegator_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Delegator
 
 export function RQ8() {
     const { loading: loadingRawSim, error: errorRawSim, data: dataRawSim } = useQuery(GET_HUMAN_RESULTS);
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
+        fetchPolicy: 'no-cache'
+    }); 
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
@@ -57,19 +59,23 @@ export function RQ8() {
     const fileExtension = '.xlsx';
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataRawSim?.getAllRawSimData && dataParticipantLog?.getParticipantLog) {
-            const surveyResults = dataSurveyResults.getAllSurveyResults;
+        if (dataTextResults?.getAllScenarioResults && dataRawSim?.getAllRawSimData && dataParticipantLog?.getParticipantLog) {
+            const textResults = dataTextResults.getAllScenarioResults;
             const simData = dataRawSim.getAllRawSimData;
             const participantLog = dataParticipantLog.getParticipantLog;
             const allObjs = [];
             const allTA1s = [];
             const allScenarios = [];
             const allAttributes = [];
+            const pids = [];
+            const recorded = {};
 
-            // find participants that have completed the delegation survey
-            const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
-            for (const res of completed_surveys) {
-                const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
+            for (const res of textResults) {
+                const pid = res['participantID'];
+                if (pids.includes(pid)) {
+                    continue;
+                }
+                recorded[pid] = [];
                 // see if participant has completed the open world scenario
                 const openWorld = simData.find(
                     log => log['pid'] == pid && log['openWorld'] == true
@@ -77,6 +83,9 @@ export function RQ8() {
                 if (!openWorld) {
                     continue;
                 }
+
+                const { textResultsForPID, alignments } = getAlignments(textResults, pid);
+
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
                     log => log['ParticipantID'] == pid
@@ -84,37 +93,81 @@ export function RQ8() {
                 if (!logData) {
                     continue;
                 }
-                const admOrder = admOrderMapping[logData['ADMOrder']];
-                const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
-                const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+
+                const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
+                const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
 
 
-                for (const entry of admOrder) {
-                    const entryObj = {};
-                    entryObj['Delegator_ID'] = pid;
-                    entryObj['TA1_Name'] = entry['TA1'].replace('ST', 'SoarTech').replace('Adept', 'ADEPT');
-                    allTA1s.push(entryObj['TA1_Name']);
-                    entryObj['Attribute'] = entry['Attribute'];
-                    allAttributes.push(entryObj['Attribute']);
-                    entryObj['Scenario'] = entry['TA1'] == 'Adept' ? ad_scenario : st_scenario;
-                    allScenarios.push(entryObj['Scenario']);
-
-                    allObjs.push(entryObj);
+                for (const entry of textResultsForPID) {
+                    // don't include duplicate entries
+                    if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                        continue;
+                    }
+                    else {
+                        recorded[pid].push(entry['serverSessionId']);
+                    }
+                    // ignore training scenarios
+                    if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                        continue;
+                    }
+                    let attributes = ['MJ', 'IO'];
+                    if (entry['scenario_id'].includes('qol')) {
+                        attributes = ['QOL'];
+                    }
+                    else if (entry['scenario_id'].includes('vol')) {
+                        attributes = ['VOL'];
+                    }
+                    for (const att of attributes) {
+                        const entryObj = {};
+                        entryObj['Participant_ID'] = pid;
+                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') ? 'ADEPT' : 'SoarTech';
+                        allTA1s.push(entryObj['TA1_Name']);
+                        entryObj['Attribute'] = att;
+                        allAttributes.push(att);
+                        entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                        allScenarios.push(entryObj['Scenario']);
+                        entryObj['Participant KDMA'] = entryObj['TA1_Name'] == 'ADEPT' ? entry['kdmas'].find((x) => x['kdma'] == (att == 'MJ' ? 'Moral judgement' : 'Ingroup Bias'))?.value ?? '-' : '-';
+                        entryObj['Alignment score (Participant|high target)'] = alignments.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
+                        entryObj['Alignment score (Participant|low target)'] = alignments.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
+                        allObjs.push(entryObj);
+                    }
+                    pids.push(pid);
                 }
             }
+            // sort
+            allObjs.sort((a, b) => {
+                // Compare PID
+                if (Number(a['Participant_ID']) < Number(b['Participant_ID'])) return -1;
+                if (Number(a['Participant_ID']) > Number(b['Participant_ID'])) return 1;
+
+                // If PID is equal, compare TA1
+                if (a.TA1_Name < b.TA1_Name) return -1;
+                if (a.TA1_Name > b.TA1_Name) return 1;
+
+                // if TA1 is equal, compare attribute
+                return a.Attribute - b.Attribute;
+            });
             setFormattedData(allObjs);
             setFilteredData(allObjs);
             setTA1s(Array.from(new Set(allTA1s)));
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataRawSim, dataSurveyResults, dataParticipantLog]);
+    }, [dataRawSim, dataTextResults, dataParticipantLog]);
 
 
     const exportToExcel = async () => {
         // Create a new workbook and worksheet
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(formattedData);
+        const dataCopy = structuredClone(formattedData);
+        for (let pid of Object.keys(dataCopy)) {
+            for (let k of Object.keys(dataCopy[pid])) {
+                if (dataCopy[pid][k] == '-') {
+                    dataCopy[pid][k] = '';
+                }
+            }
+        }
+        const ws = XLSX.utils.json_to_sheet(dataCopy);
 
         // Adjust column widths
         const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
@@ -143,10 +196,10 @@ export function RQ8() {
             (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
             (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
         ));
-    }, [ta1Filters, scenarioFilters, attributeFilters, filteredData, formattedData]);
+    }, [ta1Filters, scenarioFilters, attributeFilters, formattedData]);
 
-    if (loadingRawSim || loadingSurveyResults || loadingParticipantLog) return <p>Loading...</p>;
-    if (errorRawSim || errorSurveyResults || errorParticipantLog) return <p>Error :</p>;
+    if (loadingRawSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
+    if (errorRawSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
@@ -213,9 +266,9 @@ export function RQ8() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
+                        return (<tr key={dataSet['Participant_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['Delegator_ID'] + '-' + val + '-' + index}>
+                                return (<td key={dataSet['Participant_ID'] + '-' + val + '-' + index}>
                                     {dataSet[val] ?? '-'}
                                 </td>);
                             })}
