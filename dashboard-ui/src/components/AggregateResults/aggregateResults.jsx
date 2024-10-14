@@ -219,33 +219,33 @@ const ADEPT_HEADERS_DRE = {
 
 const HEADER_SIM_DATA = {
     3: [
-    "Participant",
-    "SimEnv",
-    "SimOrder",
-    "AD_P1",
-    "AD_P2",
-    "AD_P3",
-    "ST_1.1",
-    "ST_1.2",
-    "ST_1.3",
-    "ST_2.2", 
-    "ST_2.3",
-    "ST_3.1",
-    "ST_3.2",
-    "ST_4.1",
-    "ST_4.2",
-    "ST_4.3",
-    "ST_5.1",
-    "ST_5.2",
-    "ST_5.3",
-    "ST_6.1",
-    "ST_6.2",
-    "ST_8.1",
-    "ST_8.2",
-    "AD_KDMA_Env",
-    "ST_KDMA_Env",
-    "AD_KDMA",
-    "ST_KDMA"
+        "Participant",
+        "SimEnv",
+        "SimOrder",
+        "AD_P1",
+        "AD_P2",
+        "AD_P3",
+        "ST_1.1",
+        "ST_1.2",
+        "ST_1.3",
+        "ST_2.2",
+        "ST_2.3",
+        "ST_3.1",
+        "ST_3.2",
+        "ST_4.1",
+        "ST_4.2",
+        "ST_4.3",
+        "ST_5.1",
+        "ST_5.2",
+        "ST_5.3",
+        "ST_6.1",
+        "ST_6.2",
+        "ST_8.1",
+        "ST_8.2",
+        "AD_KDMA_Env",
+        "ST_KDMA_Env",
+        "AD_KDMA",
+        "ST_KDMA"
     ],
     4: [
         "Participant",
@@ -307,20 +307,20 @@ export default function AggregateResults({ type }) {
     const [iframeTitle, setIframeTitle] = React.useState(null);
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
-        variables: {"evalNumber": selectedEval}
+        variables: { "evalNumber": selectedEval }
         // only pulls from network, never cached
         //fetchPolicy: 'network-only',
     });
 
     React.useEffect(() => {
         evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForSimAlignment) { 
+        if (evalIdOptionsRaw?.getEvalIdsForSimAlignment) {
             for (const result of evalIdOptionsRaw.getEvalIdsForSimAlignment) {
-                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+                evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
 
             }
         }
-         
+
     }, [evalIdOptionsRaw, evalOptions]);
 
     const getGroupKey = (row) => {
@@ -329,12 +329,19 @@ export default function AggregateResults({ type }) {
         return `${adeptName}_${stName}`;
     }
 
+    const formatCellData = (data) => {
+        if (typeof data === 'object' && data !== null) {
+            return JSON.stringify(data);
+        }
+        return data;
+    };
+
     React.useEffect(() => {
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
             const full = populateDataSet(data);
             full.sort((a, b) => a['ParticipantID'] - b['ParticipantID']);
             setFullData(full);
-            
+
             const grouped = getAggregatedData();
             if (grouped.groupedSim) {
                 const newGroupedSim = {};
@@ -408,9 +415,9 @@ export default function AggregateResults({ type }) {
         setShowDefinitions(false);
     }
 
-    function selectEvaluation(target){
+    function selectEvaluation(target) {
         setSelectedEval(target.value);
-    }    
+    }
 
     const getHeadersEval4 = (headers, adeptScenario) => {
         const splitPoint = headers.indexOf('ADEPT_Session_Id');
@@ -449,7 +456,7 @@ export default function AggregateResults({ type }) {
 
     return (
         <div className='aggregatePage'>
-            {type === 'HumanSimParticipant' && 
+            {type === 'HumanSimParticipant' &&
                 <div className="home-container">
                     <Modal className='table-modal' open={showIframe} onClose={closeIframe}>
                         <div className='modal-body'>
@@ -511,7 +518,7 @@ export default function AggregateResults({ type }) {
             }
 
             {type === 'Program' && <ProgramQuestions />}
-            {(type === 'HumanProbeData' && aggregateData) && 
+            {(type === 'HumanProbeData' && aggregateData) &&
                 <div className="home-container">
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
@@ -535,10 +542,9 @@ export default function AggregateResults({ type }) {
                                 menu: provided => ({ ...provided, zIndex: 9999 })
                             }}
                         />
-                    </div>                    
-                
-                    {aggregateData["groupedSim"]!== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) =>
-                    {
+                    </div>
+
+                    {aggregateData["groupedSim"] !== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) => {
                         const [adeptScenario, stScenario] = objectKey.split('_');
                         const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], adeptScenario);
                         return (<div className='chart-home-container' key={"container_" + key}>
@@ -548,7 +554,7 @@ export default function AggregateResults({ type }) {
                                 </div>
                             </div>
                             <div key={"container_" + key} className='resultTableSection result-table-section-override'>
-                                
+
                                 <table key={"table_" + objectKey} className="itm-table">
                                     <thead>
                                         <tr>
@@ -560,7 +566,9 @@ export default function AggregateResults({ type }) {
                                     <tbody>
                                         {aggregateData["groupedSim"][objectKey].map((rowObj, rowKey) => (
                                             <tr key={"tr_" + rowKey}>
-                                                {headers?.map((item, itemKey) => (<td key={"row_" + item + itemKey}>{rowObj !== undefined ? rowObj[item] : ""}</td>))}
+                                                {headers?.map((item, itemKey) => (<td key={"row_" + item + itemKey}>
+                                                    {rowObj !== undefined ? formatCellData(rowObj[item]) : ""}
+                                                </td>))}
                                             </tr>
                                         ))}
                                     </tbody>
