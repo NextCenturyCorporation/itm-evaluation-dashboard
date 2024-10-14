@@ -34,6 +34,26 @@
     box-sizing: border-box;
 }
 
+.participant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 12px;
+}
+
+.participant-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.team-chooser {
+    margin: 0;
+}
+
 .probe-cell {
     border-left: 1px solid black;
 }
@@ -86,18 +106,4 @@
     background-color: white;
     border: 2px solid black;
     border-radius: 12px;
-}
-
-.team-chooser {
-    float: right;
-    margin-bottom: 8px;
-    margin-right: 12px;
-}
-
-.participant-title {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: #333;
-    padding-left: 14px; 
 }

@@ -255,6 +255,7 @@ export default function HumanResults() {
         </div>
         {selectedPID ?
             <div className="sim-participant">
+                <div className="participant-header">
                 <h2 className="participant-title">
                     {`${getScenarioName()} - Participant ${selectedPID}`}
                 </h2>
@@ -263,6 +264,7 @@ export default function HumanResults() {
                     <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-freeform' value={"freeform"}>Freeform</ToggleButton>
                 </ToggleButtonGroup>}
+                </div>
                 <div className="table-container">
                     <table className="action-list">
                         <thead>
