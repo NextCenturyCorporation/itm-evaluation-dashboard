@@ -167,59 +167,70 @@ function SingleGraph({ data, version }) {
             else if (version === 4)
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
 
-            const curResults = [];
-            for (const entry of data) {
+            const curResults = data.map(entry => {
                 const entryResults = {};
                 for (const q of Object.keys(entry.questions)) {
-                    if (entry.questions[q].response?.includes("to delegate")) {
-                        entryResults[q] = entry.questions[q].response.substr(15);
-                    } else {
-                        entryResults[q] = entry.questions[q].response;
-                    }
+                    entryResults[q] = entry.questions[q].response?.includes("to delegate")
+                        ? entry.questions[q].response.substr(15)
+                        : entry.questions[q].response;
                 }
-                curResults.push(entryResults);
-            }
+                return entryResults;
+            });
 
-            setSurveyResults([...curResults]);
-            const survey = new Model(surveyJson);
-            setSurvey(survey);
+
+            setSurveyResults(curResults);
+            setSurvey(new Model(surveyJson));
         }
     }, [data, version, surveys]);
 
-    if (!vizPanel && !!survey) {
-        const vizPanel = new VisualizationPanel(
-            survey.getAllQuestions(),
-            surveyResults,
-            vizPanelOptions
-        );
-        vizPanel.showToolbar = false;
-        VisualizerBase.customColors = ["green", "lightgreen", "lightblue", "orange", "red"];
-        setVizPanel(vizPanel);
-    }
+    React.useEffect(() => {
+        if (survey && surveyResults.length > 0) {
+            const newVizPanel = new VisualizationPanel(
+                survey.getAllQuestions(),
+                surveyResults,
+                vizPanelOptions
+            );
+            newVizPanel.showToolbar = false;
+            VisualizerBase.customColors = ["green", "lightgreen", "lightblue", "orange", "red"];
+            setVizPanel(newVizPanel);
+        }
+    }, [survey, surveyResults]);
 
     React.useEffect(() => {
         if (vizPanel) {
-            vizPanel.render("viz_" + pageName);
+            const vizElementId = "viz_" + pageName;
+            const vizElement = document.getElementById(vizElementId);
             
-            // Resize graphs after a short delay to ensure they're fully rendered
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 100);
-    
-            return () => {
-                if (document.getElementById("viz_" + pageName))
-                    document.getElementById("viz_" + pageName).innerHTML = "";
+            if (vizElement) {
+                vizElement.innerHTML = "";
+                vizPanel.render(vizElementId);
+                
+                const resizeObserver = new ResizeObserver(() => {
+                    vizPanel.layout();
+                });
+                resizeObserver.observe(vizElement);
+
+                return () => {
+                    resizeObserver.disconnect();
+                    if (vizElement) {
+                        vizElement.innerHTML = "";
+                    }
+                };
             }
         }
     }, [vizPanel, pageName]);
 
-
-    return (<div>
-        <h3 className="page-name">{pageName.split(':')[0].slice(-3) == 'vs ' ? pageName.replace(' vs :', ':') : pageName.replace('vs  vs', 'vs')}</h3>
-        <div id={"viz_" + pageName} />
-    </div>);
+    return (
+        <div>
+            <h3 className="page-name">
+                {pageName.split(':')[0].slice(-3) === 'vs ' 
+                    ? pageName.replace(' vs :', ':') 
+                    : pageName.replace('vs  vs', 'vs')}
+            </h3>
+            <div id={"viz_" + pageName} />
+        </div>
+    );
 }
-
 
 export function SurveyResults() {
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
