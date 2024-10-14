@@ -365,8 +365,10 @@ export default function AggregateResults({ type }) {
                 if (typeof dataCopy[pid][k] === 'string' && dataCopy[pid][k].includes('link:')) {
                     dataCopy[pid][k] = dataCopy[pid][k].split('link:')[1];
                 }
+                if (dataCopy[pid][k] == '-') {
+                    dataCopy[pid][k] = '';
+                }
             }
-
         }
         const ws = XLSX.utils.json_to_sheet(dataCopy);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
@@ -395,8 +397,8 @@ export default function AggregateResults({ type }) {
                 const data = [];
                 for (const origObj of aggregateData['groupedSim'][objKey]) {
                     const newObj = {};
-                    for (let x of getHeadersEval4(HEADER_SIM_DATA[selectedEval], adeptScenario)) {
-                        newObj[x] = origObj[x];
+                    for (let x of getHeadersEval4(HEADER_SIM_DATA[selectedEval], objKey)) {
+                        newObj[x] = origObj[x] == '-' ? '' : origObj[x];
                     }
                     data.push(newObj);
                 }

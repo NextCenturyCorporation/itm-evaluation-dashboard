@@ -1,6 +1,4 @@
 import React from "react";
-import * as FileSaver from 'file-saver';
-import XLSX from 'sheetjs-style';
 import '../../SurveyResults/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
@@ -10,34 +8,8 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
-
-const admOrderMapping = {
-    1: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" },],
-    2: [{ "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" }],
-    3: [{ "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" },
-    { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" }],
-    4: [{ "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-    { "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-    { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }]
-}
-
-const delEnvMapping = {
-    "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
-    "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
-    "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-    "ST-1": ["qol-dre-1-eval", "vol-dre-1-eval"],
-    "ST-2": ["qol-dre-2-eval", "vol-dre-2-eval"],
-    "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
-}
+import { admOrderMapping, delEnvMapping } from "../../Survey/survey";
+import { exportToExcel, getAlignments } from "../utils";
 
 const RATING_MAP = {
     "Strongly disagree": 1,
@@ -68,8 +40,14 @@ const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
+    
+const GET_COMPARISON_DATA = gql`
+    query getHumanToADMComparison {
+        getHumanToADMComparison
+    }`;
 
 const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+
 
 export function RQ13() {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -80,6 +58,7 @@ export function RQ13() {
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
     });
+    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -104,8 +83,6 @@ export function RQ13() {
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
 
-    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-    const fileExtension = '.xlsx';
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -116,11 +93,12 @@ export function RQ13() {
     }
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison) {
             const surveyResults = dataSurveyResults.getAllSurveyResults;
             const participantLog = dataParticipantLog.getParticipantLog;
             const textResults = dataTextResults.getAllScenarioResults;
             const admData = dataADMs.getAllHistoryByEvalNumber;
+            const comparisons = comparisonData.getHumanToADMComparison;
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -139,20 +117,7 @@ export function RQ13() {
                 if (!logData) {
                     continue;
                 }
-                const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
-                const alignments = [];
-                let addedMJ = false;
-                for (const textRes of textResultsForPID) {
-                    if (Object.keys(textRes).includes("combinedAlignmentData")) {
-                        if (!addedMJ) {
-                            alignments.push(...textRes['combinedAlignmentData']);
-                            addedMJ = true;
-                        }
-                    }
-                    else {
-                        alignments.push(...textRes['alignmentData'])
-                    }
-                }
+                const {textResultsForPID, alignments} = getAlignments(textResults, pid);
                 // set up object to store participant data
                 const admOrder = admOrderMapping[logData['ADMOrder']];
                 let trial_num = 1;
@@ -218,7 +183,9 @@ export function RQ13() {
                         entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
                         entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
-                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = '-';
+
+                        const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && delEnvMapping[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = comparison_entry?.score ?? '-';
 
                         entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
                         if (t == 'comparison') {
@@ -268,41 +235,26 @@ export function RQ13() {
             setScenarios(Array.from(new Set(allScenarios)));
             setTargets(Array.from(new Set(allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData]);
 
-    const exportToExcel = async () => {
-        // Create a new workbook and worksheet
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(formattedData);
-
-        // Adjust column widths
-        const colWidths = HEADERS.map(header => ({ wch: Math.max(header.length, 20) }));
-        ws['!cols'] = colWidths;
-
-        // Add the worksheet to the workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Survey Data');
-
-        // Generate Excel file
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'RQ-1_and_RQ-3 data' + fileExtension);
-    };
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
-            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-            (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-            (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
-            (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
-            (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil']))
-        ));
-    }, [ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
+        if (formattedData.length > 0) {
+            setFilteredData(formattedData.filter((x) =>
+                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
+                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
+                (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
+                (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
+                (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil']))
+            ));
+        }
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
@@ -422,7 +374,7 @@ export function RQ13() {
                 />
             </div>
             <div className="option-section">
-                <button className='downloadBtn' onClick={exportToExcel}>Download All Data</button>
+                <button className='downloadBtn' onClick={() => exportToExcel('RQ-1_and_RQ-3 data', formattedData, HEADERS)}>Download All Data</button>
                 <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
             </div>
         </section>
@@ -439,9 +391,9 @@ export function RQ13() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['ParticipantId'] + '-' + index}>
+                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['ParticipantId'] + '-' + val}>
+                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val]}
                                 </td>);
                             })}
@@ -458,3 +410,5 @@ export function RQ13() {
         </Modal>
     </>);
 }
+
+
