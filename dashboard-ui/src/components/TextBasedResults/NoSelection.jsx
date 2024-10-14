@@ -30,7 +30,7 @@ const NoSelection = () => (
               </ListGroup.Item>
             </ListGroup>
             <Card.Text className="mt-3">
-              If you need to export the data, a download button will be available in the Participants view.
+              In the Participants view, a download button is available to export the data.
             </Card.Text>
           </Card.Body>
         </Card>
