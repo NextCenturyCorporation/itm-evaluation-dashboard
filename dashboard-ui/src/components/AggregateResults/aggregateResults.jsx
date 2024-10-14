@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { getAggregatedData, populateDataSet, isDefined } from './DataFunctions';
+import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellData } from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
@@ -281,18 +281,6 @@ const HEADER_SIM_DATA = {
     ]
 };
 
-const adept_dre_names = {
-    '1': 'DryRunEval-MJ2-eval',
-    '2': 'DryRunEval-MJ4-eval',
-    '3': 'DryRunEval-MJ5-eval'
-}
-
-const st_dre_names = {
-    '1': 'QOL-VOL-1',
-    '2': 'QOL-VOL-2',
-    '3': 'QOL-VOL-3'
-}
-
 export default function AggregateResults({ type }) {
     const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -323,23 +311,6 @@ export default function AggregateResults({ type }) {
 
     }, [evalIdOptionsRaw, evalOptions]);
 
-    const getGroupKey = (row) => {
-        if (selectedEval === 3) {
-            return row.SimEnv;
-        } else if (selectedEval === 4) {
-            const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
-            const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
-            return `${adeptName}_${stName}`;
-        }
-    }
-
-    const formatCellData = (data) => {
-        if (typeof data === 'object' && data !== null) {
-            return JSON.stringify(data);
-        }
-        return data;
-    };
-
     React.useEffect(() => {
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
             const full = populateDataSet(data);
@@ -350,7 +321,7 @@ export default function AggregateResults({ type }) {
             if (grouped.groupedSim) {
                 const newGroupedSim = {};
                 Object.values(grouped.groupedSim).flat().forEach(row => {
-                    const key = getGroupKey(row);
+                    const key = getGroupKey(row, selectedEval);
                     if (!newGroupedSim[key]) {
                         newGroupedSim[key] = [];
                     }
