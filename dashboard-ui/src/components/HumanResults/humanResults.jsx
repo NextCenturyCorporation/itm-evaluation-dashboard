@@ -66,11 +66,14 @@ export default function HumanResults() {
         if (data?.getAllRawSimData && data?.getAllSimAlignment) {
             const organized = {};
             for (const entry of data.getAllRawSimData) {
+                if (entry.openWorld) {
+                    continue;
+                }
                 const version = entry.evalNumber;
                 const scene = version == 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
-                    const probes = data.getAllSimAlignment.filter((x) => pid === x.pid && (version == 3 ? ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
+                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && pid === x.pid && (version == 3 ? ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
                     // go through the scene to find where each scenario starts/ends
                     entry['adept'] = [];
                     entry['soartech'] = [];

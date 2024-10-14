@@ -657,15 +657,16 @@ function populateDataSet(data) {
     let simAlign = null;
     if (data.getAllSimAlignmentByEval) {
         const version = data.getAllSimAlignmentByEval[0]?.evalNumber;
-        simAlign = getSimAlignment(data.getAllSimAlignmentByEval);
-        let tempGroupHumanSimData = version == 3 ? Object.groupBy(data.getAllSimAlignmentByEval, ({ env }) => env) : Object.groupBy(data.getAllSimAlignmentByEval, ({ pid }) => pid);
+        const simData = data.getAllSimAlignmentByEval.filter((x) => !x.openWorld);
+        simAlign = getSimAlignment(simData);
+        let tempGroupHumanSimData = version == 3 ? Object.groupBy(simData, ({ env }) => env) : Object.groupBy(simData, ({ pid }) => pid);
         Object.keys(tempGroupHumanSimData).forEach(key => {
             if (version == 3) {
                 tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({ pid }) => pid);
                 let tempGroupPidArray = [];
                 Object.keys(tempGroupHumanSimData[key]).forEach(keyPid => {
                     if (keyPid.indexOf(" ") === -1) {
-                        tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid], data.getAllSimAlignmentByEval[0].evalNumber));
+                        tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid], simData[0].evalNumber));
                     }
                 });
                 tempGroupHumanSimData[key] = tempGroupPidArray;
