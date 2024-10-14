@@ -324,9 +324,13 @@ export default function AggregateResults({ type }) {
     }, [evalIdOptionsRaw, evalOptions]);
 
     const getGroupKey = (row) => {
-        const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
-        const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
-        return `${adeptName}_${stName}`;
+        if (selectedEval === 3) {
+            return row.SimEnv;
+        } else if (selectedEval === 4) {
+            const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
+            const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
+            return `${adeptName}_${stName}`;
+        }
     }
 
     const formatCellData = (data) => {
@@ -356,7 +360,7 @@ export default function AggregateResults({ type }) {
             }
             setAggregateData(grouped);
         }
-    }, [data, error, loading]);
+    }, [data, error, loading, selectedEval]);
 
     const exportToExcel = async () => {
         const dataCopy = structuredClone(fullData);
@@ -456,6 +460,10 @@ export default function AggregateResults({ type }) {
         }
     }
 
+    const capitalizeFirstLetter = (string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      };
+
     return (
         <div className='aggregatePage'>
             {type === 'HumanSimParticipant' &&
@@ -547,12 +555,13 @@ export default function AggregateResults({ type }) {
                     </div>
 
                     {aggregateData["groupedSim"] !== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) => {
-                        const [adeptScenario, stScenario] = objectKey.split('_');
-                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], adeptScenario);
+                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], objectKey.split('_')[0]);
                         return (<div className='chart-home-container' key={"container_" + key}>
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
-                                    <h4 key={"header_" + objectKey}>ADEPT: {adeptScenario}, SoarTech: {stScenario}</h4>
+                                    <h4 key={"header_" + objectKey}>
+                                        {selectedEval === 3 ? capitalizeFirstLetter(objectKey) : `ADEPT: ${objectKey.split('_')[0]}, SoarTech: ${objectKey.split('_')[1]}`}
+                                    </h4>
                                 </div>
                             </div>
                             <div key={"container_" + key} className='resultTableSection result-table-section-override'>
