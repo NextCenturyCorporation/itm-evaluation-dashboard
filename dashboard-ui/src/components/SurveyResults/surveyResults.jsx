@@ -167,59 +167,70 @@ function SingleGraph({ data, version }) {
             else if (version === 4)
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
 
-            const curResults = [];
-            for (const entry of data) {
+            const curResults = data.map(entry => {
                 const entryResults = {};
                 for (const q of Object.keys(entry.questions)) {
-                    if (entry.questions[q].response?.includes("to delegate")) {
-                        entryResults[q] = entry.questions[q].response.substr(15);
-                    } else {
-                        entryResults[q] = entry.questions[q].response;
-                    }
+                    entryResults[q] = entry.questions[q].response?.includes("to delegate")
+                        ? entry.questions[q].response.substr(15)
+                        : entry.questions[q].response;
                 }
-                curResults.push(entryResults);
-            }
+                return entryResults;
+            });
 
-            setSurveyResults([...curResults]);
-            const survey = new Model(surveyJson);
-            setSurvey(survey);
+
+            setSurveyResults(curResults);
+            setSurvey(new Model(surveyJson));
         }
     }, [data, version, surveys]);
 
-    if (!vizPanel && !!survey) {
-        const vizPanel = new VisualizationPanel(
-            survey.getAllQuestions(),
-            surveyResults,
-            vizPanelOptions
-        );
-        vizPanel.showToolbar = false;
-        VisualizerBase.customColors = ["green", "lightgreen", "lightblue", "orange", "red"];
-        setVizPanel(vizPanel);
-    }
+    React.useEffect(() => {
+        if (survey && surveyResults.length > 0) {
+            const newVizPanel = new VisualizationPanel(
+                survey.getAllQuestions(),
+                surveyResults,
+                vizPanelOptions
+            );
+            newVizPanel.showToolbar = false;
+            VisualizerBase.customColors = ["green", "lightgreen", "lightblue", "orange", "red"];
+            setVizPanel(newVizPanel);
+        }
+    }, [survey, surveyResults]);
 
     React.useEffect(() => {
         if (vizPanel) {
-            vizPanel.render("viz_" + pageName);
+            const vizElementId = "viz_" + pageName;
+            const vizElement = document.getElementById(vizElementId);
             
-            // Resize graphs after a short delay to ensure they're fully rendered
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 100);
-    
-            return () => {
-                if (document.getElementById("viz_" + pageName))
-                    document.getElementById("viz_" + pageName).innerHTML = "";
+            if (vizElement) {
+                vizElement.innerHTML = "";
+                vizPanel.render(vizElementId);
+                
+                const resizeObserver = new ResizeObserver(() => {
+                    vizPanel.layout();
+                });
+                resizeObserver.observe(vizElement);
+
+                return () => {
+                    resizeObserver.disconnect();
+                    if (vizElement) {
+                        vizElement.innerHTML = "";
+                    }
+                };
             }
         }
     }, [vizPanel, pageName]);
 
-
-    return (<div>
-        <h3 className="page-name">{pageName.split(':')[0].slice(-3) == 'vs ' ? pageName.replace(' vs :', ':') : pageName.replace('vs  vs', 'vs')}</h3>
-        <div id={"viz_" + pageName} />
-    </div>);
+    return (
+        <div>
+            <h3 className="page-name">
+                {pageName.split(':')[0].slice(-3) === 'vs ' 
+                    ? pageName.replace(' vs :', ':') 
+                    : pageName.replace('vs  vs', 'vs')}
+            </h3>
+            <div id={"viz_" + pageName} />
+        </div>
+    );
 }
-
 
 export function SurveyResults() {
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
@@ -230,11 +241,12 @@ export function SurveyResults() {
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
     const [showTable, setShowTable] = React.useState(false);
-    const [filterBySurveyVersion, setVersionOption] = React.useState("");
+    const [filterBySurveyVersion, setVersionOption] = React.useState(parseInt(useSelector(state => state?.configs?.currentSurveyVersion)));
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
     const [generalizePages, setGeneralization] = React.useState(true);
+    const surveys = useSelector((state) => state.configs.surveyConfigs);
 
     React.useEffect(() => {
         // component did mount
@@ -253,6 +265,13 @@ export function SurveyResults() {
         }
     };
 
+    const indexToScenarioName = (index) => {
+        if (filterBySurveyVersion == 4) { return index }
+        const currentSurvey = Object.values(surveys).find(survey => survey.version == filterBySurveyVersion);
+        const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex == index);
+        return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
+    }
+
 
     React.useEffect(() => {
         if (data && filterBySurveyVersion) {
@@ -270,13 +289,16 @@ export function SurveyResults() {
                     for (const x of Object.keys(result.results)) {
                         if (result.results[x]?.scenarioIndex) {
                             const scenarioIndex = String(result.results[x].scenarioIndex);
-                            const scenarioName = result.results[x]?.scenarioName || `Scenario ${scenarioIndex}`;
+                            const scenarioName = indexToScenarioName(scenarioIndex)
                             scenarios[scenarioIndex] = scenarioName;
                         }
                     }
                 }
             }
-            setScenarioIndices(scenarios);
+            const sortedScenarios = Object.fromEntries(
+                Object.entries(scenarios).sort(([,a],[,b]) => a.localeCompare(b))
+            );
+            setScenarioIndices(sortedScenarios);
 
             if (Object.keys(scenarios).length > 0) {
                 setSelectedScenario("");
