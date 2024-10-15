@@ -20,7 +20,7 @@ const GET_HUMAN_RESULTS = gql`
         getAllSimAlignment
   }`;
 
-const ENV_MAP = {
+const MRE_ENV_MAP = {
     "sim-sub": "Submarine",
     "sim-urban-sanitized": "Urban",
     "sim-jungle": "Jungle",
@@ -51,15 +51,15 @@ export default function HumanResults() {
     const [selectedScene, setSelectedScene] = React.useState(null);
     const [teamSelected, setSelectedTeam] = React.useState('adept');
     const [selectedPID, setSelectedPID] = React.useState(null);
-    
+
     React.useEffect(() => {
         evalOptions = [];
         if (evalIdOptionsRaw?.getEvalIdsForHumanResults) {
             for (const result of evalIdOptionsRaw.getEvalIdsForHumanResults) {
-                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+                evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
             }
         }
-         
+
     }, [evalIdOptionsRaw, evalOptions]);
 
     React.useEffect(() => {
@@ -73,7 +73,7 @@ export default function HumanResults() {
                 const scene = version == 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
-                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && pid === x.pid && (version == 3 ? ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
+                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && pid === x.pid && (version == 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
                     // go through the scene to find where each scenario starts/ends
                     entry['adept'] = [];
                     entry['soartech'] = [];
@@ -167,7 +167,15 @@ export default function HumanResults() {
         }
     };
 
-    function selectEvaluation(target){
+    const getScenarioName = () => {
+        if (selectedEval === 4) {
+            return selectedScene
+        } else {
+            return MRE_ENV_MAP[selectedScene] || selectedScene
+        }
+    }
+
+    function selectEvaluation(target) {
         setSelectedEval(target.value);
         setSelectedScene(null);
         setSelectedPID(null);
@@ -188,21 +196,23 @@ export default function HumanResults() {
                         value={evalOptions.find(option => option.value === selectedEval)}
                     />
                 </div>}
-            {selectedEval && selectedEval != 4 && dataByScene &&      
+            {selectedEval && selectedEval != 4 && dataByScene &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Environment</span>
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {
-                            Object.keys(dataByScene).map((item) =>
-                                <ListItem id={"scene_" + item} key={"scene_" + item}
-                                    button
-                                    selected={selectedScene === item}
-                                    onClick={() => { setSelectedScene(item); setSelectedPID(null); }}>
-                                    <ListItemText primary={ENV_MAP[item]} />
-                                </ListItem>
-                            )
+                            Object.keys(dataByScene)
+                                .filter(item => item in MRE_ENV_MAP)
+                                .map((item) =>
+                                    <ListItem id={"scene_" + item} key={"scene_" + item}
+                                        button
+                                        selected={selectedScene === item}
+                                        onClick={() => { setSelectedScene(item); setSelectedPID(null); }}>
+                                        <ListItemText primary={MRE_ENV_MAP[item]} />
+                                    </ListItem>
+                                )
                         }
                     </List>
                 </div>}
@@ -230,30 +240,34 @@ export default function HumanResults() {
                         <span className="nav-header-text">Participant ID</span>
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
-                        {Object.keys(dataByScene[selectedScene]).map((item) =>
-                            {
-                                if (dataByScene[selectedScene][item].evalNumber === selectedEval){
-                                    return (
+                        {Object.keys(dataByScene[selectedScene]).map((item) => {
+                            if (dataByScene[selectedScene][item].evalNumber === selectedEval) {
+                                return (
                                     <ListItem id={"pid_" + item} key={"pid_" + item}
                                         button
                                         selected={selectedPID === item}
                                         onClick={() => setSelectedPID(item)}>
                                         <ListItemText primary={item} />
                                     </ListItem>)
-                            
-                                }
-                            }                            
+
+                            }
+                        }
                         )}
                     </List>
                 </div>}
         </div>
         {selectedPID ?
             <div className="sim-participant">
+                <div className="participant-header">
+                <h2 className="participant-title">
+                    {`${getScenarioName()} - Participant ${selectedPID}`}
+                </h2>
                 {selectedEval == 3 && <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
                     <ToggleButton variant="secondary" id='choose-adept' value={"adept"}>ADEPT</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-freeform' value={"freeform"}>Freeform</ToggleButton>
                 </ToggleButtonGroup>}
+                </div>
                 <div className="table-container">
                     <table className="action-list">
                         <thead>
