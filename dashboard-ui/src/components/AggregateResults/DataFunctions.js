@@ -682,6 +682,25 @@ function formatCellData(data) {
     return data;
 }
 
+function sortedObjectKeys (objectKeys, selectedEval) {
+    // sorting tables for humanProbeData, compare adept, if same, then compare st
+    if (selectedEval === 4) {
+        return objectKeys.sort((a, b) => {
+            const [aAdept, aSoarTech] = a.split('_');
+            const [bAdept, bSoarTech] = b.split('_');
+            
+            const adeptComparison = aAdept.localeCompare(bAdept);
+            
+            if (adeptComparison === 0) {
+                return aSoarTech.localeCompare(bSoarTech);
+            }
+            
+            return adeptComparison;
+        });
+    }
+    return objectKeys;
+};
+
 function populateDataSet(data) {
     let simAlign = null;
     if (data.getAllSimAlignmentByEval) {
@@ -1200,4 +1219,4 @@ function getChartData(data) {
 }
 
 
-export { populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey, formatCellData };
+export { populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey, formatCellData, sortedObjectKeys };

@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellData } from './DataFunctions';
+import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellData, sortedObjectKeys} from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
@@ -525,7 +525,7 @@ export default function AggregateResults({ type }) {
                         />
                     </div>
 
-                    {aggregateData["groupedSim"] !== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) => {
+                    {aggregateData["groupedSim"] !== undefined && sortedObjectKeys(Object.keys(aggregateData["groupedSim"]), selectedEval).map((objectKey, key) => {
                         const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], objectKey.split('_')[0]);
                         return (<div className='chart-home-container' key={"container_" + key}>
                             <div className='chart-header'>
