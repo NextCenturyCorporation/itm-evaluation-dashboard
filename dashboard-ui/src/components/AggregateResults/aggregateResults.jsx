@@ -309,7 +309,7 @@ export default function AggregateResults({ type }) {
             }
         }
 
-    }, [evalIdOptionsRaw, evalOptions]);
+    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
