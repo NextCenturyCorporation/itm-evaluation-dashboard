@@ -46,7 +46,12 @@ const GET_COMPARISON_DATA = gql`
         getHumanToADMComparison
     }`;
 
-const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const GET_SIM_DATA = gql`
+    query GetSimAlignment($evalNumber: Float!){
+        getAllSimAlignmentByEval(evalNumber: $evalNumber)
+    }`;
+
+const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 
 export function RQ13() {
@@ -59,6 +64,7 @@ export function RQ13() {
         variables: { "evalNumber": 4 }
     });
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -93,12 +99,13 @@ export function RQ13() {
     }
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval) {
             const surveyResults = dataSurveyResults.getAllSurveyResults;
             const participantLog = dataParticipantLog.getParticipantLog;
             const textResults = dataTextResults.getAllScenarioResults;
             const admData = dataADMs.getAllHistoryByEvalNumber;
             const comparisons = comparisonData.getHumanToADMComparison;
+            const simData = dataSim.getAllSimAlignmentByEval;
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -179,6 +186,12 @@ export function RQ13() {
                             adm.history[adm.history.length - 1].parameters.target_id == page['admTarget']);
                         const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
                         entryObj['Alignment score (ADM|target)'] = alignment;
+                        const simEntry = simData.find((x) => x.pid == pid &&
+                            (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
+                            x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                        const alignmentData = simEntry?.data?.alignment?.adms_vs_text;
+                        entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD')) &&
+                            x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] == page['admTarget'])?.score ?? '-';
                         entryObj['Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'])?.score ?? '-';
                         entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
@@ -253,8 +266,8 @@ export function RQ13() {
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}

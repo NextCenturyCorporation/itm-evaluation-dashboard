@@ -264,7 +264,7 @@ export class App extends React.Component {
                                                                         Human Participant Data: Within-Subjects Analysis
                                                                     </NavDropdown.Item>
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
-                                                                        Human Sim Probe Values
+                                                                        Human Sim Probe Data
                                                                     </NavDropdown.Item>
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
                                                                         Play by Play: Humans in Sim

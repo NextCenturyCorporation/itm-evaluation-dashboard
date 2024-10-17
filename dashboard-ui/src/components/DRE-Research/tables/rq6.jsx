@@ -102,9 +102,10 @@ export function RQ6() {
                         allAttributes.push(att);
                         entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
                         allScenarios.push(entryObj['Scenario']);
-                        entryObj['Alignment score (Participant_Text|Participant_Sim)'] = simData.find((x) => x.pid == pid &&
+                        const vrVsText = simData.find((x) => x.pid == pid &&
                             (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
                             x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')))?.data?.alignment?.vr_vs_text;
+                        entryObj['Alignment score (Participant_Text|Participant_Sim)'] = ['QOL', 'VOL'].includes(att) ? vrVsText : vrVsText?.[att];
                         allObjs.push(entryObj);
                     }
                     pids.push(pid);
