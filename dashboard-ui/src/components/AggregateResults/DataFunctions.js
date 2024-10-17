@@ -1220,4 +1220,9 @@ function getChartData(data) {
 }
 
 
-export { populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey, formatCellData, sortedObjectKeys };
+function cleanDreData(data) {
+    console.log(data);
+    return data;
+}
+
+export { populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey, formatCellData, sortedObjectKeys, cleanDreData };

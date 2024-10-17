@@ -1,10 +1,11 @@
 import React from 'react';
-import './aggregateResults.css';
-import { populateDataSet } from './DataFunctions';
+import '../aggregateResults.css';
+import { populateDataSet } from '../DataFunctions';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
 import Select from 'react-select';
 import MreHomePage from './MRE_homePage';
+import DreHomePage from './DRE_homePage';
 
 
 const get_eval_name_numbers = gql`
@@ -30,13 +31,13 @@ const GET_SURVEY_RESULTS = gql`
 
 export default function ProgramQuestions() {
     const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [selectedEval, setSelectedEval] = React.useState(3);
+    const [selectedEval, setSelectedEval] = React.useState(4);
     const [fullData, setFullData] = React.useState(null);
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
 
     const { data } = useQuery(GET_ADM_DATA, {
-        variables: {"evalNumber": selectedEval},
+        variables: { "evalNumber": selectedEval },
     });
     const { loading, error, data: allData } = useQuery(GET_SURVEY_RESULTS, { variables: { "evalNumber": selectedEval } });
 
@@ -98,10 +99,10 @@ export default function ProgramQuestions() {
         }
     }, [data]);
 
-    function selectEvaluation(target){
+    function selectEvaluation(target) {
         setSelectedEval(target.value);
-    }    
-    
+    }
+
     return (
         <div className="home-container">
             <div className="selection-section">
@@ -117,8 +118,8 @@ export default function ProgramQuestions() {
                     }}
                 />
 
-            </div>   
-            {selectedEval == 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> : <></>}
+            </div>
+            {selectedEval == 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> : <DreHomePage fullData={fullData} />}
         </div>
     );
 }
