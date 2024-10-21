@@ -2,6 +2,8 @@
  * functions that help with data aggregation
  */
 
+import { getMeanAcrossAll } from "./statistics";
+
 const SIM_MAP = {
     "submarine": 1,
     "jungle": 2,
@@ -682,19 +684,19 @@ function formatCellData(data) {
     return data;
 }
 
-function sortedObjectKeys (objectKeys, selectedEval) {
+function sortedObjectKeys(objectKeys, selectedEval) {
     // sorting tables for humanProbeData, compare adept, if same, then compare st
     if (selectedEval === 4) {
         return objectKeys.sort((a, b) => {
             const [aAdept, aSoarTech] = a.split('_');
             const [bAdept, bSoarTech] = b.split('_');
-            
+
             const adeptComparison = aAdept.localeCompare(bAdept);
-            
+
             if (adeptComparison === 0) {
                 return aSoarTech.localeCompare(bSoarTech);
             }
-            
+
             return adeptComparison;
         });
     }
@@ -1225,4 +1227,197 @@ function cleanDreData(data) {
     return data;
 }
 
-export { populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey, formatCellData, sortedObjectKeys, cleanDreData };
+const getAlignmentComparisonVsTrustRatings = (data) => {
+    const byAttribute = {};
+    const byAlignment = {};
+    const attributes = ['IO', 'MJ', 'QOL', 'VOL'];
+    const alignments = ['aligned', 'baseline', 'misaligned'];
+    for (const att of attributes) {
+        const pairs = [];
+        const alignmentPairs = [];
+        for (let x of data.filter((d) => d.Attribute == att)) {
+            const align = x['Alignment score (Delegator|Observed_ADM (target))'];
+            const trust = x['Trust_Rating'];
+            if (isDefined(align) && align != '-' && isDefined(trust) && trust != '-') {
+                pairs.push({ x: align, y: trust });
+            }
+            const alignStatus = x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'];
+            if (isDefined(alignStatus) && alignStatus != '-' && isDefined(trust) && trust != '-') {
+                alignmentPairs.push({ x: alignments.indexOf(alignStatus) + (Math.random() * (att == 'IO' || att == 'QOL' ? -1 : 1) / 8), y: trust, label: alignStatus });
+            }
+        }
+        byAttribute[att] = pairs;
+        byAlignment[att] = alignmentPairs;
+    }
+    return { byAttribute, byAlignment };
+}
+
+const getAlignmentsByAdmType = (data) => {
+    const byAdmType = {};
+    const admTypes = ['aligned', 'baseline', 'misaligned'];
+    for (const admType of admTypes) {
+        const adms = [];
+        const targets = [];
+        const admPoints = [];
+        const targetPoints = [];
+        for (let x of data.filter((d) => d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == admType)) {
+            const align_adm = x['Alignment score (Delegator|Observed_ADM (target))'];
+            const align_target = x['Alignment score (Delegator|target)'];
+            if (isDefined(align_adm) && align_adm != '-') {
+                adms.push(align_adm);
+                admPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: admType });
+            }
+            if (isDefined(align_target) && align_target != '-') {
+                targets.push(align_target);
+                targetPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_target, label: admType });
+            }
+        }
+        byAdmType[admType] = { adms, targets, admPoints, targetPoints };
+    }
+    return byAdmType;
+}
+
+const getAlignmentsByAttribute = (data) => {
+    const byAttribute = {};
+    const attributes = ['IO', 'MJ', 'QOL', 'VOL'];
+    for (const attribute of attributes) {
+        const adms = [];
+        const admPoints = [];
+        for (let x of data.filter((d) => d['Attribute'] == attribute)) {
+            const align_adm = x['Alignment score (Delegator|Observed_ADM (target))'];
+            if (isDefined(align_adm) && align_adm != '-') {
+                adms.push(align_adm);
+                admPoints.push({ x: attributes.indexOf(attribute) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: attribute });
+            }
+        }
+        const rescaledAdms = [];
+        const rescaledAdmPoints = [];
+        const range = Math.max(...adms) - Math.min(...adms);
+        const min = Math.min(...adms);
+        for (let x of adms) {
+            const rescaled = (x - min) / range;
+            rescaledAdms.push(rescaled);
+            rescaledAdmPoints.push({ x: attributes.indexOf(attribute) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: rescaled, label: attribute });
+        }
+
+        byAttribute[attribute] = { adms, admPoints, rescaledAdms, rescaledAdmPoints };
+    }
+    return byAttribute;
+}
+
+function getDelegationPreferences(data) {
+    const dataByPid = {};
+    for (const entry of data.filter((x) => x['ADM_Type'] === 'comparison')) {
+        const pid = entry['Delegator_ID'];
+        const baseline = entry['Delegation preference (A/B)'];
+        const misaligned = entry['Delegation preference (A/M)'];
+        if (!Object.keys(dataByPid).includes(pid)) {
+            // will store 0 when baseline/misaligned is preferred, 1 otherwise
+            dataByPid[pid] = { 'baseline': [], 'misaligned': [] };
+        }
+        if (['A', 'B'].includes(baseline)) {
+            dataByPid[pid]['baseline'].push(baseline == 'B' ? 0 : 1);
+        }
+        if (['A', 'M'].includes(misaligned)) {
+            dataByPid[pid]['misaligned'].push(misaligned == 'M' ? 0 : 1);
+        }
+    }
+    const preferencePercents = { 'baseline': [], 'misaligned': [] };
+    for (const pid of Object.keys(dataByPid)) {
+        preferencePercents['baseline'].push(dataByPid[pid]['baseline'].reduce((s, a) => s + a, 0) / dataByPid[pid]['baseline'].length);
+        preferencePercents['misaligned'].push(dataByPid[pid]['misaligned'].reduce((s, a) => s + a, 0) / dataByPid[pid]['misaligned'].length);
+    }
+    return preferencePercents;
+}
+
+function getDelegationVsAlignment(data) {
+    const delegationVsAlignmentBaseline = { 'IO': [], 'MJ': [], 'QOL': [], 'VOL': [] };
+    const delegationVsAlignmentMisaligned = { 'IO': [], 'MJ': [], 'QOL': [], 'VOL': [] };
+    const alignedOnly = data.filter((x) => x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] === 'aligned');
+    for (const entry of alignedOnly) {
+        const delAB = entry['Delegation preference (A/B)'];
+        const delAM = entry['Delegation preference (A/M)'];
+        const alignment = entry['Alignment score (Delegator|Observed_ADM (target))'];
+        if (isDefined(alignment) && alignment != '-') {
+            if (['y', 'n'].includes(delAB)) {
+                delegationVsAlignmentBaseline[entry['Attribute']].push({ x: alignment, y: delAB == 'y' ? 1 : 0 });
+            }
+            if (['y', 'n'].includes(delAM)) {
+                delegationVsAlignmentMisaligned[entry['Attribute']].push({ x: alignment, y: delAM == 'y' ? 1 : 0 });
+            }
+        }
+
+    }
+    return { delegationVsAlignmentBaseline, delegationVsAlignmentMisaligned };
+}
+
+function getRatingsBySelectionStatus(data) {
+    const admsOnly = data.filter((x) => ['aligned', 'misaligned', 'baseline'].includes(x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']));
+    const results = { 'Selected': { 'Trust': [], 'Agree': [], 'Trustworthy': [], 'SRAlign': [] }, 'Not Selected': { 'Trust': [], 'Agree': [], 'Trustworthy': [], 'SRAlign': [] } };
+    for (const entry of admsOnly) {
+        const admType = entry['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
+        switch (admType) {
+            case 'baseline':
+                switch (entry['Delegation preference (A/B)']) {
+                    case 'y':
+                        results['Selected']['Trust'].push(entry['Trust_Rating']);
+                        results['Selected']['Agree'].push(entry['Agreement_Rating']);
+                        results['Selected']['Trustworthy'].push(entry['Trustworthy_Rating']);
+                        results['Selected']['SRAlign'].push(entry['SRAlign_Rating']);
+                        break;
+                    case 'n':
+                        results['Not Selected']['Trust'].push(entry['Trust_Rating']);
+                        results['Not Selected']['Agree'].push(entry['Agreement_Rating']);
+                        results['Not Selected']['Trustworthy'].push(entry['Trustworthy_Rating']);
+                        results['Not Selected']['SRAlign'].push(entry['SRAlign_Rating']);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case 'aligned':
+                const del = entry['Delegation preference (A/B)'] + entry['Delegation preference (A/M)'];
+                if (del.includes('y')) {
+                    results['Selected']['Trust'].push(entry['Trust_Rating']);
+                    results['Selected']['Agree'].push(entry['Agreement_Rating']);
+                    results['Selected']['Trustworthy'].push(entry['Trustworthy_Rating']);
+                    results['Selected']['SRAlign'].push(entry['SRAlign_Rating']);
+                }
+                else {
+                    results['Not Selected']['Trust'].push(entry['Trust_Rating']);
+                    results['Not Selected']['Agree'].push(entry['Agreement_Rating']);
+                    results['Not Selected']['Trustworthy'].push(entry['Trustworthy_Rating']);
+                    results['Not Selected']['SRAlign'].push(entry['SRAlign_Rating']);
+                }
+                break;
+            case 'misaligned':
+                switch (entry['Delegation preference (A/M)']) {
+                    case 'y':
+                        results['Selected']['Trust'].push(entry['Trust_Rating']);
+                        results['Selected']['Agree'].push(entry['Agreement_Rating']);
+                        results['Selected']['Trustworthy'].push(entry['Trustworthy_Rating']);
+                        results['Selected']['SRAlign'].push(entry['SRAlign_Rating']);
+                        break;
+                    case 'n':
+                        results['Not Selected']['Trust'].push(entry['Trust_Rating']);
+                        results['Not Selected']['Agree'].push(entry['Agreement_Rating']);
+                        results['Not Selected']['Trustworthy'].push(entry['Trustworthy_Rating']);
+                        results['Not Selected']['SRAlign'].push(entry['SRAlign_Rating']);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    return results;
+}
+
+export {
+    populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey,
+    formatCellData, sortedObjectKeys, cleanDreData, getAlignmentComparisonVsTrustRatings,
+    getAlignmentsByAdmType, getDelegationPreferences, getAlignmentsByAttribute, getDelegationVsAlignment,
+    getRatingsBySelectionStatus
+};

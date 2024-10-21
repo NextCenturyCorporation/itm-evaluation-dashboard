@@ -119,7 +119,7 @@ export default function ProgramQuestions() {
                 />
 
             </div>
-            {selectedEval == 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> : <DreHomePage fullData={fullData} />}
+            {fullData && (selectedEval == 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> : <DreHomePage fullData={fullData} admAlignment={admAlignment} />)}
         </div>
     );
 }

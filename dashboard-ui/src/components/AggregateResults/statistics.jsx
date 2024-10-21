@@ -73,4 +73,46 @@ function getStandardError(lst) {
     return [mean - se, mean + se];
 }
 
-export { getBoxWhiskerData, getMean, getMedian, getMode, getStandDev, getStandardError };
+const getMeanAcrossAll = (obj, keys = 'all') => {
+    const data = [];
+    if (obj != undefined) {
+        for (const key of Object.keys(obj)) {
+            if (keys === 'all' || keys.includes(key)) {
+                data.push(...obj[key]);
+            }
+        }
+    }
+    return getMean(data);
+};
+
+const getSeAcrossAll = (obj, keys = 'all') => {
+    const data = [];
+    if (obj != undefined) {
+        for (const key of Object.keys(obj)) {
+            if (keys === 'all' || keys.includes(key)) {
+                data.push(...obj[key]);
+            }
+        }
+    }
+    return getStandardError(data);
+};
+
+
+const calculateBestFitLine = (data) => {
+    const n = data.length;
+    const sumX = data.reduce((acc, point) => acc + point.x, 0);
+    const sumY = data.reduce((acc, point) => acc + point.y, 0);
+    const sumXY = data.reduce((acc, point) => acc + point.x * point.y, 0);
+    const sumX2 = data.reduce((acc, point) => acc + point.x * point.x, 0);
+
+    const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const b = (sumY - m * sumX) / n;
+
+    const lineData = [
+        { x: Math.min(...data.map((x) => x.x)), y: m * Math.min(...data.map((x) => x.x)) + b },
+        { x: Math.max(...data.map((x) => x.x)), y: m * Math.max(...data.map((x) => x.x)) + b },
+    ];
+    return lineData;
+};
+
+export { getBoxWhiskerData, getMean, getMedian, getMode, getStandDev, getStandardError, getMeanAcrossAll, getSeAcrossAll, calculateBestFitLine };

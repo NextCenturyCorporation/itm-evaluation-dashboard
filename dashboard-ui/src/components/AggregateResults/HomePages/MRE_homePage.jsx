@@ -2,7 +2,7 @@ import { ScatterChart } from '@mui/x-charts';
 import React from 'react';
 import '../aggregateResults.css';
 import CanvasJSReact from '@canvasjs/react-charts';
-import { getBoxWhiskerData, getMean, getMedian, getStandDev, getStandardError } from '../statistics';
+import { getBoxWhiskerData, getMean, getMeanAcrossAll, getMedian, getSeAcrossAll, getStandDev, getStandardError } from '../statistics';
 import { isDefined, getChartData } from '../DataFunctions';
 
 
@@ -130,30 +130,6 @@ export default function MreHomePage({ fullData, admKdmas, admAlignment }) {
 
     const setYAxis = (e) => {
         return AXIS_CONVERSION[e.value] || '';
-    };
-
-    const getMeanAcrossAll = (obj, keys = 'all') => {
-        const data = [];
-        if (obj != undefined) {
-            for (const key of Object.keys(obj)) {
-                if (keys === 'all' || keys.includes(key)) {
-                    data.push(...obj[key]);
-                }
-            }
-        }
-        return getMean(data);
-    };
-
-    const getSeAcrossAll = (obj, keys = 'all') => {
-        const data = [];
-        if (obj != undefined) {
-            for (const key of Object.keys(obj)) {
-                if (keys === 'all' || keys.includes(key)) {
-                    data.push(...obj[key]);
-                }
-            }
-        }
-        return getStandardError(data);
     };
 
     const getN = (obj, keys = 'all') => {
