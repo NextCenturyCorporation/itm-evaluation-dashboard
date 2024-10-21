@@ -6,6 +6,7 @@ networks:
 services:
   nginx:
     image: nginx:latest
+    restart: always
     container_name: dashboard-nginx
     volumes:
       - ./resources/nginx.conf:/etc/nginx/nginx.conf
@@ -22,6 +23,7 @@ services:
   dashboard-ui:
     container_name: dashboard-ui
     image: dashboard-ui
+    restart: always
     volumes:
       - ../dashboard-ui/public/configs/prod/config.js:/usr/src/app/src/services/config.js
       - ../dashboard-ui/public:/usr/src//app/public
@@ -40,6 +42,7 @@ services:
   dashboard-server:
     container_name: dashboard-graphql
     image: dashboard-graphql
+    restart: always
     volumes:
       - ../dashboard-ui/public/configs/prod/graphql-config.js:/usr/src/app/config.js
       - $HOME/.aws/:/root/.aws/:ro
@@ -55,6 +58,7 @@ services:
       NODE_OPTIONS: "--max-old-space-size=16384"
   dashboard-mongo: 
     image: 'mongo'
+    restart: always
     container_name: dashboard-mongo
     command: --port 27030
     networks:
