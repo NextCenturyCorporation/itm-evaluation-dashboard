@@ -1221,12 +1221,6 @@ function getChartData(data) {
     return { 'scatter': scattered, 'stt': stt, 'sts': sts, 'adt': adt, 'ads': ads };
 }
 
-
-function cleanDreData(data) {
-    console.log(data);
-    return data;
-}
-
 const getAlignmentComparisonVsTrustRatings = (data) => {
     const byAttribute = {};
     const byAlignment = {};
@@ -1417,7 +1411,7 @@ function getRatingsBySelectionStatus(data) {
 
 export {
     populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey,
-    formatCellData, sortedObjectKeys, cleanDreData, getAlignmentComparisonVsTrustRatings,
+    formatCellData, sortedObjectKeys, getAlignmentComparisonVsTrustRatings,
     getAlignmentsByAdmType, getDelegationPreferences, getAlignmentsByAttribute, getDelegationVsAlignment,
     getRatingsBySelectionStatus
 };
