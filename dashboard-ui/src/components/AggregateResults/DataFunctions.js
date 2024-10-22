@@ -18,6 +18,18 @@ const SIM_MAP = {
     "dryrun-soartech-eval-vol3": 3
 }
 
+const adept_dre_names = {
+    '1': 'DryRunEval-MJ2-eval',
+    '2': 'DryRunEval-MJ4-eval',
+    '3': 'DryRunEval-MJ5-eval'
+}
+
+const st_dre_names = {
+    '1': 'QOL-VOL-1',
+    '2': 'QOL-VOL-2',
+    '3': 'QOL-VOL-3'
+}
+
 const MED_ROLE_MAP = {
     "M-3 Medical student": 1,
     "M-4 medical student": 1,
@@ -653,19 +665,56 @@ function populateHumanDataRow(rowObject, version) {
     return returnObj;
 }
 
+function getGroupKey(row, selectedEval) {
+    if (selectedEval === 3) {
+        return row.SimEnv;
+    } else if (selectedEval === 4) {
+        const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
+        const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
+        return `${adeptName}_${stName}`;
+    }
+}
+
+function formatCellData(data) {
+    if (typeof data === 'object' && data !== null) {
+        return JSON.stringify(data);
+    }
+    return data;
+}
+
+function sortedObjectKeys (objectKeys, selectedEval) {
+    // sorting tables for humanProbeData, compare adept, if same, then compare st
+    if (selectedEval === 4) {
+        return objectKeys.sort((a, b) => {
+            const [aAdept, aSoarTech] = a.split('_');
+            const [bAdept, bSoarTech] = b.split('_');
+            
+            const adeptComparison = aAdept.localeCompare(bAdept);
+            
+            if (adeptComparison === 0) {
+                return aSoarTech.localeCompare(bSoarTech);
+            }
+            
+            return adeptComparison;
+        });
+    }
+    return objectKeys;
+};
+
 function populateDataSet(data) {
     let simAlign = null;
     if (data.getAllSimAlignmentByEval) {
         const version = data.getAllSimAlignmentByEval[0]?.evalNumber;
-        simAlign = getSimAlignment(data.getAllSimAlignmentByEval);
-        let tempGroupHumanSimData = version == 3 ? Object.groupBy(data.getAllSimAlignmentByEval, ({ env }) => env) : Object.groupBy(data.getAllSimAlignmentByEval, ({ pid }) => pid);
+        const simData = data.getAllSimAlignmentByEval.filter((x) => !x.openWorld);
+        simAlign = getSimAlignment(simData);
+        let tempGroupHumanSimData = version == 3 ? Object.groupBy(simData, ({ env }) => env) : Object.groupBy(simData, ({ pid }) => pid);
         Object.keys(tempGroupHumanSimData).forEach(key => {
             if (version == 3) {
                 tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({ pid }) => pid);
                 let tempGroupPidArray = [];
                 Object.keys(tempGroupHumanSimData[key]).forEach(keyPid => {
                     if (keyPid.indexOf(" ") === -1) {
-                        tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid], data.getAllSimAlignmentByEval[0].evalNumber));
+                        tempGroupPidArray.push(populateHumanDataRow(tempGroupHumanSimData[key][keyPid], simData[0].evalNumber));
                     }
                 });
                 tempGroupHumanSimData[key] = tempGroupPidArray;
@@ -783,10 +832,10 @@ function populateDataSet(data) {
                 tmpSet['IO_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
                 const qol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.sid;
                 const qol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
-                tmpSet['QOL_KDMA_Sim'] = qol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-';
+                tmpSet['QOL_KDMA_Sim'] = ['202409112'].includes(pid) ? '-' : (qol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-');
                 const vol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.sid;
                 const vol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved');
-                tmpSet['VOL_KDMA_Sim'] = vol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores` : '-';
+                tmpSet['VOL_KDMA_Sim'] = ['202409111', '202409112'].includes(pid) ? '-' : (vol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_URL + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores` : '-');
                 const adept_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('DryRun'))?.kdmas;
                 if (Array.isArray(adept_text_kdmas)) {
                     tmpSet['MJ_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
@@ -1171,4 +1220,4 @@ function getChartData(data) {
 }
 
 
-export { populateDataSet, getAggregatedData, getChartData, isDefined };
+export { populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey, formatCellData, sortedObjectKeys };

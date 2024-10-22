@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { getAggregatedData, populateDataSet, isDefined } from './DataFunctions';
+import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellData, sortedObjectKeys} from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
@@ -219,33 +219,33 @@ const ADEPT_HEADERS_DRE = {
 
 const HEADER_SIM_DATA = {
     3: [
-    "Participant",
-    "SimEnv",
-    "SimOrder",
-    "AD_P1",
-    "AD_P2",
-    "AD_P3",
-    "ST_1.1",
-    "ST_1.2",
-    "ST_1.3",
-    "ST_2.2", 
-    "ST_2.3",
-    "ST_3.1",
-    "ST_3.2",
-    "ST_4.1",
-    "ST_4.2",
-    "ST_4.3",
-    "ST_5.1",
-    "ST_5.2",
-    "ST_5.3",
-    "ST_6.1",
-    "ST_6.2",
-    "ST_8.1",
-    "ST_8.2",
-    "AD_KDMA_Env",
-    "ST_KDMA_Env",
-    "AD_KDMA",
-    "ST_KDMA"
+        "Participant",
+        "SimEnv",
+        "SimOrder",
+        "AD_P1",
+        "AD_P2",
+        "AD_P3",
+        "ST_1.1",
+        "ST_1.2",
+        "ST_1.3",
+        "ST_2.2",
+        "ST_2.3",
+        "ST_3.1",
+        "ST_3.2",
+        "ST_4.1",
+        "ST_4.2",
+        "ST_4.3",
+        "ST_5.1",
+        "ST_5.2",
+        "ST_5.3",
+        "ST_6.1",
+        "ST_6.2",
+        "ST_8.1",
+        "ST_8.2",
+        "AD_KDMA_Env",
+        "ST_KDMA_Env",
+        "AD_KDMA",
+        "ST_KDMA"
     ],
     4: [
         "Participant",
@@ -295,32 +295,43 @@ export default function AggregateResults({ type }) {
     const [iframeTitle, setIframeTitle] = React.useState(null);
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
-        variables: {"evalNumber": selectedEval}
+        variables: { "evalNumber": selectedEval }
         // only pulls from network, never cached
         //fetchPolicy: 'network-only',
     });
 
     React.useEffect(() => {
         evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForSimAlignment) { 
+        if (evalIdOptionsRaw?.getEvalIdsForSimAlignment) {
             for (const result of evalIdOptionsRaw.getEvalIdsForSimAlignment) {
-                evalOptions.push({value: result._id.evalNumber, label:  result._id.evalName})
+                evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
 
             }
         }
-         
+
     }, [evalIdOptionsRaw, evalOptions]);
 
     React.useEffect(() => {
-        // only get chosen survey version!!
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
             const full = populateDataSet(data);
             full.sort((a, b) => a['ParticipantID'] - b['ParticipantID']);
             setFullData(full);
-            setAggregateData(getAggregatedData());
+
+            const grouped = getAggregatedData();
+            if (grouped.groupedSim) {
+                const newGroupedSim = {};
+                Object.values(grouped.groupedSim).flat().forEach(row => {
+                    const key = getGroupKey(row, selectedEval);
+                    if (!newGroupedSim[key]) {
+                        newGroupedSim[key] = [];
+                    }
+                    newGroupedSim[key].push(row);
+                });
+                grouped.groupedSim = newGroupedSim;
+            }
+            setAggregateData(grouped);
         }
-        
-    }, [data, error, loading]);
+    }, [data, error, loading, selectedEval]);
 
     const exportToExcel = async () => {
         const dataCopy = structuredClone(fullData);
@@ -354,11 +365,10 @@ export default function AggregateResults({ type }) {
             FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'human_sim_data' + fileExtension);
         }
         else {
-            // because of different headers, create a different sheet for each adept environment
             const sheets = {};
-            const names = []
+            const names = [];
             for (const objKey in aggregateData['groupedSim']) {
-                // recreate object based on header so that excel sheet is organized (this is important if you don't want a crazy excel doc!)
+                const [adeptScenario, stScenario] = objKey.split('_');
                 const data = [];
                 for (const origObj of aggregateData['groupedSim'][objKey]) {
                     const newObj = {};
@@ -374,7 +384,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: sheets, SheetNames: names };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data_' + (selectedEval == 3 ? 'mre' : 'dre') + fileExtension);
+            FileSaver.saveAs(data, 'human_sim_data_dre' + fileExtension);
         }
     };
 
@@ -382,9 +392,9 @@ export default function AggregateResults({ type }) {
         setShowDefinitions(false);
     }
 
-    function selectEvaluation(target){
+    function selectEvaluation(target) {
         setSelectedEval(target.value);
-    }    
+    }
 
     const getHeadersEval4 = (headers, adeptScenario) => {
         const splitPoint = headers.indexOf('ADEPT_Session_Id');
@@ -421,9 +431,13 @@ export default function AggregateResults({ type }) {
         }
     }
 
+    const capitalizeFirstLetter = (string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      };
+
     return (
         <div className='aggregatePage'>
-            {type === 'HumanSimParticipant' && 
+            {type === 'HumanSimParticipant' &&
                 <div className="home-container">
                     <Modal className='table-modal' open={showIframe} onClose={closeIframe}>
                         <div className='modal-body'>
@@ -485,7 +499,7 @@ export default function AggregateResults({ type }) {
             }
 
             {type === 'Program' && <ProgramQuestions />}
-            {(type === 'HumanProbeData' && aggregateData) && 
+            {(type === 'HumanProbeData' && aggregateData) &&
                 <div className="home-container">
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
@@ -509,19 +523,20 @@ export default function AggregateResults({ type }) {
                                 menu: provided => ({ ...provided, zIndex: 9999 })
                             }}
                         />
-                    </div>                    
-                
-                    {aggregateData["groupedSim"]!== undefined && Object.keys(aggregateData["groupedSim"]).map((objectKey, key) =>
-                    {
-                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], objectKey);
+                    </div>
+
+                    {aggregateData["groupedSim"] !== undefined && sortedObjectKeys(Object.keys(aggregateData["groupedSim"]), selectedEval).map((objectKey, key) => {
+                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], objectKey.split('_')[0]);
                         return (<div className='chart-home-container' key={"container_" + key}>
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
-                                    <h4 key={"header_" + objectKey}>{objectKey[0].toUpperCase() + objectKey.slice(1)}</h4>
+                                    <h4 key={"header_" + objectKey}>
+                                        {selectedEval === 3 ? capitalizeFirstLetter(objectKey) : `ADEPT: ${objectKey.split('_')[0]}, SoarTech: ${objectKey.split('_')[1]}`}
+                                    </h4>
                                 </div>
                             </div>
                             <div key={"container_" + key} className='resultTableSection result-table-section-override'>
-                                
+
                                 <table key={"table_" + objectKey} className="itm-table">
                                     <thead>
                                         <tr>
@@ -533,7 +548,9 @@ export default function AggregateResults({ type }) {
                                     <tbody>
                                         {aggregateData["groupedSim"][objectKey].map((rowObj, rowKey) => (
                                             <tr key={"tr_" + rowKey}>
-                                                {headers?.map((item, itemKey) => (<td key={"row_" + item + itemKey}>{rowObj !== undefined ? rowObj[item] : ""}</td>))}
+                                                {headers?.map((item, itemKey) => (<td key={"row_" + item + itemKey}>
+                                                    {rowObj !== undefined ? formatCellData(rowObj[item]) : ""}
+                                                </td>))}
                                             </tr>
                                         ))}
                                     </tbody>
