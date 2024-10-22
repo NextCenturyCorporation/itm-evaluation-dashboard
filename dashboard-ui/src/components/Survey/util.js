@@ -34,3 +34,10 @@ export const survey3_0_groups = [
         ['TAD', 'Adept Submarine'],
         ['kitware', 'Adept Submarine']
 ]
+
+export function surveyVersion_x_0(surveyVersion) {
+    if (surveyVersion.toString().endsWith('.0')) {
+      return parseInt(surveyVersion);
+    }
+    return surveyVersion;
+  }

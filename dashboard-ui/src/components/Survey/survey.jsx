@@ -11,7 +11,7 @@ import { OmnibusComparison } from "./omnibusComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery } from 'react-apollo'
-import { getUID, shuffle, survey3_0_groups } from './util';
+import { getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './util';
 import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
@@ -1101,7 +1101,7 @@ class SurveyPage extends Component {
         this.surveyData.user = this.props.currentUser;
         this.surveyData.timeComplete = new Date().toString();
         this.surveyData.startTime = this.state.startTime;
-        this.surveyData.surveyVersion = this.state.surveyVersion;
+        this.surveyData.surveyVersion = surveyVersion_x_0(this.state.surveyVersion);
         this.surveyData.browserInfo = this.state.browserInfo;
 
         // 7-16 data collect. Log info about order, agent, and DM 
