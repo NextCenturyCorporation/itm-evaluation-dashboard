@@ -107,6 +107,15 @@
         justify-content: space-around;
     }
 
+    .q2-scatters {
+        flex-direction: column;
+    }
+
+    .q2-scatters .outlinedPlot {
+        width: auto;
+        min-width: 712px;
+    }
+
 }
 
 @media only screen and (max-width: 1449px) {
@@ -134,6 +143,15 @@
 
     .rq3-lines .outlinedPlot {
         width: auto;
+    }
+
+    .q2-scatters {
+        flex-direction: column;
+    }
+
+    .q2-scatters .outlinedPlot {
+        width: auto;
+        min-width: 712px;
     }
 
 }
