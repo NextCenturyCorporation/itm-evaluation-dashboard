@@ -1,9 +1,14 @@
 import React from 'react';
 import { accountsPassword } from '../../services/accountsService';
 import { withRouter } from 'react-router-dom';
-import $, { trim } from 'jquery';
-import brandImage from '../../img/logo.png';
+import $ from 'jquery';
+import brandImage from '../../img/itm-logo.png';
 import { Tabs, Tab, Toast } from 'react-bootstrap';
+import './login.css';
+import bcrypt from 'bcryptjs';
+import VisibilityIcon from '@material-ui/icons/Visibility';
+import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
+
 class LoginApp extends React.Component {
 
     constructor(props) {
@@ -11,17 +16,54 @@ class LoginApp extends React.Component {
         this.state = {
             userName: "",
             password: "",
+            classification: "",
             error: null,
             createUserName: "",
             createPassword: "",
             createEmail: "",
+            textEmail: "",
+            textClassification: "",
             forgotEmail: "",
             loginFailed: false,
-            createAccountFailed: false
+            createAccountFailed: false,
+            pidCreationFailed: false,
+            viewHiddenEmail: false
         };
-
         this.login = this.login.bind(this);
         this.createAccount = this.createAccount.bind(this);
+    }
+
+    setupPID = async (e) => {
+        e.preventDefault();  // Prevent the default form submission
+        const { textEmail, textClassification } = this.state;
+
+        // removing leading and trailing white space 
+        const trimmedEmail = textEmail.trim();
+
+        if (!textEmail || !textClassification) {
+            $("#text-entry-feedback").addClass("feedback-display").text("All fields are required.");
+            return; // Stop the function if any field is empty
+        }
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // email regex
+        if (!re.test(trimmedEmail)) {
+            $("#text-entry-feedback").addClass("feedback-display").text("Please ensure that you enter a valid email address.");
+            return;
+        }
+        const hashedEmail = bcrypt.hashSync(trimmedEmail, "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
+
+        $("#text-entry-feedback").removeClass("feedback-display");
+        try {
+            // let results = await accountsPassword.createUser({
+            //     classification: textClassification,
+            //     email: trimmedEmail
+            // });
+
+            // this.props.history.push('/');
+            // this.props.userLoginHandler(results.user);
+        } catch (err) {
+            $("#text-entry-feedback").addClass("feedback-display");
+            this.setState({ error: err.message, pidCreationFailed: true });
+        }
     }
 
     createAccount = async (e) => {
@@ -59,9 +101,6 @@ class LoginApp extends React.Component {
             this.setState({ error: err.message, createAccountFailed: true });
         }
     }
-
-
-
 
     login = async () => {
         $("#sign-in-feedback").removeClass("feedback-display");
@@ -127,6 +166,14 @@ class LoginApp extends React.Component {
         this.setState({ forgotEmail: target.value });
     }
 
+    onChangeTextEmail = ({ target }) => {
+        this.setState({ textEmail: target.value });
+    }
+
+    onChangeClassification = ({ target }) => {
+        this.setState({ textClassification: target.value });
+    }
+
     showSignIn = (evt) => {
         $("#sign-in-pane").removeClass("display-none");
         $("#forgot-password-pane").addClass("display-none");
@@ -136,6 +183,10 @@ class LoginApp extends React.Component {
         $("#sign-in-pane").addClass("display-none");
         $("#forgot-password-pane").removeClass("display-none");
     };
+
+    toggleVisibility = () => {
+        this.setState({ viewHiddenEmail: !this.state.viewHiddenEmail });
+    }
 
     loginErrorMappings = {
         "GraphQL error: Unrecognized options for login request": "Please enter your username and password.",
@@ -150,23 +201,21 @@ class LoginApp extends React.Component {
 
     render() {
         return (
-            <div className="container-fluid vertical-height-100">
+            <div className='full-page'>
+                <div className="login-header-logo">
+                    <div className="d-flex justify-content-center">
+                        <img src={brandImage} alt="" />
+                    </div>
+                    <h1 className="d-flex justify-content-center login-header-text">ITM Dashboard</h1>
+                </div>
                 <div className="row justify-content-center align-items-center h-100 center-container">
-                    <div className="col col-md-4 login-container">
-                        <div className="login-header-logo">
-                            <div className="d-flex justify-content-center">
-                                <img src={brandImage} alt="" />
-                            </div>
-                            <div className="d-flex justify-content-center login-header-text">Dashboard</div>
-                        </div>
-
-
-                        <Tabs className='p-1' defaultActiveKey={1}>
+                    <div className="login-container">
+                        <Tabs className='p-1' defaultActiveKey={this.props.isParticipant ? 2 : 1}>
                             <Tab eventKey={0} title="Create Account">
                                 <div>
                                     <div className="sign-in-instructions">
-                                        <div className="sign-in-header">Create Account</div>
-                                        <div>Create an account to save, share and comment on queries.</div>
+                                        <h4 className="sign-in-header">Create Account</h4>
+                                        <p className='subtext'>Create an account to view results.</p>
                                     </div>
                                     <form onSubmit={this.createAccount}>
                                         <div className="form-group">
@@ -190,7 +239,7 @@ class LoginApp extends React.Component {
                                             </Toast>
                                         )}
                                         <div className="form-group">
-                                            <button className="btn btn-primary btn-lg btn-block mt-1" type="submit">Create Account</button>
+                                            <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Create Account</button>
                                         </div>
                                         <div className="invalid-feedback" id="create-account-feedback">
                                             {this.state.error}
@@ -202,8 +251,8 @@ class LoginApp extends React.Component {
                                 <div >
                                     <div id="sign-in-pane">
                                         <div className="sign-in-instructions">
-                                            <div className="sign-in-header">Sign in</div>
-                                            <div>Sign in using your username or email address.</div>
+                                            <h4 className="sign-in-header">Sign in</h4>
+                                            <p className='subtext'>Sign in using your username or email address.</p>
                                         </div>
                                         <form>
                                             <div className="form-group">
@@ -211,7 +260,10 @@ class LoginApp extends React.Component {
                                                 <input className="form-control form-control-lg" placeholder="Email / Username" type="text" id="userName" value={this.state.userName} onChange={this.onChangeUserName} />
                                             </div>
                                             <div className="form-group">
-                                                <div className="input-login-header">Password</div>
+                                                <div className='multi-header'>
+                                                    <div className="input-login-header">Password</div>
+                                                    <a className="" id="forgot-pass-tab" href="#forgot" onClick={this.forgotPasswordLink}>Forgot Password?</a>
+                                                </div>
                                                 <input className="form-control form-control-lg" placeholder="Password" type="password" id="password" value={this.state.password} onChange={this.onChangePassword} />
                                             </div>
                                             <div className="form-group">
@@ -225,12 +277,7 @@ class LoginApp extends React.Component {
                                                 )}
                                             </div>
                                             <div className="form-group">
-                                                <div className="forgot-password">
-                                                    <a className="" id="forgot-pass-tab" href="#forgot" onClick={this.forgotPasswordLink}>Forgot Password?</a>
-                                                </div>
-                                            </div>
-                                            <div className="form-group">
-                                                <button className="btn btn-primary btn-lg btn-block" onClick={this.login} type="button">Sign In</button>
+                                                <button className="action-btn sd-btn sd-navigation__next-btn" onClick={this.login} type="button">Sign In</button>
                                             </div>
                                             <div className="invalid-feedback" id="sign-in-feedback">
                                                 {this.state.error}
@@ -240,8 +287,8 @@ class LoginApp extends React.Component {
                                     <div id="forgot-password-pane" className="display-none">
                                         <div id="send-forgot-email-pane">
                                             <div className="sign-in-instructions">
-                                                <div className="sign-in-header">Forgot Password</div>
-                                                <div>Enter your email address to reset password.</div>
+                                                <h4 className="sign-in-header">Forgot Password</h4>
+                                                <p className='subtext'>Enter your email address to reset password.</p>
                                             </div>
                                             <form>
                                                 <div className="form-group">
@@ -249,7 +296,7 @@ class LoginApp extends React.Component {
                                                     <input className="form-control form-control-lg" placeholder="Email" type="text" id="forgotEmail" value={this.state.forgotEmail} onChange={this.onChangeForgotEmail} />
                                                 </div>
                                                 <div className="form-group">
-                                                    <button className="btn btn-primary btn-lg btn-block" onClick={this.resetPassword} type="button">Send Reset Email</button>
+                                                    <button className="action-btn sd-btn sd-navigation__next-btn" onClick={this.resetPassword} type="button">Send Reset Email</button>
                                                 </div>
                                                 <div className="invalid-feedback" id="reset-password-feedback">
                                                     {this.state.error}
@@ -258,10 +305,61 @@ class LoginApp extends React.Component {
                                         </div>
                                         <div id="success-forgot-email-pane" className="display-none">
                                             <div className="sign-in-instructions">
-                                                <div className="sign-in-header">Email sent!</div>
-                                                <div>Check your email for a link to reset your password.</div>
+                                                <h4 className="sign-in-header">Email sent!</h4>
+                                                <p className='subtext'>Check your email for a link to reset your password.</p>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                            </Tab>
+                            <Tab eventKey={2} title="Text Scenario Login">
+                                <div >
+                                    <div id="sign-in-pane">
+                                        <div className="sign-in-instructions">
+                                            <h4 className="sign-in-header">Start Text Scenario</h4>
+                                            <p className='justified-subtext'>To start the text scenario portion of the experiment, enter your email address. You will be asked
+                                                for this email address at the study location, so please remember what you use.
+                                            </p>
+                                        </div>
+                                        <form onSubmit={this.setupPID}>
+                                            <div className="form-group">
+                                                <div className="input-login-header">Email Address</div>
+                                                <div className="input-with-btn">
+                                                    <input className="form-control form-control-lg" required placeholder="Email" type={this.state.viewHiddenEmail ? "text" : "password"} id="emailOnly" value={this.state.textEmail} onChange={this.onChangeTextEmail} />
+                                                    <button className="blank-btn" type='button' onClick={this.toggleVisibility}>{this.state.viewHiddenEmail ? <VisibilityIcon /> : <VisibilityOffIcon />}</button>
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
+                                                <div className="input-login-header">Classification</div>
+                                                <div className='radios'>
+                                                    <div>
+                                                        <input type="radio" id="mil" name="classification" value="mil" onChange={this.onChangeClassification} required />
+                                                        <label htmlFor="mil">Military</label>
+                                                    </div>
+                                                    <div>
+                                                        <input type="radio" id="civ" name="classification" value="civ" onChange={this.onChangeClassification} />
+                                                        <label htmlFor="mil">Civilian</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
+                                                {this.state.loginFailed && (
+                                                    <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ loginFailed: false })}>
+                                                        <Toast.Header>
+                                                            <strong className="me-auto">Error Creating User</strong>
+                                                        </Toast.Header>
+                                                        <Toast.Body className='text-white'>{this.loginErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
+                                                    </Toast>
+                                                )}
+                                            </div>
+
+                                            <div className="form-group">
+                                                <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Start</button>
+                                            </div>
+                                            <div className="invalid-feedback" id="text-entry-feedback">
+                                                {this.state.error}
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </Tab>

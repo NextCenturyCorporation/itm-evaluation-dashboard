@@ -94,7 +94,10 @@ function AdmResults() {
     return <ADMChartPage />
 }
 
-function Login({ newState, userLoginHandler, updateHandler }) {
+function Login({ newState, userLoginHandler, participantTextLogin }) {
+    if (participantTextLogin) {
+        return <LoginApp userLoginHandler={userLoginHandler} isParticipant={participantTextLogin} />;
+    }
     if (newState !== null) {
         if (newState.currentUser !== null) {
             return <Home newState={newState} currentUser={newState.currentUser} />;
@@ -105,6 +108,7 @@ function Login({ newState, userLoginHandler, updateHandler }) {
         return <LoginApp userLoginHandler={userLoginHandler} />;
     }
 }
+
 
 function MyAccount({ newState, userLoginHandler }) {
     if (newState.currentUser === null) {
@@ -166,7 +170,7 @@ export class App extends React.Component {
         //refresh the session to get a new accessToken if expired
         const tokens = await accountsClient.refreshSession();
 
-        if (window.location.href.indexOf("reset-password") > -1) {
+        if (window.location.href.indexOf("reset-password") > -1 || window.location.href.indexOf("/participantText") > -1) {
             return;
         }
 
@@ -341,6 +345,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/login">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/participantText">
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantTextLogin={true} />
                                                     </Route>
                                                     <Route path="/reset-password/:token" component={ResetPassPage} />
                                                     <Route path="/myaccount">
