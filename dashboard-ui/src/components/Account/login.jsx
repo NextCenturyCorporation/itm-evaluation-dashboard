@@ -53,6 +53,7 @@ class LoginApp extends React.Component {
 
         $("#text-entry-feedback").removeClass("feedback-display");
         try {
+            this.props.participantLoginHandler(hashedEmail, textClassification, this.props.updatePLog);
             // let results = await accountsPassword.createUser({
             //     classification: textClassification,
             //     email: trimmedEmail
@@ -333,12 +334,12 @@ class LoginApp extends React.Component {
                                                 <div className="input-login-header">Classification</div>
                                                 <div className='radios'>
                                                     <div>
-                                                        <input type="radio" id="mil" name="classification" value="mil" onChange={this.onChangeClassification} required />
-                                                        <label htmlFor="mil">Military</label>
+                                                        <input type="radio" id="Mil" name="classification" value="Mil" onChange={this.onChangeClassification} required />
+                                                        <label htmlFor="Mil">Military</label>
                                                     </div>
                                                     <div>
-                                                        <input type="radio" id="civ" name="classification" value="civ" onChange={this.onChangeClassification} />
-                                                        <label htmlFor="mil">Civilian</label>
+                                                        <input type="radio" id="Civ" name="classification" value="Civ" onChange={this.onChangeClassification} />
+                                                        <label htmlFor="Civ">Civilian</label>
                                                     </div>
                                                 </div>
                                             </div>

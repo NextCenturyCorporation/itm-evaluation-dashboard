@@ -6,7 +6,7 @@ import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useSelector, useDispatch } from "react-redux";
 import '../../css/admin-page.css';
-import { setSurveyVersion, setupConfigWithImages } from '../App/configSetup';
+import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`

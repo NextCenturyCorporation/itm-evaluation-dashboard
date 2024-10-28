@@ -8,6 +8,7 @@ import { Autocomplete, TextField, Modal } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ2.2_2.3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ2.2_2.3.pdf';
 import { ADM_NAME_MAP, exportToExcel } from "../utils";
+import { isDefined } from "../../AggregateResults/DataFunctions";
 
 const getAdmData = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
@@ -65,7 +66,10 @@ export function RQ2223() {
                 const scenario = adm.history[0].response?.id ?? adm.history[1].response?.id;
                 const last_entry = adm.history[adm.history.length - 1];
                 const target = last_entry.parameters.target_id;
-                const alignment = last_entry.response.score;
+                const alignment = last_entry.response?.score;
+                if (!isDefined(alignment)) {
+                    continue;
+                }
                 if (!Object.keys(ADM_NAME_MAP).includes(admName)) {
                     continue;
                 }

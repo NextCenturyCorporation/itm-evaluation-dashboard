@@ -208,12 +208,13 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    updateAdminUser(username: String, isAdmin: Boolean): JSON
-    updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON
-    uploadSurveyResults(surveyId: String, results: JSON): JSON
-    uploadScenarioResults(results: [JSON]): JSON
-    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON
-    updateSurveyVersion(version: String!): String
+    updateAdminUser(username: String, isAdmin: Boolean): JSON,
+    updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON,
+    uploadSurveyResults(surveyId: String, results: JSON): JSON,
+    uploadScenarioResults(results: [JSON]): JSON,
+    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
+    updateSurveyVersion(version: String!): String,
+    updateParticipantLog(pid: String, updates: JSON): JSON
   }
 `;
 
@@ -545,6 +546,12 @@ const resolvers = {
         { upsert: true }
       );
       return result.value.version;
+    },
+    updateParticipantLog: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('participantLog').update(
+        { "ParticipantID": Number(args["pid"]) },
+        { $set: args["updates"] }
+      );
     }
 
   },
