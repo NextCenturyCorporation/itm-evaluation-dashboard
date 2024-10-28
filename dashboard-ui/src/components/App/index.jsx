@@ -46,20 +46,20 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 
 const history = createBrowserHistory();
 
-const GET_SURVEY_VERSION = gql`
+const GET_SURVEY_VERSION_AND_PARTICIPANTS = gql`
   query GetSurveyVersion {
     getCurrentSurveyVersion
+    getParticipantLog
   }
 `;
 
 
-const GET_CONFIGS_AND_USERS = gql`
+const GET_CONFIGS = gql`
   query GetConfigs($includeImageUrls: Boolean!) {
     getAllSurveyConfigs
     getAllImageUrls @include(if: $includeImageUrls)
     getAllTextBasedConfigs
     getAllTextBasedImages
-    getParticipantLog
   }
 `;
 
@@ -216,7 +216,7 @@ export class App extends React.Component {
         if (foundParticipant) {
             const pid = foundParticipant['ParticipantID'];
             this.setState({ pid: pid }, () => {
-                history.push("/text-based?pid=" + this.state.pid);
+                history.push("/text-based?pid=" + this.state.pid + "&class=" + classification);
             });
         }
         else {
@@ -243,17 +243,18 @@ export class App extends React.Component {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_SURVEY_VERSION}>
-                    {({ loading: versionLoading, error: versionError, data: versionData }) => {
-                        if (versionLoading) return <div>Loading...</div>;
-                        if (versionError) return <div>Error fetching survey version</div>;
+                <Query query={GET_SURVEY_VERSION_AND_PARTICIPANTS}>
+                    {({ loading: initialLoading, error: initialError, data: initialData }) => {
+                        if (initialLoading) return <div>Loading...</div>;
+                        if (initialError) return <div>Error fetching survey initial data</div>;
 
-                        const surveyVersion = versionData.getCurrentSurveyVersion;
+                        const surveyVersion = initialData.getCurrentSurveyVersion;
                         const includeImageUrls = surveyVersion < 4;
+                        setParticipantLogInStore(initialData.getParticipantLog);
 
                         return (
                             <Query
-                                query={GET_CONFIGS_AND_USERS}
+                                query={GET_CONFIGS}
                                 variables={{ includeImageUrls }}
                                 fetchPolicy={'cache-first'}
                             >
@@ -267,18 +268,16 @@ export class App extends React.Component {
                                     // Setup configs
                                     setupConfigWithImages(data);
                                     setupTextBasedConfig(data);
-                                    setSurveyVersion(surveyVersion);
-                                    setParticipantLogInStore(data.getParticipantLog)
+                                    setSurveyVersion(surveyVersion);                                    
 
                                     return (
                                         <div className="itm-app">
                                             {this.state.updatePLog && (
                                                 <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
-                                                    {(updateParticipantLog, { data }) => (
+                                                    {(updateParticipantLog) => (
                                                         <div>
                                                             <button ref={this.uploadButtonRef} hidden onClick={(e) => {
                                                                 e.preventDefault();
-                                                                console.log('hi!');
                                                                 updateParticipantLog({
                                                                     variables: { pid: this.state.pLogUpdate.pid.toString(), updates: this.state.pLogUpdate.updates }
                                                                 });

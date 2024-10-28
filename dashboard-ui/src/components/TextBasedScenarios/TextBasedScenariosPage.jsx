@@ -21,6 +21,8 @@ import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
+import { withRouter } from 'react-router-dom';
+import { isDefined } from '../AggregateResults/DataFunctions';
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -88,6 +90,7 @@ class TextBasedScenariosPage extends Component {
             combinedSessionId: '',
             adeptScenarios: [],
             uploadedScenarios: 0,
+            moderated: true
         };
 
         this.surveyData = {};
@@ -204,6 +207,18 @@ class TextBasedScenariosPage extends Component {
 
     componentDidMount() {
         document.addEventListener('keydown', this.handleKeyPress);
+        const queryParams = new URLSearchParams(window.location.search);
+        const pid = queryParams.get('pid');
+        const classification = queryParams.get('class');
+        if (isDefined(pid) && isDefined(classification)) {
+            this.introSurvey.data = {
+                "Participant ID": pid,
+                "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : "Military Background",
+                "vrEnvironmentsCompleted": ['none']
+            };
+            this.introSurveyComplete(this.introSurvey);
+            this.setState({ moderated: false });
+        }
     }
 
     componentWillUnmount() {
@@ -646,6 +661,7 @@ class TextBasedScenariosPage extends Component {
                     <ScenarioCompletionScreen
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}
+                        moderatorExists={this.state.moderated}
                     />
                 )}
             </>
@@ -653,7 +669,7 @@ class TextBasedScenariosPage extends Component {
     }
 }
 
-export default TextBasedScenariosPage;
+export default withRouter(TextBasedScenariosPage);
 
 ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
     return React.createElement(MedicalScenario, props)
@@ -677,7 +693,7 @@ const simNameMappings = {
     'ST-3': ['stq3', 'stv3'],
 }
 
-const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
+const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
 
@@ -688,27 +704,31 @@ const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
                     <Card className="border-0 shadow">
                         <Card.Body className="text-center p-5">
                             <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
-                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
-                            <Card bg="light" className="p-4">
-                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
-                                    Participant should complete the following scenarios in VR:
-                                </Card.Title>
-                                <Card.Subtitle className="mb-3 text-muted">
-                                    Please complete the scenarios in the order listed below:
-                                </Card.Subtitle>
-                                <ListGroup variant="flush" className="border rounded">
-                                    {allScenarios.map((scenario, index) => (
-                                        <ListGroup.Item
-                                            key={index}
-                                            className="py-3 d-flex align-items-center"
-                                        >
-                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
-                                            <span className="fs-5">{scenario}</span>
-                                        </ListGroup.Item>
-                                    ))}
-                                </ListGroup>
-                            </Card>
-                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                            {moderatorExists ?
+                                <>
+                                    <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                                    <Card bg="light" className="p-4">
+                                        <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                            Participant should complete the following scenarios in VR:
+                                        </Card.Title>
+                                        <Card.Subtitle className="mb-3 text-muted">
+                                            Please complete the scenarios in the order listed below:
+                                        </Card.Subtitle>
+                                        <ListGroup variant="flush" className="border rounded">
+                                            {allScenarios.map((scenario, index) => (
+                                                <ListGroup.Item
+                                                    key={index}
+                                                    className="py-3 d-flex align-items-center"
+                                                >
+                                                    <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                                    <span className="fs-5">{scenario}</span>
+                                                </ListGroup.Item>
+                                            ))}
+                                        </ListGroup>
+                                    </Card>
+                                    <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                                </> : <p>You may now close the browser</p>
+                            }
                         </Card.Body>
                     </Card>
                 </Col>
