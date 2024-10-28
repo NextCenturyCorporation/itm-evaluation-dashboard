@@ -127,6 +127,15 @@
         flex-direction: column;
         align-items: center;
     }
+
+    .rq1-lines {
+        flex-direction: column;
+    }
+
+    .rq3-lines .outlinedPlot {
+        width: auto;
+    }
+
 }
 
 .delegationChoices>*, .side-by-side>* {

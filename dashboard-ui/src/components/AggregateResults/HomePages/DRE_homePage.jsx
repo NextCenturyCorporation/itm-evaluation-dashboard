@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 import { getRQ134Data } from "../../DRE-Research/utils";
 import { getAlignmentComparisonVsTrustRatings, getAlignmentsByAdmType, getAlignmentsByAttribute, getDelegationPreferences, getDelegationVsAlignment, getRatingsBySelectionStatus } from "../DataFunctions";
 import CanvasJSReact from '@canvasjs/react-charts';
-import { calculateBestFitLine, getBoxWhiskerData, getMean, getMeanAcrossAll, getSeAcrossAll, getStandardError } from "../statistics";
+import { calculateBestFitLine, getBoxWhiskerData, getLogisticData, getMean, getMeanAcrossAll, getSeAcrossAll, getStandardError } from "../statistics";
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
@@ -502,7 +502,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
                         </div>
                     }
 
-                    {alignmentsByAdmType &&
+                    {/* {alignmentsByAdmType &&
                         <div className='q2-adms'>
                             <div className="outlinedPlot">
                                 <h4>Alignment scores between delegator and targets (expected distribution of alignment scores by ADM classification)</h4>
@@ -628,7 +628,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
                                 }} />
                             </div>
                         </div>
-                    }
+                    } */}
 
                     {trustVsAlignStatus && <div className="rq1-lines">
                         {generateTrustVsAlignedStatusChart('ADEPT')}
@@ -955,7 +955,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
                             }} />
                         </div>
                     </div>}
-                    {delVsAlignment && <div className='rq3-lines'>
+                    {/* {delVsAlignment && <div className='rq3-lines'>
                         {['IO', 'MJ', 'QOL', 'VOL'].map((att) => {
                             return <div key={att + 'delegation/align'} className='rq1-lines'>
                                 <div className="outlinedPlot">
@@ -985,7 +985,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
                                                 color: '#000',
                                                 lineThickness: 4,
                                                 markerSize: 0,
-                                                type: "line", dataPoints: calculateBestFitLine(delVsAlignment?.delegationVsAlignmentBaseline?.[att])
+                                                type: "line", dataPoints: getLogisticData(delVsAlignment?.delegationVsAlignmentBaseline?.[att])
                                             }
                                         ]
                                     }} />
@@ -1018,7 +1018,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
                                                 color: '#000',
                                                 lineThickness: 4,
                                                 markerSize: 0,
-                                                type: "line", dataPoints: calculateBestFitLine(delVsAlignment?.delegationVsAlignmentMisaligned?.[att])
+                                                type: "line", dataPoints: getLogisticData(delVsAlignment?.delegationVsAlignmentMisaligned?.[att])
                                             }
                                         ]
                                     }} />
@@ -1026,7 +1026,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
                                 </div>
                             </div>
                         })}
-                    </div>}
+                    </div>} */}
                     {ratingBySelection &&
                         <div className='q2-adms'>
                             <div>

@@ -1254,7 +1254,8 @@ const getAlignmentsByAdmType = (data) => {
         const targets = [];
         const admPoints = [];
         const targetPoints = [];
-        for (let x of data.filter((d) => d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == admType)) {
+        const lessData = data.filter((d) => d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == admType && d['ADM Loading'] == 'normal');
+        for (let x of lessData) {
             const align_adm = x['Alignment score (Delegator|Observed_ADM (target))'];
             const align_target = x['Alignment score (Delegator|target)'];
             if (isDefined(align_adm) && align_adm != '-') {
@@ -1327,17 +1328,31 @@ function getDelegationPreferences(data) {
 function getDelegationVsAlignment(data) {
     const delegationVsAlignmentBaseline = { 'IO': [], 'MJ': [], 'QOL': [], 'VOL': [] };
     const delegationVsAlignmentMisaligned = { 'IO': [], 'MJ': [], 'QOL': [], 'VOL': [] };
-    const alignedOnly = data.filter((x) => x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] === 'aligned');
-    for (const entry of alignedOnly) {
+    const noComparisons = data.filter((x) => x['ADM Type'] !== 'comparison');
+    for (const entry of noComparisons) {
+        const admType = entry['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'];
         const delAB = entry['Delegation preference (A/B)'];
         const delAM = entry['Delegation preference (A/M)'];
         const alignment = entry['Alignment score (Delegator|Observed_ADM (target))'];
+        const att = entry['Attribute'];
+        const aligned = noComparisons.find((x) => x['Delegator_ID'] === entry['Delegator_ID'] && x['Attribute'] == att && x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned');
+        if (entry['ADM Loading'] !== 'normal' || (isDefined(aligned) && aligned['ADM Loading'] !== 'normal')) {
+            continue;
+        }
         if (isDefined(alignment) && alignment != '-') {
-            if (['y', 'n'].includes(delAB)) {
-                delegationVsAlignmentBaseline[entry['Attribute']].push({ x: alignment, y: delAB == 'y' ? 1 : 0 });
+            if (admType == 'aligned') { 
+                if (['y', 'n'].includes(delAB)) {
+                    delegationVsAlignmentBaseline[att].push({ x: alignment, y: delAB == 'y' ? 0 : 1 });
+                }
+                if (['y', 'n'].includes(delAM)) {
+                    delegationVsAlignmentMisaligned[att].push({ x: alignment, y: delAM == 'y' ? 0 : 1 });
+                }
             }
-            if (['y', 'n'].includes(delAM)) {
-                delegationVsAlignmentMisaligned[entry['Attribute']].push({ x: alignment, y: delAM == 'y' ? 1 : 0 });
+            else if (admType == 'misaligned' && ['y', 'n'].includes(delAM)) {
+                delegationVsAlignmentMisaligned[att].push({ x: alignment, y: delAM == 'y' ? 1 : 0 });
+            }
+            else if (admType == 'baseline' && ['y', 'n'].includes(delAB)) {
+                delegationVsAlignmentBaseline[att].push({ x: alignment, y: delAB == 'y' ? 1 : 0 });
             }
         }
 
