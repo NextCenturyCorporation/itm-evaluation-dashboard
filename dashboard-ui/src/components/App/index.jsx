@@ -142,7 +142,7 @@ function PidLookupPage({ newState }) {
     if (newState.currentUser === null) {
         history.push("/login");
     } else {
-        if (newState.currentUser.experimenter === true) {
+        if (newState.currentUser.experimenter === true || newState.currentUser.admin === true) {
             return <PidLookup />
         } else {
             return <Home newState={newState} />;
@@ -389,7 +389,7 @@ export class App extends React.Component {
                                                                             Administrator
                                                                         </Link>
                                                                     )}
-                                                                    {this.state.currentUser.experimenter === true && (
+                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true) && (
                                                                         <Link className="dropdown-item" to="/pid-lookup" onClick={this.handleToggle}>
                                                                             PID Lookup
                                                                         </Link>
