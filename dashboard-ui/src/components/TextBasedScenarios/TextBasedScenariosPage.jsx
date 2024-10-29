@@ -93,7 +93,8 @@ class TextBasedScenariosPage extends Component {
             combinedSessionId: '',
             adeptScenarios: [],
             uploadedScenarios: 0,
-            moderated: true
+            moderated: true,
+            startSurvey: true
         };
 
         this.surveyData = {};
@@ -634,7 +635,7 @@ class TextBasedScenariosPage extends Component {
                         <h4>Guidelines:</h4>
                         <ul>
                             <li>Please complete the experiment in one sitting.</li>
-                            <li>Remember that there are no right or wrong answers.</li>
+                            <li>Choose the option that best matches how you would triage the scenario.</li>
                             <li>Read all details to clearly understand each question before responding.</li>
                             <li>Do not close the browser until you reach the "Thank You" page at the end.</li>
                             <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
