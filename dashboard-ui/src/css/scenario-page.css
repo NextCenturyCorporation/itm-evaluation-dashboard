@@ -1,8 +1,59 @@
 .TableContainer {
-    max-height: 70vh;
-  }
-  
-  /* TableHead */
-  .TableHead {
-    background-color: #f4f4f4;
-  }
+  max-height: 70vh;
+}
+
+/* TableHead */
+.TableHead {
+  background-color: #f4f4f4;
+}
+
+.text-instructions p {
+  margin: 20px 48px 10px 48px;
+}
+
+.text-instructions ul {
+  margin-left: 48px;
+}
+
+.text-instructions h4 {
+  font-size: 18px;
+  margin-left: 48px;
+}
+
+.center-text {
+  margin: auto auto 20px auto !important;
+  font-weight: 500;
+  text-align: center;
+}
+
+.text-instructions button {
+  margin: auto;
+  display: block;
+  padding: 12px 50px;
+  border-radius: 8px;
+  font-size: 18px;
+  color: #b15e2f !important;
+  border: 1px solid #b15e2f;
+  background-color: white;
+  box-shadow: 1px 1px 1px;
+}
+
+.text-instructions button:hover {
+  filter: brightness(97%);
+  box-shadow: 1px 2px 2px;
+}
+
+.text-instructions button:active {
+  filter: brightness(94%);
+  box-shadow: 1px 3px 3px;
+}
+
+.text-instructions h2 {
+  background-color: rgb(89, 38, 16);
+  color: white;
+  text-align: center;
+  padding: 24px;
+  font-variant: small-caps;
+  font-weight: 300;
+  font-size: 40px;
+}

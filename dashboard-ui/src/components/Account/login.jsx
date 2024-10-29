@@ -312,7 +312,7 @@ class LoginApp extends React.Component {
                                         <div className="sign-in-instructions">
                                             <h4 className="sign-in-header">Start Text Scenario</h4>
                                             <p className='justified-subtext'>To start the text scenario portion of the experiment, enter your email address. You will be asked
-                                                for this email address at the study location, so please remember what you use.
+                                                for this email address at the study location, so please remember what you use. <br /> <i>Your email will never be stored in connection to your responses. The experimenters will not have access to your email, only to a number randomly assigned to you.</i>
                                             </p>
                                         </div>
                                         <form onSubmit={this.setupPID}>

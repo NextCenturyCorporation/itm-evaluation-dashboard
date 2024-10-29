@@ -224,7 +224,7 @@ class TextBasedScenariosPage extends Component {
                 "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : "Military Background",
                 "vrEnvironmentsCompleted": ['none']
             };
-            this.setState({ moderated: false }, () => {
+            this.setState({ moderated: false, startSurvey: false }, () => {
                 this.introSurveyComplete(this.introSurvey);
             });
         }
@@ -260,7 +260,8 @@ class TextBasedScenariosPage extends Component {
             adeptSessionsCompleted: 0,
             combinedSessionId: '',
             adeptScenarios: [],
-            uploadedScenarios: 0
+            uploadedScenarios: 0,
+            startSurvey: true
         });
 
         this.surveyData = {};
@@ -622,7 +623,29 @@ class TextBasedScenariosPage extends Component {
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
-                {this.state.currentConfig && !this.state.allScenariosCompleted && (
+                {!this.state.moderated && !this.state.startSurvey && (
+                    <div className="text-instructions">
+                        <h2>Instructions</h2>
+                        <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
+                            <br />
+                            During this portion of the experiment, you will be presented with several medical triage scenarios. You will be given action options from which to choose. Please consider
+                            how you would act if you were placed in this scenario.
+                        </p>
+                        <h4>Guidelines:</h4>
+                        <ul>
+                            <li>Please complete the experiment in one sitting.</li>
+                            <li>Remember that there are no right or wrong answers.</li>
+                            <li>Read all details to clearly understand each question before responding.</li>
+                            <li>Do not close the browser until you reach the "Thank You" page at the end.</li>
+                            <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
+                        </ul>
+                        <p className='center-text'>Press "Start" to begin.</p>
+                        <button onClick={() => this.setState({ startSurvey: true })}>Start</button>
+                    </div>
+                )
+
+                }
+                {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
                     <>
                         <Survey model={this.survey} />
                         {this.shouldBlockNavigation && (
