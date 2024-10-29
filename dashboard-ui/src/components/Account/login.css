@@ -93,6 +93,15 @@
     flex-direction: row;
 }
 
+.pid-shower {
+    margin-top: 12px;
+    font-weight: 300;
+}
+
+.error-text {
+    color: #a51d1d !important;
+}
+
 @media only screen and (max-width: 600px) {
     .full-page {
         overflow: auto;

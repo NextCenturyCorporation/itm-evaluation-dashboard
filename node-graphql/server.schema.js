@@ -18,6 +18,7 @@ const typeDefs = gql`
   extend type User {
     admin: Boolean
     evaluator: Boolean
+    experimenter: Boolean
   }
 
   type Player {
@@ -210,6 +211,7 @@ const typeDefs = gql`
   type Mutation {
     updateAdminUser(username: String, isAdmin: Boolean): JSON,
     updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON,
+    updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
@@ -511,6 +513,12 @@ const resolvers = {
       return await dashboardDB.db.collection('users').update(
         { "username": args["username"] },
         { $set: { "evaluator": args["isEvaluator"] } }
+      );
+    },
+    updateExperimenterUser: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "experimenter": args["isExperimenter"] } }
       );
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {

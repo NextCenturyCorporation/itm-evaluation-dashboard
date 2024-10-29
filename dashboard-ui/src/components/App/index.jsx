@@ -42,6 +42,7 @@ import { RQ3 } from '../DRE-Research/RQ3';
 import { ExploratoryAnalysis } from '../DRE-Research/ExploratoryAnalysis';
 import store from '../../store/store';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import { PidLookup } from '../Account/pidLookup';
 
 
 const history = createBrowserHistory();
@@ -137,6 +138,18 @@ function Admin({ newState, userLoginHandler }) {
     }
 }
 
+function PidLookupPage({ newState }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.experimenter === true) {
+            return <PidLookup />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
 function ReviewTextBased({ newState, userLoginHandler }) {
     if (newState.currentUser === null) {
         history.push("/login");
@@ -196,7 +209,7 @@ export class App extends React.Component {
         const user = await accountsGraphQL.getUser(
             tokens ? tokens.accessToken : ''
         );
-
+        console.log(user);
         this.setState({ currentUser: user });
     }
 
@@ -377,6 +390,11 @@ export class App extends React.Component {
                                                                             Administrator
                                                                         </Link>
                                                                     )}
+                                                                    {this.state.currentUser.experimenter === true && (
+                                                                        <Link className="dropdown-item" to="/pid-lookup" onClick={this.handleToggle}>
+                                                                            PID Lookup
+                                                                        </Link>
+                                                                    )}
                                                                     <Link className="dropdown-item" to={{}} onClick={this.logout}>
                                                                         Logout
                                                                     </Link>
@@ -415,6 +433,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/admin">
                                                         <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/pid-lookup">
+                                                        <PidLookupPage newState={this.state} />
                                                     </Route>
                                                     <Route path="/survey">
                                                         <Survey currentUser={this.state.currentUser} />

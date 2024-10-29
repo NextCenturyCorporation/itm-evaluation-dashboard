@@ -31,14 +31,14 @@ class LoginApp extends React.Component {
         };
         this.login = this.login.bind(this);
         this.createAccount = this.createAccount.bind(this);
-    }
+    };
 
     setupPID = async (e) => {
         e.preventDefault();  // Prevent the default form submission
         const { textEmail, textClassification } = this.state;
 
         // removing leading and trailing white space 
-        const trimmedEmail = textEmail.trim();
+        const trimmedEmail = textEmail.trim().toLowerCase();
 
         if (!textEmail || !textClassification) {
             $("#text-entry-feedback").addClass("feedback-display").text("All fields are required.");
@@ -54,18 +54,11 @@ class LoginApp extends React.Component {
         $("#text-entry-feedback").removeClass("feedback-display");
         try {
             this.props.participantLoginHandler(hashedEmail, textClassification, this.props.updatePLog);
-            // let results = await accountsPassword.createUser({
-            //     classification: textClassification,
-            //     email: trimmedEmail
-            // });
-
-            // this.props.history.push('/');
-            // this.props.userLoginHandler(results.user);
         } catch (err) {
             $("#text-entry-feedback").addClass("feedback-display");
             this.setState({ error: err.message, pidCreationFailed: true });
         }
-    }
+    };
 
     createAccount = async (e) => {
         e.preventDefault();  // Prevent the default form submission
@@ -101,7 +94,7 @@ class LoginApp extends React.Component {
             $("#create-account-feedback").addClass("feedback-display");
             this.setState({ error: err.message, createAccountFailed: true });
         }
-    }
+    };
 
     login = async () => {
         $("#sign-in-feedback").removeClass("feedback-display");
@@ -129,7 +122,7 @@ class LoginApp extends React.Component {
             $("#sign-in-feedback").addClass("feedback-display");
             this.setState({ error: err.message, loginFailed: true });
         }
-    }
+    };
 
     resetPassword = async () => {
         try {
@@ -141,39 +134,39 @@ class LoginApp extends React.Component {
             $("#reset-password-feedback").addClass("feedback-display");
             this.setState({ error: err.message });
         }
-    }
+    };
 
     onChangeUserName = ({ target }) => {
         this.setState({ userName: target.value });
-    }
+    };
 
     onChangePassword = ({ target }) => {
         this.setState({ password: target.value });
-    }
+    };
 
     onChangeCreateUserName = ({ target }) => {
         this.setState({ createUserName: target.value });
-    }
+    };
 
     onChangeCreateEmail = ({ target }) => {
         this.setState({ createEmail: target.value });
-    }
+    };
 
     onChangeCreatePassword = ({ target }) => {
         this.setState({ createPassword: target.value });
-    }
+    };
 
     onChangeForgotEmail = ({ target }) => {
         this.setState({ forgotEmail: target.value });
-    }
+    };
 
     onChangeTextEmail = ({ target }) => {
         this.setState({ textEmail: target.value });
-    }
+    };
 
     onChangeClassification = ({ target }) => {
         this.setState({ textClassification: target.value });
-    }
+    };
 
     showSignIn = (evt) => {
         $("#sign-in-pane").removeClass("display-none");
