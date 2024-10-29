@@ -209,7 +209,6 @@ export class App extends React.Component {
         const user = await accountsGraphQL.getUser(
             tokens ? tokens.accessToken : ''
         );
-        console.log(user);
         this.setState({ currentUser: user });
     }
 
