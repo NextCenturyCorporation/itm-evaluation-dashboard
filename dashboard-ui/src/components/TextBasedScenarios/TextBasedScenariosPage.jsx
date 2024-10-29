@@ -23,6 +23,9 @@ import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import { createBrowserHistory } from 'history';
+
+const history = createBrowserHistory({ forceRefresh: true });
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -129,20 +132,25 @@ class TextBasedScenariosPage extends Component {
         if (!matchedLog || isDuplicate) {
             let message = "No matching participant ID was found.";
             if (isDuplicate) {
-                message = "This participant ID has already been used.";
+                message = `This ${this.state.moderated ? "participant ID" : "email"} has already been used.`;
             }
             message += " Would you like to continue anyway?\n\n" +
-                "Click 'OK' to continue with the current ID.\n" +
-                "Click 'Cancel' to re-enter the participant ID.";
+                `Click 'OK' to continue with the current ${this.state.moderated ? "ID" : "email"}.\n` +
+                `Click 'Cancel' to re-enter the ${this.state.moderated ? "participant ID" : "email"}.`;
 
             const userChoice = window.confirm(message);
 
             if (!userChoice) {
                 // just reload intro survey
-                this.introSurvey = new Model(introConfig);
-                this.introSurvey.onComplete.add(this.introSurveyComplete);
-                this.introSurvey.applyTheme(surveyTheme);
-                this.setState({ currentConfig: null }); // Force re-render
+                if (this.state.moderated) {
+                    this.introSurvey = new Model(introConfig);
+                    this.introSurvey.onComplete.add(this.introSurveyComplete);
+                    this.introSurvey.applyTheme(surveyTheme);
+                    this.setState({ currentConfig: null }); // Force re-render
+                }
+                else {
+                    history.push('/participantText');
+                }
                 return;
             } else {
                 // if you want to go through with a non-matched or duplicate PID, giving default experience
@@ -216,8 +224,9 @@ class TextBasedScenariosPage extends Component {
                 "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : "Military Background",
                 "vrEnvironmentsCompleted": ['none']
             };
-            this.introSurveyComplete(this.introSurvey);
-            this.setState({ moderated: false });
+            this.setState({ moderated: false }, () => {
+                this.introSurveyComplete(this.introSurvey);
+            });
         }
     }
 
