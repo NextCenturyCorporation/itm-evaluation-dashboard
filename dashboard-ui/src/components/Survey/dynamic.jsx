@@ -11,8 +11,9 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
 import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
+import { useSelector } from "react-redux";
 
-const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission }) => {
+const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission, scenarioIndex }) => {
     const [visiblePatients, setVisiblePatients] = useState(() => {
         const initialVisibility = {};
         patients.forEach(patient => {
@@ -28,6 +29,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const [showSituationModal, setShowSituationModal] = useState(showModal);
     const [showMoreDetailsModal, setShowMoreDetailsModal] = useState(false);
     const [actionLogs, setActionLogs] = useState([]);
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const matchingTextConfig = textBasedConfigs[scenarioIndex];
+    console.log(matchingTextConfig)
+    console.log(actions)
 
     // log actions
     const logAction = (actionName) => {

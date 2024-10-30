@@ -632,8 +632,8 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'DryRunEval-IO2-eval':
-                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
-                set1 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4']
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4']
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
                 validAdms = this.getValidADM(ALL_IO_TARGETS, ioTargets, cols1to3, set1, set2, []);
                 alignedTarget = validAdms['aligned'];
