@@ -117,6 +117,7 @@ export function RQ13() {
             const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
             for (const res of completed_surveys) {
                 const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
+                const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
                     log => log['ParticipantID'] == pid
@@ -169,7 +170,7 @@ export function RQ13() {
                         }
                         entryObj['TA1_Name'] = entry['TA1'];
                         allTA1s.push(entry['TA1']);
-                        entryObj['Trial_ID'] = trial_num;
+                        entryObj['Trial_ID'] = orderLog ? orderLog.indexOf(page['pageName']) + 1 : trial_num;
                         trial_num += 1;
                         entryObj['Attribute'] = entry['Attribute'];
                         allAttributes.push(entryObj['Attribute']);
