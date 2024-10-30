@@ -5,7 +5,7 @@ import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellD
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import './aggregateResults.css';
-import ProgramQuestions from './programQuestions';
+import ProgramQuestions from './HomePages/programQuestions';
 import { Modal } from "@mui/material";
 import { DefinitionTable } from './definitionTable';
 import CloseIcon from '@material-ui/icons/Close';
@@ -309,7 +309,7 @@ export default function AggregateResults({ type }) {
             }
         }
 
-    }, [evalIdOptionsRaw, evalOptions]);
+    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
