@@ -6,7 +6,7 @@ import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useSelector, useDispatch } from "react-redux";
 import '../../css/admin-page.css';
-import { setSurveyVersion, setupConfigWithImages } from '../App/configSetup';
+import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -36,6 +36,12 @@ const UPDATE_ADMIN_USER = gql`
 const UPDATE_EVALUATOR_USER = gql`
     mutation updateEvaluatorUser($username: String!, $isEvaluator: Boolean!) {
         updateEvaluatorUser(username: $username, isEvaluator: $isEvaluator) 
+    }
+`;
+
+const UPDATE_EXPERIMENTER_USER = gql`
+    mutation updateExperimenterUser($username: String!, $isExperimenter: Boolean!) {
+        updateExperimenterUser(username: $username, isExperimenter: $isExperimenter) 
     }
 `;
 
@@ -133,6 +139,49 @@ function EvaluatorInputBox({ options, selectedOptions }) {
             lang={{
                 availableHeader: "All Users",
                 selectedHeader: "Evaluators"
+            }} />
+    );
+}
+
+function ExperimenterInputBox({ options, selectedOptions }) {
+    const [selected, setSelected] = useState(selectedOptions.sort());
+    const [updateExperimenterUserCall] = useMutation(UPDATE_EXPERIMENTER_USER);
+
+    const setExperimenter = (newSelect) => {
+        for (let i = 0; i < newSelect.length; i++) {
+            if (!selected.includes(newSelect[i])) {
+                updateExperimenterUserCall({
+                    variables: {
+                        username: newSelect[i],
+                        isExperimenter: true
+                    }
+                });
+            }
+        }
+        for (let i = 0; i < selected.length; i++) {
+            if (!newSelect.includes(selected[i])) {
+                updateExperimenterUserCall({
+                    variables: {
+                        username: selected[i],
+                        isExperimenter: false
+                    }
+                });
+            }
+        }
+        setSelected(newSelect);
+    }
+
+    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+    return (
+        <DualListBox
+            options={options}
+            selected={selected}
+            onChange={setExperimenter}
+            showHeaderLabels={true}
+            lang={{
+                availableHeader: "All Users",
+                selectedHeader: "Experimenters"
             }} />
     );
 }
@@ -375,18 +424,25 @@ function AdminPage({ currentUser }) {
                     let selectedOptions = [];
                     let evaluatorOptions = [];
                     let evaluatorSelectedOptions = [];
+                    let experimenterOptions = [];
+                    let experimenterSelectedOptions = [];
 
                     const users = data[getUsersQueryName]
                     for (let i = 0; i < users.length; i++) {
                         options.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
                         evaluatorOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                        experimenterOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
 
                         if (users[i].admin) {
-                            selectedOptions.push(users[i].username)
+                            selectedOptions.push(users[i].username);
                         }
 
                         if (users[i].evaluator) {
-                            evaluatorSelectedOptions.push(users[i].username)
+                            evaluatorSelectedOptions.push(users[i].username);
+                        }
+
+                        if (users[i].experimenter) {
+                            experimenterSelectedOptions.push(users[i].username);
                         }
                     }
 
@@ -417,6 +473,21 @@ function AdminPage({ currentUser }) {
                                             </Card.Text>
                                             <h6>Modify Current Evaluators</h6>
                                             <EvaluatorInputBox options={evaluatorOptions} selectedOptions={evaluatorSelectedOptions} />
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            </Row>
+
+                            <Row className="mb-4">
+                                <Col>
+                                    <Card>
+                                        <Card.Header as="h5">Experimenters</Card.Header>
+                                        <Card.Body>
+                                            <Card.Text>
+                                                Manage experimenter settings.
+                                            </Card.Text>
+                                            <h6>Modify Current Experimenters</h6>
+                                            <ExperimenterInputBox options={experimenterOptions} selectedOptions={experimenterSelectedOptions} />
                                         </Card.Body>
                                     </Card>
                                 </Col>

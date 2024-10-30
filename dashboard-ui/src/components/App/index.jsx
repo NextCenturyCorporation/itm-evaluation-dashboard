@@ -3,8 +3,8 @@ import queryString from 'query-string';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
-import { SurveyPage, SurveyPageWrapper } from '../Survey/survey';
-import { TextBasedScenariosPage, TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
+import { SurveyPageWrapper } from '../Survey/survey';
+import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
@@ -19,8 +19,8 @@ import NavDropdown from 'react-bootstrap/NavDropdown';
 import { createBrowserHistory } from 'history';
 import ADMChartPage from '../AdmCharts/admChartPage';
 import gql from "graphql-tag";
-import { Query } from '@apollo/react-components';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion } from './configSetup';
+import { Query, Mutation } from '@apollo/react-components';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setParticipantLogInStore } from './setupUtils';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -36,18 +36,21 @@ import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
 import HumanResults from '../HumanResults/humanResults';
-import { isDefined } from '../AggregateResults/DataFunctions';
 import { RQ1 } from '../DRE-Research/RQ1';
 import { RQ2 } from '../DRE-Research/RQ2';
 import { RQ3 } from '../DRE-Research/RQ3';
 import { ExploratoryAnalysis } from '../DRE-Research/ExploratoryAnalysis';
+import store from '../../store/store';
+import { isDefined } from '../AggregateResults/DataFunctions';
+import { PidLookup } from '../Account/pidLookup';
 
 
 const history = createBrowserHistory();
 
-const GET_SURVEY_VERSION = gql`
+const GET_SURVEY_VERSION_AND_PARTICIPANTS = gql`
   query GetSurveyVersion {
     getCurrentSurveyVersion
+    getParticipantLog
   }
 `;
 
@@ -59,6 +62,12 @@ const GET_CONFIGS = gql`
     getAllTextBasedConfigs
     getAllTextBasedImages
   }
+`;
+
+const UPDATE_PARTICIPANT_LOG = gql`
+    mutation updateParticipantLog($pid: String!, $updates: JSON!) {
+        updateParticipantLog(pid: $pid, updates: $updates) 
+    }
 `;
 
 
@@ -94,15 +103,18 @@ function AdmResults() {
     return <ADMChartPage />
 }
 
-function Login({ newState, userLoginHandler, updateHandler }) {
+function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin }) {
+    if (participantTextLogin) {
+        return <LoginApp userLoginHandler={userLoginHandler} isParticipant={participantTextLogin} participantLoginHandler={participantLoginHandler} />;
+    }
     if (newState !== null) {
         if (newState.currentUser !== null) {
             return <Home newState={newState} currentUser={newState.currentUser} />;
         } else {
-            return <LoginApp userLoginHandler={userLoginHandler} />;
+            return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
         }
     } else {
-        return <LoginApp userLoginHandler={userLoginHandler} />;
+        return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
     }
 }
 
@@ -120,6 +132,18 @@ function Admin({ newState, userLoginHandler }) {
     } else {
         if (newState.currentUser.admin === true) {
             return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
+function PidLookupPage({ newState }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.experimenter === true || newState.currentUser.admin === true) {
+            return <PidLookup />
         } else {
             return <Home newState={newState} />;
         }
@@ -157,16 +181,23 @@ export class App extends React.Component {
 
         this.state = queryString.parse(window.location.search);
         this.state.currentUser = null;
+        this.state.allUsers = null;
+        this.state.participantLog = null;
+        this.state.updatePLog = false;
+        this.state.pLogUpdate = null;
+        this.state.pid = null;
 
         this.logout = this.logout.bind(this);
         this.userLoginHandler = this.userLoginHandler.bind(this);
+        this.participantLoginHandler = this.participantLoginHandler.bind(this);
+        this.uploadButtonRef = React.createRef();
     }
 
     async componentDidMount() {
         //refresh the session to get a new accessToken if expired
         const tokens = await accountsClient.refreshSession();
 
-        if (window.location.href.indexOf("reset-password") > -1) {
+        if (window.location.href.indexOf("reset-password") > -1 || window.location.href.indexOf("/participantText") > -1) {
             return;
         }
 
@@ -178,7 +209,6 @@ export class App extends React.Component {
         const user = await accountsGraphQL.getUser(
             tokens ? tokens.accessToken : ''
         );
-
         this.setState({ currentUser: user });
     }
 
@@ -192,17 +222,47 @@ export class App extends React.Component {
         this.setState({ currentUser: userObject });
     }
 
+    participantLoginHandler(hashedEmail, classification) {
+        const pLog = store.getState().participants.participantLog;
+        const foundParticipant = pLog.find((x) => x.hashedEmail == hashedEmail && classification == x.Type);
+        if (foundParticipant) {
+            const pid = foundParticipant['ParticipantID'];
+            this.setState({ pid: pid }, () => {
+                history.push("/text-based?pid=" + this.state.pid + "&class=" + classification);
+            });
+        }
+        else {
+            // create a user account and get a pid for this user
+            const nextAvailablePid = pLog.find((x) => x.Type == classification && !x.claimed)?.['ParticipantID'];
+            if (isDefined(nextAvailablePid)) {
+                this.setState({ updatePLog: true, pLogUpdate: { updates: { hashedEmail: hashedEmail, claimed: true }, pid: nextAvailablePid } }, () => {
+                    if (this.uploadButtonRef.current) {
+                        this.uploadButtonRef.current.click();
+                    }
+                    this.setState({ pid: nextAvailablePid }, () => {
+                        history.push("/text-based?pid=" + this.state.pid + "&class=" + classification);
+                    });
+                });
+            }
+            else {
+                throw "No PIDs available";
+            }
+        }
+    }
+
+
     render() {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_SURVEY_VERSION}>
-                    {({ loading: versionLoading, error: versionError, data: versionData }) => {
-                        if (versionLoading) return <div>Loading...</div>;
-                        if (versionError) return <div>Error fetching survey version</div>;
+                <Query query={GET_SURVEY_VERSION_AND_PARTICIPANTS}>
+                    {({ loading: initialLoading, error: initialError, data: initialData }) => {
+                        if (initialLoading) return <div>Loading...</div>;
+                        if (initialError) return <div>Error fetching survey initial data</div>;
 
-                        const surveyVersion = versionData.getCurrentSurveyVersion;
+                        const surveyVersion = initialData.getCurrentSurveyVersion;
                         const includeImageUrls = surveyVersion < 4;
+                        setParticipantLogInStore(initialData.getParticipantLog);
 
                         return (
                             <Query
@@ -220,10 +280,26 @@ export class App extends React.Component {
                                     // Setup configs
                                     setupConfigWithImages(data);
                                     setupTextBasedConfig(data);
-                                    setSurveyVersion(surveyVersion);
+                                    setSurveyVersion(surveyVersion);                                    
 
                                     return (
                                         <div className="itm-app">
+                                            {this.state.updatePLog && (
+                                                <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                                                    {(updateParticipantLog) => (
+                                                        <div>
+                                                            <button ref={this.uploadButtonRef} hidden onClick={(e) => {
+                                                                e.preventDefault();
+                                                                updateParticipantLog({
+                                                                    variables: { pid: this.state.pLogUpdate.pid.toString(), updates: this.state.pLogUpdate.updates }
+                                                                });
+                                                                this.setState({ updatePLog: false });
+                                                            }}></button>
+                                                        </div>
+                                                    )}
+                                                </Mutation>
+                                            )
+                                            }
                                             {currentUser &&
                                                 <nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
                                                     <a className="navbar-brand" href="/">
@@ -313,6 +389,11 @@ export class App extends React.Component {
                                                                             Administrator
                                                                         </Link>
                                                                     )}
+                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true) && (
+                                                                        <Link className="dropdown-item" to="/pid-lookup" onClick={this.handleToggle}>
+                                                                            PID Lookup
+                                                                        </Link>
+                                                                    )}
                                                                     <Link className="dropdown-item" to={{}} onClick={this.logout}>
                                                                         Logout
                                                                     </Link>
@@ -340,7 +421,10 @@ export class App extends React.Component {
                                                         <Scenarios />
                                                     </Route>
                                                     <Route path="/login">
-                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/participantText">
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} />
                                                     </Route>
                                                     <Route path="/reset-password/:token" component={ResetPassPage} />
                                                     <Route path="/myaccount">
@@ -348,6 +432,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/admin">
                                                         <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/pid-lookup">
+                                                        <PidLookupPage newState={this.state} />
                                                     </Route>
                                                     <Route path="/survey">
                                                         <Survey currentUser={this.state.currentUser} />
