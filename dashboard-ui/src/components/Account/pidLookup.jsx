@@ -38,7 +38,7 @@ export function PidLookup() {
     };
 
     const toggleVisibility = () => {
-        setViewHiddenEmail(!this.state.viewHiddenEmail);
+        setViewHiddenEmail(!viewHiddenEmail);
     };
 
     const onChangeClassification = ({ target }) => {
