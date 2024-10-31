@@ -27,9 +27,9 @@ const GET_SIM_DATA = gql`
 const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Alignment score (Participant_Text|Participant_Sim)']
 
 
-export function RQ6() {
+export function RQ6({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
     });    
@@ -45,7 +45,7 @@ export function RQ6() {
 
     React.useEffect(() => {
         if (dataTextResults?.getAllScenarioResults && dataParticipantLog?.getParticipantLog && dataSim?.getAllSimAlignmentByEval) {
-            const textResults = dataTextResults.getAllScenarioResults;
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
             const participantLog = dataParticipantLog.getParticipantLog;
             const simData = dataSim.getAllSimAlignmentByEval;
             const allObjs = [];
@@ -62,7 +62,7 @@ export function RQ6() {
                 }
                 recorded[pid] = [];
 
-                const { textResultsForPID, _ } = getAlignments(textResults, pid);
+                const { textResultsForPID, _ } = getAlignments(evalNum, textResults, pid);
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
@@ -131,7 +131,7 @@ export function RQ6() {
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataParticipantLog, dataTextResults, dataSim]);
+    }, [dataParticipantLog, dataTextResults, dataSim, evalNum]);
 
 
     const openModal = () => {

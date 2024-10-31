@@ -35,7 +35,7 @@ const ATTRIBUTE_MAPPING = {
 
 const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most aligned target', 'Least aligned target', 'Alignment score (Participant|Most aligned target)', 'Alignment score (Participant|Least aligned target)', 'Group target', 'Alignment score (Participant|group target)', 'TA2_Name', 'Alignment score (Participant|ADM(most))', 'Alignment score (Participant|ADM(least))', 'Match_MostAligned', 'Match_LeastAligned', 'Match_GrpMembers']
 
-export function RQ5() {
+export function RQ5({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
@@ -59,9 +59,9 @@ export function RQ5() {
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
             const participantLog = dataParticipantLog.getParticipantLog;
-            const textResults = dataTextResults.getAllScenarioResults;
-            const comparisons = comparisonData.getHumanToADMComparison;
-            const matches = comparisonData.getADMTextProbeMatches;
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
+            const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber == evalNum);
+            const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber == evalNum);
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -78,7 +78,7 @@ export function RQ5() {
                 }
                 recorded[pid] = [];
 
-                const { textResultsForPID, alignments } = getAlignments(textResults, pid);
+                const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
@@ -183,7 +183,7 @@ export function RQ5() {
             setScenarios(Array.from(new Set(allScenarios)));
             setGroupTargets(Array.from(new Set(allGroupTargets)));
         }
-    }, [dataParticipantLog, dataTextResults, comparisonData]);
+    }, [dataParticipantLog, dataTextResults, comparisonData, evalNum]);
 
     const admAuthorMatch = (ta2, entry2) => {
         return ((ta2 == 'Parallax' && entry2['adm_author'] == 'TAD') || (ta2 == 'Kitware' && entry2['adm_author'] == 'kitware'));

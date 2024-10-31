@@ -50,8 +50,8 @@ export const exportToExcel = async (filename, formattedData, headers) => {
     FileSaver.saveAs(data, filename + fileExtension);
 };
 
-export function getAlignments(textResults, pid) {
-    const textResultsForPID = textResults.filter((data) => data.evalNumber == 4 && data.participantID == pid);
+export function getAlignments(evalNum, textResults, pid) {
+    const textResultsForPID = textResults.filter((data) => data.evalNumber == evalNum && data.participantID == pid);
     const alignments = [];
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
@@ -68,7 +68,7 @@ export function getAlignments(textResults, pid) {
     return { textResultsForPID, alignments };
 }
 
-export function getRQ134Data(dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim) {
+export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim) {
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = dataTextResults.getAllScenarioResults;
@@ -83,7 +83,7 @@ export function getRQ134Data(dataSurveyResults, dataParticipantLog, dataTextResu
     const allAttributes = [];
 
     // find participants that have completed the delegation survey
-    const completed_surveys = surveyResults.filter((res) => res.results?.surveyVersion == 4 && isDefined(res.results['Post-Scenario Measures']));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && isDefined(res.results['Post-Scenario Measures']));
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
@@ -94,7 +94,7 @@ export function getRQ134Data(dataSurveyResults, dataParticipantLog, dataTextResu
         if (!logData) {
             continue;
         }
-        const { textResultsForPID, alignments } = getAlignments(textResults, pid);
+        const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
         // set up object to store participant data
         const admOrder = admOrderMapping[logData['ADMOrder']];
         let trial_num = 1;

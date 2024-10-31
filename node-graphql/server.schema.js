@@ -157,7 +157,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON],
-    getGroupAdmAlignmentEval4: [JSON],
+    getGroupAdmAlignmentByEval(evalNumber: Float): [JSON],
     getEvalIds: [JSON],
     getEvalIdsForAllHistory: [JSON],
     getAllHistoryByID(historyId: ID): JSON
@@ -242,9 +242,9 @@ const resolvers = {
         }
       }).toArray().then(result => { return result; });
     },
-    getGroupAdmAlignmentEval4: async (obj, args, context, inflow) => {
+    getGroupAdmAlignmentByEval: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({
-        "evalNumber": 4,
+        "evalNumber": args["evalNumber"],
         $expr: {
           $in: [
             { $arrayElemAt: ["$history.parameters.target_id", -1] },

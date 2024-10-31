@@ -63,7 +63,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
 
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval) {
-            const origData = getRQ134Data(dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            const origData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             setData(origData.allObjs);
             const tmpGroupTargets = {};
             for (const x of dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == 4)) {

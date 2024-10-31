@@ -18,9 +18,9 @@ const getAdmData = gql`
 const HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 'Scenario', 'Target_Type (Group/Individual)', 'Aligned ADM Alignment score (ADM|target)', 'Aligned Server Session ID', 'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'];
 
 
-export function RQ2223() {
+export function RQ2223({ evalNum }) {
     const { loading: loading, error: error, data: data } = useQuery(getAdmData, {
-        variables: { "evalNumber": 4 }
+        variables: { "evalNumber": evalNum }
     });
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -154,7 +154,7 @@ export function RQ2223() {
             setScenarios(Array.from(new Set(allScenarios)));
             setTargets(Array.from(new Set(allTargets)));
         }
-    }, [data]);
+    }, [data, evalNum]);
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
