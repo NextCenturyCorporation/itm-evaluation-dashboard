@@ -368,6 +368,8 @@ class TextBasedScenariosPage extends Component {
 
         } else {
             await this.calcScore(scenario, 'soartech')
+            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL)
+            scenario.kdmas = kdma_data
         }
     }
 
@@ -407,6 +409,7 @@ class TextBasedScenariosPage extends Component {
             scenario.combinedAlignmentData = sortedAlignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
             scenario.mostLeastAligned = combinedMostLeastAligned
+            scenario.kdmas = await this.attachKdmaValue(this.state.combinedSessionId, url)
             const sanitizedData = this.sanitizeKeys(scenario)
             await new Promise(resolve => {
                 this.setState({
@@ -421,6 +424,13 @@ class TextBasedScenariosPage extends Component {
                 });
             });
         }
+    }
+
+    attachKdmaValue = async (sessionId, url) => {
+        const endpoint = '/api/v1/computed_kdma_profile?session_id='
+        const response = await axios.get(`${url}${endpoint}${sessionId}`)
+        console.log(response)
+        return response.data
     }
 
     mostLeastAligned = async (sessionId, ta1, url, scenario) => {
