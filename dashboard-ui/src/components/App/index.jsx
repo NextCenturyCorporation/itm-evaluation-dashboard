@@ -296,7 +296,7 @@ export class App extends React.Component {
                     });
                 }
                 else {
-                    const newPid = Math.max(...pLog.filter((x) => x.Type === classification).map((x) => Number(x['ParticipantID']))) + 1;
+                    const newPid = Math.max(...pLog.filter((x) => x.Type === classification && !["202409113A", "202409113B"].includes(x['ParticipantID'])).map((x) => Number(x['ParticipantID']))) + 1;
                     const setNum = (newPid - (classification == 'Civ' ? 5 : 1)) % 12;
                     const participantData = {
                         ...SURVEY_SETS[classification][setNum], "ParticipantID": newPid, "Type": classification,
