@@ -47,12 +47,16 @@ import { PidLookup } from '../Account/pidLookup';
 
 const history = createBrowserHistory();
 
-const GET_SURVEY_VERSION_AND_PARTICIPANTS = gql`
+const GET_SURVEY_VERSION = gql`
   query GetSurveyVersion {
     getCurrentSurveyVersion
-    getParticipantLog
   }
 `;
+
+const GET_PARTICIPANT_LOG = gql`
+  query GetParticipantLog {
+    getParticipantLog
+  }`;
 
 
 const GET_CONFIGS = gql`
@@ -61,14 +65,48 @@ const GET_CONFIGS = gql`
     getAllImageUrls @include(if: $includeImageUrls)
     getAllTextBasedConfigs
     getAllTextBasedImages
-  }
-`;
+  }`;
 
 const UPDATE_PARTICIPANT_LOG = gql`
     mutation updateParticipantLog($pid: String!, $updates: JSON!) {
         updateParticipantLog(pid: $pid, updates: $updates) 
-    }
-`;
+    }`;
+
+const ADD_PARTICIPANT = gql`
+    mutation addNewParticipantToLog($participantData: JSON!) {
+        addNewParticipantToLog(participantData: $participantData) 
+    }`;
+
+const SURVEY_SETS = {
+    "Mil": [
+        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
+        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 2 },
+        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 3 },
+        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 4 },
+        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 1 },
+        { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 },
+        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 3 },
+        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 4 },
+        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 1 },
+        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 2 },
+        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 3 },
+        { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 4 },
+    ],
+    "Civ": [
+        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 3 },
+        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 4 },
+        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 1 },
+        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 2 },
+        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 3 },
+        { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 4 },
+        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
+        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 2 },
+        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 3 },
+        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 4 },
+        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 1 },
+        { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 },
+    ]
+}
 
 
 function Home({ newState }) {
@@ -186,11 +224,14 @@ export class App extends React.Component {
         this.state.updatePLog = false;
         this.state.pLogUpdate = null;
         this.state.pid = null;
+        this.state.newParticipantData = null;
+        this.state.loadPLog = false;
 
         this.logout = this.logout.bind(this);
         this.userLoginHandler = this.userLoginHandler.bind(this);
         this.participantLoginHandler = this.participantLoginHandler.bind(this);
         this.uploadButtonRef = React.createRef();
+        this.addPButtonRef = React.createRef();
     }
 
     async componentDidMount() {
@@ -209,7 +250,7 @@ export class App extends React.Component {
         const user = await accountsGraphQL.getUser(
             tokens ? tokens.accessToken : ''
         );
-        this.setState({ currentUser: user });
+        this.setState({ currentUser: user, loadPLog: true });
     }
 
     async logout() {
@@ -223,31 +264,52 @@ export class App extends React.Component {
     }
 
     participantLoginHandler(hashedEmail, classification) {
-        const pLog = store.getState().participants.participantLog;
-        const foundParticipant = pLog.find((x) => x.hashedEmail == hashedEmail && classification == x.Type);
-        if (foundParticipant) {
-            const pid = foundParticipant['ParticipantID'];
-            this.setState({ pid: pid }, () => {
-                history.push("/text-based?pid=" + this.state.pid + "&class=" + classification);
-            });
+        // get fresh participant log from database to minimize race conditions
+        setParticipantLogInStore(null);
+        const sleep = (ms) => {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
-        else {
-            // create a user account and get a pid for this user
-            const nextAvailablePid = pLog.find((x) => x.Type == classification && !x.claimed)?.['ParticipantID'];
-            if (isDefined(nextAvailablePid)) {
-                this.setState({ updatePLog: true, pLogUpdate: { updates: { hashedEmail: hashedEmail, claimed: true }, pid: nextAvailablePid } }, () => {
-                    if (this.uploadButtonRef.current) {
-                        this.uploadButtonRef.current.click();
-                    }
-                    this.setState({ pid: nextAvailablePid }, () => {
-                        history.push("/text-based?pid=" + this.state.pid + "&class=" + classification);
-                    });
+        this.setState({ loadPLog: true }, async () => {
+            while (!isDefined(store.getState().participants.participantLog)) {
+                await sleep(200);
+            }
+            this.setState({ loadPLog: false });
+            const pLog = store.getState().participants.participantLog;
+            const foundParticipant = pLog.find((x) => x.hashedEmail == hashedEmail && classification == x.Type);
+            if (foundParticipant) {
+                const pid = foundParticipant['ParticipantID'];
+                this.setState({ pid: pid }, () => {
+                    history.push("/text-based?pid=" + this.state.pid + "&class=" + classification);
                 });
             }
             else {
-                throw "No PIDs available";
+                // create a user account and get a pid for this user
+                const nextAvailablePid = pLog.find((x) => x.Type == classification && !x.claimed)?.['ParticipantID'];
+                if (isDefined(nextAvailablePid)) {
+                    this.setState({ updatePLog: true, pLogUpdate: { updates: { hashedEmail: hashedEmail, claimed: true }, pid: nextAvailablePid } }, () => {
+                        if (this.uploadButtonRef.current) {
+                            this.uploadButtonRef.current.click();
+                        }
+                        this.setState({ pid: nextAvailablePid }, () => {
+                            history.push("/text-based?pid=" + this.state.pid + "&class=" + classification);
+                        });
+                    });
+                }
+                else {
+                    const newPid = Math.max(...pLog.filter((x) => x.Type === classification).map((x) => Number(x['ParticipantID']))) + 1;
+                    const setNum = (newPid - (classification == 'Civ' ? 5 : 1)) % 12;
+                    const participantData = {
+                        ...SURVEY_SETS[classification][setNum], "ParticipantID": newPid, "Type": classification,
+                        "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": hashedEmail
+                    };
+                    this.setState({ updatePLog: true, newParticipantData: participantData }, () => {
+                        if (this.addPButtonRef.current) {
+                            this.addPButtonRef.current.click();
+                        }
+                    });
+                }
             }
-        }
+        });
     }
 
 
@@ -255,14 +317,20 @@ export class App extends React.Component {
         const { currentUser } = this.state;
         return (
             <Router history={history}>
-                <Query query={GET_SURVEY_VERSION_AND_PARTICIPANTS}>
-                    {({ loading: initialLoading, error: initialError, data: initialData }) => {
-                        if (initialLoading) return <div>Loading...</div>;
-                        if (initialError) return <div>Error fetching survey initial data</div>;
+                {this.state.loadPLog && <Query query={GET_PARTICIPANT_LOG} fetchPolicy={'no-cache'}>
+                    {({ loading: participantLoading, error: participantError, data: participantData }) => {
+                        if (participantLoading) return <div>Loading...</div>;
+                        if (participantError) return <div>Error fetching participant log</div>;
+                        setParticipantLogInStore(participantData.getParticipantLog);
+                    }}
+                </Query>}
+                <Query query={GET_SURVEY_VERSION}>
+                    {({ loading: versionLoading, error: versionError, data: versionData }) => {
+                        if (versionLoading) return <div>Loading...</div>;
+                        if (versionError) return <div>Error fetching survey version data</div>;
 
-                        const surveyVersion = initialData.getCurrentSurveyVersion;
+                        const surveyVersion = versionData.getCurrentSurveyVersion;
                         const includeImageUrls = surveyVersion < 4;
-                        setParticipantLogInStore(initialData.getParticipantLog);
 
                         return (
                             <Query
@@ -280,26 +348,45 @@ export class App extends React.Component {
                                     // Setup configs
                                     setupConfigWithImages(data);
                                     setupTextBasedConfig(data);
-                                    setSurveyVersion(surveyVersion);                                    
+                                    setSurveyVersion(surveyVersion);
 
                                     return (
                                         <div className="itm-app">
                                             {this.state.updatePLog && (
-                                                <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
-                                                    {(updateParticipantLog) => (
-                                                        <div>
-                                                            <button ref={this.uploadButtonRef} hidden onClick={(e) => {
-                                                                e.preventDefault();
-                                                                updateParticipantLog({
-                                                                    variables: { pid: this.state.pLogUpdate.pid.toString(), updates: this.state.pLogUpdate.updates }
-                                                                });
-                                                                this.setState({ updatePLog: false });
-                                                            }}></button>
-                                                        </div>
-                                                    )}
-                                                </Mutation>
-                                            )
-                                            }
+                                                <>
+                                                    <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                                                        {(updateParticipantLog) => (
+                                                            <div>
+                                                                <button ref={this.uploadButtonRef} hidden onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    updateParticipantLog({
+                                                                        variables: { pid: this.state.pLogUpdate.pid.toString(), updates: this.state.pLogUpdate.updates }
+                                                                    });
+                                                                    this.setState({ updatePLog: false });
+                                                                }}></button>
+                                                            </div>
+                                                        )}
+                                                    </Mutation>
+                                                    <Mutation mutation={ADD_PARTICIPANT} onCompleted={() => {
+                                                        this.setState({ pid: this.state.newParticipantData['ParticipantID'] }, () => {
+                                                            history.push("/text-based?pid=" + this.state.pid + "&class=" + this.state.newParticipantData['Type']);
+                                                        });
+                                                    }
+                                                    }>
+                                                        {(addNewParticipantToLog) => (
+                                                            <div>
+                                                                <button ref={this.addPButtonRef} hidden onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    addNewParticipantToLog({
+                                                                        variables: { participantData: this.state.newParticipantData }
+                                                                    });
+                                                                    this.setState({ updatePLog: false });
+                                                                }}></button>
+                                                            </div>
+                                                        )}
+                                                    </Mutation>
+                                                </>
+                                            )}
                                             {currentUser &&
                                                 <nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
                                                     <a className="navbar-brand" href="/">
