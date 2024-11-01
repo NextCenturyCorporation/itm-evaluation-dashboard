@@ -30,20 +30,24 @@ const history = createBrowserHistory({ forceRefresh: true });
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
-    }`
+    }`;
 
 const GET_ALL_SCENARIO_RESULTS = gql`
     query GetAllScenarioResults {
         getAllScenarioResults
-    }
-`
+    }`;
 
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
-    }
-`
+    }`;
+
+const UPDATE_PARTICIPANT_LOG = gql`
+    mutation updateParticipantLog($pid: String!, $updates: JSON!) {
+        updateParticipantLog(pid: $pid, updates: $updates) 
+    }`;
+
 
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
@@ -94,7 +98,9 @@ class TextBasedScenariosPage extends Component {
             adeptScenarios: [],
             uploadedScenarios: 0,
             moderated: true,
-            startSurvey: true
+            startSurvey: true,
+            updatePLog: false,
+            startCount: 0
         };
 
         this.surveyData = {};
@@ -105,6 +111,7 @@ class TextBasedScenariosPage extends Component {
         this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
+        this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true
         this.handleKeyPress = this.handleKeyPress.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
@@ -129,6 +136,14 @@ class TextBasedScenariosPage extends Component {
         );
 
         let scenarios = [];
+
+        if (matchedLog) {
+            this.setState({ updatePLog: true, startCount: matchedLog['textEntryCount'] }, () => {
+                if (this.uploadButtonRefPLog.current) {
+                    this.uploadButtonRefPLog.current.click();
+                }
+            });
+        }
 
         if (!matchedLog || isDuplicate) {
             let message = "No matching participant ID was found.";
@@ -262,7 +277,8 @@ class TextBasedScenariosPage extends Component {
             combinedSessionId: '',
             adeptScenarios: [],
             uploadedScenarios: 0,
-            startSurvey: true
+            startSurvey: true,
+            updatePLog: false
         });
 
         this.surveyData = {};
@@ -663,7 +679,13 @@ class TextBasedScenariosPage extends Component {
                         onCompleted={() => {
                             this.setState(prevState => ({
                                 uploadedScenarios: prevState.uploadedScenarios + 1,
-                            }));
+                            }), () => {
+                                this.setState({ updatePLog: true }, () => {
+                                    if (this.uploadButtonRefPLog.current) {
+                                        this.uploadButtonRefPLog.current.click();
+                                    }
+                                });
+                            });
                         }}
                     >
                         {(uploadSurveyResults, { data }) => (
@@ -675,6 +697,21 @@ class TextBasedScenariosPage extends Component {
                                             variables: { results: this.state.sanitizedData }
                                         })
                                     }
+                                }}></button>
+                            </div>
+                        )}
+                    </Mutation>
+                )}
+                {this.state.updatePLog && (
+                    <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                        {(updateParticipantLog) => (
+                            <div>
+                                <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
+                                    e.preventDefault();
+                                    updateParticipantLog({
+                                        variables: { pid: this.state.participantID, updates: { claimed: true, textEntryCount: this.state.startCount + this.state.uploadedScenarios } }
+                                    });
+                                    this.setState({ updatePLog: false });
                                 }}></button>
                             </div>
                         )}
