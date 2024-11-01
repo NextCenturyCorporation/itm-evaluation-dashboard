@@ -214,6 +214,7 @@ const typeDefs = gql`
     updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
+    addNewParticipantToLog(participantData: JSON): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON
@@ -534,6 +535,9 @@ const resolvers = {
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await dashboardDB.db.collection('userScenarioResults').insertOne(result)
       }
+    },
+    addNewParticipantToLog: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('participantLog').insertOne(args.participantData);
     },
     updateEvalIdsByPage: async (obj, args, context, inflow) => {
       // hmm can't do this with graphql?      
