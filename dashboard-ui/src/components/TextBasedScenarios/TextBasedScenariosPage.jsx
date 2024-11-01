@@ -429,7 +429,6 @@ class TextBasedScenariosPage extends Component {
     attachKdmaValue = async (sessionId, url) => {
         const endpoint = '/api/v1/computed_kdma_profile?session_id='
         const response = await axios.get(`${url}${endpoint}${sessionId}`)
-        console.log(response)
         return response.data
     }
 
