@@ -1,8 +1,17 @@
 import { RQ2223 } from "./tables/rq22-rq23";
 import './dre-rq.css';
 import { RQ21 } from "./tables/rq21";
+import rq2Code from './rcode/code_for_dashboard_RQ2.R';
+import React from 'react';
+import { Button, Modal } from 'react-bootstrap';
+import { RCodeModal } from "./rcode/RcodeModal";
 
 export function RQ2() {
+    const [rq2CodeShowing, setRQ2CodeShowing] = React.useState(false);
+
+    const close2Code = () => {
+        setRQ2CodeShowing(false);
+    }
     return (<div className="researchQuestion">
         <div className="section-container">
             <h2>RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?</h2>
@@ -36,7 +45,20 @@ export function RQ2() {
         <div className="section-container">
             <h2>RQ2.2 & 2.3 Data</h2>
             <RQ2223 />
-
+            <div className="buttons">
+                <button onClick={() => setRQ2CodeShowing(true)}>View R Syntax</button>
+                <Modal className='rCodeModal' show={rq2CodeShowing} onHide={close2Code} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>RQ3 Analysis 2.2 and 2.3 - Code</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body><RCodeModal rcodeFile={rq2Code} downloadName={'RQ2_code.R'} /></Modal.Body>
+                    <Modal.Footer>
+                        <Button className='downloadBtn' onClick={close2Code}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
         </div>
     </div>);
 }

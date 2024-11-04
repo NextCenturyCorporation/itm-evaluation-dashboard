@@ -3,13 +3,19 @@ import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
 import { RCodeModal } from "./rcode/RcodeModal";
 import rq32Code from './rcode/code_for_dashboard_RQ32.R';
+import rq31Code from './rcode/code_for_dashboard_RQ31_and_RQ33.R';
 import { Button, Modal } from 'react-bootstrap';
 
 export function RQ3() {
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
+    const [rq31CodeShowing, setRQ31CodeShowing] = React.useState(false);
 
     const close32Code = () => {
         setRQ32CodeShowing(false);
+    }
+
+    const close31Code = () => {
+        setRQ31CodeShowing(false);
     }
 
     return (<div className="researchQuestion">
@@ -47,6 +53,20 @@ export function RQ3() {
                 </ul>
                 <li>Delegation preference (A/B)</li>
             </ul>
+            <div className="buttons">
+                <button onClick={() => setRQ31CodeShowing(true)}>View R Syntax</button>
+                <Modal className='rCodeModal' show={rq31CodeShowing} onHide={close31Code} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>RQ3 Analysis 3.1 and 3.3 - Code</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body><RCodeModal rcodeFile={rq31Code} downloadName={'RQ31_33_code.R'} /></Modal.Body>
+                    <Modal.Footer>
+                        <Button className='downloadBtn' onClick={close31Code}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
         </div>
         <div className="section-container">
             <h2>RQ3 Analysis 3.2 - Logistic regression of alignment score</h2>
@@ -83,6 +103,9 @@ export function RQ3() {
                 <li>Delegation preference (A/M)</li>
                 <li>Trust_Rating</li>
             </ul>
+            <div className="buttons">
+                <button onClick={() => setRQ31CodeShowing(true)}>View R Syntax</button>
+            </div>
         </div>
     </div>);
 }
