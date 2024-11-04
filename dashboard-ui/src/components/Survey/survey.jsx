@@ -34,6 +34,11 @@ const UPLOAD_SURVEY_RESULTS = gql`
     uploadSurveyResults(surveyId: $surveyId, results: $results)
   }`;
 
+const UPDATE_PARTICIPANT_LOG = gql`
+    mutation updateParticipantLog($pid: String!, $updates: JSON!) {
+        updateParticipantLog(pid: $pid, updates: $updates) 
+    }`;
+
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -146,7 +151,10 @@ class SurveyPage extends Component {
             pid: null,
             validPid: false,
             lastTimeCalled: 0,
-            envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 }
+            envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 },
+            updatePLog: false,
+            initialUploadedCount: 0,
+            hasUploaded: false
         };
         this.surveyConfigClone = null;
         this.pageStartTimes = {};
@@ -180,6 +188,7 @@ class SurveyPage extends Component {
         this.survey.onValueChanged.add(this.onValueChanged)
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
+        this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true;
         if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
@@ -189,6 +198,7 @@ class SurveyPage extends Component {
             };
             // search to see if this pid has been used before and fully completed the survey
             const pidExists = this.props.surveyResults.filter((res) => res.results?.surveyVersion == 4 && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid) {
                 if (pidExists.length > 0) {
@@ -411,7 +421,7 @@ class SurveyPage extends Component {
         // assuming 0 is most aligned and length-1 is least aligned, gets the valid adms following the formula:
         // aligned cannot be in the same category as baseline (listed in cols1to3)
         // misaligned cannot be in the same category as baseline (listed in cols1to3)
-        // mistaligned cannot be in the same set as aligned
+        // misaligned cannot be in the same set as aligned
         let alignedStatus = 'most aligned';
         let alignedTarget = '';
         let misalignedTarget = '';
@@ -631,8 +641,8 @@ class SurveyPage extends Component {
                 misalignedStatus = validAdms['misalignedStatus'];
                 break;
             case 'DryRunEval-IO2-eval':
-                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
-                set1 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4']
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4'];
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
                 validAdms = this.getValidADM(ALL_IO_TARGETS, ioTargets, cols1to3, set1, set2, []);
                 alignedTarget = validAdms['aligned'];
@@ -1024,6 +1034,16 @@ class SurveyPage extends Component {
         }
 
         const pageName = options.page.name;
+        if (pageName == 'VR Page') {
+            // made it past warnings and pid page, so log pid as claimed
+            if (this.state.validPid) {
+                this.setState({ updatePLog: true }, () => {
+                    if (this.uploadButtonRefPLog.current) {
+                        this.uploadButtonRefPLog.current.click();
+                    }
+                });
+            }
+        }
 
         if (Object.keys(this.pageStartTimes).length > 0) {
             this.timerHelper()
@@ -1147,6 +1167,17 @@ class SurveyPage extends Component {
             }
             this.postConfigSetup();
         }
+        else {
+            this.setState({ hasUploaded: true }, () => {
+                if (this.state.validPid) {
+                    this.setState({ updatePLog: true }, () => {
+                        if (this.uploadButtonRefPLog.current) {
+                            this.uploadButtonRefPLog.current.click();
+                        }
+                    });
+                }
+            });
+        }
     }
 
     finishFirstPage = (survey) => {
@@ -1219,8 +1250,22 @@ class SurveyPage extends Component {
                                     </div>
                                 )}
                             </Mutation>
-                        )
-                        }
+                    )}
+                    {this.state.updatePLog && (
+                        <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                            {(updateParticipantLog) => (
+                                <div>
+                                    <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
+                                        e.preventDefault();
+                                        updateParticipantLog({
+                                            variables: { pid: this.state.pid, updates: { claimed: true, surveyEntryCount: this.state.initialUploadedCount + (this.state.hasUploaded ? 1 : 0) } }
+                                        });
+                                        this.setState({ updatePLog: false });
+                                    }}></button>
+                                </div>
+                            )}
+                        </Mutation>
+                    )}
                         <div style={{
                             position: 'fixed',
                             bottom: '1rem',
