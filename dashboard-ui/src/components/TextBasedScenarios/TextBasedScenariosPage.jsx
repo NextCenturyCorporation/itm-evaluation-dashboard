@@ -62,7 +62,8 @@ export const scenarioMappings = {
 
 export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
+        { fetchPolicy: 'no-cache' });
     const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
 
     if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
