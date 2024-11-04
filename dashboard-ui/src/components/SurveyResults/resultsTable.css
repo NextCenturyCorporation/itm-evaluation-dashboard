@@ -64,16 +64,44 @@
 
 .downloadBtn {
     border-radius: 4px;
+    background-color: rgb(212, 212, 212);
+    border: 1px solid black;
+    color: black;
+}
+
+.rCodeModal .modal-dialog {
+    min-width: 70%;
+}
+
+.rCode {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 4px;
+    max-height: 600px;
+    overflow: auto;
+}
+
+.codeDownload {
+    padding: 8px 4px;
+    margin-bottom: 4px;
+}
+
+.code-line {
+    margin-bottom: 2px;
+    font-family: 'Courier New', 'Courier', 'monospace';
 }
 
 .downloadBtn:hover {
     cursor: pointer;
     background-color: rgb(204, 204, 204);
+    border: 1px solid black;
+    color: black;
 }
 
 .downloadBtn:active {
     cursor: pointer;
-    background-color: darkgrey;
+    background-color: darkgrey !important;
+    border: 1px solid black;
     color: white;
 }
 
