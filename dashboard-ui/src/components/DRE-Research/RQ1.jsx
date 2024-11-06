@@ -1,7 +1,16 @@
 import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
+import rq1Code from './rcode/code_for_dashboard_RQ1.R';
+import React from 'react';
+import { Button, Modal } from 'react-bootstrap';
+import { RCodeModal } from "./rcode/RcodeModal";
 
 export function RQ1() {
+    const [rq1CodeShowing, setRQ1CodeShowing] = React.useState(false);
+
+    const close1Code = () => {
+        setRQ1CodeShowing(false);
+    }
     return (<div className="researchQuestion">
         <div className="section-container">
             <h2>RQ1: Does alignment score predict measures of trust?</h2>
@@ -25,7 +34,6 @@ export function RQ1() {
         <div className="section-container">
             <h2>RQ1 Data</h2>
             <RQ13 />
-
         </div>
         <div className="section-container">
             <h2>RQ1 Analysis 1.1 - Linear Mixed Effects Regression Alignment on Trust</h2>
@@ -38,7 +46,18 @@ export function RQ1() {
                 <li>Trust_Rating</li>
             </ul>
             <div className="buttons">
-                <button>View R Syntax</button>
+                <button onClick={() => setRQ1CodeShowing(true)}>View R Syntax</button>
+                <Modal className='rCodeModal' show={rq1CodeShowing} onHide={close1Code} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>RQ1 Analysis - Code</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body><RCodeModal rcodeFile={rq1Code} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Footer>
+                        <Button className='downloadBtn' onClick={close1Code}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
         </div>
         <div className="section-container">
@@ -52,7 +71,18 @@ export function RQ1() {
                 <li>Trust_Rating</li>
             </ul>
             <div className="buttons">
-                <button>View R Syntax</button>
+                <button onClick={() => setRQ1CodeShowing(true)}>View R Syntax</button>
+                <Modal className='rCodeModal' show={rq1CodeShowing} onHide={close1Code} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>RQ1 Analysis - Code</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body><RCodeModal rcodeFile={rq1Code} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Footer>
+                        <Button className='downloadBtn' onClick={close1Code}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
         </div>
     </div>);

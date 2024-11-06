@@ -21,24 +21,33 @@ import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
+import { withRouter } from 'react-router-dom';
+import { isDefined } from '../AggregateResults/DataFunctions';
+import { createBrowserHistory } from 'history';
+
+const history = createBrowserHistory({ forceRefresh: true });
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
         uploadScenarioResults(results: $results)
-    }`
+    }`;
 
 const GET_ALL_SCENARIO_RESULTS = gql`
     query GetAllScenarioResults {
         getAllScenarioResults
-    }
-`
+    }`;
 
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
-    }
-`
+    }`;
+
+const UPDATE_PARTICIPANT_LOG = gql`
+    mutation updateParticipantLog($pid: String!, $updates: JSON!) {
+        updateParticipantLog(pid: $pid, updates: $updates) 
+    }`;
+
 
 export const scenarioMappings = {
     "SoarTech Jungle": stJungleConfig,
@@ -53,7 +62,8 @@ export const scenarioMappings = {
 
 export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
+        { fetchPolicy: 'no-cache' });
     const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
 
     if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
@@ -88,6 +98,10 @@ class TextBasedScenariosPage extends Component {
             combinedSessionId: '',
             adeptScenarios: [],
             uploadedScenarios: 0,
+            moderated: true,
+            startSurvey: true,
+            updatePLog: false,
+            startCount: 0
         };
 
         this.surveyData = {};
@@ -98,6 +112,7 @@ class TextBasedScenariosPage extends Component {
         this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
+        this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true
         this.handleKeyPress = this.handleKeyPress.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
@@ -123,23 +138,36 @@ class TextBasedScenariosPage extends Component {
 
         let scenarios = [];
 
+        if (matchedLog) {
+            this.setState({ updatePLog: true, startCount: matchedLog['textEntryCount'] }, () => {
+                if (this.uploadButtonRefPLog.current) {
+                    this.uploadButtonRefPLog.current.click();
+                }
+            });
+        }
+
         if (!matchedLog || isDuplicate) {
             let message = "No matching participant ID was found.";
             if (isDuplicate) {
-                message = "This participant ID has already been used.";
+                message = `This ${this.state.moderated ? "participant ID" : "email"} has already been used.`;
             }
             message += " Would you like to continue anyway?\n\n" +
-                "Click 'OK' to continue with the current ID.\n" +
-                "Click 'Cancel' to re-enter the participant ID.";
+                `Click 'OK' to continue with the current ${this.state.moderated ? "ID" : "email"}.\n` +
+                `Click 'Cancel' to re-enter the ${this.state.moderated ? "participant ID" : "email"}.`;
 
             const userChoice = window.confirm(message);
 
             if (!userChoice) {
                 // just reload intro survey
-                this.introSurvey = new Model(introConfig);
-                this.introSurvey.onComplete.add(this.introSurveyComplete);
-                this.introSurvey.applyTheme(surveyTheme);
-                this.setState({ currentConfig: null }); // Force re-render
+                if (this.state.moderated) {
+                    this.introSurvey = new Model(introConfig);
+                    this.introSurvey.onComplete.add(this.introSurveyComplete);
+                    this.introSurvey.applyTheme(surveyTheme);
+                    this.setState({ currentConfig: null }); // Force re-render
+                }
+                else {
+                    history.push('/participantText');
+                }
                 return;
             } else {
                 // if you want to go through with a non-matched or duplicate PID, giving default experience
@@ -204,6 +232,19 @@ class TextBasedScenariosPage extends Component {
 
     componentDidMount() {
         document.addEventListener('keydown', this.handleKeyPress);
+        const queryParams = new URLSearchParams(window.location.search);
+        const pid = queryParams.get('pid');
+        const classification = queryParams.get('class');
+        if (isDefined(pid) && isDefined(classification)) {
+            this.introSurvey.data = {
+                "Participant ID": pid,
+                "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : "Military Background",
+                "vrEnvironmentsCompleted": ['none']
+            };
+            this.setState({ moderated: false, startSurvey: false }, () => {
+                this.introSurveyComplete(this.introSurvey);
+            });
+        }
     }
 
     componentWillUnmount() {
@@ -236,7 +277,9 @@ class TextBasedScenariosPage extends Component {
             adeptSessionsCompleted: 0,
             combinedSessionId: '',
             adeptScenarios: [],
-            uploadedScenarios: 0
+            uploadedScenarios: 0,
+            startSurvey: true,
+            updatePLog: false
         });
 
         this.surveyData = {};
@@ -342,6 +385,8 @@ class TextBasedScenariosPage extends Component {
 
         } else {
             await this.calcScore(scenario, 'soartech')
+            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL)
+            scenario.kdmas = kdma_data
         }
     }
 
@@ -381,6 +426,7 @@ class TextBasedScenariosPage extends Component {
             scenario.combinedAlignmentData = sortedAlignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
             scenario.mostLeastAligned = combinedMostLeastAligned
+            scenario.kdmas = await this.attachKdmaValue(this.state.combinedSessionId, url)
             const sanitizedData = this.sanitizeKeys(scenario)
             await new Promise(resolve => {
                 this.setState({
@@ -395,6 +441,12 @@ class TextBasedScenariosPage extends Component {
                 });
             });
         }
+    }
+
+    attachKdmaValue = async (sessionId, url) => {
+        const endpoint = '/api/v1/computed_kdma_profile?session_id='
+        const response = await axios.get(`${url}${endpoint}${sessionId}`)
+        return response.data
     }
 
     mostLeastAligned = async (sessionId, ta1, url, scenario) => {
@@ -598,7 +650,29 @@ class TextBasedScenariosPage extends Component {
                 {!this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
-                {this.state.currentConfig && !this.state.allScenariosCompleted && (
+                {!this.state.moderated && !this.state.startSurvey && (
+                    <div className="text-instructions">
+                        <h2>Instructions</h2>
+                        <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
+                            <br />
+                            During this portion of the experiment, you will be presented with several medical triage scenarios. You will be given action options from which to choose. Please consider
+                            how you would act if you were placed in this scenario.
+                        </p>
+                        <h4>Guidelines:</h4>
+                        <ul>
+                            <li>Please complete the experiment in one sitting.</li>
+                            <li>Choose the option that best matches how you would triage the scenario.</li>
+                            <li>Read all details to clearly understand each question before responding.</li>
+                            <li>Do not close the browser until you reach the "Thank You" page at the end.</li>
+                            <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
+                        </ul>
+                        <p className='center-text'>Press "Start" to begin.</p>
+                        <button onClick={() => this.setState({ startSurvey: true })}>Start</button>
+                    </div>
+                )
+
+                }
+                {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
                     <>
                         <Survey model={this.survey} />
                         {this.shouldBlockNavigation && (
@@ -615,7 +689,13 @@ class TextBasedScenariosPage extends Component {
                         onCompleted={() => {
                             this.setState(prevState => ({
                                 uploadedScenarios: prevState.uploadedScenarios + 1,
-                            }));
+                            }), () => {
+                                this.setState({ updatePLog: true }, () => {
+                                    if (this.uploadButtonRefPLog.current) {
+                                        this.uploadButtonRefPLog.current.click();
+                                    }
+                                });
+                            });
                         }}
                     >
                         {(uploadSurveyResults, { data }) => (
@@ -627,6 +707,21 @@ class TextBasedScenariosPage extends Component {
                                             variables: { results: this.state.sanitizedData }
                                         })
                                     }
+                                }}></button>
+                            </div>
+                        )}
+                    </Mutation>
+                )}
+                {this.state.updatePLog && (
+                    <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                        {(updateParticipantLog) => (
+                            <div>
+                                <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
+                                    e.preventDefault();
+                                    updateParticipantLog({
+                                        variables: { pid: this.state.participantID, updates: { claimed: true, textEntryCount: this.state.startCount + this.state.uploadedScenarios } }
+                                    });
+                                    this.setState({ updatePLog: false });
                                 }}></button>
                             </div>
                         )}
@@ -646,6 +741,7 @@ class TextBasedScenariosPage extends Component {
                     <ScenarioCompletionScreen
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}
+                        moderatorExists={this.state.moderated}
                     />
                 )}
             </>
@@ -653,7 +749,7 @@ class TextBasedScenariosPage extends Component {
     }
 }
 
-export default TextBasedScenariosPage;
+export default withRouter(TextBasedScenariosPage);
 
 ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
     return React.createElement(MedicalScenario, props)
@@ -677,7 +773,7 @@ const simNameMappings = {
     'ST-3': ['stq3', 'stv3'],
 }
 
-const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
+const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
 
@@ -688,27 +784,31 @@ const ScenarioCompletionScreen = ({ sim1, sim2 }) => {
                     <Card className="border-0 shadow">
                         <Card.Body className="text-center p-5">
                             <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
-                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
-                            <Card bg="light" className="p-4">
-                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
-                                    Participant should complete the following scenarios in VR:
-                                </Card.Title>
-                                <Card.Subtitle className="mb-3 text-muted">
-                                    Please complete the scenarios in the order listed below:
-                                </Card.Subtitle>
-                                <ListGroup variant="flush" className="border rounded">
-                                    {allScenarios.map((scenario, index) => (
-                                        <ListGroup.Item
-                                            key={index}
-                                            className="py-3 d-flex align-items-center"
-                                        >
-                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
-                                            <span className="fs-5">{scenario}</span>
-                                        </ListGroup.Item>
-                                    ))}
-                                </ListGroup>
-                            </Card>
-                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                            {moderatorExists ?
+                                <>
+                                    <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                                    <Card bg="light" className="p-4">
+                                        <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                            Participant should complete the following scenarios in VR:
+                                        </Card.Title>
+                                        <Card.Subtitle className="mb-3 text-muted">
+                                            Please complete the scenarios in the order listed below:
+                                        </Card.Subtitle>
+                                        <ListGroup variant="flush" className="border rounded">
+                                            {allScenarios.map((scenario, index) => (
+                                                <ListGroup.Item
+                                                    key={index}
+                                                    className="py-3 d-flex align-items-center"
+                                                >
+                                                    <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                                    <span className="fs-5">{scenario}</span>
+                                                </ListGroup.Item>
+                                            ))}
+                                        </ListGroup>
+                                    </Card>
+                                    <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                                </> : <p>You may now close the browser</p>
+                            }
                         </Card.Body>
                     </Card>
                 </Col>

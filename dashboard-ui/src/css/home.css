@@ -13,7 +13,7 @@
     border-radius: 15px;
     background-color: #ffffff;
     margin: 10px 25px;
-    min-height:150px;
+    min-height: 150px;
     padding-bottom: 10px;
 }
 
@@ -47,11 +47,11 @@
     width: 250px;
 }
 
-.flex-chart-center svg{
+.flex-chart-center svg {
     overflow: visible !important;
 }
 
 .center-text {
-    width:100%;
+    width: 100%;
     text-align: center;
 }

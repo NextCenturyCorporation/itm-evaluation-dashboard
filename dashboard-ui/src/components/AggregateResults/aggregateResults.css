@@ -47,6 +47,37 @@
     margin-bottom: 8px;
 }
 
+.outlinedPlot h4 {
+    text-align: center;
+    margin-bottom: 12px;
+    margin-left: 18px;
+    margin-right: 18px;
+}
+
+.rq1-lines {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
+    margin: 18px auto;
+}
+
+.rq3-lines {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.rq3-lines .outlinedPlot {
+    width: calc(50% - 18px - 18px);
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .kdma-section>* {
     margin-top: 0px;
 }
@@ -76,6 +107,15 @@
         justify-content: space-around;
     }
 
+    .q2-scatters {
+        flex-direction: column;
+    }
+
+    .q2-scatters .outlinedPlot {
+        width: auto;
+        min-width: 712px;
+    }
+
 }
 
 @media only screen and (max-width: 1449px) {
@@ -96,6 +136,24 @@
         flex-direction: column;
         align-items: center;
     }
+
+    .rq1-lines {
+        flex-direction: column;
+    }
+
+    .rq3-lines .outlinedPlot {
+        width: auto;
+    }
+
+    .q2-scatters {
+        flex-direction: column;
+    }
+
+    .q2-scatters .outlinedPlot {
+        width: auto;
+        min-width: 712px;
+    }
+
 }
 
 .delegationChoices>*, .side-by-side>* {
@@ -135,6 +193,25 @@
     border: 1px solid black;
 }
 
+.q1, .q2, .q3 {
+    width: 100%;
+}
+
+.q2-scatters {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
+    text-align: center;
+}
+
+.q2-scatters>* {
+    padding: 8px;
+    width: calc(50% - 32px);
+    text-align: center;
+}
+
 .q2-adms {
     width: 100%;
     display: flex;
@@ -159,6 +236,8 @@
 .q2-adms h3 {
     text-align: center;
     width: 100%;
+    border: 0px !important;
+    margin-bottom: 12px;
 }
 
 .home-container .result-table-section-override {

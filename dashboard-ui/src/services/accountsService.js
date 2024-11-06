@@ -28,6 +28,7 @@ const accountsGraphQL = new GraphQLClient({
       username
       admin
       evaluator
+      experimenter
     }
   `,
 });

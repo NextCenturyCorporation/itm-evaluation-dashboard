@@ -1,6 +1,7 @@
 import store from '../../store/store';
 import { addConfig, addTextBasedConfig, setCurrentSurveyVersion } from '../../store/slices/configSlice';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import { setParticipantLog } from '../../store/slices/participantSlice';
 
 export function setupConfigWithImages(data) {
     for (const config of data.getAllSurveyConfigs) {
@@ -62,5 +63,9 @@ export function setupTextBasedConfig(data) {
 }
 
 export function setSurveyVersion(version) {
-    store.dispatch(setCurrentSurveyVersion(Number(version).toFixed(1)))
+    store.dispatch(setCurrentSurveyVersion(Number(version).toFixed(1)));
+}
+
+export function setParticipantLogInStore(participants) {
+    store.dispatch(setParticipantLog(participants));
 }

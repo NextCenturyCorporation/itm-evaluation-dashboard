@@ -18,6 +18,7 @@ const typeDefs = gql`
   extend type User {
     admin: Boolean
     evaluator: Boolean
+    experimenter: Boolean
   }
 
   type Player {
@@ -208,12 +209,15 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    updateAdminUser(username: String, isAdmin: Boolean): JSON
-    updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON
-    uploadSurveyResults(surveyId: String, results: JSON): JSON
-    uploadScenarioResults(results: [JSON]): JSON
-    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON
-    updateSurveyVersion(version: String!): String
+    updateAdminUser(username: String, isAdmin: Boolean): JSON,
+    updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON,
+    updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
+    uploadSurveyResults(surveyId: String, results: JSON): JSON,
+    uploadScenarioResults(results: [JSON]): JSON,
+    addNewParticipantToLog(participantData: JSON): JSON,
+    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
+    updateSurveyVersion(version: String!): String,
+    updateParticipantLog(pid: String, updates: JSON): JSON
   }
 `;
 
@@ -512,6 +516,12 @@ const resolvers = {
         { $set: { "evaluator": args["isEvaluator"] } }
       );
     },
+    updateExperimenterUser: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "experimenter": args["isExperimenter"] } }
+      );
+    },
     uploadSurveyResults: async (obj, args, context, inflow) => {
       const filter = { surveyId: args.surveyId }
       const update = { $set: { results: args.results } }
@@ -525,6 +535,9 @@ const resolvers = {
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await dashboardDB.db.collection('userScenarioResults').insertOne(result)
       }
+    },
+    addNewParticipantToLog: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('participantLog').insertOne(args.participantData);
     },
     updateEvalIdsByPage: async (obj, args, context, inflow) => {
       // hmm can't do this with graphql?      
@@ -545,6 +558,12 @@ const resolvers = {
         { upsert: true }
       );
       return result.value.version;
+    },
+    updateParticipantLog: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('participantLog').update(
+        { "ParticipantID": Number(args["pid"]) },
+        { $set: args["updates"] }
+      );
     }
 
   },

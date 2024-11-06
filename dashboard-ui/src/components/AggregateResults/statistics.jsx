@@ -31,6 +31,50 @@ function getMean(lst) {
     return cleanLst.reduce((a, b) => a + b, 0) / cleanLst.length;
 }
 
+function getLogisticData(dataPoints) {
+    const data = dataPoints.map((dp) => [dp.x, dp.y]);
+    const learningRate = 0.01;
+    const maxIterations = 10000;
+    const threshold = 1e-6;
+
+    let weights = [0, 0];
+
+    const sigmoid = (z) => 1 / (1 + Math.exp(-z));
+
+    for (let iter = 0; iter < maxIterations; iter++) {
+        let gradients = [0, 0];
+        let totalError = 0;
+
+        for (const point of data) {
+            const x = point[0];
+            const y = point[1];
+            const z = weights[0] * x + weights[1];
+            const prediction = sigmoid(z);
+            totalError += (y - prediction);
+
+            gradients[0] += (y - prediction) * x;
+            gradients[1] += (y - prediction);
+        }
+
+        for (let i = 0; i < weights.length; i++) {
+            weights[i] += learningRate * gradients[i];
+        }
+
+        if (Math.abs(totalError) < threshold) {
+            break;
+        }
+    }
+
+    function predict(weights, x) {
+        const z = weights[0] * x + weights[1];
+        return 1 / (1 + Math.exp(-z));
+    }
+
+    return [...data, ...Array.from({ length: 100 }, (_, i) => i / 100)].map((x) => { return { x: x[0], y: predict(weights, x[0]) } }).sort((a, b) => a.x - b.x);
+
+}
+
+
 function getMode(lst) {
     const cleanLst = getCleanLst(lst);
     const counts = {};
@@ -73,4 +117,46 @@ function getStandardError(lst) {
     return [mean - se, mean + se];
 }
 
-export { getBoxWhiskerData, getMean, getMedian, getMode, getStandDev, getStandardError };
+const getMeanAcrossAll = (obj, keys = 'all') => {
+    const data = [];
+    if (obj != undefined) {
+        for (const key of Object.keys(obj)) {
+            if (keys === 'all' || keys.includes(key)) {
+                data.push(...obj[key]);
+            }
+        }
+    }
+    return getMean(data);
+};
+
+const getSeAcrossAll = (obj, keys = 'all') => {
+    const data = [];
+    if (obj != undefined) {
+        for (const key of Object.keys(obj)) {
+            if (keys === 'all' || keys.includes(key)) {
+                data.push(...obj[key]);
+            }
+        }
+    }
+    return getStandardError(data);
+};
+
+
+const calculateBestFitLine = (data) => {
+    const n = data.length;
+    const sumX = data.reduce((acc, point) => acc + point.x, 0);
+    const sumY = data.reduce((acc, point) => acc + point.y, 0);
+    const sumXY = data.reduce((acc, point) => acc + point.x * point.y, 0);
+    const sumX2 = data.reduce((acc, point) => acc + point.x * point.x, 0);
+
+    const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const b = (sumY - m * sumX) / n;
+
+    const lineData = [
+        { x: Math.min(...data.map((x) => x.x)), y: m * Math.min(...data.map((x) => x.x)) + b },
+        { x: Math.max(...data.map((x) => x.x)), y: m * Math.max(...data.map((x) => x.x)) + b },
+    ];
+    return lineData;
+};
+
+export { getBoxWhiskerData, getMean, getMedian, getMode, getStandDev, getStandardError, getMeanAcrossAll, getSeAcrossAll, calculateBestFitLine, getLogisticData };
