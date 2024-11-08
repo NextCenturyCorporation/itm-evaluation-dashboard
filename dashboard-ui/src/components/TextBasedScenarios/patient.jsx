@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
-import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 
 const Patient = ({ patient, onImageClick, blockedVitals }) => {
@@ -12,7 +12,8 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
     heart_rate: <FaHeartbeat />,
     spo2: <FaPercent />,
     mental_status: <FaBrain />,
-    conscious: <BsPersonFillGear />
+    conscious: <BsPersonFillGear />,
+    triss: <FaChartLine />
   };
 
   const vitalNames = {
@@ -22,7 +23,18 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
     heart_rate: "HR",
     spo2: "SPO2",
     mental_status: "Mental Status",
-    conscious: "Conscious"
+    conscious: "Conscious",
+    triss: "TRISS"
+  };
+
+  const getTrissBadgeColor = (score) => {
+    if (!score) return 'secondary';
+    const value = parseFloat(score);
+    if (value >= 90) return 'success';
+    if (value >= 75) return 'info';
+    if (value >= 50) return 'warning';
+    if (value >= 25) return 'orange';
+    return 'danger';
   };
 
   const avpuColors = {
@@ -78,6 +90,8 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
         return mentalColors[value];
       case 'conscious':
         return 'info';
+      case 'triss':
+        return getTrissBadgeColor(value);
       default:
         return 'secondary';
     }
@@ -107,7 +121,8 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
       return <div>No vitals data available</div>;
     }
 
-    const vitalsVisible = !blockedVitals?.includes(patient.id);
+    const vitalsVisible = true
+    //!blockedVitals?.includes(patient.id);
     return (
       <div className="d-flex flex-column gap-1 h-100">
         {Object.entries(vitals).map(([key, value]) => (
@@ -123,7 +138,7 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
                 bg={vitalsVisible ? getVitalBadgeColor(key, value) : 'info'}
                 className="vital-badge"
               >
-                {vitalsVisible ? value.toString().toUpperCase() : "Unknown"}
+                {vitalsVisible ? (key === 'triss' ? `${value}%` : value.toString().toUpperCase()) : "Unknown"}
               </Badge>
             </div>
           </div>
