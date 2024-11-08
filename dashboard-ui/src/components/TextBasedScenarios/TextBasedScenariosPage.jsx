@@ -385,13 +385,13 @@ class TextBasedScenariosPage extends Component {
 
         } else {
             await this.calcScore(scenario, 'soartech')
-            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL)
+            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_DRE_URL)
             scenario.kdmas = kdma_data
         }
     }
 
     beginRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = process.env.REACT_APP_ADEPT_DRE_URL;
         const sessionEndpoint = '/api/v1/new_session';
 
         try {
@@ -407,13 +407,13 @@ class TextBasedScenariosPage extends Component {
     }
 
     continueRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = process.env.REACT_APP_ADEPT_DRE_URL;
 
         await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = process.env.REACT_APP_ADEPT_DRE_URL;
         const alignmentEndpoint = '/api/v1/alignment/session'
 
         const alignmentData = await Promise.all(
@@ -533,11 +533,11 @@ class TextBasedScenariosPage extends Component {
         let url, sessionEndpoint, alignmentEndpoint;
 
         if (alignmentType === 'adept') {
-            url = process.env.REACT_APP_ADEPT_URL;
+            url = process.env.REACT_APP_ADEPT_DRE_URL;
             sessionEndpoint = '/api/v1/new_session';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else if (alignmentType === 'soartech') {
-            url = process.env.REACT_APP_SOARTECH_URL;
+            url = process.env.REACT_APP_SOARTECH_DRE_URL;
             sessionEndpoint = '/api/v1/new_session?user_id=default_user';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else {
