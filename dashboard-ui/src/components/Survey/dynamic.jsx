@@ -86,6 +86,17 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         logAction('Close more details modal');
     };
 
+    const processActionText = (action, index, sceneActions) => {
+        let processedText = action.replace('Question:', 'The medic was asked:');
+        
+        // Check if the previous action contained 'Question:'
+        if (index > 0 && sceneActions[index - 1].includes('Question:')) {
+            processedText = 'The medic chose to: ' + processedText;
+        }
+        
+        return processedText;
+    };
+
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
             sceneCharacters.includes(patient.name) && (
@@ -159,8 +170,9 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                             {sceneActions && sceneActions.map((action, index) => (
                                                 <ListGroup.Item key={`action-${index}`} className="action-item" style={{
                                                     "fontWeight": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
-                                                    "backgroundColor": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#eee" : "#fff"
-                                                }}>{action}</ListGroup.Item>
+                                                    "backgroundColor": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#eee" : "#fff",
+                                                    "fontSize": action.includes('Question:') ? '20px' : '16px'
+                                                }}>{processActionText(action, index, sceneActions)}</ListGroup.Item>
                                             ))}
                                         </ListGroup>
                                     </Accordion.Body>
