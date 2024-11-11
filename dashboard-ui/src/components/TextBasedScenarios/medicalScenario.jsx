@@ -171,7 +171,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       return
     }
     
-    if (survey.title != "DryRunEval-MJ2-eval") { 
+    if (survey.title != "DryRunEval-MJ2-eval" && survey.title != "phase1-adept-eval-MJ2") { 
       return true 
     }
 
