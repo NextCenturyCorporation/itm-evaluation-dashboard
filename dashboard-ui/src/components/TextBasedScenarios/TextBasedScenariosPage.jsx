@@ -398,7 +398,7 @@ class TextBasedScenariosPage extends Component {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
                 this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+                    await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
                 })
             }
         } catch (e) {
@@ -409,7 +409,7 @@ class TextBasedScenariosPage extends Component {
     continueRunningSession = async (scenario) => {
         const url = process.env.REACT_APP_ADEPT_URL;
 
-        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+        await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
@@ -771,6 +771,18 @@ const simNameMappings = {
     'ST-1': ['stq2_ph1', 'stv2_ph1'],
     'ST-2': ['stq3_ph1', 'stv3_ph1'],
     'ST-3': ['stq4_ph1', 'stv4_ph1'],
+}
+
+/* 
+    I needed to save these configs separately from the dre configs despite the fact they have the same ids.
+    Using this mapping to get id that matches up with ADEPT ta1 server for server calls
+*/
+const adeptScenarioIdMap = {
+    'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
+    'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
+    'phase1-adept-eval-MJ5': 'DryRunEval-MJ5-eval',
+    'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
+    'phase1-adept-train-IO1': 'DryRunEval.IO1'
 }
 
 const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists }) => {
