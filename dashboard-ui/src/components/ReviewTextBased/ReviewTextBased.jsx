@@ -135,7 +135,7 @@ export function ReviewTextBasedPage() {
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {renderConfigGroup(phase1AdeptConfigs, "Adept", getAdeptLabel)}
+                        {renderConfigGroup(phase1AdeptConfigs, "ADEPT", getAdeptLabel)}
                         {renderConfigGroup(phase1SoarTechConfigs, "SoarTech", getSoarTechLabel)}
                     </Card.Body>
                 </Card>
@@ -143,7 +143,7 @@ export function ReviewTextBasedPage() {
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {renderConfigGroup(dreAdeptConfigs, "Adept")}
+                        {renderConfigGroup(dreAdeptConfigs, "ADEPT")}
                         {renderConfigGroup(dreSoarTechConfigs, "SoarTech")}
                     </Card.Body>
                 </Card>
@@ -151,7 +151,7 @@ export function ReviewTextBasedPage() {
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>MRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {renderConfigGroup(mreAdeptConfigs, "Adept", getAdeptLabel)}
+                        {renderConfigGroup(mreAdeptConfigs, "ADEPT", getAdeptLabel)}
                         {renderConfigGroup(mreSoarTechConfigs, "SoarTech", getSoarTechLabel)}
                     </Card.Body>
                 </Card>
