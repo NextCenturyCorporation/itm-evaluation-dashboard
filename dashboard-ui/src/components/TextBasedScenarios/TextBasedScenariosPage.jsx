@@ -352,7 +352,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('DryRun')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept')) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -364,7 +364,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('DryRun')) {
+        if (scenario.scenario_id.includes('adept')) {
             if (this.state.adeptSessionsCompleted === 0) {
                 await this.beginRunningSession(scenario)
             } else {
