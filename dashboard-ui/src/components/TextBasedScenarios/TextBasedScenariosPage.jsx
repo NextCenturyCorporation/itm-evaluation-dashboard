@@ -196,7 +196,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     scenariosFromLog = (entry) => {
-        return dreMappings[entry].flatMap(scenarioId =>
+        return p1Mappings[entry].flatMap(scenarioId =>
             Object.values(this.props.textBasedConfigs).filter(config =>
                 config.scenario_id === scenarioId
             )
@@ -340,8 +340,8 @@ class TextBasedScenariosPage extends Component {
         });
 
         scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
-        scenarioData.evalNumber = 4
-        scenarioData.evalName = 'Dry Run Evaluation'
+        scenarioData.evalNumber = 5
+        scenarioData.evalName = 'Phase 1 Evaluation'
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -385,13 +385,13 @@ class TextBasedScenariosPage extends Component {
 
         } else {
             await this.calcScore(scenario, 'soartech')
-            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_DRE_URL)
+            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL)
             scenario.kdmas = kdma_data
         }
     }
 
     beginRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_DRE_URL;
+        const url = process.env.REACT_APP_ADEPT_URL;
         const sessionEndpoint = '/api/v1/new_session';
 
         try {
@@ -407,13 +407,13 @@ class TextBasedScenariosPage extends Component {
     }
 
     continueRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_DRE_URL;
+        const url = process.env.REACT_APP_ADEPT_URL;
 
         await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
-        const url = process.env.REACT_APP_ADEPT_DRE_URL;
+        const url = process.env.REACT_APP_ADEPT_URL;
         const alignmentEndpoint = '/api/v1/alignment/session'
 
         const alignmentData = await Promise.all(
@@ -533,11 +533,11 @@ class TextBasedScenariosPage extends Component {
         let url, sessionEndpoint, alignmentEndpoint;
 
         if (alignmentType === 'adept') {
-            url = process.env.REACT_APP_ADEPT_DRE_URL;
+            url = process.env.REACT_APP_ADEPT_URL;
             sessionEndpoint = '/api/v1/new_session';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else if (alignmentType === 'soartech') {
-            url = process.env.REACT_APP_SOARTECH_DRE_URL;
+            url = process.env.REACT_APP_SOARTECH_URL;
             sessionEndpoint = '/api/v1/new_session?user_id=default_user';
             alignmentEndpoint = '/api/v1/alignment/session';
         } else {
@@ -755,7 +755,7 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
     return React.createElement(MedicalScenario, props)
 })
 
-const dreMappings = {
+const p1Mappings = {
     'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
     'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
     'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
