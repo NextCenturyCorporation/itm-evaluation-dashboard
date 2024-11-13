@@ -68,7 +68,7 @@ export function TextBasedScenariosPageWrapper(props) {
 
     if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
     if (participantLogError || scenarioResultsError) return <p>Error</p>;
-
+    console.log(textBasedConfigs)
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
@@ -756,21 +756,21 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
 })
 
 const dreMappings = {
-    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
-    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
-    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
+    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
+    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
+    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
 }
 
 const simNameMappings = {
     'AD-1': ['Eval_Adept_Urban'],
     'AD-2': ['Eval_Adept_Jungle'],
     'AD-3': ['Eval-Adept_Desert'],
-    'ST-1': ['stq1', 'stv1'],
-    'ST-2': ['stq2', 'stv2'],
-    'ST-3': ['stq3', 'stv3'],
+    'ST-1': ['stq2_ph1', 'stv2_ph1'],
+    'ST-2': ['stq3_ph1', 'stv3_ph1'],
+    'ST-3': ['stq4_ph1', 'stv4_ph1'],
 }
 
 const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists }) => {
