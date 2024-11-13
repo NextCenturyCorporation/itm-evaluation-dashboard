@@ -68,7 +68,7 @@ export function TextBasedScenariosPageWrapper(props) {
 
     if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
     if (participantLogError || scenarioResultsError) return <p>Error</p>;
-    console.log(textBasedConfigs)
+
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
@@ -408,7 +408,6 @@ class TextBasedScenariosPage extends Component {
 
     continueRunningSession = async (scenario) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-
         await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
     }
 
@@ -530,16 +529,18 @@ class TextBasedScenariosPage extends Component {
     };
 
     calcScore = async (scenario, alignmentType) => {
-        let url, sessionEndpoint, alignmentEndpoint;
+        let url, sessionEndpoint, alignmentEndpoint, scenario_id;
 
         if (alignmentType === 'adept') {
             url = process.env.REACT_APP_ADEPT_URL;
             sessionEndpoint = '/api/v1/new_session';
             alignmentEndpoint = '/api/v1/alignment/session';
+            scenario_id = adeptScenarioIdMap[scenario.scenario_id]
         } else if (alignmentType === 'soartech') {
             url = process.env.REACT_APP_SOARTECH_URL;
             sessionEndpoint = '/api/v1/new_session?user_id=default_user';
             alignmentEndpoint = '/api/v1/alignment/session';
+            scenario_id = scenario.scenario_id
         } else {
             throw new Error('Invalid alignment type');
         }
@@ -548,7 +549,7 @@ class TextBasedScenariosPage extends Component {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
                 const sessionId = session.data;
-                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
+                await this.submitResponses(scenario, scenario_id, url, sessionId);
 
                 if (alignmentType === 'adept') {
                     scenario.alignmentData = await Promise.all(
