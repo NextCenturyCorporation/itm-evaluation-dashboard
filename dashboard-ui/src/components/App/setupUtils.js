@@ -49,7 +49,13 @@ export function setupTextBasedConfig(data) {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
                         for (const patient of el.patients) {
-                            const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId?.toLowerCase() === patient.id?.toLowerCase() && x.scenarioId === page.scenario_id));
+                            /*
+                            soartech has different images for same casualty id's depending on scenario so we need to make sure casualty id matches 
+                            patient id, as well as the scenario id for each. However, adept is able to reuse images from dre in phase 1. Hence the 
+                            funky ternary operator here
+                            */
+                            const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId?.toLowerCase() === patient.id?.toLowerCase() &&
+                                (tempConfig.author == 'adept' ? true : x.scenarioId === page.scenario_id)));
                             if (foundImg) {
                                 patient.imgUrl = foundImg.imageByteCode;
                             }

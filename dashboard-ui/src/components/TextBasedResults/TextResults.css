@@ -87,6 +87,7 @@
 
 .result-display {
     width: calc(100% - 220px);
+    margin-right: 24px
 }
 
 .viewGroup {
@@ -129,12 +130,14 @@
     max-height: 700px;
     overflow: auto;
     border: 1px solid black;
+    border-radius: 4px;
 }
 
 .participant-text-results {
     width: 100%;
     display: flex;
     flex-direction: column;
+    padding-right: 24px;
 }
 
 .participant-text-results button {
