@@ -370,7 +370,6 @@ class TextBasedScenariosPage extends Component {
             } else {
                 await this.continueRunningSession(scenario)
             }
-            await this.calcScore(scenario, 'adept')
 
             let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
 
@@ -413,16 +412,10 @@ class TextBasedScenariosPage extends Component {
 
     uploadAdeptScenarios = async (scenarios) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-        const alignmentEndpoint = '/api/v1/alignment/session'
 
-        const alignmentData = await Promise.all(
-            alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
-        );
-        const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
         const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
 
         for (let scenario of scenarios) {
-            scenario.combinedAlignmentData = sortedAlignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
             scenario.mostLeastAligned = combinedMostLeastAligned
             scenario.kdmas = await this.attachKdmaValue(this.state.combinedSessionId, url)
@@ -529,53 +522,41 @@ class TextBasedScenariosPage extends Component {
     };
 
     calcScore = async (scenario, alignmentType) => {
-        let url, sessionEndpoint, alignmentEndpoint, scenario_id;
-
-        if (alignmentType === 'adept') {
-            url = process.env.REACT_APP_ADEPT_URL;
-            sessionEndpoint = '/api/v1/new_session';
-            alignmentEndpoint = '/api/v1/alignment/session';
-            scenario_id = adeptScenarioIdMap[scenario.scenario_id]
-        } else if (alignmentType === 'soartech') {
-            url = process.env.REACT_APP_SOARTECH_URL;
-            sessionEndpoint = '/api/v1/new_session?user_id=default_user';
-            alignmentEndpoint = '/api/v1/alignment/session';
-            scenario_id = scenario.scenario_id
-        } else {
-            throw new Error('Invalid alignment type');
+        // function should now only be called on soartech scenarios because of change to ADEPT server
+        if (alignmentType != 'soartech') {
+            console.error('function should only be called on alignment type soartech but was called on ' + alignmentType)
+            return
         }
+
+        const url = process.env.REACT_APP_SOARTECH_URL;
+        const sessionEndpoint = '/api/v1/new_session?user_id=default_user';
+        const alignmentEndpoint = '/api/v1/alignment/session';
+        const scenario_id = scenario.scenario_id
 
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
-            if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
+            if (session.status === 201) {
                 const sessionId = session.data;
                 await this.submitResponses(scenario, scenario_id, url, sessionId);
-
-                if (alignmentType === 'adept') {
-                    scenario.alignmentData = await Promise.all(
-                        alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'adept'))
-                    );
-                } else if (alignmentType === 'soartech') {
-                    let targetArray;
-                    if (scenario.scenario_id.includes('qol')) {
-                        targetArray = alignmentIDs.stQOL;
-                    } else if (scenario.scenario_id.includes('vol')) {
-                        targetArray = alignmentIDs.stVOL;
-                    } else {
-                        throw new Error('Invalid SoarTech scenario type');
-                    }
-
-                    scenario.alignmentData = await Promise.all(
-                        targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
-                    );
-
-                    scenario.alignmentData.sort((a, b) => b.score - a.score);
-                    const mostLeastAligned = await this.mostLeastAligned(sessionId, 'soartech', url, scenario)
-                    scenario.mostLeastAligned = mostLeastAligned
+                let targetArray;
+                if (scenario.scenario_id.includes('qol')) {
+                    targetArray = alignmentIDs.stQOL;
+                } else if (scenario.scenario_id.includes('vol')) {
+                    targetArray = alignmentIDs.stVOL;
+                } else {
+                    throw new Error('Invalid SoarTech scenario type');
                 }
 
+                scenario.alignmentData = await Promise.all(
+                    targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
+                );
+
+                scenario.alignmentData.sort((a, b) => b.score - a.score);
+                const mostLeastAligned = await this.mostLeastAligned(sessionId, 'soartech', url, scenario)
+                scenario.mostLeastAligned = mostLeastAligned
                 scenario.serverSessionId = sessionId;
             }
+
         } catch (error) {
             console.error(`Error in ${alignmentType} alignment:`, error);
         }
