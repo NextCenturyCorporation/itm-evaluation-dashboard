@@ -746,7 +746,7 @@ const p1Mappings = {
     'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
 }
 
-const simNameMappings = {
+export const simNameMappings = {
     'AD-1': ['Eval_Adept_Urban'],
     'AD-2': ['Eval_Adept_Jungle'],
     'AD-3': ['Eval-Adept_Desert'],
