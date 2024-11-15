@@ -87,7 +87,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     };
 
     const processActionText = (action, index, sceneActions) => {
-        let processedText = action.replace('Question:', 'The medic was asked:');
+        let processedText = action.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
         
         // Check if the previous action contained 'Question:'
         if (index > 0 && sceneActions[index - 1].includes('Question:')) {
@@ -96,6 +96,15 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         
         return processedText;
     };
+
+    const getSceneStyle = (action) => {
+        const isMedicAction = !(action.includes('Update:') || action.includes('Note:') || action.includes('Question:'));
+        return {
+            "fontWeight": !isMedicAction ? "700" : "500",
+            "backgroundColor": action.includes("<HIGHLIGHT>") ? "rgb(251 252 152)" : !isMedicAction ? "#eee" : "#fff",
+            "fontSize": action.includes('Question:') ? '20px' : '16px'
+        }
+    }
 
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
@@ -168,11 +177,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Accordion.Body>
                                         <ListGroup>
                                             {sceneActions && sceneActions.map((action, index) => (
-                                                <ListGroup.Item key={`action-${index}`} className="action-item" style={{
-                                                    "fontWeight": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
-                                                    "backgroundColor": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#eee" : "#fff",
-                                                    "fontSize": action.includes('Question:') ? '20px' : '16px'
-                                                }}>{processActionText(action, index, sceneActions)}</ListGroup.Item>
+                                                <ListGroup.Item key={`action-${index}`} className="action-item" style={getSceneStyle(action)}>{processActionText(action, index, sceneActions)}</ListGroup.Item>
                                             ))}
                                         </ListGroup>
                                     </Accordion.Body>
