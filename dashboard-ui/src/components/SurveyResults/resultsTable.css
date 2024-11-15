@@ -112,6 +112,11 @@
     gap: 8px;
 }
 
+.adjusted-margin {
+    margin-top: -32px;
+    height: 72px;
+}
+
 .checkboxes {
     display: flex;
     flex-direction: row;
@@ -146,4 +151,10 @@
 
 .filteredText {
     margin-left: 12px !important;
+}
+
+.downloadGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }

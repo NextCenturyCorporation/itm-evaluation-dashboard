@@ -9,6 +9,7 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { exportToExcel, getAlignments } from "../utils";
+import { DownloadButtons } from "./download-buttons";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -325,10 +326,7 @@ export function RQ5() {
                     onChange={(_, newVal) => setGroupTargetFilters(newVal)}
                 />
             </div>
-            <div className="option-section">
-                <button className='downloadBtn' onClick={() => exportToExcel('RQ-5 data', formattedData, HEADERS)}>Download All Data</button>
-                <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
-            </div>
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-5 data'} openModal={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

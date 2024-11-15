@@ -8,6 +8,7 @@ import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
 import { exportToExcel, getRQ134Data } from "../utils";
+import { DownloadButtons } from "./download-buttons";
 
 
 const GET_PARTICIPANT_LOG = gql`
@@ -236,10 +237,7 @@ export function RQ13() {
                     onChange={(_, newVal) => setDelMilFilters(newVal)}
                 />
             </div>
-            <div className="option-section">
-                <button className='downloadBtn' onClick={() => exportToExcel('RQ-1_and_RQ-3 data', formattedData, HEADERS)}>Download All Data</button>
-                <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
-            </div>
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-1_and_RQ-3 data'} openModal={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
