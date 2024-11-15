@@ -463,7 +463,12 @@ class TextBasedScenariosPage extends Component {
                         kdma_id: target
                     }
                 });
-                responses.push({ 'target': target, 'response': response.data })
+
+                const filteredData = response.data.filter(obj => 
+                    !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
+                );
+
+                responses.push({ 'target': target, 'response': filteredData })
             }
         } catch (err) {
             console.error(err)
