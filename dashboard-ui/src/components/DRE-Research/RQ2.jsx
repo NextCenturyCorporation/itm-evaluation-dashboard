@@ -1,14 +1,19 @@
 import { RQ2223 } from "./tables/rq22-rq23";
 import './dre-rq.css';
 import { RQ21 } from "./tables/rq21";
+import rq21Code from './rcode/code_for_dashboard_RQ21.R';
 import rq2Code from './rcode/code_for_dashboard_RQ2.R';
 import React from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
 
 export function RQ2() {
+    const [rq21CodeShowing, setRQ21CodeShowing] = React.useState(false);
     const [rq2CodeShowing, setRQ2CodeShowing] = React.useState(false);
 
+    const close21Code = () => {
+        setRQ21CodeShowing(false);
+    }
     const close2Code = () => {
         setRQ2CodeShowing(false);
     }
@@ -38,7 +43,20 @@ export function RQ2() {
         <div className="section-container">
             <h2>RQ2.1 Data</h2>
             <RQ21 />
-
+            <div className="buttons">
+                <button onClick={() => setRQ21CodeShowing(true)}>View R Syntax</button>
+                <Modal className='rCodeModal' show={rq21CodeShowing} onHide={close21Code} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>RQ3 Analysis 2.1 - Code</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body><RCodeModal rcodeFile={rq21Code} downloadName={'RQ21_code.R'} /></Modal.Body>
+                    <Modal.Footer>
+                        <Button className='downloadBtn' onClick={close21Code}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
         </div>
         <h3>RQ2 Analysis 2.2: T-tests comparing Alignable ADM versus Baseline ADM on group-aligned targets</h3>
         <h3>RQ2 Analysis 2.3: T-tests comparing Alignable ADM versus Baseline ADM on individual-aligned targets</h3>
