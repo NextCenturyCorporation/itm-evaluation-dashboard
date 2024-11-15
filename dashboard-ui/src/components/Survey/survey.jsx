@@ -8,6 +8,7 @@ import { DynamicTemplate } from "./dynamicTemplate";
 import { Omnibus } from "./omnibusTemplate";
 import { Comparison } from "./comparison";
 import { OmnibusComparison } from "./omnibusComparison";
+import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery } from 'react-apollo'
@@ -268,6 +269,7 @@ class SurveyPage extends Component {
         let aname = '';
         let mname = '';
         let secondName = '';
+        const type = baselineAdm.scenarioName.includes("SoarTech") ? 'comparison' : 'adeptComparison';
         if (alignedAdm) {
             aname = alignedAdm['name'];
             if (!misalignedAdm) {
@@ -281,9 +283,9 @@ class SurveyPage extends Component {
             }
         }
         const compare3 = {
-            "type": "comparison",
+            "type": type,
             "name": bname + " vs " + aname + " vs " + mname + ": Review",
-            "title": "Click below to review medic decisions",
+            "title": "",
             "decisionMakers": [
                 bname,
                 aname,
@@ -291,9 +293,9 @@ class SurveyPage extends Component {
             ]
         };
         const compare2 = {
-            "type": "comparison",
+            "type": type,
             "name": bname + " vs " + secondName + ": Review",
-            "title": "Click below to review medic decisions",
+            "title": "",
             "decisionMakers": [
                 bname,
                 secondName
@@ -1328,6 +1330,11 @@ ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
 
 ReactQuestionFactory.Instance.registerQuestion("comparison", (props) => {
     return React.createElement(Comparison, props)
+})
+
+
+ReactQuestionFactory.Instance.registerQuestion("adeptComparison", (props) => {
+    return React.createElement(AdeptComparison, props)
 })
 
 ReactQuestionFactory.Instance.registerQuestion("omnibusComparison", (props) => {

@@ -4,7 +4,7 @@ import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 
-const Patient = ({ patient, onImageClick, blockedVitals }) => {
+const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) => {
   const vitalIcons = {
     avpu: <FaEye />,
     ambulatory: <FaAmbulance />,
@@ -187,18 +187,20 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
                       left: 0,
                     }}
                   />
-                  <ZoomInIcon
-                    className="magnifying-glass"
-                    style={{
-                      position: 'absolute',
-                      bottom: '8px',
-                      left: '8px',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      zIndex: 1,
-                    }}
-                    onClick={() => onImageClick(patient)}
-                  />
+                  {!imageClickDisabled &&
+                    <ZoomInIcon
+                      className="magnifying-glass"
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '8px',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        zIndex: 1,
+                      }}
+                      onClick={() => onImageClick(patient)}
+                    />
+                  }
                 </div>
               </Col>
               <Col md={5} className="d-flex flex-column">
