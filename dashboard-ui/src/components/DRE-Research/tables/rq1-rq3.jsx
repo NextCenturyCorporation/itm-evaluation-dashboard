@@ -7,7 +7,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
-import { exportToExcel, getRQ134Data } from "../utils";
+import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 
 

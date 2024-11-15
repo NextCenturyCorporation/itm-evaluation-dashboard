@@ -7,7 +7,7 @@ import definitionXLFile from '../variables/Variable Definitions RQ8.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ8.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { exportToExcel, getAlignments } from "../utils";
+import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 
 

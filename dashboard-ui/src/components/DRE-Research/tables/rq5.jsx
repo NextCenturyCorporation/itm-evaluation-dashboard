@@ -8,7 +8,7 @@ import definitionPDFFile from '../variables/Variable Definitions RQ5.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
-import { exportToExcel, getAlignments } from "../utils";
+import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 
 const GET_PARTICIPANT_LOG = gql`
