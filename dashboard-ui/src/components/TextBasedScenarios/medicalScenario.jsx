@@ -199,27 +199,56 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   }
 
   springerUptonEdgeCase() {
-    const relevantProbes = ['template Probe 2-A.1', 'template Probe 2-A.1-A.1', 'template Probe 2-A.1-B.1', 'template Probe 2-A.1-B.1-A.1', 
-        'template Probe 2-B.1', 'template Probe 2-B.1-A.1', 'template Probe 2-B.1-B.1', 'template Probe 2-B.1-B.1-A.1', 'template Probe 3']
-    if (!relevantProbes.includes(this.question.jsonObj.name)) { return }
+    const relevantProbes = [
+        'template Probe 2-A.1',
+        'template Probe 2-A.1-A.1',
+        'template Probe 2-A.1-B.1',
+        'template Probe 2-A.1-B.1-A.1',
+        'template Probe 2-B.1',
+        'template Probe 2-B.1-A.1',
+        'template Probe 2-B.1-B.1',
+        'template Probe 2-B.1-B.1-A.1',
+        'template Probe 3'
+    ];
+    
+    if (!relevantProbes.includes(this.question.jsonObj.name)) {
+        return;
+    }
 
     const baseVitals = {
         'avpu': 'ALERT',
         'ambulatory': true,
         'mental_status': 'UPSET',
         'spo2': 'NORMAL'
+    };
+
+    const normalVitals = { ...baseVitals, 'breathing': 'NORMAL', 'heart_rate': 'NORMAL' };
+    const fastVitals = { ...baseVitals, 'breathing': 'FAST', 'heart_rate': 'FAST' };
+
+    const springerIndex = this.patients.findIndex(patient => patient.name === 'Springer');
+    const uptonIndex = this.patients.findIndex(patient => patient.name === 'Upton');
+    const isSpringerFirst = this.question.survey.valuesHash['probe Scene 1'] === 'Assess Springer first.';
+
+    // create new array of patients as work around for immutable error
+    const updatedPatients = [...this.patients];
+
+    if (springerIndex !== -1) {
+        updatedPatients[springerIndex] = {
+            ...updatedPatients[springerIndex],
+            vitals: isSpringerFirst ? normalVitals : fastVitals
+        };
     }
 
-    const normalVitals = { ...baseVitals, 'breathing': 'NORMAL', 'heart_rate': 'NORMAL' }
-    const fastVitals = { ...baseVitals, 'breathing': 'FAST', 'heart_rate': 'FAST' }
+    if (uptonIndex !== -1) {
+        updatedPatients[uptonIndex] = {
+            ...updatedPatients[uptonIndex],
+            vitals: isSpringerFirst ? fastVitals : normalVitals
+        };
+    }
 
-    const springer = this.patients.find(patient => patient.name == 'Springer')
-    const upton = this.patients.find(patient => patient.name == 'Upton')
-    const isSpringerFirst = this.question.survey.valuesHash['probe Scene 1'] == 'Assess Springer first.'
+    this.question.patients = updatedPatients;
 
-    if (springer) springer.vitals = isSpringerFirst ? normalVitals : fastVitals
-    if (upton) upton.vitals = isSpringerFirst ? fastVitals : normalVitals
-
+    // force re-render
     this.setState({});
 }
 
