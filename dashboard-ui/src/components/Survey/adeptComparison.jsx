@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import { Button, Modal, Col, Row, Card, ListGroup } from "react-bootstrap";
+import { Button, Modal, Col, Row, Card, Tab, Tabs } from "react-bootstrap";
 import { renderSituation } from "./util";
-import Dynamic from "./dynamic";
 import './template.css'
 import { useSelector } from "react-redux";
 import Patient from '../TextBasedScenarios/patient';
@@ -31,12 +30,7 @@ export class AdeptComparisonModel extends Question {
 
 Serializer.addClass(
     CUSTOM_TYPE,
-    [
-        {
-            name: "decisionMakers",
-            default: []
-        },
-    ],
+    [{ name: "decisionMakers", default: [] }],
     function () {
         return new AdeptComparisonModel("");
     },
@@ -50,15 +44,14 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 export class AdeptComparison extends SurveyQuestionElementBase {
     constructor(props) {
         super(props);
-
         this.state = {
             dmDetails: [],
             showModal: false,
             userActions: [],
             surveyConfig: null,
-            isSurveyLoaded: false
+            isSurveyLoaded: false,
+            activeTab: 'actions'
         }
-
         this.dm = ' '
         this.updateActionLogs = this.updateActionLogs.bind(this)
     }
@@ -78,9 +71,8 @@ export class AdeptComparison extends SurveyQuestionElementBase {
         let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
         let dmDetails = relevantPages.map(page => page.elements[0]);
         dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
-        console.log(dmDetails)
-        this.setState({ dmDetails });
         this.setState({
+            dmDetails,
             isSurveyLoaded: true
         });
     }
@@ -88,7 +80,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
     ConfigGetter = () => {
         const reducer = useSelector((state) => state?.configs?.surveyConfigs);
         const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
-        useEffect(() => {
+        React.useEffect(() => {
             if (reducer) {
                 this.setState({
                     surveyConfig: reducer['delegation_v' + currentSurveyVersion]
@@ -139,33 +131,68 @@ export class AdeptComparison extends SurveyQuestionElementBase {
 
     processActionText = (action, index, sceneActions) => {
         let processedText = action.replace('Question:', 'The medic was asked:');
-        
-        // Check if the previous action contained 'Question:'
         if (index > 0 && sceneActions[index - 1].includes('Question:') && !sceneActions[index - 1].includes('Why')) {
             processedText = 'The medic chose to: ' + processedText;
         }
-        
         return processedText;
     };
 
+    renderSituationTab = () => {
+        return (
+            <div>
+                <Card className="mb-3">
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center">
+                            Situation
+                        </div>
+                    </Card.Header>
+                    <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
+                        {renderSituation(this.state.dmDetails[0].situation)}
+                    </Card.Body>
+                </Card>
+                <Card>
+                    <Card.Body>
+                        <Row>
+                            <Col md={3} className="d-flex flex-column">
+                                <Supplies supplies={this.state.dmDetails[0].supplies} />
+                            </Col>
+                            <Col md={9}>
+                                <Row>
+                                    {this.patientCards()}
+                                </Row>
+                            </Col>
+                        </Row>
+                    </Card.Body>
+                </Card>
+            </div>
+        );
+    }
+
     renderActionLists = () => {
         return (
-            <Row className="mt-4">
-                {this.state.dmDetails.slice(0,2).map((dm, index) => (
-                    <Col key={`actions-${index}`} md={12 / this.state.dmDetails.slice(0,2).length}>
-                        <Card>
+            <Row>
+                {this.state.dmDetails.map((dm, index) => (
+                    <Col key={`actions-${index}`} md={6}>
+                        <Card className="h-100">
                             <Card.Header>
                                 <h5 className="mb-0">{dm.dmName}'s Actions</h5>
                             </Card.Header>
-                            <ListGroup variant="flush">
+                            <Card.Body className="overflow-auto" style={{ maxHeight: 'calc(70vh - 200px)' }}>
                                 {dm.actions.map((action, actionIndex) => (
-                                    <ListGroup.Item key={`action-${actionIndex}`} className="action-item" style={{
-                                        "fontWeight": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
-                                        "backgroundColor": action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#eee" : "#fff",
-                                        "fontSize": action.includes('Question:') ? '20px' : '16px'
-                                    }}>{this.processActionText(action, actionIndex, dm.actions)}</ListGroup.Item>
+                                    <div
+                                        key={`action-${actionIndex}`}
+                                        className="action-item p-3 mb-2 rounded"
+                                        style={{
+                                            fontWeight: action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
+                                            backgroundColor: action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#f8f9fa" : "#fff",
+                                            fontSize: action.includes('Question:') ? '20px' : '16px',
+                                            border: '1px solid #dee2e6'
+                                        }}
+                                    >
+                                        {this.processActionText(action, actionIndex, dm.actions)}
+                                    </div>
                                 ))}
-                            </ListGroup>
+                            </Card.Body>
                         </Card>
                     </Col>
                 ))}
@@ -177,43 +204,51 @@ export class AdeptComparison extends SurveyQuestionElementBase {
         return (
             <>
                 <this.ConfigGetter />
-                {this.state.isSurveyLoaded && <>
-                    <Button className="mx-3" variant="outline-light" style={{ backgroundColor: "#b15e2f" }} onClick={() => this.handleShowModal()}>
-                        Review Medic Actions
-                    </Button>
-                    <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="xl">
-                        <Modal.Header closeButton>
-                            <Modal.Title>Test</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <Card className="mb-3">
-                                <Card.Header className="d-flex justify-content-between align-items-center">
-                                    <div className="d-flex align-items-center">
-                                        Situation
-                                    </div>
-                                </Card.Header>
-                                <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
-                                    {renderSituation(this.state.dmDetails[0].situation)}
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Row className="mb-4">
-                                    <Col md={3} className="d-flex flex-column">
-                                        <Supplies supplies={this.state.dmDetails[0].supplies} />
-                                    </Col>
-                                    <Col md={9}>
-                                        <Row>
-                                            {this.patientCards()}
-                                        </Row>
-                                    </Col>
-                                </Row>
-                            </Card>
-                            {this.renderActionLists()}
-                        </Modal.Body>
-                    </Modal>
-                </>
-                }
+                {this.state.isSurveyLoaded && (
+                    <>
+                        <Button
+                            className="mx-3"
+                            variant="outline-light"
+                            style={{ backgroundColor: "#b15e2f" }}
+                            onClick={this.handleShowModal}
+                        >
+                            Review Medic Actions
+                        </Button>
+                        <Modal
+                            show={this.state.showModal}
+                            onHide={this.handleCloseModal}
+                            size="xl"
+                            className="action-comparison-modal"
+                            dialogClassName="m-0"
+                            fullscreen={true}  
+                        >
+                            <Modal.Header closeButton>
+                                <Modal.Title>Medic Action Review</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body className="p-0">
+                                <div className="h-100 d-flex flex-column">
+                                    <Tabs
+                                        activeKey={this.state.activeTab}
+                                        onSelect={(k) => this.setState({ activeTab: k })}
+                                        className="mb-3 px-4 pt-3"
+                                    >
+                                        <Tab eventKey="situation" title="Situation & Patients">
+                                            <div className="px-4">
+                                                {this.renderSituationTab()}
+                                            </div>
+                                        </Tab>
+                                        <Tab eventKey="actions" title="Action Comparison">
+                                            <div className="px-4">
+                                                {this.renderActionLists()}
+                                            </div>
+                                        </Tab>
+                                    </Tabs>
+                                </div>
+                            </Modal.Body>
+                        </Modal>
+                    </>
+                )}
             </>
-        )
+        );
     }
 }

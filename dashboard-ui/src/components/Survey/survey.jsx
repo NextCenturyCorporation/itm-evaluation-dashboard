@@ -282,27 +282,17 @@ class SurveyPage extends Component {
                 secondName = mname;
             }
         }
-        const compare3 = {
-            "type": type,
-            "name": bname + " vs " + aname + " vs " + mname + ": Review",
-            "title": "",
-            "decisionMakers": [
-                bname,
-                aname,
-                mname
-            ]
-        };
-        const compare2 = {
-            "type": type,
-            "name": bname + " vs " + secondName + ": Review",
-            "title": "",
-            "decisionMakers": [
-                bname,
-                secondName
-            ]
-        };
         let elements = [];
         if (secondName != '') {
+            const compare2 = {
+                "type": type,
+                "name": bname + " vs " + secondName + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    bname,
+                    secondName
+                ]
+            };
             elements.push(compare2);
             elements = [...elements, {
                 "type": "radiogroup",
@@ -336,8 +326,15 @@ class SurveyPage extends Component {
             ]
         }
         else {
-            elements.push(compare3);
             elements = [...elements, {
+                "type": type,
+                "name": bname + " vs " + aname + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    bname,
+                    aname,
+                ]
+            },{
                 "type": "radiogroup",
                 "name": aname + " vs " + bname + ": Forced Choice",
                 "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
@@ -365,6 +362,15 @@ class SurveyPage extends Component {
                     "name": aname + " vs " + bname + ": Explain your response to the delegation preference question",
                     "title": "Explain your response to the delegation preference question:",
                     "isRequired": true
+                },
+                {
+                    "type": type,
+                    "name": aname + " vs " + mname + ": Review",
+                    "title": "",
+                    "decisionMakers": [
+                        aname,
+                        mname
+                    ]
                 },
                 {
                     "type": "radiogroup",
