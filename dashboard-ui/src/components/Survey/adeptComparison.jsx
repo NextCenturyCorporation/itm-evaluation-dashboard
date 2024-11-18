@@ -130,12 +130,24 @@ export class AdeptComparison extends SurveyQuestionElementBase {
     }
 
     processActionText = (action, index, sceneActions) => {
-        let processedText = action.replace('Question:', 'The medic was asked:');
-        if (index > 0 && sceneActions[index - 1].includes('Question:') && !sceneActions[index - 1].includes('Why')) {
+        let processedText = action.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
+        
+        // Check if the previous action contained 'Question:'
+        if (index > 0 && sceneActions[index - 1].includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
         }
+        
         return processedText;
     };
+
+    getSceneStyle = (action) => {
+        const isMedicAction = !(action.includes('Update:') || action.includes('Note:') || action.includes('Question:'));
+        return {
+            "fontWeight": !isMedicAction ? "700" : "500",
+            "backgroundColor": action.includes("<HIGHLIGHT>") ? "rgb(251 252 152)" : !isMedicAction ? "#eee" : "#fff",
+            "fontSize": action.includes('Question:') ? '20px' : '16px'
+        }
+    }
 
     renderSituationTab = () => {
         return (
@@ -182,12 +194,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
                                     <div
                                         key={`action-${actionIndex}`}
                                         className="action-item p-3 mb-2 rounded"
-                                        style={{
-                                            fontWeight: action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "700" : "500",
-                                            backgroundColor: action.includes('Update:') || action.includes('Note:') || action.includes('Question:') ? "#f8f9fa" : "#fff",
-                                            fontSize: action.includes('Question:') ? '20px' : '16px',
-                                            border: '1px solid #dee2e6'
-                                        }}
+                                        style={this.getSceneStyle(action)}
                                     >
                                         {this.processActionText(action, actionIndex, dm.actions)}
                                     </div>
