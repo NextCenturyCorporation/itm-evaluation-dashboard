@@ -8,6 +8,7 @@ import { DynamicTemplate } from "./dynamicTemplate";
 import { Omnibus } from "./omnibusTemplate";
 import { Comparison } from "./comparison";
 import { OmnibusComparison } from "./omnibusComparison";
+import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery } from 'react-apollo'
@@ -268,6 +269,7 @@ class SurveyPage extends Component {
         let aname = '';
         let mname = '';
         let secondName = '';
+        const type = baselineAdm.scenarioName.includes("SoarTech") ? 'comparison' : 'adeptComparison';
         if (alignedAdm) {
             aname = alignedAdm['name'];
             if (!misalignedAdm) {
@@ -280,27 +282,17 @@ class SurveyPage extends Component {
                 secondName = mname;
             }
         }
-        const compare3 = {
-            "type": "comparison",
-            "name": bname + " vs " + aname + " vs " + mname + ": Review",
-            "title": "Click below to review medic decisions",
-            "decisionMakers": [
-                bname,
-                aname,
-                mname
-            ]
-        };
-        const compare2 = {
-            "type": "comparison",
-            "name": bname + " vs " + secondName + ": Review",
-            "title": "Click below to review medic decisions",
-            "decisionMakers": [
-                bname,
-                secondName
-            ]
-        };
         let elements = [];
         if (secondName != '') {
+            const compare2 = {
+                "type": type,
+                "name": bname + " vs " + secondName + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    bname,
+                    secondName
+                ]
+            };
             elements.push(compare2);
             elements = [...elements, {
                 "type": "radiogroup",
@@ -334,8 +326,15 @@ class SurveyPage extends Component {
             ]
         }
         else {
-            elements.push(compare3);
             elements = [...elements, {
+                "type": type,
+                "name": bname + " vs " + aname + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    bname,
+                    aname,
+                ]
+            },{
                 "type": "radiogroup",
                 "name": aname + " vs " + bname + ": Forced Choice",
                 "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
@@ -363,6 +362,15 @@ class SurveyPage extends Component {
                     "name": aname + " vs " + bname + ": Explain your response to the delegation preference question",
                     "title": "Explain your response to the delegation preference question:",
                     "isRequired": true
+                },
+                {
+                    "type": type,
+                    "name": aname + " vs " + mname + ": Review",
+                    "title": "",
+                    "decisionMakers": [
+                        aname,
+                        mname
+                    ]
                 },
                 {
                     "type": "radiogroup",
@@ -1328,6 +1336,11 @@ ReactQuestionFactory.Instance.registerQuestion("omnibus", (props) => {
 
 ReactQuestionFactory.Instance.registerQuestion("comparison", (props) => {
     return React.createElement(Comparison, props)
+})
+
+
+ReactQuestionFactory.Instance.registerQuestion("adeptComparison", (props) => {
+    return React.createElement(AdeptComparison, props)
 })
 
 ReactQuestionFactory.Instance.registerQuestion("omnibusComparison", (props) => {
