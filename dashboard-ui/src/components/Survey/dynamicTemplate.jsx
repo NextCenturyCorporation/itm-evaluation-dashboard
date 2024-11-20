@@ -146,6 +146,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             userActions: [],
         };
         this.updateActionLogs = this.updateActionLogs.bind(this)
+        this.scenarioIndex = this.question.parent.data.jsonObj.scenarioIndex
     }
 
     get question() {
@@ -189,7 +190,6 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     renderElement() {
-
         return (
             <Dynamic 
                 patients={this.patients} 
@@ -203,6 +203,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 mission={this.mission}
                 showModal={false}
                 updateActionLogs={this.updateActionLogs}
+                scenarioIndex={this.scenarioIndex}
             />
         )
     }

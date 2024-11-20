@@ -11,8 +11,9 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
 import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
+import { useSelector } from 'react-redux';
 
-const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission }) => {
+const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission, scenarioIndex }) => {
     const [visiblePatients, setVisiblePatients] = useState(() => {
         const initialVisibility = {};
         patients.forEach(patient => {
@@ -28,7 +29,26 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const [showSituationModal, setShowSituationModal] = useState(showModal);
     const [showMoreDetailsModal, setShowMoreDetailsModal] = useState(false);
     const [actionLogs, setActionLogs] = useState([]);
-
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const matchingScenario = textBasedConfigs[scenarioIndex];
+    console.log(matchingScenario)
+    
+    const getProbe = (action) => {
+        if (!matchingScenario) { return null }
+        const probeId = action['probe_id']
+        
+        for (const page of matchingScenario.pages) {
+            for (const element of page.elements) {
+                if (element.probe_id === probeId) {
+                    console.log('Found matching probe:', element)
+                    return element
+                }
+            }
+        }
+        console.log('didnt find match for ' + probeId)
+        return null
+    }
+    
     // log actions
     const logAction = (actionName) => {
         const newLog = { dmName, actionName, timestamp: new Date().toISOString() };
@@ -87,17 +107,19 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     };
 
     const processActionText = (action, index, sceneActions) => {
+        getProbe(action)
+        action = action['text'];
         let processedText = action.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
         
         // Check if the previous action contained 'Question:'
-        if (index > 0 && sceneActions[index - 1].includes('Question:')) {
+        if (index > 0 && sceneActions[index - 1]['text'].includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
         }
-        
         return processedText;
     };
 
     const getSceneStyle = (action) => {
+        action = action['text']
         const isMedicAction = !(action.includes('Update:') || action.includes('Note:') || action.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",
