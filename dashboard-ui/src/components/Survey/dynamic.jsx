@@ -32,11 +32,11 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const matchingScenario = textBasedConfigs[scenarioIndex];
     console.log(matchingScenario)
-    
+
     const getProbe = (action) => {
         if (!matchingScenario) { return null }
         const probeId = action['probe_id']
-        
+
         for (const page of matchingScenario.pages) {
             for (const element of page.elements) {
                 if (element.probe_id === probeId) {
@@ -45,10 +45,9 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 }
             }
         }
-        console.log('didnt find match for ' + probeId)
         return null
     }
-    
+
     // log actions
     const logAction = (actionName) => {
         const newLog = { dmName, actionName, timestamp: new Date().toISOString() };
@@ -109,15 +108,17 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const processActionText = (action, index, sceneActions) => {
         const probe = getProbe(action)
         let processedText = action['text'].replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
-        
+
         // Check if the previous action contained 'Question:'
         if (index > 0 && sceneActions[index - 1]['text'].includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
-            
+
             // Add possible choices if probe exists
-            if (probe && probe.choices) {
-                processedText += '\n\nMedic could have:\n' + 
-                    probe.choices.map(choice => `• ${choice.text}`).join('\n');
+            if (scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) {
+                if (probe && probe.choices) {
+                    processedText += '\n\nMedic could have:\n' +
+                        probe.choices.map(choice => `• ${choice.text}`).join('\n');
+                }
             }
         }
         return processedText;
@@ -204,13 +205,13 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Accordion.Body>
                                         <ListGroup>
                                             {sceneActions && sceneActions.map((action, index) => (
-                                                <ListGroup.Item 
-                                                key={`action-${index}`} 
-                                                className="action-item" 
-                                                style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
-                                            >
-                                                {processActionText(action, index, sceneActions)}
-                                            </ListGroup.Item>
+                                                <ListGroup.Item
+                                                    key={`action-${index}`}
+                                                    className="action-item"
+                                                    style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
+                                                >
+                                                    {processActionText(action, index, sceneActions)}
+                                                </ListGroup.Item>
                                             ))}
                                         </ListGroup>
                                     </Accordion.Body>
@@ -267,19 +268,19 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             </Card>
             {isDefined(scenes) ?
                 scenes.map((scene) => (
-                    <Scene 
+                    <Scene
                         key={scene.id}
-                        sceneId={scene.id} 
-                        sceneActions={scene.actions} 
-                        sceneSupplies={scene.supplies} 
-                        sceneCharacters={scene.char_ids} 
+                        sceneId={scene.id}
+                        sceneActions={scene.actions}
+                        sceneSupplies={scene.supplies}
+                        sceneCharacters={scene.char_ids}
                     />
                 ))
-                : <Scene 
-                    sceneId='Scene 1' 
-                    sceneActions={actions} 
-                    sceneSupplies={supplies} 
-                    sceneCharacters={patients.map((p) => p.name)} 
+                : <Scene
+                    sceneId='Scene 1'
+                    sceneActions={actions}
+                    sceneSupplies={supplies}
+                    sceneCharacters={patients.map((p) => p.name)}
                 />
             }
 
