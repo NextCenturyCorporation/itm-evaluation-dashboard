@@ -7,8 +7,9 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ2.2_2.3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ2.2_2.3.pdf';
-import { ADM_NAME_MAP, exportToExcel } from "../utils";
+import { ADM_NAME_MAP } from "../utils";
 import { isDefined } from "../../AggregateResults/DataFunctions";
+import { DownloadButtons } from "./download-buttons";
 
 const getAdmData = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
@@ -263,11 +264,7 @@ export function RQ2223({ evalNum }) {
                     onChange={(_, newVal) => setTargetTypeFilters(newVal)}
                 />
             </div>
-
-            <div className="option-section">
-                <button className='downloadBtn' onClick={() => exportToExcel('RQ-22_and_RQ-23 data', formattedData, HEADERS)}>Download All Data</button>
-                <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
-            </div>
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-22_and_RQ-23 data'} openModal={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

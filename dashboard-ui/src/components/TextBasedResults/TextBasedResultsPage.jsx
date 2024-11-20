@@ -126,7 +126,7 @@ function SingleGraph({ data, pageName }) {
 
     React.useEffect(() => {
         if (data) {
-           
+
             const filteredData = Object.fromEntries(
                 Object.entries(data).filter(([key]) =>
                     !['originalKey', 'total', 'question', 'undefined'].includes(key)
@@ -433,7 +433,7 @@ export default function TextBasedResultsPage() {
                                         if (tmpResponses[scenario][normalizedQ][answer] !== undefined) {
                                             tmpResponses[scenario][normalizedQ][answer] += 1;
                                         } else {
-                                            
+
                                             tmpResponses[scenario][normalizedQ][answer] = 1;
                                         }
                                         tmpResponses[scenario][normalizedQ].total += 1;
@@ -441,14 +441,14 @@ export default function TextBasedResultsPage() {
                                 }
                             }
                         }
-                    } 
+                    }
                 } catch (error) {
                     console.error(`Error processing result:`, error);
                     console.log('Problematic result:', result);
                 }
             }
 
-            const sortedScenarios = Array.from(uniqueScenarios).sort((a, b) => 
+            const sortedScenarios = Array.from(uniqueScenarios).sort((a, b) =>
                 a.localeCompare(b, undefined, { sensitivity: 'base' })
             );
 
@@ -574,20 +574,20 @@ export default function TextBasedResultsPage() {
                 </div>
             )}
         </div>
-        {scenarioChosen ? ( 
-            <div className="result-display">
-            <div className="text-based-header">
-                <div />
-                <h2>{scenarioChosen}</h2>
-                <ToggleButtonGroup className="viewGroup" type="checkbox" value={dataFormat} onChange={handleFormatChange}>
-                    <ToggleButton variant="secondary" id='choose-text' value={"text"}>Text</ToggleButton>
-                    <ToggleButton variant="secondary" id='choose-chart' value={"charts"}>Charts</ToggleButton>
-                    <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
-                </ToggleButtonGroup>
-            </div>
-            {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} /> : <ChartedResultsSection />}
-        </div>) : (
-            <NoSelection/>
+        {scenarioChosen ? (
+            <div className="result-display" >
+                <div className="text-based-header">
+                    <div />
+                    <h2>{scenarioChosen}</h2>
+                    <ToggleButtonGroup className="viewGroup" type="checkbox" value={dataFormat} onChange={handleFormatChange}>
+                        <ToggleButton variant="secondary" id='choose-text' value={"text"}>Text</ToggleButton>
+                        <ToggleButton variant="secondary" id='choose-chart' value={"charts"}>Charts</ToggleButton>
+                        <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
+                    </ToggleButtonGroup>
+                </div>
+                {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} /> : <ChartedResultsSection />}
+            </div>) : (
+            <NoSelection />
         )}
     </div>);
 }

@@ -40,11 +40,6 @@ export function ReviewTextBasedPage() {
     };
 
     const ensureStringProperties = (obj) => {
-        /*
-        * Fix to weird bug phi found. Some values that should be stored as strings were being
-        * stored as ints. I.e if the scene was named '2' instead of 'scene 2'. Only occured in 
-        * MRE Adept scenarios
-        */
         const stringProps = ['name', 'title', 'description'];
         Object.keys(obj).forEach(key => {
             if (stringProps.includes(key) && obj[key] !== null && obj[key] !== undefined) {
@@ -66,11 +61,7 @@ export function ReviewTextBasedPage() {
                 config.showTitle = false;
                 const surveyModel = new Model(config);
                 surveyModel.applyTheme(surveyTheme);
-                /*
-                * stops default behavior of highlighting first option when
-                * trying to progress without answering (ST request)
-                */
-                surveyModel.focusOnFirstError = false
+                surveyModel.focusOnFirstError = false;
                 setSelectedConfig(surveyModel);
             } catch (error) {
                 console.error('Error creating survey model:', error);
@@ -79,17 +70,25 @@ export function ReviewTextBasedPage() {
     };
 
     const renderConfigButtons = () => {
+        const phase1AdeptConfigs = [];
+        const phase1SoarTechConfigs = [];
         const dreAdeptConfigs = [];
         const dreSoarTechConfigs = [];
         const mreAdeptConfigs = [];
         const mreSoarTechConfigs = [];
 
         Object.entries(textBasedConfigs).forEach(([configName, config]) => {
-            if (config.eval === 'dre') {
-                if (configName.includes('DryRunEval')) {
-                    dreAdeptConfigs.push(configName)
+            if (config.eval === 'phase1') {
+                if (config.author === 'adept') {
+                    phase1AdeptConfigs.push(configName);
                 } else {
-                    dreSoarTechConfigs.push(configName)
+                    phase1SoarTechConfigs.push(configName);
+                }
+            } else if (config.eval === 'dre') {
+                if (configName.includes('DryRunEval')) {
+                    dreAdeptConfigs.push(configName);
+                } else {
+                    dreSoarTechConfigs.push(configName);
                 }
             } else if (config.eval === 'mre') {
                 if (configName.includes('MetricsEval')) {
@@ -109,7 +108,6 @@ export function ReviewTextBasedPage() {
         };
 
         const getSoarTechLabel = (configName) => {
-            // Remove '-1' suffix and capitalize the first letter
             return configName.replace('-1', '').charAt(0).toUpperCase() + configName.replace('-1', '').slice(1);
         };
 
@@ -135,9 +133,17 @@ export function ReviewTextBasedPage() {
         return (
             <>
                 <Card className="mb-4 border-0 shadow">
+                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
+                    <Card.Body className="bg-light">
+                        {renderConfigGroup(phase1AdeptConfigs, "ADEPT", getAdeptLabel)}
+                        {renderConfigGroup(phase1SoarTechConfigs, "SoarTech", getSoarTechLabel)}
+                    </Card.Body>
+                </Card>
+
+                <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {renderConfigGroup(dreAdeptConfigs, "Adept")}
+                        {renderConfigGroup(dreAdeptConfigs, "ADEPT")}
                         {renderConfigGroup(dreSoarTechConfigs, "SoarTech")}
                     </Card.Body>
                 </Card>
@@ -145,7 +151,7 @@ export function ReviewTextBasedPage() {
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>MRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {renderConfigGroup(mreAdeptConfigs, "Adept", getAdeptLabel)}
+                        {renderConfigGroup(mreAdeptConfigs, "ADEPT", getAdeptLabel)}
                         {renderConfigGroup(mreSoarTechConfigs, "SoarTech", getSoarTechLabel)}
                     </Card.Body>
                 </Card>

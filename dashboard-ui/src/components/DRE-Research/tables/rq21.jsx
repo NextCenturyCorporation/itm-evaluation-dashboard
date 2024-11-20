@@ -7,7 +7,8 @@ import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { ADM_NAME_MAP, exportToExcel, getAlignments } from "../utils";
+import { ADM_NAME_MAP, getAlignments } from "../utils";
+import { DownloadButtons } from "./download-buttons";
 
 const HEADERS = ['TA1_Name', 'Source', 'Attribute', 'Scenario', 'Group_Target', 'Decision_Maker', 'Alignment score (Individual|Group_target) or (ADM|group_target)']
 
@@ -275,10 +276,7 @@ export function RQ21({ evalNum }) {
                     onChange={(_, newVal) => setDecisionMakerFilters(newVal)}
                 />
             </div>
-            <div className="option-section">
-                <button className='downloadBtn' onClick={() => exportToExcel('RQ-21 data', formattedData, HEADERS)}>Download All Data</button>
-                <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
-            </div>
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-21 data'} openModal={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

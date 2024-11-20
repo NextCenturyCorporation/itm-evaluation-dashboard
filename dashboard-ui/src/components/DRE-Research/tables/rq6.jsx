@@ -7,7 +7,8 @@ import definitionXLFile from '../variables/Variable Definitions RQ6.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { exportToExcel, getAlignments } from "../utils";
+import { getAlignments } from "../utils";
+import { DownloadButtons } from "./download-buttons";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -202,10 +203,7 @@ export function RQ6({ evalNum }) {
                     onChange={(_, newVal) => setScenarioFilters(newVal)}
                 />
             </div>
-            <div className="option-section">
-                <button className='downloadBtn' onClick={() => exportToExcel('RQ-6 data', formattedData, HEADERS)}>Download All Data</button>
-                <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
-            </div>
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-6 data'} openModal={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

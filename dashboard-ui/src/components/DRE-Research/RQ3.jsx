@@ -2,16 +2,32 @@ import React from 'react';
 import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
 import Select from 'react-select';
+import { RCodeModal } from "./rcode/RcodeModal";
+import rq32Code from './rcode/code_for_dashboard_RQ32.R';
+import rq31Code from './rcode/code_for_dashboard_RQ31_and_RQ33.R';
+import { Button, Modal } from 'react-bootstrap';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
     { value: 5, label: 'Phase 1 Evaluation' }
 ];
 
+
+
 export function RQ3() {
+    const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
+    const [rq31CodeShowing, setRQ31CodeShowing] = React.useState(false);
     const [selectedEval, setSelectedEval] = React.useState(4);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
+    }
+
+    const close32Code = () => {
+        setRQ32CodeShowing(false);
+    }
+
+    const close31Code = () => {
+        setRQ31CodeShowing(false);
     }
 
     return (<div className="researchQuestion">
@@ -62,6 +78,20 @@ export function RQ3() {
                 </ul>
                 <li>Delegation preference (A/B)</li>
             </ul>
+            <div className="buttons">
+                <button onClick={() => setRQ31CodeShowing(true)}>View R Syntax</button>
+                <Modal className='rCodeModal' show={rq31CodeShowing} onHide={close31Code} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>RQ3 Analysis 3.1 and 3.3 - Code</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body><RCodeModal rcodeFile={rq31Code} downloadName={'RQ31_33_code.R'} /></Modal.Body>
+                    <Modal.Footer>
+                        <Button className='downloadBtn' onClick={close31Code}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
         </div>
         <div className="section-container">
             <h2>RQ3 Analysis 3.2 - Logistic regression of alignment score</h2>
@@ -73,6 +103,20 @@ export function RQ3() {
                 <li>Delegation preference (A/B)</li>
                 <li>Delegation preference (A/M)</li>
             </ul>
+            <div className="buttons">
+                <button onClick={() => setRQ32CodeShowing(true)}>View R Syntax</button>
+                <Modal className='rCodeModal' show={rq32CodeShowing} onHide={close32Code} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>RQ3 Analysis 3.2 - Code</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body><RCodeModal rcodeFile={rq32Code} downloadName={'RQ32_code.R'} /></Modal.Body>
+                    <Modal.Footer>
+                        <Button className='downloadBtn' onClick={close32Code}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
         </div>
         <div className="section-container">
             <h2>RQ3 Analysis 3.3 - Repeated Measures ANOVA of Trust ratings by delegation choice</h2>
@@ -84,6 +128,9 @@ export function RQ3() {
                 <li>Delegation preference (A/M)</li>
                 <li>Trust_Rating</li>
             </ul>
+            <div className="buttons">
+                <button onClick={() => setRQ31CodeShowing(true)}>View R Syntax</button>
+            </div>
         </div>
     </div>);
 }
