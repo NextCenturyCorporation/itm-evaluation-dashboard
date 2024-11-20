@@ -86,21 +86,30 @@ export function ReviewDelegationPage() {
     };
 
     const renderConfigButtons = () => {
-        const scenarios = {};
+        const dre_scenarios = {};
+        const ph1_scenarios = {};
 
+        const dre_config = delegationConfigs["delegation_v4.0"];
+        const ph1_config = delegationConfigs["delegation_v5.0"];
+        [dre_config, ph1_config].forEach((config, i) => {
+            for (const page of config['pages']) {
+                if (Object.keys(page).includes('scenarioIndex')) {
+                    if ((i == 0 && !Object.keys(dre_scenarios).includes(page['scenarioIndex'])) ||
+                        (i == 1 && !Object.keys(ph1_scenarios).includes(page['scenarioIndex']))) {
+                        if (i == 0) dre_scenarios[page['scenarioIndex']] = {};
+                        else ph1_scenarios[page['scenarioIndex']] = {};
 
-        const config = delegationConfigs["delegation_v4.0"];
-        for (const page of config['pages']) {
-            if (Object.keys(page).includes('scenarioIndex')) {
-                if (!Object.keys(scenarios).includes(page['scenarioIndex'])) {
-                    scenarios[page['scenarioIndex']] = {};
+                    }
+                    if ((i == 0 && !Object.keys(dre_scenarios[page['scenarioIndex']]).includes(page['admName'])) ||
+                        (i == 1 && !Object.keys(ph1_scenarios[page['scenarioIndex']]).includes(page['admName']))) {
+                        if (i == 0) dre_scenarios[page['scenarioIndex']][page['admName']] = [];
+                        else ph1_scenarios[page['scenarioIndex']][page['admName']] = [];
+                    }
+                    if (i == 0) dre_scenarios[page['scenarioIndex']][page['admName']].push(page);
+                    else ph1_scenarios[page['scenarioIndex']][page['admName']].push(page);
                 }
-                if (!Object.keys(scenarios[page['scenarioIndex']]).includes(page['admName'])) {
-                    scenarios[page['scenarioIndex']][page['admName']] = [];
-                }
-                scenarios[page['scenarioIndex']][page['admName']].push(page);
             }
-        }
+        });
         const renderConfigGroup = (configs, title) => (
             <Accordion className="accordion">
                 <Accordion.Item eventKey="0">
@@ -138,11 +147,21 @@ export function ReviewDelegationPage() {
         return (
             <>
                 <Card className="mb-4 border-0 shadow">
+                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
+                    <Card.Body className="bg-light">
+                        {Object.keys(ph1_scenarios).map((scenarioName => (
+                            <div key={scenarioName}>
+                                {renderConfigGroup(ph1_scenarios[scenarioName], scenarioName)}
+                            </div>
+                        )))}
+                    </Card.Body>
+                </Card>
+                <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
-                        {Object.keys(scenarios).map((scenarioName => (
+                        {Object.keys(dre_scenarios).map((scenarioName => (
                             <div key={scenarioName}>
-                                {renderConfigGroup(scenarios[scenarioName], scenarioName)}
+                                {renderConfigGroup(dre_scenarios[scenarioName], scenarioName)}
                             </div>
                         )))}
                     </Card.Body>
