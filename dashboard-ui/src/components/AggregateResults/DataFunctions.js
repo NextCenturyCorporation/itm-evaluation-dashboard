@@ -2,8 +2,6 @@
  * functions that help with data aggregation
  */
 
-import { getMeanAcrossAll } from "./statistics";
-
 const SIM_MAP = {
     "submarine": 1,
     "jungle": 2,
@@ -449,7 +447,7 @@ function getOverallDelRate(res) {
     // gets the overall delegation rate (1=delegated, 0=no delegation) for a participant
     let val = 0;
     let tally = 0;
-    if (res.results.evalNumber != 4) {
+    if (![4, 5].includes(res.results.evalNumber)) {
         const st = getStDelRate(res);
         const ad = getAdDelRate(res);
         val = st['val'] + ad['val'];
@@ -478,7 +476,7 @@ function getOverallTrust(res) {
     // gets the overall trust level of a participant
     let val = 0;
     let tally = 0;
-    if (res.results.evalNumber != 4) {
+    if (![4, 5].includes(res.results.evalNumber)) {
         const adMedics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
         const stMedics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
 
@@ -587,13 +585,13 @@ function populateHumanDataRow(rowObject, version) {
             }
         }
     }
-    else if (version == 4) {
+    else if ([4, 5].includes(version)) {
         returnObj = {
             "Participant": rowObject[0].pid
         };
         const adept_mapping = { 'MJ2': 1, 'MJ4': 2, 'MJ5': 3 };
         if (rowObject[0].scenario_id.includes('ol')) {
-            returnObj['ST_Scenario'] = rowObject[0].scenario_id.split('ol-dre-')[1].split('-')[0];
+            returnObj['ST_Scenario'] = version == 4 ? rowObject[0].scenario_id.split('ol-dre-')[1].split('-')[0] : Number(rowObject[0].scenario_id.split('ol-ph1-eval-')[1].split('-')[0]) - 1;
             returnObj[rowObject[0].scenario_id.split('ol')[0] == 'q' ? 'QOL_Session_Id' : 'VOL_Session_Id'] = rowObject[0]?.data?.alignment?.['sid'] ?? '-';
         }
         else {
@@ -605,10 +603,10 @@ function populateHumanDataRow(rowObject, version) {
         const mj4ProbeIds = ["Probe 1", "Probe 2 kicker", "Probe 2 passerby", "Probe 2-A.1", "Probe 2-D.1", "Probe 2-D.1-B.1", "Probe 3", "Probe 3-A.1", "Probe 3-B.1", "Probe 6", "Probe 7", "Probe 8", "Probe 9", "Probe 10", "Probe 10-A.1", "Probe 10-A.1-B.1", "Probe 10-B.1", "Probe 10-C.1"];
         const mj5ProbeIds = ["Probe 1", "Probe 1-A.1", "Probe 1-B.1", "Probe 2", "Probe 2-A.1", "Probe 2-A.1-A.1", "Probe 2-A.1-B.1", "Probe 2-A.1-B.1-A.1", "Probe 2-B.1", "Probe 2-B.1-A.1", "Probe 2-B.1-B.1", "Probe 2-B.1-B.1-A.1", "Probe 3", "Probe 4", "Probe 4.5", "Probe 7", "Probe 8", "Probe 8-A.1", "Probe 8-A.1-A.1", "Probe 9", "Probe 9-A.1", "Probe 9-B.1", "Probe 9-C.1"];
 
-        const qol1ProbeIds = ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "qol-dre-train2-Probe-11", "12"];
-        const qolProbeIds = ["qol-dre-?-eval-Probe-1", "qol-dre-?-eval-Probe-2", "qol-dre-?-eval-Probe-3", "qol-dre-?-eval-Probe-4", "qol-dre-?-eval-Probe-5", "qol-dre-?-eval-Probe-6", "qol-dre-?-eval-Probe-7", "qol-dre-?-eval-Probe-8", "qol-dre-?-eval-Probe-9", "qol-dre-?-eval-Probe-10", "qol-dre-?-eval-Probe-11", "qol-dre-?-eval-Probe-12"];
-        const volProbeIds = ["vol-dre-?-eval-Probe-1", "vol-dre-?-eval-Probe-2", "vol-dre-?-eval-Probe-3", "vol-dre-?-eval-Probe-4", "vol-dre-?-eval-Probe-5", "vol-dre-?-eval-Probe-6", "vol-dre-?-eval-Probe-7", "vol-dre-?-eval-Probe-8", "vol-dre-?-eval-Probe-9", "vol-dre-?-eval-Probe-10", "vol-dre-?-eval-Probe-11", "vol-dre-?-eval-Probe-12"];
-        const vol1ProbeIds = ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "vol-dre-train2-Probe-11", "vol-dre-train2-Probe-12"];
+        const qol1ProbeIds = version == 4 ? ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "qol-dre-train2-Probe-11", "12"] : ['qol-ph1-eval-2-Probe-1', 'qol-ph1-eval-2-Probe-2', 'qol-ph1-eval-2-Probe-3', 'qol-ph1-eval-2-Probe-4', 'qol-ph1-eval-2-Probe-5', 'qol-ph1-eval-2-Probe-6'];
+        const qolProbeIds = version == 4 ? ["qol-dre-?-eval-Probe-1", "qol-dre-?-eval-Probe-2", "qol-dre-?-eval-Probe-3", "qol-dre-?-eval-Probe-4", "qol-dre-?-eval-Probe-5", "qol-dre-?-eval-Probe-6", "qol-dre-?-eval-Probe-7", "qol-dre-?-eval-Probe-8", "qol-dre-?-eval-Probe-9", "qol-dre-?-eval-Probe-10", "qol-dre-?-eval-Probe-11", "qol-dre-?-eval-Probe-12"] : ['qol-ph1-eval-?-Probe-1', 'qol-ph1-eval-?-Probe-2', 'qol-ph1-eval-?-Probe-3', 'qol-ph1-eval-?-Probe-4', 'qol-ph1-eval-?-Probe-5', 'qol-ph1-eval-?-Probe-6'];
+        const volProbeIds = version == 4 ? ["vol-dre-?-eval-Probe-1", "vol-dre-?-eval-Probe-2", "vol-dre-?-eval-Probe-3", "vol-dre-?-eval-Probe-4", "vol-dre-?-eval-Probe-5", "vol-dre-?-eval-Probe-6", "vol-dre-?-eval-Probe-7", "vol-dre-?-eval-Probe-8", "vol-dre-?-eval-Probe-9", "vol-dre-?-eval-Probe-10", "vol-dre-?-eval-Probe-11", "vol-dre-?-eval-Probe-12"] : ['vol-ph1-eval-?-Probe-1', 'vol-ph1-eval-?-Probe-2', 'vol-ph1-eval-?-Probe-3', 'vol-ph1-eval-?-Probe-4', 'vol-ph1-eval-?-Probe-5', 'vol-ph1-eval-?-Probe-6'];
+        const vol1ProbeIds = version == 4 ? ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "vol-dre-train2-Probe-11", "vol-dre-train2-Probe-12"] : ['vol-ph1-eval-2-Probe-1', 'vol-ph1-eval-2-Probe-2', 'vol-ph1-eval-2-Probe-3', 'vol-ph1-eval-2-Probe-4', 'vol-ph1-eval-2-Probe-5', 'vol-ph1-eval-2-Probe-6'];
 
         for (let i = 0; i < rowObject[0].data.data.length; i++) {
             if (rowObject[0]['scenario_id'].includes('qol') || rowObject[0]['scenario_id'].includes('vol')) {
@@ -670,7 +668,7 @@ function populateHumanDataRow(rowObject, version) {
 function getGroupKey(row, selectedEval) {
     if (selectedEval === 3) {
         return row.SimEnv;
-    } else if (selectedEval === 4) {
+    } else if ([4, 5].includes(selectedEval)) {
         const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
         const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
         return `${adeptName}_${stName}`;
@@ -686,7 +684,7 @@ function formatCellData(data) {
 
 function sortedObjectKeys(objectKeys, selectedEval) {
     // sorting tables for humanProbeData, compare adept, if same, then compare st
-    if (selectedEval === 4) {
+    if ([4, 5].includes(selectedEval)) {
         return objectKeys.sort((a, b) => {
             const [aAdept, aSoarTech] = a.split('_');
             const [bAdept, bSoarTech] = b.split('_');
@@ -731,7 +729,7 @@ function populateDataSet(data) {
             }
         });
         // for version 4, we will only separate by ADEPT, since they have different probes and we want to combine ST and Adept into one row per participant
-        if (version == 4) {
+        if ([4, 5].includes(version)) {
             tempGroupHumanSimData = Object.values(tempGroupHumanSimData).flat();
             const adept_mapping = { 1: ["DryRunEval-MJ2-eval"], 2: ["DryRunEval-MJ4-eval"], 3: ["DryRunEval-MJ5-eval"] }
             tempGroupHumanSimData = Object.groupBy(tempGroupHumanSimData, ({ ADEPT_Scenario }) => adept_mapping[ADEPT_Scenario]);
@@ -744,7 +742,7 @@ function populateDataSet(data) {
     const allResults = [];
     for (const res of data.getAllSurveyResultsByEval) {
         // if survey instructions does not exist, we don't want the entry
-        if ([2, 4].includes(res.results?.surveyVersion) && Object.keys(res.results).includes('Survey Introduction')) {
+        if ([2, 4, 5].includes(res.results?.surveyVersion) && Object.keys(res.results).includes('Survey Introduction')) {
             // use this result!
             const tmpSet = {};
 
@@ -754,7 +752,7 @@ function populateDataSet(data) {
                 // ignore some pids
                 continue;
             }
-            if (res.results.evalNumber == 4) {
+            if ([4, 5].includes(res.results.evalNumber)) {
                 const valid_ids = data?.getParticipantLog?.map((x) => x?.ParticipantID?.toString());
                 if (!valid_ids.includes(pid)) {
                     // only include valid ids for survey version 4
@@ -817,7 +815,7 @@ function populateDataSet(data) {
             const textOrder = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
 
 
-            if (res.results.evalNumber == 4) {
+            if ([4, 5].includes(res.results.evalNumber)) {
 
                 tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('adept'))] ?? '-';
                 tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('qol'))] ?? '-';
@@ -852,7 +850,7 @@ function populateDataSet(data) {
             }
 
 
-            if (res.results.evalNumber != 4) {
+            if (![4, 5].includes(res.results.evalNumber)) {
                 // get order of text based
                 tmpSet['TextOrder'] = textOrder;
 
