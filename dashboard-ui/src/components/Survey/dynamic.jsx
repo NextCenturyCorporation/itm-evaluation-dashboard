@@ -107,13 +107,18 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     };
 
     const processActionText = (action, index, sceneActions) => {
-        getProbe(action)
-        action = action['text'];
-        let processedText = action.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
+        const probe = getProbe(action)
+        let processedText = action['text'].replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
         
         // Check if the previous action contained 'Question:'
         if (index > 0 && sceneActions[index - 1]['text'].includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
+            
+            // Add possible choices if probe exists
+            if (probe && probe.choices) {
+                processedText += '\n\nMedic could have:\n' + 
+                    probe.choices.map(choice => `• ${choice.text}`).join('\n');
+            }
         }
         return processedText;
     };
@@ -199,7 +204,13 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Accordion.Body>
                                         <ListGroup>
                                             {sceneActions && sceneActions.map((action, index) => (
-                                                <ListGroup.Item key={`action-${index}`} className="action-item" style={getSceneStyle(action)}>{processActionText(action, index, sceneActions)}</ListGroup.Item>
+                                                <ListGroup.Item 
+                                                key={`action-${index}`} 
+                                                className="action-item" 
+                                                style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
+                                            >
+                                                {processActionText(action, index, sceneActions)}
+                                            </ListGroup.Item>
                                             ))}
                                         </ListGroup>
                                     </Accordion.Body>
