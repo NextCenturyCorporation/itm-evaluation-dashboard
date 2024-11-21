@@ -191,14 +191,14 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true;
-        if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
             this.setSeenScenarios();
             this.survey.data = {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const pidExists = this.props.surveyResults.filter((res) => res.results?.surveyVersion == 4 && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion == 4 || res.results?.surveyVersion == 5) && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid) {
@@ -246,13 +246,13 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
-        if (this.state.surveyVersion == 4.0 && this.state.pid != null) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: false
             });
         }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
-        if (this.state.surveyVersion != 4.0) {
+        if ((this.state.surveyVersion != 4.0 && this.state.surveyVersion != 5.0)) {
             this.applyPageRandomization(groupedDMs, comparisonPages, removed);
         } else if (this.state.pid != null) {
             this.setState({
@@ -793,12 +793,12 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed }
         }
-        else if (this.state.surveyVersion == 4.0 && this.state.pid == null) {
+        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
 
             return {};
         }
-        else if (this.state.surveyVersion == 4.0) {
+        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0)) {
             const allPages = this.surveyConfigClone.pages;
             const pages = [...allPages.slice(0, 5)];
             const order = admOrderMapping[this.state.envsSeen['ADMOrder']];
@@ -1149,6 +1149,11 @@ class SurveyPage extends Component {
             this.surveyData['evalName'] = 'Dry Run Evaluation';
             this.surveyData['orderLog'] = this.state.orderLog;
         }
+        if (this.state.surveyVersion == 5.0) {
+            this.surveyData['evalNumber'] = 5;
+            this.surveyData['evalName'] = 'Phase 1 Evaluation';
+            this.surveyData['orderLog'] = this.state.orderLog;
+        }
 
         // upload the results to mongoDB
         this.setState({ uploadData: true }, () => {
@@ -1163,7 +1168,7 @@ class SurveyPage extends Component {
         this.uploadSurveyData(survey, true);
         this.shouldBlockNavigation = false;
         if (this.surveyConfigClone.pages.length < 3) {
-            if (this.state.surveyVersion == 4.0 && survey.valuesHash['Participant ID'] !== this.state.pid) {
+            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
                         log => log['ParticipantID'] == this.state.pid
@@ -1197,7 +1202,7 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if (this.state.surveyVersion == 4.0 && sender.valuesHash['Participant ID'] !== this.state.pid) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && sender.valuesHash['Participant ID'] !== this.state.pid) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => log['ParticipantID'] == this.state.pid
