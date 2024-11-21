@@ -403,7 +403,7 @@ export class App extends React.Component {
                                                             <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
                                                                 Take Delegation Survey
                                                             </NavDropdown.Item>
-                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based">
+                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based" disabled>
                                                                 Complete Text Scenarios
                                                             </NavDropdown.Item>
                                                             {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
