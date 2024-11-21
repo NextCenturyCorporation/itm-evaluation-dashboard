@@ -250,12 +250,13 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
     let misalignedStatus = 'least aligned';
     let i = 0;
     if (!targets) {
+        // get default adms
         if (set1.length > 0 && set2.length > 0) {
             alignedTarget = set1[0];
             misalignedTarget = set2[0];
         }
         else {
-            alignedTarget = set1[0];
+            alignedTarget = set1[0] ?? allTargets[i + 1];
             misalignedTarget = allTargets[i];
             while (cols1to3.includes(misalignedTarget) || (set1.includes(alignedTarget) && set1.includes(misalignedTarget))) {
                 i += 1;
@@ -314,7 +315,43 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
     let misalignedStatus = 'least aligned';
     switch (scenario) {
         case 'DryRunEval-MJ2-eval':
+            if (surveyVersion == 4) {
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.5'];
+                set1 = ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4']
+                set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
+                set3 = ['ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
+            }
+            else {
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.8'];
+                set1 = ['ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4']
+                set2 = ['ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7'];
+                set3 = [];
+            }
+            validAdms = getValidADM(getAllMjTargets(surveyVersion), mjTargets, cols1to3, set1, set2, set3);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
         case 'DryRunEval-MJ4-eval':
+            if (surveyVersion == 4) {
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.5'];
+                set1 = ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4']
+                set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
+                set3 = ['ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
+            }
+            else {
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.5'];
+                set1 = ['ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7']
+                set2 = [];
+                set3 = [];
+            }
+            validAdms = getValidADM(getAllMjTargets(surveyVersion), mjTargets, cols1to3, set1, set2, set3);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
         case 'DryRunEval-MJ5-eval':
             if (surveyVersion == 4) {
                 cols1to3 = ['ADEPT-DryRun-Moral judgement-0.5'];
@@ -323,7 +360,10 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
                 set3 = ['ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
             }
             else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.3'];
+                set1 = []
+                set2 = [];
+                set3 = [];
             }
             validAdms = getValidADM(getAllMjTargets(surveyVersion), mjTargets, cols1to3, set1, set2, set3);
             alignedTarget = validAdms['aligned'];
@@ -338,7 +378,9 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
             }
             else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.6'];
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4']
+                set2 = [];
             }
             validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, set2, []);
             alignedTarget = validAdms['aligned'];
@@ -352,7 +394,9 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
                 set1 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4']
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
             } else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'];
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3']
+                set2 = ['ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5'];
             }
             validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, set2, []);
             alignedTarget = validAdms['aligned'];
@@ -367,7 +411,10 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.7'];
                 set3 = ['ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
             } else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.8'];
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3']
+                set2 = [];
+                set3 = [];
             }
 
             validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, set2, set3);
@@ -431,7 +478,54 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
             alignedStatus = validAdms['alignedStatus'];
             misalignedStatus = validAdms['misalignedStatus'];
             break;
-        // DKTODO: add new st mappings
+        case 'qol-ph1-eval-2':
+            cols1to3 = ['qol-human-6403274-SplitHighBinary-ph1'];
+            validAdms = getValidADM(getAllQolTargets(surveyVersion), qolTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'qol-ph1-eval-3':
+            cols1to3 = ['qol-human-6403274-SplitHighBinary-ph1'];
+            validAdms = getValidADM(getAllQolTargets(surveyVersion), qolTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'qol-ph1-eval-4':
+            cols1to3 = ['qol-human-7040555-SplitHighMulti-ph1'];
+            validAdms = getValidADM(getAllQolTargets(surveyVersion), qolTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'vol-ph1-eval-2':
+            cols1to3 = ['vol-human-8022671-SplitHighMulti-ph1'];
+            validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'vol-ph1-eval-3':
+            cols1to3 = ['vol-human-6403274-SplitEvenBinary-ph1'];
+            validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'vol-ph1-eval-4':
+            cols1to3 = ['vol-human-5032922-SplitLowMulti-ph1'];
+            validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
         default:
             break;
     }
@@ -457,7 +551,10 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                 set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
                 set3 = ['ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
             } else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4'];
+                set1 = ['ADEPT-DryRun-Moral judgement-0.5'];
+                set2 = ['ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8'];
+                set3 = [];
             }
             validAdms = getValidADM(getAllMjTargets(surveyVersion), mjTargets, cols1to3, set1, set2, set3);
             alignedTarget = validAdms['aligned'];
@@ -471,7 +568,9 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                 set1 = ['ADEPT-DryRun-Moral judgement-0.6']
                 set2 = ['ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
             } else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5'];
+                set1 = []
+                set2 = [];
             }
             validAdms = getValidADM(getAllMjTargets(surveyVersion), mjTargets, cols1to3, set1, set2, []);
             alignedTarget = validAdms['aligned'];
@@ -486,7 +585,9 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                 set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
                 set3 = ['ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
             } else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5'];
+                set1 = []
+                set2 = [];
             }
             validAdms = getValidADM(getAllMjTargets(surveyVersion), mjTargets, cols1to3, set1, set2, set3);
             alignedTarget = validAdms['aligned'];
@@ -500,7 +601,9 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                 set1 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
             } else {
-                // DKTODO
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.3'];
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5'];
+                set2 = ['ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'];
             }
             validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, set2, []);
             alignedTarget = validAdms['aligned'];
@@ -509,17 +612,49 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-IO4-eval':
-        case 'DryRunEval-IO5-eval':
-            // NOTE: Only 1 adm to be found here!! Special case!!
-            // DKTODO - this has probably changed! Check for io4/io5!!
-            target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
-            if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
-                alignedTarget = target;
-                misalignedTarget = null;
+            if (surveyVersion == 4) {
+                // NOTE: Only 1 adm to be found here!! Special case!!
+                target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
+                if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
+                    alignedTarget = target;
+                    misalignedTarget = null;
+                }
+                else {
+                    misalignedTarget = target;
+                    alignedTarget = null;
+                }
+            } else {
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5', 'ADEPT-DryRun-Ingroup Bias-0.6'];
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'];
+                validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, [], []);
+                alignedTarget = validAdms['aligned'];
+                misalignedTarget = validAdms['misaligned'];
+                alignedStatus = validAdms['alignedStatus'];
+                misalignedStatus = validAdms['misalignedStatus'];
             }
-            else {
-                misalignedTarget = target;
-                alignedTarget = null;
+            break;
+        case 'DryRunEval-IO5-eval':
+            if (surveyVersion == 4) {
+                // NOTE: Only 1 adm to be found here!! Special case!!
+                target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
+                if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
+                    alignedTarget = target;
+                    misalignedTarget = null;
+                }
+                else {
+                    misalignedTarget = target;
+                    alignedTarget = null;
+                }
+            } else {
+                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4'];
+                set1 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
+                set2 = ['ADEPT-DryRun-Ingroup Bias-0.6'];
+                set3 = ['ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'];
+                validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, set2, set3);
+                alignedTarget = validAdms['aligned'];
+                misalignedTarget = validAdms['misaligned'];
+                alignedStatus = validAdms['alignedStatus'];
+                misalignedStatus = validAdms['misalignedStatus'];
             }
             break;
         case 'qol-dre-1-eval':
@@ -559,7 +694,57 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             alignedStatus = validAdms['alignedStatus'];
             misalignedStatus = validAdms['misalignedStatus'];
             break;
-        // DKTODO: Add new st mappings
+        case 'qol-ph1-eval-2':
+            cols1to3 = ['qqol-human-0000001-SplitEvenMulti-ph1'];
+            validAdms = getValidADM(getAllQolTargets(surveyVersion), qolTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'qol-ph1-eval-3':
+            cols1to3 = ['qol-human-0000001-SplitEvenMulti-ph1'];
+            validAdms = getValidADM(getAllQolTargets(surveyVersion), qolTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'qol-ph1-eval-4':
+            cols1to3 = ['qol-human-3043871-SplitHighBinary-ph1'];
+            validAdms = getValidADM(getAllQolTargets(surveyVersion), qolTargets, cols1to3, [], [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'vol-ph1-eval-2':
+            cols1to3 = ['vol-human-5032922-SplitLowMulti-ph1'];
+            set1 = ["vol-synth-LowCluster-ph1", "vol-human-8478698-SplitLowMulti-ph1"]
+            validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, set1, [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'vol-ph1-eval-3':
+            cols1to3 = ['vol-human-5032922-SplitLowMulti-ph1'];
+            set1 = ["vol-synth-LowCluster-ph1", "vol-human-8478698-SplitLowMulti-ph1"]
+            validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, set1, [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
+        case 'vol-ph1-eval-4':
+            cols1to3 = ['vol-human-8022671-SplitHighMulti-ph1'];
+            set1 = ["vol-synth-LowCluster-ph1", "vol-human-8478698-SplitLowMulti-ph1"]
+            validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, set1, [], []);
+            alignedTarget = validAdms['aligned'];
+            misalignedTarget = validAdms['misaligned'];
+            alignedStatus = validAdms['alignedStatus'];
+            misalignedStatus = validAdms['misalignedStatus'];
+            break;
         default:
             break;
     }

@@ -324,7 +324,7 @@ class SurveyPage extends Component {
                     alignedAdm['target'] = alignedADMTarget;
                     pagesToShuffle.push(alignedAdm);
                 } else { 
-                    console.warn("Missing Aligned ADM"); 
+                    console.warn("Missing Aligned ADM for " + expectedScenario + " - " + expectedAuthor + " - " + alignedADMTarget); 
                 }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];

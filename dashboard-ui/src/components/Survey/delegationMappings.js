@@ -39,39 +39,49 @@ export const admOrderMapping = {
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }]
 }
 
-// DKTODO - update baselines kitware (need to add keys for new st, ternary for adept)
 export const getKitwareBaselineMapping = (sv) => {
     return {
-        "DryRunEval-IO2-eval": "ADEPT-DryRun-Ingroup Bias-0.5",
-        "DryRunEval-IO4-eval": "ADEPT-DryRun-Ingroup Bias-0.6",
-        "DryRunEval-IO5-eval": "ADEPT-DryRun-Ingroup Bias-0.6",
-        "DryRunEval-MJ2-eval": "ADEPT-DryRun-Moral judgement-0.5",
-        "DryRunEval-MJ4-eval": "ADEPT-DryRun-Moral judgement-0.5",
-        "DryRunEval-MJ5-eval": "ADEPT-DryRun-Moral judgement-0.5",
+        "DryRunEval-IO2-eval": sv == 4 ? "ADEPT-DryRun-Ingroup Bias-0.5" : "ADEPT-DryRun-Ingroup Bias-0.6",
+        "DryRunEval-IO4-eval": sv == 4 ? "ADEPT-DryRun-Ingroup Bias-0.6" : "ADEPT-DryRun-Ingroup Bias-0.7",
+        "DryRunEval-IO5-eval": sv == 4 ? "ADEPT-DryRun-Ingroup Bias-0.6" : "ADEPT-DryRun-Ingroup Bias-0.8",
+        "DryRunEval-MJ2-eval": sv == 4 ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.8",
+        "DryRunEval-MJ4-eval": sv == 4 ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.5",
+        "DryRunEval-MJ5-eval": sv == 4 ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.3",
         "qol-dre-1-eval": "qol-human-1774519-SplitEvenBinary",
         "qol-dre-2-eval": "qol-human-1774519-SplitEvenBinary",
         "qol-dre-3-eval": "qol-human-6403274-SplitHighBinary",
         "vol-dre-1-eval": "vol-human-7040555-SplitEvenBinary",
         "vol-dre-2-eval": "vol-human-7040555-SplitEvenBinary",
-        "vol-dre-3-eval": "vol-human-6403274-SplitEvenBinary"
+        "vol-dre-3-eval": "vol-human-6403274-SplitEvenBinary",
+        "qol-ph1-eval-2": "qol-human-6403274-SplitHighBinary-ph1",
+        "qol-ph1-eval-3": "qol-human-6403274-SplitHighBinary-ph1",
+        "qol-ph1-eval-4": "qol-human-7040555-SplitHighMulti-ph1",
+        "vol-ph1-eval-2": "vol-human-8022671-SplitHighMulti-ph1",
+        "vol-ph1-eval-3": "vol-human-6403274-SplitEvenBinary-ph1",
+        "vol-ph1-eval-4": "vol-human-5032922-SplitLowMulti-ph1"
+
     }
 };
 
-
-// DKTODO - update baselines parallax (need to add keys for new st, ternary for adept)
 export const getTadBaselineMapping = (sv) => {
     return {
-        "DryRunEval-IO2-eval": "ADEPT-DryRun-Ingroup Bias-0.4",
-        "DryRunEval-IO4-eval": "ADEPT-DryRun-Ingroup Bias-0.4",
-        "DryRunEval-IO5-eval": "ADEPT-DryRun-Ingroup Bias-0.4",
-        "DryRunEval-MJ2-eval": "ADEPT-DryRun-Moral judgement-0.2",
-        "DryRunEval-MJ4-eval": "ADEPT-DryRun-Moral judgement-0.3",
-        "DryRunEval-MJ5-eval": "ADEPT-DryRun-Moral judgement-0.3",
+        "DryRunEval-IO2-eval": sv == 4 ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
+        "DryRunEval-IO4-eval": sv == 4 ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
+        "DryRunEval-IO5-eval": sv == 4 ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
+        "DryRunEval-MJ2-eval": sv == 4 ? "ADEPT-DryRun-Moral judgement-0.2" : "ADEPT-DryRun-Moral judgement-0.2",
+        "DryRunEval-MJ4-eval": sv == 4 ? "ADEPT-DryRun-Moral judgement-0.3" : "ADEPT-DryRun-Moral judgement-0.2",
+        "DryRunEval-MJ5-eval": sv == 4 ? "ADEPT-DryRun-Moral judgement-0.3" : "ADEPT-DryRun-Moral judgement-0.2",
         "qol-dre-1-eval": "qol-human-3447902-SplitHighMulti",
         "qol-dre-2-eval": "qol-human-8022671-SplitLowMulti",
         "qol-dre-3-eval": "qol-human-6349649-SplitHighMulti",
         "vol-dre-1-eval": "vol-human-3043871-SplitLowMulti",
         "vol-dre-2-eval": "vol-human-3043871-SplitLowMulti",
-        "vol-dre-3-eval": "vol-human-3043871-SplitLowMulti"
+        "vol-dre-3-eval": "vol-human-3043871-SplitLowMulti",
+        "qol-ph1-eval-2": "qol-human-0000001-SplitEvenMulti-ph1",
+        "qol-ph1-eval-3": "qol-human-0000001-SplitEvenMulti-ph1",
+        "qol-ph1-eval-4": "qol-human-3043871-SplitHighBinary-ph1",
+        "vol-ph1-eval-2": "vol-human-5032922-SplitLowMulti-ph1",
+        "vol-ph1-eval-3": "vol-human-5032922-SplitLowMulti-ph1",
+        "vol-ph1-eval-4": "vol-human-8022671-SplitHighMulti-ph1"
     }
 };
