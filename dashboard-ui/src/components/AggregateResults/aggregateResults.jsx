@@ -399,7 +399,7 @@ export default function AggregateResults({ type }) {
     };
 
     const exportHumanSimToExcel = async () => {
-        if (selectedEval !== 4) {
+        if (selectedEval !== 4 && selectedEval !== 5) {
             let humanSimData = [];
             for (var objkey in aggregateData["groupedSim"]) {
                 humanSimData = humanSimData.concat(aggregateData["groupedSim"][objkey]);
@@ -577,7 +577,7 @@ export default function AggregateResults({ type }) {
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
                                     <h4 key={"header_" + objectKey}>
-                                        {selectedEval === 3 ? capitalizeFirstLetter(objectKey) : `ADEPT: ${objectKey.split('_')[0]}, SoarTech: ${objectKey.split('_')[1]}`}
+                                        {selectedEval === 3 ? capitalizeFirstLetter(objectKey) : `ADEPT: ${objectKey.split('_')[0].replace('DryRunEval', selectedEval == 4 ? 'DryRunEval' : 'Phase1')}, SoarTech: ${objectKey.split('_')[1].replace('3', selectedEval == 4 ? '3' : '4').replace('2', selectedEval == 4 ? '2' : '3').replace('1', selectedEval == 4 ? '1' : '2')}`}
                                     </h4>
                                 </div>
                             </div>
