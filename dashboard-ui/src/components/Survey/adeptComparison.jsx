@@ -130,7 +130,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
     }
 
     processActionText = (action, index, sceneActions) => {
-        action = action['text']
+        action = action['text'] ? action['text'] : action;
         let processedText = action.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
         
         // Check if the previous action contained 'Question:'
@@ -142,7 +142,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
     };
 
     getSceneStyle = (action) => {
-        action = action['text']
+        action = action['text'] ? action['text'] : action;
         const isMedicAction = !(action.includes('Update:') || action.includes('Note:') || action.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",

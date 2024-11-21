@@ -105,7 +105,8 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
 
     const processActionText = (action, index, sceneActions) => {
         const probe = getProbe(action)
-        let processedText = action['text'].replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
+        action = action['text'] ? action['text'] : action;
+        let processedText = action.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
 
         if (index > 0 && sceneActions[index - 1]['text'].includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
@@ -140,7 +141,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     };
 
     const getSceneStyle = (action) => {
-        action = action['text']
+        action = action['text'] ? action['text'] : action;
         const isMedicAction = !(action.includes('Update:') || action.includes('Note:') || action.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",
