@@ -284,7 +284,13 @@ class SurveyPage extends Component {
                 "vol": participantResults.findLast((el) => el['scenario_id'].includes('vol')) ?? undefined,
                 "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval')) ?? undefined
             };
-            const adeptMostLeast = getOrderedAdeptTargets(admLists?.adept?.combinedAlignmentData ?? []);
+            let adeptMostLeast = null;
+            if (this.state.surveyVersion == 4.0) {
+                adeptMostLeast = getOrderedAdeptTargets(admLists?.adept?.combinedAlignmentData ?? []);
+            }
+            else {
+                adeptMostLeast = { 'Ingroup': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Ingroup Bias'), 'Moral': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Moral judgement') }
+            }
             for (let x of order) {
                 const expectedAuthor = (x['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                 const expectedScenario = x['TA1'] == 'ST' ? (x['Attribute'] == 'QOL' ? stScenario[0] : stScenario[1]) : (x['Attribute'] == 'MJ' ? adScenario[0] : adScenario[1]);
