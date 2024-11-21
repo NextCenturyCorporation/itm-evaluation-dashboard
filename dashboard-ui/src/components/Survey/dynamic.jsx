@@ -6,7 +6,7 @@ import { FaInfoCircle } from 'react-icons/fa';
 import SituationModal from "./situationModal";
 import VitalsDropdown from "./vitalsDropdown";
 import './template.css';
-import { renderSituation } from './util';
+import { renderSituation } from './surveyUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';

@@ -12,11 +12,12 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery } from 'react-apollo'
-import { generateComparisonPagev4, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './util';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './surveyUtils';
 import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
@@ -55,72 +56,6 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResults
     }`;
 
-const envMappingToText = {
-    "AD-1": "Shooter/Victim (Urban)",
-    "AD-2": "IED (Jungle)",
-    "AD-3": "Fistfight (Desert)",
-    "ST-1": "QOL-1 and VOL-1",
-    "ST-2": "QOL-2 and VOL-2",
-    "ST-3": "QOL-3 and VOL-3",
-}
-
-export const delEnvMapping = {
-    "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
-    "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
-    "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-    "ST-1": ["qol-dre-1-eval", "vol-dre-1-eval"],
-    "ST-2": ["qol-dre-2-eval", "vol-dre-2-eval"],
-    "ST-3": ["qol-dre-3-eval", "vol-dre-3-eval"],
-}
-
-export const admOrderMapping = {
-    1: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
-        { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-        { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-        { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" },],
-    2: [{ "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-        { "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-        { "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" }],
-    3: [{ "TA2": "Parallax", "TA1": "Adept", "Attribute": "MJ" },
-        { "TA2": "Parallax", "TA1": "ST", "Attribute": "QOL" },
-        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
-        { "TA2": "Kitware", "TA1": "ST", "Attribute": "VOL" }],
-    4: [{ "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
-        { "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
-        { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }]
-}
-
-const kitwareBaselineMapping = {
-    "DryRunEval-IO2-eval": "ADEPT-DryRun-Ingroup Bias-0.5",
-    "DryRunEval-IO4-eval": "ADEPT-DryRun-Ingroup Bias-0.6",
-    "DryRunEval-IO5-eval": "ADEPT-DryRun-Ingroup Bias-0.6",
-    "DryRunEval-MJ2-eval": "ADEPT-DryRun-Moral judgement-0.5",
-    "DryRunEval-MJ4-eval": "ADEPT-DryRun-Moral judgement-0.5",
-    "DryRunEval-MJ5-eval": "ADEPT-DryRun-Moral judgement-0.5",
-    "qol-dre-1-eval": "qol-human-1774519-SplitEvenBinary",
-    "qol-dre-2-eval": "qol-human-1774519-SplitEvenBinary",
-    "qol-dre-3-eval": "qol-human-6403274-SplitHighBinary",
-    "vol-dre-1-eval": "vol-human-7040555-SplitEvenBinary",
-    "vol-dre-2-eval": "vol-human-7040555-SplitEvenBinary",
-    "vol-dre-3-eval": "vol-human-6403274-SplitEvenBinary",
-};
-
-const tadBaselineMapping = {
-    "DryRunEval-IO2-eval": "ADEPT-DryRun-Ingroup Bias-0.4",
-    "DryRunEval-IO4-eval": "ADEPT-DryRun-Ingroup Bias-0.4",
-    "DryRunEval-IO5-eval": "ADEPT-DryRun-Ingroup Bias-0.4",
-    "DryRunEval-MJ2-eval": "ADEPT-DryRun-Moral judgement-0.2",
-    "DryRunEval-MJ4-eval": "ADEPT-DryRun-Moral judgement-0.3",
-    "DryRunEval-MJ5-eval": "ADEPT-DryRun-Moral judgement-0.3",
-    "qol-dre-1-eval": "qol-human-3447902-SplitHighMulti",
-    "qol-dre-2-eval": "qol-human-8022671-SplitLowMulti",
-    "qol-dre-3-eval": "qol-human-6349649-SplitHighMulti",
-    "vol-dre-1-eval": "vol-human-3043871-SplitLowMulti",
-    "vol-dre-2-eval": "vol-human-3043871-SplitLowMulti",
-    "vol-dre-3-eval": "vol-human-3043871-SplitLowMulti",
-};
 
 class SurveyPage extends Component {
 
@@ -157,11 +92,11 @@ class SurveyPage extends Component {
 
     setSeenScenarios = () => {
         if (this.survey.getQuestionByName("Text Scenarios Completed")) {
-            const text_scenarios = this.state.validPid ? '\t' + envMappingToText[this.state.envsSeen['Text-1']] + '\n\t' + envMappingToText[this.state.envsSeen['Text-2']] : '\tInvalid Participant ID; no text scenario log. \n\tPlease double check the participant ID before continuing, or select "No" and enter an explanation.';
+            const text_scenarios = this.state.validPid ? '\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Text-1']] + '\n\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Text-2']] : '\tInvalid Participant ID; no text scenario log. \n\tPlease double check the participant ID before continuing, or select "No" and enter an explanation.';
             this.survey.getQuestionByName("Text Scenarios Completed").title = "Please verify that the following Text Scenarios have been completed:\n" + text_scenarios;
         }
         if (this.survey.getQuestionByName("VR Scenarios Completed")) {
-            const text_scenarios = this.state.validPid ? '\t' + envMappingToText[this.state.envsSeen['Sim-1']] + '\n\t' + envMappingToText[this.state.envsSeen['Sim-2']] : '\tInvalid Participant ID; no VR scenario log. \n\tPlease double check the participant ID before continuing, or select "No" and enter an explanation.';
+            const text_scenarios = this.state.validPid ? '\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Sim-1']] + '\n\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Sim-2']] : '\tInvalid Participant ID; no VR scenario log. \n\tPlease double check the participant ID before continuing, or select "No" and enter an explanation.';
             this.survey.getQuestionByName("VR Scenarios Completed").title = "Please verify that the following VR Scenarios have been completed:\n" + text_scenarios;
         }
     }
@@ -340,8 +275,8 @@ class SurveyPage extends Component {
             const order = admOrderMapping[this.state.envsSeen['ADMOrder']];
             // author is TAD or kitware, alignment is the target name, admType is aligned or baseline, scenarioName is SoarTech VOL 1, etc.
             const del1 = this.state.envsSeen['Del-1'];
-            const stScenario = delEnvMapping[del1.includes("ST") ? del1 : this.state.envsSeen['Del-2']];
-            const adScenario = delEnvMapping[del1.includes("AD") ? del1 : this.state.envsSeen['Del-2']];
+            const stScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("ST") ? del1 : this.state.envsSeen['Del-2']];
+            const adScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("AD") ? del1 : this.state.envsSeen['Del-2']];
             // find most and least aligned adms for every attribute
             const participantResults = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             const admLists = {
@@ -356,22 +291,22 @@ class SurveyPage extends Component {
                 let adms = null;
                 if (expectedAuthor == 'kitware') {
                     if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
-                        adms = getKitwareAdms(expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
+                        adms = getKitwareAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
-                        adms = getKitwareAdms(expectedScenario, null, null, null, null);
+                        adms = getKitwareAdms(this.state.surveyVersion, expectedScenario, null, null, null, null);
                     }
                 }
                 else {
                     if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
-                        adms = getParallaxAdms(expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
+                        adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
-                        adms = getParallaxAdms(expectedScenario, null, null, null, null);
+                        adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, null, null, null, null);
                     }
                 }
 
                 const alignedADMTarget = adms['aligned'];
                 const misalignedADMTarget = adms['misaligned'];
-                const baselineADMTarget = x['TA2'] == 'Kitware' ? kitwareBaselineMapping[expectedScenario] : tadBaselineMapping[expectedScenario];
+                const baselineADMTarget = x['TA2'] == 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
                 const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline' && x.admAlignment == baselineADMTarget);
                 // aligned
                 const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
@@ -399,7 +334,7 @@ class SurveyPage extends Component {
                 } else { console.warn("Missing Misaligned ADM"); }
                 shuffle(pagesToShuffle);
                 pages.push(...pagesToShuffle);
-                pages.push(generateComparisonPagev4(baselineAdm, alignedAdm, misalignedAdm));
+                pages.push(generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm));
             }
             pages.push(allPages.slice(-1)[0]);
             this.surveyConfigClone.pages = pages;

@@ -146,6 +146,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
             userActions: [],
         };
         this.updateActionLogs = this.updateActionLogs.bind(this);
+        // review pages need parent.data, the actual survey needs parent.jsonObj
         this.scenarioIndex = this.question.parent.jsonObj.scenarioIndex;
         if (!isDefined(this.scenarioIndex)) {
             this.scenarioIndex = this.question.parent.data.jsonObj.scenarioIndex;
