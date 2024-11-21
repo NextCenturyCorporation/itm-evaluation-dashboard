@@ -62,6 +62,21 @@ const customStyles = `
   }
 `;
 
+const PH1_NAME_MAP = {
+    'DryRunEval-MJ2-eval': 'phase1-adept-eval-MJ2',
+    'DryRunEval-MJ4-eval': 'phase1-adept-eval-MJ4',
+    'DryRunEval-MJ5-eval': 'phase1-adept-eval-MJ5',
+    'DryRunEval-IO2-eval': 'phase1-adept-eval-IO2',
+    'DryRunEval-IO4-eval': 'phase1-adept-eval-IO4',
+    'DryRunEval-IO5-eval': 'phase1-adept-eval-IO5',
+    'qol-ph1-eval-2': 'qol-ph1-eval-2',
+    'qol-ph1-eval-3': 'qol-ph1-eval-3',
+    'qol-ph1-eval-4': 'qol-ph1-eval-4',
+    'vol-ph1-eval-2': 'vol-ph1-eval-2',
+    'vol-ph1-eval-3': 'vol-ph1-eval-3',
+    'vol-ph1-eval-4': 'vol-ph1-eval-4',
+};
+
 export function ReviewDelegationPage() {
     const delegationConfigs = useSelector(state => state.configs.surveyConfigs);
     const [selectedConfig, setSelectedConfig] = useState(null);
@@ -69,7 +84,6 @@ export function ReviewDelegationPage() {
 
     const handleSurveyComplete = (sender) => {
         const results = sender.data;
-        console.log("Survey results:", results);
     };
 
     const handleConfigSelect = (page) => {
@@ -78,7 +92,7 @@ export function ReviewDelegationPage() {
                 const surveyModel = new Model(page);
                 surveyModel.applyTheme(surveyTheme);
                 setSelectedConfig(surveyModel);
-                setReviewingText(page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment']);
+                setReviewingText((page['evalNumber'] == 4 ? page['scenarioIndex'] : PH1_NAME_MAP[page['scenarioIndex']]) + ' - ' + page['admName'] + ' - ' + page['admAlignment']);
             } catch (error) {
                 console.error('Error creating survey model:', error);
             }
@@ -110,6 +124,7 @@ export function ReviewDelegationPage() {
                 }
             }
         });
+
         const renderConfigGroup = (configs, title) => (
             <Accordion className="accordion">
                 <Accordion.Item eventKey="0">
@@ -150,8 +165,8 @@ export function ReviewDelegationPage() {
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
                     <Card.Body className="bg-light">
                         {Object.keys(ph1_scenarios).map((scenarioName => (
-                            <div key={scenarioName}>
-                                {renderConfigGroup(ph1_scenarios[scenarioName], scenarioName)}
+                            <div key={PH1_NAME_MAP[scenarioName]}>
+                                {renderConfigGroup(ph1_scenarios[scenarioName], PH1_NAME_MAP[scenarioName])}
                             </div>
                         )))}
                     </Card.Body>
