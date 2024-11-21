@@ -174,11 +174,23 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
           {patient.imgUrl ? (
             <>
               <Col md={7} className="d-flex mb-3 mb-md-0">
-                <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px', overflow: 'hidden' }}>
+                <div className="text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded"
+                  style={{
+                    position: 'relative',
+                    height: patient.demographics.age ? '300px' : '',
+                    overflow: 'hidden'
+                  }}>
                   <img
                     src={`data:image/png;base64,${patient.imgUrl}`}
                     alt={`${patient.id ?? patient.name}`}
-                    style={{
+                    style={patient.demographics.age ? {
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      position: 'relative'
+                    } : {
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',

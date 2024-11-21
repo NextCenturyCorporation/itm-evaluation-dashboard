@@ -105,9 +105,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
 
     const processActionText = (action, index, sceneActions) => {
         const probe = getProbe(action)
-        let processedText = action['text'].replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
+        const text = action?.text || '';
+        let processedText = text.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
 
-        if (index > 0 && sceneActions[index - 1]['text'].includes('Question:')) {
+        if (index > 0 && sceneActions[index - 1]?.text?.includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
 
             if ((scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) && 
@@ -140,12 +141,12 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     };
 
     const getSceneStyle = (action) => {
-        action = action['text']
-        const isMedicAction = !(action.includes('Update:') || action.includes('Note:') || action.includes('Question:'));
+        const text = action?.text || '';
+        const isMedicAction = !(text.includes('Update:') || text.includes('Note:') || text.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",
-            "backgroundColor": action.includes("<HIGHLIGHT>") ? "rgb(251 252 152)" : !isMedicAction ? "#eee" : "#fff",
-            "fontSize": action.includes('Question:') ? '20px' : '16px'
+            "backgroundColor": text.includes("<HIGHLIGHT>") ? "rgb(251 252 152)" : !isMedicAction ? "#eee" : "#fff",
+            "fontSize": text.includes('Question:') ? '20px' : '16px'
         }
     }
 
