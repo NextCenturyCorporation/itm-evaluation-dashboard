@@ -11,7 +11,7 @@ export function setupConfigWithImages(data) {
                 if (Object.keys(el).includes("patients")) {
                     for (const patient of el.patients) {
                         let foundImg = null;
-                        if (config.survey.version == 4) {
+                        if (config.survey.version == 4 || config.survey.version == 5) {
                             let pName = patient.name;
                             if (pName.includes('Casualty')) {
                                 pName = 'casualty_' + pName.substring(pName.length - 1);
@@ -22,7 +22,7 @@ export function setupConfigWithImages(data) {
                             foundImg = data.getAllImageUrls?.find((x) => x._id == patient.imgUrl);
                         }
                         if (isDefined(foundImg)) {
-                            if (config.survey.version == 4) {
+                            if (config.survey.version == 4 || config.survey.version == 5) {
                                 patient.imgUrl = foundImg.imageByteCode;
                             }
                             else {
