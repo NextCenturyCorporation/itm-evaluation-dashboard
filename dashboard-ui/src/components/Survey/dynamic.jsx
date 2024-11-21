@@ -109,16 +109,33 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         const probe = getProbe(action)
         let processedText = action['text'].replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
 
-        // Check if the previous action contained 'Question:'
         if (index > 0 && sceneActions[index - 1]['text'].includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
 
-            // Add possible choices if probe exists
-            if (scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) {
-                if (probe && probe.choices) {
-                    processedText += '\n\nMedic could have:\n' +
-                        probe.choices.map(choice => `• ${choice.text}`).join('\n');
-                }
+            if ((scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) && 
+                probe?.choices) {
+                return (
+                    <div>
+                        <div className="mb-3">{processedText}</div>
+                        <Card className="bg-light border-0">
+                            <Card.Body>
+                                <div className="d-flex align-items-center mb-2">
+                                    <small className="text-muted">What the medic could have done:</small>
+                                </div>
+                                <ListGroup variant="flush">
+                                    {probe.choices.map((choice, idx) => (
+                                        <ListGroup.Item 
+                                            key={idx}
+                                            className="bg-light border-0 py-1 ps-3"
+                                        >
+                                            • {choice.text}
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            </Card.Body>
+                        </Card>
+                    </div>
+                );
             }
         }
         return processedText;
