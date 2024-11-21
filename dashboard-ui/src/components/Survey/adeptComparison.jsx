@@ -192,13 +192,13 @@ export class AdeptComparison extends SurveyQuestionElementBase {
                                 <h5 className="mb-0">{dm.dmName}'s Actions</h5>
                             </Card.Header>
                             <Card.Body className="overflow-auto" style={{ maxHeight: 'calc(70vh - 200px)' }}>
-                                {dm.actions.map((action, actionIndex) => (
+                                {dm.scenes[0].actions.map((action, actionIndex) => (
                                     <div
                                         key={`action-${actionIndex}`}
                                         className="action-item p-3 mb-2 rounded"
                                         style={this.getSceneStyle(action)}
                                     >
-                                        {this.processActionText(action, actionIndex, dm.actions)}
+                                        {this.processActionText(action, actionIndex, dm.scenes[0].actions)}
                                     </div>
                                 ))}
                             </Card.Body>
