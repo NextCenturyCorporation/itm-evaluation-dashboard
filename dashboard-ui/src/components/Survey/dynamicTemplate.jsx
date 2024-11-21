@@ -145,11 +145,11 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         this.state = {
             userActions: [],
         };
-        this.updateActionLogs = this.updateActionLogs.bind(this)
-        console.log(this.question);
-        console.log(this.question.parent);
-        console.log(this.question.parent.data.jsonObj);
-        this.scenarioIndex = this.question.parent.data.jsonObj.scenarioIndex
+        this.updateActionLogs = this.updateActionLogs.bind(this);
+        this.scenarioIndex = this.question.parent.jsonObj.scenarioIndex;
+        if (!isDefined(this.scenarioIndex)) {
+            this.scenarioIndex = this.question.parent.data.jsonObj.scenarioIndex;
+        }
     }
 
     get question() {
