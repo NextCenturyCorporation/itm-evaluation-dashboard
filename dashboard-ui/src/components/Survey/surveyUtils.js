@@ -267,14 +267,28 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         misalignedStatus = 'default for invalid pid';
     }
     else {
-        alignedTarget = targets[i].target;
+        if (targets.response) {
+            alignedTarget = Object.keys(targets.response[i])[0];
+        } else {
+            alignedTarget = targets[i].target;
+        }
+
         while (cols1to3.includes(alignedTarget)) {
             i += 1;
-            alignedTarget = targets[i].target;
+            if (targets.response) {
+                alignedTarget = Object.keys(targets.response[i])[0];
+            } else {
+                alignedTarget = targets[i].target;
+            }
             alignedStatus = `overlapped with baseline. Is ${i} below most aligned`;
         }
         i = 1;
-        misalignedTarget = targets[targets.length - i].target;
+
+        if (targets.response) {
+            misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
+        } else {
+            misalignedTarget = targets[targets.length - i].target;
+        }
         let baselineOverlap = false;
         let alignedOverlap = false;
         while (cols1to3.includes(misalignedTarget) ||
@@ -282,7 +296,11 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
             (set2.includes(misalignedTarget) && set2.includes(alignedTarget)) ||
             (set3.includes(misalignedTarget) && set3.includes(alignedTarget))) {
             i += 1;
-            misalignedTarget = targets[targets.length - i].target;
+            if (targets.response) {
+                misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
+            } else {
+                misalignedTarget = targets[targets.length - i].target;
+            }
             if (cols1to3.includes(misalignedTarget)) {
                 baselineOverlap = true;
             }
