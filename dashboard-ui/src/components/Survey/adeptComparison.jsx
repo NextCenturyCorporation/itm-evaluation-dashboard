@@ -2,7 +2,7 @@ import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Button, Modal, Col, Row, Card, Tab, Tabs } from "react-bootstrap";
-import { renderSituation } from "./util";
+import { renderSituation } from "./surveyUtils";
 import './template.css'
 import { useSelector } from "react-redux";
 import Patient from '../TextBasedScenarios/patient';
@@ -129,12 +129,17 @@ export class AdeptComparison extends SurveyQuestionElementBase {
             ));
     }
 
+    getActionText = (action) => {
+        if (typeof action === 'string') return action;
+        return action?.text || '';
+    };
+
     processActionText = (action, index, sceneActions) => {
-        const text = action?.text || '';
+        const text = this.getActionText(action)
         let processedText = text.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
         
         // Check if the previous action contained 'Question:'
-        if (index > 0 && sceneActions[index - 1]?.text?.includes('Question:')) {
+        if (index > 0 && this.getActionText(sceneActions[index - 1])?.includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
         }
         
@@ -142,7 +147,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
     };
 
     getSceneStyle = (action) => {
-        const text = action?.text || '';
+        const text = this.getActionText(action);
         const isMedicAction = !(text.includes('Update:') || text.includes('Note:') || text.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",
@@ -192,13 +197,13 @@ export class AdeptComparison extends SurveyQuestionElementBase {
                                 <h5 className="mb-0">{dm.dmName}'s Actions</h5>
                             </Card.Header>
                             <Card.Body className="overflow-auto" style={{ maxHeight: 'calc(70vh - 200px)' }}>
-                                {dm.actions.map((action, actionIndex) => (
+                                {dm.scenes[0].actions.map((action, actionIndex) => (
                                     <div
                                         key={`action-${actionIndex}`}
                                         className="action-item p-3 mb-2 rounded"
                                         style={this.getSceneStyle(action)}
                                     >
-                                        {this.processActionText(action, actionIndex, dm.actions)}
+                                        {this.processActionText(action, actionIndex, dm.scenes[0].actions)}
                                     </div>
                                 ))}
                             </Card.Body>

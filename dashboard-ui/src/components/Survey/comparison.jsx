@@ -59,6 +59,7 @@ export class Comparison extends SurveyQuestionElementBase {
         }
 
         this.dm = ' '
+        this.scenarioIndex = ''
         this.updateActionLogs = this.updateActionLogs.bind(this)
     }
 
@@ -77,6 +78,7 @@ export class Comparison extends SurveyQuestionElementBase {
         decisionMakers = [...new Set(decisionMakers)];
         let relevantPages = config.pages.filter(page => decisionMakers.includes(page.name));
         let dmDetails = relevantPages.map(page => page.elements[0]);
+        this.scenarioIndex = relevantPages[0].scenarioIndex
         //extra cleansing of any potential duplicates
         dmDetails = Array.from(new Set(dmDetails.map(detail => JSON.stringify(detail)))).map(str => JSON.parse(str));
         this.setState({ dmDetails });
@@ -149,6 +151,7 @@ export class Comparison extends SurveyQuestionElementBase {
                                 explanation={this.dm.explanation}
                                 showModal={false}
                                 updateActionLogs={this.updateActionLogs}
+                                scenarioIndex={this.scenarioIndex}
                             />
                         </Modal.Body>
                     </Modal>
