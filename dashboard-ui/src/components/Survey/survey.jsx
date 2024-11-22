@@ -290,7 +290,6 @@ class SurveyPage extends Component {
             }
             else {
                 adeptMostLeast = { 'Ingroup': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Ingroup Bias'), 'Moral': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Moral judgement') }
-                console.log(adeptMostLeast)
             }
             for (let x of order) {
                 const expectedAuthor = (x['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
@@ -305,7 +304,6 @@ class SurveyPage extends Component {
                 }
                 else {
                     if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
-                        console.log('hit 308')
                         adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
                         adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, null, null, null, null);
@@ -317,14 +315,6 @@ class SurveyPage extends Component {
                 const baselineADMTarget = x['TA2'] == 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
                 const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline' && x.admAlignment == baselineADMTarget);
                 // aligned
-                console.log('expected author')
-                console.log(expectedAuthor)
-                console.log('expected scenario')
-                console.log(expectedScenario)
-                console.log('aligned target')
-                console.log(alignedADMTarget)
-                console.log('misaligned target')
-                console.log(misalignedADMTarget)
                 if (expectedScenario.includes('DryRun')) {
                     alignedADMTarget = alignedADMTarget.slice(0, -1) + '.' + alignedADMTarget.slice(-1);
                     misalignedADMTarget = misalignedADMTarget.slice(0, -1) + '.' + misalignedADMTarget.slice(-1);
