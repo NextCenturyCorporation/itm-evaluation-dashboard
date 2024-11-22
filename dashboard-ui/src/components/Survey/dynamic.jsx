@@ -103,12 +103,18 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         logAction('Close more details modal');
     };
 
+    const getActionText = (action) => {
+        if (typeof action === 'string') return action;
+        return action?.text || '';
+    };
+
     const processActionText = (action, index, sceneActions) => {
         const probe = getProbe(action)
-        const text = action?.text || '';
+        const text = getActionText(action)
         let processedText = text.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
 
-        if (index > 0 && sceneActions[index - 1]?.text?.includes('Question:')) {
+        if (index > 0 && getActionText(sceneActions[index - 1])?.includes('Question:')) {
+            console.log('hit')
             processedText = 'The medic chose to: ' + processedText;
 
             if ((scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) && 
@@ -141,7 +147,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     };
 
     const getSceneStyle = (action) => {
-        const text = action?.text || '';
+        const text = getActionText(action);
         const isMedicAction = !(text.includes('Update:') || text.includes('Note:') || text.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",

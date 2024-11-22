@@ -129,12 +129,17 @@ export class AdeptComparison extends SurveyQuestionElementBase {
             ));
     }
 
+    getActionText = (action) => {
+        if (typeof action === 'string') return action;
+        return action?.text || '';
+    };
+
     processActionText = (action, index, sceneActions) => {
-        const text = action?.text || '';
+        const text = this.getActionText(action)
         let processedText = text.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
         
         // Check if the previous action contained 'Question:'
-        if (index > 0 && sceneActions[index - 1]?.text?.includes('Question:')) {
+        if (index > 0 && this.getActionText(sceneActions[index - 1])?.includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
         }
         
@@ -142,7 +147,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
     };
 
     getSceneStyle = (action) => {
-        const text = action?.text || '';
+        const text = this.getActionText(action);
         const isMedicAction = !(text.includes('Update:') || text.includes('Note:') || text.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",
