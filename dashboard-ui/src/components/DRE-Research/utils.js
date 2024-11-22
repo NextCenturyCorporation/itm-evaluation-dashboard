@@ -55,14 +55,39 @@ export function getAlignments(evalNum, textResults, pid) {
     const alignments = [];
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
-        if (Object.keys(textRes).includes("combinedAlignmentData")) {
-            if (!addedMJ) {
-                alignments.push(...textRes['combinedAlignmentData']);
-                addedMJ = true;
+        if (evalNum == 4) {
+        // adept
+            if (Object.keys(textRes).includes("combinedAlignmentData")) {
+                if (!addedMJ) {
+                    alignments.push(...textRes['combinedAlignmentData']);
+                    addedMJ = true;
+                }
+            }
+            else {
+                // st
+                alignments.push(...textRes['alignmentData'])
             }
         }
         else {
-            alignments.push(...textRes['alignmentData'])
+            // adept
+            if (!Object.keys(textRes).includes("alignmentData")) {
+                if (!addedMJ) {
+                    const atts = [];
+                    for (const attSet of textRes['mostLeastAligned']) {
+                        for (const att of attSet.response) {
+                            for (const k of Object.keys(att)) {
+                                atts.push({ 'target': k, 'score': att[k] });
+                            }
+                        }
+                    }
+                    alignments.push(...atts);
+                    addedMJ = true;
+                }
+            }
+            else {
+                // st
+                alignments.push(...textRes['alignmentData'])
+            }  
         }
     }
     return { textResultsForPID, alignments };
