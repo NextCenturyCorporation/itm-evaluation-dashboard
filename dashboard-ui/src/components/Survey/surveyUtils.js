@@ -272,8 +272,15 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         } else {
             alignedTarget = targets[i].target;
         }
+        
+        function adeptSlice(target) {
+            if (targets.response) {
+                return target.slice(0, -1) + '.' + target.slice(-1);
+            }
+            return target
+        }
 
-        while (cols1to3.includes(alignedTarget)) {
+        while (cols1to3.includes(adeptSlice(alignedTarget))) {
             i += 1;
             if (targets.response) {
                 alignedTarget = Object.keys(targets.response[i])[0];
