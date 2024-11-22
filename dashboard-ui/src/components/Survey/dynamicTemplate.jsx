@@ -145,7 +145,12 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         this.state = {
             userActions: [],
         };
-        this.updateActionLogs = this.updateActionLogs.bind(this)
+        this.updateActionLogs = this.updateActionLogs.bind(this);
+        // review pages need parent.data, the actual survey needs parent.jsonObj
+        this.scenarioIndex = this.question.parent.jsonObj.scenarioIndex;
+        if (!isDefined(this.scenarioIndex)) {
+            this.scenarioIndex = this.question.parent.data.jsonObj.scenarioIndex;
+        }
     }
 
     get question() {
@@ -189,7 +194,6 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     renderElement() {
-
         return (
             <Dynamic 
                 patients={this.patients} 
@@ -203,6 +207,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
                 mission={this.mission}
                 showModal={false}
                 updateActionLogs={this.updateActionLogs}
+                scenarioIndex={this.scenarioIndex}
             />
         )
     }

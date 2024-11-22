@@ -6,13 +6,14 @@ import { FaInfoCircle } from 'react-icons/fa';
 import SituationModal from "./situationModal";
 import VitalsDropdown from "./vitalsDropdown";
 import './template.css';
-import { renderSituation } from './util';
+import { renderSituation } from './surveyUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
 import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
+import { useSelector } from 'react-redux';
 
-const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission }) => {
+const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission, scenarioIndex }) => {
     const [visiblePatients, setVisiblePatients] = useState(() => {
         const initialVisibility = {};
         patients.forEach(patient => {
@@ -28,6 +29,22 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const [showSituationModal, setShowSituationModal] = useState(showModal);
     const [showMoreDetailsModal, setShowMoreDetailsModal] = useState(false);
     const [actionLogs, setActionLogs] = useState([]);
+    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const matchingScenario = textBasedConfigs[scenarioIndex];
+
+    const getProbe = (action) => {
+        if (!matchingScenario) { return null }
+        const probeId = action['probe_id']
+
+        for (const page of matchingScenario.pages) {
+            for (const element of page.elements) {
+                if (element.probe_id === probeId) {
+                    return element
+                }
+            }
+        }
+        return null
+    }
 
     // log actions
     const logAction = (actionName) => {
@@ -86,23 +103,56 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         logAction('Close more details modal');
     };
 
+    const getActionText = (action) => {
+        if (typeof action === 'string') return action;
+        return action?.text || '';
+    };
+
     const processActionText = (action, index, sceneActions) => {
-        let processedText = action.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
-        
-        // Check if the previous action contained 'Question:'
-        if (index > 0 && sceneActions[index - 1].includes('Question:')) {
+        const probe = getProbe(action)
+        const text = getActionText(action)
+        let processedText = text.replace('Question:', 'The medic was asked:').replace('<HIGHLIGHT>', '');
+
+        if (index > 0 && getActionText(sceneActions[index - 1])?.includes('Question:')) {
+            console.log('hit')
             processedText = 'The medic chose to: ' + processedText;
+
+            if ((scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) && 
+                probe?.choices) {
+                return (
+                    <div>
+                        <div className="mb-3">{processedText}</div>
+                        <Card className="bg-light border-0">
+                            <Card.Body>
+                                <div className="d-flex align-items-center mb-2">
+                                    <small className="text-muted">What the medic could have done:</small>
+                                </div>
+                                <ListGroup variant="flush">
+                                    {probe.choices.map((choice, idx) => (
+                                        <ListGroup.Item 
+                                            key={idx}
+                                            className="bg-light border-0 py-1 ps-3"
+                                        >
+                                            • {choice.text}
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            </Card.Body>
+                        </Card>
+                    </div>
+                );
+            }
         }
-        
         return processedText;
     };
 
     const getSceneStyle = (action) => {
-        const isMedicAction = !(action.includes('Update:') || action.includes('Note:') || action.includes('Question:'));
+        const text = getActionText(action);
+        const isMedicAction = !(text.includes('Update:') || text.includes('Note:') || text.includes('Question:'));
         return {
             "fontWeight": !isMedicAction ? "700" : "500",
-            "backgroundColor": action.includes("<HIGHLIGHT>") ? "rgb(251 252 152)" : !isMedicAction ? "#eee" : "#fff",
-            "fontSize": action.includes('Question:') ? '20px' : '16px'
+            "backgroundColor": text.includes("<HIGHLIGHT>") ? "rgb(251 252 152)" : !isMedicAction ? "#eee" : "#fff",
+            "fontSize": text.includes('Question:') ? '20px' : '16px'
         }
     }
 
@@ -177,7 +227,13 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Accordion.Body>
                                         <ListGroup>
                                             {sceneActions && sceneActions.map((action, index) => (
-                                                <ListGroup.Item key={`action-${index}`} className="action-item" style={getSceneStyle(action)}>{processActionText(action, index, sceneActions)}</ListGroup.Item>
+                                                <ListGroup.Item
+                                                    key={`action-${index}`}
+                                                    className="action-item"
+                                                    style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
+                                                >
+                                                    {processActionText(action, index, sceneActions)}
+                                                </ListGroup.Item>
                                             ))}
                                         </ListGroup>
                                     </Accordion.Body>
@@ -234,19 +290,19 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             </Card>
             {isDefined(scenes) ?
                 scenes.map((scene) => (
-                    <Scene 
+                    <Scene
                         key={scene.id}
-                        sceneId={scene.id} 
-                        sceneActions={scene.actions} 
-                        sceneSupplies={scene.supplies} 
-                        sceneCharacters={scene.char_ids} 
+                        sceneId={scene.id}
+                        sceneActions={scene.actions}
+                        sceneSupplies={scene.supplies}
+                        sceneCharacters={scene.char_ids}
                     />
                 ))
-                : <Scene 
-                    sceneId='Scene 1' 
-                    sceneActions={actions} 
-                    sceneSupplies={supplies} 
-                    sceneCharacters={patients.map((p) => p.name)} 
+                : <Scene
+                    sceneId='Scene 1'
+                    sceneActions={actions}
+                    sceneSupplies={supplies}
+                    sceneCharacters={patients.map((p) => p.name)}
                 />
             }
 
