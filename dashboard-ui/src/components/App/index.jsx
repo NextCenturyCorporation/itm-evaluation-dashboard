@@ -168,7 +168,7 @@ function AdmResults() {
 }
 
 function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin, testerLogin }) {
-    if (testerLogin && newState.currentUser === null) {
+    if (testerLogin && (newState.currentUser === null || (!newState.currentUser.admin && !newState.currentUser.experimenter))) {
         history.push('/participantText');
     }
     else if (participantTextLogin) {
