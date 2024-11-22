@@ -39,7 +39,7 @@ const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Partici
 ]
 
 
-export function RQ8() {
+export function RQ8({ evalNum }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_HUMAN_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
@@ -57,7 +57,7 @@ export function RQ8() {
 
     React.useEffect(() => {
         if (dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment && dataParticipantLog?.getParticipantLog) {
-            const textResults = dataTextResults.getAllScenarioResults;
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
             const allObjs = [];
@@ -81,7 +81,7 @@ export function RQ8() {
                     continue;
                 }
 
-                const { textResultsForPID, alignments } = getAlignments(textResults, pid);
+                const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
@@ -170,7 +170,7 @@ export function RQ8() {
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataSim, dataTextResults, dataParticipantLog]);
+    }, [dataSim, dataTextResults, dataParticipantLog, evalNum]);
 
 
     const openModal = () => {
