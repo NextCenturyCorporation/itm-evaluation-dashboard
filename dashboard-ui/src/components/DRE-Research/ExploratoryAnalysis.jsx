@@ -12,7 +12,7 @@ const ALLOWED_EVAL_OPTIONS = [
 ];
 
 export function ExploratoryAnalysis() {
-    const [selectedEval, setSelectedEval] = React.useState(4);
+    const [selectedEval, setSelectedEval] = React.useState(5);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }
