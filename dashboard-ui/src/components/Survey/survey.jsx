@@ -342,6 +342,12 @@ class SurveyPage extends Component {
                     misalignedAdm['target'] = misalignedADMTarget;
                     pagesToShuffle.push(misalignedAdm);
                 } else { console.warn("Missing Misaligned ADM"); }
+                console.log('baselineAdm')
+                console.log(baselineAdm)
+                console.log('alignedADM')
+                console.log(alignedAdm)
+                console.log('misalignedADM')
+                console.log(misalignedAdm)
                 shuffle(pagesToShuffle);
                 pages.push(...pagesToShuffle);
                 pages.push(generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm));
