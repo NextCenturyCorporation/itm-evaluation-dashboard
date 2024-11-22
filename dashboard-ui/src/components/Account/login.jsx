@@ -225,7 +225,7 @@ class LoginApp extends React.Component {
                                             <input className="form-control form-control-lg" required placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
                                         </div>
                                         {this.state.createAccountFailed && (
-                                            <Toast bg='danger' className='mt-1' autohide={false} onClose={()=> this.setState({ createAccountFailed: false })}>
+                                            <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ createAccountFailed: false })}>
                                                 <Toast.Header>
                                                     <strong className="me-auto">Error creating account</strong>
                                                 </Toast.Header>
@@ -262,12 +262,12 @@ class LoginApp extends React.Component {
                                             </div>
                                             <div className="form-group">
                                                 {this.state.loginFailed && (
-                                                     <Toast bg='danger' className='mt-1' autohide={false} onClose={()=> this.setState({ loginFailed: false })}>
+                                                    <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ loginFailed: false })}>
                                                         <Toast.Header>
-                                                    <strong className="me-auto">Error logging in</strong>
-                                                </Toast.Header>
-                                                <Toast.Body className='text-white'>{this.loginErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
-                                            </Toast>
+                                                            <strong className="me-auto">Error logging in</strong>
+                                                        </Toast.Header>
+                                                        <Toast.Body className='text-white'>{this.loginErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
+                                                    </Toast>
                                                 )}
                                             </div>
                                             <div className="form-group">
@@ -326,14 +326,21 @@ class LoginApp extends React.Component {
                                             <div className="form-group">
                                                 <div className="input-login-header">Classification</div>
                                                 <div className='radios'>
-                                                    <div>
+                                                    {this.props.history.location.pathname != '/participantTextTester' && <div>
                                                         <input type="radio" id="Mil" name="classification" value="Mil" onChange={this.onChangeClassification} required />
                                                         <label htmlFor="Mil">Military</label>
                                                     </div>
-                                                    <div>
-                                                        <input type="radio" id="Civ" name="classification" value="Civ" onChange={this.onChangeClassification} />
-                                                        <label htmlFor="Civ">Civilian</label>
-                                                    </div>
+                                                    }
+                                                    {this.props.history.location.pathname != '/participantTextTester' &&
+                                                        <div>
+                                                            <input type="radio" id="Civ" name="classification" value="Civ" onChange={this.onChangeClassification} />
+                                                            <label htmlFor="Civ">Civilian</label>
+                                                        </div>
+                                                    }
+                                                    {this.props.history.location.pathname == '/participantTextTester' && <div>
+                                                        <input type="radio" id="Test" name="classification" value="Test" onChange={this.onChangeClassification} required />
+                                                        <label htmlFor="Test">Tester</label>
+                                                    </div>}
                                                 </div>
                                             </div>
                                             <div className="form-group">

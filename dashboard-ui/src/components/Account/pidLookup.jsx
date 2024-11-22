@@ -95,6 +95,10 @@ export function PidLookup() {
                                 <input type="radio" id="Civ" name="classification" value="Civ" onChange={onChangeClassification} />
                                 <label htmlFor="Civ">Civilian</label>
                             </div>
+                            <div>
+                                <input type="radio" id="Test" name="classification" value="Test" onChange={onChangeClassification} />
+                                <label htmlFor="Test">Tester</label>
+                            </div>
                         </div>
                     </div>
 

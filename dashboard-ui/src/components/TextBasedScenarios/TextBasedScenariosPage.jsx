@@ -238,7 +238,7 @@ class TextBasedScenariosPage extends Component {
         if (isDefined(pid) && isDefined(classification)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
-                "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : "Military Background",
+                "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : classification == 'Test' ? 'Tester' : "Military Background",
                 "vrEnvironmentsCompleted": ['none']
             };
             this.setState({ moderated: false, startSurvey: false }, () => {
