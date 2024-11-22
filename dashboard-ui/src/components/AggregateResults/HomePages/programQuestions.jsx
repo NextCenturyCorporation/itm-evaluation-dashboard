@@ -74,7 +74,7 @@ export default function ProgramQuestions() {
                         scenario = x.history[1].response.id;
                     }
                     const target = x.history[x.history.length - 1].parameters.target_id;
-                    const kdma = x.history[x.history.length - 1].response.kdma_values[0].value;
+                    const kdma = x.history[x.history.length - 1]?.response?.kdma_values[0]?.value;
                     if (Object.keys(admKdmas).includes(admName)) {
                         if (Object.keys(admKdmas[admName]).includes(target)) {
                             admKdmas[admName][target][scenario] = kdma;
@@ -108,7 +108,7 @@ export default function ProgramQuestions() {
             <div className="selection-section">
                 <Select
                     onChange={selectEvaluation}
-                    options={evalOptions}
+                    options={evalOptions.filter((x) => x.value != 5)}
                     defaultValue={evalOptions[0]}
                     placeholder="Select Evaluation"
                     value={evalOptions.find(option => option.value === selectedEval)}
@@ -119,7 +119,8 @@ export default function ProgramQuestions() {
                 />
 
             </div>
-            {fullData && (selectedEval == 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> : <DreHomePage fullData={fullData} admAlignment={admAlignment} />)}
+            {fullData && (selectedEval == 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> :
+                <DreHomePage fullData={fullData} admAlignment={admAlignment} evalNumber={selectedEval} />)}
         </div>
     );
 }

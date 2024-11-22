@@ -42,7 +42,7 @@ function getQuestionAnswerSets(pageName, config, genericName = null) {
         }
         return surveyJson;
     }
-    else if (pageName.includes('vs') && config.version == 4) {
+    else if (pageName.includes('vs') && [4, 5].includes(config.version)) {
         // comparison pages are created during runtime in version 4, so we need to handle them differently
         const surveyJson = { elements: [] };
         const bname = pageName.split(' vs ')[0].trim();
@@ -166,6 +166,12 @@ function SingleGraph({ data, version }) {
             }
             else if (version === 4)
                 surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v4.0']);
+            else if (version === 5 && data[0].v4Name) {
+                surveyJson = getQuestionAnswerSets(data[0].origName, surveys['delegation_v5.0'], data[0].v4Name);
+                setPageName((data[0].v4Name + ": Survey Results").replace('vs aligned vs misaligned', 'vs Aligned vs Misaligned'));
+            }
+            else if (version === 5)
+                surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v5.0']);
 
             const curResults = data.map(entry => {
                 const entryResults = {};
@@ -266,7 +272,7 @@ export function SurveyResults() {
     };
 
     const indexToScenarioName = (index) => {
-        if (filterBySurveyVersion == 4) { return index }
+        if (filterBySurveyVersion == 4 || filterBySurveyVersion == 5) { return index }
         const currentSurvey = Object.values(surveys).find(survey => survey.version == filterBySurveyVersion);
         const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex == index);
         return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
@@ -319,8 +325,8 @@ export function SurveyResults() {
                     const res = obj[x];
                     if (String(res?.scenarioIndex) === String(selectedScenario)) {
                         const resCopy = structuredClone(res);
-                        const indexBy = (filterBySurveyVersion != 4 || !generalizePages) ? resCopy.pageType + '_' + resCopy.pageName : resCopy.pageType + '_' + resCopy.admAuthor + '_' + resCopy.admAlignment;
-                        if (filterBySurveyVersion == 4 && generalizePages) {
+                        const indexBy = (![4, 5].includes(filterBySurveyVersion) || !generalizePages) ? resCopy.pageType + '_' + resCopy.pageName : resCopy.pageType + '_' + resCopy.admAuthor + '_' + resCopy.admAlignment;
+                        if ([4, 5].includes(filterBySurveyVersion) && generalizePages) {
                             resCopy.v4Name = resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware') + ' ' + resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1);
                             resCopy.origName = resCopy.pageName;
                             resCopy.pageName = resCopy.v4Name;
@@ -405,7 +411,7 @@ export function SurveyResults() {
                     <div className="nav-header">
                         <span className="nav-header-text">Survey Version</span>
                     </div>
-                    <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
+                    <List component="nav" className="nav-list version-select" aria-label="secondary mailbox folder">
                         {versions.map((item) =>
                             <ListItem id={"version_" + item} key={"version_" + item}
                                 button
@@ -438,7 +444,7 @@ export function SurveyResults() {
             {filterBySurveyVersion && selectedScenario != "" ?
                 <div className="graph-section">
                     <div className="options">
-                        {filterBySurveyVersion == 4 &&
+                        {[4, 5].includes(filterBySurveyVersion) &&
                             <FormControlLabel className='prettyToggle' labelPlacement='top' control={<RadioGroup row defaultValue="Alignment" onChange={toggleGeneralizability}>
                                 <FormControlLabel value="Alignment" control={<Radio />} label="Alignment" />
                                 <FormControlLabel value="Medic" control={<Radio />} label="Medic" />

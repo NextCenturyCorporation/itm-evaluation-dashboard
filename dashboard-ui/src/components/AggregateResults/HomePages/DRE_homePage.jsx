@@ -38,7 +38,7 @@ const GET_SIM_DATA = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-export default function DreHomePage({ fullData, admAlignment }) {
+export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
 
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
@@ -46,10 +46,10 @@ export default function DreHomePage({ fullData, admAlignment }) {
         fetchPolicy: 'no-cache'
     });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 4 }
+        variables: { "evalNumber": evalNumber }
     });
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNumber } });
 
     const [data, setData] = React.useState(null);
     const [alignVsTrust, setAlignVsTrust] = React.useState(null);
@@ -63,10 +63,10 @@ export default function DreHomePage({ fullData, admAlignment }) {
 
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval) {
-            const origData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            const origData = getRQ134Data(evalNumber, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             setData(origData.allObjs);
             const tmpGroupTargets = {};
-            for (const x of dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == 4)) {
+            for (const x of dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNumber)) {
                 if (Object.keys(x).includes('group_targets')) {
                     for (const k of Object.keys(x['group_targets'])) {
                         if (!Object.keys(tmpGroupTargets).includes(k)) {
@@ -428,26 +428,26 @@ export default function DreHomePage({ fullData, admAlignment }) {
                         showInLegend: true,
                         name: 'Aligned',
                         color: '#5B89C1',
-                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['aligned']][target]), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['aligned']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
                     },
                     {
                         type: 'spline',
                         showInLegend: true,
                         name: 'Baseline',
                         color: '#C15B5B',
-                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['baseline']][target]), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['baseline']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
                     },
                     {
                         type: 'error',
                         name: 'Variability Range (aligned)',
                         color: '#555',
-                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['aligned']][target]), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['aligned']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
                     },
                     {
                         type: 'error',
                         name: 'Variability Range (baseline)',
                         color: '#555',
-                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['baseline']][target]), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['baseline']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
 
                     }
                 ]
@@ -644,7 +644,7 @@ export default function DreHomePage({ fullData, admAlignment }) {
             <div className='chart-header q2'>
                 <div className='chart-header-label q2'>
                     <h4>2. Do aligned ADMs have the ability to tune to a subset of the attribute space?</h4>
-                    {admAlignment && groupTargets && <div className='q2-scatters'>
+                    {evalNumber != 5 && admAlignment && groupTargets && <div className='q2-scatters'>
                         <div className='outlinedPlot'>
                             <h3>Parallax ADMs and Human DMs on Group MJ Attributes</h3>
                             {generateAlignmentScatter('Parallax', 'MJ')}

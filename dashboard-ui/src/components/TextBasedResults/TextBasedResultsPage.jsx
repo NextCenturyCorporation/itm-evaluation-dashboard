@@ -333,7 +333,7 @@ export default function TextBasedResultsPage() {
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(4);
+    const [selectedEval, setSelectedEval] = React.useState(5);
     const [evalOptions, setEvalOptions] = React.useState([]);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);

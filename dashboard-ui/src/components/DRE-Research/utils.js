@@ -1,7 +1,7 @@
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
-import { admOrderMapping, delEnvMapping } from "../Survey/survey";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { admOrderMapping, getDelEnvMapping } from '../Survey/delegationMappings';
 
 
 export const ADM_NAME_MAP = {
@@ -55,14 +55,39 @@ export function getAlignments(evalNum, textResults, pid) {
     const alignments = [];
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
-        if (Object.keys(textRes).includes("combinedAlignmentData")) {
-            if (!addedMJ) {
-                alignments.push(...textRes['combinedAlignmentData']);
-                addedMJ = true;
+        if (evalNum == 4) {
+        // adept
+            if (Object.keys(textRes).includes("combinedAlignmentData")) {
+                if (!addedMJ) {
+                    alignments.push(...textRes['combinedAlignmentData']);
+                    addedMJ = true;
+                }
+            }
+            else {
+                // st
+                alignments.push(...textRes['alignmentData'])
             }
         }
         else {
-            alignments.push(...textRes['alignmentData'])
+            // adept
+            if (!Object.keys(textRes).includes("alignmentData")) {
+                if (!addedMJ) {
+                    const atts = [];
+                    for (const attSet of textRes['mostLeastAligned']) {
+                        for (const att of attSet.response) {
+                            for (const k of Object.keys(att)) {
+                                atts.push({ 'target': k, 'score': att[k] });
+                            }
+                        }
+                    }
+                    alignments.push(...atts);
+                    addedMJ = true;
+                }
+            }
+            else {
+                // st
+                alignments.push(...textRes['alignmentData'])
+            }  
         }
     }
     return { textResultsForPID, alignments };
@@ -111,10 +136,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     const ta2Matches = obj['admAuthor'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
                     if (entry['TA1'] == 'Adept') {
-                        scenario = entry['Attribute'] == 'MJ' ? delEnvMapping[ad_scenario][0] : delEnvMapping[ad_scenario][1];
+                        scenario = entry['Attribute'] == 'MJ' ? getDelEnvMapping(res.results.surveyVersion)[ad_scenario][0] : getDelEnvMapping(res.results.surveyVersion)[ad_scenario][1];
                     }
                     else {
-                        scenario = entry['Attribute'] == 'QOL' ? delEnvMapping[st_scenario][0] : delEnvMapping[st_scenario][1];
+                        scenario = entry['Attribute'] == 'QOL' ? getDelEnvMapping(res.results.surveyVersion)[st_scenario][0] : getDelEnvMapping(res.results.surveyVersion)[st_scenario][1];
                     }
 
                     const scenarioMatches = obj['scenarioIndex'] == scenario;
@@ -167,7 +192,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
                 entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
 
-                const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && delEnvMapping[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
                 entryObj['Alignment score (Delegator|Observed_ADM (target))'] = comparison_entry?.score ?? '-';
 
                 entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
