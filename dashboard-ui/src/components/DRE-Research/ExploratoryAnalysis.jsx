@@ -1,11 +1,35 @@
+import React from 'react';
 import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
 import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
 import { RQ6 } from "./tables/rq6";
+import Select from 'react-select';
+
+const ALLOWED_EVAL_OPTIONS = [
+    { value: 4, label: 'Dry Run Evaluation' },
+    { value: 5, label: 'Phase 1 Evaluation' }
+];
 
 export function ExploratoryAnalysis() {
+    const [selectedEval, setSelectedEval] = React.useState(5);
+    function selectEvaluation(target) {
+        setSelectedEval(target.value);
+    }
     return (<div className="researchQuestion">
+        <div className="rq-selection-section">
+            <Select
+                onChange={selectEvaluation}
+                options={ALLOWED_EVAL_OPTIONS}
+                defaultValue={ALLOWED_EVAL_OPTIONS[0]}
+                placeholder="Select Evaluation"
+                value={ALLOWED_EVAL_OPTIONS.find(option => option.value === selectedEval)}
+                styles={{
+                    // Fixes the overlapping problem of the component
+                    menu: provided => ({ ...provided, zIndex: 9999 })
+                }}
+            />
+        </div>
         <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
             <p className='indented'>
@@ -27,7 +51,7 @@ export function ExploratoryAnalysis() {
         </div>
         <div className="section-container">
             <h2>RQ4 Data</h2>
-            <RQ13 />
+            <RQ13 evalNum={selectedEval} />
             <p>
                 <b>Variables used from dataset:</b>
             </p>
@@ -68,7 +92,7 @@ export function ExploratoryAnalysis() {
         </div>
         <div className="section-container">
             <h2>RQ5 Data</h2>
-            <RQ5 />
+            <RQ5 evalNum={selectedEval} />
         </div>
 
         <div className="section-container">
@@ -82,7 +106,7 @@ export function ExploratoryAnalysis() {
         </div>
         <div className="section-container">
             <h2>RQ6 Data</h2>
-            <RQ6 />
+            <RQ6 evalNum={selectedEval} />
         </div>
 
         <div className="section-container">
@@ -106,7 +130,7 @@ export function ExploratoryAnalysis() {
         </div>
         <div className="section-container">
             <h2>RQ8 Data</h2>
-            <RQ8 />
+            <RQ8 evalNum={selectedEval} />
         </div>
     </div>);
 }

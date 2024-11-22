@@ -39,9 +39,21 @@ const DRE_SCENARIOS = [
     "vol-dre-3-eval"
 ];
 
+const PH1_SCENARIOS = {
+    "phase1-adept-eval-MJ2": "DryRunEval-MJ2-eval",
+    "phase1-adept-eval-MJ4": "DryRunEval-MJ4-eval",
+    "phase1-adept-eval-MJ5": "DryRunEval-MJ5-eval",
+    "qol-ph1-eval-2": "qol-ph1-eval-2",
+    "qol-ph1-eval-3": "qol-ph1-eval-3",
+    "qol-ph1-eval-4": "qol-ph1-eval-4",
+    "vol-ph1-eval-2": "vol-ph1-eval-2",
+    "vol-ph1-eval-3": "vol-ph1-eval-3",
+    "vol-ph1-eval-4": "vol-ph1-eval-4"
+};
+
 export default function HumanResults() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [selectedEval, setSelectedEval] = React.useState(4);
+    const [selectedEval, setSelectedEval] = React.useState(5);
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         // only pulls from network, never cached
@@ -129,10 +141,10 @@ export default function HumanResults() {
                                 break;
                             }
                         }
-                        if (soartech_start !== -1 && soartech_end === -1 || (version == 4 && (scene.includes('qol') || scene.includes('vol')))) {
+                        if (soartech_start !== -1 && soartech_end === -1 || ([4, 5].includes(version) && (scene.includes('qol') || scene.includes('vol')))) {
                             entry['soartech'].push(action);
                         }
-                        if (adept_start !== -1 && adept_end === -1 || (version == 4 && scene.includes('DryRunEval'))) {
+                        if (adept_start !== -1 && adept_end === -1 || ([4, 5].includes(version) && scene.includes('DryRunEval'))) {
                             entry['adept'].push(action);
                         }
                         if (freeform_start !== -1) {
@@ -168,7 +180,7 @@ export default function HumanResults() {
     };
 
     const getScenarioName = () => {
-        if (selectedEval === 4) {
+        if ([4, 5].includes(selectedEval)) {
             return selectedScene
         } else {
             return MRE_ENV_MAP[selectedScene] || selectedScene
@@ -196,7 +208,7 @@ export default function HumanResults() {
                         value={evalOptions.find(option => option.value === selectedEval)}
                     />
                 </div>}
-            {selectedEval && selectedEval != 4 && dataByScene &&
+            {selectedEval && ![4, 5].includes(selectedEval) && dataByScene &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Environment</span>
@@ -216,18 +228,18 @@ export default function HumanResults() {
                         }
                     </List>
                 </div>}
-            {selectedEval == 4 &&
+            {[4, 5].includes(selectedEval) &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Scenario</span>
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {
-                            DRE_SCENARIOS.map((item) =>
+                            (selectedEval == 4 ? DRE_SCENARIOS : Object.keys(PH1_SCENARIOS)).map((item) =>
                                 <ListItem id={"scene_" + item} key={"scene_" + item}
                                     button
-                                    selected={selectedScene === item}
-                                    onClick={() => { setSelectedScene(item); setSelectedPID(null); }}>
+                                    selected={selectedScene === (selectedEval == 4 ? item : PH1_SCENARIOS[item])}
+                                    onClick={() => { setSelectedScene(selectedEval == 4 ? item : PH1_SCENARIOS[item]); setSelectedPID(null); }}>
                                     <ListItemText primary={item} />
                                 </ListItem>
                             )
@@ -322,7 +334,7 @@ export default function HumanResults() {
                     </table>
                 </div>
             </div>
-            : <h2 className="not-found">Please select {selectedEval == 4 ? "a scenario" : "an environment"} and participant to view results</h2>
+            : <h2 className="not-found">Please select {[4, 5].includes(selectedEval) ? "a scenario" : "an environment"} and participant to view results</h2>
         }
     </div >);
 }

@@ -1,23 +1,48 @@
+import React from 'react';
 import { RQ2223 } from "./tables/rq22-rq23";
 import './dre-rq.css';
 import { RQ21 } from "./tables/rq21";
+import Select from 'react-select';
 import rq21Code from './rcode/code_for_dashboard_RQ21.R';
 import rq2Code from './rcode/code_for_dashboard_RQ2.R';
-import React from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
+
+const ALLOWED_EVAL_OPTIONS = [
+    { value: 4, label: 'Dry Run Evaluation' },
+    { value: 5, label: 'Phase 1 Evaluation' }
+];
+
 
 export function RQ2() {
     const [rq21CodeShowing, setRQ21CodeShowing] = React.useState(false);
     const [rq2CodeShowing, setRQ2CodeShowing] = React.useState(false);
+    const [selectedEval, setSelectedEval] = React.useState(5);
 
+    function selectEvaluation(target) {
+        setSelectedEval(target.value);
+    }
     const close21Code = () => {
         setRQ21CodeShowing(false);
     }
     const close2Code = () => {
         setRQ2CodeShowing(false);
     }
+
     return (<div className="researchQuestion">
+        <div className="rq-selection-section">
+            <Select
+                onChange={selectEvaluation}
+                options={ALLOWED_EVAL_OPTIONS}
+                defaultValue={ALLOWED_EVAL_OPTIONS[0]}
+                placeholder="Select Evaluation"
+                value={ALLOWED_EVAL_OPTIONS.find(option => option.value === selectedEval)}
+                styles={{
+                    // Fixes the overlapping problem of the component
+                    menu: provided => ({ ...provided, zIndex: 9999 })
+                }}
+            />
+        </div>
         <div className="section-container">
             <h2>RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?</h2>
             <p className='indented'>
@@ -42,7 +67,7 @@ export function RQ2() {
         <h3>RQ2 Analysis 2.1: Alignable ADM tuned within largest cluster of human attributes</h3>
         <div className="section-container">
             <h2>RQ2.1 Data</h2>
-            <RQ21 />
+            <RQ21 evalNum={selectedEval} />
             <div className="buttons">
                 <button onClick={() => setRQ21CodeShowing(true)}>View R Syntax</button>
                 <Modal className='rCodeModal' show={rq21CodeShowing} onHide={close21Code} centered>
@@ -62,7 +87,7 @@ export function RQ2() {
         <h3>RQ2 Analysis 2.3: T-tests comparing Alignable ADM versus Baseline ADM on individual-aligned targets</h3>
         <div className="section-container">
             <h2>RQ2.2 & 2.3 Data</h2>
-            <RQ2223 />
+            <RQ2223 evalNum={selectedEval} />
             <div className="buttons">
                 <button onClick={() => setRQ2CodeShowing(true)}>View R Syntax</button>
                 <Modal className='rCodeModal' show={rq2CodeShowing} onHide={close2Code} centered>

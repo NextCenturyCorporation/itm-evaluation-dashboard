@@ -13,8 +13,8 @@ import { DownloadButtons } from "./download-buttons";
 const HEADERS = ['TA1_Name', 'Source', 'Attribute', 'Scenario', 'Group_Target', 'Decision_Maker', 'Alignment score (Individual|Group_target) or (ADM|group_target)']
 
 const getGroupAdmData = gql`
-    query getGroupAdmAlignmentEval4 {
-        getGroupAdmAlignmentEval4
+    query getGroupAdmAlignmentByEval($evalNumber: Float!) {
+        getGroupAdmAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
 const GET_TEXT_RESULTS = gql`
@@ -22,8 +22,8 @@ const GET_TEXT_RESULTS = gql`
         getAllScenarioResults
     }`;
 
-export function RQ21() {
-    const { loading: loadingAdms, error: errorAdms, data: dataAdms } = useQuery(getGroupAdmData);
+export function RQ21({ evalNum }) {
+    const { loading: loadingAdms, error: errorAdms, data: dataAdms } = useQuery(getGroupAdmData, { variables: { "evalNumber": evalNum } });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
     });
@@ -45,9 +45,9 @@ export function RQ21() {
 
 
     React.useEffect(() => {
-        if (dataAdms?.getGroupAdmAlignmentEval4 && dataTextResults?.getAllScenarioResults) {
-            const admData = dataAdms.getGroupAdmAlignmentEval4;
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == 4);
+        if (dataAdms?.getGroupAdmAlignmentByEval && dataTextResults?.getAllScenarioResults) {
+            const admData = dataAdms.getGroupAdmAlignmentByEval;
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
             let allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -112,7 +112,7 @@ export function RQ21() {
                 }
                 recorded[pid] = [];
 
-                const { textResultsForPID, _ } = getAlignments(textResults, pid);
+                const { textResultsForPID, _ } = getAlignments(evalNum, textResults, pid);
                 for (const entry of textResultsForPID) {
                     // ignore training scenarios
                     if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
@@ -159,7 +159,7 @@ export function RQ21() {
             setGroupTargets(Array.from(new Set(allGroupTargets)));
             setDecisionMakers(Array.from(new Set(allDecisionMakers)));
         }
-    }, [dataAdms, dataTextResults]);
+    }, [dataAdms, dataTextResults, evalNum]);
 
 
     const openModal = () => {

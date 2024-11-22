@@ -56,7 +56,7 @@ class ResultsTable extends React.Component {
         this.state = {
             adm: "",
             scenario: "",
-            evalNumber: null,
+            evalNumber: 5,
             ADMQueryString: "history.parameters.ADM Name",
             showScrollButton: false,
             alignmentTarget: null
