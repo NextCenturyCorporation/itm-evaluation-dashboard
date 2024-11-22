@@ -166,14 +166,14 @@ export class AdeptComparison extends SurveyQuestionElementBase {
                         </div>
                     </Card.Header>
                     <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
-                        {renderSituation(this.state.dmDetails[0].situation)}
+                        {renderSituation(this.state.dmDetails[0]?.situation)}
                     </Card.Body>
                 </Card>
                 <Card>
                     <Card.Body>
                         <Row>
                             <Col md={3} className="d-flex flex-column">
-                                <Supplies supplies={this.state.dmDetails[0].supplies} />
+                                <Supplies supplies={this.state.dmDetails[0]?.supplies} />
                             </Col>
                             <Col md={9}>
                                 <Row>
@@ -203,7 +203,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
                                         className="action-item p-3 mb-2 rounded"
                                         style={this.getSceneStyle(action)}
                                     >
-                                        {this.processActionText(action, actionIndex, dm.scenes[0].actions)}
+                                        {this.processActionText(action, actionIndex, dm.scenes[0]?.actions)}
                                     </div>
                                 ))}
                             </Card.Body>

@@ -282,7 +282,7 @@ class SurveyPage extends Component {
             const admLists = {
                 "qol": participantResults.findLast((el) => el['scenario_id'].includes('qol')) ?? undefined,
                 "vol": participantResults.findLast((el) => el['scenario_id'].includes('vol')) ?? undefined,
-                "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval')) ?? undefined
+                "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval') || el['scenario_id'].includes('adept')) ?? undefined
             };
             let adeptMostLeast = null;
             if (this.state.surveyVersion == 4.0) {
@@ -290,6 +290,7 @@ class SurveyPage extends Component {
             }
             else {
                 adeptMostLeast = { 'Ingroup': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Ingroup Bias'), 'Moral': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Moral judgement') }
+                console.log(adeptMostLeast)
             }
             for (let x of order) {
                 const expectedAuthor = (x['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
@@ -304,17 +305,30 @@ class SurveyPage extends Component {
                 }
                 else {
                     if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
+                        console.log('hit 308')
                         adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
                         adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, null, null, null, null);
                     }
                 }
 
-                const alignedADMTarget = adms['aligned'];
-                const misalignedADMTarget = adms['misaligned'];
+                let alignedADMTarget = adms['aligned'];
+                let misalignedADMTarget = adms['misaligned'];
                 const baselineADMTarget = x['TA2'] == 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
                 const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline' && x.admAlignment == baselineADMTarget);
                 // aligned
+                console.log('expected author')
+                console.log(expectedAuthor)
+                console.log('expected scenario')
+                console.log(expectedScenario)
+                console.log('aligned target')
+                console.log(alignedADMTarget)
+                console.log('misaligned target')
+                console.log(misalignedADMTarget)
+                if (expectedScenario.includes('DryRun')) {
+                    alignedADMTarget = alignedADMTarget.slice(0, -1) + '.' + alignedADMTarget.slice(-1);
+                    misalignedADMTarget = misalignedADMTarget.slice(0, -1) + '.' + misalignedADMTarget.slice(-1);
+                }
                 const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
                 // misaligned
                 const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == misalignedADMTarget);
