@@ -298,7 +298,7 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         }
         let baselineOverlap = false;
         let alignedOverlap = false;
-        while (cols1to3.includes(misalignedTarget) ||
+        while (cols1to3.includes(adeptSlice(misalignedTarget)) ||
             (set1.includes(misalignedTarget) && set1.includes(alignedTarget)) ||
             (set2.includes(misalignedTarget) && set2.includes(alignedTarget)) ||
             (set3.includes(misalignedTarget) && set3.includes(alignedTarget))) {
@@ -308,7 +308,7 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
             } else {
                 misalignedTarget = targets[targets.length - i].target;
             }
-            if (cols1to3.includes(misalignedTarget)) {
+            if (cols1to3.includes(adeptSlice(misalignedTarget))) {
                 baselineOverlap = true;
             }
             else {
