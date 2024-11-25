@@ -61,6 +61,7 @@ class SurveyPage extends Component {
 
     constructor(props) {
         super(props);
+        this.queryParams = new URLSearchParams(window.location.search);
         this.state = {
             uploadData: false,
             startTime: null,
@@ -74,7 +75,8 @@ class SurveyPage extends Component {
             firstGroup: [],
             secondGroup: [],
             orderLog: [],
-            pid: null,
+            pid: this.queryParams.get('pid') ?? null,
+            onlineOnly: isDefined(this.queryParams.get('adeptQualtrix')),
             validPid: false,
             lastTimeCalled: 0,
             envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 },
@@ -126,20 +128,23 @@ class SurveyPage extends Component {
             const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion == 4 || res.results?.surveyVersion == 5) && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
-            if (this.state.validPid) {
-                if (pidExists.length > 0) {
+            if (this.state.validPid || this.state.onlineOnly) {
+                if (pidExists.length > 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                 }
-                else if (completedTextSurvey.length == 0) {
+                else if (completedTextSurvey.length == 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
                 }
                 else {
-                    this.survey.currentPage = 2;
+                    this.survey.currentPage = this.state.onlineOnly ? 3 : 2;
                     this.survey.pages[1].visibleIf = "false";
+                    if (this.state.onlineOnly) {
+                        this.survey.pages[2].visibleIf = 'false';
+                    }
                 }
             }
             else {
@@ -342,12 +347,6 @@ class SurveyPage extends Component {
                     misalignedAdm['target'] = misalignedADMTarget;
                     pagesToShuffle.push(misalignedAdm);
                 } else { console.warn("Missing Misaligned ADM"); }
-                console.log('baselineAdm')
-                console.log(baselineAdm)
-                console.log('alignedADM')
-                console.log(alignedAdm)
-                console.log('misalignedADM')
-                console.log(misalignedAdm)
                 shuffle(pagesToShuffle);
                 pages.push(...pagesToShuffle);
                 pages.push(generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm));
@@ -640,6 +639,7 @@ class SurveyPage extends Component {
             this.surveyData['evalNumber'] = 5;
             this.surveyData['evalName'] = 'Phase 1 Evaluation';
             this.surveyData['orderLog'] = this.state.orderLog;
+            this.surveyData['pid'] = this.state.pid;
         }
 
         // upload the results to mongoDB

@@ -43,6 +43,7 @@ import { ExploratoryAnalysis } from '../DRE-Research/ExploratoryAnalysis';
 import store from '../../store/store';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { PidLookup } from '../Account/pidLookup';
+import StartOnline from '../OnlineOnly/OnlineOnly';
 
 
 const history = createBrowserHistory();
@@ -540,6 +541,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/text-based">
                                                         <TextBased />
+                                                    </Route>
+                                                    <Route path="/remote-text-survey">
+                                                        <StartOnline />
                                                     </Route>
                                                     <Route path="/text-based-results">
                                                         <TextBasedResults />
