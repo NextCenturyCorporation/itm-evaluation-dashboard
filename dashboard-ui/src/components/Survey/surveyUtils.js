@@ -649,13 +649,15 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                     alignedTarget = null;
                 }
             } else {
-                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5', 'ADEPT-DryRun-Ingroup Bias-0.6'];
-                set1 = ['ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'];
-                validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, [], []);
-                alignedTarget = validAdms['aligned'];
-                misalignedTarget = validAdms['misaligned'];
-                alignedStatus = validAdms['alignedStatus'];
-                misalignedStatus = validAdms['misalignedStatus'];
+                target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-0.8').target;
+                if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
+                    alignedTarget = target;
+                    misalignedTarget = null;
+                }
+                else {
+                    misalignedTarget = target;
+                    alignedTarget = null;
+                }
             }
             break;
         case 'DryRunEval-IO5-eval':
