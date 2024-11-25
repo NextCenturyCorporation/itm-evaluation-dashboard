@@ -650,8 +650,9 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                     alignedTarget = null;
                 }
             } else {
-                target = ioTargets['response'].find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-08').target;
-                if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 6) {
+                target = 'ADEPT-DryRun-Ingroup Bias-08';
+                const mostAligned = Object.keys(ioTargets['response'][0])[0].split('Bias-')[1].slice(-1);
+                if (parseFloat(mostAligned) > 6) {
                     alignedTarget = target;
                     misalignedTarget = null;
                 }

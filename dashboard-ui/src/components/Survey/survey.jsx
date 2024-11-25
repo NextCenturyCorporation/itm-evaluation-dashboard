@@ -316,8 +316,8 @@ class SurveyPage extends Component {
                 const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline' && x.admAlignment == baselineADMTarget);
                 // aligned
                 if (expectedScenario.includes('DryRun')) {
-                    alignedADMTarget = alignedADMTarget.slice(0, -1) + '.' + alignedADMTarget.slice(-1);
-                    misalignedADMTarget = misalignedADMTarget.slice(0, -1) + '.' + misalignedADMTarget.slice(-1);
+                    if (alignedADMTarget) alignedADMTarget = alignedADMTarget?.slice(0, -1) + '.' + alignedADMTarget?.slice(-1);
+                    if (misalignedADMTarget) misalignedADMTarget = misalignedADMTarget?.slice(0, -1) + '.' + misalignedADMTarget?.slice(-1);
                 }
                 const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
                 // misaligned
