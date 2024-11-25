@@ -639,6 +639,7 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
         case 'DryRunEval-IO4-eval':
             if (surveyVersion == 4) {
                 // NOTE: Only 1 adm to be found here!! Special case!!
+                // load 1.0 as the second ADM. label it as "aligned" if most aligned is 0.5 to 1.0; otherwise label "misaligned"
                 target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
                 if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
                     alignedTarget = target;
@@ -649,8 +650,8 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                     alignedTarget = null;
                 }
             } else {
-                target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-0.8').target;
-                if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
+                target = ioTargets['response'].find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-08').target;
+                if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 6) {
                     alignedTarget = target;
                     misalignedTarget = null;
                 }
