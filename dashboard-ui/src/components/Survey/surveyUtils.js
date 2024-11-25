@@ -299,9 +299,9 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         let baselineOverlap = false;
         let alignedOverlap = false;
         while (cols1to3.includes(adeptSlice(misalignedTarget)) ||
-            (set1.includes(misalignedTarget) && set1.includes(alignedTarget)) ||
-            (set2.includes(misalignedTarget) && set2.includes(alignedTarget)) ||
-            (set3.includes(misalignedTarget) && set3.includes(alignedTarget))) {
+            (set1.includes(adeptSlice(misalignedTarget)) && set1.includes(adeptSlice(alignedTarget))) ||
+            (set2.includes(adeptSlice(misalignedTarget)) && set2.includes(adeptSlice(alignedTarget))) ||
+            (set3.includes(adeptSlice(misalignedTarget)) && set3.includes(adeptSlice(alignedTarget)))) {
             i += 1;
             if (targets.response) {
                 misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
