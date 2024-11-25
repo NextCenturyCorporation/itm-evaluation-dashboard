@@ -17,6 +17,7 @@ import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
@@ -82,7 +83,8 @@ class SurveyPage extends Component {
             envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 },
             updatePLog: false,
             initialUploadedCount: 0,
-            hasUploaded: false
+            hasUploaded: false,
+            surveyComplete: false
         };
         this.surveyConfigClone = null;
         this.pageStartTimes = {};
@@ -117,6 +119,7 @@ class SurveyPage extends Component {
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
+        this.redirectLinkRef = React.createRef();
         this.shouldBlockNavigation = true;
         if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
@@ -566,6 +569,9 @@ class SurveyPage extends Component {
 
 
     uploadSurveyData = (survey, finalUpload) => {
+        if (finalUpload) {
+            this.setState({ surveyComplete: true });
+        }
         this.timerHelper()
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
@@ -752,7 +758,7 @@ class SurveyPage extends Component {
                             </Mutation>
                     )}
                     {this.state.updatePLog && (
-                        <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={this.state.onlineOnly && this.redirectLinkRef?.click()}>
                             {(updateParticipantLog) => (
                                 <div>
                                     <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
@@ -780,6 +786,17 @@ class SurveyPage extends Component {
                         }}>
                             Survey v{this.state.surveyVersion}
                         </div>
+                    {this.surveyComplete && (this.state.updatePLog || this.state.uploadData) && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+                                <Spinner animation="border" role="status">
+                                    <span className="sr-only">Loading...</span>
+                                </Spinner>
+                                <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                            </div>
+                        </div>
+                    )}
+                    <a ref={this.redirectLinkRef} hidden href={`ourqualtrics.com/?participant_id=${this.state.pid}`} />
                 </>
                 }
             </>

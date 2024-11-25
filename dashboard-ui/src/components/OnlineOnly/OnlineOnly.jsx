@@ -42,7 +42,7 @@ const LOG_VARIATIONS = [
 ];
 
 export default function StartOnline() {
-    const { refetch } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'network-only' });
+    const { refetch } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [textTime, setTextTime] = React.useState(false);
     const history = useHistory();

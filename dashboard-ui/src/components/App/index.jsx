@@ -239,7 +239,7 @@ export class App extends React.Component {
         //refresh the session to get a new accessToken if expired
         const tokens = await accountsClient.refreshSession();
 
-        if (window.location.href.indexOf("reset-password") > -1 || window.location.href.indexOf("/participantText") > -1) {
+        if (window.location.href.indexOf("reset-password") > -1 || window.location.href.indexOf("/participantText") > -1 || window.location.href.indexOf('/remote-text-survey?') > -1) {
             return;
         }
 
