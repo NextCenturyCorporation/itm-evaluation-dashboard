@@ -297,7 +297,7 @@ export class App extends React.Component {
                 }
                 else {
                     // still want to record distinction between civ and mil but it should no longer effect the actual pid
-                    const newPid = Math.max(...pLog.filter((x) => 
+                    const newPid = Math.max(...pLog.filter((x) =>
                         !["202409113A", "202409113B"].includes(x['ParticipantID'])
                     ).map((x) => Number(x['ParticipantID']))) + 1;
                     const setNum = (newPid - (classification == 'Civ' ? 5 : 1)) % 12;
@@ -370,12 +370,15 @@ export class App extends React.Component {
                                                             </div>
                                                         )}
                                                     </Mutation>
-                                                    <Mutation mutation={ADD_PARTICIPANT} onCompleted={() => {
-                                                        this.setState({ pid: this.state.newParticipantData['ParticipantID'] }, () => {
-                                                            history.push("/text-based?pid=" + this.state.pid + "&class=" + this.state.newParticipantData['Type']);
+                                                    <Mutation mutation={ADD_PARTICIPANT} onCompleted={(data) => {
+                                                        console.log('Server response:', data);
+                                                        const finalPid = data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
+                                                        console.log('Using final PID from server:', finalPid);
+
+                                                        this.setState({ pid: finalPid }, () => {
+                                                            history.push("/text-based?pid=" + finalPid + "&class=" + this.state.newParticipantData['Type']);
                                                         });
-                                                    }
-                                                    }>
+                                                    }}>
                                                         {(addNewParticipantToLog) => (
                                                             <div>
                                                                 <button ref={this.addPButtonRef} hidden onClick={(e) => {
