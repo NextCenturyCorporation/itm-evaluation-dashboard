@@ -731,7 +731,7 @@ class TextBasedScenariosPage extends Component {
                             <Spinner animation="border" role="status">
                                 <span className="sr-only">Loading...</span>
                             </Spinner>
-                            <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                            <p style={{ marginTop: '10px' }}>{this.state.onlineOnly ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily" : "Uploading documents, please wait..."}</p>
                         </div>
                     </div>
                 )}

@@ -144,11 +144,13 @@ class SurveyPage extends Component {
                 }
                 else {
                     this.survey.currentPage = this.state.onlineOnly ? 3 : 2;
-                    this.survey.pages[1].visibleIf = "false";
                     if (this.state.onlineOnly) {
+                        this.survey.pages[3].elements[0].html = this.survey.pages[3].elements[0].html.split('<br/><br/>').slice(0, -1).join('<br/><br/>');
                         this.survey.pages[0].visibleIf = 'false';
                         this.survey.pages[2].visibleIf = 'false';
                     }
+                    this.survey.pages[1].visibleIf = "false";
+
                 }
             }
             else {
@@ -662,7 +664,7 @@ class SurveyPage extends Component {
         this.uploadSurveyData(survey, true);
         this.shouldBlockNavigation = false;
         if (this.surveyConfigClone.pages.length < 3) {
-            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid) {
+            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
                         log => log['ParticipantID'] == this.state.pid
@@ -696,7 +698,7 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && sender.valuesHash['Participant ID'] !== this.state.pid) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => log['ParticipantID'] == this.state.pid
