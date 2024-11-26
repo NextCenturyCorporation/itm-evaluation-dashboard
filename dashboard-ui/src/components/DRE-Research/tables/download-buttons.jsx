@@ -11,7 +11,7 @@ export function DownloadButtons({ formattedData, filteredData, HEADERS, fileName
             </div> :
                 <button className='downloadBtn' onClick={() => exportToExcel(fileName, formattedData, HEADERS)}>Download All Data</button>
             }
-            <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
+            {openModal && <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>}
         </div>
     );
 }

@@ -158,3 +158,8 @@
     flex-direction: column;
     gap: 4px;
 }
+
+.progress-header {
+    margin-left: 12px;
+    margin-top: 18px;
+}
