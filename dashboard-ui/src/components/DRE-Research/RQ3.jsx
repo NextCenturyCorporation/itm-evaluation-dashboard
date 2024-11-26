@@ -17,7 +17,7 @@ const ALLOWED_EVAL_OPTIONS = [
 export function RQ3() {
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
     const [rq31CodeShowing, setRQ31CodeShowing] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(4);
+    const [selectedEval, setSelectedEval] = React.useState(5);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }

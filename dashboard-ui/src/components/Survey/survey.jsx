@@ -282,7 +282,7 @@ class SurveyPage extends Component {
             const admLists = {
                 "qol": participantResults.findLast((el) => el['scenario_id'].includes('qol')) ?? undefined,
                 "vol": participantResults.findLast((el) => el['scenario_id'].includes('vol')) ?? undefined,
-                "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval')) ?? undefined
+                "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval') || el['scenario_id'].includes('adept')) ?? undefined
             };
             let adeptMostLeast = null;
             if (this.state.surveyVersion == 4.0) {
@@ -310,11 +310,15 @@ class SurveyPage extends Component {
                     }
                 }
 
-                const alignedADMTarget = adms['aligned'];
-                const misalignedADMTarget = adms['misaligned'];
+                let alignedADMTarget = adms['aligned'];
+                let misalignedADMTarget = adms['misaligned'];
                 const baselineADMTarget = x['TA2'] == 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
                 const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline' && x.admAlignment == baselineADMTarget);
                 // aligned
+                if (expectedScenario.includes('DryRun')) {
+                    if (alignedADMTarget && !alignedADMTarget.includes('.')) alignedADMTarget = alignedADMTarget?.slice(0, -1) + '.' + alignedADMTarget?.slice(-1);
+                    if (misalignedADMTarget && !misalignedADMTarget.includes('.')) misalignedADMTarget = misalignedADMTarget?.slice(0, -1) + '.' + misalignedADMTarget?.slice(-1);
+                }
                 const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
                 // misaligned
                 const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == misalignedADMTarget);
@@ -338,6 +342,12 @@ class SurveyPage extends Component {
                     misalignedAdm['target'] = misalignedADMTarget;
                     pagesToShuffle.push(misalignedAdm);
                 } else { console.warn("Missing Misaligned ADM"); }
+                console.log('baselineAdm')
+                console.log(baselineAdm)
+                console.log('alignedADM')
+                console.log(alignedAdm)
+                console.log('misalignedADM')
+                console.log(misalignedAdm)
                 shuffle(pagesToShuffle);
                 pages.push(...pagesToShuffle);
                 pages.push(generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm));

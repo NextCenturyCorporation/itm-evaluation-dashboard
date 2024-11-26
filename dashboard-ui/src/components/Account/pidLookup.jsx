@@ -15,7 +15,6 @@ const GET_PARTICIPANT_LOG = gql`
 export function PidLookup() {
 
     const [viewHiddenEmail, setViewHiddenEmail] = React.useState(false);
-    const [classification, setClassification] = React.useState("");
     const [email, setEmail] = React.useState("");
     const [pid, setPid] = React.useState("");
     const [sim1, setSim1] = React.useState("")
@@ -29,7 +28,7 @@ export function PidLookup() {
             const trimmedEmail = email.trim().toLowerCase();
             const hashedEmail = bcrypt.hashSync(trimmedEmail, "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
             const matchingParticipant = dataParticipantLog.getParticipantLog.find(
-                (x) => x.hashedEmail == hashedEmail && classification == x.Type
+                (x) => x.hashedEmail == hashedEmail
             );
 
             if (matchingParticipant) {
@@ -53,10 +52,6 @@ export function PidLookup() {
 
     const toggleVisibility = () => {
         setViewHiddenEmail(!viewHiddenEmail);
-    };
-
-    const onChangeClassification = ({ target }) => {
-        setClassification(target.value);
     };
 
     const onChangeEmail = ({ target }) => {
@@ -84,24 +79,6 @@ export function PidLookup() {
                             <button className="blank-btn" type='button' onClick={toggleVisibility}>{viewHiddenEmail ? <VisibilityIcon /> : <VisibilityOffIcon />}</button>
                         </div>
                     </div>
-                    <div className="form-group">
-                        <div className="input-login-header">Classification</div>
-                        <div className='radios'>
-                            <div>
-                                <input type="radio" id="Mil" name="classification" value="Mil" onChange={onChangeClassification} required />
-                                <label htmlFor="Mil">Military</label>
-                            </div>
-                            <div>
-                                <input type="radio" id="Civ" name="classification" value="Civ" onChange={onChangeClassification} />
-                                <label htmlFor="Civ">Civilian</label>
-                            </div>
-                            <div>
-                                <input type="radio" id="Test" name="classification" value="Test" onChange={onChangeClassification} />
-                                <label htmlFor="Test">Tester</label>
-                            </div>
-                        </div>
-                    </div>
-
                     <div className="form-group">
                         <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Find PID</button>
                     </div>
