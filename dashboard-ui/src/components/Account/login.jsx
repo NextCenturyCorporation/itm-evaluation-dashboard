@@ -16,13 +16,11 @@ class LoginApp extends React.Component {
         this.state = {
             userName: "",
             password: "",
-            classification: "",
             error: null,
             createUserName: "",
             createPassword: "",
             createEmail: "",
             textEmail: "",
-            textClassification: "",
             forgotEmail: "",
             loginFailed: false,
             createAccountFailed: false,
@@ -35,12 +33,12 @@ class LoginApp extends React.Component {
 
     setupPID = async (e) => {
         e.preventDefault();  // Prevent the default form submission
-        const { textEmail, textClassification } = this.state;
+        const { textEmail } = this.state;
 
         // removing leading and trailing white space 
         const trimmedEmail = textEmail.trim().toLowerCase();
 
-        if (!textEmail || !textClassification) {
+        if (!textEmail) {
             $("#text-entry-feedback").addClass("feedback-display").text("All fields are required.");
             return; // Stop the function if any field is empty
         }
@@ -53,7 +51,7 @@ class LoginApp extends React.Component {
 
         $("#text-entry-feedback").removeClass("feedback-display");
         try {
-            this.props.participantLoginHandler(hashedEmail, textClassification, this.props.updatePLog);
+            this.props.participantLoginHandler(hashedEmail, this.props.updatePLog);
         } catch (err) {
             $("#text-entry-feedback").addClass("feedback-display");
             this.setState({ error: err.message, pidCreationFailed: true });
@@ -162,10 +160,6 @@ class LoginApp extends React.Component {
 
     onChangeTextEmail = ({ target }) => {
         this.setState({ textEmail: target.value });
-    };
-
-    onChangeClassification = ({ target }) => {
-        this.setState({ textClassification: target.value });
     };
 
     showSignIn = (evt) => {
@@ -321,19 +315,6 @@ class LoginApp extends React.Component {
                                                 <div className="input-with-btn">
                                                     <input className="form-control form-control-lg" required placeholder="Email" type={this.state.viewHiddenEmail ? "text" : "password"} id="emailOnly" value={this.state.textEmail} onChange={this.onChangeTextEmail} />
                                                     <button className="blank-btn" type='button' onClick={this.toggleVisibility}>{this.state.viewHiddenEmail ? <VisibilityIcon /> : <VisibilityOffIcon />}</button>
-                                                </div>
-                                            </div>
-                                            <div className="form-group">
-                                                <div className="input-login-header">Classification</div>
-                                                <div className='radios'>
-                                                    <div>
-                                                        <input type="radio" id="Mil" name="classification" value="Mil" onChange={this.onChangeClassification} required />
-                                                        <label htmlFor="Mil">Military</label>
-                                                    </div>
-                                                    <div>
-                                                        <input type="radio" id="Civ" name="classification" value="Civ" onChange={this.onChangeClassification} />
-                                                        <label htmlFor="Civ">Civilian</label>
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="form-group">

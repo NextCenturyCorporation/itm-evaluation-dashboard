@@ -10,11 +10,22 @@ async function createUniqueIndex() {
           { "ParticipantID": 1 }, 
           { unique: true }
       );
-      console.log("Unique index on ParticipantID created successfully");
+    console.log("Unique index on ParticipantID created successfully.");
   } catch (error) {
       if (error.code !== 85) { // Index already exists
-          console.error("Error creating unique index:", error);
-      }
+      console.error("Error creating unique index (ParticipantID):", error);
+    }
+  }
+  try {
+    await dashboardDB.db.collection('participantLog').createIndex(
+      { "hashedEmail": 1 },
+      { unique: true }
+    );
+    console.log("Unique index on hashedEmail created successfully.");
+  } catch (error) {
+    if (error.code !== 85) { // Index already exists
+      console.error("Error creating unique index (hashedEmail):", error);
+    }
   }
 }
 
@@ -618,7 +629,13 @@ const resolvers = {
       } catch (error) {
           const timestamp = new Date().toISOString();
           console.error(`[${timestamp}] CRITICAL ERROR in addNewParticipantToLog:`, error);
+        if (error.code === 11000) {
+          return -1;
+        }
+        else {
           throw error;
+        }
+
       }
   },
     updateEvalIdsByPage: async (obj, args, context, inflow) => {
