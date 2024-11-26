@@ -341,8 +341,8 @@ class SurveyPage extends Component {
                     alignedAdm['alignment'] = 'aligned';
                     alignedAdm['target'] = alignedADMTarget;
                     pagesToShuffle.push(alignedAdm);
-                } else { 
-                    console.warn("Missing Aligned ADM for " + expectedScenario + " - " + expectedAuthor + " - " + alignedADMTarget); 
+                } else {
+                    console.warn("Missing Aligned ADM for " + expectedScenario + " - " + expectedAuthor + " - " + alignedADMTarget);
                 }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
@@ -364,7 +364,7 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else if (this.state.surveyVersion == 1){
+        else if (this.state.surveyVersion == 1) {
             let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
             // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
             let removed = groupedDMs.pop();
@@ -675,7 +675,7 @@ class SurveyPage extends Component {
         }
         else {
             this.setState({ hasUploaded: true }, () => {
-                if (this.state.validPid) {
+                if (this.state.validPid || this.state.onlineOnly) {
                     this.setState({ updatePLog: true }, () => {
                         if (this.uploadButtonRefPLog.current) {
                             this.uploadButtonRefPLog.current.click();
@@ -758,7 +758,7 @@ class SurveyPage extends Component {
                             </Mutation>
                     )}
                     {this.state.updatePLog && (
-                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={this.state.onlineOnly && this.redirectLinkRef?.click()}>
+                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={this.state.onlineOnly && this.redirectLinkRef?.current?.click()}>
                             {(updateParticipantLog) => (
                                 <div>
                                     <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
@@ -796,7 +796,7 @@ class SurveyPage extends Component {
                             </div>
                         </div>
                     )}
-                    <a ref={this.redirectLinkRef} hidden href={`ourqualtrics.com/?participant_id=${this.state.pid}`} />
+                    <a ref={this.redirectLinkRef} hidden href={`https://www.ourqualtrics.com/?participant_id=${this.state.pid}`} />
                 </>
                 }
             </>
@@ -810,12 +810,12 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
-      });
+    });
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults ) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults ) return <p>Error :</p>;
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
 
     return (
         <SurveyPage

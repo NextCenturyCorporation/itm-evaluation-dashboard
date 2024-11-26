@@ -53,7 +53,7 @@ export default function StartOnline() {
         // get current plog
         const result = await refetch();
         // calculate new pid
-        const newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
+        let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
             !["202409113A", "202409113B"].includes(x['ParticipantID'])
         ).map((x) => Number(x['ParticipantID']))) + 1;
         // get correct plog data
@@ -63,7 +63,10 @@ export default function StartOnline() {
             "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": null
         };
         // update database
-        await addParticipant({ variables: { participantData } });
+        const addRes = await addParticipant({ variables: { participantData } });
+        // extra step to prevent duplicate pids
+        newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
+
 
         const currentSearchParams = new URLSearchParams(location.search);
         currentSearchParams.set('pid', newPid);

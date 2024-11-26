@@ -372,9 +372,7 @@ export class App extends React.Component {
                                                         )}
                                                     </Mutation>
                                                     <Mutation mutation={ADD_PARTICIPANT} onCompleted={(data) => {
-                                                        console.log('Server response:', data);
                                                         const finalPid = data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
-                                                        console.log('Using final PID from server:', finalPid);
 
                                                         this.setState({ pid: finalPid }, () => {
                                                             history.push("/text-based?pid=" + finalPid + "&class=" + this.state.newParticipantData['Type']);
