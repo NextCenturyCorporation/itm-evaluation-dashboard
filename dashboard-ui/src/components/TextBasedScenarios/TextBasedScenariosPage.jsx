@@ -238,10 +238,10 @@ class TextBasedScenariosPage extends Component {
         const pid = queryParams.get('pid');
         const classification = queryParams.get('class');
         const adeptQualtrix = queryParams.get('adeptQualtrix');
-        if (isDefined(pid) && isDefined(classification)) {
+        if (isDefined(pid)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
-                "Military or Civilian background": classification == 'Online' ? 'Online' : classification == 'Civ' ? "Civilian Background" : "Military Background",
+                "Military or Civilian background": classification == 'Online' ? 'Online' : classification,
                 "vrEnvironmentsCompleted": ['none']
             };
             if (isDefined(adeptQualtrix)) {
