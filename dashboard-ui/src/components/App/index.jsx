@@ -74,8 +74,8 @@ const UPDATE_PARTICIPANT_LOG = gql`
     }`;
 
 const ADD_PARTICIPANT = gql`
-    mutation addNewParticipantToLog($participantData: JSON!) {
-        addNewParticipantToLog(participantData: $participantData) 
+    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
+        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
     }`;
 
 const SURVEY_SETS = {
@@ -109,6 +109,8 @@ const SURVEY_SETS = {
     ]
 }
 
+const LOW_PID = 202411300;
+const HIGH_PID = 202411499;
 
 function Home({ newState }) {
     if (newState.currentUser == null) {
@@ -284,8 +286,8 @@ export class App extends React.Component {
                 });
             }
             else {
-                // create a user account and get a pid for this user
-                const nextAvailablePid = pLog.find((x) => x.Type == classification && !x.claimed)?.['ParticipantID'];
+                // create a user account and get a pid for this user using pre-populated entries in the participant log
+                const nextAvailablePid = pLog.find((x) => x.Type == classification && !x.claimed && x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID)?.['ParticipantID'];
                 if (isDefined(nextAvailablePid)) {
                     this.setState({ updatePLog: true, pLogUpdate: { updates: { hashedEmail: hashedEmail, claimed: true }, pid: nextAvailablePid } }, () => {
                         if (this.uploadButtonRef.current) {
@@ -297,9 +299,11 @@ export class App extends React.Component {
                     });
                 }
                 else {
+                    // generate a new pid by incrementing highest found
                     // still want to record distinction between civ and mil but it should no longer effect the actual pid
                     const newPid = Math.max(...pLog.filter((x) =>
-                        !["202409113A", "202409113B"].includes(x['ParticipantID'])
+                        !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
+                        x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
                     ).map((x) => Number(x['ParticipantID']))) + 1;
                     const setNum = (newPid - (classification == 'Civ' ? 5 : 1)) % 12;
                     const participantData = {
@@ -383,7 +387,7 @@ export class App extends React.Component {
                                                                 <button ref={this.addPButtonRef} hidden onClick={(e) => {
                                                                     e.preventDefault();
                                                                     addNewParticipantToLog({
-                                                                        variables: { participantData: this.state.newParticipantData }
+                                                                        variables: { participantData: this.state.newParticipantData, lowPid: LOW_PID, highPid: HIGH_PID }
                                                                     });
                                                                     this.setState({ updatePLog: false });
                                                                 }}></button>

@@ -10,8 +10,8 @@ const GET_PARTICIPANT_LOG = gql`
     }`;
 
 const ADD_PARTICIPANT = gql`
-    mutation addNewParticipantToLog($participantData: JSON!) {
-        addNewParticipantToLog(participantData: $participantData) 
+    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
+        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
     }`;
 
 const LOG_VARIATIONS = [
@@ -53,9 +53,12 @@ export default function StartOnline() {
         // get current plog
         const result = await refetch();
         // calculate new pid
+        const lowPid = 202411500;
+        const highPid = 202411599;
         let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
-            !["202409113A", "202409113B"].includes(x['ParticipantID'])
-        ).map((x) => Number(x['ParticipantID']))) + 1;
+            !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
+            x.ParticipantID >= lowPid && x.ParticipantID <= highPid
+        ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         // get correct plog data
         const setNum = newPid % 24;
         const participantData = {
@@ -63,7 +66,7 @@ export default function StartOnline() {
             "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": null
         };
         // update database
-        const addRes = await addParticipant({ variables: { participantData } });
+        const addRes = await addParticipant({ variables: { participantData, lowPid, highPid } });
         // extra step to prevent duplicate pids
         newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
 

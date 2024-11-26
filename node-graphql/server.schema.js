@@ -230,7 +230,7 @@ const typeDefs = gql`
     updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
-    addNewParticipantToLog(participantData: JSON): JSON,
+    addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON
@@ -560,15 +560,14 @@ const resolvers = {
               
               const highestPidDoc = await dashboardDB.db.collection('participantLog')
                   .find({
-                      ParticipantID: { $type: "number" }
+                    ParticipantID: { $type: "number", $gte: args.highPid, $lte: args.lowPid }
                   })
                   .sort({ ParticipantID: -1 })
                   .limit(1)
                   .toArray();
 
   
-            const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : 202411301;
-              
+          const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : args.lowPid;
               args.participantData.ParticipantID = nextPid;
           }
   
@@ -582,7 +581,7 @@ const resolvers = {
                   // get absolute latest highest PID
                   const highestPidDoc = await dashboardDB.db.collection('participantLog')
                       .find({
-                          ParticipantID: { $type: "number" }
+                        ParticipantID: { $type: "number", $gte: args.highPid, $lte: args.lowPid }
                       })
                       .sort({ ParticipantID: -1 })
                       .limit(1)
