@@ -299,9 +299,9 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         let baselineOverlap = false;
         let alignedOverlap = false;
         while (cols1to3.includes(adeptSlice(misalignedTarget)) ||
-            (set1.includes(misalignedTarget) && set1.includes(alignedTarget)) ||
-            (set2.includes(misalignedTarget) && set2.includes(alignedTarget)) ||
-            (set3.includes(misalignedTarget) && set3.includes(alignedTarget))) {
+            (set1.includes(adeptSlice(misalignedTarget)) && set1.includes(adeptSlice(alignedTarget))) ||
+            (set2.includes(adeptSlice(misalignedTarget)) && set2.includes(adeptSlice(alignedTarget))) ||
+            (set3.includes(adeptSlice(misalignedTarget)) && set3.includes(adeptSlice(alignedTarget)))) {
             i += 1;
             if (targets.response) {
                 misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
@@ -639,6 +639,7 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
         case 'DryRunEval-IO4-eval':
             if (surveyVersion == 4) {
                 // NOTE: Only 1 adm to be found here!! Special case!!
+                // load 1.0 as the second ADM. label it as "aligned" if most aligned is 0.5 to 1.0; otherwise label "misaligned"
                 target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
                 if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
                     alignedTarget = target;
@@ -649,13 +650,16 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
                     alignedTarget = null;
                 }
             } else {
-                cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5', 'ADEPT-DryRun-Ingroup Bias-0.6'];
-                set1 = ['ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'];
-                validAdms = getValidADM(getAllIoTargets(surveyVersion), ioTargets, cols1to3, set1, [], []);
-                alignedTarget = validAdms['aligned'];
-                misalignedTarget = validAdms['misaligned'];
-                alignedStatus = validAdms['alignedStatus'];
-                misalignedStatus = validAdms['misalignedStatus'];
+                target = 'ADEPT-DryRun-Ingroup Bias-08';
+                const mostAligned = Object.keys(ioTargets['response'][0])[0].split('Bias-')[1].slice(-1);
+                if (parseFloat(mostAligned) > 6) {
+                    alignedTarget = target;
+                    misalignedTarget = null;
+                }
+                else {
+                    misalignedTarget = target;
+                    alignedTarget = null;
+                }
             }
             break;
         case 'DryRunEval-IO5-eval':
