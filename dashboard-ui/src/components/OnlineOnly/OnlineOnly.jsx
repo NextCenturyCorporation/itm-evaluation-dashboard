@@ -3,6 +3,8 @@ import { useMutation, useQuery } from '@apollo/react-hooks';
 import gql from "graphql-tag";
 import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedScenariosPage";
 import { useHistory, useLocation } from 'react-router-dom';
+import bcrypt from 'bcryptjs';
+
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -63,7 +65,7 @@ export default function StartOnline() {
         const setNum = newPid % 24;
         const participantData = {
             ...LOG_VARIATIONS[setNum], "ParticipantID": newPid, "Type": "Online",
-            "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": null
+            "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT)
         };
         // update database
         const addRes = await addParticipant({ variables: { participantData, lowPid, highPid } });
