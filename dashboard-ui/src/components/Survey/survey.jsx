@@ -146,6 +146,7 @@ class SurveyPage extends Component {
                     this.survey.currentPage = this.state.onlineOnly ? 3 : 2;
                     this.survey.pages[1].visibleIf = "false";
                     if (this.state.onlineOnly) {
+                        this.survey.pages[0].visibleIf = 'false';
                         this.survey.pages[2].visibleIf = 'false';
                     }
                 }
@@ -687,7 +688,7 @@ class SurveyPage extends Component {
     }
 
     finishFirstPage = (survey) => {
-        if (survey.currentPageNo == 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
+        if (!this.state.onlineOnly && survey.currentPageNo == 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
             this.setState({ lastTimeCalled: new Date() }, () => {
                 this.postConfigSetup();
             });
