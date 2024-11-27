@@ -234,11 +234,10 @@ class TextBasedScenariosPage extends Component {
         document.addEventListener('keydown', this.handleKeyPress);
         const queryParams = new URLSearchParams(window.location.search);
         const pid = queryParams.get('pid');
-        const classification = queryParams.get('class');
-        if (isDefined(pid) && isDefined(classification)) {
+        if (isDefined(pid)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
-                "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : "Military Background",
+                "Military or Civilian background": null,
                 "vrEnvironmentsCompleted": ['none']
             };
             this.setState({ moderated: false, startSurvey: false }, () => {
