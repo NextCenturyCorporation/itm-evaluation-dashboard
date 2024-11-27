@@ -11,7 +11,7 @@ export function setupConfigWithImages(data) {
                 if (Object.keys(el).includes("patients")) {
                     for (const patient of el.patients) {
                         let foundImg = null;
-                        if (config.survey.version == 4) {
+                        if (config.survey.version == 4 || config.survey.version == 5) {
                             let pName = patient.name;
                             if (pName.includes('Casualty')) {
                                 pName = 'casualty_' + pName.substring(pName.length - 1);
@@ -22,7 +22,7 @@ export function setupConfigWithImages(data) {
                             foundImg = data.getAllImageUrls?.find((x) => x._id == patient.imgUrl);
                         }
                         if (isDefined(foundImg)) {
-                            if (config.survey.version == 4) {
+                            if (config.survey.version == 4 || config.survey.version == 5) {
                                 patient.imgUrl = foundImg.imageByteCode;
                             }
                             else {
@@ -49,7 +49,13 @@ export function setupTextBasedConfig(data) {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
                         for (const patient of el.patients) {
-                            const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId?.toLowerCase() === patient.id?.toLowerCase() && x.scenarioId === page.scenario_id));
+                            /*
+                            soartech has different images for same casualty id's depending on scenario so we need to make sure casualty id matches 
+                            patient id, as well as the scenario id for each. However, adept is able to reuse images from dre in phase 1. Hence the 
+                            funky ternary operator here
+                            */
+                            const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId?.toLowerCase() === patient.id?.toLowerCase() &&
+                                (tempConfig.author == 'adept' ? true : x.scenarioId === page.scenario_id)));
                             if (foundImg) {
                                 patient.imgUrl = foundImg.imageByteCode;
                             }

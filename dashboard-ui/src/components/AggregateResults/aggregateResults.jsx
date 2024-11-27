@@ -208,6 +208,32 @@ const HEADER = {
         "MJ_KDMA_Sim",
         "IO_KDMA_Text",
         "IO_KDMA_Sim"
+    ],
+    5: [
+        "ParticipantID",
+        "Date",
+        "MedRole",
+        "MedExp",
+        "MilitaryExp",
+        "YrsMilExp",
+        "PropTrust",
+        "Delegation",
+        "Trust",
+        "PostVRstate",
+        "AD_Scenario_Text",
+        "AD_Scenario_Sim",
+        "QOL_Scenario_Text",
+        "QOL_Scenario_Sim",
+        "VOL_Scenario_Text",
+        "VOL_Scenario_Sim",
+        "QOL_KDMA_Text",
+        "QOL_KDMA_Sim",
+        "VOL_KDMA_Text",
+        "VOL_KDMA_Sim",
+        "MJ_KDMA_Text",
+        "MJ_KDMA_Sim",
+        "IO_KDMA_Text",
+        "IO_KDMA_Sim"
     ]
 };
 
@@ -278,6 +304,26 @@ const HEADER_SIM_DATA = {
         "VOL_11",
         "VOL_12",
         "VOL_Session_Id"
+    ],
+    5: [
+        "Participant",
+        "ADEPT_Scenario",
+        "ST_Scenario",
+        "QOL_1",
+        "QOL_2",
+        "QOL_3",
+        "QOL_4",
+        "QOL_5",
+        "QOL_6",
+        "QOL_Session_Id",
+        "ADEPT_Session_Id",
+        "VOL_1",
+        "VOL_2",
+        "VOL_3",
+        "VOL_4",
+        "VOL_5",
+        "VOL_6",
+        "VOL_Session_Id"
     ]
 };
 
@@ -289,7 +335,7 @@ export default function AggregateResults({ type }) {
     const [fullData, setFullData] = React.useState([]);
     const [aggregateData, setAggregateData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(4);
+    const [selectedEval, setSelectedEval] = React.useState(5);
     const [iframeLink, setIframeLink] = React.useState(null);
     const [showIframe, setShowIframe] = React.useState(false);
     const [iframeTitle, setIframeTitle] = React.useState(null);
@@ -353,7 +399,7 @@ export default function AggregateResults({ type }) {
     };
 
     const exportHumanSimToExcel = async () => {
-        if (selectedEval !== 4) {
+        if (selectedEval !== 4 && selectedEval !== 5) {
             let humanSimData = [];
             for (var objkey in aggregateData["groupedSim"]) {
                 humanSimData = humanSimData.concat(aggregateData["groupedSim"][objkey]);
@@ -531,7 +577,7 @@ export default function AggregateResults({ type }) {
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
                                     <h4 key={"header_" + objectKey}>
-                                        {selectedEval === 3 ? capitalizeFirstLetter(objectKey) : `ADEPT: ${objectKey.split('_')[0]}, SoarTech: ${objectKey.split('_')[1]}`}
+                                        {selectedEval === 3 ? capitalizeFirstLetter(objectKey) : `ADEPT: ${objectKey.split('_')[0].replace('DryRunEval', selectedEval == 4 ? 'DryRunEval' : 'Phase1')}, SoarTech: ${objectKey.split('_')[1].replace('3', selectedEval == 4 ? '3' : '4').replace('2', selectedEval == 4 ? '2' : '3').replace('1', selectedEval == 4 ? '1' : '2')}`}
                                     </h4>
                                 </div>
                             </div>

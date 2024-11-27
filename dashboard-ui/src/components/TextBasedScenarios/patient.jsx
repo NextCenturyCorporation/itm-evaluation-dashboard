@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
-import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs'
 
-const Patient = ({ patient, onImageClick, blockedVitals }) => {
+const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) => {
   const vitalIcons = {
     avpu: <FaEye />,
     ambulatory: <FaAmbulance />,
@@ -12,7 +12,8 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
     heart_rate: <FaHeartbeat />,
     spo2: <FaPercent />,
     mental_status: <FaBrain />,
-    conscious: <BsPersonFillGear />
+    conscious: <BsPersonFillGear />,
+    triss: <FaChartLine />
   };
 
   const vitalNames = {
@@ -22,7 +23,18 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
     heart_rate: "HR",
     spo2: "SPO2",
     mental_status: "Mental Status",
-    conscious: "Conscious"
+    conscious: "Conscious",
+    triss: "TRISS"
+  };
+
+  const getTrissBadgeColor = (score) => {
+    if (!score) return 'secondary';
+    const value = parseFloat(score);
+    if (value >= 90) return 'success';
+    if (value >= 75) return 'info';
+    if (value >= 50) return 'warning';
+    if (value >= 25) return 'orange';
+    return 'danger';
   };
 
   const avpuColors = {
@@ -78,6 +90,8 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
         return mentalColors[value];
       case 'conscious':
         return 'info';
+      case 'triss':
+        return getTrissBadgeColor(value);
       default:
         return 'secondary';
     }
@@ -123,7 +137,7 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
                 bg={vitalsVisible ? getVitalBadgeColor(key, value) : 'info'}
                 className="vital-badge"
               >
-                {vitalsVisible ? value.toString().toUpperCase() : "Unknown"}
+                {vitalsVisible ? (key === 'triss' ? `${value}%` : value.toString().toUpperCase()) : "Unknown"}
               </Badge>
             </div>
           </div>
@@ -160,11 +174,23 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
           {patient.imgUrl ? (
             <>
               <Col md={7} className="d-flex mb-3 mb-md-0">
-                <div className="bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded" style={{ position: 'relative', minHeight: '150px', overflow: 'hidden' }}>
+                <div className="text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded"
+                  style={{
+                    position: 'relative',
+                    height: patient.demographics.age ? '300px' : '',
+                    overflow: 'hidden'
+                  }}>
                   <img
                     src={`data:image/png;base64,${patient.imgUrl}`}
                     alt={`${patient.id ?? patient.name}`}
-                    style={{
+                    style={patient.demographics.age ? {
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      position: 'relative'
+                    } : {
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
@@ -173,18 +199,20 @@ const Patient = ({ patient, onImageClick, blockedVitals }) => {
                       left: 0,
                     }}
                   />
-                  <ZoomInIcon
-                    className="magnifying-glass"
-                    style={{
-                      position: 'absolute',
-                      bottom: '8px',
-                      left: '8px',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      zIndex: 1,
-                    }}
-                    onClick={() => onImageClick(patient)}
-                  />
+                  {!imageClickDisabled &&
+                    <ZoomInIcon
+                      className="magnifying-glass"
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '8px',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        zIndex: 1,
+                      }}
+                      onClick={() => onImageClick(patient)}
+                    />
+                  }
                 </div>
               </Col>
               <Col md={5} className="d-flex flex-column">

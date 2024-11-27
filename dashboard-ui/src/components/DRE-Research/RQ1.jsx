@@ -1,9 +1,15 @@
+import React from 'react';
 import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
+import Select from 'react-select';
 import rq1Code from './rcode/code_for_dashboard_RQ1.R';
-import React from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
+
+const ALLOWED_EVAL_OPTIONS = [
+    { value: 4, label: 'Dry Run Evaluation' },
+    { value: 5, label: 'Phase 1 Evaluation' }
+];
 
 export function RQ1() {
     const [rq1CodeShowing, setRQ1CodeShowing] = React.useState(false);
@@ -11,7 +17,24 @@ export function RQ1() {
     const close1Code = () => {
         setRQ1CodeShowing(false);
     }
+    const [selectedEval, setSelectedEval] = React.useState(5);
+    function selectEvaluation(target) {
+        setSelectedEval(target.value);
+    }
     return (<div className="researchQuestion">
+        <div className="rq-selection-section">
+            <Select
+                onChange={selectEvaluation}
+                options={ALLOWED_EVAL_OPTIONS}
+                defaultValue={ALLOWED_EVAL_OPTIONS[0]}
+                placeholder="Select Evaluation"
+                value={ALLOWED_EVAL_OPTIONS.find(option => option.value === selectedEval)}
+                styles={{
+                    // Fixes the overlapping problem of the component
+                    menu: provided => ({ ...provided, zIndex: 9999 })
+                }}
+            />
+        </div>
         <div className="section-container">
             <h2>RQ1: Does alignment score predict measures of trust?</h2>
             <p className='indented'>
@@ -33,7 +56,8 @@ export function RQ1() {
         </div>
         <div className="section-container">
             <h2>RQ1 Data</h2>
-            <RQ13 />
+            <RQ13 evalNum={selectedEval} />
+
         </div>
         <div className="section-container">
             <h2>RQ1 Analysis 1.1 - Linear Mixed Effects Regression Alignment on Trust</h2>

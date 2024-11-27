@@ -4,6 +4,33 @@ const { dashboardDB } = require('./server.mongo');
 // const { MONGO_DB } = require('./config');
 const { GraphQLScalarType, Kind } = require("graphql");
 
+async function createUniqueIndex() {
+  try {
+    await dashboardDB.db.collection('participantLog').createIndex(
+      { "ParticipantID": 1 },
+      { unique: true }
+    );
+    console.log("Unique index on ParticipantID created successfully.");
+  } catch (error) {
+    if (error.code !== 85) { // Index already exists
+      console.error("Error creating unique index (ParticipantID):", error);
+    }
+  }
+  try {
+    await dashboardDB.db.collection('participantLog').createIndex(
+      { "hashedEmail": 1 },
+      { unique: true }
+    );
+    console.log("Unique index on hashedEmail created successfully.");
+  } catch (error) {
+    if (error.code !== 85) { // Index already exists
+      console.error("Error creating unique index (hashedEmail):", error);
+    }
+  }
+}
+
+createUniqueIndex().catch(console.error);
+
 const typeDefs = gql`
   scalar JSON
 
@@ -157,7 +184,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON],
-    getGroupAdmAlignmentEval4: [JSON],
+    getGroupAdmAlignmentByEval(evalNumber: Float): [JSON],
     getEvalIds: [JSON],
     getEvalIdsForAllHistory: [JSON],
     getAllHistoryByID(historyId: ID): JSON
@@ -243,9 +270,9 @@ const resolvers = {
         }
       }).toArray().then(result => { return result; });
     },
-    getGroupAdmAlignmentEval4: async (obj, args, context, inflow) => {
+    getGroupAdmAlignmentByEval: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('test').find({
-        "evalNumber": 4,
+        "evalNumber": args["evalNumber"],
         $expr: {
           $in: [
             { $arrayElemAt: ["$history.parameters.target_id", -1] },
@@ -537,7 +564,79 @@ const resolvers = {
       }
     },
     addNewParticipantToLog: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('participantLog').insertOne(args.participantData);
+      try {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] ====== Starting new participant addition ======`);
+        console.log(`[${timestamp}] Initial participant data:`, {
+          email: args.participantData.hashedEmail.substring(0, 10) + '...',
+          type: args.participantData.Type,
+          proposedPID: args.participantData.ParticipantID
+        });
+
+        if (!Number.isFinite(args.participantData.ParticipantID)) {
+          console.log(`[${timestamp}] Invalid PID detected, querying for highest PID`);
+
+          const highestPidDoc = await dashboardDB.db.collection('participantLog')
+            .find({
+              ParticipantID: { $type: "number" }
+            })
+            .sort({ ParticipantID: -1 })
+            .limit(1)
+            .toArray();
+
+          console.log(`[${timestamp}] Current highest PID record:`, highestPidDoc[0]?.ParticipantID || 'none found');
+
+          const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : 202411301;
+          console.log(`[${timestamp}] Generated new PID: ${nextPid}`);
+
+          args.participantData.ParticipantID = nextPid;
+        }
+
+        // try to insert with our validated PID
+        try {
+          console.log(`[${timestamp}] Attempting insert for PID: ${args.participantData.ParticipantID}`);
+          const result = await dashboardDB.db.collection('participantLog').insertOne(args.participantData);
+          console.log(`[${timestamp}] Insert SUCCESS for PID: ${args.participantData.ParticipantID}`);
+          return result;
+        } catch (error) {
+          if (error.code === 11000) { // ff we hit a duplicate
+            console.log(`[${timestamp}] DUPLICATE KEY ERROR for PID: ${args.participantData.ParticipantID}`);
+            console.log(`[${timestamp}] Retrying with new PID generation`);
+
+            // get absolute latest highest PID
+            const highestPidDoc = await dashboardDB.db.collection('participantLog')
+              .find({
+                ParticipantID: { $type: "number" }
+              })
+              .sort({ ParticipantID: -1 })
+              .limit(1)
+              .toArray();
+
+            const retryPid = Number(highestPidDoc[0].ParticipantID) + 1;
+            console.log(`[${timestamp}] New retry PID generated: ${retryPid}`);
+
+            args.participantData.ParticipantID = retryPid;
+
+            console.log(`[${timestamp}] Attempting final insert with PID: ${retryPid}`);
+            const retryResult = await dashboardDB.db.collection('participantLog')
+              .insertOne(args.participantData);
+            console.log(`[${timestamp}] Retry insert SUCCESS for PID: ${retryPid}`);
+            return retryResult;
+          }
+          console.error(`[${timestamp}] NON-DUPLICATE ERROR:`, error);
+          throw error;
+        }
+      } catch (error) {
+        const timestamp = new Date().toISOString();
+        console.error(`[${timestamp}] CRITICAL ERROR in addNewParticipantToLog:`, error);
+        if (error.code === 11000) {
+          return -1;
+        }
+        else {
+          throw error;
+        }
+
+      }
     },
     updateEvalIdsByPage: async (obj, args, context, inflow) => {
       // hmm can't do this with graphql?      

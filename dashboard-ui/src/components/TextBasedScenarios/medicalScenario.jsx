@@ -158,6 +158,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       this.setState({ showTransitionModal: true });
     }
     this.overideBlockedVitals();
+    this.springerUptonEdgeCase();
   }
 
   handleCloseTransitionModal = () => {
@@ -170,9 +171,9 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       // should never happen
       return
     }
-    
-    if (survey.title != "DryRunEval-MJ2-eval") { 
-      return true 
+
+    if (survey.title != "DryRunEval-MJ2-eval" && survey.title != "phase1-adept-eval-MJ2") {
+      return true
     }
 
     const probe = survey.getValue('probe Probe 4-B.1-B.1')
@@ -196,6 +197,60 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     // trick to re render by updating state (with nothing)
     this.setState({});
   }
+
+  springerUptonEdgeCase() {
+    const relevantProbes = [
+        'template Probe 2-A.1',
+        'template Probe 2-A.1-A.1',
+        'template Probe 2-A.1-B.1',
+        'template Probe 2-A.1-B.1-A.1',
+        'template Probe 2-B.1',
+        'template Probe 2-B.1-A.1',
+        'template Probe 2-B.1-B.1',
+        'template Probe 2-B.1-B.1-A.1',
+        'template Probe 3'
+    ];
+    
+    if (!relevantProbes.includes(this.question.jsonObj.name)) {
+        return;
+    }
+
+    const baseVitals = {
+        'avpu': 'ALERT',
+        'ambulatory': true,
+        'mental_status': 'UPSET',
+        'spo2': 'NORMAL'
+    };
+
+    const normalVitals = { ...baseVitals, 'breathing': 'NORMAL', 'heart_rate': 'NORMAL' };
+    const fastVitals = { ...baseVitals, 'breathing': 'FAST', 'heart_rate': 'FAST' };
+
+    const springerIndex = this.patients.findIndex(patient => patient.name === 'Springer');
+    const uptonIndex = this.patients.findIndex(patient => patient.name === 'Upton');
+    const isSpringerFirst = this.question.survey.valuesHash['probe Scene 1'] === 'Assess Springer first.';
+
+    // create new array of patients as work around for immutable error
+    const updatedPatients = [...this.patients];
+
+    if (springerIndex !== -1) {
+        updatedPatients[springerIndex] = {
+            ...updatedPatients[springerIndex],
+            vitals: isSpringerFirst ? normalVitals : fastVitals
+        };
+    }
+
+    if (uptonIndex !== -1) {
+        updatedPatients[uptonIndex] = {
+            ...updatedPatients[uptonIndex],
+            vitals: isSpringerFirst ? fastVitals : normalVitals
+        };
+    }
+
+    this.question.patients = updatedPatients;
+
+    // force re-render
+    this.setState({});
+}
 
   renderElement() {
     return (
@@ -264,7 +319,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           <Modal.Body>
             {this.state.selectedPatient?.demographics.age && (
               <p className="mb-2 text-muted">
-                {this.state.selectedPatient.demographics.age} years old, 
+                {this.state.selectedPatient.demographics.age} years old,
                 {this.state.selectedPatient.demographics.sex === 'F' ? 'Female' : 'Male'}
               </p>
             )}

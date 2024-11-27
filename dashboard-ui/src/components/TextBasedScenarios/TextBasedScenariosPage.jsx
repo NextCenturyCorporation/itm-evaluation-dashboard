@@ -196,7 +196,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     scenariosFromLog = (entry) => {
-        return dreMappings[entry].flatMap(scenarioId =>
+        return p1Mappings[entry].flatMap(scenarioId =>
             Object.values(this.props.textBasedConfigs).filter(config =>
                 config.scenario_id === scenarioId
             )
@@ -234,11 +234,10 @@ class TextBasedScenariosPage extends Component {
         document.addEventListener('keydown', this.handleKeyPress);
         const queryParams = new URLSearchParams(window.location.search);
         const pid = queryParams.get('pid');
-        const classification = queryParams.get('class');
-        if (isDefined(pid) && isDefined(classification)) {
+        if (isDefined(pid)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
-                "Military or Civilian background": classification == 'Civ' ? "Civilian Background" : "Military Background",
+                "Military or Civilian background": null,
                 "vrEnvironmentsCompleted": ['none']
             };
             this.setState({ moderated: false, startSurvey: false }, () => {
@@ -340,8 +339,8 @@ class TextBasedScenariosPage extends Component {
         });
 
         scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
-        scenarioData.evalNumber = 4
-        scenarioData.evalName = 'Dry Run Evaluation'
+        scenarioData.evalNumber = 5
+        scenarioData.evalName = 'Phase 1 Evaluation'
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -352,7 +351,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('DryRun')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept')) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -364,13 +363,12 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('DryRun')) {
+        if (scenario.scenario_id.includes('adept')) {
             if (this.state.adeptSessionsCompleted === 0) {
                 await this.beginRunningSession(scenario)
             } else {
                 await this.continueRunningSession(scenario)
             }
-            await this.calcScore(scenario, 'adept')
 
             let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
 
@@ -398,7 +396,7 @@ class TextBasedScenariosPage extends Component {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
                 this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+                    await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
                 })
             }
         } catch (e) {
@@ -408,22 +406,15 @@ class TextBasedScenariosPage extends Component {
 
     continueRunningSession = async (scenario) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-
-        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+        await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-        const alignmentEndpoint = '/api/v1/alignment/session'
 
-        const alignmentData = await Promise.all(
-            alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, this.state.combinedSessionId, 'adept'))
-        );
-        const sortedAlignmentData = alignmentData.sort((a, b) => b.score - a.score);
         const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
 
         for (let scenario of scenarios) {
-            scenario.combinedAlignmentData = sortedAlignmentData
             scenario.combinedSessionId = this.state.combinedSessionId
             scenario.mostLeastAligned = combinedMostLeastAligned
             scenario.kdmas = await this.attachKdmaValue(this.state.combinedSessionId, url)
@@ -471,7 +462,12 @@ class TextBasedScenariosPage extends Component {
                         kdma_id: target
                     }
                 });
-                responses.push({ 'target': target, 'response': response.data })
+
+                const filteredData = response.data.filter(obj => 
+                    !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
+                );
+
+                responses.push({ 'target': target, 'response': filteredData })
             }
         } catch (err) {
             console.error(err)
@@ -530,51 +526,41 @@ class TextBasedScenariosPage extends Component {
     };
 
     calcScore = async (scenario, alignmentType) => {
-        let url, sessionEndpoint, alignmentEndpoint;
-
-        if (alignmentType === 'adept') {
-            url = process.env.REACT_APP_ADEPT_URL;
-            sessionEndpoint = '/api/v1/new_session';
-            alignmentEndpoint = '/api/v1/alignment/session';
-        } else if (alignmentType === 'soartech') {
-            url = process.env.REACT_APP_SOARTECH_URL;
-            sessionEndpoint = '/api/v1/new_session?user_id=default_user';
-            alignmentEndpoint = '/api/v1/alignment/session';
-        } else {
-            throw new Error('Invalid alignment type');
+        // function should now only be called on soartech scenarios because of change to ADEPT server
+        if (alignmentType != 'soartech') {
+            console.error('function should only be called on alignment type soartech but was called on ' + alignmentType)
+            return
         }
+
+        const url = process.env.REACT_APP_SOARTECH_URL;
+        const sessionEndpoint = '/api/v1/new_session?user_id=default_user';
+        const alignmentEndpoint = '/api/v1/alignment/session';
+        const scenario_id = scenario.scenario_id
 
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
-            if (session.status === (alignmentType === 'adept' ? 200 : 201)) {
+            if (session.status === 201) {
                 const sessionId = session.data;
-                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
-
-                if (alignmentType === 'adept') {
-                    scenario.alignmentData = await Promise.all(
-                        alignmentIDs.adeptAlignmentIDs.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'adept'))
-                    );
-                } else if (alignmentType === 'soartech') {
-                    let targetArray;
-                    if (scenario.scenario_id.includes('qol')) {
-                        targetArray = alignmentIDs.stQOL;
-                    } else if (scenario.scenario_id.includes('vol')) {
-                        targetArray = alignmentIDs.stVOL;
-                    } else {
-                        throw new Error('Invalid SoarTech scenario type');
-                    }
-
-                    scenario.alignmentData = await Promise.all(
-                        targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
-                    );
-
-                    scenario.alignmentData.sort((a, b) => b.score - a.score);
-                    const mostLeastAligned = await this.mostLeastAligned(sessionId, 'soartech', url, scenario)
-                    scenario.mostLeastAligned = mostLeastAligned
+                await this.submitResponses(scenario, scenario_id, url, sessionId);
+                let targetArray;
+                if (scenario.scenario_id.includes('qol')) {
+                    targetArray = alignmentIDs.stQOL;
+                } else if (scenario.scenario_id.includes('vol')) {
+                    targetArray = alignmentIDs.stVOL;
+                } else {
+                    throw new Error('Invalid SoarTech scenario type');
                 }
 
+                scenario.alignmentData = await Promise.all(
+                    targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
+                );
+
+                scenario.alignmentData.sort((a, b) => b.score - a.score);
+                const mostLeastAligned = await this.mostLeastAligned(sessionId, 'soartech', url, scenario)
+                scenario.mostLeastAligned = mostLeastAligned
                 scenario.serverSessionId = sessionId;
             }
+
         } catch (error) {
             console.error(`Error in ${alignmentType} alignment:`, error);
         }
@@ -755,22 +741,34 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
     return React.createElement(MedicalScenario, props)
 })
 
-const dreMappings = {
-    'AD-1': ['DryRunEval-MJ2-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'AD-2': ['DryRunEval-MJ4-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'AD-3': ['DryRunEval-MJ5-eval', 'DryRunEval.MJ1', 'DryRunEval.IO1'],
-    'ST-1': ['qol-dre-1-eval', 'vol-dre-1-eval'],
-    'ST-2': ['qol-dre-2-eval', 'vol-dre-2-eval'],
-    'ST-3': ['qol-dre-3-eval', 'vol-dre-3-eval'],
+const p1Mappings = {
+    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
+    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
+    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
 }
 
-const simNameMappings = {
+export const simNameMappings = {
     'AD-1': ['Eval_Adept_Urban'],
     'AD-2': ['Eval_Adept_Jungle'],
     'AD-3': ['Eval-Adept_Desert'],
-    'ST-1': ['stq1', 'stv1'],
-    'ST-2': ['stq2', 'stv2'],
-    'ST-3': ['stq3', 'stv3'],
+    'ST-1': ['stq2_ph1', 'stv2_ph1'],
+    'ST-2': ['stq3_ph1', 'stv3_ph1'],
+    'ST-3': ['stq4_ph1', 'stv4_ph1'],
+}
+
+/* 
+    I needed to save these configs separately from the dre configs despite the fact they have the same ids.
+    Using this mapping to get id that matches up with ADEPT ta1 server for server calls
+*/
+const adeptScenarioIdMap = {
+    'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
+    'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
+    'phase1-adept-eval-MJ5': 'DryRunEval-MJ5-eval',
+    'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
+    'phase1-adept-train-IO1': 'DryRunEval.IO1'
 }
 
 const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists }) => {

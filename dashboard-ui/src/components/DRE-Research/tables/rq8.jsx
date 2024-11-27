@@ -7,7 +7,8 @@ import definitionXLFile from '../variables/Variable Definitions RQ8.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ8.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { exportToExcel, getAlignments } from "../utils";
+import { getAlignments } from "../utils";
+import { DownloadButtons } from "./download-buttons";
 
 
 const GET_HUMAN_RESULTS = gql`
@@ -38,7 +39,7 @@ const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Partici
 ]
 
 
-export function RQ8() {
+export function RQ8({ evalNum }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_HUMAN_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
@@ -56,7 +57,7 @@ export function RQ8() {
 
     React.useEffect(() => {
         if (dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment && dataParticipantLog?.getParticipantLog) {
-            const textResults = dataTextResults.getAllScenarioResults;
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
             const allObjs = [];
@@ -80,7 +81,7 @@ export function RQ8() {
                     continue;
                 }
 
-                const { textResultsForPID, alignments } = getAlignments(textResults, pid);
+                const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
@@ -169,7 +170,7 @@ export function RQ8() {
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataSim, dataTextResults, dataParticipantLog]);
+    }, [dataSim, dataTextResults, dataParticipantLog, evalNum]);
 
 
     const openModal = () => {
@@ -238,10 +239,7 @@ export function RQ8() {
                     onChange={(_, newVal) => setScenarioFilters(newVal)}
                 />
             </div>
-            <div className="option-section">
-                <button className='downloadBtn' onClick={() => exportToExcel('RQ-8 data', formattedData, HEADERS)}>Download All Data</button>
-                <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>
-            </div>
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-8 data'} openModal={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

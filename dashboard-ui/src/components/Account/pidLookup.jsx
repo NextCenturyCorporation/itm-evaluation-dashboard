@@ -5,6 +5,7 @@ import './login.css';
 import bcrypt from 'bcryptjs';
 import gql from "graphql-tag";
 import { useQuery } from 'react-apollo'
+import { simNameMappings } from "../TextBasedScenarios/TextBasedScenariosPage";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -14,9 +15,10 @@ const GET_PARTICIPANT_LOG = gql`
 export function PidLookup() {
 
     const [viewHiddenEmail, setViewHiddenEmail] = React.useState(false);
-    const [classification, setClassification] = React.useState("");
     const [email, setEmail] = React.useState("");
     const [pid, setPid] = React.useState("");
+    const [sim1, setSim1] = React.useState("")
+    const [sim2, setSim2] = React.useState("")
     const [notFound, setNotFound] = React.useState(false);
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
 
@@ -25,24 +27,31 @@ export function PidLookup() {
         if (dataParticipantLog?.getParticipantLog) {
             const trimmedEmail = email.trim().toLowerCase();
             const hashedEmail = bcrypt.hashSync(trimmedEmail, "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
-            const matchingPid = dataParticipantLog.getParticipantLog.find((x) => x.hashedEmail == hashedEmail && classification == x.Type)?.['ParticipantID'];
-            if (matchingPid) {
-                setPid(matchingPid);
+            const matchingParticipant = dataParticipantLog.getParticipantLog.find(
+                (x) => x.hashedEmail == hashedEmail
+            );
+
+            if (matchingParticipant) {
+                setPid(matchingParticipant.ParticipantID);
+                setSim1(matchingParticipant['Sim-1']);
+                setSim2(matchingParticipant['Sim-2']);
                 setNotFound(false);
-            }
-            else {
+            } else {
                 setPid("");
+                setSim1("");
+                setSim2("");
                 setNotFound(true);
             }
         }
     };
 
-    const toggleVisibility = () => {
-        setViewHiddenEmail(!viewHiddenEmail);
+    const formatSimValue = (sim) => {
+        const mapped = simNameMappings[sim];
+        return Array.isArray(mapped) ? mapped.join(", ") : mapped;
     };
 
-    const onChangeClassification = ({ target }) => {
-        setClassification(target.value);
+    const toggleVisibility = () => {
+        setViewHiddenEmail(!viewHiddenEmail);
     };
 
     const onChangeEmail = ({ target }) => {
@@ -70,24 +79,17 @@ export function PidLookup() {
                             <button className="blank-btn" type='button' onClick={toggleVisibility}>{viewHiddenEmail ? <VisibilityIcon /> : <VisibilityOffIcon />}</button>
                         </div>
                     </div>
-                    <div className="form-group">
-                        <div className="input-login-header">Classification</div>
-                        <div className='radios'>
-                            <div>
-                                <input type="radio" id="Mil" name="classification" value="Mil" onChange={onChangeClassification} required />
-                                <label htmlFor="Mil">Military</label>
-                            </div>
-                            <div>
-                                <input type="radio" id="Civ" name="classification" value="Civ" onChange={onChangeClassification} />
-                                <label htmlFor="Civ">Civilian</label>
-                            </div>
-                        </div>
-                    </div>
 
                     <div className="form-group">
                         <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Find PID</button>
                     </div>
-                    {pid && <h3 className='pid-shower'>PID: {pid}</h3>}
+                    {pid &&
+                        <>
+                            <h3 className='pid-shower'>PID: {pid}</h3>
+                            <h3 className='pid-shower'>SIM-1: {formatSimValue(sim1)}</h3>
+                            <h3 className='pid-shower'>SIM-2: {formatSimValue(sim2)}</h3>
+                        </>
+                    }
                     {notFound && <h3 className='error-text'>PID Not Found</h3>}
                 </form>
             </div>
