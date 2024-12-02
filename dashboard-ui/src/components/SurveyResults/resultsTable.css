@@ -163,3 +163,19 @@
     margin-left: 12px;
     margin-top: 18px;
 }
+
+.li-green-cell {
+    background-color: rgb(194, 236, 194) !important;
+}
+
+.dk-green-cell {
+    background-color: rgb(123, 188, 123) !important;
+}
+
+.white-cell {
+    background-color: white !important;
+}
+
+.small-column {
+    min-width: 100px !important;
+}
