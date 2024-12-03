@@ -572,13 +572,13 @@ const resolvers = {
 
           const highestPidDoc = await dashboardDB.db.collection('participantLog')
             .find({
-              ParticipantID: { $type: "number" }
+              ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
             })
             .sort({ ParticipantID: -1 })
             .limit(1)
             .toArray();
 
-          const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : 202411301;
+          const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : args.lowPid;
 
           args.participantData.ParticipantID = nextPid;
         }
@@ -596,7 +596,7 @@ const resolvers = {
             // get absolute latest highest PID
             const highestPidDoc = await dashboardDB.db.collection('participantLog')
               .find({
-                ParticipantID: { $type: "number" }
+                ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
               })
               .sort({ ParticipantID: -1 })
               .limit(1)
