@@ -430,7 +430,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: sheets, SheetNames: names };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data_dre' + fileExtension);
+            FileSaver.saveAs(data, 'human_sim_data' + (selectedEval == 4 ? '_dre' : '_ph1') + fileExtension);
         }
     };
 
