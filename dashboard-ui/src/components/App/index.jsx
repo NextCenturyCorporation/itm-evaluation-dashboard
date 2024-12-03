@@ -446,6 +446,9 @@ export class App extends React.Component {
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
                                                                         ADM Alignment Results
                                                                     </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className='dropdown-item' to="/adm-probe-responses">
+                                                                        ADM Probe Responses
+                                                                    </NavDropdown.Item>
                                                                 </NavDropdown>
                                                                 <NavDropdown title="Data Analysis">
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
