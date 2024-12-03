@@ -91,6 +91,14 @@ export function RQ13({ evalNum }) {
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            data.allObjs.sort((a, b) => {
+                // Compare PID
+                if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
+                if (Number(a['Delegator_ID']) > Number(b['Delegator_ID'])) return 1;
+
+                // if PID is equal, compare trial id
+                return a.Trial_ID - b.Trial_ID;
+            });
             setFormattedData(data.allObjs);
             setFilteredData(data.allObjs);
             setTA1s(Array.from(new Set(data.allTA1s)));

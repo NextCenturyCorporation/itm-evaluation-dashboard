@@ -34,7 +34,7 @@ export function DefinitionTable({ evalNumber }) {
 
     const exportWordDoc = () => {
         const wordFile = evalNumber == 4 ? dreWordFile : mreWordFile;
-        FileSaver.saveAs(wordFile, (evalNumber == 4 ? 'dre_' : 'mre_') + 'Definitions.docx');
+        FileSaver.saveAs(wordFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : 'ph1_') + 'Definitions.docx');
     };
 
     return (<>
