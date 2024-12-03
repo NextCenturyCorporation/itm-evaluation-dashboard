@@ -24,6 +24,7 @@ import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { createBrowserHistory } from 'history';
+import { SurveyPageWrapper } from '../Survey/survey';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -101,7 +102,8 @@ class TextBasedScenariosPage extends Component {
             moderated: true,
             startSurvey: true,
             updatePLog: false,
-            startCount: 0
+            startCount: 0,
+            onlineOnly: false
         };
 
         this.surveyData = {};
@@ -234,15 +236,25 @@ class TextBasedScenariosPage extends Component {
         document.addEventListener('keydown', this.handleKeyPress);
         const queryParams = new URLSearchParams(window.location.search);
         const pid = queryParams.get('pid');
+        const classification = queryParams.get('class');
+        const adeptQualtrix = queryParams.get('adeptQualtrix');
         if (isDefined(pid)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
-                "Military or Civilian background": null,
+                "Military or Civilian background": classification == 'Online' ? 'Online' : classification,
                 "vrEnvironmentsCompleted": ['none']
             };
-            this.setState({ moderated: false, startSurvey: false }, () => {
-                this.introSurveyComplete(this.introSurvey);
-            });
+            if (isDefined(adeptQualtrix)) {
+                this.setState({ moderated: false, startSurvey: true, onlineOnly: true }, () => {
+                    this.introSurveyComplete(this.introSurvey);
+                });
+            }
+            else {
+                this.setState({ moderated: false, startSurvey: false }, () => {
+                    this.introSurveyComplete(this.introSurvey);
+                });
+            }
+
         }
     }
 
@@ -719,7 +731,7 @@ class TextBasedScenariosPage extends Component {
                             <Spinner animation="border" role="status">
                                 <span className="sr-only">Loading...</span>
                             </Spinner>
-                            <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                            <p style={{ marginTop: '10px' }}>{this.state.onlineOnly ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily" : "Uploading documents, please wait..."}</p>
                         </div>
                     </div>
                 )}
@@ -728,6 +740,7 @@ class TextBasedScenariosPage extends Component {
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}
                         moderatorExists={this.state.moderated}
+                        toDelegation={this.state.onlineOnly}
                     />
                 )}
             </>
@@ -771,46 +784,51 @@ const adeptScenarioIdMap = {
     'phase1-adept-train-IO1': 'DryRunEval.IO1'
 }
 
-const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists }) => {
+const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
 
     return (
-        <Container className="mt-5">
-            <Row className="justify-content-center">
-                <Col md={10} lg={8}>
-                    <Card className="border-0 shadow">
-                        <Card.Body className="text-center p-5">
-                            <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
-                            {moderatorExists ?
-                                <>
-                                    <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
-                                    <Card bg="light" className="p-4">
-                                        <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
-                                            Participant should complete the following scenarios in VR:
-                                        </Card.Title>
-                                        <Card.Subtitle className="mb-3 text-muted">
-                                            Please complete the scenarios in the order listed below:
-                                        </Card.Subtitle>
-                                        <ListGroup variant="flush" className="border rounded">
-                                            {allScenarios.map((scenario, index) => (
-                                                <ListGroup.Item
-                                                    key={index}
-                                                    className="py-3 d-flex align-items-center"
-                                                >
-                                                    <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
-                                                    <span className="fs-5">{scenario}</span>
-                                                </ListGroup.Item>
-                                            ))}
-                                        </ListGroup>
-                                    </Card>
-                                    <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
-                                </> : <p>You may now close the browser</p>
-                            }
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
+        <>
+            {toDelegation ?
+                <SurveyPageWrapper />
+                :
+                <Container className="mt-5">
+                    <Row className="justify-content-center">
+                        <Col md={10} lg={8}>
+                            <Card className="border-0 shadow">
+                                <Card.Body className="text-center p-5">
+                                    <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                                    {moderatorExists ?
+                                        <>
+                                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                                            <Card bg="light" className="p-4">
+                                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                                    Participant should complete the following scenarios in VR:
+                                                </Card.Title>
+                                                <Card.Subtitle className="mb-3 text-muted">
+                                                    Please complete the scenarios in the order listed below:
+                                                </Card.Subtitle>
+                                                <ListGroup variant="flush" className="border rounded">
+                                                    {allScenarios.map((scenario, index) => (
+                                                        <ListGroup.Item
+                                                            key={index}
+                                                            className="py-3 d-flex align-items-center"
+                                                        >
+                                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                                            <span className="fs-5">{scenario}</span>
+                                                        </ListGroup.Item>
+                                                    ))}
+                                                </ListGroup>
+                                            </Card>
+                                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                                        </> : <p>You may now close the browser</p>
+                                    }
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Container>}
+        </>
     );
 };
