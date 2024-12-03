@@ -15,7 +15,16 @@ const SIM_MAP = {
     "dryrun-soartech-eval-qol3": 3,
     "dryrun-soartech-eval-vol1": 1,
     "dryrun-soartech-eval-vol2": 2,
-    "dryrun-soartech-eval-vol3": 3
+    "dryrun-soartech-eval-vol3": 3,
+    "phase1-adept-eval-MJ2": 1,
+    "phase1-adept-eval-MJ4": 2,
+    "phase1-adept-eval-MJ5": 3,
+    "phase1-soartech-eval-qol2": 1,
+    "phase1-soartech-eval-qol3": 2,
+    "phase1-soartech-eval-qol4": 3,
+    "phase1-soartech-eval-vol2": 1,
+    "phase1-soartech-eval-vol3": 2,
+    "phase1-soartech-eval-vol4": 3
 }
 
 const adept_dre_names = {
@@ -78,7 +87,16 @@ const TEXT_BASED_MAP = {
     "qol-dre-3-eval": 3,
     "vol-dre-1-eval": 1,
     "vol-dre-2-eval": 2,
-    "vol-dre-3-eval": 3
+    "vol-dre-3-eval": 3,
+    "phase1-adept-eval-MJ2": 1,
+    "phase1-adept-eval-MJ4": 2,
+    "phase1-adept-eval-MJ5": 3,
+    "qol-ph1-eval-2": 1,
+    "qol-ph1-eval-3": 2,
+    "qol-ph1-eval-4": 3,
+    "vol-ph1-eval-2": 1,
+    "vol-ph1-eval-3": 2,
+    "vol-ph1-eval-4": 3,
 };
 
 const RESPONSIBILITY_MAP = {
@@ -615,13 +633,13 @@ function populateHumanDataRow(rowObject, version) {
                         if (rowObject[0]['scenario_id'].includes('qol') && rowObject[0].data.data[i].probe_id.indexOf(qol1ProbeIds[j]) > -1) {
                             returnObj["QOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["QualityOfLife"] ?? '-';
                         }
-                        else if (rowObject[0]['scenario_id'].includes('qol') && (rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 3)) > -1)) {
+                        else if (rowObject[0]['scenario_id'].includes('qol') && (rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 3)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 4)) > -1)) {
                             returnObj["QOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["QualityOfLife"] ?? '-';
                         }
                         else if (rowObject[0]['scenario_id'].includes('vol') && rowObject[0].data.data[i].probe_id.indexOf(vol1ProbeIds[j]) > -1) {
                             returnObj["VOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["PerceivedQuantityOfLivesSaved"] ?? '-';
                         }
-                        else if (rowObject[0]['scenario_id'].includes('vol') && (rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 3)) > -1)) {
+                        else if (rowObject[0]['scenario_id'].includes('vol') && (rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 3)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 4)) > -1)) {
                             returnObj["VOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["PerceivedQuantityOfLivesSaved"] ?? '-';
                         }
                     }
@@ -816,14 +834,12 @@ function populateDataSet(data) {
 
 
             if ([4, 5].includes(res.results.evalNumber)) {
-
                 tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('adept'))] ?? '-';
                 tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('qol'))] ?? '-';
                 tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('vol'))] ?? '-';
 
                 const text_scenarios = data.getAllScenarioResultsByEval.filter((x) => x.participantID == pid);
-
-                tmpSet['AD_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('DryRunEval-MJ'))?.scenario_id] ?? '-';
+                tmpSet['AD_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('DryRunEval-MJ') || x?.scenario_id?.includes('phase1-adept-eval-MJ'))?.scenario_id] ?? '-';
                 tmpSet['QOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
                 tmpSet['VOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
 
