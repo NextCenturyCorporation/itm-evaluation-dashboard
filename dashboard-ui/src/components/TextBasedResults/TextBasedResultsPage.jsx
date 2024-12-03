@@ -14,7 +14,7 @@ import XLSX from 'sheetjs-style';
 import Select from 'react-select';
 import { useSelector } from 'react-redux';
 import NoSelection from './NoSelection';
-let evalOptions = [];
+
 const get_eval_name_numbers = gql`
     query getEvalIdsForAllScenarioResults{
         getEvalIdsForAllScenarioResults
@@ -24,6 +24,11 @@ const GET_SCENARIO_RESULTS_BY_EVAL = gql`
     query getAllScenarioResultsByEval($evalNumber: Float!){
         getAllScenarioResultsByEval(evalNumber: $evalNumber)
   }`;
+
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }`;
 
 function shortenAnswer(answer) {
     // shortens an answer so the whole thing is visible and understandable without taking up too much screen real estate
@@ -327,7 +332,8 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
 
 
 export default function TextBasedResultsPage() {
-    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+    const { loading: loadingEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+    const { data: participantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [scenarioChosen, setScenario] = React.useState(null);
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
@@ -383,7 +389,7 @@ export default function TextBasedResultsPage() {
         const participants = {};
         const uniqueScenarios = new Set();
 
-        if (data?.getAllScenarioResultsByEval) {
+        if (data?.getAllScenarioResultsByEval && participantLog?.getParticipantLog) {
             Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
                 filteredTextBasedConfigs[scenario].pages.forEach(page => {
@@ -406,6 +412,13 @@ export default function TextBasedResultsPage() {
             });
 
             for (const result of data.getAllScenarioResultsByEval) {
+                const pid = result['participantID'];
+                const logData = participantLog.getParticipantLog.find(
+                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                );
+                if ((selectedEval == 4 || selectedEval == 5) && logData.length == 0) {
+                    continue;
+                }
                 try {
                     const scenario = result.scenario_id || result.title;
                     if (scenario) {

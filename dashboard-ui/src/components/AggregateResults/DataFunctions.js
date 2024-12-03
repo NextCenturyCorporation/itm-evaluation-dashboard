@@ -748,14 +748,17 @@ function populateDataSet(data) {
 
             // get participant id. two different versions exist: one with Participant ID and the other with Participant ID Page
             let pid = safeGet(res, ['results', 'Participant ID', 'questions', 'Participant ID', 'response'], ['results', 'Participant ID Page', 'questions', 'Participant ID', 'response']);
+            if (!pid) {
+                pid = safeGet(res, ['results', 'pid'])
+            }
             if (!pid || pid === '42' || pid === '019') {
                 // ignore some pids
                 continue;
             }
             if ([4, 5].includes(res.results.evalNumber)) {
-                const valid_ids = data?.getParticipantLog?.map((x) => x?.ParticipantID?.toString());
-                if (!valid_ids.includes(pid)) {
-                    // only include valid ids for survey version 4
+                const valid_id = data?.getParticipantLog?.filter((x) => x?.ParticipantID?.toString() == pid && x['Type'] != 'Test');
+                if (valid_id.length == 0) {
+                // only include valid ids for survey version 4 & 5
                     continue;
                 }
             }
