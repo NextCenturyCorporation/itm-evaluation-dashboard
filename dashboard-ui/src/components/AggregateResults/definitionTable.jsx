@@ -10,7 +10,7 @@ export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const xlFile = evalNumber == 4 ? dreXlFile : mreXlFile; 
+        const xlFile = evalNumber == 4 || evalNumber == 5 ? dreXlFile : mreXlFile; 
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
