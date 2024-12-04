@@ -15,7 +15,16 @@ const SIM_MAP = {
     "dryrun-soartech-eval-qol3": 3,
     "dryrun-soartech-eval-vol1": 1,
     "dryrun-soartech-eval-vol2": 2,
-    "dryrun-soartech-eval-vol3": 3
+    "dryrun-soartech-eval-vol3": 3,
+    "phase1-adept-eval-MJ2": 1,
+    "phase1-adept-eval-MJ4": 2,
+    "phase1-adept-eval-MJ5": 3,
+    "phase1-soartech-eval-qol2": 1,
+    "phase1-soartech-eval-qol3": 2,
+    "phase1-soartech-eval-qol4": 3,
+    "phase1-soartech-eval-vol2": 1,
+    "phase1-soartech-eval-vol3": 2,
+    "phase1-soartech-eval-vol4": 3
 }
 
 const adept_dre_names = {
@@ -78,7 +87,16 @@ const TEXT_BASED_MAP = {
     "qol-dre-3-eval": 3,
     "vol-dre-1-eval": 1,
     "vol-dre-2-eval": 2,
-    "vol-dre-3-eval": 3
+    "vol-dre-3-eval": 3,
+    "phase1-adept-eval-MJ2": 1,
+    "phase1-adept-eval-MJ4": 2,
+    "phase1-adept-eval-MJ5": 3,
+    "qol-ph1-eval-2": 1,
+    "qol-ph1-eval-3": 2,
+    "qol-ph1-eval-4": 3,
+    "vol-ph1-eval-2": 1,
+    "vol-ph1-eval-3": 2,
+    "vol-ph1-eval-4": 3,
 };
 
 const RESPONSIBILITY_MAP = {
@@ -615,13 +633,13 @@ function populateHumanDataRow(rowObject, version) {
                         if (rowObject[0]['scenario_id'].includes('qol') && rowObject[0].data.data[i].probe_id.indexOf(qol1ProbeIds[j]) > -1) {
                             returnObj["QOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["QualityOfLife"] ?? '-';
                         }
-                        else if (rowObject[0]['scenario_id'].includes('qol') && (rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 3)) > -1)) {
+                        else if (rowObject[0]['scenario_id'].includes('qol') && (rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 3)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(qolProbeIds[j].replace('?', 4)) > -1)) {
                             returnObj["QOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["QualityOfLife"] ?? '-';
                         }
                         else if (rowObject[0]['scenario_id'].includes('vol') && rowObject[0].data.data[i].probe_id.indexOf(vol1ProbeIds[j]) > -1) {
                             returnObj["VOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["PerceivedQuantityOfLivesSaved"] ?? '-';
                         }
-                        else if (rowObject[0]['scenario_id'].includes('vol') && (rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 3)) > -1)) {
+                        else if (rowObject[0]['scenario_id'].includes('vol') && (rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 2)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 3)) > -1 || rowObject[0].data.data[i].probe_id.indexOf(volProbeIds[j].replace('?', 4)) > -1)) {
                             returnObj["VOL_" + (j + 1)] = rowObject[0].data.data[i].probe.kdma_association?.["PerceivedQuantityOfLivesSaved"] ?? '-';
                         }
                     }
@@ -819,14 +837,12 @@ function populateDataSet(data) {
 
 
             if ([4, 5].includes(res.results.evalNumber)) {
-
                 tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('adept'))] ?? '-';
                 tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('qol'))] ?? '-';
                 tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('vol'))] ?? '-';
 
                 const text_scenarios = data.getAllScenarioResultsByEval.filter((x) => x.participantID == pid);
-
-                tmpSet['AD_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('DryRunEval-MJ'))?.scenario_id] ?? '-';
+                tmpSet['AD_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('DryRunEval-MJ') || x?.scenario_id?.includes('phase1-adept-eval-MJ'))?.scenario_id] ?? '-';
                 tmpSet['QOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
                 tmpSet['VOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
 
@@ -835,21 +851,21 @@ function populateDataSet(data) {
                 tmpSet['IO_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
                 const qol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.sid;
                 const qol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
-                tmpSet['QOL_KDMA_Sim'] = ['202409112'].includes(pid) ? '-' : (qol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_DRE_URL + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-');
+                tmpSet['QOL_KDMA_Sim'] = ['202409112'].includes(pid) ? '-' : (qol_sim_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-');
                 const vol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.sid;
                 const vol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved');
-                tmpSet['VOL_KDMA_Sim'] = ['202409111', '202409112'].includes(pid) ? '-' : (vol_sim_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_DRE_URL + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores` : '-');
-                const adept_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('DryRun'))?.kdmas;
+                tmpSet['VOL_KDMA_Sim'] = ['202409111', '202409112'].includes(pid) ? '-' : (vol_sim_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores` : '-');
+                const adept_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('DryRun') || x?.scenario_id?.includes('adept'))?.kdmas;
                 if (Array.isArray(adept_text_kdmas)) {
                     tmpSet['MJ_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
                     tmpSet['IO_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
                 }
                 const qol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.serverSessionId;
                 const qol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('qol'))?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
-                tmpSet['QOL_KDMA_Text'] = qol_text_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_DRE_URL + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores` : '-';
+                tmpSet['QOL_KDMA_Text'] = qol_text_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores` : '-';
                 const vol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.serverSessionId;
                 const vol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('vol'))?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved');
-                tmpSet['VOL_KDMA_Text'] = vol_text_kdma ? 'link:' + process.env.REACT_APP_SOARTECH_DRE_URL + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores` : '-';
+                tmpSet['VOL_KDMA_Text'] = vol_text_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores` : '-';
             }
 
 
