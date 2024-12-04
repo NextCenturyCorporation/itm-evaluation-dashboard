@@ -151,6 +151,11 @@ export const ADMProbeResponses = (props) => {
         return currentScenarioObj ? formatScenarioString(currentScenarioObj._id.id) : '';
     };
 
+    const getSessionId = (history) => {
+        const sessionEntry = history.find(entry => entry.command === 'TA1 Session ID');
+        return sessionEntry?.response || '-';
+    };
+
     return (
         <div className="layout">
             <div className="layout-board">
@@ -232,12 +237,15 @@ export const ADMProbeResponses = (props) => {
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
                                             if (testDataArray.length === 0) return <div>No data available</div>;
-
+                                            console.log(testDataArray);
                                             // Get all possible probe IDs from all test data
                                             const probeColumns = new Set();
                                             testDataArray.forEach(({ data }) => {
                                                 const history = data?.history || [];
-                                                const probeResponses = history.filter(entry => entry.command === 'Respond to TA1 Probe');
+                                                const probeResponses = history.filter(entry =>
+                                                    entry.command === 'Respond to TA1 Probe' &&
+                                                    entry.parameters?.probe_id !== 'n/a'  // Filter out n/a probes
+                                                );
                                                 probeResponses.forEach(response => {
                                                     if (response.parameters?.probe_id) {
                                                         probeColumns.add(response.parameters.probe_id);
@@ -268,7 +276,7 @@ export const ADMProbeResponses = (props) => {
                                                             {currentEval >= 3 && (
                                                                 <>
                                                                     <th>Alignment Target</th>
-                                                                    <th>Session ID</th>
+                                                                    <th>TA1 Session ID</th>
                                                                 </>
                                                             )}
                                                             {sortedProbeColumns.map(probeId => (
@@ -277,24 +285,21 @@ export const ADMProbeResponses = (props) => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {testDataArray.map(({ alignmentTarget, data }) => {
-                                                            const sessionId = data?.history[0]?.parameters?.session_id || '-';
-                                                            return (
-                                                                <tr key={`${adm}-${alignmentTarget || 'default'}`}>
-                                                                    {currentEval >= 3 && (
-                                                                        <>
-                                                                            <td>{alignmentTarget}</td>
-                                                                            <td>{sessionId}</td>
-                                                                        </>
-                                                                    )}
-                                                                    {sortedProbeColumns.map(probeId => (
-                                                                        <td key={`${alignmentTarget}-${probeId}`}>
-                                                                            {getChoiceForProbe(data.history, probeId) || '-'}
-                                                                        </td>
-                                                                    ))}
-                                                                </tr>
-                                                            );
-                                                        })}
+                                                        {testDataArray.map(({ alignmentTarget, data }) => (
+                                                            <tr key={`${adm}-${alignmentTarget || 'default'}`}>
+                                                                {currentEval >= 3 && (
+                                                                    <>
+                                                                        <td>{alignmentTarget}</td>
+                                                                        <td>{getSessionId(data.history)}</td>
+                                                                    </>
+                                                                )}
+                                                                {sortedProbeColumns.map(probeId => (
+                                                                    <td key={`${alignmentTarget}-${probeId}`}>
+                                                                        {getChoiceForProbe(data.history, probeId) || '-'}
+                                                                    </td>
+                                                                ))}
+                                                            </tr>
+                                                        ))}
                                                     </tbody>
                                                 </table>
                                             );
