@@ -30,9 +30,15 @@ const alignment_target_by_scenario = gql`
     }
 `;
 
-const test_by_adm_and_scenario = gql`
-    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTarget: String, $evalNumber: Int){
-        getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName, alignmentTarget: $alignmentTarget, evalNumber: $evalNumber)
+const get_all_test_data = gql`
+    query getAllTestDataForADM($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTargets: [String], $evalNumber: Int) {
+        getAllTestDataForADM(
+            admQueryStr: $admQueryStr,
+            scenarioID: $scenarioID,
+            admName: $admName,
+            alignmentTargets: $alignmentTargets,
+            evalNumber: $evalNumber
+        )
     }
 `;
 
@@ -78,22 +84,11 @@ export const ADMProbeResponses = (props) => {
         }
     }, [admData, currentScenario, currentEval, alignmentTargets]);
 
-    const getProbeColumns = (history) => {
-        const probeResponses = history.filter(entry => entry.command === 'Respond to TA1 Probe');
-        const columns = new Set();
-        probeResponses.forEach(response => {
-            if (response.parameters?.probe_id) {
-                columns.add(response.parameters.probe_id);
-            }
-        });
-        return Array.from(columns).sort();
-    };
-
     const getChoiceForProbe = (history, probeId) => {
         const probeResponse = history
             .filter(entry => entry.command === 'Respond to TA1 Probe')
             .find(entry => entry.parameters?.probe_id === probeId);
-        return probeResponse?.parameters?.choice || 'N/A';
+        return probeResponse?.parameters?.choice || '-';
     };
 
     if (evalNameLoading) return <div>Loading...</div>;
@@ -222,12 +217,12 @@ export const ADMProbeResponses = (props) => {
                                 </div>
                                 <div className='resultTableSection result-table-section-override'>
                                     <Query 
-                                        query={test_by_adm_and_scenario}
+                                        query={get_all_test_data}
                                         variables={{
                                             admQueryStr: queryString,
                                             scenarioID: currentScenario,
                                             admName: adm,
-                                            alignmentTarget: queryData[adm]?.alignmentTargets[0],  // Get first target to determine columns
+                                            alignmentTargets: queryData[adm]?.alignmentTargets || [],
                                             evalNumber: currentEval
                                         }}
                                     >
@@ -235,54 +230,57 @@ export const ADMProbeResponses = (props) => {
                                             if (loading) return <div>Loading...</div>;
                                             if (error) return <div>Error loading test data</div>;
                                             
-                                            const testData = data?.getTestByADMandScenario;
-                                            if (!testData?.history) return <div>No data available</div>;
+                                            const testDataArray = data?.getAllTestDataForADM || [];
+                                            if (testDataArray.length === 0) return <div>No data available</div>;
 
-                                            // Get all possible probe IDs for column headers
-                                            const probeColumns = getProbeColumns(testData.history);
+                                            // Get all possible probe IDs from all test data
+                                            const probeColumns = new Set();
+                                            testDataArray.forEach(({ data }) => {
+                                                const history = data?.history || [];
+                                                const probeResponses = history.filter(entry => entry.command === 'Respond to TA1 Probe');
+                                                probeResponses.forEach(response => {
+                                                    if (response.parameters?.probe_id) {
+                                                        probeColumns.add(response.parameters.probe_id);
+                                                    }
+                                                });
+                                            });
+
+                                            const sortedProbeColumns = Array.from(probeColumns).sort((a, b) => {
+                                                const aMatch = a.match(/\d+/);
+                                                const bMatch = b.match(/\d+/);
+                                                
+                                                if (aMatch && bMatch) {
+                                                    const aNum = parseInt(aMatch[0]);
+                                                    const bNum = parseInt(bMatch[0]);
+                                                    
+                                                    if (aNum === bNum) {
+                                                        return a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'});
+                                                    }
+                                                    return aNum - bNum;
+                                                }
+                                                return a.localeCompare(b);
+                                            });
 
                                             return (
                                                 <table className="itm-table">
                                                     <thead>
                                                         <tr>
                                                             {currentEval >= 3 && <th>Alignment Target</th>}
-                                                            {probeColumns.map(probeId => (
+                                                            {sortedProbeColumns.map(probeId => (
                                                                 <th key={probeId}>{probeId}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {queryData[adm]?.alignmentTargets.map(target => (
-                                                            <Query 
-                                                                key={`${adm}-${target || 'default'}`}
-                                                                query={test_by_adm_and_scenario}
-                                                                variables={{
-                                                                    admQueryStr: queryString,
-                                                                    scenarioID: currentScenario,
-                                                                    admName: adm,
-                                                                    alignmentTarget: target,
-                                                                    evalNumber: currentEval
-                                                                }}
-                                                            >
-                                                                {({ loading: rowLoading, error: rowError, data: rowData }) => {
-                                                                    if (rowLoading) return <tr><td colSpan={probeColumns.length + 1}>Loading...</td></tr>;
-                                                                    if (rowError) return <tr><td colSpan={probeColumns.length + 1}>Error loading data</td></tr>;
-
-                                                                    const rowTestData = rowData?.getTestByADMandScenario;
-                                                                    if (!rowTestData?.history) return <tr><td colSpan={probeColumns.length + 1}>No data available</td></tr>;
-
-                                                                    return (
-                                                                        <tr key={`${adm}-${target || 'default'}`}>
-                                                                            {currentEval >= 3 && <td>{target}</td>}
-                                                                            {probeColumns.map(probeId => (
-                                                                                <td key={`${target}-${probeId}`}>
-                                                                                    {getChoiceForProbe(rowTestData.history, probeId) || '-'}
-                                                                                </td>
-                                                                            ))}
-                                                                        </tr>
-                                                                    );
-                                                                }}
-                                                            </Query>
+                                                        {testDataArray.map(({ alignmentTarget, data }) => (
+                                                            <tr key={`${adm}-${alignmentTarget || 'default'}`}>
+                                                                {currentEval >= 3 && <td>{alignmentTarget}</td>}
+                                                                {sortedProbeColumns.map(probeId => (
+                                                                    <td key={`${alignmentTarget}-${probeId}`}>
+                                                                        {getChoiceForProbe(data.history, probeId) || '-'}
+                                                                    </td>
+                                                                ))}
+                                                            </tr>
                                                         ))}
                                                     </tbody>
                                                 </table>

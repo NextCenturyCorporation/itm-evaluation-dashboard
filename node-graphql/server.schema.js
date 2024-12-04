@@ -194,6 +194,7 @@ const typeDefs = gql`
     getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON,
     getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID): JSON,
     getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON
+    getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON]
     getAllScenarios(id: ID): [Scenario]
     getScenarioState(id: ID): State
     getAllScenarioStates: [State]
@@ -363,6 +364,40 @@ const resolvers = {
       }
       
       return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
+    },
+    getAllTestDataForADM: async (obj, args, context, inflow) => {
+      const results = [];
+      
+      for (const target of args.alignmentTargets) {
+        let queryObj = {
+          $and: [
+            { "history.response.id": args.scenarioID }
+          ]
+        };
+        
+        if (target) {
+          queryObj.$and.push({ "history.response.id": target });
+        }
+        
+        if (args.evalNumber) {
+          queryObj.$and.push({ "evalNumber": args.evalNumber });
+        }
+        
+        queryObj[args.admQueryStr] = args.admName;
+        
+        const result = await dashboardDB.db.collection('test')
+          .findOne(queryObj)
+          .then(result => result);
+        
+        if (result) {
+          results.push({
+            alignmentTarget: target,
+            data: result
+          });
+        }
+      }
+      
+      return results;
     },
     getAllScenarios: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').find().toArray().then(result => { return result; });
