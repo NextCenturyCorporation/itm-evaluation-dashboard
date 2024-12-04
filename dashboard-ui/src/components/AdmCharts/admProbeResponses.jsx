@@ -31,7 +31,7 @@ const alignment_target_by_scenario = gql`
 `;
 
 const test_by_adm_and_scenario = gql`
-    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTarget: String){
+    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTarget: String, $evalNumber: Int){
         getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName, alignmentTarget: $alignmentTarget)
     }`;
 
@@ -137,6 +137,10 @@ export const ADMProbeResponses = (props) => {
         return currentScenarioObj ? formatScenarioString(currentScenarioObj._id.id) : '';
     };
 
+    const filterHistory = (testData) => {
+        return testData.history.filter((entry) => entry.command == 'Respond to TA1 Probe')
+    }
+
     return (
         <div className="layout">
             <div className="layout-board">
@@ -229,8 +233,9 @@ export const ADMProbeResponses = (props) => {
                                                                 
                                                                 const testData = data?.getTestByADMandScenario;
                                                                 console.log(testData)
+                                                                console.log(filterHistory(testData))
                                                                 return testData ? 
-                                                                    JSON.stringify(testData).substring(0, 100) + "..." :
+                                                                    JSON.stringify(filterHistory(testData)).substring(0, 100) + "..." :
                                                                     "No data";
                                                             }}
                                                         </Query>

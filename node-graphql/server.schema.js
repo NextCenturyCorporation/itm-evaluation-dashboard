@@ -335,6 +335,7 @@ const resolvers = {
     getTestByADMandScenario: async (obj, args, context, inflow) => {
       // NOTE: We might need to add evalNumber to this query in the future
       let queryObj = {};
+      if (args["evalNumber"]) { queryObj["evalNumber"] = args["evalNumber"]}
       if (args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") {
         queryObj[args["admQueryStr"]] = args["admName"];
         queryObj["history.response.id"] = args["scenarioID"];
