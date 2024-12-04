@@ -18,6 +18,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import { createBrowserHistory } from 'history';
 import ADMChartPage from '../AdmCharts/admChartPage';
+import { ADMProbeResponses } from '../AdmCharts/admProbeResponses';
 import gql from "graphql-tag";
 import { Query, Mutation } from '@apollo/react-components';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setParticipantLogInStore } from './setupUtils';
@@ -509,6 +510,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route exact path="/adm-results">
                                                         <AdmResults />
+                                                    </Route>
+                                                    <Route exact path='/adm-probe-responses'>
+                                                        <ADMProbeResponses/>
                                                     </Route>
                                                     <Route exact path="/humanSimParticipant">
                                                         <AggregateResults type="HumanSimParticipant" />
