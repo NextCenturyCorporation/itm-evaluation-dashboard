@@ -395,7 +395,7 @@ export default function AggregateResults({ type }) {
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'participant_data' + fileExtension);
+        FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : selectedEval == 4 ? 'dre_' : 'ph1_') + 'participant_data' + fileExtension);
     };
 
     const exportHumanSimToExcel = async () => {
@@ -408,7 +408,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'human_sim_data' + fileExtension);
+            FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : selectedEval == 4 ? 'dre_' : 'ph1_') + 'human_sim_data' + fileExtension);
         }
         else {
             const sheets = {};
@@ -430,7 +430,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: sheets, SheetNames: names };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data_dre' + fileExtension);
+            FileSaver.saveAs(data, 'human_sim_data' + (selectedEval == 4 ? '_dre' : '_ph1') + fileExtension);
         }
     };
 

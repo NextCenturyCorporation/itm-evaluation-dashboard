@@ -150,14 +150,24 @@ export function RQ21({ evalNum }) {
             textObjs.sort((a, b) => a['Decision_Maker'] - b['Decision_Maker']);
             allObjs = allObjs.concat(textObjs);
 
-            setFormattedData(allObjs);
-            setFilteredData(allObjs);
+            if (allObjs.length > 0) {
+                setFormattedData(allObjs);
+                setFilteredData(allObjs);
+            }
+            else {
+                setFormattedData([{ 'TA1_Name': null }]);
+                setFilteredData([{ 'TA1_Name': '-' }])
+            }
             setTA1s(Array.from(new Set(allTA1s)));
             setTA2s(Array.from(new Set(allTA2s)));
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
             setGroupTargets(Array.from(new Set(allGroupTargets)));
             setDecisionMakers(Array.from(new Set(allDecisionMakers)));
+        }
+        else {
+            setFormattedData([{ 'TA1_Name': '-' }]);
+            setFilteredData([{ 'TA1_Name': '-' }])
         }
     }, [dataAdms, dataTextResults, evalNum]);
 
@@ -294,7 +304,7 @@ export function RQ21({ evalNum }) {
                         return (<tr key={dataSet['Source'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['Source'] + '-' + val}>
-                                    {dataSet[val]}
+                                    {dataSet[val] ?? '-'}
                                 </td>);
                             })}
                         </tr>);

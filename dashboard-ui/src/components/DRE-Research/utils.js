@@ -185,6 +185,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const entryObj = {};
                 entryObj['ADM Order'] = logData['ADMOrder'];
                 entryObj['Delegator_ID'] = pid;
+                entryObj['Datasource'] = evalNum == 4 ? 'DRE' : logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL';
                 entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : logData['Type'] == 'Mil' ? 'Military' : logData['Type'];
                 const roles = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'];
                 // override 102, who is military
@@ -212,13 +213,13 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     adm.history[adm.history.length - 1].parameters.target_id == page['admTarget']);
                 const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
                 entryObj['Alignment score (ADM|target)'] = alignment;
-                const simEntry = simData.find((x) => x.pid == pid &&
+                const simEntry = simData.find((x) => x.evalNumber == evalNum && x.pid == pid &&
                     (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
                     x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
                 const alignmentData = simEntry?.data?.alignment?.adms_vs_text;
                 entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD')) &&
                     x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] == page['admTarget'])?.score ?? '-';
-                entryObj['Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'])?.score ?? '-';
+                entryObj['Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'] || (evalNum == 5 && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
                 entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                 entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
                 entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
