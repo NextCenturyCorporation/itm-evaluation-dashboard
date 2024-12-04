@@ -51,7 +51,7 @@ class LoginApp extends React.Component {
 
         $("#text-entry-feedback").removeClass("feedback-display");
         try {
-            this.props.participantLoginHandler(hashedEmail, this.props.updatePLog);
+            this.props.participantLoginHandler(hashedEmail, this.props.history.location.pathname == '/participantTextTester');
         } catch (err) {
             $("#text-entry-feedback").addClass("feedback-display");
             this.setState({ error: err.message, pidCreationFailed: true });
@@ -199,107 +199,111 @@ class LoginApp extends React.Component {
                 <div className="row justify-content-center align-items-center h-100 center-container">
                     <div className="login-container">
                         <Tabs className='p-1' defaultActiveKey={this.props.isParticipant ? 2 : 1}>
-                            <Tab eventKey={0} title="Create Account">
-                                <div>
-                                    <div className="sign-in-instructions">
-                                        <h4 className="sign-in-header">Create Account</h4>
-                                        <p className='subtext'>Create an account to view results.</p>
-                                    </div>
-                                    <form onSubmit={this.createAccount}>
-                                        <div className="form-group">
-                                            <div className="input-login-header">Email Address</div>
-                                            <input className="form-control form-control-lg" required placeholder="Email" type="text" id="createEmail" value={this.state.createEmail} onChange={this.onChangeCreateEmail} />
-                                        </div>
-                                        <div className="form-group">
-                                            <div className="input-login-header">Username</div>
-                                            <input className="form-control form-control-lg" required placeholder="Username" type="text" id="createUserName" value={this.state.createUserName} onChange={this.onChangeCreateUserName} />
-                                        </div>
-                                        <div className="form-group">
-                                            <div className="input-login-header">Password</div>
-                                            <input className="form-control form-control-lg" required placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
-                                        </div>
-                                        {this.state.createAccountFailed && (
-                                            <Toast bg='danger' className='mt-1' autohide={false} onClose={()=> this.setState({ createAccountFailed: false })}>
-                                                <Toast.Header>
-                                                    <strong className="me-auto">Error creating account</strong>
-                                                </Toast.Header>
-                                                <Toast.Body className='text-white'>{this.createAccountErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
-                                            </Toast>
-                                        )}
-                                        <div className="form-group">
-                                            <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Create Account</button>
-                                        </div>
-                                        <div className="invalid-feedback" id="create-account-feedback">
-                                            {this.state.error}
-                                        </div>
-                                    </form>
-                                </div>
-                            </Tab>
-                            <Tab eventKey={1} title="Sign In">
-                                <div >
-                                    <div id="sign-in-pane">
+                            {this.props.history.location.pathname != '/participantTextTester' &&
+                                <Tab eventKey={0} title="Create Account">
+                                    <div>
                                         <div className="sign-in-instructions">
-                                            <h4 className="sign-in-header">Sign in</h4>
-                                            <p className='subtext'>Sign in using your username or email address.</p>
+                                            <h4 className="sign-in-header">Create Account</h4>
+                                            <p className='subtext'>Create an account to view results.</p>
                                         </div>
-                                        <form>
+                                        <form onSubmit={this.createAccount}>
                                             <div className="form-group">
-                                                <div className="input-login-header">Email Address or Username</div>
-                                                <input className="form-control form-control-lg" placeholder="Email / Username" type="text" id="userName" value={this.state.userName} onChange={this.onChangeUserName} />
+                                                <div className="input-login-header">Email Address</div>
+                                                <input className="form-control form-control-lg" required placeholder="Email" type="text" id="createEmail" value={this.state.createEmail} onChange={this.onChangeCreateEmail} />
                                             </div>
                                             <div className="form-group">
-                                                <div className='multi-header'>
-                                                    <div className="input-login-header">Password</div>
-                                                    <a className="" id="forgot-pass-tab" href="#forgot" onClick={this.forgotPasswordLink}>Forgot Password?</a>
-                                                </div>
-                                                <input className="form-control form-control-lg" placeholder="Password" type="password" id="password" value={this.state.password} onChange={this.onChangePassword} />
+                                                <div className="input-login-header">Username</div>
+                                                <input className="form-control form-control-lg" required placeholder="Username" type="text" id="createUserName" value={this.state.createUserName} onChange={this.onChangeCreateUserName} />
                                             </div>
                                             <div className="form-group">
-                                                {this.state.loginFailed && (
-                                                     <Toast bg='danger' className='mt-1' autohide={false} onClose={()=> this.setState({ loginFailed: false })}>
-                                                        <Toast.Header>
-                                                    <strong className="me-auto">Error logging in</strong>
-                                                </Toast.Header>
-                                                <Toast.Body className='text-white'>{this.loginErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
-                                            </Toast>
-                                                )}
+                                                <div className="input-login-header">Password</div>
+                                                <input className="form-control form-control-lg" required placeholder="Password" type="password" id="createPassword" value={this.state.createPassword} onChange={this.onChangeCreatePassword} />
                                             </div>
+                                            {this.state.createAccountFailed && (
+                                                <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ createAccountFailed: false })}>
+                                                    <Toast.Header>
+                                                        <strong className="me-auto">Error creating account</strong>
+                                                    </Toast.Header>
+                                                    <Toast.Body className='text-white'>{this.createAccountErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
+                                                </Toast>
+                                            )}
                                             <div className="form-group">
-                                                <button className="action-btn sd-btn sd-navigation__next-btn" onClick={this.login} type="button">Sign In</button>
+                                                <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Create Account</button>
                                             </div>
-                                            <div className="invalid-feedback" id="sign-in-feedback">
+                                            <div className="invalid-feedback" id="create-account-feedback">
                                                 {this.state.error}
                                             </div>
                                         </form>
                                     </div>
-                                    <div id="forgot-password-pane" className="display-none">
-                                        <div id="send-forgot-email-pane">
+                                </Tab>
+                            }
+                            {this.props.history.location.pathname != '/participantTextTester' &&
+                                <Tab eventKey={1} title="Sign In">
+                                    <div >
+                                        <div id="sign-in-pane">
                                             <div className="sign-in-instructions">
-                                                <h4 className="sign-in-header">Forgot Password</h4>
-                                                <p className='subtext'>Enter your email address to reset password.</p>
+                                                <h4 className="sign-in-header">Sign in</h4>
+                                                <p className='subtext'>Sign in using your username or email address.</p>
                                             </div>
                                             <form>
                                                 <div className="form-group">
-                                                    <div className="input-login-header">Email Address</div>
-                                                    <input className="form-control form-control-lg" placeholder="Email" type="text" id="forgotEmail" value={this.state.forgotEmail} onChange={this.onChangeForgotEmail} />
+                                                    <div className="input-login-header">Email Address or Username</div>
+                                                    <input className="form-control form-control-lg" placeholder="Email / Username" type="text" id="userName" value={this.state.userName} onChange={this.onChangeUserName} />
                                                 </div>
                                                 <div className="form-group">
-                                                    <button className="action-btn sd-btn sd-navigation__next-btn" onClick={this.resetPassword} type="button">Send Reset Email</button>
+                                                    <div className='multi-header'>
+                                                        <div className="input-login-header">Password</div>
+                                                        <a className="" id="forgot-pass-tab" href="#forgot" onClick={this.forgotPasswordLink}>Forgot Password?</a>
+                                                    </div>
+                                                    <input className="form-control form-control-lg" placeholder="Password" type="password" id="password" value={this.state.password} onChange={this.onChangePassword} />
                                                 </div>
-                                                <div className="invalid-feedback" id="reset-password-feedback">
+                                                <div className="form-group">
+                                                    {this.state.loginFailed && (
+                                                        <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ loginFailed: false })}>
+                                                            <Toast.Header>
+                                                                <strong className="me-auto">Error logging in</strong>
+                                                            </Toast.Header>
+                                                            <Toast.Body className='text-white'>{this.loginErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
+                                                        </Toast>
+                                                    )}
+                                                </div>
+                                                <div className="form-group">
+                                                    <button className="action-btn sd-btn sd-navigation__next-btn" onClick={this.login} type="button">Sign In</button>
+                                                </div>
+                                                <div className="invalid-feedback" id="sign-in-feedback">
                                                     {this.state.error}
                                                 </div>
                                             </form>
                                         </div>
-                                        <div id="success-forgot-email-pane" className="display-none">
-                                            <div className="sign-in-instructions">
-                                                <h4 className="sign-in-header">Email sent!</h4>
-                                                <p className='subtext'>Check your email for a link to reset your password.</p>
+                                        <div id="forgot-password-pane" className="display-none">
+                                            <div id="send-forgot-email-pane">
+                                                <div className="sign-in-instructions">
+                                                    <h4 className="sign-in-header">Forgot Password</h4>
+                                                    <p className='subtext'>Enter your email address to reset password.</p>
+                                                </div>
+                                                <form>
+                                                    <div className="form-group">
+                                                        <div className="input-login-header">Email Address</div>
+                                                        <input className="form-control form-control-lg" placeholder="Email" type="text" id="forgotEmail" value={this.state.forgotEmail} onChange={this.onChangeForgotEmail} />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <button className="action-btn sd-btn sd-navigation__next-btn" onClick={this.resetPassword} type="button">Send Reset Email</button>
+                                                    </div>
+                                                    <div className="invalid-feedback" id="reset-password-feedback">
+                                                        {this.state.error}
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div id="success-forgot-email-pane" className="display-none">
+                                                <div className="sign-in-instructions">
+                                                    <h4 className="sign-in-header">Email sent!</h4>
+                                                    <p className='subtext'>Check your email for a link to reset your password.</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </Tab>
+                                </Tab>
+                            }
                             <Tab eventKey={2} title="Text Scenario Login">
                                 <div >
                                     <div id="sign-in-pane">
