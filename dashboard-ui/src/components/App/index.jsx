@@ -44,6 +44,8 @@ import store from '../../store/store';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
+import { ParticipantProgressTable } from '../Account/participantProgress';
+
 
 
 const history = createBrowserHistory();
@@ -488,6 +490,11 @@ export class App extends React.Component {
                                                                             Administrator
                                                                         </Link>
                                                                     )}
+                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
+                                                                        <Link className="dropdown-item" to="/participant-progress-table" onClick={this.handleToggle}>
+                                                                            Progress Table
+                                                                        </Link>
+                                                                    )}
                                                                     {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true) && (
                                                                         <Link className="dropdown-item" to="/pid-lookup" onClick={this.handleToggle}>
                                                                             PID Lookup
@@ -539,6 +546,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/admin">
                                                         <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/participant-progress-table">
+                                                        <ParticipantProgressTable newState={this.state} />
                                                     </Route>
                                                     <Route path="/pid-lookup">
                                                         <PidLookupPage newState={this.state} />
