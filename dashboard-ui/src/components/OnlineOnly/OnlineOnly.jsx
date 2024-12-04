@@ -50,6 +50,15 @@ export default function StartOnline() {
     const history = useHistory();
     const location = useLocation();
 
+    React.useEffect(() => {
+        // make sure adeptQualtrix is true, otherwise send to login
+        const queryParams = new URLSearchParams(window.location.search);
+        const adeptQualtrix = queryParams.get('adeptQualtrix');
+        if (adeptQualtrix != 'true') {
+            history.push('/login');
+        }
+    }, []);
+
     const startSurvey = async () => {
         // get pid
         // get current plog
