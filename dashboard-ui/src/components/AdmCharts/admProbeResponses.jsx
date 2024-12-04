@@ -72,14 +72,14 @@ export const ADMProbeResponses = (props) => {
     useEffect(() => {
         if (admData?.getPerformerADMsForScenario && currentScenario) {
             const newQueryData = {};
-            
+
             admData.getPerformerADMsForScenario.forEach(adm => {
                 newQueryData[adm] = {
                     alignmentTargets: currentEval >= 3 ? alignmentTargets : [null],
                     data: {}
                 };
             });
-            
+
             setQueryData(newQueryData);
         }
     }, [admData, currentScenario, currentEval, alignmentTargets]);
@@ -216,7 +216,7 @@ export const ADMProbeResponses = (props) => {
                                     </div>
                                 </div>
                                 <div className='resultTableSection result-table-section-override'>
-                                    <Query 
+                                    <Query
                                         query={get_all_test_data}
                                         variables={{
                                             admQueryStr: queryString,
@@ -229,7 +229,7 @@ export const ADMProbeResponses = (props) => {
                                         {({ loading, error, data }) => {
                                             if (loading) return <div>Loading...</div>;
                                             if (error) return <div>Error loading test data</div>;
-                                            
+
                                             const testDataArray = data?.getAllTestDataForADM || [];
                                             if (testDataArray.length === 0) return <div>No data available</div>;
 
@@ -248,13 +248,13 @@ export const ADMProbeResponses = (props) => {
                                             const sortedProbeColumns = Array.from(probeColumns).sort((a, b) => {
                                                 const aMatch = a.match(/\d+/);
                                                 const bMatch = b.match(/\d+/);
-                                                
+
                                                 if (aMatch && bMatch) {
                                                     const aNum = parseInt(aMatch[0]);
                                                     const bNum = parseInt(bMatch[0]);
-                                                    
+
                                                     if (aNum === bNum) {
-                                                        return a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'});
+                                                        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
                                                     }
                                                     return aNum - bNum;
                                                 }
@@ -265,23 +265,36 @@ export const ADMProbeResponses = (props) => {
                                                 <table className="itm-table">
                                                     <thead>
                                                         <tr>
-                                                            {currentEval >= 3 && <th>Alignment Target</th>}
+                                                            {currentEval >= 3 && (
+                                                                <>
+                                                                    <th>Alignment Target</th>
+                                                                    <th>Session ID</th>
+                                                                </>
+                                                            )}
                                                             {sortedProbeColumns.map(probeId => (
                                                                 <th key={probeId}>{probeId}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {testDataArray.map(({ alignmentTarget, data }) => (
-                                                            <tr key={`${adm}-${alignmentTarget || 'default'}`}>
-                                                                {currentEval >= 3 && <td>{alignmentTarget}</td>}
-                                                                {sortedProbeColumns.map(probeId => (
-                                                                    <td key={`${alignmentTarget}-${probeId}`}>
-                                                                        {getChoiceForProbe(data.history, probeId) || '-'}
-                                                                    </td>
-                                                                ))}
-                                                            </tr>
-                                                        ))}
+                                                        {testDataArray.map(({ alignmentTarget, data }) => {
+                                                            const sessionId = data?.history[0]?.parameters?.session_id || '-';
+                                                            return (
+                                                                <tr key={`${adm}-${alignmentTarget || 'default'}`}>
+                                                                    {currentEval >= 3 && (
+                                                                        <>
+                                                                            <td>{alignmentTarget}</td>
+                                                                            <td>{sessionId}</td>
+                                                                        </>
+                                                                    )}
+                                                                    {sortedProbeColumns.map(probeId => (
+                                                                        <td key={`${alignmentTarget}-${probeId}`}>
+                                                                            {getChoiceForProbe(data.history, probeId) || '-'}
+                                                                        </td>
+                                                                    ))}
+                                                                </tr>
+                                                            );
+                                                        })}
                                                     </tbody>
                                                 </table>
                                             );
