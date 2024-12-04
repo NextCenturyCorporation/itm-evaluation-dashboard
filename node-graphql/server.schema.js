@@ -193,7 +193,7 @@ const typeDefs = gql`
     getScenarioNamesByEval(evalNumber: Float): [JSON]
     getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON,
     getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID): JSON,
-    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String): JSON
+    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON
     getAllScenarios(id: ID): [Scenario]
     getScenarioState(id: ID): State
     getAllScenarioStates: [State]
