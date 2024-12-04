@@ -333,18 +333,35 @@ const resolvers = {
       return alignmentTargets;
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
-      // NOTE: We might need to add evalNumber to this query in the future
       let queryObj = {};
-      if (args["evalNumber"]) { queryObj["evalNumber"] = args["evalNumber"]}
+      
       if (args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") {
+        queryObj = {
+          $and: [
+            { "history.response.id": args["scenarioID"] }
+          ]
+        };
+        
+        if (args["evalNumber"]) {
+          queryObj.$and.push({ "evalNumber": args["evalNumber"] });
+        }
+        
         queryObj[args["admQueryStr"]] = args["admName"];
-        queryObj["history.response.id"] = args["scenarioID"];
       } else {
         queryObj = {
-          $and: [{ "history.response.id": args["alignmentTarget"] }, { "history.response.id": args["scenarioID"] }],
+          $and: [
+            { "history.response.id": args["alignmentTarget"] }, 
+            { "history.response.id": args["scenarioID"] }
+          ]
         };
+        
+        if (args["evalNumber"]) {
+          queryObj.$and.push({ "evalNumber": args["evalNumber"] });
+        }
+        
         queryObj[args["admQueryStr"]] = args["admName"];
       }
+      
       return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
     },
     getAllScenarios: async (obj, args, context, inflow) => {
