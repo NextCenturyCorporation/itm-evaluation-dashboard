@@ -18,6 +18,7 @@ import gql from 'graphql-tag';
 import AlignmentScoreBox from './alignmentScore';
 import '../../css/results-page.css';
 import { Query } from 'react-apollo';
+import { RQ2223 } from '../DRE-Research/tables/rq22-rq23';
 
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
@@ -316,7 +317,7 @@ class ResultsTable extends React.Component {
                     </div>
                     <div className="test-overview-area">
                         {((this.state.evalNumber < 3 && this.state.scenario !== "" && this.state.adm !== "") || (
-                            this.state.evalNumber >= 3 && this.state.scenario !== "" && this.state.adm !== "" && this.state.alignmentTarget !== null) ) &&
+                            this.state.evalNumber >= 3 && this.state.scenario !== "" && this.state.adm !== "" && this.state.alignmentTarget !== null)) ?
                             <Query query={test_by_adm_and_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm, "alignmentTarget": this.state.alignmentTarget}}>
                                 {
                                     ({ loading, error, data }) => {
@@ -346,7 +347,10 @@ class ResultsTable extends React.Component {
                                         )
                                     }
                                 }
-                            </Query>
+                            </Query> :
+                            <>
+                                <RQ2223 evalNum={this.state.evalNumber} />
+                            </>
                         }
                     </div>
                 </div>

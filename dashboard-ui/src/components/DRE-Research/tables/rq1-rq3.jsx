@@ -41,7 +41,7 @@ const GET_SIM_DATA = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-const HEADERS = ['ADM Order', 'Delegator_ID', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS = ['ADM Order', 'Delegator_ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 
 export function RQ13({ evalNum }) {
@@ -91,6 +91,14 @@ export function RQ13({ evalNum }) {
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            data.allObjs.sort((a, b) => {
+                // Compare PID
+                if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
+                if (Number(a['Delegator_ID']) > Number(b['Delegator_ID'])) return 1;
+
+                // if PID is equal, compare trial id
+                return a.Trial_ID - b.Trial_ID;
+            });
             setFormattedData(data.allObjs);
             setFilteredData(data.allObjs);
             setTA1s(Array.from(new Set(data.allTA1s)));

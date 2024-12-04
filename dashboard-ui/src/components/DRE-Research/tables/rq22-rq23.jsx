@@ -147,8 +147,14 @@ export function RQ2223({ evalNum }) {
                 return a.Trial_ID - b.Trial_ID;
             });
 
-            setFormattedData(allObjs);
-            setFilteredData(allObjs);
+            if (allObjs.length > 0) {
+                setFormattedData(allObjs);
+                setFilteredData(allObjs);
+            }
+            else {
+                setFormattedData([{ 'Trial_ID': '-' }]);
+                setFilteredData([{ 'Trial_ID': '-' }]);
+            }
             setTA1s(Array.from(new Set(allTA1s)));
             setTA2s(Array.from(new Set(allTA2s)));
             setAttributes(Array.from(new Set(allAttributes)));
@@ -282,7 +288,7 @@ export function RQ2223({ evalNum }) {
                         return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['Delegator_ID'] + '-' + val}>
-                                    {dataSet[val]}
+                                    {dataSet[val] ?? '-'}
                                 </td>);
                             })}
                         </tr>);
