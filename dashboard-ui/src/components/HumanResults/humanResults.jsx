@@ -51,6 +51,18 @@ const PH1_SCENARIOS = {
     "vol-ph1-eval-4": "vol-ph1-eval-4"
 };
 
+const PH1_MAP = {
+    "DryRunEval-MJ2-eval": "phase1-adept-eval-MJ2",
+    "DryRunEval-MJ4-eval": "phase1-adept-eval-MJ4",
+    "DryRunEval-MJ5-eval": "phase1-adept-eval-MJ5",
+    "qol-ph1-eval-2": "qol-ph1-eval-2",
+    "qol-ph1-eval-3": "qol-ph1-eval-3",
+    "qol-ph1-eval-4": "qol-ph1-eval-4",
+    "vol-ph1-eval-2": "vol-ph1-eval-2",
+    "vol-ph1-eval-3": "vol-ph1-eval-3",
+    "vol-ph1-eval-4": "vol-ph1-eval-4"
+};
+
 export default function HumanResults() {
     const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const [selectedEval, setSelectedEval] = React.useState(5);
@@ -180,8 +192,10 @@ export default function HumanResults() {
     };
 
     const getScenarioName = () => {
-        if ([4, 5].includes(selectedEval)) {
+        if (selectedEval == 4) {
             return selectedScene
+        } else if (selectedEval == 5) {
+            return PH1_MAP[selectedScene]
         } else {
             return MRE_ENV_MAP[selectedScene] || selectedScene
         }

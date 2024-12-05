@@ -21,6 +21,11 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResults
     }`;
 
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }`;
+
 function getQuestionAnswerSets(pageName, config, genericName = null) {
     const pagesFound = config.pages.filter((page) => page.name === pageName);
     if (pagesFound.length > 0) {
@@ -243,6 +248,7 @@ export function SurveyResults() {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
     });
+    const { data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
@@ -321,6 +327,16 @@ export function SurveyResults() {
                 if (result.results) {
                     obj = result.results;
                 }
+                let pid = obj['Participant ID']?.questions['Participant ID']?.response ?? obj['Participant ID Page']?.questions['Participant ID']?.response ?? obj['pid'];
+                if (!pid) {
+                    continue;
+                }
+                const logData = dataParticipantLog.getParticipantLog.find(
+                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                );
+                if ((filterBySurveyVersion == 4 || filterBySurveyVersion == 5) && !logData) {
+                    continue;
+                }
                 for (const x of Object.keys(obj)) {
                     const res = obj[x];
                     if (String(res?.scenarioIndex) === String(selectedScenario)) {
@@ -365,7 +381,7 @@ export function SurveyResults() {
             }
             setResultData(separatedData);
         }
-    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages]);
+    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
 
     // detect survey versions in data set
     React.useEffect(() => {
@@ -461,7 +477,7 @@ export function SurveyResults() {
             <Modal className='table-modal' open={showTable} onClose={closeModal}>
                 <div className='modal-body'>
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                    <ResultsTable data={data.getAllSurveyResults} />
+                    <ResultsTable data={data.getAllSurveyResults} pLog={dataParticipantLog.getParticipantLog} />
                 </div>
             </Modal>
         </>}

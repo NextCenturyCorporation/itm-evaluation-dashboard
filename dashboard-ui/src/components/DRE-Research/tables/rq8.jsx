@@ -75,7 +75,7 @@ export function RQ8({ evalNum }) {
                 recorded[pid] = [];
                 // see if participant has completed the open world scenario
                 const openWorld = simData.find(
-                    log => log['pid'] == pid && log['openWorld'] == true
+                    log => log['pid'] == pid && log['openWorld'] == true 
                 );
                 if (!openWorld) {
                     continue;
@@ -85,7 +85,7 @@ export function RQ8({ evalNum }) {
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
-                    log => log['ParticipantID'] == pid
+                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
                 );
                 if (!logData) {
                     continue;
@@ -117,7 +117,7 @@ export function RQ8({ evalNum }) {
                     for (const att of attributes) {
                         const entryObj = {};
                         entryObj['Participant_ID'] = pid;
-                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') ? 'ADEPT' : 'SoarTech';
+                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
                         allTA1s.push(entryObj['TA1_Name']);
                         entryObj['Attribute'] = att;
                         allAttributes.push(att);
