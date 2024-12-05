@@ -145,7 +145,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         // see if participant is in the participantLog
         const logData = participantLog.find(
-            log => log['ParticipantID'] == pid
+            log => log['ParticipantID'] == pid && log['Type'] != 'Test'
         );
         if (!logData) {
             continue;

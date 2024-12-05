@@ -50,6 +50,7 @@ export default function StartOnline() {
     const history = useHistory();
     const location = useLocation();
 
+
     React.useEffect(() => {
         // make sure adeptQualtrix is true, otherwise send to login
         const queryParams = new URLSearchParams(window.location.search);
