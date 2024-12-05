@@ -158,17 +158,43 @@ export const ADMProbeResponses = (props) => {
         return sessionEntry?.response || '-';
     };
 
-    const downloadTableAsExcel = (tableData, adm) => {
-        // Format data for Excel
-        const excelData = tableData.map(({ alignmentTarget, data }) => {
-            const row = {
-                'Alignment Target': alignmentTarget,
-                'TA1 Session ID': getSessionId(data.history)
-            };
+    const downloadAsExcel = (tableData, adm = null, isAllTables = false) => {
+        console.log(tableData)
+        console.log(adm)
+        console.log(isAllTables)
+        const excelData = isAllTables ? tableData : formatTableData(tableData);
 
-            // Add probe responses to row
+        console.log(excelData)
+        // Create and save workbook
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Probe Responses");
+
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const fileName = isAllTables ?
+            `${getCurrentScenarioName()}_all_adm_probe_responses.xlsx` :
+            `${getCurrentScenarioName()}_${formatADMString(adm)}_probe_responses.xlsx`;
+
+        const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+        saveAs(data, fileName);
+    };
+    // Helper function to format table data
+    const formatTableData = (testDataArray, adm = null) => {
+        return testDataArray.map(({ alignmentTarget, data }) => {
+            const row = adm ?
+                {
+                    'ADM': formatADMString(adm),
+                    'Alignment Target': alignmentTarget,
+                    'TA1 Session ID': getSessionId(data.history)
+                } :
+                {
+                    'Alignment Target': alignmentTarget,
+                    'TA1 Session ID': getSessionId(data.history)
+                };
+
+            // Get and sort probe columns
             const probeColumns = new Set();
-            tableData.forEach(({ data }) => {
+            testDataArray.forEach(({ data }) => {
                 const history = data?.history || [];
                 const probeResponses = history.filter(entry =>
                     entry.command === 'Respond to TA1 Probe' &&
@@ -181,7 +207,6 @@ export const ADMProbeResponses = (props) => {
                 });
             });
 
-            // Sort probe columns
             const sortedProbeColumns = Array.from(probeColumns).sort((a, b) => {
                 const aMatch = a.match(/\d+/);
                 const bMatch = b.match(/\d+/);
@@ -203,19 +228,6 @@ export const ADMProbeResponses = (props) => {
 
             return row;
         });
-
-        // Create workbook
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Probe Responses");
-
-        // Generate buffer
-        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-        // Save file
-        const fileName = `${getCurrentScenarioName()}_${formatADMString(adm)}_probe_responses.xlsx`;
-        const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-        saveAs(data, fileName);
     };
 
     return (
@@ -273,14 +285,67 @@ export const ADMProbeResponses = (props) => {
                 </div>
                 {currentScenario && (
                     <div className="test-overview-area">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                            <Query
+                                query={get_all_test_data}
+                                variables={{
+                                    admQueryStr: queryString,
+                                    scenarioID: currentScenario,
+                                    admName: admData?.getPerformerADMsForScenario[0],
+                                    alignmentTargets: queryData[admData?.getPerformerADMsForScenario[0]]?.alignmentTargets || [],
+                                    evalNumber: currentEval
+                                }}
+                            >
+                                {({ loading, error, data }) => {
+                                    if (loading || error || !admData?.getPerformerADMsForScenario) return null;
+
+                                    return (
+                                        <button
+                                            className='aggregateDownloadBtn'
+                                            onClick={() => {
+                                                const allData = admData.getPerformerADMsForScenario.map(adm => (
+                                                    formatTableData(data?.getAllTestDataForADM || [], adm)
+                                                )).flat();
+                                                downloadAsExcel(allData, null, true);
+                                            }}
+                                        >
+                                            Download All as Excel
+                                        </button>
+                                    );
+                                }}
+                            </Query>
+                        </div>
                         {!admLoading && !admError && admData?.getPerformerADMsForScenario?.map((adm, index) => (
                             <div className='chart-home-container' key={index}>
                                 <div className='chart-header'>
                                     <div className='chart-header-label'>
                                         <h4>
-                                            {getCurrentScenarioName()}: {formatADMString(adm)}
+                                            {getCurrentScenarioName()}, {formatADMString(adm)}
                                         </h4>
                                     </div>
+                                    <Query
+                                        query={get_all_test_data}
+                                        variables={{
+                                            admQueryStr: queryString,
+                                            scenarioID: currentScenario,
+                                            admName: adm,
+                                            alignmentTargets: queryData[adm]?.alignmentTargets || [],
+                                            evalNumber: currentEval
+                                        }}
+                                    >
+                                        {({ loading, error, data }) => {
+                                            if (loading || error || !data?.getAllTestDataForADM) return null;
+
+                                            return (
+                                                <button 
+                                                    className="aggregateDownloadBtn"
+                                                    onClick={() => downloadAsExcel(data?.getAllTestDataForADM || [], adm)}
+                                                >
+                                                    Download Table as Excel
+                                                </button>
+                                            );
+                                        }}
+                                    </Query>
                                 </div>
                                 <div className='resultTableSection result-table-section-override'>
                                     <Query
@@ -299,14 +364,14 @@ export const ADMProbeResponses = (props) => {
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
                                             if (testDataArray.length === 0) return <div>No data available</div>;
-                                            console.log(testDataArray);
-                                            // Get all possible probe IDs from all test data
+
+
                                             const probeColumns = new Set();
                                             testDataArray.forEach(({ data }) => {
                                                 const history = data?.history || [];
                                                 const probeResponses = history.filter(entry =>
                                                     entry.command === 'Respond to TA1 Probe' &&
-                                                    entry.parameters?.probe_id !== 'n/a'  // Filter out n/a probes
+                                                    entry.parameters?.probe_id !== 'n/a'
                                                 );
                                                 probeResponses.forEach(response => {
                                                     if (response.parameters?.probe_id) {
@@ -333,54 +398,38 @@ export const ADMProbeResponses = (props) => {
 
                                             return (
                                                 <>
-                                                <div style={{ marginLeft: 'auto', padding: '10px' }}>
-                                                        <button
-                                                            style={{
-                                                                backgroundColor: '#4CAF50',
-                                                                color: 'white',
-                                                                padding: '8px 16px',
-                                                                border: 'none',
-                                                                borderRadius: '4px',
-                                                                cursor: 'pointer',
-                                                                fontSize: '14px'
-                                                            }}
-                                                            onClick={() => downloadTableAsExcel(testDataArray, adm)}
-                                                        >
-                                                            Download as Excel
-                                                        </button>
-                                                    </div>
-                                                <table className="itm-table">
-                                                    <thead>
-                                                        <tr>
-                                                            {currentEval >= 3 && (
-                                                                <>
-                                                                    <th>Alignment Target</th>
-                                                                    <th>TA1 Session ID</th>
-                                                                </>
-                                                            )}
-                                                            {sortedProbeColumns.map(probeId => (
-                                                                <th key={probeId}>{probeId}</th>
-                                                            ))}
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {testDataArray.map(({ alignmentTarget, data }) => (
-                                                            <tr key={`${adm}-${alignmentTarget || 'default'}`}>
+                                                    <table className="itm-table">
+                                                        <thead>
+                                                            <tr>
                                                                 {currentEval >= 3 && (
                                                                     <>
-                                                                        <td>{alignmentTarget}</td>
-                                                                        <td>{getSessionId(data.history)}</td>
+                                                                        <th>Alignment Target</th>
+                                                                        <th>TA1 Session ID</th>
                                                                     </>
                                                                 )}
                                                                 {sortedProbeColumns.map(probeId => (
-                                                                    <td key={`${alignmentTarget}-${probeId}`}>
-                                                                        {getChoiceForProbe(data.history, probeId) || '-'}
-                                                                    </td>
+                                                                    <th key={probeId}>{probeId}</th>
                                                                 ))}
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody>
+                                                            {testDataArray.map(({ alignmentTarget, data }) => (
+                                                                <tr key={`${adm}-${alignmentTarget || 'default'}`}>
+                                                                    {currentEval >= 3 && (
+                                                                        <>
+                                                                            <td>{alignmentTarget}</td>
+                                                                            <td>{getSessionId(data.history)}</td>
+                                                                        </>
+                                                                    )}
+                                                                    {sortedProbeColumns.map(probeId => (
+                                                                        <td key={`${alignmentTarget}-${probeId}`}>
+                                                                            {getChoiceForProbe(data.history, probeId) || '-'}
+                                                                        </td>
+                                                                    ))}
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
                                                 </>
                                             );
                                         }}
