@@ -123,9 +123,16 @@ export function RQ8({ evalNum }) {
                         allAttributes.push(att);
                         entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
                         allScenarios.push(entryObj['Scenario']);
-                        entryObj['Participant KDMA'] = entryObj['TA1_Name'] == 'ADEPT' ? entry['kdmas']?.find((x) => x['kdma'] == (att == 'MJ' ? 'Moral judgement' : 'Ingroup Bias'))?.value ?? '-' : '-';
-                        entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
-                        entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
+                        const kdmas = Array.isArray(entry['kdmas']) ? entry['kdmas'] : entry['kdmas']?.['computed_kdma_profile'];
+                        entryObj['Participant KDMA'] = kdmas?.find((x) => x['kdma'] == (att == 'MJ' ? 'Moral judgement' : att == 'IO' ? 'Ingroup Bias' : att == 'QOL' ? 'QualityOfLife' : 'PerceivedQuantityOfLivesSaved'))?.value ?? '-';
+                        if (evalNum == 4) {
+                            entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
+                            entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
+                        }
+                        else {
+                            entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-08' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-08' : att == 'QOL' ? 'qol-synth-HighExtreme-ph1' : att == 'VOL' ? 'vol-synth-HighCluster-ph1' : ''))?.score ?? '-';
+                            entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-02' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-02' : att == 'QOL' ? 'qol-synth-LowExtreme-ph1' : att == 'VOL' ? 'vol-synth-LowExtreme-ph1' : ''))?.score ?? '-';
+                        }
                         const owData = openWorld['data'];
                         entryObj['Assess_patient'] = owData?.assess_patient;
                         entryObj['Assess_total'] = owData?.assess_total;
