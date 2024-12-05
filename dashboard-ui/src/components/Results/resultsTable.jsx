@@ -40,8 +40,8 @@ const performer_adm_by_scenario = gql`
         getPerformerADMsForScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID)
     }`;
 const test_by_adm_and_scenario = gql`
-    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTarget: String){
-        getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName, alignmentTarget: $alignmentTarget)
+    query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTarget: String, $evalNumber: Int){
+        getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName, alignmentTarget: $alignmentTarget, evalNumber: $evalNumber)
     }`;
 const alignment_target_by_scenario = gql`
     query getAlignmentTargetsPerScenario($evalNumber: Float!, $scenarioID: ID){
@@ -317,13 +317,13 @@ class ResultsTable extends React.Component {
                     <div className="test-overview-area">
                         {((this.state.evalNumber < 3 && this.state.scenario !== "" && this.state.adm !== "") || (
                             this.state.evalNumber >= 3 && this.state.scenario !== "" && this.state.adm !== "" && this.state.alignmentTarget !== null) ) &&
-                            <Query query={test_by_adm_and_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm, "alignmentTarget": this.state.alignmentTarget}}>
+                            <Query query={test_by_adm_and_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm, "alignmentTarget": this.state.alignmentTarget, "evalNumber": this.state.evalNumber}}>
                                 {
                                     ({ loading, error, data }) => {
                                         if (loading) return <div>Loading ...</div> 
                                         if (error) return <div>Error</div>
                                         const testData = data[getTestByADMandScenarioName];
-
+                                        console.log(testData)
                                         return (
                                             <>
                                                 {testData !== null && testData !== undefined &&
