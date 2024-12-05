@@ -3,6 +3,8 @@ import { useQuery } from '@apollo/react-hooks';
 import { Query } from 'react-apollo';
 import gql from "graphql-tag";
 import { List, ListItem, ListItemText } from '@mui/material';
+import * as XLSX from 'sheetjs-style';
+import { saveAs } from 'file-saver';
 import '../../css/results-page.css';
 import '../../css/aggregateResults.css';
 
@@ -156,6 +158,66 @@ export const ADMProbeResponses = (props) => {
         return sessionEntry?.response || '-';
     };
 
+    const downloadTableAsExcel = (tableData, adm) => {
+        // Format data for Excel
+        const excelData = tableData.map(({ alignmentTarget, data }) => {
+            const row = {
+                'Alignment Target': alignmentTarget,
+                'TA1 Session ID': getSessionId(data.history)
+            };
+
+            // Add probe responses to row
+            const probeColumns = new Set();
+            tableData.forEach(({ data }) => {
+                const history = data?.history || [];
+                const probeResponses = history.filter(entry =>
+                    entry.command === 'Respond to TA1 Probe' &&
+                    entry.parameters?.probe_id !== 'n/a'
+                );
+                probeResponses.forEach(response => {
+                    if (response.parameters?.probe_id) {
+                        probeColumns.add(response.parameters.probe_id);
+                    }
+                });
+            });
+
+            // Sort probe columns
+            const sortedProbeColumns = Array.from(probeColumns).sort((a, b) => {
+                const aMatch = a.match(/\d+/);
+                const bMatch = b.match(/\d+/);
+                if (aMatch && bMatch) {
+                    const aNum = parseInt(aMatch[0]);
+                    const bNum = parseInt(bMatch[0]);
+                    if (aNum === bNum) {
+                        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+                    }
+                    return aNum - bNum;
+                }
+                return a.localeCompare(b);
+            });
+
+            // Add probe responses to row
+            sortedProbeColumns.forEach(probeId => {
+                row[probeId] = getChoiceForProbe(data.history, probeId) || '-';
+            });
+
+            return row;
+        });
+
+        // Create workbook
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Probe Responses");
+
+        // Generate buffer
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+        // Save file
+        const fileName = `${getCurrentScenarioName()}_${formatADMString(adm)}_probe_responses.xlsx`;
+        const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+        saveAs(data, fileName);
+    };
+
     return (
         <div className="layout">
             <div className="layout-board">
@@ -270,6 +332,23 @@ export const ADMProbeResponses = (props) => {
                                             });
 
                                             return (
+                                                <>
+                                                <div style={{ marginLeft: 'auto', padding: '10px' }}>
+                                                        <button
+                                                            style={{
+                                                                backgroundColor: '#4CAF50',
+                                                                color: 'white',
+                                                                padding: '8px 16px',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '14px'
+                                                            }}
+                                                            onClick={() => downloadTableAsExcel(testDataArray, adm)}
+                                                        >
+                                                            Download as Excel
+                                                        </button>
+                                                    </div>
                                                 <table className="itm-table">
                                                     <thead>
                                                         <tr>
@@ -302,6 +381,7 @@ export const ADMProbeResponses = (props) => {
                                                         ))}
                                                     </tbody>
                                                 </table>
+                                                </>
                                             );
                                         }}
                                     </Query>
