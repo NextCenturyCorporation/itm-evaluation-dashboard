@@ -43,6 +43,9 @@ import { ExploratoryAnalysis } from '../DRE-Research/ExploratoryAnalysis';
 import store from '../../store/store';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { PidLookup } from '../Account/pidLookup';
+import StartOnline from '../OnlineOnly/OnlineOnly';
+import { ParticipantProgressTable } from '../Account/participantProgress';
+
 
 
 const history = createBrowserHistory();
@@ -73,37 +76,39 @@ const UPDATE_PARTICIPANT_LOG = gql`
     }`;
 
 const ADD_PARTICIPANT = gql`
-    mutation addNewParticipantToLog($participantData: JSON!) {
-        addNewParticipantToLog(participantData: $participantData) 
+    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
+        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
     }`;
 
 const SURVEY_SETS = [
-        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
-        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 2 },
-        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 3 },
-        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 4 },
-        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 1 },
-        { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 },
-        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 3 },
-        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 4 },
-        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 1 },
-        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 2 },
-        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 3 },
+    { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
+    { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 2 },
+    { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 3 },
+    { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 4 },
+    { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 1 },
+    { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 },
+    { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 3 },
+    { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 4 },
+    { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 1 },
+    { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 2 },
+    { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 3 },
     { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 4 },
-        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 3 },
-        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 4 },
-        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 1 },
-        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 2 },
-        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 3 },
-        { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 4 },
-        { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
-        { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 2 },
-        { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 3 },
-        { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 4 },
-        { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 1 },
+    { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 3 },
+    { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 4 },
+    { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 1 },
+    { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 2 },
+    { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 3 },
+    { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 4 },
+    { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
+    { "Text-1": "ST-1", "Text-2": "AD-2", "Sim-1": "ST-2", "Sim-2": "AD-3", "Del-1": "ST-3", "Del-2": "AD-1", "ADMOrder": 2 },
+    { "Text-1": "AD-2", "Text-2": "ST-2", "Sim-1": "AD-3", "Sim-2": "ST-3", "Del-1": "AD-1", "Del-2": "ST-1", "ADMOrder": 3 },
+    { "Text-1": "ST-2", "Text-2": "AD-3", "Sim-1": "ST-3", "Sim-2": "AD-1", "Del-1": "ST-1", "Del-2": "AD-2", "ADMOrder": 4 },
+    { "Text-1": "AD-3", "Text-2": "ST-3", "Sim-1": "AD-1", "Sim-2": "ST-1", "Del-1": "AD-2", "Del-2": "ST-2", "ADMOrder": 1 },
     { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 }
 ]
 
+const LOW_PID = 202411300;
+const HIGH_PID = 202411499;
 
 function Home({ newState }) {
     if (newState.currentUser == null) {
@@ -137,8 +142,11 @@ function AdmResults() {
     return <ADMChartPage />
 }
 
-function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin }) {
-    if (participantTextLogin) {
+function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin, testerLogin }) {
+    if (testerLogin && (newState.currentUser === null || (!newState.currentUser.admin && !newState.currentUser.experimenter))) {
+        history.push('/participantText');
+    }
+    else if (participantTextLogin) {
         return <LoginApp userLoginHandler={userLoginHandler} isParticipant={participantTextLogin} participantLoginHandler={participantLoginHandler} />;
     }
     if (newState !== null) {
@@ -234,7 +242,7 @@ export class App extends React.Component {
         //refresh the session to get a new accessToken if expired
         const tokens = await accountsClient.refreshSession();
 
-        if (window.location.href.indexOf("reset-password") > -1 || window.location.href.indexOf("/participantText") > -1) {
+        if (window.location.href.indexOf("reset-password") > -1 || window.location.href.indexOf("/participantText") > -1 || window.location.href.indexOf('/remote-text-survey?') > -1) {
             return;
         }
 
@@ -259,7 +267,7 @@ export class App extends React.Component {
         this.setState({ currentUser: userObject });
     }
 
-    participantLoginHandler(hashedEmail) {
+    participantLoginHandler(hashedEmail, isTester) {
         // get fresh participant log from database to minimize race conditions
         setParticipantLogInStore(null);
         const sleep = (ms) => {
@@ -279,8 +287,8 @@ export class App extends React.Component {
                 });
             }
             else {
-                // create a user account and get a pid for this user
-                const nextAvailablePid = pLog.find((x) => !x.claimed)?.['ParticipantID'];
+                // create a user account and get a pid for this user using pre-populated entries in the participant log
+                const nextAvailablePid = pLog.find((x) => !x.claimed && x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID)?.['ParticipantID'];
                 if (isDefined(nextAvailablePid)) {
                     this.setState({ updatePLog: true, pLogUpdate: { updates: { hashedEmail: hashedEmail, claimed: true }, pid: nextAvailablePid } }, () => {
                         if (this.uploadButtonRef.current) {
@@ -292,12 +300,14 @@ export class App extends React.Component {
                     });
                 }
                 else {
+                    // generate a new pid by incrementing highest found
                     const newPid = Math.max(...pLog.filter((x) =>
-                        !["202409113A", "202409113B"].includes(x['ParticipantID'])
+                        !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
+                        x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
                     ).map((x) => Number(x['ParticipantID']))) + 1;
                     const setNum = newPid % 24;
                     const participantData = {
-                        ...SURVEY_SETS[setNum], "ParticipantID": newPid, "Type": "emailParticipant",
+                        ...SURVEY_SETS[setNum], "ParticipantID": newPid, "Type": isTester ? "Test" : "emailParticipant",
                         "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": hashedEmail
                     };
                     this.setState({ updatePLog: true, newParticipantData: participantData }, () => {
@@ -366,13 +376,11 @@ export class App extends React.Component {
                                                         )}
                                                     </Mutation>
                                                     <Mutation mutation={ADD_PARTICIPANT} onCompleted={(data) => {
-                                                        console.log('Server response:', data);
                                                         if (data?.addNewParticipantToLog == -1) {
                                                             alert("This email address is taken. Please enter a different email.");
                                                         }
                                                         else {
                                                             const finalPid = data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
-                                                            console.log('Using final PID from server:', finalPid);
 
                                                             this.setState({ pid: finalPid }, () => {
                                                                 history.push("/text-based?pid=" + finalPid);
@@ -384,7 +392,7 @@ export class App extends React.Component {
                                                                 <button ref={this.addPButtonRef} hidden onClick={(e) => {
                                                                     e.preventDefault();
                                                                     addNewParticipantToLog({
-                                                                        variables: { participantData: this.state.newParticipantData }
+                                                                        variables: { participantData: this.state.newParticipantData, lowPid: LOW_PID, highPid: HIGH_PID }
                                                                     });
                                                                     this.setState({ updatePLog: false });
                                                                 }}></button>
@@ -482,9 +490,19 @@ export class App extends React.Component {
                                                                             Administrator
                                                                         </Link>
                                                                     )}
+                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
+                                                                        <Link className="dropdown-item" to="/participant-progress-table" onClick={this.handleToggle}>
+                                                                            Progress Table
+                                                                        </Link>
+                                                                    )}
                                                                     {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true) && (
                                                                         <Link className="dropdown-item" to="/pid-lookup" onClick={this.handleToggle}>
                                                                             PID Lookup
+                                                                        </Link>
+                                                                    )}
+                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true) && (
+                                                                        <Link className="dropdown-item" to="/participantTextTester" onClick={this.handleToggle}>
+                                                                            Test Text Scenario
                                                                         </Link>
                                                                     )}
                                                                     <Link className="dropdown-item" to={{}} onClick={this.logout}>
@@ -514,10 +532,13 @@ export class App extends React.Component {
                                                         <Scenarios />
                                                     </Route>
                                                     <Route path="/login">
-                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} />
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} />
                                                     </Route>
                                                     <Route path="/participantText">
-                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} />
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={false} />
+                                                    </Route>
+                                                    <Route path="/participantTextTester">
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={true} />
                                                     </Route>
                                                     <Route path="/reset-password/:token" component={ResetPassPage} />
                                                     <Route path="/myaccount">
@@ -525,6 +546,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/admin">
                                                         <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
+                                                    <Route path="/participant-progress-table">
+                                                        <ParticipantProgressTable newState={this.state} />
                                                     </Route>
                                                     <Route path="/pid-lookup">
                                                         <PidLookupPage newState={this.state} />
@@ -543,6 +567,9 @@ export class App extends React.Component {
                                                     </Route>
                                                     <Route path="/text-based">
                                                         <TextBased />
+                                                    </Route>
+                                                    <Route path="/remote-text-survey">
+                                                        <StartOnline />
                                                     </Route>
                                                     <Route path="/text-based-results">
                                                         <TextBasedResults />

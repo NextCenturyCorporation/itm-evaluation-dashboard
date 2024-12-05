@@ -200,9 +200,13 @@ const HEADER = {
         "QOL_Scenario_Sim",
         "VOL_Scenario_Text",
         "VOL_Scenario_Sim",
+        "QOL_KDE_Text",
         "QOL_KDMA_Text",
+        "QOL_KDE_Sim",
         "QOL_KDMA_Sim",
+        "VOL_KDE_Text",
         "VOL_KDMA_Text",
+        "VOL_KDE_Sim",
         "VOL_KDMA_Sim",
         "MJ_KDMA_Text",
         "MJ_KDMA_Sim",
@@ -226,9 +230,13 @@ const HEADER = {
         "QOL_Scenario_Sim",
         "VOL_Scenario_Text",
         "VOL_Scenario_Sim",
+        "QOL_KDE_Text",
         "QOL_KDMA_Text",
+        "QOL_KDE_Sim",
         "QOL_KDMA_Sim",
+        "VOL_KDE_Text",
         "VOL_KDMA_Text",
+        "VOL_KDE_Sim",
         "VOL_KDMA_Sim",
         "MJ_KDMA_Text",
         "MJ_KDMA_Sim",
@@ -395,7 +403,7 @@ export default function AggregateResults({ type }) {
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'participant_data' + fileExtension);
+        FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : selectedEval == 4 ? 'dre_' : 'ph1_') + 'participant_data' + fileExtension);
     };
 
     const exportHumanSimToExcel = async () => {
@@ -408,7 +416,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : 'dre_') + 'human_sim_data' + fileExtension);
+            FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : selectedEval == 4 ? 'dre_' : 'ph1_') + 'human_sim_data' + fileExtension);
         }
         else {
             const sheets = {};
@@ -430,7 +438,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: sheets, SheetNames: names };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data_dre' + fileExtension);
+            FileSaver.saveAs(data, 'human_sim_data' + (selectedEval == 4 ? '_dre' : '_ph1') + fileExtension);
         }
     };
 

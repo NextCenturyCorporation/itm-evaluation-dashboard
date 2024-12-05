@@ -79,7 +79,6 @@ export function PidLookup() {
                             <button className="blank-btn" type='button' onClick={toggleVisibility}>{viewHiddenEmail ? <VisibilityIcon /> : <VisibilityOffIcon />}</button>
                         </div>
                     </div>
-
                     <div className="form-group">
                         <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Find PID</button>
                     </div>

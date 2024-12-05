@@ -250,6 +250,7 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
     let misalignedStatus = 'least aligned';
     let i = 0;
     if (!targets) {
+        console.warn('Using Default ADMs');
         // get default adms
         if (set1.length > 0 && set2.length > 0) {
             alignedTarget = set1[0];
