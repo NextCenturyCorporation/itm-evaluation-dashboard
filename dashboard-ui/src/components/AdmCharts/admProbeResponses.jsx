@@ -323,29 +323,31 @@ export const ADMProbeResponses = (props) => {
                                             {getCurrentScenarioName()}, {formatADMString(adm)}
                                         </h4>
                                     </div>
-                                    <Query
-                                        query={get_all_test_data}
-                                        variables={{
-                                            admQueryStr: queryString,
-                                            scenarioID: currentScenario,
-                                            admName: adm,
-                                            alignmentTargets: queryData[adm]?.alignmentTargets || [],
-                                            evalNumber: currentEval
-                                        }}
-                                    >
-                                        {({ loading, error, data }) => {
-                                            if (loading || error || !data?.getAllTestDataForADM) return null;
+                                    <div className='chart-header-download'>
+                                        <Query
+                                            query={get_all_test_data}
+                                            variables={{
+                                                admQueryStr: queryString,
+                                                scenarioID: currentScenario,
+                                                admName: adm,
+                                                alignmentTargets: queryData[adm]?.alignmentTargets || [],
+                                                evalNumber: currentEval
+                                            }}
+                                        >
+                                            {({ loading, error, data }) => {
+                                                if (loading || error || !data?.getAllTestDataForADM) return null;
 
-                                            return (
-                                                <button 
-                                                    className="aggregateDownloadBtn"
-                                                    onClick={() => downloadAsExcel(data?.getAllTestDataForADM || [], adm)}
-                                                >
-                                                    Download Table as Excel
-                                                </button>
-                                            );
-                                        }}
-                                    </Query>
+                                                return (
+                                                    <button
+                                                        className="aggregateDownloadBtn"
+                                                        onClick={() => downloadAsExcel(data?.getAllTestDataForADM || [], adm)}
+                                                    >
+                                                        Download Table as Excel
+                                                    </button>
+                                                );
+                                            }}
+                                        </Query>
+                                    </div>
                                 </div>
                                 <div className='resultTableSection result-table-section-override'>
                                     <Query
