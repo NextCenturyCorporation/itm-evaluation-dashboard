@@ -241,7 +241,7 @@ const typeDefs = gql`
     updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
-    addNewParticipantToLog(participantData: JSON): JSON,
+    addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON
@@ -566,35 +566,25 @@ const resolvers = {
     addNewParticipantToLog: async (obj, args, context, inflow) => {
       try {
         const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] ====== Starting new participant addition ======`);
-        console.log(`[${timestamp}] Initial participant data:`, {
-          email: args.participantData.hashedEmail.substring(0, 10) + '...',
-          type: args.participantData.Type,
-          proposedPID: args.participantData.ParticipantID
-        });
 
         if (!Number.isFinite(args.participantData.ParticipantID)) {
           console.log(`[${timestamp}] Invalid PID detected, querying for highest PID`);
 
           const highestPidDoc = await dashboardDB.db.collection('participantLog')
             .find({
-              ParticipantID: { $type: "number" }
+              ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
             })
             .sort({ ParticipantID: -1 })
             .limit(1)
             .toArray();
 
-          console.log(`[${timestamp}] Current highest PID record:`, highestPidDoc[0]?.ParticipantID || 'none found');
-
-          const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : 202411301;
-          console.log(`[${timestamp}] Generated new PID: ${nextPid}`);
+          const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : args.lowPid;
 
           args.participantData.ParticipantID = nextPid;
         }
 
         // try to insert with our validated PID
         try {
-          console.log(`[${timestamp}] Attempting insert for PID: ${args.participantData.ParticipantID}`);
           const result = await dashboardDB.db.collection('participantLog').insertOne(args.participantData);
           console.log(`[${timestamp}] Insert SUCCESS for PID: ${args.participantData.ParticipantID}`);
           return result;
@@ -606,7 +596,7 @@ const resolvers = {
             // get absolute latest highest PID
             const highestPidDoc = await dashboardDB.db.collection('participantLog')
               .find({
-                ParticipantID: { $type: "number" }
+                ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
               })
               .sort({ ParticipantID: -1 })
               .limit(1)

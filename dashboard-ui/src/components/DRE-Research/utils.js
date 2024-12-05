@@ -1,5 +1,5 @@
 import * as FileSaver from 'file-saver';
-import XLSX from 'sheetjs-style';
+import XLSX from 'xlsx-js-style';
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { admOrderMapping, getDelEnvMapping } from '../Survey/delegationMappings';
 
@@ -24,7 +24,7 @@ const RATING_MAP = {
 const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
 const fileExtension = '.xlsx';
 
-export const exportToExcel = async (filename, formattedData, headers) => {
+export const exportToExcel = async (filename, formattedData, headers, participantData = false) => {
     // Create a new workbook and worksheet
     const wb = XLSX.utils.book_new();
     const dataCopy = structuredClone(formattedData);
@@ -41,8 +41,39 @@ export const exportToExcel = async (filename, formattedData, headers) => {
     const colWidths = headers.map(header => ({ wch: Math.max(header.length, 20) }));
     ws['!cols'] = colWidths;
 
+    if (participantData) {
+        // apply conditional formatting to participant data
+        const keys = Object.keys(dataCopy[Object.keys(dataCopy)[0]]);
+        const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+
+        for (let row = 1; row <= dataCopy.length; row++) {
+            for (let col = 0; col < keys.length; col++) {
+                const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+                const cell = ws[cellRef];
+
+                if (cell) {
+                    const val = cell.v;
+                    if (lightGreenIfNotNull.includes(keys[col]) && isDefined(val)) {
+                        cell.s = {
+                            fill: {
+                                fgColor: { rgb: 'c2ecc2' }  // Light green color
+                            }
+                        };
+                    }
+                    if ((keys[col] == 'Delegation' && val == 1) || (keys[col] == 'Text' && val == 5) || (keys[col] == 'Sim Count' && val == 4)) {
+                        cell.s = {
+                            fill: {
+                                fgColor: { rgb: '7bbc7b' }  // Dark green color
+                            }
+                        };
+                    }
+                }
+            }
+        }
+    }
+
     // Add the worksheet to the workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'RQ Data');
+    XLSX.utils.book_append_sheet(wb, ws, participantData ? 'Participants' : 'RQ Data');
 
     // Generate Excel file
     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -114,7 +145,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         // see if participant is in the participantLog
         const logData = participantLog.find(
-            log => log['ParticipantID'] == pid
+            log => log['ParticipantID'] == pid && log['Type'] != 'Test'
         );
         if (!logData) {
             continue;

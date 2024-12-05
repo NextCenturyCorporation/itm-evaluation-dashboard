@@ -67,7 +67,7 @@ export function RQ6({ evalNum }) {
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
-                    log => log['ParticipantID'] == pid
+                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
                 );
                 if (!logData) {
                     continue;
