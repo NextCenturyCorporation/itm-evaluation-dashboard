@@ -23,7 +23,7 @@ function formatTime(seconds) {
 
 const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation', 'Order Log', 'Updated Order Log'];
 
-export function ResultsTable({ data }) {
+export function ResultsTable({ data, pLog }) {
     const [formattedData, setFormattedData] = React.useState([]);
     let defaultVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     defaultVersion = defaultVersion.endsWith('.0') ?
@@ -50,13 +50,18 @@ export function ResultsTable({ data }) {
             if (!filterBySurveyVersion.includes(version?.toString()) && !selectAll) {
                 addToTable = false;
             }
-            entryObj['Participant Id'] = entry['Participant ID']?.questions['Participant ID']?.response;
-            if (!entryObj['Participant Id']) {
-                entryObj['Participant Id'] = entry['Participant ID Page']?.questions['Participant ID']?.response;
-                if (!entryObj['Participant Id']) {
-                    continue;
-                }
+            let pid = entry['Participant ID']?.questions['Participant ID']?.response ?? entry['Participant ID Page']?.questions['Participant ID']?.response ?? entry['pid'];
+            if (!pid) {
+                continue;
             }
+            const logData = pLog.find(
+                log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+            );
+            if ((version == 4 || version == 5) && !logData) {
+                continue;
+            }
+            entryObj['Participant Id'] = pid;
+
             entryObj['Survey Version'] = version;
             if (version && !tmpVersion.includes(version)) {
                 tmpVersion.push(version);

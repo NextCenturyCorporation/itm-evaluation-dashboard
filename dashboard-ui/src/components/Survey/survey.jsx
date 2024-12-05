@@ -17,6 +17,7 @@ import Bowser from "bowser";
 import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
@@ -61,6 +62,7 @@ class SurveyPage extends Component {
 
     constructor(props) {
         super(props);
+        this.queryParams = new URLSearchParams(window.location.search);
         this.state = {
             uploadData: false,
             startTime: null,
@@ -74,13 +76,16 @@ class SurveyPage extends Component {
             firstGroup: [],
             secondGroup: [],
             orderLog: [],
-            pid: null,
+            pid: this.queryParams.get('pid') ?? null,
+            onlineOnly: isDefined(this.queryParams.get('adeptQualtrix')),
+            prolificPid: this.queryParams.get('PROLIFIC_PID'),
             validPid: false,
             lastTimeCalled: 0,
             envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 },
             updatePLog: false,
             initialUploadedCount: 0,
-            hasUploaded: false
+            hasUploaded: false,
+            surveyComplete: false
         };
         this.surveyConfigClone = null;
         this.pageStartTimes = {};
@@ -115,6 +120,7 @@ class SurveyPage extends Component {
         this.survey.onComplete.add(this.onSurveyComplete);
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
+        this.redirectLinkRef = React.createRef();
         this.shouldBlockNavigation = true;
         if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
@@ -126,20 +132,26 @@ class SurveyPage extends Component {
             const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion == 4 || res.results?.surveyVersion == 5) && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
-            if (this.state.validPid) {
-                if (pidExists.length > 0) {
+            if (this.state.validPid || this.state.onlineOnly) {
+                if (pidExists.length > 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                 }
-                else if (completedTextSurvey.length == 0) {
+                else if (completedTextSurvey.length == 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
                 }
                 else {
-                    this.survey.currentPage = 2;
+                    this.survey.currentPage = this.state.onlineOnly ? 3 : 2;
+                    if (this.state.onlineOnly) {
+                        this.survey.pages[3].elements[0].html = this.survey.pages[3].elements[0].html.split('<br/><br/>').slice(0, -1).join('<br/><br/>');
+                        this.survey.pages[0].visibleIf = 'false';
+                        this.survey.pages[2].visibleIf = 'false';
+                    }
                     this.survey.pages[1].visibleIf = "false";
+
                 }
             }
             else {
@@ -296,14 +308,14 @@ class SurveyPage extends Component {
                 const expectedScenario = x['TA1'] == 'ST' ? (x['Attribute'] == 'QOL' ? stScenario[0] : stScenario[1]) : (x['Attribute'] == 'MJ' ? adScenario[0] : adScenario[1]);
                 let adms = null;
                 if (expectedAuthor == 'kitware') {
-                    if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
+                    if ((this.state.onlineOnly || this.state.validPid) && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
                         adms = getKitwareAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
                         adms = getKitwareAdms(this.state.surveyVersion, expectedScenario, null, null, null, null);
                     }
                 }
                 else {
-                    if (this.state.validPid && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
+                    if ((this.state.onlineOnly || this.state.validPid) && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
                         adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
                         adms = getParallaxAdms(this.state.surveyVersion, expectedScenario, null, null, null, null);
@@ -333,8 +345,8 @@ class SurveyPage extends Component {
                     alignedAdm['alignment'] = 'aligned';
                     alignedAdm['target'] = alignedADMTarget;
                     pagesToShuffle.push(alignedAdm);
-                } else { 
-                    console.warn("Missing Aligned ADM for " + expectedScenario + " - " + expectedAuthor + " - " + alignedADMTarget); 
+                } else {
+                    console.warn("Missing Aligned ADM for " + expectedScenario + " - " + expectedAuthor + " - " + alignedADMTarget);
                 }
                 if (isDefined(misalignedAdm)) {
                     misalignedAdm['admStatus'] = adms['misalignedStatus'];
@@ -356,7 +368,7 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else if (this.state.surveyVersion == 1){
+        else if (this.state.surveyVersion == 1) {
             let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
             // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
             let removed = groupedDMs.pop();
@@ -561,6 +573,9 @@ class SurveyPage extends Component {
 
 
     uploadSurveyData = (survey, finalUpload) => {
+        if (finalUpload) {
+            this.setState({ surveyComplete: true });
+        }
         this.timerHelper()
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
@@ -634,6 +649,7 @@ class SurveyPage extends Component {
             this.surveyData['evalNumber'] = 5;
             this.surveyData['evalName'] = 'Phase 1 Evaluation';
             this.surveyData['orderLog'] = this.state.orderLog;
+            this.surveyData['pid'] = this.state.pid;
         }
 
         // upload the results to mongoDB
@@ -649,7 +665,7 @@ class SurveyPage extends Component {
         this.uploadSurveyData(survey, true);
         this.shouldBlockNavigation = false;
         if (this.surveyConfigClone.pages.length < 3) {
-            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid) {
+            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
                         log => log['ParticipantID'] == this.state.pid
@@ -663,7 +679,7 @@ class SurveyPage extends Component {
         }
         else {
             this.setState({ hasUploaded: true }, () => {
-                if (this.state.validPid) {
+                if (this.state.validPid || this.state.onlineOnly) {
                     this.setState({ updatePLog: true }, () => {
                         if (this.uploadButtonRefPLog.current) {
                             this.uploadButtonRefPLog.current.click();
@@ -675,7 +691,7 @@ class SurveyPage extends Component {
     }
 
     finishFirstPage = (survey) => {
-        if (survey.currentPageNo == 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
+        if (!this.state.onlineOnly && survey.currentPageNo == 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
             this.setState({ lastTimeCalled: new Date() }, () => {
                 this.postConfigSetup();
             });
@@ -683,7 +699,7 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && sender.valuesHash['Participant ID'] !== this.state.pid) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => log['ParticipantID'] == this.state.pid
@@ -746,7 +762,7 @@ class SurveyPage extends Component {
                             </Mutation>
                     )}
                     {this.state.updatePLog && (
-                        <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={this.state.onlineOnly && this.redirectLinkRef?.current?.click()}>
                             {(updateParticipantLog) => (
                                 <div>
                                     <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
@@ -774,6 +790,17 @@ class SurveyPage extends Component {
                         }}>
                             Survey v{this.state.surveyVersion}
                         </div>
+                    {this.surveyComplete && (this.state.updatePLog || this.state.uploadData) && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+                                <Spinner animation="border" role="status">
+                                    <span className="sr-only">Loading...</span>
+                                </Spinner>
+                                <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                            </div>
+                        </div>
+                    )}
+                    <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}`} />
                 </>
                 }
             </>
@@ -784,15 +811,15 @@ class SurveyPage extends Component {
 export const SurveyPageWrapper = (props) => {
     const { loading: loadingHumanGroupFirst, error: errorHumanGroupFirst, data: dataHumanGroupFirst } = useQuery(COUNT_HUMAN_GROUP_FIRST);
     const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
-      });
+    });
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults ) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults ) return <p>Error :</p>;
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
 
     return (
         <SurveyPage

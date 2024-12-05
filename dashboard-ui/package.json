@@ -62,7 +62,8 @@
         "survey-analytics": "^1.9.137",
         "survey-core": "^1.9.137",
         "survey-react-ui": "^1.9.137",
-        "typescript": "5.4.3"
+        "typescript": "5.4.3",
+        "xlsx-js-style": "1.2.0"
     },
     "scripts": {
         "start": "react-scripts start",
