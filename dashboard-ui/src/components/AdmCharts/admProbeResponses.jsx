@@ -44,6 +44,93 @@ const get_all_test_data = gql`
     }
 `;
 
+const parseProbeId = (probeId) => {
+    
+    const dotFormat = probeId.match(/^(\d+)\.(\d+)$/);
+    if (dotFormat) {
+        return {
+            type: 'dotted',
+            major: parseInt(dotFormat[1]),
+            minor: parseInt(dotFormat[2]),
+            raw: parseInt(dotFormat[1]) + (parseInt(dotFormat[2]) / 100)
+        };
+    }
+
+   
+    const trainProbeFormat = probeId.match(/.*?Probe-(\d+)$/);
+    if (trainProbeFormat) {
+        const number = parseInt(trainProbeFormat[1]);
+        return {
+            type: 'train',
+            number: number,
+            raw: 4 + (number / 100)
+        };
+    }
+
+    const wordFormat = probeId.match(/^Probe\s+(\d+)\s+\w+$/);
+    if (wordFormat) {
+        const number = parseInt(wordFormat[1]);
+        return {
+            type: 'word',
+            raw: number
+        };
+    }
+
+    const simpleProbeFormat = probeId.match(/^Probe\s+(\d+)$/);
+    if (simpleProbeFormat) {
+        const number = parseInt(simpleProbeFormat[1]);
+        return {
+            type: 'simple',
+            raw: number
+        };
+    }
+
+    const singleLetterFormat = probeId.match(/^Probe\s+(\d+)([A-Z])-(\d+)$/);
+    if (singleLetterFormat) {
+        const baseNumber = parseInt(singleLetterFormat[1]);
+        const letter = singleLetterFormat[2];
+        const subNumber = parseInt(singleLetterFormat[3]);
+        
+        return {
+            type: 'single-letter',
+            raw: baseNumber + (letter.charCodeAt(0) - 64) / 100 + subNumber / 10000
+        };
+    }
+
+    const hierarchicalFormat = probeId.match(/^Probe\s+(\d+)(-[A-Z]\.?\d+)*$/);
+    if (hierarchicalFormat) {
+        const parts = probeId.split('-');
+        const baseNumber = parseInt(parts[0].match(/\d+/)[0]);
+        
+        let sortValue = baseNumber;
+        
+        for (let i = 1; i < parts.length; i++) {
+            const part = parts[i];
+            const letter = part.charAt(0);
+            const number = parseFloat(part.match(/\d+\.?\d*/)?.[0] || '0');
+            
+            sortValue += (letter.charCodeAt(0) - 64) / 100 + number / 10000;
+        }
+
+        return {
+            type: 'hierarchical',
+            raw: sortValue
+        };
+    }
+
+    return {
+        type: 'other',
+        raw: probeId
+    };
+};
+
+const compareProbeIds = (a, b) => {
+    const parsedA = parseProbeId(a);
+    const parsedB = parseProbeId(b);
+    
+    return parsedA.raw - parsedB.raw;
+};
+
 export const ADMProbeResponses = (props) => {
     const [currentEval, setCurrentEval] = useState(5);
     const [currentScenario, setCurrentScenario] = useState("");
@@ -162,7 +249,6 @@ export const ADMProbeResponses = (props) => {
     const downloadAsExcel = (tableData, adm = null, isAllTables = false) => {
         const excelData = isAllTables ? tableData : formatTableData(tableData);
 
-        // Create and save workbook
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Probe Responses");
@@ -175,7 +261,7 @@ export const ADMProbeResponses = (props) => {
         const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
         saveAs(data, fileName);
     };
-    // Helper function to format table data
+
     const formatTableData = (testDataArray, adm = null) => {
         return testDataArray.map(({ alignmentTarget, data }) => {
             const row = adm ?
@@ -189,7 +275,7 @@ export const ADMProbeResponses = (props) => {
                     'TA1 Session ID': getSessionId(data.history)
                 };
 
-            // Get and sort probe columns
+ 
             const probeColumns = new Set();
             testDataArray.forEach(({ data }) => {
                 const history = data?.history || [];
@@ -204,21 +290,8 @@ export const ADMProbeResponses = (props) => {
                 });
             });
 
-            const sortedProbeColumns = Array.from(probeColumns).sort((a, b) => {
-                const aMatch = a.match(/\d+/);
-                const bMatch = b.match(/\d+/);
-                if (aMatch && bMatch) {
-                    const aNum = parseInt(aMatch[0]);
-                    const bNum = parseInt(bMatch[0]);
-                    if (aNum === bNum) {
-                        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-                    }
-                    return aNum - bNum;
-                }
-                return a.localeCompare(b);
-            });
+            const sortedProbeColumns = Array.from(probeColumns).sort(compareProbeIds);
 
-            // Add probe responses to row
             sortedProbeColumns.forEach(probeId => {
                 row[probeId] = getChoiceForProbe(data.history, probeId) || '-';
             });
@@ -379,21 +452,7 @@ export const ADMProbeResponses = (props) => {
                                                 });
                                             });
 
-                                            const sortedProbeColumns = Array.from(probeColumns).sort((a, b) => {
-                                                const aMatch = a.match(/\d+/);
-                                                const bMatch = b.match(/\d+/);
-
-                                                if (aMatch && bMatch) {
-                                                    const aNum = parseInt(aMatch[0]);
-                                                    const bNum = parseInt(bMatch[0]);
-
-                                                    if (aNum === bNum) {
-                                                        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-                                                    }
-                                                    return aNum - bNum;
-                                                }
-                                                return a.localeCompare(b);
-                                            });
+                                            const sortedProbeColumns = Array.from(probeColumns).sort(compareProbeIds);
 
                                             return (
                                                 <>
