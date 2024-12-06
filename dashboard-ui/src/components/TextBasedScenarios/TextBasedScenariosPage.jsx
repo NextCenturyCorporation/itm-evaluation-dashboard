@@ -448,8 +448,13 @@ class TextBasedScenariosPage extends Component {
 
     attachKdmaValue = async (sessionId, url) => {
         const endpoint = '/api/v1/computed_kdma_profile?session_id='
+        try {
         const response = await axios.get(`${url}${endpoint}${sessionId}`)
         return response.data
+        } catch (e) {
+            console.error('Error getting kdmas: ' + e);
+            return null;
+        }
     }
 
     mostLeastAligned = async (sessionId, ta1, url, scenario) => {
