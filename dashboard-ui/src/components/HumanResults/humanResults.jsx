@@ -5,7 +5,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
-import './humanResults.css';
+import '../../css/humanResults.css';
 import Select from 'react-select';
 
 const get_eval_name_numbers = gql`

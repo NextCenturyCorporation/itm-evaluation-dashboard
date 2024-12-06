@@ -1,5 +1,5 @@
 import React from 'react';
-import '../aggregateResults.css';
+import '../../../css/aggregateResults.css';
 import { populateDataSet } from '../DataFunctions';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';

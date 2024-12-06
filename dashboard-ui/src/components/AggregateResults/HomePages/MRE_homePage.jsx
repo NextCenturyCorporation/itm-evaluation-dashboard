@@ -1,6 +1,6 @@
 import { ScatterChart } from '@mui/x-charts';
 import React from 'react';
-import '../aggregateResults.css';
+import '../../../css/aggregateResults.css';
 import CanvasJSReact from '@canvasjs/react-charts';
 import { getBoxWhiskerData, getMean, getMeanAcrossAll, getMedian, getSeAcrossAll, getStandDev, getStandardError } from '../statistics';
 import { isDefined, getChartData } from '../DataFunctions';

@@ -4,7 +4,7 @@ import { useQuery } from '@apollo/react-hooks';
 import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellData, sortedObjectKeys} from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
-import './aggregateResults.css';
+import '../../css/aggregateResults.css';
 import ProgramQuestions from './HomePages/programQuestions';
 import { Modal } from "@mui/material";
 import { DefinitionTable } from './definitionTable';
