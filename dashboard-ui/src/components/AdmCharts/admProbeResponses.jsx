@@ -102,12 +102,13 @@ export const ADMProbeResponses = (props) => {
             value: opt._id.evalNumber,
             label: opt._id.evalName
         }))
+        .filter(opt => opt.value >= 3)
         .sort((a, b) => (a.value < b.value) ? 1 : -1);
 
     const setEval = (target) => {
         setCurrentEval(target);
         setCurrentScenario("");
-        setQueryString(target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name");
+        setQueryString("history.parameters.adm_name");
     };
 
     const formatScenarioString = (id) => {
