@@ -146,7 +146,7 @@ class SurveyPage extends Component {
                 else {
                     this.survey.currentPage = this.state.onlineOnly ? 3 : 2;
                     if (this.state.onlineOnly) {
-                        this.survey.pages[3].elements[0].html = this.survey.pages[3].elements[0].html.split('<br/><br/>').slice(0, -1).join('<br/><br/>');
+                        this.survey.pages[3].elements[0].html = this.survey.pages[3].elements[0].html.split('<br/><br/>').slice(0, -1).join('<br/><br/>').replace('Welcome to the <strong>Military Triage Delegation Experiment</strong>. Here', 'In the final part of the study,');
                         this.survey.pages[0].visibleIf = 'false';
                         this.survey.pages[2].visibleIf = 'false';
                     }
