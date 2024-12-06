@@ -159,12 +159,8 @@ export const ADMProbeResponses = (props) => {
     };
 
     const downloadAsExcel = (tableData, adm = null, isAllTables = false) => {
-        console.log(tableData)
-        console.log(adm)
-        console.log(isAllTables)
         const excelData = isAllTables ? tableData : formatTableData(tableData);
 
-        console.log(excelData)
         // Create and save workbook
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();

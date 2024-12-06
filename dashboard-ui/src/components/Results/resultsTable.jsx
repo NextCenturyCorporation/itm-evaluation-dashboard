@@ -324,7 +324,6 @@ class ResultsTable extends React.Component {
                                         if (loading) return <div>Loading ...</div> 
                                         if (error) return <div>Error</div>
                                         const testData = data[getTestByADMandScenarioName];
-                                        console.log(testData)
                                         return (
                                             <>
                                                 {testData !== null && testData !== undefined &&
