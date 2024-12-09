@@ -762,7 +762,7 @@ class SurveyPage extends Component {
                             </Mutation>
                     )}
                     {this.state.updatePLog && (
-                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={this.state.onlineOnly && this.redirectLinkRef?.current?.click()}>
+                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={() => { this.state.onlineOnly && this.redirectLinkRef?.current?.click() }}>
                             {(updateParticipantLog) => (
                                 <div>
                                     <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
