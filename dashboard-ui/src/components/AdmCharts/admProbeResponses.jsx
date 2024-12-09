@@ -379,7 +379,7 @@ export const ADMProbeResponses = (props) => {
                                                 downloadAsExcel(allData, null, true);
                                             }}
                                         >
-                                            Download All as Excel
+                                            Download All
                                         </button>
                                     );
                                 }}
@@ -412,7 +412,7 @@ export const ADMProbeResponses = (props) => {
                                                         className="aggregateDownloadBtn"
                                                         onClick={() => downloadAsExcel(data?.getAllTestDataForADM || [], adm)}
                                                     >
-                                                        Download Table as Excel
+                                                        Download
                                                     </button>
                                                 );
                                             }}
