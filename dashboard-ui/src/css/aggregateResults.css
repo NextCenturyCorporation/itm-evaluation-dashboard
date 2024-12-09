@@ -291,3 +291,21 @@ td a {
     text-decoration: underline !important;
     color: rgb(88, 88, 115) !important;
 }
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .chart-header-download {
+    margin-left: auto;
+  }
+
+.probe-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 0px;
+    padding-left: 20px;
+}
