@@ -45,7 +45,7 @@ const get_all_test_data = gql`
 `;
 
 const parseProbeId = (probeId) => {
-    
+
     const dotFormat = probeId.match(/^(\d+)\.(\d+)$/);
     if (dotFormat) {
         return {
@@ -56,7 +56,7 @@ const parseProbeId = (probeId) => {
         };
     }
 
-   
+
     const trainProbeFormat = probeId.match(/.*?Probe-(\d+)$/);
     if (trainProbeFormat) {
         const number = parseInt(trainProbeFormat[1]);
@@ -90,7 +90,7 @@ const parseProbeId = (probeId) => {
         const baseNumber = parseInt(singleLetterFormat[1]);
         const letter = singleLetterFormat[2];
         const subNumber = parseInt(singleLetterFormat[3]);
-        
+
         return {
             type: 'single-letter',
             raw: baseNumber + (letter.charCodeAt(0) - 64) / 100 + subNumber / 10000
@@ -101,14 +101,14 @@ const parseProbeId = (probeId) => {
     if (hierarchicalFormat) {
         const parts = probeId.split('-');
         const baseNumber = parseInt(parts[0].match(/\d+/)[0]);
-        
+
         let sortValue = baseNumber;
-        
+
         for (let i = 1; i < parts.length; i++) {
             const part = parts[i];
             const letter = part.charAt(0);
             const number = parseFloat(part.match(/\d+\.?\d*/)?.[0] || '0');
-            
+
             sortValue += (letter.charCodeAt(0) - 64) / 100 + number / 10000;
         }
 
@@ -127,7 +127,7 @@ const parseProbeId = (probeId) => {
 const compareProbeIds = (a, b) => {
     const parsedA = parseProbeId(a);
     const parsedB = parseProbeId(b);
-    
+
     return parsedA.raw - parsedB.raw;
 };
 
@@ -149,7 +149,8 @@ export const ADMProbeResponses = (props) => {
     });
     const { loading: admLoading, error: admError, data: admData } = useQuery(performer_adm_by_scenario, {
         variables: { admQueryStr: queryString, scenarioID: currentScenario },
-        skip: !currentScenario
+        skip: !currentScenario,
+        fetchPolicy: "network-only"
     });
 
     useEffect(() => {
@@ -159,12 +160,13 @@ export const ADMProbeResponses = (props) => {
     }, [alignmentData]);
 
     useEffect(() => {
+
         if (admData?.getPerformerADMsForScenario && currentScenario) {
             const newQueryData = {};
 
             admData.getPerformerADMsForScenario.forEach(adm => {
                 newQueryData[adm] = {
-                    alignmentTargets: currentEval >= 3 ? alignmentTargets : [null],
+                    alignmentTargets: alignmentTargets,
                     data: {}
                 };
             });
@@ -172,6 +174,13 @@ export const ADMProbeResponses = (props) => {
             setQueryData(newQueryData);
         }
     }, [admData, currentScenario, currentEval, alignmentTargets]);
+
+    useEffect(() => {
+        setCurrentScenario("");
+        setQueryString("history.parameters.adm_name");
+        setQueryData({});
+        setAlignmentTargets([]);
+    }, [currentEval]);
 
     const getChoiceForProbe = (history, probeId) => {
         const probeResponse = history
@@ -199,13 +208,7 @@ export const ADMProbeResponses = (props) => {
     };
 
     const formatScenarioString = (id) => {
-        if (currentEval < 3) {
-            if (id.toLowerCase().indexOf("adept") > -1) {
-                return ("BBN: " + id);
-            } else {
-                return ("Soartech: " + id);
-            }
-        } else if (currentEval == 3) {
+        if (currentEval == 3) {
             if (id.toLowerCase().indexOf("metricseval") > -1) {
                 return ("ADEPT: " + id);
             } else {
@@ -275,7 +278,7 @@ export const ADMProbeResponses = (props) => {
                     'TA1 Session ID': getSessionId(data.history)
                 };
 
- 
+
             const probeColumns = new Set();
             testDataArray.forEach(({ data }) => {
                 const history = data?.history || [];
@@ -436,7 +439,6 @@ export const ADMProbeResponses = (props) => {
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
                                             if (testDataArray.length === 0) return <div>No data available</div>;
-
 
                                             const probeColumns = new Set();
                                             testDataArray.forEach(({ data }) => {
