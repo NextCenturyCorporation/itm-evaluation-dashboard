@@ -223,11 +223,7 @@
     }
 }
 
-.survey-results {
-    display: flex;
-    flex-direction: row;
-}
-
 .survey-results-content {
-    width: 88%;
+    margin: 12px;
+    width: calc(100% - 24px);
 }
