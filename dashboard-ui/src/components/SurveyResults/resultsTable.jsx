@@ -8,9 +8,17 @@ import FormControl from '@mui/material/FormControl';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 import { useSelector } from "react-redux";
+import { Autocomplete, TextField } from "@mui/material";
+import { isDefined } from "../AggregateResults/DataFunctions";
+import { DownloadButtons } from "../DRE-Research/tables/download-buttons";
 
-/* A list of names that are not pages to record in the excel sheet */
-const NON_PAGES = ['user', 'surveyVersion', 'startTime', 'timeComplete', 'Participant ID'];
+const EVAL_MAP = {
+    3: 'MRE',
+    4: 'DRE',
+    5: 'PH1'
+}
+
+const HEADERS = ['Participant ID', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Post-Scenario Measures - Time Taken (mm:ss)'];
 
 function formatTime(seconds) {
     seconds = Math.round(seconds);
@@ -21,9 +29,181 @@ function formatTime(seconds) {
     return `${minutes}:${formatted_seconds}`
 }
 
+export function ResultsTable({ data, pLog }) {
+    const [headers, setHeaders] = React.useState(HEADERS);
+    const [formattedData, setFormattedData] = React.useState([]);
+    const [filteredData, setFilteredData] = React.useState([]);
+    const [evals, setEvals] = React.useState([]);
+    const [evalFilters, setEvalFilters] = React.useState([]);
+    const [versions, setVersions] = React.useState([]);
+    const [versionFilters, setVersionFilters] = React.useState([]);
+
+
+    React.useEffect(() => {
+        if (data) {
+            const allObjs = [];
+            const allVersions = [];
+            const allEvals = [];
+            const updatedHeaders = HEADERS;
+            for (let entry of data) {
+                const obj = {};
+                // not shown in table, just for filters
+                obj['eval'] = entry.evalNumber ?? entry.results?.evalNumber;
+
+                // clean up data, only showing relevant entries
+                entry = entry.results ?? entry;
+                if (!entry) {
+                    continue;
+                }
+
+                // ignore invalid versions
+                const version = entry.surveyVersion;
+                if (!version || version < 2 || version == 3) {
+                    // TODO: show this somewhere else
+                    continue;
+                }
+
+                // ignore invalid pids
+                let pid = entry['Participant ID']?.questions['Participant ID']?.response ?? entry['Participant ID Page']?.questions['Participant ID']?.response ?? entry['pid'];
+                if (!pid) {
+                    continue;
+                }
+                const logData = pLog.find(
+                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                );
+                if ((version == 4 || version == 5) && !logData) {
+                    continue;
+                }
+                if (obj['eval'] == 3 && pid.slice(0, 4) != '2024') {
+                    continue;
+                }
+
+                // ignore unfinished surveys
+                const lastPage = entry['Post-Scenario Measures'];
+                if (!lastPage) {
+                    continue;
+                }
+
+                // add data to filter options
+                allEvals.push(obj['eval']);
+                allVersions.push(version);
+                // console.log(entry);
+                // add data to table
+                obj['Participant ID'] = pid;
+                obj['Survey Version'] = version;
+                obj['Start Time'] = entry.startTime ? new Date(entry.startTime)?.toLocaleString() : null;
+                obj['End Time'] = new Date(entry.timeComplete)?.toLocaleString();
+                const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
+                obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds) : null;
+                obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
+                console.log(lastPage);
+                for (const q of Object.keys(lastPage.questions)) {
+                    obj[q] = lastPage.questions[q].response?.toString();
+                    if (!headers.includes(q)) {
+                        updatedHeaders.push(q);
+                    }
+
+                }
+                allObjs.push(obj);
+            }
+            // prep filters and data (sort by pid)
+            allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
+            setVersions(Array.from(new Set(allVersions)).filter((x) => isDefined(x)).map((x) => x.toString()));
+            setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
+            setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            setHeaders(updatedHeaders);
+            console.log(updatedHeaders);
+        }
+    }, [data, pLog]);
+
+    React.useEffect(() => {
+        setFilteredData(formattedData.filter((x) =>
+            (versionFilters.length == 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
+            (evalFilters.length == 0 || evalFilters.map((x) => x.value).includes(x['eval']?.toString()))
+        ));
+    }, [versionFilters, evalFilters, formattedData]);
+
+    const refineData = (origData) => {
+        // remove unwanted headers from download
+        const updatedData = structuredClone(origData);
+        updatedData.map((x) => {
+            delete x.eval;
+            return x;
+        });
+        return updatedData;
+    };
+
+    return (<>
+        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        <section className='tableHeader'>
+            <div className="filters">
+                <Autocomplete
+                    multiple
+                    options={evals}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Eval"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setEvalFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={versions}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Version"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setVersionFilters(newVal)}
+                />
+            </div>
+            <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={'Survey Results'} />
+        </section>
+        <div className='resultTableSection'>
+            <table className='itm-table'>
+                <thead>
+                    <tr>
+                        {headers.map((val, index) => {
+                            return (<th key={'header-' + index}>
+                                {val}
+                            </th>);
+                        })}
+                    </tr>
+                </thead>
+                <tbody>
+                    {filteredData.map((dataSet, index) => {
+                        return (<tr key={dataSet['Participant_ID'] + '-' + index}>
+                            {headers.map((val) => {
+                                return (<td key={dataSet['Participant_ID'] + '-' + val + '-' + index}>
+                                    {dataSet[val] ?? '-'}
+                                </td>);
+                            })}
+                        </tr>);
+                    })}
+                </tbody>
+            </table>
+        </div>
+    </>);
+}
+
+// /* A list of names that are not pages to record in the excel sheet */
+const NON_PAGES = ['user', 'surveyVersion', 'startTime', 'timeComplete', 'Participant ID'];
+
+
+
 const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation', 'Order Log', 'Updated Order Log'];
 
-export function ResultsTable({ data, pLog }) {
+function OLDResultsTable({ data, pLog }) {
     const [formattedData, setFormattedData] = React.useState([]);
     let defaultVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     defaultVersion = defaultVersion.endsWith('.0') ?

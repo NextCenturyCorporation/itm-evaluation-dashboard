@@ -222,3 +222,12 @@
         border-bottom: none;
     }
 }
+
+.survey-results {
+    display: flex;
+    flex-direction: row;
+}
+
+.survey-results-content {
+    width: 88%;
+}
