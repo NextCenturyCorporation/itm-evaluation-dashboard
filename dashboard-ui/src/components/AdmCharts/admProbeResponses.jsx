@@ -387,7 +387,7 @@ export const ADMProbeResponses = (props) => {
                         </div>
                         {!admLoading && !admError && admData?.getPerformerADMsForScenario?.map((adm, index) => (
                             <div className='chart-home-container' key={index}>
-                                <div className='chart-header'>
+                                <div className='probe-chart-header'>
                                     <div className='chart-header-label'>
                                         <h4>
                                             {getCurrentScenarioName()}, {formatADMString(adm)}

@@ -301,3 +301,11 @@ td a {
   .chart-header-download {
     margin-left: auto;
   }
+
+.probe-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 0px;
+    padding-left: 20px;
+}
