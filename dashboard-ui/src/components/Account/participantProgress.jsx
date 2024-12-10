@@ -63,6 +63,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                 const sims = simResults.filter((x) => x.pid == pid).sort((a, b) => a.timestamp - b.timestamp);
                 obj['Evaluation'] = sims[0]?.evalName;
+                if (canViewProlific) {
+                    obj['Prolific ID'] = res['prolificId'];
+                    obj['Contact ID'] = res['contactId'];
+                }
                 const sim_date = new Date(sims[0]?.timestamp);
                 obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()}` : undefined;
                 obj['Sim Count'] = sims.length;
@@ -79,10 +83,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()}` : undefined;
                 obj['Delegation'] = surveys.length;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
-                if (canViewProlific) {
-                    obj['Prolific ID'] = res['prolificId'];
-                    obj['Contact ID'] = res['contactId'];
-                }
+
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
