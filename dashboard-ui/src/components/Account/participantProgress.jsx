@@ -30,10 +30,10 @@ const HEADERS = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date',
 
 
 export function ParticipantProgressTable() {
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA);
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults, refetch: refetchTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
+    const { loading: loadingSim, error: errorSim, data: dataSim, refetch: refetchSimData } = useQuery(GET_SIM_DATA);
     const [formattedData, setFormattedData] = React.useState([]);
     const [types, setTypes] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
@@ -153,6 +153,13 @@ export function ParticipantProgressTable() {
         }
     }, [formattedData, typeFilters, evalFilters, completionFilters]);
 
+    const refreshData = async () => {
+        await refetchPLog();
+        await refetchSimData();
+        await refetchSurveyResults();
+        await refetchTextResults();
+    };
+
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error :</p>;
 
@@ -206,7 +213,7 @@ export function ParticipantProgressTable() {
                     onChange={(_, newVal) => setCompletionFilters(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'Participant_Progress'} openModal={null} isParticipantData={true} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
