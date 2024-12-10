@@ -5,9 +5,8 @@ import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
 import './surveyResults.css';
 import { Model } from 'survey-core';
-import { FormControlLabel, Modal, Radio, RadioGroup } from "@mui/material";
+import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import { ResultsTable } from './resultsTable';
-import CloseIcon from '@material-ui/icons/Close';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -232,7 +231,7 @@ export function SurveyResults() {
         <div className='survey-results-content'>
             {loading && <p>Loading</p>}
             {error && <p>Error</p>}
-            <Tabs defaultActiveKey={1} className='p-1'>
+            <Tabs defaultActiveKey={0} className='p-1'>
                 <Tab eventKey={0} title="Table View">
                     {data?.getAllSurveyResults && dataParticipantLog?.getParticipantLog &&
                         <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />

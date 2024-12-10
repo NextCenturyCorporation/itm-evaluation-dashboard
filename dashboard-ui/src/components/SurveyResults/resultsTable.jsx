@@ -18,7 +18,33 @@ const EVAL_MAP = {
     5: 'PH1'
 }
 
-const HEADERS = ['Participant ID', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Post-Scenario Measures - Time Taken (mm:ss)'];
+const STARTING_HEADERS = [
+    "Participant ID",
+    "Survey Version",
+    "Start Time",
+    "End Time",
+    "Total Time",
+    "Post-Scenario Measures - Time Taken (mm:ss)",
+    "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
+    "I was easily able to imagine myself as the medic in these scenarios",
+    "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
+    "The VR training experience was helpful in making the delegation decisions in these scenarios",
+    "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+    "I am a computer gaming enthusiast",
+    "I consider myself a seasoned first responder",
+    "I have completed the SALT Triage Certificate Training Course",
+    "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
+    "I have completed disaster response training provided by the United States Military",
+    "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
+    "What is your current role (choose all that apply):",
+    "Branch and Status",
+    "Military Medical Training",
+    "Years experience in military medical role",
+    "I feel that people are generally reliable",
+    "I usually trust people until they give me a reason not to trust them",
+    "Trusting another person is not difficult for me",
+    "What was the biggest influence on your delegation decision between different medics?"
+];
 
 function formatTime(seconds) {
     seconds = Math.round(seconds);
@@ -30,7 +56,7 @@ function formatTime(seconds) {
 }
 
 export function ResultsTable({ data, pLog }) {
-    const [headers, setHeaders] = React.useState(HEADERS);
+    const [headers, setHeaders] = React.useState(STARTING_HEADERS);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
@@ -44,7 +70,20 @@ export function ResultsTable({ data, pLog }) {
             const allObjs = [];
             const allVersions = [];
             const allEvals = [];
-            const updatedHeaders = HEADERS;
+            const updatedHeaders = STARTING_HEADERS;
+            // set up block headers
+            for (let block = 1; block < 5; block++) {
+                for (let dm = 1; dm < 4; dm++) {
+                    const subheaders = ['TA1', 'TA2', 'Type', 'Target', 'Name', 'Time', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust'];
+                    for (let subhead of subheaders) {
+                        updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
+                    }
+                }
+                const comparisons = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
+                for (let subhead of comparisons) {
+                    updatedHeaders.push(`B${block}_${subhead}`);
+                }
+            }
             for (let entry of data) {
                 const obj = {};
                 // not shown in table, just for filters
@@ -87,7 +126,8 @@ export function ResultsTable({ data, pLog }) {
                 // add data to filter options
                 allEvals.push(obj['eval']);
                 allVersions.push(version);
-                // console.log(entry);
+                console.log(entry);
+
                 // add data to table
                 obj['Participant ID'] = pid;
                 obj['Survey Version'] = version;
@@ -96,14 +136,15 @@ export function ResultsTable({ data, pLog }) {
                 const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
                 obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds) : null;
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
-                console.log(lastPage);
                 for (const q of Object.keys(lastPage.questions)) {
                     obj[q] = lastPage.questions[q].response?.toString();
-                    if (!headers.includes(q)) {
-                        updatedHeaders.push(q);
-                    }
-
                 }
+
+                // get blocks of dms
+                for (const page of (entry['orderLog'] ?? []).filter((x) => x.includes('Medic'))) {
+                    console.log(page);
+                }
+
                 allObjs.push(obj);
             }
             // prep filters and data (sort by pid)
@@ -201,7 +242,7 @@ const NON_PAGES = ['user', 'surveyVersion', 'startTime', 'timeComplete', 'Partic
 
 
 
-const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation', 'Order Log', 'Updated Order Log'];
+// const STARTING_HEADERS = ['Participant Id', 'Survey Version', 'Start Time', 'End Time', 'Total Time', 'Completed Simulation', 'Order Log', 'Updated Order Log'];
 
 function OLDResultsTable({ data, pLog }) {
     const [formattedData, setFormattedData] = React.useState([]);
