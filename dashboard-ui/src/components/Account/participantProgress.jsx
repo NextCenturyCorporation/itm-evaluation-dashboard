@@ -63,7 +63,7 @@ export function ParticipantProgressTable() {
                 const sims = simResults.filter((x) => x.pid == pid).sort((a, b) => a.timestamp - b.timestamp);
                 obj['Evaluation'] = sims[0]?.evalName;
                 const sim_date = new Date(sims[0]?.timestamp);
-                obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth()}/${sim_date?.getDate() + 1}/${sim_date?.getFullYear()}` : undefined;
+                obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()}` : undefined;
                 obj['Sim Count'] = sims.length;
                 obj['Sim-1'] = sims[0]?.scenario_id;
                 obj['Sim-2'] = sims[1]?.scenario_id;
@@ -75,14 +75,14 @@ export function ParticipantProgressTable() {
                     && x.results?.['Post-Scenario Measures']);
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const survey_date = new Date(lastSurvey?.results?.timeComplete);
-                obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth()}/${survey_date?.getDate() + 1}/${survey_date?.getFullYear()}` : undefined;
+                obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()}` : undefined;
                 obj['Delegation'] = surveys.length;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
                 const text_date = new Date(lastScenario?.timeComplete);
-                obj['Text Date'] = text_date != 'Invalid Date' ? `${text_date?.getMonth()}/${text_date?.getDate() + 1}/${text_date?.getFullYear()}` : undefined;
+                obj['Text Date'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()}` : undefined;
                 obj['Text'] = scenarios.length;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
