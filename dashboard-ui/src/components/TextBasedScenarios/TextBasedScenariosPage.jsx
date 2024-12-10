@@ -117,8 +117,6 @@ class TextBasedScenariosPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true
-        this.handleKeyPress = this.handleKeyPress.bind(this);
-        this.handleKeyPress = this.handleKeyPress.bind(this);
     }
 
     duplicatePid = (pid) => {
@@ -234,7 +232,6 @@ class TextBasedScenariosPage extends Component {
     }
 
     componentDidMount() {
-        document.addEventListener('keydown', this.handleKeyPress);
         const queryParams = new URLSearchParams(window.location.search);
         const pid = queryParams.get('pid');
         const classification = queryParams.get('class');
@@ -262,18 +259,6 @@ class TextBasedScenariosPage extends Component {
                 });
             }
 
-        }
-    }
-
-    componentWillUnmount() {
-        document.removeEventListener('keydown', this.handleKeyPress);
-    }
-
-    handleKeyPress(event) {
-        if (event.key === 'M' || event.key === 'm') {
-            if (this.state.allScenariosCompleted) {
-                this.resetState();
-            }
         }
     }
 
