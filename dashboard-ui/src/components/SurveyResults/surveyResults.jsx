@@ -70,6 +70,23 @@ export function SurveyResults() {
         }
     }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
 
+    React.useEffect(() => {
+        // component did mount
+        window.addEventListener('scroll', toggleVisibility);
+        return () => {
+            // component will unmount
+            window.removeEventListener('scroll', toggleVisibility);
+        }
+    }, []);
+
+    const toggleVisibility = () => {
+        if (window.scrollY > 300) {
+            setShowScrollButton(true);
+        } else {
+            setShowScrollButton(false);
+        }
+    };
+
     const filterDataAndSetNames = () => {
         // removes data that is not in the selected scenario and creates generalized names, if necessary
         const separatedData = {};
@@ -203,7 +220,12 @@ export function SurveyResults() {
         }
     }
 
-
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    };
 
 
     return <>
@@ -271,7 +293,24 @@ export function SurveyResults() {
                     </div>
                 </Tab>
             </Tabs>
-
+            {showScrollButton && (
+                <IconButton onClick={(e) => {
+                    e.stopPropagation()
+                    scrollToTop()
+                }} style={{
+                    position: 'fixed',
+                    left: '20px',
+                    bottom: '20px',
+                    borderRadius: '10px',
+                    backgroundColor: '#592610',
+                    color: 'white',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    boxShadow: '0px 2px 10px rgba(0,0,0,0.3)'
+                }}>
+                    Back To Top <ArrowUpwardIcon fontSize='large' />
+                </IconButton>
+            )}
         </div>
     </>;
 }
@@ -300,13 +339,12 @@ function SingleGraph({ data, version }) {
         let surveyJson = [];
         // run data through function to shorten/cleanup questions and answers
         if (data[0].v4Name) {
-            surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v' + version.toString().slice(0) + '.0'], data[0].v4Name);
+            surveyJson = getQuestionAnswerSets(data[0].origName, surveys['delegation_v' + version.toString().slice(0) + '.0'], data[0].v4Name);
             setPageName((data[0].v4Name + ": Survey Results").replace('vs aligned vs misaligned', 'vs Aligned vs Misaligned'));
         }
         else {
             surveyJson = getQuestionAnswerSets(data[0].pageName, surveys['delegation_v' + version.toString().slice(0) + '.0']);
         }
-
         // more question shortening for better user experience
         const curResults = data.map(entry => {
             const entryResults = {};
@@ -391,68 +429,3 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
 }
 
 
-
-// export function SurveyResults() {
-
-
-//     React.useEffect(() => {
-//         // component did mount
-//         window.addEventListener('scroll', toggleVisibility);
-//         return () => {
-//             // component will unmount
-//             window.removeEventListener('scroll', toggleVisibility);
-//         }
-//     }, []);
-
-//     const toggleVisibility = () => {
-//         if (window.scrollY > 300) {
-//             setShowScrollButton(true);
-//         } else {
-//             setShowScrollButton(false);
-//         }
-//     };
-
-
-
-
-
-//     const closeModal = () => {
-//         setShowTable(false);
-//     }
-
-//     const scrollToTop = () => {
-//         window.scrollTo({
-//             top: 0,
-//             behavior: "smooth"
-//         });
-//     };
-
-//     return (<div className="delegation-results">
-
-//             <Modal className='table-modal' open={showTable} onClose={closeModal}>
-//                 <div className='modal-body'>
-//                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-//                     <ResultsTable data={data.getAllSurveyResults} pLog={dataParticipantLog.getParticipantLog} />
-//                 </div>
-//             </Modal>
-//         </>}
-//         {showScrollButton && (
-//             <IconButton onClick={(e) => {
-//                 e.stopPropagation()
-//                 scrollToTop()
-//             }} style={{
-//                 position: 'fixed',
-//                 left: '20px',
-//                 bottom: '20px',
-//                 borderRadius: '10px',
-//                 backgroundColor: '#592610',
-//                 color: 'white',
-//                 cursor: 'pointer',
-//                 zIndex: 1000,
-//                 boxShadow: '0px 2px 10px rgba(0,0,0,0.3)'
-//             }}>
-//                 Back To Top <ArrowUpwardIcon fontSize='large' />
-//             </IconButton>
-//         )}
-//     </div>);
-// }
