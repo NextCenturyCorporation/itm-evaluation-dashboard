@@ -103,7 +103,8 @@ class TextBasedScenariosPage extends Component {
             startSurvey: true,
             updatePLog: false,
             startCount: 0,
-            onlineOnly: false
+            onlineOnly: false,
+            skipText: false
         };
 
         this.surveyData = {};
@@ -235,6 +236,7 @@ class TextBasedScenariosPage extends Component {
         const pid = queryParams.get('pid');
         const classification = queryParams.get('class');
         const adeptQualtrix = queryParams.get('adeptQualtrix');
+        const startSurvey = queryParams.get('startSurvey');
         if (isDefined(pid)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
@@ -242,9 +244,14 @@ class TextBasedScenariosPage extends Component {
                 "vrEnvironmentsCompleted": ['none']
             };
             if (isDefined(adeptQualtrix)) {
-                this.setState({ moderated: false, startSurvey: true, onlineOnly: true }, () => {
-                    this.introSurveyComplete(this.introSurvey);
-                });
+                if (startSurvey == 'true') {
+                    this.setState({ moderated: false, onlineOnly: true, skipText: true });
+                }
+                else {
+                    this.setState({ moderated: false, startSurvey: true, onlineOnly: true }, () => {
+                        this.introSurveyComplete(this.introSurvey);
+                    });
+                }
             }
             else {
                 this.setState({ moderated: false, startSurvey: false }, () => {
@@ -635,10 +642,10 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
-                {!this.state.currentConfig && (
+                {!this.state.skipText && !this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
-                {!this.state.moderated && !this.state.startSurvey && (
+                {!this.state.skipText && !this.state.moderated && !this.state.startSurvey && (
                     <div className="text-instructions">
                         <h2>Instructions</h2>
                         <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
@@ -660,7 +667,7 @@ class TextBasedScenariosPage extends Component {
                 )
 
                 }
-                {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                {!this.state.skipText && this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
                     <>
                         <Survey model={this.survey} />
                         {this.shouldBlockNavigation && (
@@ -671,7 +678,7 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </>
                 )}
-                {this.state.uploadData && (
+                {!this.state.skipText && this.state.uploadData && (
                     <Mutation
                         mutation={UPLOAD_SCENARIO_RESULTS}
                         onCompleted={() => {
@@ -700,7 +707,7 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
-                {this.state.updatePLog && (
+                {!this.state.skipText && this.state.updatePLog && (
                     <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
                         {(updateParticipantLog) => (
                             <div>
@@ -715,7 +722,7 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
-                {this.state.allScenariosCompleted && (this.state.uploadedScenarios != this.state.scenarios.length) && (
+                {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios != this.state.scenarios.length) && (
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
                         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
                             <Spinner animation="border" role="status">
@@ -725,7 +732,7 @@ class TextBasedScenariosPage extends Component {
                         </div>
                     </div>
                 )}
-                {this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length && (
+                {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length)) && (
                     <ScenarioCompletionScreen
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}

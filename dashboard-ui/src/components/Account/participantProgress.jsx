@@ -27,7 +27,7 @@ const GET_SIM_DATA = gql`
     }`;
 
 const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
@@ -66,6 +66,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
                     obj['Contact ID'] = res['contactId'];
+                    if (res['prolificId']) obj['Survey Link'] = `https://darpaitm.caci.com/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
                 obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()}` : undefined;
@@ -90,6 +91,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const text_date = new Date(lastScenario?.timeComplete);
                 obj['Text Date'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()}` : undefined;
                 obj['Text'] = scenarios.length;
+                if (obj['Text'] < 5) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
                 obj['IO1'] = completedScenarios.includes('DryRunEval.IO1') || completedScenarios.includes('phase1-adept-train-IO1') ? 'y' : null;
@@ -135,8 +137,12 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             return 'white-cell';
         };
         return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '')}>
-            {val ?? '-'}
+            {header == 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
         </td>);
+    };
+
+    const copyLink = (linkToCopy) => {
+        navigator.clipboard.writeText(linkToCopy);
     };
 
     React.useEffect(() => {
@@ -192,7 +198,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     multiple
                     options={evals}
                     filterSelectedOptions
-                    size="small"
+                    size="small" 
                     style={{ width: '400px' }}
                     renderInput={(params) => (
                         <TextField

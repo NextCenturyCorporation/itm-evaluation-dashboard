@@ -58,6 +58,9 @@ export default function StartOnline() {
         if (adeptQualtrix != 'true') {
             history.push('/login');
         }
+        if (queryParams.get('startSurvey') == 'true') {
+            setTextTime(true);
+        }
     }, []);
 
     const startSurvey = async () => {
