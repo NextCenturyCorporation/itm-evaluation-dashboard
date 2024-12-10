@@ -46,6 +46,7 @@ const typeDefs = gql`
     admin: Boolean
     evaluator: Boolean
     experimenter: Boolean
+    adeptUser: Boolean
   }
 
   type Player {
@@ -240,6 +241,7 @@ const typeDefs = gql`
     updateAdminUser(username: String, isAdmin: Boolean): JSON,
     updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON,
     updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
+    updateAdeptUser(username: String, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
@@ -600,6 +602,12 @@ const resolvers = {
       return await dashboardDB.db.collection('users').update(
         { "username": args["username"] },
         { $set: { "experimenter": args["isExperimenter"] } }
+      );
+    },
+    updateAdeptUser: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "adeptUser": args["isAdeptUser"] } }
       );
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {

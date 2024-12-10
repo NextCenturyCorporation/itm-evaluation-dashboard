@@ -197,8 +197,8 @@ function ProgressTable({ newState }) {
     if (newState.currentUser === null) {
         history.push("/login");
     } else {
-        if (newState.currentUser.experimenter || newState.currentUser.admin || newState.evaluator) {
-            return <ParticipantProgressTable />
+        if (newState.currentUser.experimenter || newState.currentUser.admin || newState.currentUser.evaluator || newState.currentUser.adeptUser) {
+            return <ParticipantProgressTable canViewProlific={newState.currentUser.adeptUser || newState.currentUser.admin} />
         } else {
             return <Home newState={newState} />;
         }

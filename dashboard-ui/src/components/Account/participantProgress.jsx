@@ -26,10 +26,10 @@ const GET_SIM_DATA = gql`
         getAllSimAlignment
     }`;
 
-const HEADERS = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-
-export function ParticipantProgressTable() {
+export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults, refetch: refetchTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
@@ -42,6 +42,7 @@ export function ParticipantProgressTable() {
     const [evalFilters, setEvalFilters] = React.useState([]);
     const [completionFilters, setCompletionFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const HEADERS = canViewProlific ? HEADERS_WITH_PROLIFIC : HEADERS_NO_PROLIFIC;
 
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
@@ -78,6 +79,10 @@ export function ParticipantProgressTable() {
                 obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()}` : undefined;
                 obj['Delegation'] = surveys.length;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
+                if (canViewProlific) {
+                    obj['Prolific ID'] = res['prolificId'];
+                    obj['Contact ID'] = res['contactId'];
+                }
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];

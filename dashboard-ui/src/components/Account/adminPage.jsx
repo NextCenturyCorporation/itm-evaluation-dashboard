@@ -45,6 +45,13 @@ const UPDATE_EXPERIMENTER_USER = gql`
     }
 `;
 
+const UPDATE_ADEPT_USER = gql`
+    mutation updateAdeptUser($username: String!, $isAdeptUser: Boolean!) {
+        updateAdeptUser(username: $username, isAdeptUser: $isAdeptUser) 
+    }
+`;
+
+
 const GET_CURRENT_SURVEY_VERSION = gql`
     query getCurrentSurveyVersion {
         getCurrentSurveyVersion
@@ -182,6 +189,49 @@ function ExperimenterInputBox({ options, selectedOptions }) {
             lang={{
                 availableHeader: "All Users",
                 selectedHeader: "Experimenters"
+            }} />
+    );
+}
+
+function AdeptInputBox({ options, selectedOptions }) {
+    const [selected, setSelected] = useState(selectedOptions.sort());
+    const [updateAdeptUserCall] = useMutation(UPDATE_ADEPT_USER);
+
+    const setAdeptUser = (newSelect) => {
+        for (let i = 0; i < newSelect.length; i++) {
+            if (!selected.includes(newSelect[i])) {
+                updateAdeptUserCall({
+                    variables: {
+                        username: newSelect[i],
+                        isAdeptUser: true
+                    }
+                });
+            }
+        }
+        for (let i = 0; i < selected.length; i++) {
+            if (!newSelect.includes(selected[i])) {
+                updateAdeptUserCall({
+                    variables: {
+                        username: selected[i],
+                        isAdeptUser: false
+                    }
+                });
+            }
+        }
+        setSelected(newSelect);
+    }
+
+    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+    return (
+        <DualListBox
+            options={options}
+            selected={selected}
+            onChange={setAdeptUser}
+            showHeaderLabels={true}
+            lang={{
+                availableHeader: "All Users",
+                selectedHeader: "ADEPT Users"
             }} />
     );
 }
@@ -426,12 +476,15 @@ function AdminPage({ currentUser }) {
                     let evaluatorSelectedOptions = [];
                     let experimenterOptions = [];
                     let experimenterSelectedOptions = [];
+                    let adeptOptions = [];
+                    let adeptSelectedOptions = [];
 
                     const users = data[getUsersQueryName]
                     for (let i = 0; i < users.length; i++) {
                         options.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
                         evaluatorOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
                         experimenterOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                        adeptOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
 
                         if (users[i].admin) {
                             selectedOptions.push(users[i].username);
@@ -443,6 +496,10 @@ function AdminPage({ currentUser }) {
 
                         if (users[i].experimenter) {
                             experimenterSelectedOptions.push(users[i].username);
+                        }
+
+                        if (users[i].adeptUser) {
+                            adeptSelectedOptions.push(users[i].username);
                         }
                     }
 
@@ -488,6 +545,21 @@ function AdminPage({ currentUser }) {
                                             </Card.Text>
                                             <h6>Modify Current Experimenters</h6>
                                             <ExperimenterInputBox options={experimenterOptions} selectedOptions={experimenterSelectedOptions} />
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            </Row>
+
+                            <Row className="mb-4">
+                                <Col>
+                                    <Card>
+                                        <Card.Header as="h5">ADEPT Users</Card.Header>
+                                        <Card.Body>
+                                            <Card.Text>
+                                                Manage ADEPT user settings.
+                                            </Card.Text>
+                                            <h6>Modify Current ADEPT Users</h6>
+                                            <AdeptInputBox options={adeptOptions} selectedOptions={adeptSelectedOptions} />
                                         </Card.Body>
                                     </Card>
                                 </Col>
