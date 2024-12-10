@@ -40,10 +40,7 @@ const VIZ_PANEL_OPTIONS = {
 }
 
 export function SurveyResults() {
-    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
-        // only pulls from network, never cached
-        fetchPolicy: 'network-only',
-    });
+    const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'network-only' });
     const { data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState("");
@@ -55,7 +52,6 @@ export function SurveyResults() {
     const [showScrollButton, setShowScrollButton] = React.useState(false);
     const [generalizePages, setGeneralization] = React.useState(true);
     const surveys = useSelector((state) => state.configs.surveyConfigs);
-    const [showingGraphs, setShowingGraphs] = React.useState(false);
 
     React.useEffect(() => {
         if (!data) { return; }
@@ -67,6 +63,89 @@ export function SurveyResults() {
             setupDataBySurveyVersion(data, filterBySurveyVersion);
         }
     }, [filterBySurveyVersion, data]);
+
+    React.useEffect(() => {
+        if (filteredData) {
+            filterDataAndSetNames();
+        }
+    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
+
+    const filterDataAndSetNames = () => {
+        // removes data that is not in the selected scenario and creates generalized names, if necessary
+        const separatedData = {};
+        for (const result of filteredData) {
+            let obj = result.results ?? result;
+            // filter out bad data 
+            let pid = obj['Participant ID']?.questions['Participant ID']?.response ?? obj['Participant ID Page']?.questions['Participant ID']?.response ?? obj['pid'];
+            if (!pid) {
+                continue;
+            }
+            const logData = dataParticipantLog.getParticipantLog.find(
+                log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+            );
+            if ((filterBySurveyVersion == 4 || filterBySurveyVersion == 5) && !logData) {
+                continue;
+            }
+            for (const x of Object.keys(obj)) {
+                const res = obj[x];
+                if (String(res?.scenarioIndex) === String(selectedScenario)) {
+                    let resCopy = structuredClone(res);
+                    const pageNameIndex = resCopy.pageType + '_' + resCopy.pageName;
+                    const generalizedIndex = resCopy.pageType + '_' + resCopy.admAuthor + '_' + resCopy.admAlignment;
+                    const indexBy = (![4, 5].includes(filterBySurveyVersion) || !generalizePages) ? pageNameIndex : generalizedIndex;
+                    resCopy = generalizeNames(resCopy);
+                    if (Object.keys(separatedData).includes(indexBy)) {
+                        separatedData[indexBy].push(resCopy);
+                    } else {
+                        separatedData[indexBy] = [resCopy];
+                    }
+                }
+
+            }
+        }
+        setResultData(separatedData);
+    }
+
+    const generalizeNames = (resCopy) => {
+        if ([4, 5].includes(filterBySurveyVersion) && generalizePages) {
+            const admAuthor = resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware');
+            const formattedAlignment = resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1);
+            resCopy.v4Name = admAuthor + ' ' + formattedAlignment;
+            // swap name for clean, generalized name
+            resCopy.origName = resCopy.pageName;
+            resCopy.pageName = resCopy.v4Name;
+            // update question names for generalizing data
+            if (resCopy.questions) {
+                for (const q of Object.keys(resCopy.questions)) {
+                    if (resCopy.pageType.includes('single')) {
+                        // set up single medic page/question labels
+                        const newQ = (admAuthor + ' ' + formattedAlignment + ':' + q.slice(9)).replace('::', ':');
+                        resCopy.questions[newQ] = resCopy.questions[q];
+                    }
+                    else {
+                        // set up comparison page/question labels
+                        const pageADMs = resCopy.origName.split(' vs ');
+                        const qADMs = q.split(':')[0].split(' vs ');
+                        const newQ = (qADMs[0] == pageADMs[1] ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] == pageADMs[0] ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
+                        if (q.includes('Forced')) {
+                            resCopy.questions[newQ] = { 'response': resCopy.questions[q].response == pageADMs[0] ? 'Baseline' : resCopy.questions[q].response == pageADMs[1] ? 'Aligned' : 'Misaligned' };
+                        }
+                        else {
+                            resCopy.questions[newQ] = resCopy.questions[q];
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            resCopy.v4Name = undefined;
+        }
+        return resCopy;
+    }
+
+    const toggleGeneralizability = (event) => {
+        setGeneralization(event.target.value == 'Alignment');
+    }
 
     const indexToScenarioName = (index) => {
         if (filterBySurveyVersion == 4 || filterBySurveyVersion == 5) { return index }
@@ -129,11 +208,16 @@ export function SurveyResults() {
 
     return <>
         <div className='survey-results-content'>
+            {loading && <p>Loading</p>}
+            {error && <p>Error</p>}
             <Tabs defaultActiveKey={1} className='p-1'>
                 <Tab eventKey={0} title="Table View">
-                    <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />
+                    {data?.getAllSurveyResults && dataParticipantLog?.getParticipantLog &&
+                        <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />
+                    }
                 </Tab>
                 <Tab eventKey={1} title="Graph View">
+                    <div className="delegation-results">
                     <div className="delegation-results-nav">
                         <div className="selection-section">
                             <div className="nav-header">
@@ -167,6 +251,22 @@ export function SurveyResults() {
                                         </ListItem>
                                     )}
                                 </List>
+                            </div>}
+                    </div>
+                        {filterBySurveyVersion && selectedScenario != "" ?
+                            <div className="graph-section">
+                                <div className="options">
+                                    {[4, 5].includes(filterBySurveyVersion) &&
+                                        <FormControlLabel className='prettyToggle' labelPlacement='start' control={<RadioGroup row defaultValue="Alignment" onChange={toggleGeneralizability}>
+                                            <FormControlLabel value="Alignment" control={<Radio />} label="Alignment" />
+                                            <FormControlLabel value="Medic" control={<Radio />} label="Medic" />
+                                        </RadioGroup>} label="View By:" />}
+                                </div>
+                                <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
+                            </div>
+                            :
+                            <div className="graph-section">
+                                <h2>Please select a survey version and scenario to view graphical results</h2>
                             </div>}
                     </div>
                 </Tab>
@@ -293,21 +393,7 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
 
 
 // export function SurveyResults() {
-//     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
-//         // only pulls from network, never cached
-//         fetchPolicy: 'network-only',
-//     });
-//     const { data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-//     const [scenarioIndices, setScenarioIndices] = React.useState(null);
-//     const [selectedScenario, setSelectedScenario] = React.useState("");
-//     const [resultData, setResultData] = React.useState(null);
-//     const [showTable, setShowTable] = React.useState(false);
-//     const [filterBySurveyVersion, setVersionOption] = React.useState(parseInt(useSelector(state => state?.configs?.currentSurveyVersion)));
-//     const [versions, setVersions] = React.useState([]);
-//     const [filteredData, setFilteredData] = React.useState(null)
-//     const [showScrollButton, setShowScrollButton] = React.useState(false);
-//     const [generalizePages, setGeneralization] = React.useState(true);
-//     const surveys = useSelector((state) => state.configs.surveyConfigs);
+
 
 //     React.useEffect(() => {
 //         // component did mount
@@ -326,77 +412,8 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
 //         }
 //     };
 
-//     const indexToScenarioName = (index) => {
-//         if (filterBySurveyVersion == 4 || filterBySurveyVersion == 5) { return index }
-//         const currentSurvey = Object.values(surveys).find(survey => survey.version == filterBySurveyVersion);
-//         const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex == index);
-//         return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
-//     }
 
 
-//     React.useEffect(() => {
-//         if (filteredData) {
-//             const separatedData = {};
-//             for (const result of filteredData) {
-//                 let obj = result;
-//                 if (result.results) {
-//                     obj = result.results;
-//                 }
-//                 let pid = obj['Participant ID']?.questions['Participant ID']?.response ?? obj['Participant ID Page']?.questions['Participant ID']?.response ?? obj['pid'];
-//                 if (!pid) {
-//                     continue;
-//                 }
-//                 const logData = dataParticipantLog.getParticipantLog.find(
-//                     log => log['ParticipantID'] == pid && log['Type'] != 'Test'
-//                 );
-//                 if ((filterBySurveyVersion == 4 || filterBySurveyVersion == 5) && !logData) {
-//                     continue;
-//                 }
-//                 for (const x of Object.keys(obj)) {
-//                     const res = obj[x];
-//                     if (String(res?.scenarioIndex) === String(selectedScenario)) {
-//                         const resCopy = structuredClone(res);
-//                         const indexBy = (![4, 5].includes(filterBySurveyVersion) || !generalizePages) ? resCopy.pageType + '_' + resCopy.pageName : resCopy.pageType + '_' + resCopy.admAuthor + '_' + resCopy.admAlignment;
-//                         if ([4, 5].includes(filterBySurveyVersion) && generalizePages) {
-//                             resCopy.v4Name = resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware') + ' ' + resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1);
-//                             resCopy.origName = resCopy.pageName;
-//                             resCopy.pageName = resCopy.v4Name;
-//                             // update question names for generalizing data
-//                             if (resCopy.questions) {
-//                                 for (const q of Object.keys(resCopy.questions)) {
-//                                     if (resCopy.pageType.includes('single')) {
-//                                         const newQ = (resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware') + ' ' + resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1) + ':' + q.slice(9)).replace('::', ':');
-//                                         resCopy.questions[newQ] = resCopy.questions[q];
-//                                     }
-//                                     else {
-//                                         const pageADMs = resCopy.origName.split(' vs ');
-//                                         const qADMs = q.split(':')[0].split(' vs ');
-//                                         const newQ = (qADMs[0] == pageADMs[1] ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] == pageADMs[0] ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
-//                                         if (q.includes('Forced')) {
-//                                             resCopy.questions[newQ] = { 'response': resCopy.questions[q].response == pageADMs[0] ? 'Baseline' : resCopy.questions[q].response == pageADMs[1] ? 'Aligned' : 'Misaligned' };
-//                                         }
-//                                         else {
-//                                             resCopy.questions[newQ] = resCopy.questions[q];
-//                                         }
-//                                     }
-//                                 }
-//                             }
-//                         }
-//                         else {
-//                             resCopy.v4Name = undefined;
-//                         }
-//                         if (Object.keys(separatedData).includes(indexBy)) {
-//                             separatedData[indexBy].push(resCopy);
-//                         } else {
-//                             separatedData[indexBy] = [resCopy];
-//                         }
-//                     }
-
-//                 }
-//             }
-//             setResultData(separatedData);
-//         }
-//     }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
 
 
 //     const closeModal = () => {
@@ -410,66 +427,8 @@ function ScenarioGroup({ scenario, scenarioIndices, data, version }) {
 //         });
 //     };
 
-//     const toggleGeneralizability = (event) => {
-//         setGeneralization(event.target.value == 'Alignment');
-//     }
-
 //     return (<div className="delegation-results">
-//         {loading && <p>Loading</p>}
-//         {error && <p>Error</p>}
-//         {data && <>
-//             <div className="delegation-results-nav">
-//                 <div className="selection-section">
-//                     <div className="nav-header">
-//                         <span className="nav-header-text">Survey Version</span>
-//                     </div>
-//                     <List component="nav" className="nav-list version-select" aria-label="secondary mailbox folder">
-//                         {versions.map((item) =>
-//                             <ListItem id={"version_" + item} key={"version_" + item}
-//                                 button
-//                                 selected={filterBySurveyVersion === item}
-//                                 onClick={() => { setVersionOption(item); setSelectedScenario(""); }}>
-//                                 <ListItemText primary={item + '.x'} />
-//                             </ListItem>
-//                         )}
-//                     </List>
-//                 </div>
-//                 {scenarioIndices && Object.keys(scenarioIndices).length > 0 &&
-//                     <div className="selection-section">
-//                         <div className="nav-header">
-//                             <span className="nav-header-text">Scenario</span>
-//                         </div>
-//                         <List component="nav" className="nav-list scenario-list" aria-label="secondary mailbox folder">
-//                             {Object.entries(scenarioIndices).map(([index, name]) =>
-//                                 <ListItem id={"scenario_" + index} key={"scenario_" + index}
-//                                     button
-//                                     selected={String(selectedScenario) === String(index)}
-//                                     onClick={() => {
-//                                         setSelectedScenario(String(index));
-//                                     }}>
-//                                     <ListItemText primary={name} />
-//                                 </ListItem>
-//                             )}
-//                         </List>
-//                     </div>}
-//             </div>
-//             {filterBySurveyVersion && selectedScenario != "" ?
-//                 <div className="graph-section">
-//                     <div className="options">
-//                         {[4, 5].includes(filterBySurveyVersion) &&
-//                             <FormControlLabel className='prettyToggle' labelPlacement='top' control={<RadioGroup row defaultValue="Alignment" onChange={toggleGeneralizability}>
-//                                 <FormControlLabel value="Alignment" control={<Radio />} label="Alignment" />
-//                                 <FormControlLabel value="Medic" control={<Radio />} label="Medic" />
-//                             </RadioGroup>} label="View By:" />}
-//                         <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
-//                     </div>
-//                     <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
-//                 </div>
-//                 :
-//                 <div className="graph-section">
-//                     <button className='navigateBtn' onClick={() => setShowTable(true)}>View Tabulated Data</button>
-//                     <h2>Please select a survey version and scenario to view graphical results</h2>
-//                 </div>}
+
 //             <Modal className='table-modal' open={showTable} onClose={closeModal}>
 //                 <div className='modal-body'>
 //                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>

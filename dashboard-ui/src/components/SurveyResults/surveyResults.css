@@ -145,6 +145,11 @@
     font-weight: 700;
 }
 
+.prettyToggle>div {
+    width: 338px;
+    margin-left: -92px;
+}
+
 .navigateBtn {
     border-radius: 4px;
     float: right;
