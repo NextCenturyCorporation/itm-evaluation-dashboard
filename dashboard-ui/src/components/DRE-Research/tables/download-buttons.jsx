@@ -2,7 +2,7 @@ import React from "react";
 import { exportToExcel } from "../utils";
 import '../../SurveyResults/resultsTable.css';
 
-export function DownloadButtons({ formattedData, filteredData, HEADERS, fileName, openModal, isParticipantData = false }) {
+export function DownloadButtons({ formattedData, filteredData, HEADERS, fileName, extraAction, isParticipantData = false, extraActionText = 'View Variable Definitions' }) {
     return (
         <div className={"option-section " + (filteredData.length < formattedData.length ? "adjusted-margin" : "")}>
             {filteredData.length < formattedData.length ? <div className="downloadGroup">
@@ -11,7 +11,7 @@ export function DownloadButtons({ formattedData, filteredData, HEADERS, fileName
             </div> :
                 <button className='downloadBtn' onClick={() => exportToExcel(fileName, formattedData, HEADERS, isParticipantData)}>Download All Data</button>
             }
-            {openModal && <button className='downloadBtn' onClick={openModal}>View Variable Definitions</button>}
+            {extraAction && <button className='downloadBtn' onClick={extraAction}>{extraActionText}</button>}
         </div>
     );
 }

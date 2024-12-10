@@ -30,10 +30,10 @@ const HEADERS = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date',
 
 
 export function ParticipantProgressTable() {
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA);
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults, refetch: refetchTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
+    const { loading: loadingSim, error: errorSim, data: dataSim, refetch: refetchSimData } = useQuery(GET_SIM_DATA);
     const [formattedData, setFormattedData] = React.useState([]);
     const [types, setTypes] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
@@ -63,7 +63,7 @@ export function ParticipantProgressTable() {
                 const sims = simResults.filter((x) => x.pid == pid).sort((a, b) => a.timestamp - b.timestamp);
                 obj['Evaluation'] = sims[0]?.evalName;
                 const sim_date = new Date(sims[0]?.timestamp);
-                obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth()}/${sim_date?.getDate() + 1}/${sim_date?.getFullYear()}` : undefined;
+                obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()}` : undefined;
                 obj['Sim Count'] = sims.length;
                 obj['Sim-1'] = sims[0]?.scenario_id;
                 obj['Sim-2'] = sims[1]?.scenario_id;
@@ -75,14 +75,14 @@ export function ParticipantProgressTable() {
                     && x.results?.['Post-Scenario Measures']);
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const survey_date = new Date(lastSurvey?.results?.timeComplete);
-                obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth()}/${survey_date?.getDate() + 1}/${survey_date?.getFullYear()}` : undefined;
+                obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()}` : undefined;
                 obj['Delegation'] = surveys.length;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
                 const text_date = new Date(lastScenario?.timeComplete);
-                obj['Text Date'] = text_date != 'Invalid Date' ? `${text_date?.getMonth()}/${text_date?.getDate() + 1}/${text_date?.getFullYear()}` : undefined;
+                obj['Text Date'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()}` : undefined;
                 obj['Text'] = scenarios.length;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
@@ -153,6 +153,13 @@ export function ParticipantProgressTable() {
         }
     }, [formattedData, typeFilters, evalFilters, completionFilters]);
 
+    const refreshData = async () => {
+        await refetchPLog();
+        await refetchSimData();
+        await refetchSurveyResults();
+        await refetchTextResults();
+    };
+
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error :</p>;
 
@@ -206,7 +213,7 @@ export function ParticipantProgressTable() {
                     onChange={(_, newVal) => setCompletionFilters(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'Participant_Progress'} openModal={null} isParticipantData={true} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

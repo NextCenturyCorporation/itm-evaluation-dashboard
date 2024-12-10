@@ -270,7 +270,7 @@ export function RQ2223({ evalNum }) {
                     onChange={(_, newVal) => setTargetTypeFilters(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-22_and_RQ-23 data'} openModal={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-22_and_RQ-23 data'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

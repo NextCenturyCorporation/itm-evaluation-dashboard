@@ -246,7 +246,7 @@ export function RQ8({ evalNum }) {
                     onChange={(_, newVal) => setScenarioFilters(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-8 data'} openModal={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-8 data'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
