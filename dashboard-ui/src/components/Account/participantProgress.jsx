@@ -66,7 +66,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
                     obj['Contact ID'] = res['contactId'];
-                    if (res['prolificId']) obj['Survey Link'] = `https://darpaitm.caci.com/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`
+                    if (res['prolificId']) obj['Survey Link'] = `https://darpaitm.caci.com/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
                 obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()}` : undefined;
@@ -91,6 +91,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const text_date = new Date(lastScenario?.timeComplete);
                 obj['Text Date'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()}` : undefined;
                 obj['Text'] = scenarios.length;
+                if (obj['Text'] < 5) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
                 obj['IO1'] = completedScenarios.includes('DryRunEval.IO1') || completedScenarios.includes('phase1-adept-train-IO1') ? 'y' : null;
