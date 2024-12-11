@@ -69,7 +69,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     if (res['prolificId']) obj['Survey Link'] = `https://darpaitm.caci.com/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
-                obj['Sim Date-Time'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString()}` : undefined;
+                obj['Sim Date-Time'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Sim Count'] = sims.length;
                 obj['Sim-1'] = sims[0]?.scenario_id;
                 obj['Sim-2'] = sims[1]?.scenario_id;
@@ -81,7 +81,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     && x.results?.['Post-Scenario Measures']);
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const survey_date = new Date(lastSurvey?.results?.timeComplete);
-                obj['Del Date-Time'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()} - ${survey_date?.toLocaleTimeString()}` : undefined;
+                obj['Del Date-Time'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()} - ${survey_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Delegation'] = surveys.length;
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
@@ -90,7 +90,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
                 const text_date = new Date(lastScenario?.timeComplete);
-                obj['Text Date-Time'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()} - ${text_date?.toLocaleTimeString()}` : undefined;
+                obj['Text Date-Time'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()} - ${text_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text'] = scenarios.length;
                 if (obj['Text'] < 5) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
