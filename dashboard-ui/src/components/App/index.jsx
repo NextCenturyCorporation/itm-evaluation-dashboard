@@ -18,6 +18,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import { createBrowserHistory } from 'history';
 import ADMChartPage from '../AdmCharts/admChartPage';
+import { ADMProbeResponses } from '../AdmCharts/admProbeResponses';
 import gql from "graphql-tag";
 import { Query, Mutation } from '@apollo/react-components';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setParticipantLogInStore } from './setupUtils';
@@ -186,6 +187,18 @@ function PidLookupPage({ newState }) {
     } else {
         if (newState.currentUser.experimenter === true || newState.currentUser.admin === true) {
             return <PidLookup />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
+function ProgressTable({ newState }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.experimenter || newState.currentUser.admin || newState.currentUser.evaluator || newState.currentUser.adeptUser) {
+            return <ParticipantProgressTable canViewProlific={newState.currentUser.adeptUser || newState.currentUser.admin} />
         } else {
             return <Home newState={newState} />;
         }
@@ -454,6 +467,9 @@ export class App extends React.Component {
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
                                                                         ADM Alignment Results
                                                                     </NavDropdown.Item>
+                                                                    <NavDropdown.Item as={Link} className='dropdown-item' to="/adm-probe-responses">
+                                                                        ADM Probe Responses
+                                                                    </NavDropdown.Item>
                                                                 </NavDropdown>
                                                                 <NavDropdown title="Data Analysis">
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
@@ -525,6 +541,9 @@ export class App extends React.Component {
                                                     <Route exact path="/adm-results">
                                                         <AdmResults />
                                                     </Route>
+                                                    <Route exact path='/adm-probe-responses'>
+                                                        <ADMProbeResponses/>
+                                                    </Route>
                                                     <Route exact path="/humanSimParticipant">
                                                         <AggregateResults type="HumanSimParticipant" />
                                                     </Route>
@@ -548,7 +567,7 @@ export class App extends React.Component {
                                                         <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
                                                     </Route>
                                                     <Route path="/participant-progress-table">
-                                                        <ParticipantProgressTable newState={this.state} />
+                                                        <ProgressTable newState={this.state} />
                                                     </Route>
                                                     <Route path="/pid-lookup">
                                                         <PidLookupPage newState={this.state} />

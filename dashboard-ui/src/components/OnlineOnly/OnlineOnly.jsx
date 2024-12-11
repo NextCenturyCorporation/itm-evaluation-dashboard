@@ -58,6 +58,9 @@ export default function StartOnline() {
         if (adeptQualtrix != 'true') {
             history.push('/login');
         }
+        if (queryParams.get('startSurvey') == 'true') {
+            setTextTime(true);
+        }
     }, []);
 
     const startSurvey = async () => {
@@ -73,8 +76,9 @@ export default function StartOnline() {
         ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         // get correct plog data
         const setNum = newPid % 24;
+        const currentSearchParams = new URLSearchParams(location.search);
         const participantData = {
-            ...LOG_VARIATIONS[setNum], "ParticipantID": newPid, "Type": "Online",
+            ...LOG_VARIATIONS[setNum], "ParticipantID": newPid, "Type": "Online", "prolificId": currentSearchParams.get('PROLIFIC_PID'), "contactId": currentSearchParams.get('ContactID'),
             "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT)
         };
         // update database
@@ -83,7 +87,7 @@ export default function StartOnline() {
         newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
 
 
-        const currentSearchParams = new URLSearchParams(location.search);
+
         currentSearchParams.set('pid', newPid);
         currentSearchParams.set('class', 'Online');
         history.push({

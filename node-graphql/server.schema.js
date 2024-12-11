@@ -46,6 +46,7 @@ const typeDefs = gql`
     admin: Boolean
     evaluator: Boolean
     experimenter: Boolean
+    adeptUser: Boolean
   }
 
   type Player {
@@ -193,7 +194,8 @@ const typeDefs = gql`
     getScenarioNamesByEval(evalNumber: Float): [JSON]
     getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON,
     getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID): JSON,
-    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String): JSON
+    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON
+    getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON]
     getAllScenarios(id: ID): [Scenario]
     getScenarioState(id: ID): State
     getAllScenarioStates: [State]
@@ -239,6 +241,7 @@ const typeDefs = gql`
     updateAdminUser(username: String, isAdmin: Boolean): JSON,
     updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON,
     updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
+    updateAdeptUser(username: String, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
@@ -333,18 +336,70 @@ const resolvers = {
       return alignmentTargets;
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
-      // NOTE: We might need to add evalNumber to this query in the future
       let queryObj = {};
+      
       if (args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") {
+        queryObj = {
+          $and: [
+            { "history.response.id": args["scenarioID"] }
+          ]
+        };
+        
+        if (args["evalNumber"]) {
+          queryObj.$and.push({ "evalNumber": args["evalNumber"] });
+        }
+        
         queryObj[args["admQueryStr"]] = args["admName"];
-        queryObj["history.response.id"] = args["scenarioID"];
       } else {
         queryObj = {
-          $and: [{ "history.response.id": args["alignmentTarget"] }, { "history.response.id": args["scenarioID"] }],
+          $and: [
+            { "history.response.id": args["alignmentTarget"] }, 
+            { "history.response.id": args["scenarioID"] }
+          ]
         };
+        
+        if (args["evalNumber"]) {
+          queryObj.$and.push({ "evalNumber": args["evalNumber"] });
+        }
+        
         queryObj[args["admQueryStr"]] = args["admName"];
       }
+      
       return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
+    },
+    getAllTestDataForADM: async (obj, args, context, inflow) => {
+      const results = [];
+      
+      for (const target of args.alignmentTargets) {
+        let queryObj = {
+          $and: [
+            { "history.response.id": args.scenarioID }
+          ]
+        };
+        
+        if (target) {
+          queryObj.$and.push({ "history.response.id": target });
+        }
+        
+        if (args.evalNumber) {
+          queryObj.$and.push({ "evalNumber": args.evalNumber });
+        }
+        
+        queryObj[args.admQueryStr] = args.admName;
+        
+        const result = await dashboardDB.db.collection('test')
+          .findOne(queryObj)
+          .then(result => result);
+        
+        if (result) {
+          results.push({
+            alignmentTarget: target,
+            data: result
+          });
+        }
+      }
+      
+      return results;
     },
     getAllScenarios: async (obj, args, context, inflow) => {
       return await dashboardDB.db.collection('scenarios').find().toArray().then(result => { return result; });
@@ -547,6 +602,12 @@ const resolvers = {
       return await dashboardDB.db.collection('users').update(
         { "username": args["username"] },
         { $set: { "experimenter": args["isExperimenter"] } }
+      );
+    },
+    updateAdeptUser: async (obj, args, context, inflow) => {
+      return await dashboardDB.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "adeptUser": args["isAdeptUser"] } }
       );
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {

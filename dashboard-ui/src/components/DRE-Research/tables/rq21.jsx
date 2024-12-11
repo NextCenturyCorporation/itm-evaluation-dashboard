@@ -286,7 +286,7 @@ export function RQ21({ evalNum }) {
                     onChange={(_, newVal) => setDecisionMakerFilters(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-21 data'} openModal={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-21 data'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

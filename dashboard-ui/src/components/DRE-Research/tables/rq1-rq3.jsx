@@ -245,7 +245,7 @@ export function RQ13({ evalNum }) {
                     onChange={(_, newVal) => setDelMilFilters(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-1_and_RQ-3 data'} openModal={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>

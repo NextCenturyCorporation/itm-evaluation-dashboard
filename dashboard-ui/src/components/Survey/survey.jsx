@@ -79,6 +79,7 @@ class SurveyPage extends Component {
             pid: this.queryParams.get('pid') ?? null,
             onlineOnly: isDefined(this.queryParams.get('adeptQualtrix')),
             prolificPid: this.queryParams.get('PROLIFIC_PID'),
+            contactId: this.queryParams.get('ContactID'),
             validPid: false,
             lastTimeCalled: 0,
             envsSeen: { "Del-1": "AD-1", "Del-2": "ST-3", "ADMOrder": 1 },
@@ -762,7 +763,7 @@ class SurveyPage extends Component {
                             </Mutation>
                     )}
                     {this.state.updatePLog && (
-                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={this.state.onlineOnly && this.redirectLinkRef?.current?.click()}>
+                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={() => { this.state.onlineOnly && this.redirectLinkRef?.current?.click() }}>
                             {(updateParticipantLog) => (
                                 <div>
                                     <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
@@ -800,7 +801,7 @@ class SurveyPage extends Component {
                             </div>
                         </div>
                     )}
-                    <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}`} />
+                    <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}&ContactID=${this.state.contactId}`} />
                 </>
                 }
             </>
