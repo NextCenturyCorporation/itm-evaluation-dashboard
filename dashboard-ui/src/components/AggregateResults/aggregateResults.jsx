@@ -495,14 +495,13 @@ export default function AggregateResults({ type }) {
         }
 
         const [adeptPart, stPart] = objectKey.split('_');
-
         let adeptScenario = adeptPart;
         if (adeptPart.includes('DryRunEval')) {
             adeptScenario = evalNumber === 4 ? adeptScenario : adeptScenario.replace('DryRunEval', 'Phase1');
         }
 
         let transformedStPart = stPart;
-        if (evalNumber === 5) {
+        if (stPart && evalNumber === 5) {
             transformedStPart = stPart
                 .replace(/3/g, '4')
                 .replace(/2/g, '3')
