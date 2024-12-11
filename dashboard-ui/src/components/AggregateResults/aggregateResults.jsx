@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
-import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellData, sortedObjectKeys} from './DataFunctions';
+import { getAggregatedData, populateDataSet, isDefined, getGroupKey, formatCellData, sortedObjectKeys } from './DataFunctions';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import '../../css/aggregateResults.css';
@@ -487,7 +487,22 @@ export default function AggregateResults({ type }) {
 
     const capitalizeFirstLetter = (string) => {
         return string.charAt(0).toUpperCase() + string.slice(1);
-      };
+    };
+
+    const formatScenarioTitle = (objectKey, evalNumber) => {
+        if (evalNumber === 3) {
+            return capitalizeFirstLetter(objectKey);
+        }
+
+        const [adeptPart, stPart] = objectKey.split('_');
+
+        let adeptScenario = adeptPart;
+        if (adeptPart.includes('DryRunEval')) {
+            adeptScenario = evalNumber === 4 ? adeptScenario : adeptScenario.replace('DryRunEval', 'Phase1');
+        }
+
+        return `ADEPT: ${adeptScenario}, SoarTech: ${stPart}`;
+    };
 
     return (
         <div className='aggregatePage'>
@@ -585,7 +600,7 @@ export default function AggregateResults({ type }) {
                             <div className='chart-header'>
                                 <div className='chart-header-label'>
                                     <h4 key={"header_" + objectKey}>
-                                        {selectedEval === 3 ? capitalizeFirstLetter(objectKey) : `ADEPT: ${objectKey.split('_')[0].replace('DryRunEval', selectedEval == 4 ? 'DryRunEval' : 'Phase1')}, SoarTech: ${objectKey.split('_')[1].replace('3', selectedEval == 4 ? '3' : '4').replace('2', selectedEval == 4 ? '2' : '3').replace('1', selectedEval == 4 ? '1' : '2')}`}
+                                        {formatScenarioTitle(objectKey, selectedEval)}
                                     </h4>
                                 </div>
                             </div>
