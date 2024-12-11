@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { Autocomplete, TextField } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../DRE-Research/tables/download-buttons";
+import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -88,12 +89,13 @@ export function ResultsTable({ data, pLog }) {
     const [roles, setRoles] = React.useState([]);
     const [roleFilters, setRoleFilters] = React.useState([]);
     const [surveyStatus] = React.useState(['Complete', 'Incomplete']);
-    const [statusFilters, setStatusFilters] = React.useState([]);
+    const [statusFilters, setStatusFilters] = React.useState(null);
     const [militaryStatus] = React.useState(['Yes', 'No']);
-    const [milFilters, setMilFilters] = React.useState([]);
+    const [milFilters, setMilFilters] = React.useState(null);
     const [versions, setVersions] = React.useState([]);
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
+    const [showLegacy, setShowLegacy] = React.useState(false);
 
 
     React.useEffect(() => {
@@ -281,6 +283,7 @@ export function ResultsTable({ data, pLog }) {
         }
     }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters]);
 
+
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
@@ -289,6 +292,16 @@ export function ResultsTable({ data, pLog }) {
             return x;
         });
         return updatedData;
+    };
+
+    const toggleDataType = (event) => {
+        setShowLegacy(event.target.value == 'Legacy');
+        setFilteredData(formattedData);
+        setEvalFilters([]);
+        setMilFilters(null);
+        setRoleFilters([]);
+        setStatusFilters(null);
+        setVersionFilters([]);
     };
 
     return (<>
@@ -300,7 +313,8 @@ export function ResultsTable({ data, pLog }) {
                     options={evals}
                     filterSelectedOptions
                     size="small"
-                    defaultValue={evals.filter((x) => x.value == '5')}
+                    value={evalFilters}
+                    isOptionEqualToValue={(x, y) => x.value == y.value & x.label == y.label}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -315,6 +329,7 @@ export function ResultsTable({ data, pLog }) {
                     options={versions}
                     filterSelectedOptions
                     size="small"
+                    value={versionFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -329,6 +344,7 @@ export function ResultsTable({ data, pLog }) {
                     options={roles}
                     filterSelectedOptions
                     size="small"
+                    value={roleFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -342,6 +358,7 @@ export function ResultsTable({ data, pLog }) {
                     options={militaryStatus}
                     filterSelectedOptions
                     size="small"
+                    value={milFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -355,6 +372,7 @@ export function ResultsTable({ data, pLog }) {
                     options={surveyStatus}
                     filterSelectedOptions
                     size="small"
+                    value={statusFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -364,7 +382,12 @@ export function ResultsTable({ data, pLog }) {
                     )}
                     onChange={(_, newVal) => setStatusFilters(newVal)}
                 />
+                <RadioGroup className='simple-radios' row defaultValue="DRE/PH1" onChange={toggleDataType}>
+                    <FormControlLabel value="Legacy" control={<Radio />} label="Legacy" />
+                    <FormControlLabel value="DRE/PH1" control={<Radio />} label="DRE/PH1" />
+                </RadioGroup>
             </div>
+
             <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={'Survey Results'} />
         </section>
         <div className='resultTableSection'>
