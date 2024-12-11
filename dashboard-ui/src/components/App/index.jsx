@@ -193,6 +193,18 @@ function PidLookupPage({ newState }) {
     }
 }
 
+function ProgressTable({ newState }) {
+    if (newState.currentUser === null) {
+        history.push("/login");
+    } else {
+        if (newState.currentUser.experimenter || newState.currentUser.admin || newState.currentUser.evaluator || newState.currentUser.adeptUser) {
+            return <ParticipantProgressTable canViewProlific={newState.currentUser.adeptUser || newState.currentUser.admin} />
+        } else {
+            return <Home newState={newState} />;
+        }
+    }
+}
+
 function ReviewTextBased({ newState, userLoginHandler }) {
     if (newState.currentUser === null) {
         history.push("/login");
@@ -555,7 +567,7 @@ export class App extends React.Component {
                                                         <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
                                                     </Route>
                                                     <Route path="/participant-progress-table">
-                                                        <ParticipantProgressTable newState={this.state} />
+                                                        <ProgressTable newState={this.state} />
                                                     </Route>
                                                     <Route path="/pid-lookup">
                                                         <PidLookupPage newState={this.state} />
