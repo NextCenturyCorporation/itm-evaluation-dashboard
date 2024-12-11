@@ -83,6 +83,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const survey_date = new Date(lastSurvey?.results?.timeComplete);
                 obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()}` : undefined;
                 obj['Delegation'] = surveys.length;
+                if (obj['Delegation'] > 0) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
 
 

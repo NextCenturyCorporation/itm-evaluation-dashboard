@@ -18,6 +18,24 @@ const EVAL_MAP = {
     5: 'PH1'
 }
 
+const TRUST_MAP = {
+    "Strongly disagree": 1,
+    "Disagree": 2,
+    "Neither agree nor disagree": 3,
+    "Agree": 4,
+    "Strongly agree": 5
+};
+
+const CONFIDENCE_MAP = {
+    "Not confident at all": 1,
+    "No confident at all": 1,
+    "Not confidence at all": 1,
+    "Not confident": 2,
+    "Somewhat confident": 3,
+    "Confident": 4,
+    "Completely confident": 5
+};
+
 const STARTING_HEADERS = [
     "Participant ID",
     "Survey Version",
@@ -43,7 +61,13 @@ const STARTING_HEADERS = [
     "I feel that people are generally reliable",
     "I usually trust people until they give me a reason not to trust them",
     "Trusting another person is not difficult for me",
-    "What was the biggest influence on your delegation decision between different medics?"
+    "What was the biggest influence on your delegation decision between different medics?",
+    "Have you completed the text-based scenarios",
+    "VR Scenarios Completed",
+    "VR Experience Level",
+    "VR Comfort Level",
+    "Additional Information About Discomfort",
+    "Note Page - Time Taken (mm:ss)"
 ];
 
 function formatTime(seconds) {
@@ -61,8 +85,15 @@ export function ResultsTable({ data, pLog }) {
     const [filteredData, setFilteredData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
     const [evalFilters, setEvalFilters] = React.useState([]);
+    const [roles, setRoles] = React.useState([]);
+    const [roleFilters, setRoleFilters] = React.useState([]);
+    const [surveyStatus] = React.useState(['Complete', 'Incomplete']);
+    const [statusFilters, setStatusFilters] = React.useState([]);
+    const [militaryStatus] = React.useState(['Yes', 'No']);
+    const [milFilters, setMilFilters] = React.useState([]);
     const [versions, setVersions] = React.useState([]);
     const [versionFilters, setVersionFilters] = React.useState([]);
+    const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
 
 
     React.useEffect(() => {
@@ -70,6 +101,7 @@ export function ResultsTable({ data, pLog }) {
             const allObjs = [];
             const allVersions = [];
             const allEvals = [];
+            let allRoles = [];
             const updatedHeaders = STARTING_HEADERS;
             // set up block headers
             for (let block = 1; block < 5; block++) {
@@ -97,7 +129,7 @@ export function ResultsTable({ data, pLog }) {
 
                 // ignore invalid versions
                 const version = entry.surveyVersion;
-                if (!version || version < 2 || version == 3) {
+                if (!version || version < 4) {
                     // TODO: show this somewhere else
                     continue;
                 }
@@ -117,16 +149,11 @@ export function ResultsTable({ data, pLog }) {
                     continue;
                 }
 
-                // ignore unfinished surveys
                 const lastPage = entry['Post-Scenario Measures'];
-                if (!lastPage) {
-                    continue;
-                }
 
                 // add data to filter options
                 allEvals.push(obj['eval']);
                 allVersions.push(version);
-                console.log(entry);
 
                 // add data to table
                 obj['Participant ID'] = pid;
@@ -135,14 +162,83 @@ export function ResultsTable({ data, pLog }) {
                 obj['End Time'] = new Date(entry.timeComplete)?.toLocaleString();
                 const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
                 obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds) : null;
-                obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
-                for (const q of Object.keys(lastPage.questions)) {
-                    obj[q] = lastPage.questions[q].response?.toString();
+                if (lastPage) {
+                    obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
+                    for (const q of Object.keys(lastPage.questions)) {
+                        if (q != 'What is your current role (choose all that apply):') {
+                            obj[q] = lastPage.questions[q].response?.toString();
+                        }
+                        else {
+                            const roles = lastPage.questions[q].response?.toString();
+                            allRoles = [...allRoles, ...roles.split(',')];
+                            obj[q] = roles.replaceAll(',', '; ');
+                        }
+                    }
                 }
 
+                if (!entry['Note page']) {
+                    continue;
+                }
+                if (entry['VR Page']) {
+                    obj["VR Experience Level"] = entry['VR Page']?.questions?.['VR Experience Level']?.response?.slice(0, 1);
+                    obj["VR Comfort Level"] = entry['VR Page']?.questions?.['VR Comfort Level']?.response;
+                    obj["Additional Information About Discomfort"] = entry['VR Page']?.questions?.['Additional Information About Discomfort']?.response;
+                }
+                else {
+                    obj["VR Comfort Level"] = entry['Participant ID Page']?.questions?.['VR Comfort Level']?.response;
+                    obj["Additional Information About Discomfort"] = entry['Participant ID Page']?.questions?.['Additional Information About Discomfort']?.response;
+                    obj["Have you completed the text-based scenarios"] = entry['Participant ID Page']?.questions?.['Have you completed the text-based scenarios']?.response;
+                    obj["VR Scenarios Completed"] = entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response;
+                }
+                obj["Note Page - Time Taken (mm:ss)"] = formatTime(entry['Note page'].timeSpentOnPage);
+
+
                 // get blocks of dms
-                for (const page of (entry['orderLog'] ?? []).filter((x) => x.includes('Medic'))) {
-                    console.log(page);
+                let block = 1;
+                let dm = 1;
+                for (const pageName of (entry['orderLog'] ?? []).filter((x) => x.includes('Medic'))) {
+                    const page = entry[pageName];
+                    if (!page) {
+                        // should never occur
+                        if (lastPage) {
+                            console.error('Page not found! ', pageName);
+                        }
+                        continue;
+                    }
+                    if (page.pageType == 'singleMedic') {
+                        obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
+                        obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
+                        obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
+                        obj[`B${block}_DM${dm}_Target`] = page.admTarget;
+                        obj[`B${block}_DM${dm}_Name`] = pageName;
+                        obj[`B${block}_DM${dm}_Time`] = formatTime(page.timeSpentOnPage);
+                        obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex;
+                        obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[pageName + ': Do you agree with the decisions that this medic made?']?.response];
+                        obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[pageName + ': The way this medic makes medical decisions is how I make decisions']?.response];
+                        obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[pageName + ': This medic is trustworthy']?.response];
+                        obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[pageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
+                        dm += 1;
+                    }
+                    else if (page.pageType == 'comparison') {
+                        const alignment = page.admAlignment?.split(' vs ');
+                        const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
+                        const alignedVsBaseline = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')];
+                        const alignedVsMisaligned = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')];
+                        obj[`B${block}_Compare_DM1`] = order[0] + ' - ' + alignment[0];
+                        obj[`B${block}_Compare_DM2`] = order[1] + ' - ' + alignment[1];
+                        obj[`B${block}_Compare_DM3`] = order[2] + ' - ' + alignment[2];
+                        obj[`B${block}_Compare_Time`] = formatTime(page.timeSpentOnPage);
+                        const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
+                        obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
+                        obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                        obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
+                        const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
+                        obj[`B${block}_Compare_FC2`] = fc2 + ' - ' + alignment[order.indexOf(fc2)];
+                        obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                        obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
+                        block += 1;
+                        dm = 1;
+                    }
                 }
 
                 allObjs.push(obj);
@@ -154,16 +250,36 @@ export function ResultsTable({ data, pLog }) {
             setFormattedData(allObjs);
             setFilteredData(allObjs);
             setHeaders(updatedHeaders);
-            console.log(updatedHeaders);
+            setRoles(Array.from(new Set(allRoles)));
+            setOrigHeaderSet(updatedHeaders);
         }
     }, [data, pLog]);
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
+        const filtered = formattedData.filter((x) =>
             (versionFilters.length == 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
-            (evalFilters.length == 0 || evalFilters.map((x) => x.value).includes(x['eval']?.toString()))
-        ));
-    }, [versionFilters, evalFilters, formattedData]);
+            (evalFilters.length == 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
+            (roleFilters.length == 0 || roleFilters.some((filter) => x['What is your current role (choose all that apply):']?.split('; ').includes(filter))) &&
+            (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (mm:ss)'])) &&
+            (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (mm:ss)'])) &&
+            (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
+            (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))
+        );
+        setFilteredData(filtered);
+        // remove extra headers that have no data
+        if (formattedData.length > 0) {
+            const usedHeaders = [];
+            for (let x of origHeaderSet) {
+                for (let datapoint of filtered) {
+                    if (isDefined(datapoint[x])) {
+                        usedHeaders.push(x);
+                        break;
+                    }
+                }
+            }
+            setHeaders(usedHeaders);
+        }
+    }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters]);
 
     const refineData = (origData) => {
         // remove unwanted headers from download
@@ -179,11 +295,12 @@ export function ResultsTable({ data, pLog }) {
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
-                <Autocomplete
+                {evals.length > 0 && <Autocomplete
                     multiple
                     options={evals}
                     filterSelectedOptions
                     size="small"
+                    defaultValue={evals.filter((x) => x.value == '4')}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -192,7 +309,7 @@ export function ResultsTable({ data, pLog }) {
                         />
                     )}
                     onChange={(_, newVal) => setEvalFilters(newVal)}
-                />
+                />}
                 <Autocomplete
                     multiple
                     options={versions}
@@ -206,6 +323,46 @@ export function ResultsTable({ data, pLog }) {
                         />
                     )}
                     onChange={(_, newVal) => setVersionFilters(newVal)}
+                />
+                <Autocomplete
+                    multiple
+                    options={roles}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Role"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setRoleFilters(newVal)}
+                />
+                <Autocomplete
+                    options={militaryStatus}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Is Military"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setMilFilters(newVal)}
+                />
+                <Autocomplete
+                    options={surveyStatus}
+                    filterSelectedOptions
+                    size="small"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Survey Status"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setStatusFilters(newVal)}
                 />
             </div>
             <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={'Survey Results'} />
