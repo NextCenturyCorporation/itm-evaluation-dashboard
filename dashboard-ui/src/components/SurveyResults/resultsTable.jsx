@@ -84,7 +84,7 @@ export function ResultsTable({ data, pLog }) {
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
-    const [evalFilters, setEvalFilters] = React.useState([]);
+    const [evalFilters, setEvalFilters] = React.useState([{ 'value': '5', 'label': '5 - PH1' }]);
     const [roles, setRoles] = React.useState([]);
     const [roleFilters, setRoleFilters] = React.useState([]);
     const [surveyStatus] = React.useState(['Complete', 'Incomplete']);
@@ -196,7 +196,7 @@ export function ResultsTable({ data, pLog }) {
                 // get blocks of dms
                 let block = 1;
                 let dm = 1;
-                for (const pageName of (entry['orderLog'] ?? []).filter((x) => x.includes('Medic'))) {
+                for (const pageName of (entry['orderLog'] ?? Object.keys(entry)).filter((x) => x.includes('Medic'))) {
                     const page = entry[pageName];
                     if (!page) {
                         // should never occur
@@ -300,7 +300,7 @@ export function ResultsTable({ data, pLog }) {
                     options={evals}
                     filterSelectedOptions
                     size="small"
-                    defaultValue={evals.filter((x) => x.value == '4')}
+                    defaultValue={evals.filter((x) => x.value == '5')}
                     renderInput={(params) => (
                         <TextField
                             {...params}
