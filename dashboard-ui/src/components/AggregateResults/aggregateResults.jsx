@@ -501,7 +501,15 @@ export default function AggregateResults({ type }) {
             adeptScenario = evalNumber === 4 ? adeptScenario : adeptScenario.replace('DryRunEval', 'Phase1');
         }
 
-        return `ADEPT: ${adeptScenario}, SoarTech: ${stPart}`;
+        let transformedStPart = stPart;
+        if (evalNumber === 5) {
+            transformedStPart = stPart
+                .replace(/3/g, '4')
+                .replace(/2/g, '3')
+                .replace(/1/g, '2')   
+        }
+
+        return `ADEPT: ${adeptScenario}, SoarTech: ${transformedStPart}`;
     };
 
     return (
