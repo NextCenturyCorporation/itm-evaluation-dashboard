@@ -179,3 +179,13 @@
 .small-column {
     min-width: 100px !important;
 }
+
+.simple-radios {
+    display: flex;
+    flex-direction: row;
+    min-width: 240px !important;
+    border: 1px solid rgb(175, 175, 175);
+    padding-left: 12px;
+    border-radius: 4px;
+    max-height: 40px !important;
+}
