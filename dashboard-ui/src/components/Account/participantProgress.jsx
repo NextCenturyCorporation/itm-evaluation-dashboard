@@ -26,8 +26,9 @@ const GET_SIM_DATA = gql`
         getAllSimAlignment
     }`;
 
-const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date', 'Delegation', 'Text Date', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
@@ -66,10 +67,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
                     obj['Contact ID'] = res['contactId'];
-                    if (res['prolificId']) obj['Survey Link'] = `https://darpaitm.caci.com/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
+                    if (res['prolificId']) obj['Survey Link'] = `${window.location.protocol}//${window.location.host}/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
-                obj['Sim Date'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()}` : undefined;
+                obj['Sim Date-Time'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Sim Count'] = sims.length;
                 obj['Sim-1'] = sims[0]?.scenario_id;
                 obj['Sim-2'] = sims[1]?.scenario_id;
@@ -81,15 +82,24 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     && x.results?.['Post-Scenario Measures']);
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const survey_date = new Date(lastSurvey?.results?.timeComplete);
-                obj['Del Date'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()}` : undefined;
+                obj['Del Date-Time'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()} - ${survey_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Delegation'] = surveys.length;
+                const delScenarios = lastSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
+                if (delScenarios) {
+                    obj['Del-1'] = lastSurvey?.results?.[delScenarios[0]]?.scenarioIndex;
+                    obj['Del-2'] = lastSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
+                    obj['Del-3'] = lastSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
+                    obj['Del-4'] = lastSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
+                }
+                if (obj['Delegation'] > 0) obj['Survey Link'] = null;
+
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
 
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
                 const text_date = new Date(lastScenario?.timeComplete);
-                obj['Text Date'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()}` : undefined;
+                obj['Text Date-Time'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()} - ${text_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text'] = scenarios.length;
                 if (obj['Text'] < 5) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;

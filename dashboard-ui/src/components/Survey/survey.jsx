@@ -14,12 +14,11 @@ import { Mutation } from '@apollo/react-components';
 import { useQuery } from 'react-apollo'
 import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './surveyUtils';
 import Bowser from "bowser";
-import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
-
+import { useHistory } from 'react-router-dom';
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
     countHumanGroupFirst
@@ -122,7 +121,6 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.redirectLinkRef = React.createRef();
-        this.shouldBlockNavigation = true;
         if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
             if (this.state.surveyVersion == 4.0) this.setSeenScenarios();
@@ -283,13 +281,21 @@ class SurveyPage extends Component {
             return {};
         }
         else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0)) {
+            let scenariosToSee = this.state.envsSeen;
+            if (this.state.surveyVersion == 5.0 && this.state.onlineOnly) {
+                const matchedLog = this.props.participantLog.getParticipantLog.find(
+                    log => log['ParticipantID'] == this.state.pid
+                );
+                scenariosToSee = isDefined(matchedLog) ? matchedLog : this.state.envsSeen
+                this.setState({ envsSeen: scenariosToSee });
+            }
             const allPages = this.surveyConfigClone.pages;
             const pages = [...allPages.slice(0, 5)];
-            const order = admOrderMapping[this.state.envsSeen['ADMOrder']];
+            const order = admOrderMapping[scenariosToSee['ADMOrder']];
             // author is TAD or kitware, alignment is the target name, admType is aligned or baseline, scenarioName is SoarTech VOL 1, etc.
-            const del1 = this.state.envsSeen['Del-1'];
-            const stScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("ST") ? del1 : this.state.envsSeen['Del-2']];
-            const adScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("AD") ? del1 : this.state.envsSeen['Del-2']];
+            const del1 = scenariosToSee['Del-1'];
+            const stScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("ST") ? del1 : scenariosToSee['Del-2']];
+            const adScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("AD") ? del1 : scenariosToSee['Del-2']];
             // find most and least aligned adms for every attribute
             const participantResults = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             const admLists = {
@@ -574,7 +580,7 @@ class SurveyPage extends Component {
 
 
     uploadSurveyData = (survey, finalUpload) => {
-        if (finalUpload) {
+        if (finalUpload && survey.PageCount > 1) {
             this.setState({ surveyComplete: true });
         }
         this.timerHelper()
@@ -664,7 +670,6 @@ class SurveyPage extends Component {
     onSurveyComplete = (survey) => {
         // final upload
         this.uploadSurveyData(survey, true);
-        this.shouldBlockNavigation = false;
         if (this.surveyConfigClone.pages.length < 3) {
             if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
@@ -722,6 +727,26 @@ class SurveyPage extends Component {
 
     componentDidMount() {
         this.detectUserInfo();
+        
+        window.addEventListener('beforeunload', this.handleBeforeUnload);
+
+        // push initial state to prevent back navigation
+        window.history.pushState(null, '', window.location.href);
+        
+    }
+    
+    handleBeforeUnload = (e) => {
+        if (!this.state.surveyComplete) {
+            if (!window.confirm('Please finish the survey before leaving the page. If you leave now, you will need to start the survey over from the beginning.')) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        }
+    };
+
+    componentWillUnmount() {
+        window.removeEventListener('beforeunload', this.handleBeforeUnload);
     }
 
     detectUserInfo = () => {
@@ -737,21 +762,16 @@ class SurveyPage extends Component {
     render() {
         return (
             <>
+                <NavigationGuard surveyComplete={this.state.surveyComplete} />
                 <this.ConfigGetter />
                 {this.state.isSurveyLoaded &&
                     <>
-                        {this.shouldBlockNavigation && (
-                            <Prompt
-                                when={this.shouldBlockNavigation}
-                                message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
-                            />
-                        )}
                         <Survey model={this.survey} />
                         {this.state.uploadData && (
                             <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
                                 {(uploadSurveyResults, { data }) => (
                                     <div>
-                                    <button ref={this.uploadButtonRef} hidden onClick={(e) => {
+                                        <button ref={this.uploadButtonRef} hidden onClick={(e) => {
                                             e.preventDefault();
                                             uploadSurveyResults({
                                                 variables: { surveyId: this.state.surveyId, results: this.surveyData }
@@ -761,22 +781,22 @@ class SurveyPage extends Component {
                                     </div>
                                 )}
                             </Mutation>
-                    )}
-                    {this.state.updatePLog && (
-                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={() => { this.state.onlineOnly && this.redirectLinkRef?.current?.click() }}>
-                            {(updateParticipantLog) => (
-                                <div>
-                                    <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
-                                        e.preventDefault();
-                                        updateParticipantLog({
-                                            variables: { pid: this.state.pid, updates: { claimed: true, surveyEntryCount: this.state.initialUploadedCount + (this.state.hasUploaded ? 1 : 0) } }
-                                        });
-                                        this.setState({ updatePLog: false });
-                                    }}></button>
-                                </div>
-                            )}
-                        </Mutation>
-                    )}
+                        )}
+                        {this.state.updatePLog && (
+                            <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={() => { this.state.onlineOnly && this.redirectLinkRef?.current?.click() }}>
+                                {(updateParticipantLog) => (
+                                    <div>
+                                        <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
+                                            e.preventDefault();
+                                            updateParticipantLog({
+                                                variables: { pid: this.state.pid, updates: { claimed: true, surveyEntryCount: this.state.initialUploadedCount + (this.state.hasUploaded ? 1 : 0) } }
+                                            });
+                                            this.setState({ updatePLog: false });
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
                         <div style={{
                             position: 'fixed',
                             bottom: '1rem',
@@ -791,18 +811,18 @@ class SurveyPage extends Component {
                         }}>
                             Survey v{this.state.surveyVersion}
                         </div>
-                    {this.surveyComplete && (this.state.updatePLog || this.state.uploadData) && (
-                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-                            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
-                                <Spinner animation="border" role="status">
-                                    <span className="sr-only">Loading...</span>
-                                </Spinner>
-                                <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                        {this.surveyComplete && (this.state.updatePLog || this.state.uploadData) && (
+                            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                                <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+                                    <Spinner animation="border" role="status">
+                                        <span className="sr-only">Loading...</span>
+                                    </Spinner>
+                                    <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}&ContactID=${this.state.contactId}`} />
-                </>
+                        )}
+                        <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}&ContactID=${this.state.contactId}`} />
+                    </>
                 }
             </>
         )
@@ -832,6 +852,30 @@ export const SurveyPageWrapper = (props) => {
             surveyResults={dataSurveyResults.getAllSurveyResults}
             surveyVersion={currentSurveyVersion}
         />)
+};
+
+const NavigationGuard = ({ surveyComplete }) => {
+    const history = useHistory();
+
+    useEffect(() => {
+        const unblock = history.block((tx) => {
+            if (!surveyComplete) {
+                if (window.confirm('Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.')) {
+                    return true; 
+                } else {
+                    return false;
+                }
+            }
+            // survey is complete
+            return true; 
+        });
+
+        return () => {
+            unblock(); 
+        };
+    }, [history, surveyComplete]);
+
+    return null;
 };
 
 export default SurveyPage;
