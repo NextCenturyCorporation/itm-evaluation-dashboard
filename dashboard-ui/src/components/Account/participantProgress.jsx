@@ -26,8 +26,9 @@ const GET_SIM_DATA = gql`
         getAllSimAlignment
     }`;
 
-const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
@@ -83,7 +84,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const survey_date = new Date(lastSurvey?.results?.timeComplete);
                 obj['Del Date-Time'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()} - ${survey_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Delegation'] = surveys.length;
+                const delScenarios = lastSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
+                if (delScenarios) {
+                    obj['Del-1'] = lastSurvey?.results?.[delScenarios[0]]?.scenarioIndex;
+                    obj['Del-2'] = lastSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
+                    obj['Del-3'] = lastSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
+                    obj['Del-4'] = lastSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
+                }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
+
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
 
 
