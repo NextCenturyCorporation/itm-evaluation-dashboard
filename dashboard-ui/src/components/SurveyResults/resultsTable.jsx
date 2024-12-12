@@ -1,9 +1,13 @@
 import React from "react";
 import './resultsTable.css';
-import { Autocomplete, TextField } from "@mui/material";
+import { Modal, Autocomplete, TextField } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../DRE-Research/tables/download-buttons";
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
+import CloseIcon from '@material-ui/icons/Close';
+import { RQDefinitionTable } from "../DRE-Research/variables/rq-variables";
+import definitionXLFile from '../DRE-Research/variables/Variable Definitions RQ5.xlsx';
+import definitionPDFFile from '../DRE-Research/variables/Variable Definitions RQ5.pdf';
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -88,7 +92,7 @@ export function ResultsTable({ data, pLog }) {
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
     const [showLegacy, setShowLegacy] = React.useState(false);
-
+    const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     React.useEffect(() => {
         if (data) {
@@ -373,6 +377,14 @@ export function ResultsTable({ data, pLog }) {
         setVersionFilters([]);
     };
 
+    const openModal = () => {
+        setShowDefinitions(true);
+    };
+
+    const closeModal = () => {
+        setShowDefinitions(false);
+    };
+
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
@@ -457,7 +469,7 @@ export function ResultsTable({ data, pLog }) {
                 </RadioGroup>
             </div>
 
-            <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={'Survey Results'} />
+            <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={'Survey Results'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
@@ -483,5 +495,11 @@ export function ResultsTable({ data, pLog }) {
                 </tbody>
             </table>
         </div>
+        <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
+            <div className='modal-body'>
+                <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
+                <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+            </div>
+        </Modal>
     </>);
 }
