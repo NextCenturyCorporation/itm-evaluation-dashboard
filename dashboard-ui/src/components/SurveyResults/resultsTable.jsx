@@ -6,8 +6,8 @@ import { DownloadButtons } from "../DRE-Research/tables/download-buttons";
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import CloseIcon from '@material-ui/icons/Close';
 import { RQDefinitionTable } from "../DRE-Research/variables/rq-variables";
-import definitionXLFile from '../DRE-Research/variables/Variable Definitions RQ5.xlsx';
-import definitionPDFFile from '../DRE-Research/variables/Variable Definitions RQ5.pdf';
+import definitionXLFile from './Survey Delegation Variables.xlsx';
+import definitionPDFFile from './Survey Delegation Variables.pdf';
 
 const EVAL_MAP = {
     3: 'MRE',
