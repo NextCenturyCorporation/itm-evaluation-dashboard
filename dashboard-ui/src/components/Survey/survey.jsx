@@ -18,7 +18,7 @@ import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
-
+import { useHistory } from 'react-router-dom';
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
     countHumanGroupFirst
@@ -121,7 +121,6 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.redirectLinkRef = React.createRef();
-        this.shouldBlockNavigation = true;
         if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
             if (this.state.surveyVersion == 4.0) this.setSeenScenarios();
@@ -671,7 +670,6 @@ class SurveyPage extends Component {
     onSurveyComplete = (survey) => {
         // final upload
         this.uploadSurveyData(survey, true);
-        this.shouldBlockNavigation = false;
         if (this.surveyConfigClone.pages.length < 3) {
             if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
@@ -729,14 +727,14 @@ class SurveyPage extends Component {
 
     componentDidMount() {
         this.detectUserInfo();
-
+        
         window.addEventListener('beforeunload', this.handleBeforeUnload);
-        window.addEventListener('popstate', this.handlePopState);
 
         // push initial state to prevent back navigation
         window.history.pushState(null, '', window.location.href);
+        
     }
-
+    
     handleBeforeUnload = (e) => {
         if (!this.state.surveyComplete) {
             if (!window.confirm('Please finish the survey before leaving the page. If you leave now, you will need to start the survey over from the beginning.')) {
@@ -747,23 +745,8 @@ class SurveyPage extends Component {
         }
     };
 
-
-    handlePopState = (e) => {
-        if (!this.state.surveyComplete) {
-            if (window.confirm('Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.')) {
-                // allow navigation
-                return;
-            } else {
-                // prevent navigation
-                e.preventDefault();
-                window.history.pushState(null, '', window.location.href);
-            }
-        }
-    };
-
     componentWillUnmount() {
         window.removeEventListener('beforeunload', this.handleBeforeUnload);
-        window.removeEventListener('popstate', this.handlePopState);
     }
 
     detectUserInfo = () => {
@@ -779,6 +762,7 @@ class SurveyPage extends Component {
     render() {
         return (
             <>
+                <NavigationGuard surveyComplete={this.state.surveyComplete} />
                 <this.ConfigGetter />
                 {this.state.isSurveyLoaded &&
                     <>
@@ -868,6 +852,30 @@ export const SurveyPageWrapper = (props) => {
             surveyResults={dataSurveyResults.getAllSurveyResults}
             surveyVersion={currentSurveyVersion}
         />)
+};
+
+const NavigationGuard = ({ surveyComplete }) => {
+    const history = useHistory();
+
+    useEffect(() => {
+        const unblock = history.block((tx) => {
+            if (!surveyComplete) {
+                if (window.confirm('Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.')) {
+                    return true; 
+                } else {
+                    return false;
+                }
+            }
+            // survey is complete
+            return true; 
+        });
+
+        return () => {
+            unblock(); 
+        };
+    }, [history, surveyComplete]);
+
+    return null;
 };
 
 export default SurveyPage;
