@@ -8,6 +8,8 @@ import CloseIcon from '@material-ui/icons/Close';
 import { RQDefinitionTable } from "../DRE-Research/variables/rq-variables";
 import definitionXLFile from './Survey Delegation Variables.xlsx';
 import definitionPDFFile from './Survey Delegation Variables.pdf';
+import definitionXLFileLegacy from './Survey Delegation Variables - Legacy.xlsx';
+import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf';
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -387,7 +389,7 @@ export function ResultsTable({ data, pLog }) {
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
-        <section className='tableHeader'>
+        <section className='tableHeader results-download-btns'>
             <div className="filters">
                 {!showLegacy && evals.length > 0 && <Autocomplete
                     multiple
@@ -464,8 +466,8 @@ export function ResultsTable({ data, pLog }) {
                     onChange={(_, newVal) => setStatusFilters(newVal)}
                 />
                 <RadioGroup className='simple-radios' row defaultValue="DRE/PH1" onChange={toggleDataType}>
-                    <FormControlLabel value="Legacy" control={<Radio />} label="Legacy" />
-                    <FormControlLabel value="DRE/PH1" control={<Radio />} label="DRE/PH1" />
+                    <FormControlLabel value="Legacy" control={<Radio />} label=" Legacy" />
+                    <FormControlLabel value="DRE/PH1" control={<Radio />} label=" DRE/PH1" />
                 </RadioGroup>
             </div>
 
@@ -498,7 +500,8 @@ export function ResultsTable({ data, pLog }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                {showLegacy ? <RQDefinitionTable downloadName={'Survey Results Definitions - Legacy.pdf'} xlFile={definitionXLFileLegacy} pdfFile={definitionPDFFileLegacy} /> :
+                    <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />}
             </div>
         </Modal>
     </>);
