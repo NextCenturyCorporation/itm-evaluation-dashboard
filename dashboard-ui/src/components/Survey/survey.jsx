@@ -14,7 +14,6 @@ import { Mutation } from '@apollo/react-components';
 import { useQuery } from 'react-apollo'
 import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './surveyUtils';
 import Bowser from "bowser";
-import { Prompt } from 'react-router-dom'
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
@@ -574,7 +573,7 @@ class SurveyPage extends Component {
 
 
     uploadSurveyData = (survey, finalUpload) => {
-        if (finalUpload) {
+        if (finalUpload && survey.PageCount > 1) {
             this.setState({ surveyComplete: true });
         }
         this.timerHelper()
@@ -722,6 +721,41 @@ class SurveyPage extends Component {
 
     componentDidMount() {
         this.detectUserInfo();
+
+        window.addEventListener('beforeunload', this.handleBeforeUnload);
+        window.addEventListener('popstate', this.handlePopState);
+
+        // push initial state to prevent back navigation
+        window.history.pushState(null, '', window.location.pathname);
+    }
+
+    handleBeforeUnload = (e) => {
+        if (!this.state.surveyComplete) {
+            if (!window.confirm('Please finish the survey before leaving the page. If you leave now, you will need to start the survey over from the beginning.')) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        }
+    };
+
+
+    handlePopState = (e) => {
+        if (!this.state.surveyComplete) {
+            if (window.confirm('Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.')) {
+                // allow navigation
+                return;
+            } else {
+                // prevent navigation
+                e.preventDefault();
+                window.history.pushState(null, '', window.location.pathname);
+            }
+        }
+    };
+
+    componentWillUnmount() {
+        window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        window.removeEventListener('popstate', this.handlePopState);
     }
 
     detectUserInfo = () => {
@@ -740,18 +774,12 @@ class SurveyPage extends Component {
                 <this.ConfigGetter />
                 {this.state.isSurveyLoaded &&
                     <>
-                        {this.shouldBlockNavigation && (
-                            <Prompt
-                                when={this.shouldBlockNavigation}
-                                message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.'
-                            />
-                        )}
                         <Survey model={this.survey} />
                         {this.state.uploadData && (
                             <Mutation mutation={UPLOAD_SURVEY_RESULTS}>
                                 {(uploadSurveyResults, { data }) => (
                                     <div>
-                                    <button ref={this.uploadButtonRef} hidden onClick={(e) => {
+                                        <button ref={this.uploadButtonRef} hidden onClick={(e) => {
                                             e.preventDefault();
                                             uploadSurveyResults({
                                                 variables: { surveyId: this.state.surveyId, results: this.surveyData }
@@ -761,22 +789,22 @@ class SurveyPage extends Component {
                                     </div>
                                 )}
                             </Mutation>
-                    )}
-                    {this.state.updatePLog && (
-                        <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={() => { this.state.onlineOnly && this.redirectLinkRef?.current?.click() }}>
-                            {(updateParticipantLog) => (
-                                <div>
-                                    <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
-                                        e.preventDefault();
-                                        updateParticipantLog({
-                                            variables: { pid: this.state.pid, updates: { claimed: true, surveyEntryCount: this.state.initialUploadedCount + (this.state.hasUploaded ? 1 : 0) } }
-                                        });
-                                        this.setState({ updatePLog: false });
-                                    }}></button>
-                                </div>
-                            )}
-                        </Mutation>
-                    )}
+                        )}
+                        {this.state.updatePLog && (
+                            <Mutation mutation={UPDATE_PARTICIPANT_LOG} onCompleted={() => { this.state.onlineOnly && this.redirectLinkRef?.current?.click() }}>
+                                {(updateParticipantLog) => (
+                                    <div>
+                                        <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
+                                            e.preventDefault();
+                                            updateParticipantLog({
+                                                variables: { pid: this.state.pid, updates: { claimed: true, surveyEntryCount: this.state.initialUploadedCount + (this.state.hasUploaded ? 1 : 0) } }
+                                            });
+                                            this.setState({ updatePLog: false });
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
                         <div style={{
                             position: 'fixed',
                             bottom: '1rem',
@@ -791,18 +819,18 @@ class SurveyPage extends Component {
                         }}>
                             Survey v{this.state.surveyVersion}
                         </div>
-                    {this.surveyComplete && (this.state.updatePLog || this.state.uploadData) && (
-                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-                            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
-                                <Spinner animation="border" role="status">
-                                    <span className="sr-only">Loading...</span>
-                                </Spinner>
-                                <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                        {this.surveyComplete && (this.state.updatePLog || this.state.uploadData) && (
+                            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                                <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+                                    <Spinner animation="border" role="status">
+                                        <span className="sr-only">Loading...</span>
+                                    </Spinner>
+                                    <p style={{ marginTop: '10px' }}>Uploading documents, please wait...</p>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}&ContactID=${this.state.contactId}`} />
-                </>
+                        )}
+                        <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}&ContactID=${this.state.contactId}`} />
+                    </>
                 }
             </>
         )
