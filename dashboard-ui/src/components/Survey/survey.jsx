@@ -282,13 +282,21 @@ class SurveyPage extends Component {
             return {};
         }
         else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0)) {
+            let scenariosToSee = this.state.envsSeen;
+            if (this.state.surveyVersion == 5.0 && this.state.onlineOnly) {
+                const matchedLog = this.props.participantLog.getParticipantLog.find(
+                    log => log['ParticipantID'] == this.state.pid
+                );
+                scenariosToSee = isDefined(matchedLog) ? matchedLog : this.state.envsSeen
+                this.setState({ envsSeen: scenariosToSee });
+            }
             const allPages = this.surveyConfigClone.pages;
             const pages = [...allPages.slice(0, 5)];
-            const order = admOrderMapping[this.state.envsSeen['ADMOrder']];
+            const order = admOrderMapping[scenariosToSee['ADMOrder']];
             // author is TAD or kitware, alignment is the target name, admType is aligned or baseline, scenarioName is SoarTech VOL 1, etc.
-            const del1 = this.state.envsSeen['Del-1'];
-            const stScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("ST") ? del1 : this.state.envsSeen['Del-2']];
-            const adScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("AD") ? del1 : this.state.envsSeen['Del-2']];
+            const del1 = scenariosToSee['Del-1'];
+            const stScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("ST") ? del1 : scenariosToSee['Del-2']];
+            const adScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("AD") ? del1 : scenariosToSee['Del-2']];
             // find most and least aligned adms for every attribute
             const participantResults = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             const admLists = {
