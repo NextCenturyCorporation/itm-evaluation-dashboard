@@ -92,32 +92,42 @@ export function ResultsTable({ data, pLog }) {
 
     React.useEffect(() => {
         if (data) {
-            if (showLegacy) {
-                setLegacyData(data);
-            }
-            else {
-                setDrePh1Data(data);
-            }
+            formatData(data);
         }
     }, [data, pLog, showLegacy]);
 
-
-    const setDrePh1Data = (data) => {
+    const formatData = (data) => {
         const allObjs = [];
         const allEvals = [];
+        const allVersions = [];
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
         // set up block headers
+        const subheaders = (showLegacy ? [] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
+        const dmCount = showLegacy ? 2 : 3;
         for (let block = 1; block < 5; block++) {
-            for (let dm = 1; dm < 4; dm++) {
-                const subheaders = ['TA1', 'TA2', 'Type', 'Target', 'Name', 'Time', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust'];
+            for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
                 }
             }
-            const comparisons = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
+            const comparisons = showLegacy ? ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'] : ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
             for (let subhead of comparisons) {
                 updatedHeaders.push(`B${block}_${subhead}`);
+            }
+        }
+        if (showLegacy) {
+            // add omnibus columns
+            for (let block = 5; block < 7; block++) {
+                for (let omni = 1; omni < 3; omni++) {
+                    for (let subhead of subheaders) {
+                        updatedHeaders.push(`B${block}_Omni${omni}_${subhead}`);
+                    }
+                }
+                const comparisons = ['Compare_Omni1', 'Compare_Omni2', 'Omni_Compare_Time', 'Omni_Compare_FC1', 'Omni_Compare_FC1_Conf', 'Omni_Compare_FC1_Explain'];
+                for (let subhead of comparisons) {
+                    updatedHeaders.push(`B${block}_${subhead}`);
+                }
             }
         }
         for (let entry of data) {
@@ -133,7 +143,7 @@ export function ResultsTable({ data, pLog }) {
 
             // ignore invalid versions
             const version = entry.surveyVersion;
-            if (!version || version < 4) {
+            if (!version || ((showLegacy && version >= 4) || (!showLegacy && version < 4))) {
                 continue;
             }
 
@@ -142,6 +152,11 @@ export function ResultsTable({ data, pLog }) {
             if (!pid) {
                 continue;
             }
+
+            if (obj['eval'] == 3 && pid.slice(0, 4) != '2024') {
+                continue;
+            }
+
             const logData = pLog.find(
                 log => log['ParticipantID'] == pid && log['Type'] != 'Test'
             );
@@ -150,169 +165,13 @@ export function ResultsTable({ data, pLog }) {
             }
 
             const lastPage = entry['Post-Scenario Measures'];
+            if (showLegacy && !lastPage) {
+                // don't ignore those without last page in versions 4 & 5 bc of 12/10 collection problem
+                continue;
+            }
 
             // add data to filter options
             allEvals.push(obj['eval']);
-
-            // add data to table
-            obj['Participant ID'] = pid;
-            obj['Survey Version'] = version;
-            obj['Start Time'] = entry.startTime ? new Date(entry.startTime)?.toLocaleString() : null;
-            obj['End Time'] = new Date(entry.timeComplete)?.toLocaleString();
-            const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
-            obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds) : null;
-            if (lastPage) {
-                obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
-                for (const q of Object.keys(lastPage.questions)) {
-                    if (q != 'What is your current role (choose all that apply):') {
-                        obj[q] = lastPage.questions[q].response?.toString();
-                    }
-                    else {
-                        const roles = lastPage.questions[q].response?.toString();
-                        allRoles = [...allRoles, ...roles.split(',')];
-                        obj[q] = roles.replaceAll(',', '; ');
-                    }
-                }
-            }
-
-            if (!entry['Note page']) {
-                continue;
-            }
-            if (entry['VR Page']) {
-                obj["VR Experience Level"] = entry['VR Page']?.questions?.['VR Experience Level']?.response?.slice(0, 1);
-                obj["VR Comfort Level"] = entry['VR Page']?.questions?.['VR Comfort Level']?.response;
-                obj["Additional Information About Discomfort"] = entry['VR Page']?.questions?.['Additional Information About Discomfort']?.response;
-            }
-            else {
-                obj["VR Comfort Level"] = entry['Participant ID Page']?.questions?.['VR Comfort Level']?.response;
-                obj["Additional Information About Discomfort"] = entry['Participant ID Page']?.questions?.['Additional Information About Discomfort']?.response;
-                obj["Have you completed the text-based scenarios"] = entry['Participant ID Page']?.questions?.['Have you completed the text-based scenarios']?.response;
-                obj["VR Scenarios Completed"] = entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response;
-            }
-            obj["Note Page - Time Taken (mm:ss)"] = formatTime(entry['Note page'].timeSpentOnPage);
-
-
-            // get blocks of dms
-            let block = 1;
-            let dm = 1;
-            for (const pageName of (entry['orderLog'] ?? Object.keys(entry)).filter((x) => x.includes('Medic'))) {
-                const page = entry[pageName];
-                if (!page) {
-                    // should never occur
-                    if (lastPage) {
-                        console.error('Page not found! ', pageName);
-                    }
-                    continue;
-                }
-                if (page.pageType == 'singleMedic') {
-                    obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
-                    obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
-                    obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
-                    obj[`B${block}_DM${dm}_Target`] = page.admTarget;
-                    obj[`B${block}_DM${dm}_Name`] = pageName;
-                    obj[`B${block}_DM${dm}_Time`] = formatTime(page.timeSpentOnPage);
-                    obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex;
-                    obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[pageName + ': Do you agree with the decisions that this medic made?']?.response];
-                    obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[pageName + ': The way this medic makes medical decisions is how I make decisions']?.response];
-                    obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[pageName + ': This medic is trustworthy']?.response];
-                    obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[pageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
-                    dm += 1;
-                }
-                else if (page.pageType == 'comparison') {
-                    const alignment = page.admAlignment?.split(' vs ');
-                    const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
-                    const alignedVsBaseline = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')];
-                    const alignedVsMisaligned = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')];
-                    obj[`B${block}_Compare_DM1`] = order[0] + ' - ' + alignment[0];
-                    obj[`B${block}_Compare_DM2`] = order[1] + ' - ' + alignment[1];
-                    obj[`B${block}_Compare_DM3`] = order[2] + ' - ' + alignment[2];
-                    obj[`B${block}_Compare_Time`] = formatTime(page.timeSpentOnPage);
-                    const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
-                    obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
-                    obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                    obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
-                    const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
-                    obj[`B${block}_Compare_FC2`] = fc2 + ' - ' + alignment[order.indexOf(fc2)];
-                    obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                    obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
-                    block += 1;
-                    dm = 1;
-                }
-            }
-
-            allObjs.push(obj);
-        }
-        // prep filters and data (sort by pid)
-        allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
-        setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
-        setFormattedData(allObjs);
-        setFilteredData(allObjs);
-        setHeaders(updatedHeaders);
-        setRoles(Array.from(new Set(allRoles)));
-        setOrigHeaderSet(updatedHeaders);
-    };
-
-
-    const setLegacyData = (data) => {
-        const allObjs = [];
-        const allVersions = [];
-        let allRoles = [];
-        const updatedHeaders = [...STARTING_HEADERS];
-        // set up block headers
-        const subheaders = ['Name', 'Time', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust'];
-        for (let block = 1; block < 5; block++) {
-            for (let dm = 1; dm < 3; dm++) {
-
-                for (let subhead of subheaders) {
-                    updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
-                }
-            }
-            const comparisons = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
-            for (let subhead of comparisons) {
-                updatedHeaders.push(`B${block}_${subhead}`);
-            }
-        }
-        for (let block = 5; block < 7; block++) {
-            for (let omni = 1; omni < 3; omni++) {
-                for (let subhead of subheaders) {
-                    updatedHeaders.push(`B${block}_Omni${omni}_${subhead}`);
-                }
-            }
-            const comparisons = ['Compare_Omni1', 'Compare_Omni2', 'Omni_Compare_Time', 'Omni_Compare_FC1', 'Omni_Compare_FC1_Conf', 'Omni_Compare_FC1_Explain'];
-            for (let subhead of comparisons) {
-                updatedHeaders.push(`B${block}_${subhead}`);
-            }
-        }
-        for (let entry of data) {
-            const obj = {};
-            // not shown in table, just for filters
-            obj['eval'] = entry.evalNumber ?? entry.results?.evalNumber;
-
-            // clean up data, only showing relevant entries
-            entry = entry.results ?? entry;
-            if (!entry) {
-                continue;
-            }
-
-            // ignore invalid versions
-            const version = entry.surveyVersion;
-            if (!version || version >= 4) {
-                continue;
-            }
-
-            // ignore invalid pids
-            let pid = entry['Participant ID']?.questions['Participant ID']?.response ?? entry['Participant ID Page']?.questions['Participant ID']?.response ?? entry['pid'];
-            if (!pid) {
-                continue;
-            }
-            if (obj['eval'] == 3 && pid.slice(0, 4) != '2024') {
-                continue;
-            }
-
-            const lastPage = entry['Post-Scenario Measures'];
-            if (!lastPage) {
-                continue;
-            }
 
             // add data to filter options
             allVersions.push(version);
@@ -339,7 +198,6 @@ export function ResultsTable({ data, pLog }) {
             }
 
             if (!entry['Note page']) {
-                // ignore no note page, because that means they never started the survey
                 continue;
             }
             if (entry['VR Page']) {
@@ -356,6 +214,7 @@ export function ResultsTable({ data, pLog }) {
             }
             obj["Note Page - Time Taken (mm:ss)"] = formatTime(entry['Note page'].timeSpentOnPage);
 
+
             // get blocks of dms
             let block = 1;
             let dm = 1;
@@ -368,8 +227,14 @@ export function ResultsTable({ data, pLog }) {
                     }
                     continue;
                 }
-                if ((page.pageType == 'singleMedic' && !pageName.includes('Omnibus')) || (!page.pageType && pageName.includes('Scenario'))) {
+                if ((page.pageType == 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
+                    if (!showLegacy) {
+                        obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
+                        obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
+                        obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
+                        obj[`B${block}_DM${dm}_Target`] = page.admTarget;
+                    }
                     obj[`B${block}_DM${dm}_Name`] = cleanPageName;
                     obj[`B${block}_DM${dm}_Time`] = formatTime(page.timeSpentOnPage);
                     obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
@@ -379,19 +244,39 @@ export function ResultsTable({ data, pLog }) {
                     obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
                     dm += 1;
                 }
-                else if ((page.pageType == 'comparison' && !pageName.includes('Omnibus')) || (!page.pageType && pageName.includes(' vs '))) {
-                    const order = pageName.split(' vs ');
-                    obj[`B${block}_Compare_DM1`] = order[0];
-                    obj[`B${block}_Compare_DM2`] = order[1];
-                    obj[`B${block}_Compare_Time`] = formatTime(page.timeSpentOnPage);
-                    obj[`B${block}_Compare_FC1`] = page.questions?.[pageName + ': Forced Choice']?.response ?? page.questions?.[pageName + ': Given the information provided']?.response;
-                    obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                    obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
-                    obj[`B${block}_Compare_FC1_Differences`] = page.questions?.[pageName + ': What, if anything, would you have done differently in the presented scenario?']?.response;
+                else if ((page.pageType == 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
+                    if (!showLegacy) {
+                        const alignment = page.admAlignment?.split(' vs ');
+                        const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
+                        const alignedVsBaseline = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')];
+                        const alignedVsMisaligned = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')];
+                        obj[`B${block}_Compare_DM1`] = order[0] + ' - ' + alignment[0];
+                        obj[`B${block}_Compare_DM2`] = order[1] + ' - ' + alignment[1];
+                        obj[`B${block}_Compare_DM3`] = order[2] + ' - ' + alignment[2];
+                        obj[`B${block}_Compare_Time`] = formatTime(page.timeSpentOnPage);
+                        const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
+                        obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
+                        obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                        obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
+                        const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
+                        obj[`B${block}_Compare_FC2`] = fc2 + ' - ' + alignment[order.indexOf(fc2)];
+                        obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                        obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
+                    }
+                    else {
+                        const order = pageName.split(' vs ');
+                        obj[`B${block}_Compare_DM1`] = order[0];
+                        obj[`B${block}_Compare_DM2`] = order[1];
+                        obj[`B${block}_Compare_Time`] = formatTime(page.timeSpentOnPage);
+                        obj[`B${block}_Compare_FC1`] = page.questions?.[pageName + ': Forced Choice']?.response ?? page.questions?.[pageName + ': Given the information provided']?.response;
+                        obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                        obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
+                        obj[`B${block}_Compare_FC1_Differences`] = page.questions?.[pageName + ': What, if anything, would you have done differently in the presented scenario?']?.response;
+                    }
                     block += 1;
                     dm = 1;
                 }
-                if (pageName.includes('Omnibus')) {
+                if (showLegacy && pageName.includes('Omnibus')) {
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
                     if (page.pageType == 'singleMedic') {
                         obj[`B${block}_Omni${dm}_Name`] = cleanPageName;
@@ -421,6 +306,7 @@ export function ResultsTable({ data, pLog }) {
         }
         // prep filters and data (sort by pid)
         allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
+        setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
         setVersions(Array.from(new Set(allVersions)).filter((x) => isDefined(x)).map((x) => x.toString()));
         setFormattedData(allObjs);
         setFilteredData(allObjs);
@@ -428,8 +314,6 @@ export function ResultsTable({ data, pLog }) {
         setRoles(Array.from(new Set(allRoles)));
         setOrigHeaderSet(updatedHeaders);
     };
-
-
 
     React.useEffect(() => {
         const filtered = formattedData.filter((x) =>
