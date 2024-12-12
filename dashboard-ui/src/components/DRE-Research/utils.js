@@ -102,7 +102,7 @@ export function getAlignments(evalNum, textResults, pid) {
         else {
             // adept
             if (!Object.keys(textRes).includes("alignmentData")) {
-                if (!addedMJ) {
+                if (!addedMJ && textRes['mostLeastAligned']) {
                     const atts = [];
                     for (const attSet of textRes['mostLeastAligned']) {
                         for (const att of attSet.response) {
