@@ -726,7 +726,7 @@ class SurveyPage extends Component {
         window.addEventListener('popstate', this.handlePopState);
 
         // push initial state to prevent back navigation
-        window.history.pushState(null, '', window.location.pathname);
+        window.history.pushState(null, '', window.location.href);
     }
 
     handleBeforeUnload = (e) => {
@@ -748,7 +748,7 @@ class SurveyPage extends Component {
             } else {
                 // prevent navigation
                 e.preventDefault();
-                window.history.pushState(null, '', window.location.pathname);
+                window.history.pushState(null, '', window.location.href);
             }
         }
     };
