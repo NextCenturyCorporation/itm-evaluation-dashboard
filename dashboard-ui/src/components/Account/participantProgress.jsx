@@ -66,7 +66,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
                     obj['Contact ID'] = res['contactId'];
-                    if (res['prolificId']) obj['Survey Link'] = `https://darpaitm.caci.com/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
+                    if (res['prolificId']) obj['Survey Link'] = `${window.location.protocol}//${window.location.host}/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
                 obj['Sim Date-Time'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
