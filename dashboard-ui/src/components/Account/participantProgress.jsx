@@ -193,6 +193,18 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         setColumnsToHide([...columnsToHide, val]);
     };
 
+    const refineData = (origData) => {
+        // remove unwanted headers from download
+        const updatedData = structuredClone(origData);
+        updatedData.map((x) => {
+            for (const h of columnsToHide) {
+                delete x[h];
+            }
+            return x;
+        });
+        return updatedData;
+    };
+
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error :</p>;
 
@@ -262,7 +274,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     onChange={(_, newVal) => setColumnsToHide(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
+            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
