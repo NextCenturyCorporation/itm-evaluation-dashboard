@@ -140,6 +140,10 @@
     max-width: 180px;
 }
 
+.filters .large-box {
+    min-width: 220px !important;
+}
+
 #big-filter {
     min-width: 160px !important;
 }

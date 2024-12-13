@@ -45,6 +45,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [completionFilters, setCompletionFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [columnsToHide, setColumnsToHide] = React.useState([]);
+    const [sortOptions] = React.useState(['Participant ID ↑', 'Participant ID ↓', 'Text Start Time ↑', 'Text Start Time ↓', 'Sim Count ↑', 'Sim Count ↓', 'Del Count ↑', 'Del Count ↓', 'Text Count ↑', 'Text Count ↓'])
+    const [sortBy, setSortBy] = React.useState('Participant ID ↑');
     const HEADERS = canViewProlific ? HEADERS_WITH_PROLIFIC : HEADERS_NO_PROLIFIC;
 
     React.useEffect(() => {
@@ -131,8 +133,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             // // sort
             allObjs.sort((a, b) => {
                 // Compare PID
-                if (Number(a['Participant_ID']) < Number(b['Participant_ID'])) return -1;
-                if (Number(a['Participant_ID']) > Number(b['Participant_ID'])) return 1;
+                if (Number(a['Participant ID']) < Number(b['Participant ID'])) return -1;
+                if (Number(a['Participant ID']) > Number(b['Participant ID'])) return 1;
             });
             setFormattedData(allObjs);
             setFilteredData(allObjs);
@@ -181,6 +183,46 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             }));
         }
     }, [formattedData, typeFilters, evalFilters, completionFilters]);
+
+    const getDateFromString = (s) => {
+        if (s) {
+            const t = 'T' + s.split(' - ')[1];
+            const mdy = s.split(' - ')[0].split('/');
+            const ydm = mdy[2] + '-' + mdy[0].toString().padStart(2, '0') + '-' + mdy[1].toString().padStart(2, '0');
+            let date = new Date(ydm + t);
+            return date == 'Invalid Date' ? -1 : date.getTime();
+        }
+        return -1;
+    }
+
+    React.useEffect(() => {
+        if (sortBy) {
+            const dataCopy = structuredClone(filteredData);
+            const sortKeyMap = {
+                "Participant ID": "Participant ID",
+                "Text Start Time": "Text Start Date-Time",
+                "Sim Count": "Sim Count",
+                "Del Count": "Delegation",
+                "Text Count": "Text"
+            }
+            dataCopy.sort((a, b) => {
+                const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
+                const incOrDec = sortBy.split(' ').slice(-1)[0] == '↑' ? 'i' : 'd';
+                let aVal = a[simpleK];
+                let bVal = b[simpleK];
+                if (simpleK.includes('Date-Time')) {
+                    aVal = getDateFromString(aVal);
+                    bVal = getDateFromString(bVal);
+                }
+                if (incOrDec == 'i') {
+                    return (aVal > bVal) ? 1 : -1;
+                } else {
+                    return (aVal < bVal) ? 1 : -1;
+                }
+            });
+            setFilteredData(dataCopy);
+        }
+    }, [sortBy]);
 
     const refreshData = async () => {
         await refetchPLog();
@@ -272,6 +314,22 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                         />
                     )}
                     onChange={(_, newVal) => setColumnsToHide(newVal)}
+                />
+                <Autocomplete
+                    options={sortOptions}
+                    filterSelectedOptions
+                    className="large-box"
+                    size="small"
+                    style={{ width: '600px' }}
+                    value={sortBy}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Sort By"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setSortBy(newVal)}
                 />
             </div>
             <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
