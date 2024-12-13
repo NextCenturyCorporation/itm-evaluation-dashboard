@@ -5,6 +5,7 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../DRE-Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -26,8 +27,8 @@ const GET_SIM_DATA = gql`
         getAllSimAlignment
     }`;
 
-const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
@@ -43,6 +44,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [evalFilters, setEvalFilters] = React.useState([]);
     const [completionFilters, setCompletionFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const [columnsToHide, setColumnsToHide] = React.useState([]);
     const HEADERS = canViewProlific ? HEADERS_WITH_PROLIFIC : HEADERS_NO_PROLIFIC;
 
     React.useEffect(() => {
@@ -80,9 +82,12 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                 const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response == pid)
                     && x.results?.['Post-Scenario Measures']);
+                const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response == pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
-                const survey_date = new Date(lastSurvey?.results?.timeComplete);
-                obj['Del Date-Time'] = survey_date != 'Invalid Date' ? `${survey_date?.getMonth() + 1}/${survey_date?.getDate()}/${survey_date?.getFullYear()} - ${survey_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                const survey_start_date = lastSurvey ? new Date(lastSurvey?.results?.startTime) : new Date(incompleteSurveys?.slice(-1)?.[0]?.results?.startTime);
+                const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
+                obj['Del Start Date-Time'] = survey_start_date != 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Del End Date-Time'] = survey_end_date != 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Delegation'] = surveys.length;
                 const delScenarios = lastSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
                 if (delScenarios) {
@@ -98,8 +103,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
-                const text_date = new Date(lastScenario?.timeComplete);
-                obj['Text Date-Time'] = text_date != 'Invalid Date' ? `${text_date?.getMonth() + 1}/${text_date?.getDate()}/${text_date?.getFullYear()} - ${text_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                const text_start_date = new Date(lastScenario?.startTime);
+                const text_end_date = new Date(lastScenario?.timeComplete);
+                obj['Text Start Date-Time'] = text_start_date != 'Invalid Date' ? `${text_start_date?.getMonth() + 1}/${text_start_date?.getDate()}/${text_start_date?.getFullYear()} - ${text_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Text End Date-Time'] = text_end_date != 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text'] = scenarios.length;
                 if (obj['Text'] < 5) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
@@ -146,7 +153,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             }
             return 'white-cell';
         };
-        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '')}>
+        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '') + ' ' + (header.length > 17 ? 'large-column' : '')}>
             {header == 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
         </td>);
     };
@@ -180,6 +187,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         await refetchSimData();
         await refetchSurveyResults();
         await refetchTextResults();
+    };
+
+    const hideColumn = (val) => {
+        setColumnsToHide([...columnsToHide, val]);
     };
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
@@ -234,6 +245,22 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     )}
                     onChange={(_, newVal) => setCompletionFilters(newVal)}
                 />
+                <Autocomplete
+                    multiple
+                    options={HEADERS}
+                    size="small"
+                    limitTags={1}
+                    style={{ width: '600px' }}
+                    value={columnsToHide}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Hidden Columns"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setColumnsToHide(newVal)}
+                />
             </div>
             <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
         </section>
@@ -242,8 +269,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 <thead>
                     <tr>
                         {HEADERS.map((val, index) => {
-                            return (<th key={'header-' + index} className={val.length < 5 ? 'small-column' : ''}>
-                                {val}
+                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className={val.length < 5 ? 'small-column' : ''}>
+                                {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
                             </th>);
                         })}
                     </tr>
@@ -252,7 +279,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['Participant_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return formatCell(val, dataSet);
+                                return !columnsToHide.includes(val) && formatCell(val, dataSet);
                             })}
                         </tr>);
                     })}
