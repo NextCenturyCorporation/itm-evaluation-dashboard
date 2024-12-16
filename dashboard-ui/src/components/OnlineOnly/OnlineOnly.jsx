@@ -69,7 +69,7 @@ export default function StartOnline() {
         const result = await refetch();
         // calculate new pid
         const lowPid = 202411500;
-        const highPid = 202411599;
+        const highPid = 202411799;
         let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
             !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
             x.ParticipantID >= lowPid && x.ParticipantID <= highPid
