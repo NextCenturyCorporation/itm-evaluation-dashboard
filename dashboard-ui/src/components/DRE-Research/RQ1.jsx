@@ -55,7 +55,7 @@ export function RQ1() {
             </p>
         </div>
         <div className="section-container">
-            <RQ13 evalNum={selectedEval} graphTitle={'RQ1 Data'} />
+            <RQ13 evalNum={selectedEval} tableTitle={'RQ1 Data'} />
 
         </div>
         <div className="section-container">
