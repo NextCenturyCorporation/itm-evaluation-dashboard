@@ -1,4 +1,4 @@
-import React, { Component, useEffect } from "react";
+import React, { Component, useEffect, useRef } from "react";
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui"
@@ -727,26 +727,7 @@ class SurveyPage extends Component {
 
     componentDidMount() {
         this.detectUserInfo();
-        
-        window.addEventListener('beforeunload', this.handleBeforeUnload);
-
-        // push initial state to prevent back navigation
-        window.history.pushState(null, '', window.location.href);
-        
-    }
-    
-    handleBeforeUnload = (e) => {
-        if (!this.state.surveyComplete) {
-            if (!window.confirm('Please finish the survey before leaving the page. If you leave now, you will need to start the survey over from the beginning.')) {
-                e.preventDefault();
-                e.returnValue = '';
-                return '';
-            }
-        }
-    };
-
-    componentWillUnmount() {
-        window.removeEventListener('beforeunload', this.handleBeforeUnload);
+       
     }
 
     detectUserInfo = () => {
@@ -856,22 +837,49 @@ export const SurveyPageWrapper = (props) => {
 
 export const NavigationGuard = ({ surveyComplete }) => {
     const history = useHistory();
+    const isHandlingNavigation = useRef(false);
+    const initialUrl = useRef(window.location.href);
 
     useEffect(() => {
-        const unblock = history.block((tx) => {
-            if (!surveyComplete) {
-                if (window.confirm('Please finish the survey before leaving the page. By hitting "OK", you will be leaving the survey before completion and will be required to start the survey over from the beginning.')) {
-                    return true; 
-                } else {
+        if (surveyComplete) return;
+
+        const confirmationMessage = 'Please finish the survey before leaving the page. If you leave now, you will need to start the survey over from the beginning.';
+        
+        const handleNavigation = () => {
+            if (isHandlingNavigation.current || surveyComplete) {
+                return true;
+            }
+
+            isHandlingNavigation.current = true;
+            try {
+                const shouldNavigate = window.confirm(confirmationMessage);
+                
+                if (!shouldNavigate) {
+                    window.history.replaceState(null, '', initialUrl.current);
                     return false;
                 }
+                return shouldNavigate;
+            } finally {
+                isHandlingNavigation.current = false;
             }
-            // survey is complete
-            return true; 
-        });
+        };
+
+        // tab/browser close
+        const handleBeforeUnload = (e) => {
+            if (!surveyComplete) {
+                e.preventDefault();
+                e.returnValue = confirmationMessage;
+                return confirmationMessage;
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        
+        const unblock = history.block(handleNavigation);
 
         return () => {
-            unblock(); 
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            unblock();
         };
     }, [history, surveyComplete]);
 

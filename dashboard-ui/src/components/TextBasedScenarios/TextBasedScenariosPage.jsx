@@ -260,10 +260,6 @@ class TextBasedScenariosPage extends Component {
             }
 
         }
-        window.addEventListener('beforeunload', this.handleBeforeUnload);
-
-        // push initial state to prevent back navigation
-        window.history.pushState(null, '', window.location.href);
     }
 
     resetState() {
@@ -642,20 +638,6 @@ class TextBasedScenariosPage extends Component {
         const page = this.survey.getPageByName(pageName);
         return page ? page.questions.map(question => question.name) : [];
     };
-    
-    handleBeforeUnload = (e) => {
-        if (!this.state.allScenariosCompleted) {
-            if (!window.confirm('Please finish the scenarios before leaving the page. If you leave now, you will need to start the scenarios over from the beginning.')) {
-                e.preventDefault();
-                e.returnValue = '';
-                return '';
-            }
-        }
-    };
-
-    componentWillUnmount() {
-        window.removeEventListener('beforeunload', this.handleBeforeUnload);
-    }
 
     render() {
         return (
