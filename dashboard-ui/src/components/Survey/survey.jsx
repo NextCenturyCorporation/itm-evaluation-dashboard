@@ -657,6 +657,9 @@ class SurveyPage extends Component {
             this.surveyData['evalName'] = 'Phase 1 Evaluation';
             this.surveyData['orderLog'] = this.state.orderLog;
             this.surveyData['pid'] = this.state.pid;
+            if (this.state.pid) {
+                this.surveyData['Participant ID Page'] = { 'pageName': 'Participant ID Page', 'questions': { 'Participant ID': { 'response': this.state.pid } } };
+            }
         }
 
         // upload the results to mongoDB
