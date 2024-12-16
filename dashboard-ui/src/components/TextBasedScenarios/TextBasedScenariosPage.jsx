@@ -14,7 +14,6 @@ import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import { Prompt } from 'react-router-dom'
 import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
@@ -25,6 +24,7 @@ import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
+import { NavigationGuard } from '../Survey/survey';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -260,6 +260,10 @@ class TextBasedScenariosPage extends Component {
             }
 
         }
+        window.addEventListener('beforeunload', this.handleBeforeUnload);
+
+        // push initial state to prevent back navigation
+        window.history.pushState(null, '', window.location.href);
     }
 
     resetState() {
@@ -638,10 +642,25 @@ class TextBasedScenariosPage extends Component {
         const page = this.survey.getPageByName(pageName);
         return page ? page.questions.map(question => question.name) : [];
     };
+    
+    handleBeforeUnload = (e) => {
+        if (!this.state.allScenariosCompleted) {
+            if (!window.confirm('Please finish the scenarios before leaving the page. If you leave now, you will need to start the scenarios over from the beginning.')) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        }
+    };
+
+    componentWillUnmount() {
+        window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    }
 
     render() {
         return (
             <>
+                <NavigationGuard surveyComplete={this.state.allScenariosCompleted} />
                 {!this.state.skipText && !this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
@@ -670,12 +689,6 @@ class TextBasedScenariosPage extends Component {
                 {!this.state.skipText && this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
                     <>
                         <Survey model={this.survey} />
-                        {this.shouldBlockNavigation && (
-                            <Prompt
-                                when={this.shouldBlockNavigation}
-                                message='Please finish the survey before leaving the page. By hitting "OK", you will be leaving the scenarios before completion and will be required to start the scenarios over from the beginning.'
-                            />
-                        )}
                     </>
                 )}
                 {!this.state.skipText && this.state.uploadData && (

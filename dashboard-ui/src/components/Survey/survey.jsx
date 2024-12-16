@@ -854,7 +854,7 @@ export const SurveyPageWrapper = (props) => {
         />)
 };
 
-const NavigationGuard = ({ surveyComplete }) => {
+export const NavigationGuard = ({ surveyComplete }) => {
     const history = useHistory();
 
     useEffect(() => {
