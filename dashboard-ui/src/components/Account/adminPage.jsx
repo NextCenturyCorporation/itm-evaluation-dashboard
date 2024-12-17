@@ -7,7 +7,10 @@ import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-b
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
 import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
-import { accountsPassword } from '../../services/accountsService';
+import { accountsClient, accountsPassword } from '../../services/accountsService';
+import { createBrowserHistory } from 'history';
+
+const history = createBrowserHistory({ forceRefresh: true });
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -67,6 +70,7 @@ const UPDATE_SURVEY_VERSION = gql`
 function InputBox({ options, selectedOptions, mutation, param, header, caller, errorCallback }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
     const [updateUserCall] = useMutation(mutation);
+    let errored = false;
     const updateUser = (newSelect) => {
         const usersToAdd = newSelect.filter(user => !selected.includes(user));
         const usersToRemove = selected.filter(user => !newSelect.includes(user));
@@ -77,12 +81,15 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
                     [param]: usersToAdd.includes(username) ? true : false,
                     caller
                 }
-            }).catch((e) => {
-                errorCallback(e);
+            }).catch(() => {
+                errorCallback();
+                errored = true;
                 return;
             })
         );
-
+        if (errored) {
+            return;
+        }
         setSelected(newSelect);
     }
     options.sort((a, b) => (a.value > b.value) ? 1 : -1);
@@ -185,7 +192,7 @@ function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
     );
 }
 
-function AdminPage({ currentUser }) {
+function AdminPage({ currentUser, updateUserHandler }) {
     const [surveyVersion, setLocalSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -196,6 +203,7 @@ function AdminPage({ currentUser }) {
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [sessionId, setSessionId] = useState(null);
+    const [errorCount, setErrorCount] = useState(0);
 
     const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION, {
         fetchPolicy: 'no-cache'
@@ -304,11 +312,17 @@ function AdminPage({ currentUser }) {
         }
     };
 
-    const notAdmin = (error) => {
-        console.error(error);
+    const notAdmin = async () => {
         setConfirmedAdmin(false);
+        const errors = errorCount + 1;
+        setErrorCount(errors);
         setPassword('');
         setPasswordError("Something went wrong! Please confirm your admin status.");
+        if (errors == 2) {
+            await accountsClient.logout();
+            updateUserHandler(null);
+            history.push('/login');
+        }
     };
 
     if (surveyVersionLoading) return <div className="loading">Loading survey version...</div>;
