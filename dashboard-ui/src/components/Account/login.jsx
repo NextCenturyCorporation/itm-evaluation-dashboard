@@ -223,7 +223,7 @@ class LoginApp extends React.Component {
                 <div className="row justify-content-center align-items-center h-100 center-container">
                     <div className="login-container">
                         <Tabs className='p-1' defaultActiveKey={this.props.isParticipant ? 2 : 1}>
-                            {this.props.history.location.pathname != '/participantTextTester' &&
+                            {this.props.history.location.pathname != '/participantTextTester' && this.props.history.location.pathname != '/participantText' &&
                                 <Tab eventKey={0} title="Create Account">
                                     <div>
                                         <div className="sign-in-instructions">
@@ -261,7 +261,7 @@ class LoginApp extends React.Component {
                                     </div>
                                 </Tab>
                             }
-                            {this.props.history.location.pathname != '/participantTextTester' &&
+                            {this.props.history.location.pathname != '/participantTextTester' && this.props.history.location.pathname != '/participantText' &&
                                 <Tab eventKey={1} title="Sign In">
                                     <div >
                                         <div id="sign-in-pane">

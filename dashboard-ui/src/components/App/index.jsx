@@ -423,24 +423,26 @@ export class App extends React.Component {
                                                         <li className="nav-item">
                                                             <Link className="nav-link" to="/">Home</Link>
                                                         </li>
-                                                        <NavDropdown title="Data Collection">
-                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
-                                                                Take Delegation Survey
-                                                            </NavDropdown.Item>
-                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based" disabled>
-                                                                Complete Text Scenarios
-                                                            </NavDropdown.Item>
-                                                            {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
-                                                                    Review Text Scenarios
+                                                        {((this.state.currentUser.admin || this.state.currentUser.evaluator || this.state.currentUser.experimenter) &&
+                                                            <NavDropdown title="Data Collection">
+                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
+                                                                    Take Delegation Survey
                                                                 </NavDropdown.Item>
-                                                            )}
-                                                            {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
-                                                                    Review Delegation Survey
+                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based" disabled>
+                                                                    Complete Text Scenarios
                                                                 </NavDropdown.Item>
-                                                            )}
-                                                        </NavDropdown>
+                                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
+                                                                        Review Text Scenarios
+                                                                    </NavDropdown.Item>
+                                                                )}
+                                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
+                                                                        Review Delegation Survey
+                                                                    </NavDropdown.Item>
+                                                                )}
+                                                            </NavDropdown>
+                                                        )}
                                                         {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
                                                             <>
                                                                 <NavDropdown title="Human Evaluation Segments">

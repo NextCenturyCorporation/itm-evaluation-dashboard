@@ -27,7 +27,7 @@ class HomePage extends React.Component {
                             </div>
                         </div>
                         <div className="data-collection-only">
-                            Thank you for your interest in the DARPA In the Moment Program.  Please use the drop down above to select if you will be completing the delegation survey or the text based scenarios.
+                            Thank you for your interest in the DARPA In the Moment Program.  If you are supposed to be taking the text scenarios, please navigate to <a href='https://darpaitm.caci.com/participantText'>https://darpaitm.com/participantText</a>
                         </div>
                     </div>
                 )}
