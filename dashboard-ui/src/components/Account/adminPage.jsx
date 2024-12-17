@@ -19,17 +19,6 @@ const GET_USERS = gql`
     }
 `;
 
-const GET_EVAL_IDS = gql`
-    query getEvalIds {
-        getEvalIds
-    }
-`;
-
-const UPDATE_EVAL_IDS_BYPAGE = gql`
-    mutation updateEvalIdsByPage($evalNumber: Int!, $field: String!, $value: Boolean!) {
-        updateEvalIdsByPage(evalNumber: $evalNumber, field: $field, value: $value) 
-    }
-`;
 
 const UPDATE_ADMIN_USER = gql`
     mutation updateAdminUser($caller: JSON!, $username: String!, $isAdmin: Boolean!) {
@@ -116,61 +105,6 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
         </Row>
 
     );
-}
-
-function EvaluationIDSTable({ data }) {
-    const [selectedEvals, setSelectedEvals] = useState([]);
-    const [updateEvalIds] = useMutation(UPDATE_EVAL_IDS_BYPAGE);
-
-    const updateShowMainPage = (newChecked) => {
-        const checkedId = parseInt(newChecked.target.value);
-
-        updateEvalIds({
-            variables: {
-                evalNumber: parseInt(newChecked.target.value),
-                field: "showMainPage",
-                value: newChecked.target.checked
-            }
-        });
-
-        if (newChecked.target.checked) {
-            setSelectedEvals([...selectedEvals, checkedId])
-        } else {
-            setSelectedEvals(selectedEvals.filter(id => id !== checkedId))
-        }
-    }
-
-    return (
-        <table className="table">
-            <thead>
-                <tr>
-                    <th>Evaluation</th>
-                    <th>Main Page</th>
-                </tr>
-            </thead>
-            <tbody>
-                {
-                    data.map((ids, index) => (
-                        <tr key={index}>
-                            <td>
-                                <label htmlFor={`evalIds-checkbox-${index}`}>{ids.evalName}</label>
-                            </td>
-                            <td>
-                                <input
-                                    type="checkbox"
-                                    id={`evalIds-showMainPage-${index}`}
-                                    name={ids.evalName}
-                                    value={ids.evalNumber}
-                                    checked={selectedEvals.includes(ids.evalNumber) || ids.showMainPage}
-                                    onChange={updateShowMainPage}
-                                />
-                            </td>
-                        </tr>
-                    ))
-                }
-            </tbody>
-        </table>
-    )
 }
 
 function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
@@ -443,30 +377,6 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                 <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                 <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                             </>
-                        );
-                    }}
-                </Query>
-
-                <Query query={GET_EVAL_IDS} fetchPolicy={'no-cache'}>
-                    {({ loading, error, data }) => {
-                        if (loading) return <div className="loading">Loading ...</div>;
-                        if (error) return <div className="error">Error: {error.message}</div>;
-
-                        return (
-                            <Row>
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">Visible Evaluation Options By Page</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Control values populated in the Evaluation Dropdown list
-                                            </Card.Text>
-                                            <h6>Modify Visible Evaluation Options</h6>
-                                            <EvaluationIDSTable data={data["getEvalIds"]} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
                         );
                     }}
                 </Query>
