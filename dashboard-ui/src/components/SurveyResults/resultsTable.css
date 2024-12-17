@@ -163,6 +163,10 @@
     gap: 4px;
 }
 
+.results-download-btns .downloadBtn {
+    max-height: 60px !important;
+}
+
 .progress-header {
     margin-left: 12px;
     margin-top: 18px;
@@ -193,7 +197,7 @@
     flex-direction: row;
     min-width: 240px !important;
     border: 1px solid rgb(175, 175, 175);
-    padding-left: 12px;
+    padding-left: 16px;
     border-radius: 4px;
     max-height: 40px !important;
 }
@@ -217,4 +221,5 @@
 
 .hide-header:active {
     background-color: rgba(215, 215, 215, 0.295);
+    justify-content: space-between;
 }

@@ -82,7 +82,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Sim-4'] = sims[3]?.scenario_id;
 
 
-                const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response == pid)
+                const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || (x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response ?? x.results?.pid) == pid)
                     && x.results?.['Post-Scenario Measures']);
                 const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response == pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
