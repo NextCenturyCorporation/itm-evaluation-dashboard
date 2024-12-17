@@ -4,7 +4,7 @@ import { Query, useQuery, useMutation, useLazyQuery } from 'react-apollo';
 import gql from 'graphql-tag';
 import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
 import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
 
@@ -15,17 +15,6 @@ const GET_USERS = gql`
     }
 `;
 
-const GET_EVAL_IDS = gql`
-    query getEvalIds {
-        getEvalIds
-    }
-`;
-
-const UPDATE_EVAL_IDS_BYPAGE = gql`
-    mutation updateEvalIdsByPage($evalNumber: Int!, $field: String!, $value: Boolean!) {
-        updateEvalIdsByPage(evalNumber: $evalNumber, field: $field, value: $value) 
-    }
-`;
 
 const UPDATE_ADMIN_USER = gql`
     mutation updateAdminUser($username: String!, $isAdmin: Boolean!) {
@@ -51,7 +40,6 @@ const UPDATE_ADEPT_USER = gql`
     }
 `;
 
-
 const GET_CURRENT_SURVEY_VERSION = gql`
     query getCurrentSurveyVersion {
         getCurrentSurveyVersion
@@ -64,231 +52,50 @@ const UPDATE_SURVEY_VERSION = gql`
     }
 `;
 
-function AdminInputBox({ options, selectedOptions }) {
+function InputBox({ options, selectedOptions, mutation, param, header }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateAdminUserCall] = useMutation(UPDATE_ADMIN_USER);
-
-    const setAdmin = (newSelect) => {
+    const [updateUserCall] = useMutation(mutation);
+    const updateUser = (newSelect) => {
         for (let i = 0; i < newSelect.length; i++) {
+            const vars = { variables: { username: newSelect[i] } };
             if (!selected.includes(newSelect[i])) {
-                updateAdminUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isAdmin: true
-                    }
-                });
+                vars['variables'][param] = true;
+                updateUserCall(vars);
             }
         }
         for (let i = 0; i < selected.length; i++) {
+            const vars = { variables: { username: selected[i] } };
             if (!newSelect.includes(selected[i])) {
-                updateAdminUserCall({
-                    variables: {
-                        username: selected[i],
-                        isAdmin: false
-                    }
-                });
+                vars['variables'][param] = false;
+                updateUserCall(vars);
             }
         }
         setSelected(newSelect);
     }
-
     options.sort((a, b) => (a.value > b.value) ? 1 : -1);
 
     return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setAdmin}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "Admins"
-            }} />
+        <Row className="mb-4">
+            <Col>
+                <Card>
+                    <Card.Header as="h5">{header}</Card.Header>
+                    <Card.Body>
+                        <h6>Modify Current {header}</h6>
+                        <DualListBox
+                            options={options}
+                            selected={selected}
+                            onChange={updateUser}
+                            showHeaderLabels={true}
+                            lang={{
+                                availableHeader: "All Users",
+                                selectedHeader: header
+                            }} />
+                    </Card.Body>
+                </Card>
+            </Col>
+        </Row>
+
     );
-}
-
-function EvaluatorInputBox({ options, selectedOptions }) {
-    const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateEvaluatorUserCall] = useMutation(UPDATE_EVALUATOR_USER);
-
-    const setEvaluator = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            if (!selected.includes(newSelect[i])) {
-                updateEvaluatorUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isEvaluator: true
-                    }
-                });
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            if (!newSelect.includes(selected[i])) {
-                updateEvaluatorUserCall({
-                    variables: {
-                        username: selected[i],
-                        isEvaluator: false
-                    }
-                });
-            }
-        }
-        setSelected(newSelect);
-    }
-
-    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-    return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setEvaluator}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "Evaluators"
-            }} />
-    );
-}
-
-function ExperimenterInputBox({ options, selectedOptions }) {
-    const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateExperimenterUserCall] = useMutation(UPDATE_EXPERIMENTER_USER);
-
-    const setExperimenter = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            if (!selected.includes(newSelect[i])) {
-                updateExperimenterUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isExperimenter: true
-                    }
-                });
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            if (!newSelect.includes(selected[i])) {
-                updateExperimenterUserCall({
-                    variables: {
-                        username: selected[i],
-                        isExperimenter: false
-                    }
-                });
-            }
-        }
-        setSelected(newSelect);
-    }
-
-    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-    return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setExperimenter}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "Experimenters"
-            }} />
-    );
-}
-
-function AdeptInputBox({ options, selectedOptions }) {
-    const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateAdeptUserCall] = useMutation(UPDATE_ADEPT_USER);
-
-    const setAdeptUser = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            if (!selected.includes(newSelect[i])) {
-                updateAdeptUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isAdeptUser: true
-                    }
-                });
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            if (!newSelect.includes(selected[i])) {
-                updateAdeptUserCall({
-                    variables: {
-                        username: selected[i],
-                        isAdeptUser: false
-                    }
-                });
-            }
-        }
-        setSelected(newSelect);
-    }
-
-    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-    return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setAdeptUser}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "ADEPT Users"
-            }} />
-    );
-}
-
-function EvaluationIDSTable({ data }) {
-    const [selectedEvals, setSelectedEvals] = useState([]);
-    const [updateEvalIds] = useMutation(UPDATE_EVAL_IDS_BYPAGE);
-
-    const updateShowMainPage = (newChecked) => {
-        const checkedId = parseInt(newChecked.target.value);
-
-        updateEvalIds({
-            variables: {
-                evalNumber: parseInt(newChecked.target.value),
-                field: "showMainPage",
-                value: newChecked.target.checked
-            }
-        });
-
-        if (newChecked.target.checked) {
-            setSelectedEvals([...selectedEvals, checkedId])
-        } else {
-            setSelectedEvals(selectedEvals.filter(id => id !== checkedId))
-        }
-    }
-
-    return (
-        <table className="table">
-            <thead>
-                <tr>
-                    <th>Evaluation</th>
-                    <th>Main Page</th>
-                </tr>
-            </thead>
-            <tbody>
-                {
-                    data.map((ids, index) => (
-                        <tr key={index}>
-                            <td>
-                                <label htmlFor={`evalIds-checkbox-${index}`}>{ids.evalName}</label>
-                            </td>
-                            <td>
-                                <input
-                                    type="checkbox"
-                                    id={`evalIds-showMainPage-${index}`}
-                                    name={ids.evalName}
-                                    value={ids.evalNumber}
-                                    checked={selectedEvals.includes(ids.evalNumber) || ids.showMainPage}
-                                    onChange={updateShowMainPage}
-                                />
-                            </td>
-                        </tr>
-                    ))
-                }
-            </tbody>
-        </table>
-    )
 }
 
 function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
@@ -470,24 +277,20 @@ function AdminPage({ currentUser }) {
                     if (loading) return <div className="loading">Loading ...</div>;
                     if (error) return <div className="error">Error: {error.message}</div>;
 
-                    let options = [];
-                    let selectedOptions = [];
-                    let evaluatorOptions = [];
+                    const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [] };
+
+                    let adminSelectedOptions = [];
                     let evaluatorSelectedOptions = [];
-                    let experimenterOptions = [];
                     let experimenterSelectedOptions = [];
-                    let adeptOptions = [];
                     let adeptSelectedOptions = [];
 
                     const users = data[getUsersQueryName]
                     for (let i = 0; i < users.length; i++) {
-                        options.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
-                        evaluatorOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
-                        experimenterOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
-                        adeptOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
-
+                        for (let k in nonSelected) {
+                            nonSelected[k].push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                        }
                         if (users[i].admin) {
-                            selectedOptions.push(users[i].username);
+                            adminSelectedOptions.push(users[i].username);
                         }
 
                         if (users[i].evaluator) {
@@ -505,90 +308,11 @@ function AdminPage({ currentUser }) {
 
                     return (
                         <>
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">Administrator</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage administrator settings.
-                                            </Card.Text>
-                                            <h6>Modify Current Admins</h6>
-                                            <AdminInputBox options={options} selectedOptions={selectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
-
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">Evaluators</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage evaluator settings.
-                                            </Card.Text>
-                                            <h6>Modify Current Evaluators</h6>
-                                            <EvaluatorInputBox options={evaluatorOptions} selectedOptions={evaluatorSelectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
-
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">Experimenters</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage experimenter settings.
-                                            </Card.Text>
-                                            <h6>Modify Current Experimenters</h6>
-                                            <ExperimenterInputBox options={experimenterOptions} selectedOptions={experimenterSelectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
-
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">ADEPT Users</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage ADEPT user settings.
-                                            </Card.Text>
-                                            <h6>Modify Current ADEPT Users</h6>
-                                            <AdeptInputBox options={adeptOptions} selectedOptions={adeptSelectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
+                            <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} />
+                            <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} />
+                            <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} />
+                            <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} />
                         </>
-                    );
-                }}
-            </Query>
-
-            <Query query={GET_EVAL_IDS} fetchPolicy={'no-cache'}>
-                {({ loading, error, data }) => {
-                    if (loading) return <div className="loading">Loading ...</div>;
-                    if (error) return <div className="error">Error: {error.message}</div>;
-
-                    return (
-                        <Row>
-                            <Col>
-                                <Card>
-                                    <Card.Header as="h5">Visible Evaluation Options By Page</Card.Header>
-                                    <Card.Body>
-                                        <Card.Text>
-                                            Control values populated in the Evaluation Dropdown list
-                                        </Card.Text>
-                                        <h6>Modify Visible Evaluation Options</h6>
-                                        <EvaluationIDSTable data={data["getEvalIds"]} />
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        </Row>
                     );
                 }}
             </Query>
