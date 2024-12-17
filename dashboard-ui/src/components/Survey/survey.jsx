@@ -839,32 +839,52 @@ export const NavigationGuard = ({ surveyComplete }) => {
     const history = useHistory();
     const isHandlingNavigation = useRef(false);
     const initialUrl = useRef(window.location.href);
+    const pendingNavigation = useRef(null);
 
     useEffect(() => {
         if (surveyComplete) return;
 
         const confirmationMessage = 'Please finish the survey before leaving the page. If you leave now, you will need to start the survey over from the beginning.';
         
-        const handleNavigation = () => {
-            if (isHandlingNavigation.current || surveyComplete) {
+        const handleNavigation = (location) => {
+            if (surveyComplete) {
                 return true;
             }
 
+            if (isHandlingNavigation.current) {
+                return false;
+            }
+
             isHandlingNavigation.current = true;
+            pendingNavigation.current = location;
+            
             try {
                 const shouldNavigate = window.confirm(confirmationMessage);
                 
-                if (!shouldNavigate) {
+                if (shouldNavigate) {
+                    // Unblock future navigations
+                    isHandlingNavigation.current = false;
+                    
+                    // Execute the navigation
+                    setTimeout(() => {
+                        if (location.pathname === window.location.pathname) {
+                            // If trying to go back to the same path (like with back button)
+                            window.history.back();
+                        } else {
+                            history.push(location.pathname);
+                        }
+                    }, 0);
+                } else {
                     window.history.replaceState(null, '', initialUrl.current);
-                    return false;
                 }
-                return shouldNavigate;
+                
+                isHandlingNavigation.current = false;
+                return false;
             } finally {
                 isHandlingNavigation.current = false;
             }
         };
 
-        // tab/browser close
         const handleBeforeUnload = (e) => {
             if (!surveyComplete) {
                 e.preventDefault();
@@ -873,13 +893,16 @@ export const NavigationGuard = ({ surveyComplete }) => {
             }
         };
 
+        // Handle tab/browser close
         window.addEventListener('beforeunload', handleBeforeUnload);
         
+        // Block navigation and handle confirmation
         const unblock = history.block(handleNavigation);
 
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
             unblock();
+            pendingNavigation.current = null;
         };
     }, [history, surveyComplete]);
 
