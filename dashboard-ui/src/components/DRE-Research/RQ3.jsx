@@ -62,8 +62,7 @@ export function RQ3() {
             </p>
         </div>
         <div className="section-container">
-            <h2>RQ3 Data</h2>
-            <RQ13 evalNum={selectedEval} />
+            <RQ13 evalNum={selectedEval} tableTitle={'RQ3 Data'} />
 
         </div>
         <div className="section-container">
