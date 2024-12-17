@@ -35,20 +35,20 @@ const UPDATE_ADMIN_USER = gql`
 `;
 
 const UPDATE_EVALUATOR_USER = gql`
-    mutation updateEvaluatorUser($username: String!, $isEvaluator: Boolean!) {
-        updateEvaluatorUser(username: $username, isEvaluator: $isEvaluator) 
+    mutation updateEvaluatorUser($caller: JSON!, $username: String!, $isEvaluator: Boolean!) {
+        updateEvaluatorUser(caller: $caller, username: $username, isEvaluator: $isEvaluator) 
     }
 `;
 
 const UPDATE_EXPERIMENTER_USER = gql`
-    mutation updateExperimenterUser($username: String!, $isExperimenter: Boolean!) {
-        updateExperimenterUser(username: $username, isExperimenter: $isExperimenter) 
+    mutation updateExperimenterUser($caller: JSON!, $username: String!, $isExperimenter: Boolean!) {
+        updateExperimenterUser(caller: $caller, username: $username, isExperimenter: $isExperimenter) 
     }
 `;
 
 const UPDATE_ADEPT_USER = gql`
-    mutation updateAdeptUser($username: String!, $isAdeptUser: Boolean!) {
-        updateAdeptUser(username: $username, isAdeptUser: $isAdeptUser) 
+    mutation updateAdeptUser($caller: JSON!, $username: String!, $isAdeptUser: Boolean!) {
+        updateAdeptUser(caller: $caller, username: $username, isAdeptUser: $isAdeptUser) 
     }
 `;
 
@@ -64,19 +64,24 @@ const UPDATE_SURVEY_VERSION = gql`
     }
 `;
 
-function InputBox({ options, selectedOptions, mutation, param, header, caller }) {
+function InputBox({ options, selectedOptions, mutation, param, header, caller, errorCallback }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
     const [updateUserCall] = useMutation(mutation);
     const updateUser = (newSelect) => {
         const usersToAdd = newSelect.filter(user => !selected.includes(user));
         const usersToRemove = selected.filter(user => !newSelect.includes(user));
-        [...usersToAdd, ...usersToRemove].map(username => updateUserCall({
-            variables: {
-                username,
-                [param]: usersToAdd.includes(username) ? true : false,
-                caller
-            }
-        }));
+        [...usersToAdd, ...usersToRemove].forEach(username =>
+            updateUserCall({
+                variables: {
+                    username,
+                    [param]: usersToAdd.includes(username) ? true : false,
+                    caller
+                }
+            }).catch((e) => {
+                errorCallback(e);
+                return;
+            })
+        );
 
         setSelected(newSelect);
     }
@@ -299,6 +304,13 @@ function AdminPage({ currentUser }) {
         }
     };
 
+    const notAdmin = (error) => {
+        console.error(error);
+        setConfirmedAdmin(false);
+        setPassword('');
+        setPasswordError("Something went wrong! Please confirm your admin status.");
+    };
+
     if (surveyVersionLoading) return <div className="loading">Loading survey version...</div>;
     if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
 
@@ -412,10 +424,10 @@ function AdminPage({ currentUser }) {
 
                         return (
                             <>
-                                <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} />
-                                <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} />
-                                <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} />
-                                <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} />
+                                <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                             </>
                         );
                     }}

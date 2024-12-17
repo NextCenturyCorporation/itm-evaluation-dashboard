@@ -240,9 +240,9 @@ const typeDefs = gql`
 
   type Mutation {
     updateAdminUser(caller: JSON, username: String, isAdmin: Boolean): JSON,
-    updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON,
-    updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
-    updateAdeptUser(username: String, isAdeptUser: Boolean): JSON,
+    updateEvaluatorUser(caller: JSON, username: String, isEvaluator: Boolean): JSON,
+    updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
+    updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
