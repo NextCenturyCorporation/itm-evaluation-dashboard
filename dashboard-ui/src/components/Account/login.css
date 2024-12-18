@@ -168,3 +168,26 @@
     color: rgb(245, 245, 245) !important;
     letter-spacing: 1px;
 }
+
+.waiting-card {
+    width: 90%;
+    min-width: 800px;
+    margin: auto;
+    margin-top: 20px;
+    padding: 0px;
+}
+
+.return-btn {
+    margin-top: 12px;
+    display: block;
+    background-color: rgb(89, 38, 16) !important;
+    border-color: rgb(133, 57, 24) !important;
+}
+
+.return-btn:hover {
+    filter: brightness(90%);
+}
+
+.return-btn:active {
+    filter: brightness(80%);
+}

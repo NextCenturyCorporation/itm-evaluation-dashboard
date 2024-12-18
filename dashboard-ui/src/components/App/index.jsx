@@ -153,7 +153,6 @@ function AdmResults() {
 
 function isUserElevated(currentUser) {
     // ignoring adeptUser, because they should already be admins, evaluators, or experimenters
-    console.log(currentUser);
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter;
 }
 
