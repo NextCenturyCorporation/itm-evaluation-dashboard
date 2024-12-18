@@ -9,6 +9,9 @@ import '../../css/admin-page.css';
 import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import CancelIcon from '@material-ui/icons/Cancel';
+import { IconButton, Switch } from '@material-ui/core';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -18,7 +21,6 @@ const GET_USERS = gql`
         getUsers
     }
 `;
-
 
 const UPDATE_ADMIN_USER = gql`
     mutation updateAdminUser($caller: JSON!, $username: String!, $isAdmin: Boolean!) {
@@ -133,11 +135,12 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
     const [surveyVersions, setSurveyVersions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [confirmedAdmin, setConfirmedAdmin] = useState(false);
+    const [confirmedAdmin, setConfirmedAdmin] = useState(true);
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [sessionId, setSessionId] = useState(null);
     const [errorCount, setErrorCount] = useState(0);
+    const [unapproved, setUnapproved] = useState([]);
 
     const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION, {
         fetchPolicy: 'no-cache'
@@ -303,6 +306,57 @@ function AdminPage({ currentUser, updateUserHandler }) {
             </Card>}
 
             {confirmedAdmin && <><Row className="mb-4">
+                {unapproved.length > 0 &&
+                    <Col>
+                        <Card>
+                            <Card.Header as="h5">Time Sensitive: New User Approvals</Card.Header>
+                            <Card.Body>
+                                <table className='itm-table small-table'>
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Email
+                                            </th>
+                                            <th>
+                                                Username
+                                            </th>
+                                            <th className='switch-header'>
+                                                Admin
+                                            </th>
+                                            <th className='switch-header'>
+                                                Evaluator
+                                            </th>
+                                            <th className='switch-header'>
+                                                Experimenter
+                                            </th>
+                                            <th className='switch-header'>
+                                                ADEPT
+                                            </th>
+                                            <th className='action-header'>
+                                                Action
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    {unapproved.map((user) => {
+                                        return (
+                                            <tr>
+                                                <td>{user.emails[0]?.address}</td>
+                                                <td>{user.username}</td>
+                                                <td><Switch /></td>
+                                                <td><Switch /></td>
+                                                <td><Switch /></td>
+                                                <td><Switch /></td>
+                                                <td>
+                                                    <IconButton children={<CheckCircleIcon color='green' className='green-btn' />} />
+                                                    <IconButton children={<CancelIcon className='red-btn' />} /></td>
+                                            </tr>);
+                                    })}
+                                </table>
+                            </Card.Body>
+                        </Card>
+                    </Col>}
+
+
                 <Col md={6}>
                     <Card>
                         <Card.Header as="h5">Survey Version</Card.Header>
@@ -347,6 +401,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         let evaluatorSelectedOptions = [];
                         let experimenterSelectedOptions = [];
                         let adeptSelectedOptions = [];
+                        setUnapproved(data[getUsersQueryName].filter((x) => !x.approved));
 
                         const users = data[getUsersQueryName]
                         for (let i = 0; i < users.length; i++) {

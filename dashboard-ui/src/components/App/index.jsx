@@ -153,6 +153,7 @@ function AdmResults() {
 
 function isUserElevated(currentUser) {
     // ignoring adeptUser, because they should already be admins, evaluators, or experimenters
+    console.log(currentUser);
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter;
 }
 
@@ -181,6 +182,8 @@ function Login({ newState, userLoginHandler, participantLoginHandler, participan
 function MyAccount({ newState, userLoginHandler }) {
     if (newState.currentUser === null) {
         history.push("/login");
+    } else if (!newState.currentUser.approved) {
+        history.push('/awaitingApproval');
     } else {
         return <MyAccountPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
     }
@@ -551,6 +554,12 @@ export class App extends React.Component {
                                             }
                                             <div className="main-content">
                                                 <Switch>
+                                                    <Route exact path="/">
+                                                        <Home newState={this.state} />
+                                                    </Route>
+                                                    <Route exact path="/awaitingApproval">
+                                                        <WaitingPage />
+                                                    </Route>
                                                     <Route path="/login">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} logout={this.logout} />
                                                     </Route>
@@ -561,17 +570,9 @@ export class App extends React.Component {
                                                     <Route path="/remote-text-survey">
                                                         <StartOnline />
                                                     </Route>
-                                                    {this.state.currentUser && <>
-                                                        <Route exact path="/awaitingApproval">
-                                                            <WaitingPage />
-                                                        </Route>
-                                                        <Route exact path="/">
-                                                            <Home newState={this.state} />
-                                                        </Route>
-                                                        <Route path="/myaccount">
-                                                            <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                        </Route>
-                                                    </>}
+                                                    <Route path="/myaccount">
+                                                        <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                    </Route>
                                                     {isUserElevated(this.state.currentUser) &&
                                                         <>
                                                         <Route exact path="/results">
@@ -639,8 +640,8 @@ export class App extends React.Component {
                                                         </Route>
                                                         </>}
                                                     {this.state.currentUser ?
-                                                        (this.state.currentUser?.approved ? 
-                                                            <Route path="*" render={() => <Redirect to="/" />} /> 
+                                                        (this.state.currentUser?.approved ?
+                                                            <Route path="*" render={() => <Redirect to="/" />} />
                                                             : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
                                                         : <Route path="*" render={() => <Redirect to="/login" />} />
                                                     }

@@ -139,3 +139,26 @@
     border-radius: 4px;
     margin-top: 10px;
 }
+
+.small-table th, .small-table td {
+    /* max-width: 100px !important; */
+    min-width: 50px !important;
+}
+
+.small-table .green-btn {
+    color: green;
+    font-size: 36px;
+}
+
+.small-table .red-btn {
+    color: rgb(166, 34, 34);
+    font-size: 36px;
+}
+
+.small-table .action-header {
+    width: 160px !important;
+}
+
+.small-table .switch-header {
+    width: 130px !important;
+}
