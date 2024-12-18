@@ -13,8 +13,8 @@ export function WaitingPage({ rejected }) {
                     <b>Status: {rejected ? 'Account Rejected' : 'Awaiting Approval'}</b>
                     <hr />
                     Thank you for your interest in the DARPA In the Moment Program.
-                    <br />
-                    {rejected && 'You have been denied access to the dashboard. If you believe this is a mistake, please contact an administrator.'}
+
+                    {rejected && <><br />You have been denied access to the dashboard. If you believe this is a mistake, please contact an administrator.</>}
                     <br /><br />If you are supposed to be taking the text scenarios, please navigate to <a href='https://darpaitm.caci.com/participantText'>https://darpaitm.com/participantText</a>
                 </div>
                 <Button onClick={() => history.push('/login')} className='return-btn'>Return to Login</Button>
