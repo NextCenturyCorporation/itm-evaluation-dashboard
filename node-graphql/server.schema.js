@@ -47,6 +47,7 @@ const typeDefs = gql`
     evaluator: Boolean
     experimenter: Boolean
     adeptUser: Boolean
+    approved: Boolean
   }
 
   type Player {
