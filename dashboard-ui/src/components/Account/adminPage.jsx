@@ -7,6 +7,10 @@ import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-b
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
 import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
+import { accountsClient, accountsPassword } from '../../services/accountsService';
+import { createBrowserHistory } from 'history';
+
+const history = createBrowserHistory({ forceRefresh: true });
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -17,26 +21,26 @@ const GET_USERS = gql`
 
 
 const UPDATE_ADMIN_USER = gql`
-    mutation updateAdminUser($username: String!, $isAdmin: Boolean!) {
-        updateAdminUser(username: $username, isAdmin: $isAdmin) 
+    mutation updateAdminUser($caller: JSON!, $username: String!, $isAdmin: Boolean!) {
+        updateAdminUser(caller: $caller, username: $username, isAdmin: $isAdmin) 
     }
 `;
 
 const UPDATE_EVALUATOR_USER = gql`
-    mutation updateEvaluatorUser($username: String!, $isEvaluator: Boolean!) {
-        updateEvaluatorUser(username: $username, isEvaluator: $isEvaluator) 
+    mutation updateEvaluatorUser($caller: JSON!, $username: String!, $isEvaluator: Boolean!) {
+        updateEvaluatorUser(caller: $caller, username: $username, isEvaluator: $isEvaluator) 
     }
 `;
 
 const UPDATE_EXPERIMENTER_USER = gql`
-    mutation updateExperimenterUser($username: String!, $isExperimenter: Boolean!) {
-        updateExperimenterUser(username: $username, isExperimenter: $isExperimenter) 
+    mutation updateExperimenterUser($caller: JSON!, $username: String!, $isExperimenter: Boolean!) {
+        updateExperimenterUser(caller: $caller, username: $username, isExperimenter: $isExperimenter) 
     }
 `;
 
 const UPDATE_ADEPT_USER = gql`
-    mutation updateAdeptUser($username: String!, $isAdeptUser: Boolean!) {
-        updateAdeptUser(username: $username, isAdeptUser: $isAdeptUser) 
+    mutation updateAdeptUser($caller: JSON!, $username: String!, $isAdeptUser: Boolean!) {
+        updateAdeptUser(caller: $caller, username: $username, isAdeptUser: $isAdeptUser) 
     }
 `;
 
@@ -52,23 +56,28 @@ const UPDATE_SURVEY_VERSION = gql`
     }
 `;
 
-function InputBox({ options, selectedOptions, mutation, param, header }) {
+function InputBox({ options, selectedOptions, mutation, param, header, caller, errorCallback }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
     const [updateUserCall] = useMutation(mutation);
+    let errored = false;
     const updateUser = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            const vars = { variables: { username: newSelect[i] } };
-            if (!selected.includes(newSelect[i])) {
-                vars['variables'][param] = true;
-                updateUserCall(vars);
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            const vars = { variables: { username: selected[i] } };
-            if (!newSelect.includes(selected[i])) {
-                vars['variables'][param] = false;
-                updateUserCall(vars);
-            }
+        const usersToAdd = newSelect.filter(user => !selected.includes(user));
+        const usersToRemove = selected.filter(user => !newSelect.includes(user));
+        [...usersToAdd, ...usersToRemove].forEach(username =>
+            updateUserCall({
+                variables: {
+                    username,
+                    [param]: usersToAdd.includes(username) ? true : false,
+                    caller
+                }
+            }).catch(() => {
+                errorCallback();
+                errored = true;
+                return;
+            })
+        );
+        if (errored) {
+            return;
         }
         setSelected(newSelect);
     }
@@ -117,13 +126,18 @@ function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
     );
 }
 
-function AdminPage({ currentUser }) {
+function AdminPage({ currentUser, updateUserHandler }) {
     const [surveyVersion, setLocalSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
     const [surveyVersions, setSurveyVersions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [confirmedAdmin, setConfirmedAdmin] = useState(false);
+    const [password, setPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [sessionId, setSessionId] = useState(null);
+    const [errorCount, setErrorCount] = useState(0);
 
     const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION, {
         fetchPolicy: 'no-cache'
@@ -209,6 +223,42 @@ function AdminPage({ currentUser }) {
         setShowConfirmation(false);
     };
 
+    const onChangePassword = (event) => {
+        setPasswordError('');
+        setPassword(event.target.value);
+    };
+
+    const verifyIdentity = async (event) => {
+        event.preventDefault();
+        try {
+            let results;
+            results = await accountsPassword.login({
+                password: password,
+                user: {
+                    username: currentUser.username,
+                }
+            });
+            setSessionId(results.sessionId);
+            setConfirmedAdmin(true);
+        } catch (err) {
+            setConfirmedAdmin(false);
+            setPasswordError(err.message);
+        }
+    };
+
+    const notAdmin = async () => {
+        setConfirmedAdmin(false);
+        const errors = errorCount + 1;
+        setErrorCount(errors);
+        setPassword('');
+        setPasswordError("Something went wrong! Please confirm your admin status.");
+        if (errors == 2) {
+            await accountsClient.logout();
+            updateUserHandler(null);
+            history.push('/login');
+        }
+    };
+
     if (surveyVersionLoading) return <div className="loading">Loading survey version...</div>;
     if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
 
@@ -238,7 +288,21 @@ function AdminPage({ currentUser }) {
                 </Col>
             </Row>
 
-            <Row className="mb-4">
+            {!confirmedAdmin && <Card className="login-modal">
+                <h3>Please confirm your identity before continuing.</h3>
+                <form onSubmit={verifyIdentity}>
+                    <div className="form-group">
+                        <div className="input-login-header">Username: {currentUser.username}</div>
+                    </div>
+                    <div className="form-group">
+                        <input placeholder="Enter Password" type="password" id="password" value={password} onChange={onChangePassword} />
+                    </div>
+                    {passwordError != '' && <p className='error-message'>{passwordError}</p>}
+                    <Button type='submit'>Submit</Button>
+                </form>
+            </Card>}
+
+            {confirmedAdmin && <><Row className="mb-4">
                 <Col md={6}>
                     <Card>
                         <Card.Header as="h5">Survey Version</Card.Header>
@@ -265,57 +329,58 @@ function AdminPage({ currentUser }) {
                 </Col>
             </Row>
 
-            <ConfirmationDialog
-                show={showConfirmation}
-                onConfirm={confirmSurveyVersionChange}
-                onCancel={cancelSurveyVersionChange}
-                message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
-            />
+                <ConfirmationDialog
+                    show={showConfirmation}
+                    onConfirm={confirmSurveyVersionChange}
+                    onCancel={cancelSurveyVersionChange}
+                    message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
+                />
 
-            <Query query={GET_USERS} fetchPolicy={'no-cache'}>
-                {({ loading, error, data }) => {
-                    if (loading) return <div className="loading">Loading ...</div>;
-                    if (error) return <div className="error">Error: {error.message}</div>;
+                <Query query={GET_USERS} fetchPolicy={'no-cache'}>
+                    {({ loading, error, data }) => {
+                        if (loading) return <div className="loading">Loading ...</div>;
+                        if (error) return <div className="error">Error: {error.message}</div>;
 
-                    const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [] };
+                        const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [] };
 
-                    let adminSelectedOptions = [];
-                    let evaluatorSelectedOptions = [];
-                    let experimenterSelectedOptions = [];
-                    let adeptSelectedOptions = [];
+                        let adminSelectedOptions = [];
+                        let evaluatorSelectedOptions = [];
+                        let experimenterSelectedOptions = [];
+                        let adeptSelectedOptions = [];
 
-                    const users = data[getUsersQueryName]
-                    for (let i = 0; i < users.length; i++) {
-                        for (let k in nonSelected) {
-                            nonSelected[k].push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                        const users = data[getUsersQueryName]
+                        for (let i = 0; i < users.length; i++) {
+                            for (let k in nonSelected) {
+                                nonSelected[k].push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                            }
+                            if (users[i].admin) {
+                                adminSelectedOptions.push(users[i].username);
+                            }
+
+                            if (users[i].evaluator) {
+                                evaluatorSelectedOptions.push(users[i].username);
+                            }
+
+                            if (users[i].experimenter) {
+                                experimenterSelectedOptions.push(users[i].username);
+                            }
+
+                            if (users[i].adeptUser) {
+                                adeptSelectedOptions.push(users[i].username);
+                            }
                         }
-                        if (users[i].admin) {
-                            adminSelectedOptions.push(users[i].username);
-                        }
 
-                        if (users[i].evaluator) {
-                            evaluatorSelectedOptions.push(users[i].username);
-                        }
-
-                        if (users[i].experimenter) {
-                            experimenterSelectedOptions.push(users[i].username);
-                        }
-
-                        if (users[i].adeptUser) {
-                            adeptSelectedOptions.push(users[i].username);
-                        }
-                    }
-
-                    return (
-                        <>
-                            <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} />
-                            <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} />
-                            <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} />
-                            <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} />
-                        </>
-                    );
-                }}
-            </Query>
+                        return (
+                            <>
+                                <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                            </>
+                        );
+                    }}
+                </Query>
+            </>}
         </Container>
     );
 }
