@@ -4,11 +4,11 @@ import GraphQLClient from '@accounts/graphql-client';
 import { ApolloClient } from 'apollo-client'
 import { createHttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
-import {GRAPHQL_URL} from './config'
+import {API_URL} from './config'
 import gql from 'graphql-tag';
 
 const httpLink = createHttpLink({
-  uri: GRAPHQL_URL
+  uri: API_URL
 });
 
 const apolloClient = new ApolloClient({
