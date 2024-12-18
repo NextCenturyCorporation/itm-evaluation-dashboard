@@ -162,3 +162,9 @@
 .small-table .switch-header {
     width: 130px !important;
 }
+
+.urgent-header {
+    background-color: rgb(208, 83, 49) !important;
+    color: rgb(245, 245, 245) !important;
+    letter-spacing: 1px;
+}

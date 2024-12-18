@@ -249,6 +249,15 @@ function ReviewDelegation({ newState, userLoginHandler }) {
     }
 }
 
+function WaitingPageWrapper({ rejected, currentUser }) {
+    if (!rejected && currentUser?.approved) {
+        history.push(('/'));
+    }
+    else {
+        return <WaitingPage rejected={rejected} />
+    }
+}
+
 export class App extends React.Component {
 
     constructor(props) {
@@ -558,7 +567,7 @@ export class App extends React.Component {
                                                         <Home newState={this.state} />
                                                     </Route>
                                                     <Route exact path="/awaitingApproval">
-                                                        <WaitingPage />
+                                                        <WaitingPageWrapper currentUser={currentUser} rejected={this.state.currentUser?.rejected} />
                                                     </Route>
                                                     <Route path="/login">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} logout={this.logout} />

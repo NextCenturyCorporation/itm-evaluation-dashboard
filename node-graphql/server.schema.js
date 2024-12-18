@@ -49,6 +49,7 @@ const typeDefs = gql`
     experimenter: Boolean
     adeptUser: Boolean
     approved: Boolean
+    rejected: Boolean
   }
 
   type Player {
@@ -244,7 +245,7 @@ const typeDefs = gql`
     updateEvaluatorUser(caller: JSON, username: String, isEvaluator: Boolean): JSON,
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
-    updateUserApproval(caller: JSON, username: String, isApproved: Boolean): JSON,
+    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
@@ -655,7 +656,16 @@ const resolvers = {
       if (session?.valid && (session?.userId == user?._id) && user?.admin) {
         return await dashboardDB.db.collection('users').update(
           { "username": args["username"] },
-          { $set: { "approved": args["isApproved"] } }
+          {
+            $set: {
+              "approved": args["isApproved"],
+              "rejected": args["isRejected"],
+              "adeptUser": args["isAdeptUser"],
+              "experimenter": args["isExperimenter"],
+              "evaluator": args["isEvaluator"],
+              "admin": args["isAdmin"]
+            }
+          }
         );
       }
       else {

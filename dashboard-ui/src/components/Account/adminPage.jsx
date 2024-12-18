@@ -46,6 +46,12 @@ const UPDATE_ADEPT_USER = gql`
     }
 `;
 
+const UPDATE_USER_APPROVAL = gql`
+    mutation updateUserApproval($caller: JSON!, $username: String!, $isApproved: Boolean!, $isRejected: Boolean!, $isAdmin: Boolean!, $isEvaluator: Boolean!, $isExperimenter: Boolean!, $isAdeptUser: Boolean!) {
+        updateUserApproval(caller: $caller, username: $username, isApproved: $isApproved, isRejected: $isRejected, isAdmin: $isAdmin, isEvaluator: $isEvaluator, isExperimenter: $isExperimenter, isAdeptUser: $isAdeptUser)
+    }
+`;
+
 const GET_CURRENT_SURVEY_VERSION = gql`
     query getCurrentSurveyVersion {
         getCurrentSurveyVersion
@@ -128,19 +134,128 @@ function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
     );
 }
 
+function ApprovalTable({ unapproved, updateUnapproved, caller }) {
+    const [updateUserCall] = useMutation(UPDATE_USER_APPROVAL);
+
+    const updateUserStatus = (userid, statusType, e) => {
+        const user = unapproved.find((x) => x._id == userid);
+        if (user) {
+            user[statusType] = e.target.checked;
+        }
+        updateUnapproved([...unapproved].filter((x) => !x.approved && !x.rejected));
+    };
+
+    const approveUser = async (userid) => {
+        const user = unapproved.find((x) => x._id == userid);
+        if (user) {
+            user.approved = true;
+        }
+        updateUnapproved([...unapproved].filter((x) => !x.approved && !x.rejected));
+        await updateUserCall({
+            variables: {
+                caller,
+                username: user.username,
+                isApproved: true,
+                isAdmin: user.admin ?? false,
+                isEvaluator: user.evaluator ?? false,
+                isExperimenter: user.experimenter ?? false,
+                isAdeptUser: user.adeptUser ?? false,
+                isRejected: false
+            }
+        });
+    };
+
+    const denyUser = async (userid) => {
+        const user = unapproved.find((x) => x._id == userid);
+        if (user) {
+            user.rejected = true;
+        }
+        updateUnapproved([...unapproved].filter((x) => !x.approved && !x.rejected));
+        await updateUserCall({
+            variables: {
+                caller,
+                username: user.username,
+                isApproved: false,
+                isAdmin: false,
+                isEvaluator: false,
+                isExperimenter: false,
+                isAdeptUser: false,
+                isRejected: true
+            }
+        });
+    };
+
+    return (<Col>
+        <Card>
+            <Card.Header className='urgent-header' as="h5">Time Sensitive: New User Approvals</Card.Header>
+            <Card.Body>
+                <table className='itm-table small-table'>
+                    <thead>
+                        <tr>
+                            <th>
+                                Email
+                            </th>
+                            <th>
+                                Username
+                            </th>
+                            <th className='switch-header'>
+                                Admin
+                            </th>
+                            <th className='switch-header'>
+                                Evaluator
+                            </th>
+                            <th className='switch-header'>
+                                Experimenter
+                            </th>
+                            <th className='switch-header'>
+                                ADEPT
+                            </th>
+                            <th className='action-header'>
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {unapproved.map((user) => {
+                            return (
+                                <tr key={user._id}>
+                                    <td>{user.emails[0]?.address}</td>
+                                    <td>{user.username}</td>
+                                    <td><Switch onChange={(e) => updateUserStatus(user._id, 'admin', e)} /></td>
+                                    <td><Switch onChange={(e) => updateUserStatus(user._id, 'evaluator', e)} /></td>
+                                    <td><Switch onChange={(e) => updateUserStatus(user._id, 'experimenter', e)} /></td>
+                                    <td><Switch onChange={(e) => updateUserStatus(user._id, 'adeptUser', e)} /></td>
+                                    <td>
+                                        <IconButton title='Approve' onClick={() => approveUser(user._id)} children={<CheckCircleIcon className='green-btn' />} />
+                                        <IconButton title='Deny' onClick={() => denyUser(user._id)} children={<CancelIcon className='red-btn' />} /></td>
+                                </tr>);
+                        })}
+                    </tbody>
+                </table>
+            </Card.Body>
+        </Card>
+    </Col>);
+};
+
 function AdminPage({ currentUser, updateUserHandler }) {
+    const { data: users } = useQuery(GET_USERS, { fetchPolicy: 'no-cache' });
     const [surveyVersion, setLocalSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
     const [surveyVersions, setSurveyVersions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [confirmedAdmin, setConfirmedAdmin] = useState(true);
+    const [confirmedAdmin, setConfirmedAdmin] = useState(false);
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [sessionId, setSessionId] = useState(null);
     const [errorCount, setErrorCount] = useState(0);
     const [unapproved, setUnapproved] = useState([]);
+
+    useEffect(() => {
+        if (users)
+            setUnapproved(users[getUsersQueryName].filter((x) => !x.approved && !x.rejected));
+    }, [users]);
 
     const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION, {
         fetchPolicy: 'no-cache'
@@ -306,56 +421,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
             </Card>}
 
             {confirmedAdmin && <><Row className="mb-4">
-                {unapproved.length > 0 &&
-                    <Col>
-                        <Card>
-                            <Card.Header as="h5">Time Sensitive: New User Approvals</Card.Header>
-                            <Card.Body>
-                                <table className='itm-table small-table'>
-                                    <thead>
-                                        <tr>
-                                            <th>
-                                                Email
-                                            </th>
-                                            <th>
-                                                Username
-                                            </th>
-                                            <th className='switch-header'>
-                                                Admin
-                                            </th>
-                                            <th className='switch-header'>
-                                                Evaluator
-                                            </th>
-                                            <th className='switch-header'>
-                                                Experimenter
-                                            </th>
-                                            <th className='switch-header'>
-                                                ADEPT
-                                            </th>
-                                            <th className='action-header'>
-                                                Action
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    {unapproved.map((user) => {
-                                        return (
-                                            <tr>
-                                                <td>{user.emails[0]?.address}</td>
-                                                <td>{user.username}</td>
-                                                <td><Switch /></td>
-                                                <td><Switch /></td>
-                                                <td><Switch /></td>
-                                                <td><Switch /></td>
-                                                <td>
-                                                    <IconButton children={<CheckCircleIcon color='green' className='green-btn' />} />
-                                                    <IconButton children={<CancelIcon className='red-btn' />} /></td>
-                                            </tr>);
-                                    })}
-                                </table>
-                            </Card.Body>
-                        </Card>
-                    </Col>}
-
+                {unapproved.length > 0 && <ApprovalTable unapproved={unapproved} updateUnapproved={setUnapproved} caller={{ username: currentUser.username, sessionId }} />}
 
                 <Col md={6}>
                     <Card>
@@ -401,9 +467,8 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         let evaluatorSelectedOptions = [];
                         let experimenterSelectedOptions = [];
                         let adeptSelectedOptions = [];
-                        setUnapproved(data[getUsersQueryName].filter((x) => !x.approved));
 
-                        const users = data[getUsersQueryName]
+                        const users = data[getUsersQueryName].filter((x) => x.approved);
                         for (let i = 0; i < users.length; i++) {
                             for (let k in nonSelected) {
                                 nonSelected[k].push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });

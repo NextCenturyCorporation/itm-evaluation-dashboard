@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function WaitingPage() {
+export function WaitingPage({ rejected }) {
     return (
         <>
             <div className="home-container">
@@ -10,7 +10,12 @@ export function WaitingPage() {
                     </div>
                 </div>
                 <div className="data-collection-only">
-                    Thank you for your interest in the DARPA In the Moment Program.  Your account is awaiting approval. Please check back later. <br /><br />If you are supposed to be taking the text scenarios, please navigate to <a href='https://darpaitm.caci.com/participantText'>https://darpaitm.com/participantText</a>
+                    <b>Status: {rejected ? 'Account Rejected' : 'Awaiting Approval'}</b>
+                    <hr />
+                    Thank you for your interest in the DARPA In the Moment Program.
+                    <br />
+                    {rejected && 'You have been denied access to the dashboard. If you believe this is a mistake, please contact an administrator.'}
+                    <br /><br />If you are supposed to be taking the text scenarios, please navigate to <a href='https://darpaitm.caci.com/participantText'>https://darpaitm.com/participantText</a>
                 </div>
             </div>
         </>
