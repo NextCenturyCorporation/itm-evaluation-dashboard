@@ -47,6 +47,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [columnsToHide, setColumnsToHide] = React.useState([]);
     const [sortOptions] = React.useState(['Participant ID ↑', 'Participant ID ↓', 'Text Start Time ↑', 'Text Start Time ↓', 'Sim Count ↑', 'Sim Count ↓', 'Del Count ↑', 'Del Count ↓', 'Text Count ↑', 'Text Count ↓'])
     const [sortBy, setSortBy] = React.useState('Participant ID ↑');
+    const [searchPid, setSearchPid] = React.useState('');
     const HEADERS = canViewProlific ? HEADERS_WITH_PROLIFIC : HEADERS_NO_PROLIFIC;
 
     React.useEffect(() => {
@@ -100,7 +101,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
 
-                obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName;
+                obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName ?? lastSurvey?.results?.evalName;
 
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
@@ -179,10 +180,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
                     (!completionFilters.includes('Any Sim') || x['Sim Count'] >= 1) &&
                     (!completionFilters.includes('Adept + OW Sim') || (didAdept && didOW)) &&
-                    (!completionFilters.includes('No Sim') || x['Sim Count'] == 0)
+                    (!completionFilters.includes('No Sim') || x['Sim Count'] == 0) &&
+                    (searchPid.length == 0 || x['Participant ID'].includes(searchPid))
             }));
         }
-    }, [formattedData, typeFilters, evalFilters, completionFilters]);
+    }, [formattedData, typeFilters, evalFilters, completionFilters, searchPid]);
 
     const getDateFromString = (s) => {
         if (s) {
@@ -245,6 +247,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             return x;
         });
         return updatedData;
+    };
+
+    const updatePidSearch = (event) => {
+        setSearchPid(event.target.value);
     };
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
@@ -331,6 +337,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     )}
                     onChange={(_, newVal) => setSortBy(newVal)}
                 />
+                <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
             <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
         </section>
