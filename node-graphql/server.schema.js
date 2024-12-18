@@ -2,7 +2,8 @@ const { gql } = require('apollo-server');
 const { dashboardDB } = require('./server.mongo');
 // const mongoDb = require("mongodb");
 // const { MONGO_DB } = require('./config');
-const { GraphQLScalarType, Kind } = require("graphql");
+const { ObjectId } = require('mongodb');
+const { GraphQLScalarType, Kind, GraphQLError } = require("graphql");
 
 async function createUniqueIndex() {
   try {
@@ -239,10 +240,10 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    updateAdminUser(username: String, isAdmin: Boolean): JSON,
-    updateEvaluatorUser(username: String, isEvaluator: Boolean): JSON,
-    updateExperimenterUser(username: String, isExperimenter: Boolean): JSON,
-    updateAdeptUser(username: String, isAdeptUser: Boolean): JSON,
+    updateAdminUser(caller: JSON, username: String, isAdmin: Boolean): JSON,
+    updateEvaluatorUser(caller: JSON, username: String, isEvaluator: Boolean): JSON,
+    updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
+    updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
@@ -588,28 +589,64 @@ const resolvers = {
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('users').update(
-        { "username": args["username"] },
-        { $set: { "admin": args["isAdmin"] } }
-      );
+      const session = await dashboardDB.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await dashboardDB.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await dashboardDB.db.collection('users').update(
+          { "username": args["username"] },
+          { $set: { "admin": args["isAdmin"] } }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update administrator status.', {
+          extensions: { code: '404' }
+        });
+      }
     },
     updateEvaluatorUser: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('users').update(
-        { "username": args["username"] },
-        { $set: { "evaluator": args["isEvaluator"] } }
-      );
+      const session = await dashboardDB.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await dashboardDB.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await dashboardDB.db.collection('users').update(
+          { "username": args["username"] },
+          { $set: { "evaluator": args["isEvaluator"] } }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update evaluator status.', {
+          extensions: { code: '404' }
+        });
+      }
     },
     updateExperimenterUser: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('users').update(
-        { "username": args["username"] },
-        { $set: { "experimenter": args["isExperimenter"] } }
-      );
+      const session = await dashboardDB.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await dashboardDB.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await dashboardDB.db.collection('users').update(
+          { "username": args["username"] },
+          { $set: { "experimenter": args["isExperimenter"] } }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update experimenter status.', {
+          extensions: { code: '404' }
+        });
+      }
     },
     updateAdeptUser: async (obj, args, context, inflow) => {
-      return await dashboardDB.db.collection('users').update(
-        { "username": args["username"] },
-        { $set: { "adeptUser": args["isAdeptUser"] } }
-      );
+      const session = await dashboardDB.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await dashboardDB.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await dashboardDB.db.collection('users').update(
+          { "username": args["username"] },
+          { $set: { "adeptUser": args["isAdeptUser"] } }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update ADEPT user status.', {
+          extensions: { code: '404' }
+        });
+      }
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {
       const filter = { surveyId: args.surveyId }
