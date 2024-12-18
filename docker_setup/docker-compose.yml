@@ -56,6 +56,7 @@ services:
       - dashboard-net
     environment:
       NODE_OPTIONS: "--max-old-space-size=16384"
+      NODE_ENV: "production"
   dashboard-mongo: 
     image: 'mongo'
     restart: always
