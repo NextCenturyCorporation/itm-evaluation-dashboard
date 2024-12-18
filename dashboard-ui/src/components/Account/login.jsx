@@ -25,7 +25,10 @@ class LoginApp extends React.Component {
             loginFailed: false,
             createAccountFailed: false,
             pidCreationFailed: false,
-            viewHiddenEmail: false
+            viewHiddenEmail: false,
+            confirmTextEmail: "",
+            viewHiddenConfirmEmail: false,
+            emailsMatch: true
         };
         this.login = this.login.bind(this);
         this.createAccount = this.createAccount.bind(this);
@@ -33,15 +36,22 @@ class LoginApp extends React.Component {
 
     setupPID = async (e) => {
         e.preventDefault();  // Prevent the default form submission
-        const { textEmail } = this.state;
+        const { textEmail, confirmTextEmail } = this.state;
 
         // removing leading and trailing white space 
         const trimmedEmail = textEmail.trim().toLowerCase();
+        const trimmedConfirmEmail = confirmTextEmail.trim().toLowerCase();
 
-        if (!textEmail) {
+        if (!textEmail || !confirmTextEmail) {
             $("#text-entry-feedback").addClass("feedback-display").text("All fields are required.");
             return; // Stop the function if any field is empty
         }
+
+        if (trimmedEmail !== trimmedConfirmEmail) {
+            this.setState({ emailsMatch: false });
+            return;
+        }
+
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // email regex
         if (!re.test(trimmedEmail)) {
             $("#text-entry-feedback").addClass("feedback-display").text("Please ensure that you enter a valid email address.");
@@ -159,7 +169,17 @@ class LoginApp extends React.Component {
     };
 
     onChangeTextEmail = ({ target }) => {
-        this.setState({ textEmail: target.value });
+        this.setState({
+            textEmail: target.value,
+            emailsMatch: target.value.trim().toLowerCase() === this.state.confirmTextEmail.trim().toLowerCase()
+        });
+    };
+
+    onChangeConfirmTextEmail = ({ target }) => {
+        this.setState({
+            confirmTextEmail: target.value,
+            emailsMatch: target.value.trim().toLowerCase() === this.state.textEmail.trim().toLowerCase()
+        });
     };
 
     showSignIn = (evt) => {
@@ -175,6 +195,10 @@ class LoginApp extends React.Component {
     toggleVisibility = () => {
         this.setState({ viewHiddenEmail: !this.state.viewHiddenEmail });
     }
+
+    toggleConfirmVisibility = () => {
+        this.setState({ viewHiddenConfirmEmail: !this.state.viewHiddenConfirmEmail });
+    };
 
     loginErrorMappings = {
         "GraphQL error: Unrecognized options for login request": "Please enter your username and password.",
@@ -199,7 +223,7 @@ class LoginApp extends React.Component {
                 <div className="row justify-content-center align-items-center h-100 center-container">
                     <div className="login-container">
                         <Tabs className='p-1' defaultActiveKey={this.props.isParticipant ? 2 : 1}>
-                            {this.props.history.location.pathname != '/participantTextTester' &&
+                            {this.props.history.location.pathname != '/participantTextTester' && this.props.history.location.pathname != '/participantText' &&
                                 <Tab eventKey={0} title="Create Account">
                                     <div>
                                         <div className="sign-in-instructions">
@@ -237,7 +261,7 @@ class LoginApp extends React.Component {
                                     </div>
                                 </Tab>
                             }
-                            {this.props.history.location.pathname != '/participantTextTester' &&
+                            {this.props.history.location.pathname != '/participantTextTester' && this.props.history.location.pathname != '/participantText' &&
                                 <Tab eventKey={1} title="Sign In">
                                     <div >
                                         <div id="sign-in-pane">
@@ -322,12 +346,41 @@ class LoginApp extends React.Component {
                                                 </div>
                                             </div>
                                             <div className="form-group">
+                                                <div className="input-login-header">Confirm Email Address</div>
+                                                <div className="input-with-btn">
+                                                    <input
+                                                        className="form-control form-control-lg"
+                                                        required
+                                                        placeholder="Confirm Email"
+                                                        type={this.state.viewHiddenConfirmEmail ? "text" : "password"}
+                                                        id="confirmEmailOnly"
+                                                        value={this.state.confirmTextEmail}
+                                                        onChange={this.onChangeConfirmTextEmail}
+                                                    />
+                                                    <button
+                                                        className="blank-btn"
+                                                        type='button'
+                                                        onClick={this.toggleConfirmVisibility}
+                                                    >
+                                                        {this.state.viewHiddenConfirmEmail ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
                                                 {this.state.loginFailed && (
                                                     <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ loginFailed: false })}>
                                                         <Toast.Header>
                                                             <strong className="me-auto">Error Creating User</strong>
                                                         </Toast.Header>
                                                         <Toast.Body className='text-white'>{this.loginErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
+                                                    </Toast>
+                                                )}
+                                                {!this.state.emailsMatch && this.state.confirmTextEmail && (
+                                                    <Toast bg='warning' className='mt-1' autohide={false} onClose={() => this.setState({ emailsMatch: true })}>
+                                                        <Toast.Header>
+                                                            <strong className="me-auto">Email Mismatch</strong>
+                                                        </Toast.Header>
+                                                        <Toast.Body>Email addresses do not match</Toast.Body>
                                                     </Toast>
                                                 )}
                                             </div>

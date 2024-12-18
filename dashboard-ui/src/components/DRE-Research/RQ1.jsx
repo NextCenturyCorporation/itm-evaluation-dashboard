@@ -55,8 +55,7 @@ export function RQ1() {
             </p>
         </div>
         <div className="section-container">
-            <h2>RQ1 Data</h2>
-            <RQ13 evalNum={selectedEval} />
+            <RQ13 evalNum={selectedEval} tableTitle={'RQ1 Data'} />
 
         </div>
         <div className="section-container">
