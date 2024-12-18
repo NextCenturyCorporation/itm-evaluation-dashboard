@@ -8,7 +8,7 @@ import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedSc
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
-import { Router, Switch, Route, Link } from 'react-router-dom';
+import { Router, Switch, Route, Link, Redirect } from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
@@ -128,7 +128,12 @@ function Scenarios() {
 }
 
 function Survey(currentUser) {
-    return <SurveyPageWrapper currentUser={currentUser?.currentUser} />
+    if (isUserElevated(currentUser?.currentUser)) {
+        return <SurveyPageWrapper currentUser={currentUser?.currentUser} />
+    }
+    else {
+        return <HomePage currentUser={currentUser} />;
+    }
 }
 
 function TextBased() {
@@ -141,6 +146,11 @@ function TextBasedResults() {
 
 function AdmResults() {
     return <ADMChartPage />
+}
+
+function isUserElevated(currentUser) {
+    // ignoring adeptUser, because they should already be admins, evaluators, or experimenters
+    return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter;
 }
 
 function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin, testerLogin }) {
@@ -423,24 +433,26 @@ export class App extends React.Component {
                                                         <li className="nav-item">
                                                             <Link className="nav-link" to="/">Home</Link>
                                                         </li>
-                                                        <NavDropdown title="Data Collection">
-                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
-                                                                Take Delegation Survey
-                                                            </NavDropdown.Item>
-                                                            <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based" disabled>
-                                                                Complete Text Scenarios
-                                                            </NavDropdown.Item>
-                                                            {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
-                                                                    Review Text Scenarios
+                                                        {(isUserElevated(this.state.currentUser) &&
+                                                            <NavDropdown title="Data Collection">
+                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
+                                                                    Take Delegation Survey
                                                                 </NavDropdown.Item>
-                                                            )}
-                                                            {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
-                                                                    Review Delegation Survey
+                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based" disabled>
+                                                                    Complete Text Scenarios
                                                                 </NavDropdown.Item>
-                                                            )}
-                                                        </NavDropdown>
+                                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
+                                                                        Review Text Scenarios
+                                                                    </NavDropdown.Item>
+                                                                )}
+                                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
+                                                                        Review Delegation Survey
+                                                                    </NavDropdown.Item>
+                                                                )}
+                                                            </NavDropdown>
+                                                        )}
                                                         {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
                                                             <>
                                                                 <NavDropdown title="Human Evaluation Segments">
@@ -506,7 +518,7 @@ export class App extends React.Component {
                                                                             Administrator
                                                                         </Link>
                                                                     )}
-                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
+                                                                    {isUserElevated(this.state.currentUser) && (
                                                                         <Link className="dropdown-item" to="/participant-progress-table" onClick={this.handleToggle}>
                                                                             Progress Table
                                                                         </Link>
@@ -535,82 +547,86 @@ export class App extends React.Component {
                                                     <Route exact path="/">
                                                         <Home newState={this.state} />
                                                     </Route>
-                                                    <Route exact path="/results">
-                                                        <Results />
-                                                    </Route>
-                                                    <Route exact path="/adm-results">
-                                                        <AdmResults />
-                                                    </Route>
-                                                    <Route exact path='/adm-probe-responses'>
-                                                        <ADMProbeResponses/>
-                                                    </Route>
-                                                    <Route exact path="/humanSimParticipant">
-                                                        <AggregateResults type="HumanSimParticipant" />
-                                                    </Route>
-                                                    <Route exact path="/scenarios">
-                                                        <Scenarios />
-                                                    </Route>
                                                     <Route path="/login">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} />
                                                     </Route>
                                                     <Route path="/participantText">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={false} />
                                                     </Route>
-                                                    <Route path="/participantTextTester">
-                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={true} />
-                                                    </Route>
                                                     <Route path="/reset-password/:token" component={ResetPassPage} />
                                                     <Route path="/myaccount">
                                                         <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
                                                     </Route>
-                                                    <Route path="/admin">
-                                                        <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                    </Route>
-                                                    <Route path="/participant-progress-table">
-                                                        <ProgressTable newState={this.state} />
-                                                    </Route>
-                                                    <Route path="/pid-lookup">
-                                                        <PidLookupPage newState={this.state} />
-                                                    </Route>
-                                                    <Route path="/survey">
-                                                        <Survey currentUser={this.state.currentUser} />
-                                                    </Route>
-                                                    <Route path="/survey-results">
-                                                        <SurveyResults />
-                                                    </Route>
-                                                    <Route path="/review-text-based">
-                                                        <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                    </Route>
-                                                    <Route path="/review-delegation">
-                                                        <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                    </Route>
-                                                    <Route path="/text-based">
-                                                        <TextBased />
-                                                    </Route>
                                                     <Route path="/remote-text-survey">
                                                         <StartOnline />
                                                     </Route>
-                                                    <Route path="/text-based-results">
-                                                        <TextBasedResults />
-                                                    </Route>
-                                                    <Route path="/humanProbeData">
-                                                        <AggregateResults type="HumanProbeData" />
-                                                    </Route>
-                                                    <Route path="/human-results">
-                                                        <HumanResults />
-                                                    </Route>
-                                                    <Route path="/dre-results/rq1">
-                                                        <RQ1 />
-                                                    </Route>
-                                                    <Route path="/dre-results/rq2">
-                                                        <RQ2 />
-                                                    </Route>
-                                                    <Route path="/dre-results/rq3">
-                                                        <RQ3 />
-                                                    </Route>
-                                                    <Route path="/dre-results/exploratory-analysis">
-                                                        <ExploratoryAnalysis />
-                                                    </Route>
+                                                    {isUserElevated(this.state.currentUser) &&
+                                                        <>
+                                                        <Route exact path="/results">
+                                                            <Results />
+                                                        </Route>
+                                                        <Route exact path="/adm-results">
+                                                            <AdmResults />
+                                                        </Route>
+                                                        <Route exact path='/adm-probe-responses'>
+                                                            <ADMProbeResponses />
+                                                        </Route>
+                                                        <Route exact path="/humanSimParticipant">
+                                                            <AggregateResults type="HumanSimParticipant" />
+                                                        </Route>
+                                                        <Route exact path="/scenarios">
+                                                            <Scenarios />
+                                                        </Route>
+                                                        <Route path="/participantTextTester">
+                                                            <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={true} />
+                                                        </Route>
+                                                        <Route path="/admin">
+                                                            <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                        </Route>
+                                                        <Route path="/participant-progress-table">
+                                                            <ProgressTable newState={this.state} />
+                                                        </Route>
+                                                        <Route path="/pid-lookup">
+                                                            <PidLookupPage newState={this.state} />
+                                                        </Route>
+                                                        <Route path="/survey">
+                                                            <Survey currentUser={this.state.currentUser} />
+                                                        </Route>
+                                                        <Route path="/survey-results">
+                                                            <SurveyResults />
+                                                        </Route>
+                                                        <Route path="/review-text-based">
+                                                            <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                        </Route>
+                                                        <Route path="/review-delegation">
+                                                            <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
+                                                        </Route>
+                                                        <Route path="/text-based">
+                                                            <TextBased />
+                                                        </Route>
+                                                        <Route path="/text-based-results">
+                                                            <TextBasedResults />
+                                                        </Route>
+                                                        <Route path="/humanProbeData">
+                                                            <AggregateResults type="HumanProbeData" />
+                                                        </Route>
+                                                        <Route path="/human-results">
+                                                            <HumanResults />
+                                                        </Route>
+                                                        <Route path="/dre-results/rq1">
+                                                            <RQ1 />
+                                                        </Route>
+                                                        <Route path="/dre-results/rq2">
+                                                            <RQ2 />
+                                                        </Route>
+                                                        <Route path="/dre-results/rq3">
+                                                            <RQ3 />
+                                                        </Route>
+                                                        <Route path="/dre-results/exploratory-analysis">
+                                                            <ExploratoryAnalysis />
+                                                        </Route>
+                                                        </>}
+                                                    <Route path="*" render={() => <Redirect to="/" />} /> 
                                                 </Switch>
                                             </div>
 
