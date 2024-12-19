@@ -249,6 +249,7 @@ const typeDefs = gql`
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON
+    getServerTimestamp: String
   }
 `;
 
@@ -751,6 +752,9 @@ const resolvers = {
         { "ParticipantID": Number(args["pid"]) },
         { $set: args["updates"] }
       );
+    },
+    getServerTimestamp: async () => {
+      return new Date().toISOString();
     }
 
   },
