@@ -59,51 +59,136 @@ const UPDATE_SURVEY_VERSION = gql`
 function InputBox({ options, selectedOptions, mutation, param, header, caller, errorCallback }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
     const [updateUserCall] = useMutation(mutation);
-    let errored = false;
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [pendingChanges, setPendingChanges] = useState(null);
+    
+    const handleConfirm = async () => {
+        let errored = false;
+        const { usersToAdd, usersToRemove } = pendingChanges;
+        
+        for (const username of [...usersToAdd, ...usersToRemove]) {
+            try {
+                await updateUserCall({
+                    variables: {
+                        username,
+                        [param]: usersToAdd.includes(username) ? true : false,
+                        caller
+                    }
+                });
+            } catch (error) {
+                errorCallback();
+                errored = true;
+                break;
+            }
+        }
+        
+        if (!errored) {
+            setSelected(pendingChanges.newSelection);
+        }
+        
+        setShowConfirmation(false);
+        setPendingChanges(null);
+    };
+
+    const handleCancel = () => {
+        setShowConfirmation(false);
+        setPendingChanges(null);
+    };
+
     const updateUser = (newSelect) => {
         const usersToAdd = newSelect.filter(user => !selected.includes(user));
         const usersToRemove = selected.filter(user => !newSelect.includes(user));
-        [...usersToAdd, ...usersToRemove].forEach(username =>
-            updateUserCall({
-                variables: {
-                    username,
-                    [param]: usersToAdd.includes(username) ? true : false,
-                    caller
-                }
-            }).catch(() => {
-                errorCallback();
-                errored = true;
-                return;
-            })
-        );
-        if (errored) {
-            return;
+        
+        // confirm for admin changes
+        if (param === 'isAdmin') {
+            setPendingChanges({
+                usersToAdd,
+                usersToRemove,
+                newSelection: newSelect
+            });
+            setShowConfirmation(true);
+        } else {
+            let errored = false;
+            [...usersToAdd, ...usersToRemove].forEach(username =>
+                updateUserCall({
+                    variables: {
+                        username,
+                        [param]: usersToAdd.includes(username) ? true : false,
+                        caller
+                    }
+                }).catch(() => {
+                    errorCallback();
+                    errored = true;
+                    return;
+                })
+            );
+            if (!errored) {
+                setSelected(newSelect);
+            }
         }
-        setSelected(newSelect);
-    }
+    };
+
     options.sort((a, b) => (a.value > b.value) ? 1 : -1);
 
     return (
-        <Row className="mb-4">
-            <Col>
-                <Card>
-                    <Card.Header as="h5">{header}</Card.Header>
-                    <Card.Body>
-                        <h6>Modify Current {header}</h6>
-                        <DualListBox
-                            options={options}
-                            selected={selected}
-                            onChange={updateUser}
-                            showHeaderLabels={true}
-                            lang={{
-                                availableHeader: "All Users",
-                                selectedHeader: header
-                            }} />
-                    </Card.Body>
-                </Card>
-            </Col>
-        </Row>
+        <>
+            <Row className="mb-4">
+                <Col>
+                    <Card>
+                        <Card.Header as="h5">{header}</Card.Header>
+                        <Card.Body>
+                            <h6>Modify Current {header}</h6>
+                            <DualListBox
+                                options={options}
+                                selected={selected}
+                                onChange={updateUser}
+                                showHeaderLabels={true}
+                                lang={{
+                                    availableHeader: "All Users",
+                                    selectedHeader: header
+                                }} />
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
 
+            <Modal show={showConfirmation} onHide={handleCancel} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Administrator Changes</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {pendingChanges?.usersToAdd.length > 0 && (
+                        <div>
+                            <p>Add administrator privileges to:</p>
+                            <ul>
+                                {pendingChanges.usersToAdd.map(user => (
+                                    <li key={user}>{user}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {pendingChanges?.usersToRemove.length > 0 && (
+                        <div>
+                            <p>Remove administrator privileges from:</p>
+                            <ul>
+                                {pendingChanges.usersToRemove.map(user => (
+                                    <li key={user}>{user}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    <p className="text-warning">This action will modify administrative access. Are you sure you want to continue?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCancel}>
+                        Cancel
+                    </Button>
+                    <Button variant="primary" onClick={handleConfirm}>
+                        Confirm Changes
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        </>
     );
 }
 
