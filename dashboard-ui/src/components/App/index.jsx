@@ -560,6 +560,9 @@ export class App extends React.Component {
                                                     <Route path="/remote-text-survey">
                                                         <StartOnline />
                                                     </Route>
+                                                    <Route path="/text-based">
+                                                        <TextBased />
+                                                    </Route>
                                                     {isUserElevated(this.state.currentUser) &&
                                                         <>
                                                         <Route exact path="/results">
@@ -600,9 +603,6 @@ export class App extends React.Component {
                                                         </Route>
                                                         <Route path="/review-delegation">
                                                             <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                        </Route>
-                                                        <Route path="/text-based">
-                                                            <TextBased />
                                                         </Route>
                                                         <Route path="/text-based-results">
                                                             <TextBasedResults />
