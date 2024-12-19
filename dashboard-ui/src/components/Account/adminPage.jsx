@@ -4,9 +4,13 @@ import { Query, useQuery, useMutation, useLazyQuery } from 'react-apollo';
 import gql from 'graphql-tag';
 import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
 import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
+import { accountsClient, accountsPassword } from '../../services/accountsService';
+import { createBrowserHistory } from 'history';
+
+const history = createBrowserHistory({ forceRefresh: true });
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
@@ -15,42 +19,30 @@ const GET_USERS = gql`
     }
 `;
 
-const GET_EVAL_IDS = gql`
-    query getEvalIds {
-        getEvalIds
-    }
-`;
-
-const UPDATE_EVAL_IDS_BYPAGE = gql`
-    mutation updateEvalIdsByPage($evalNumber: Int!, $field: String!, $value: Boolean!) {
-        updateEvalIdsByPage(evalNumber: $evalNumber, field: $field, value: $value) 
-    }
-`;
 
 const UPDATE_ADMIN_USER = gql`
-    mutation updateAdminUser($username: String!, $isAdmin: Boolean!) {
-        updateAdminUser(username: $username, isAdmin: $isAdmin) 
+    mutation updateAdminUser($caller: JSON!, $username: String!, $isAdmin: Boolean!) {
+        updateAdminUser(caller: $caller, username: $username, isAdmin: $isAdmin) 
     }
 `;
 
 const UPDATE_EVALUATOR_USER = gql`
-    mutation updateEvaluatorUser($username: String!, $isEvaluator: Boolean!) {
-        updateEvaluatorUser(username: $username, isEvaluator: $isEvaluator) 
+    mutation updateEvaluatorUser($caller: JSON!, $username: String!, $isEvaluator: Boolean!) {
+        updateEvaluatorUser(caller: $caller, username: $username, isEvaluator: $isEvaluator) 
     }
 `;
 
 const UPDATE_EXPERIMENTER_USER = gql`
-    mutation updateExperimenterUser($username: String!, $isExperimenter: Boolean!) {
-        updateExperimenterUser(username: $username, isExperimenter: $isExperimenter) 
+    mutation updateExperimenterUser($caller: JSON!, $username: String!, $isExperimenter: Boolean!) {
+        updateExperimenterUser(caller: $caller, username: $username, isExperimenter: $isExperimenter) 
     }
 `;
 
 const UPDATE_ADEPT_USER = gql`
-    mutation updateAdeptUser($username: String!, $isAdeptUser: Boolean!) {
-        updateAdeptUser(username: $username, isAdeptUser: $isAdeptUser) 
+    mutation updateAdeptUser($caller: JSON!, $username: String!, $isAdeptUser: Boolean!) {
+        updateAdeptUser(caller: $caller, username: $username, isAdeptUser: $isAdeptUser) 
     }
 `;
-
 
 const GET_CURRENT_SURVEY_VERSION = gql`
     query getCurrentSurveyVersion {
@@ -64,231 +56,55 @@ const UPDATE_SURVEY_VERSION = gql`
     }
 `;
 
-function AdminInputBox({ options, selectedOptions }) {
+function InputBox({ options, selectedOptions, mutation, param, header, caller, errorCallback }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateAdminUserCall] = useMutation(UPDATE_ADMIN_USER);
-
-    const setAdmin = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            if (!selected.includes(newSelect[i])) {
-                updateAdminUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isAdmin: true
-                    }
-                });
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            if (!newSelect.includes(selected[i])) {
-                updateAdminUserCall({
-                    variables: {
-                        username: selected[i],
-                        isAdmin: false
-                    }
-                });
-            }
-        }
-        setSelected(newSelect);
-    }
-
-    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-    return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setAdmin}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "Admins"
-            }} />
-    );
-}
-
-function EvaluatorInputBox({ options, selectedOptions }) {
-    const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateEvaluatorUserCall] = useMutation(UPDATE_EVALUATOR_USER);
-
-    const setEvaluator = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            if (!selected.includes(newSelect[i])) {
-                updateEvaluatorUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isEvaluator: true
-                    }
-                });
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            if (!newSelect.includes(selected[i])) {
-                updateEvaluatorUserCall({
-                    variables: {
-                        username: selected[i],
-                        isEvaluator: false
-                    }
-                });
-            }
-        }
-        setSelected(newSelect);
-    }
-
-    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-    return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setEvaluator}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "Evaluators"
-            }} />
-    );
-}
-
-function ExperimenterInputBox({ options, selectedOptions }) {
-    const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateExperimenterUserCall] = useMutation(UPDATE_EXPERIMENTER_USER);
-
-    const setExperimenter = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            if (!selected.includes(newSelect[i])) {
-                updateExperimenterUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isExperimenter: true
-                    }
-                });
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            if (!newSelect.includes(selected[i])) {
-                updateExperimenterUserCall({
-                    variables: {
-                        username: selected[i],
-                        isExperimenter: false
-                    }
-                });
-            }
-        }
-        setSelected(newSelect);
-    }
-
-    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-    return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setExperimenter}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "Experimenters"
-            }} />
-    );
-}
-
-function AdeptInputBox({ options, selectedOptions }) {
-    const [selected, setSelected] = useState(selectedOptions.sort());
-    const [updateAdeptUserCall] = useMutation(UPDATE_ADEPT_USER);
-
-    const setAdeptUser = (newSelect) => {
-        for (let i = 0; i < newSelect.length; i++) {
-            if (!selected.includes(newSelect[i])) {
-                updateAdeptUserCall({
-                    variables: {
-                        username: newSelect[i],
-                        isAdeptUser: true
-                    }
-                });
-            }
-        }
-        for (let i = 0; i < selected.length; i++) {
-            if (!newSelect.includes(selected[i])) {
-                updateAdeptUserCall({
-                    variables: {
-                        username: selected[i],
-                        isAdeptUser: false
-                    }
-                });
-            }
-        }
-        setSelected(newSelect);
-    }
-
-    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-    return (
-        <DualListBox
-            options={options}
-            selected={selected}
-            onChange={setAdeptUser}
-            showHeaderLabels={true}
-            lang={{
-                availableHeader: "All Users",
-                selectedHeader: "ADEPT Users"
-            }} />
-    );
-}
-
-function EvaluationIDSTable({ data }) {
-    const [selectedEvals, setSelectedEvals] = useState([]);
-    const [updateEvalIds] = useMutation(UPDATE_EVAL_IDS_BYPAGE);
-
-    const updateShowMainPage = (newChecked) => {
-        const checkedId = parseInt(newChecked.target.value);
-
-        updateEvalIds({
-            variables: {
-                evalNumber: parseInt(newChecked.target.value),
-                field: "showMainPage",
-                value: newChecked.target.checked
-            }
-        });
-
-        if (newChecked.target.checked) {
-            setSelectedEvals([...selectedEvals, checkedId])
-        } else {
-            setSelectedEvals(selectedEvals.filter(id => id !== checkedId))
-        }
-    }
-
-    return (
-        <table className="table">
-            <thead>
-                <tr>
-                    <th>Evaluation</th>
-                    <th>Main Page</th>
-                </tr>
-            </thead>
-            <tbody>
-                {
-                    data.map((ids, index) => (
-                        <tr key={index}>
-                            <td>
-                                <label htmlFor={`evalIds-checkbox-${index}`}>{ids.evalName}</label>
-                            </td>
-                            <td>
-                                <input
-                                    type="checkbox"
-                                    id={`evalIds-showMainPage-${index}`}
-                                    name={ids.evalName}
-                                    value={ids.evalNumber}
-                                    checked={selectedEvals.includes(ids.evalNumber) || ids.showMainPage}
-                                    onChange={updateShowMainPage}
-                                />
-                            </td>
-                        </tr>
-                    ))
+    const [updateUserCall] = useMutation(mutation);
+    let errored = false;
+    const updateUser = (newSelect) => {
+        const usersToAdd = newSelect.filter(user => !selected.includes(user));
+        const usersToRemove = selected.filter(user => !newSelect.includes(user));
+        [...usersToAdd, ...usersToRemove].forEach(username =>
+            updateUserCall({
+                variables: {
+                    username,
+                    [param]: usersToAdd.includes(username) ? true : false,
+                    caller
                 }
-            </tbody>
-        </table>
-    )
+            }).catch(() => {
+                errorCallback();
+                errored = true;
+                return;
+            })
+        );
+        if (errored) {
+            return;
+        }
+        setSelected(newSelect);
+    }
+    options.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+    return (
+        <Row className="mb-4">
+            <Col>
+                <Card>
+                    <Card.Header as="h5">{header}</Card.Header>
+                    <Card.Body>
+                        <h6>Modify Current {header}</h6>
+                        <DualListBox
+                            options={options}
+                            selected={selected}
+                            onChange={updateUser}
+                            showHeaderLabels={true}
+                            lang={{
+                                availableHeader: "All Users",
+                                selectedHeader: header
+                            }} />
+                    </Card.Body>
+                </Card>
+            </Col>
+        </Row>
+
+    );
 }
 
 function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
@@ -310,13 +126,18 @@ function ConfirmationDialog({ show, onConfirm, onCancel, message }) {
     );
 }
 
-function AdminPage({ currentUser }) {
+function AdminPage({ currentUser, updateUserHandler }) {
     const [surveyVersion, setLocalSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
     const [surveyVersions, setSurveyVersions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [confirmedAdmin, setConfirmedAdmin] = useState(false);
+    const [password, setPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [sessionId, setSessionId] = useState(null);
+    const [errorCount, setErrorCount] = useState(0);
 
     const { loading: surveyVersionLoading, error: surveyVersionError, data: surveyVersionData } = useQuery(GET_CURRENT_SURVEY_VERSION, {
         fetchPolicy: 'no-cache'
@@ -402,6 +223,42 @@ function AdminPage({ currentUser }) {
         setShowConfirmation(false);
     };
 
+    const onChangePassword = (event) => {
+        setPasswordError('');
+        setPassword(event.target.value);
+    };
+
+    const verifyIdentity = async (event) => {
+        event.preventDefault();
+        try {
+            let results;
+            results = await accountsPassword.login({
+                password: password,
+                user: {
+                    username: currentUser.username,
+                }
+            });
+            setSessionId(results.sessionId);
+            setConfirmedAdmin(true);
+        } catch (err) {
+            setConfirmedAdmin(false);
+            setPasswordError(err.message);
+        }
+    };
+
+    const notAdmin = async () => {
+        setConfirmedAdmin(false);
+        const errors = errorCount + 1;
+        setErrorCount(errors);
+        setPassword('');
+        setPasswordError("Something went wrong! Please confirm your admin status.");
+        if (errors == 2) {
+            await accountsClient.logout();
+            updateUserHandler(null);
+            history.push('/login');
+        }
+    };
+
     if (surveyVersionLoading) return <div className="loading">Loading survey version...</div>;
     if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
 
@@ -431,7 +288,21 @@ function AdminPage({ currentUser }) {
                 </Col>
             </Row>
 
-            <Row className="mb-4">
+            {!confirmedAdmin && <Card className="login-modal">
+                <h3>Please confirm your identity before continuing.</h3>
+                <form onSubmit={verifyIdentity}>
+                    <div className="form-group">
+                        <div className="input-login-header">Username: {currentUser.username}</div>
+                    </div>
+                    <div className="form-group">
+                        <input placeholder="Enter Password" type="password" id="password" value={password} onChange={onChangePassword} />
+                    </div>
+                    {passwordError != '' && <p className='error-message'>{passwordError}</p>}
+                    <Button type='submit'>Submit</Button>
+                </form>
+            </Card>}
+
+            {confirmedAdmin && <><Row className="mb-4">
                 <Col md={6}>
                     <Card>
                         <Card.Header as="h5">Survey Version</Card.Header>
@@ -458,140 +329,58 @@ function AdminPage({ currentUser }) {
                 </Col>
             </Row>
 
-            <ConfirmationDialog
-                show={showConfirmation}
-                onConfirm={confirmSurveyVersionChange}
-                onCancel={cancelSurveyVersionChange}
-                message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
-            />
+                <ConfirmationDialog
+                    show={showConfirmation}
+                    onConfirm={confirmSurveyVersionChange}
+                    onCancel={cancelSurveyVersionChange}
+                    message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
+                />
 
-            <Query query={GET_USERS} fetchPolicy={'no-cache'}>
-                {({ loading, error, data }) => {
-                    if (loading) return <div className="loading">Loading ...</div>;
-                    if (error) return <div className="error">Error: {error.message}</div>;
+                <Query query={GET_USERS} fetchPolicy={'no-cache'}>
+                    {({ loading, error, data }) => {
+                        if (loading) return <div className="loading">Loading ...</div>;
+                        if (error) return <div className="error">Error: {error.message}</div>;
 
-                    let options = [];
-                    let selectedOptions = [];
-                    let evaluatorOptions = [];
-                    let evaluatorSelectedOptions = [];
-                    let experimenterOptions = [];
-                    let experimenterSelectedOptions = [];
-                    let adeptOptions = [];
-                    let adeptSelectedOptions = [];
+                        const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [] };
 
-                    const users = data[getUsersQueryName]
-                    for (let i = 0; i < users.length; i++) {
-                        options.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
-                        evaluatorOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
-                        experimenterOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
-                        adeptOptions.push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                        let adminSelectedOptions = [];
+                        let evaluatorSelectedOptions = [];
+                        let experimenterSelectedOptions = [];
+                        let adeptSelectedOptions = [];
 
-                        if (users[i].admin) {
-                            selectedOptions.push(users[i].username);
+                        const users = data[getUsersQueryName]
+                        for (let i = 0; i < users.length; i++) {
+                            for (let k in nonSelected) {
+                                nonSelected[k].push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                            }
+                            if (users[i].admin) {
+                                adminSelectedOptions.push(users[i].username);
+                            }
+
+                            if (users[i].evaluator) {
+                                evaluatorSelectedOptions.push(users[i].username);
+                            }
+
+                            if (users[i].experimenter) {
+                                experimenterSelectedOptions.push(users[i].username);
+                            }
+
+                            if (users[i].adeptUser) {
+                                adeptSelectedOptions.push(users[i].username);
+                            }
                         }
 
-                        if (users[i].evaluator) {
-                            evaluatorSelectedOptions.push(users[i].username);
-                        }
-
-                        if (users[i].experimenter) {
-                            experimenterSelectedOptions.push(users[i].username);
-                        }
-
-                        if (users[i].adeptUser) {
-                            adeptSelectedOptions.push(users[i].username);
-                        }
-                    }
-
-                    return (
-                        <>
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">Administrator</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage administrator settings.
-                                            </Card.Text>
-                                            <h6>Modify Current Admins</h6>
-                                            <AdminInputBox options={options} selectedOptions={selectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
-
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">Evaluators</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage evaluator settings.
-                                            </Card.Text>
-                                            <h6>Modify Current Evaluators</h6>
-                                            <EvaluatorInputBox options={evaluatorOptions} selectedOptions={evaluatorSelectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
-
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">Experimenters</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage experimenter settings.
-                                            </Card.Text>
-                                            <h6>Modify Current Experimenters</h6>
-                                            <ExperimenterInputBox options={experimenterOptions} selectedOptions={experimenterSelectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
-
-                            <Row className="mb-4">
-                                <Col>
-                                    <Card>
-                                        <Card.Header as="h5">ADEPT Users</Card.Header>
-                                        <Card.Body>
-                                            <Card.Text>
-                                                Manage ADEPT user settings.
-                                            </Card.Text>
-                                            <h6>Modify Current ADEPT Users</h6>
-                                            <AdeptInputBox options={adeptOptions} selectedOptions={adeptSelectedOptions} />
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            </Row>
-                        </>
-                    );
-                }}
-            </Query>
-
-            <Query query={GET_EVAL_IDS} fetchPolicy={'no-cache'}>
-                {({ loading, error, data }) => {
-                    if (loading) return <div className="loading">Loading ...</div>;
-                    if (error) return <div className="error">Error: {error.message}</div>;
-
-                    return (
-                        <Row>
-                            <Col>
-                                <Card>
-                                    <Card.Header as="h5">Visible Evaluation Options By Page</Card.Header>
-                                    <Card.Body>
-                                        <Card.Text>
-                                            Control values populated in the Evaluation Dropdown list
-                                        </Card.Text>
-                                        <h6>Modify Visible Evaluation Options</h6>
-                                        <EvaluationIDSTable data={data["getEvalIds"]} />
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        </Row>
-                    );
-                }}
-            </Query>
+                        return (
+                            <>
+                                <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                            </>
+                        );
+                    }}
+                </Query>
+            </>}
         </Container>
     );
 }

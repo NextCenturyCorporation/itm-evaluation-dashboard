@@ -18,7 +18,12 @@ const schema = makeExecutableSchema({
     }
 });
 
-const server = new ApolloServer({ schema, context: accountsGraphQL.context});
+const server = new ApolloServer({ 
+    schema, 
+    context: accountsGraphQL.context,
+    introspection: false,
+    playground: false
+});
 
 // The `listen` method launches a web server
 server.listen(GRAPHQL_PORT).then(({ url }) => {

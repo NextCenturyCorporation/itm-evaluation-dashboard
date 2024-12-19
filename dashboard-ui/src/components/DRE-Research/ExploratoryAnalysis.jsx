@@ -50,8 +50,7 @@ export function ExploratoryAnalysis() {
             </p>
         </div>
         <div className="section-container">
-            <h2>RQ4 Data</h2>
-            <RQ13 evalNum={selectedEval} />
+            <RQ13 evalNum={selectedEval} tableTitle={'RQ4 Data'} />
             <p>
                 <b>Variables used from dataset:</b>
             </p>

@@ -9,6 +9,7 @@ import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
 import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
+import { Checkbox, FormControlLabel } from "@material-ui/core";
 
 
 const GET_PARTICIPANT_LOG = gql`
@@ -44,17 +45,19 @@ const GET_SIM_DATA = gql`
 const HEADERS = ['ADM Order', 'Delegator_ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 
-export function RQ13({ evalNum }) {
+export function RQ13({ evalNum, tableTitle }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
-        fetchPolicy: 'no-cache'
-    });
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": evalNum }
     });
+    const { data: dreAdms } = useQuery(GET_ADM_DATA, {
+        variables: { "evalNumber": 4 }
+    });
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
+    const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -76,6 +79,7 @@ export function RQ13({ evalNum }) {
     const [admTypeFilters, setAdmTypeFilters] = React.useState([]);
     const [delGrpFilters, setDelGrpFilters] = React.useState([]);
     const [delMilFilters, setDelMilFilters] = React.useState([]);
+    const [includeDRE, setIncludeDRE] = React.useState(false);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
 
@@ -89,8 +93,20 @@ export function RQ13({ evalNum }) {
     }
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
+            dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
+            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            if (includeDRE) {
+                // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
+                const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true);
+                data.allObjs.push(...dreData.allObjs);
+                data.allTA1s.push(...dreData.allTA1s);
+                data.allTA2s.push(...dreData.allTA2s);
+                data.allAttributes.push(...dreData.allAttributes);
+                data.allScenarios.push(...dreData.allScenarios);
+                data.allTargets.push(...dreData.allTargets);
+            }
             data.allObjs.sort((a, b) => {
                 // Compare PID
                 if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
@@ -107,8 +123,11 @@ export function RQ13({ evalNum }) {
             setScenarios(Array.from(new Set(data.allScenarios)));
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, dreAdms, dreSim]);
 
+    const updateDREStatus = (event) => {
+        setIncludeDRE(event.target.checked);
+    };
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
@@ -129,6 +148,10 @@ export function RQ13({ evalNum }) {
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
+        <h2>{tableTitle}
+            {evalNum == 5 && <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />}
+        </h2>
+
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">

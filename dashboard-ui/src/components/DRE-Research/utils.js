@@ -124,7 +124,7 @@ export function getAlignments(evalNum, textResults, pid) {
     return { textResultsForPID, alignments };
 }
 
-export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim) {
+export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false) {
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = dataTextResults.getAllScenarioResults;
@@ -141,13 +141,16 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     // find participants that have completed the delegation survey
     const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && isDefined(res.results['Post-Scenario Measures']));
     for (const res of completed_surveys) {
-        const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response;
+        const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         // see if participant is in the participantLog
         const logData = participantLog.find(
             log => log['ParticipantID'] == pid && log['Type'] != 'Test'
         );
-        if (!logData) {
+        if (!logData || logData.textEntryCount < 5) {
+            continue;
+        }
+        if (fullSetOnly && (logData.surveyEntryCount < 1 || logData.textEntryCount < 5 || logData.simEntryCount < 3)) {
             continue;
         }
         const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
