@@ -17,7 +17,7 @@ import { Mutation } from '@apollo/react-components';
 import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
-import { useQuery } from '@apollo/react-hooks';
+import { useQuery, useMutation } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
@@ -27,6 +27,12 @@ import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
 
 const history = createBrowserHistory({ forceRefresh: true });
+
+const GET_SERVER_TIMESTAMP = gql`
+  mutation GetServerTimestamp {
+    getServerTimestamp
+  }
+`;
 
 const UPLOAD_SCENARIO_RESULTS = gql`
     mutation uploadScenarioResults($results: [JSON]) {
@@ -66,6 +72,9 @@ export function TextBasedScenariosPageWrapper(props) {
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
     const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
+    
+    // server side time stamps
+    const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
     if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
     if (participantLogError || scenarioResultsError) return <p>Error</p>;
@@ -75,6 +84,7 @@ export function TextBasedScenariosPageWrapper(props) {
         textBasedConfigs={textBasedConfigs}
         participantLogs={participantLogData}
         scenarioResults={scenarioResultsData.getAllScenarioResults}
+        getServerTimestamp={getServerTimestamp}
     />;
 }
 
@@ -204,14 +214,14 @@ class TextBasedScenariosPage extends Component {
         );
     }
 
-    loadNextScenario = () => {
+    loadNextScenario = async () => {
         const { scenarios, currentScenarioIndex } = this.state;
         if (currentScenarioIndex < scenarios.length) {
             const currentScenario = scenarios[currentScenarioIndex];
-            const newStartTime = new Date().toString();
-
-            this.setState({ startTime: newStartTime }, () => {
-                this.loadSurveyConfig([currentScenario], currentScenario.title);
+            this.loadSurveyConfig([currentScenario], currentScenario.title);
+        
+            this.props.getServerTimestamp().then(newStartTime => {
+                this.setState({ startTime: newStartTime.data.getServerTimestamp });
             });
         } else {
             this.handleAllScenariosCompleted();
@@ -312,12 +322,13 @@ class TextBasedScenariosPage extends Component {
         this.timerHelper();
 
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
+        const endStamp = await this.props.getServerTimestamp();
         let scenarioData = {
             scenario_id: currentScenario.scenario_id,
             participantID: this.state.participantID,
             vrEnvCompleted: this.state.vrEnvCompleted,
             title: currentScenario.title,
-            timeComplete: new Date().toString(),
+            timeComplete: endStamp.data.getServerTimestamp,
             startTime: this.state.startTime
         };
 
