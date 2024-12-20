@@ -137,10 +137,14 @@ export function getAlignments(evalNum, textResults, pid) {
 }
 
 function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
+    const good_pids = ['202411581', '202411353', '202411546']; // hard code some pids that have other problems
     const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && ((evalNum == 4 && isDefined(res.results['Post-Scenario Measures'])) || (evalNum == 5 && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const bad_pids = [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
+        if (good_pids.includes(pid)) {
+            continue;
+        }
         const logData = participantLog.find(
             log => log['ParticipantID'] == pid && log['Type'] != 'Test'
         );
@@ -158,11 +162,25 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
         // get the scenarios the participant was supposed to see
         const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
         const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+        const adm_order = admOrderMapping[logData['ADMOrder']];
         const good_scenarios = [...getDelEnvMapping(evalNum)[ad_scenario], ...getDelEnvMapping(evalNum)[st_scenario]];
         for (const x of scenarios) {
             if (!good_scenarios.includes(x)) {
                 bad_pids.push(pid);
                 break;
+            }
+        }
+        if (!bad_pids.includes(pid)) {
+            const comparisons = res?.results?.orderLog?.filter((pgname) => pgname.includes(' vs '));
+            for (let i = 0; i < adm_order.length; i++) {
+                const expectedAdm = adm_order[i]['TA2'];
+                const expectedAtt = adm_order[i]['Attribute'];
+                const actualAdm = res?.results?.[comparisons[i]]?.['admAuthor'].replace('kitware', 'Kitware').replace('TAD', 'Parallax');
+                const actualScenario = res?.results?.[comparisons[i]]?.['scenarioIndex'];
+                if (actualAdm != expectedAdm || !actualScenario.includes(expectedAtt.replace('QOL', 'qol').replace('VOL', 'vol'))) {
+                    bad_pids.push(pid);
+                    break;
+                }
             }
         }
     }
@@ -188,6 +206,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     const wrong_del_materials = findWrongDelMaterials(evalNum, participantLog, surveyResults);
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
+        if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => res.results?.['Participant ID Page']?.questions['Participant ID']?.response == pid && isDefined(res.results['Post-Scenario Measures']))) {
+            // filter incomplete surveys from participants who have a complete survey
+            continue;
+        }
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         // see if participant is in the participantLog
         const logData = participantLog.find(
@@ -202,10 +224,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         }
         const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
         // set up object to store participant data
-        const admOrder = admOrderMapping[logData['ADMOrder']];
+        const admOrder = pid == '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
         let trial_num = 1;
-        const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
-        const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+        const st_scenario = pid == '202411327' ? 'ST-2' : (wrong_del_materials.includes(pid) ? 'ST-3' : (logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2']));
+        const ad_scenario = pid == '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2']));
 
         for (const entry of admOrder) {
             const types = ['baseline', 'aligned', 'misaligned', 'comparison'];
@@ -218,31 +240,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     let scenario = false;
 
                     if (entry['TA1'] == 'Adept') {
-                        if (wrong_del_materials.includes(pid)) {
-                            // 327 took the wrong survey (using 337's pid) which needs to be accounted for
-                            // several other participants were given the wrong materials
-                            if (pid == '202411327')
-                                scenario = entry['Attribute'] == 'MJ' ? "DryRunEval-MJ4-eval" : "DryRunEval-IO4-eval";
-                            else
-                                scenario = entry['Attribute'] == 'MJ' ? "DryRunEval-MJ2-eval" : "DryRunEval-IO2-eval";
-                        }
-                        else {
-                            scenario = entry['Attribute'] == 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
-                        }
+                        scenario = entry['Attribute'] == 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
                     }
                     else {
-                        if (wrong_del_materials.includes(pid)) {
-                            // 327 took the wrong survey (using 337's pid) which needs to be accounted for
-                            // several other participants were given the wrong materials
-                            if (pid == '202411327')
-                                scenario = entry['Attribute'] == 'QOL' ? "qol-ph1-eval-3" : "vol-ph1-eval-3";
-                            else
-                                scenario = entry['Attribute'] == 'QOL' ? "qol-ph1-eval-4" : "vol-ph1-eval-4";
-                        }
-                        else {
-                            scenario = entry['Attribute'] == 'QOL' ? getDelEnvMapping(evalNum)[st_scenario][0] : getDelEnvMapping(evalNum)[st_scenario][1];
-                        }
-
+                        scenario = entry['Attribute'] == 'QOL' ? getDelEnvMapping(evalNum)[st_scenario][0] : getDelEnvMapping(evalNum)[st_scenario][1];
                     }
                     const scenarioMatches = obj['scenarioIndex'] == scenario;
 
@@ -254,7 +255,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 }
                 page = res.results[page];
                 const entryObj = {};
-                entryObj['ADM Order'] = logData['ADMOrder'];
+                entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
                 entryObj['Delegator_ID'] = pid;
                 entryObj['Datasource'] = evalNum == 4 ? 'DRE' : logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL';
                 entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : logData['Type'] == 'Mil' ? 'Military' : logData['Type'];
@@ -340,6 +341,5 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         }
     }
     const pids = allObjs.map((x) => x['Delegator_ID']);
-    console.log(Array.from(new Set(pids)));
     return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes };
 }

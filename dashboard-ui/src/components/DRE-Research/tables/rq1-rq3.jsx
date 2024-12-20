@@ -132,7 +132,6 @@ export function RQ13({ evalNum, tableTitle }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                // x['Competence Error'] == 1 &&
                 (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
                 (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
