@@ -339,60 +339,60 @@ const resolvers = {
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
       let queryObj = {};
-      
+
       if (args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") {
         queryObj = {
           $and: [
             { "history.response.id": args["scenarioID"] }
           ]
         };
-        
+
         if (args["evalNumber"]) {
           queryObj.$and.push({ "evalNumber": args["evalNumber"] });
         }
-        
+
         queryObj[args["admQueryStr"]] = args["admName"];
       } else {
         queryObj = {
           $and: [
-            { "history.response.id": args["alignmentTarget"] }, 
+            { "history.response.id": args["alignmentTarget"] },
             { "history.response.id": args["scenarioID"] }
           ]
         };
-        
+
         if (args["evalNumber"]) {
           queryObj.$and.push({ "evalNumber": args["evalNumber"] });
         }
-        
+
         queryObj[args["admQueryStr"]] = args["admName"];
       }
-      
+
       return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
     },
     getAllTestDataForADM: async (obj, args, context, inflow) => {
       const results = [];
-      
+
       for (const target of args.alignmentTargets) {
         let queryObj = {
           $and: [
             { "history.response.id": args.scenarioID }
           ]
         };
-        
+
         if (target) {
           queryObj.$and.push({ "history.response.id": target });
         }
-        
+
         if (args.evalNumber) {
           queryObj.$and.push({ "evalNumber": args.evalNumber });
         }
-        
+
         queryObj[args.admQueryStr] = args.admName;
-        
+
         const result = await dashboardDB.db.collection('test')
           .findOne(queryObj)
           .then(result => result);
-        
+
         if (result) {
           results.push({
             alignmentTarget: target,
@@ -400,7 +400,7 @@ const resolvers = {
           });
         }
       }
-      
+
       return results;
     },
     getAllScenarios: async (obj, args, context, inflow) => {
@@ -754,7 +754,8 @@ const resolvers = {
       );
     },
     getServerTimestamp: async () => {
-      return new Date().toISOString();
+      process.env.TZ = 'America/New_York';
+      return new Date().toString();
     }
 
   },
