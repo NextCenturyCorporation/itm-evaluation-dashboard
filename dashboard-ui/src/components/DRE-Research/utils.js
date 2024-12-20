@@ -203,7 +203,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
     // find participants that have completed the delegation survey
     const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && ((evalNum == 4 && isDefined(res.results['Post-Scenario Measures'])) || (evalNum == 5 && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
-    const wrong_del_materials = findWrongDelMaterials(evalNum, participantLog, surveyResults);
+    const wrong_del_materials = evalNum == 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
         if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => res.results?.['Participant ID Page']?.questions['Participant ID']?.response == pid && isDefined(res.results['Post-Scenario Measures']))) {
