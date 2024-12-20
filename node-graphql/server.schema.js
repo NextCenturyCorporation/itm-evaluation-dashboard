@@ -755,7 +755,13 @@ const resolvers = {
     },
     getServerTimestamp: async () => {
       process.env.TZ = 'America/New_York';
-      return new Date().toString();
+      const date = new Date();
+      
+      const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
+      const currentOffset = date.getTimezoneOffset();
+      const isDST = currentOffset < januaryOffset;
+      
+      return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
     }
 
   },
