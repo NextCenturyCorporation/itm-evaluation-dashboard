@@ -139,3 +139,20 @@
     border-radius: 4px;
     margin-top: 10px;
 }
+
+.refreshing-row {
+    height: 500px;
+}
+
+.refreshing-label {
+    display: block;
+}
+
+.refreshing-td {
+    width: 500px;
+    display: flex;
+    margin: auto;
+    flex-direction: column;
+    align-items: center;
+    font-size: 32px !important;
+}
