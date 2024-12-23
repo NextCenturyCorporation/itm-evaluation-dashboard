@@ -41,15 +41,20 @@ const GET_SIM_DATA = gql`
 export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
 
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS, {
+        fetchPolicy: 'no-cache'
+    });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
     });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": evalNumber }
+        variables: { "evalNumber": evalNumber },
+        fetchPolicy: 'no-cache'
     });
-    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNumber } });
+    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, {
+        fetchPolicy: 'no-cache'
+    });
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNumber }, fetchPolicy: 'no-cache' });
 
     const [data, setData] = React.useState(null);
     const [alignVsTrust, setAlignVsTrust] = React.useState(null);
@@ -314,8 +319,8 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                         name: 'Human',
                         color: '#4287f5',
                         dataPoints: [
-                            ...groupTargets[targetMap[att]['high']].map((x) => { return { x: 0, y: x, label: ['MJ', 'IO'].includes(att) ? 'High Target' : 'Target 1' } }),
-                            ...groupTargets[targetMap[att]['low']].map((x) => { return { x: 1, y: x, label: ['MJ', 'IO'].includes(att) ? 'Low Target' : 'Target 2' } })
+                            ...(groupTargets[targetMap[att]['high']]?.map((x) => { return { x: 0, y: x, label: ['MJ', 'IO'].includes(att) ? 'High Target' : 'Target 1' } }) ?? []),
+                            ...(groupTargets[targetMap[att]['low']]?.map((x) => { return { x: 1, y: x, label: ['MJ', 'IO'].includes(att) ? 'Low Target' : 'Target 2' } }) ?? [])
                         ]
                     },
                     {
@@ -384,7 +389,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                 'aligned': 'ALIGN-ADM-ComparativeRegression-ICL-Template'
             }
         };
-        const targetMap = {
+        const targetMap = evalNumber == 4 ? {
             'MJ': ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3',
                 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5', 'ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7',
                 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'],
@@ -397,7 +402,18 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                 'qol-human-7040555-SplitHighMulti', 'qol-synth-HighCluster', 'qol-human-2932740-HighExtreme', 'qol-synth-HighExtreme'],
             'VOL': ['vol-synth-LowExtreme', 'vol-synth-LowCluster', 'vol-human-3043871-SplitLowMulti', 'vol-human-5032922-SplitLowMulti', 'vol-human-8478698-SplitLowMulti',
                 'vol-synth-SplitLowBinary', 'vol-human-2637411-SplitEvenMulti', 'vol-human-2932740-SplitEvenMulti', 'vol-human-6403274-SplitEvenBinary',
-                'vol-human-7040555-SplitEvenBinary', 'vol-human-1774519-SplitHighMulti', 'vol-human-8022671-SplitHighMulti', 'vol-synth-HighCluster', 'vol-synth-HighExtreme'],
+                'vol-human-7040555-SplitEvenBinary', 'vol-human-1774519-SplitHighMulti', 'vol-human-8022671-SplitHighMulti', 'vol-synth-HighCluster', 'vol-synth-HighExtreme']
+        } : {
+            'MJ': ['ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5',
+                'ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8'],
+            'IO': ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5',
+                'ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'],
+            'QOL': ["qol-synth-LowExtreme-ph1", "qol-synth-LowCluster-ph1", "qol-human-5032922-SplitLowMulti-ph1", "qol-human-8022671-SplitLowMulti-ph1",
+                "qol-human-0000001-SplitEvenMulti-ph1", "qol-human-3043871-SplitHighBinary-ph1", "qol-human-6403274-SplitHighBinary-ph1",
+                "qol-human-7040555-SplitHighMulti-ph1", "qol-synth-HighCluster-ph1", "qol-synth-HighExtreme-ph1"],
+            'VOL': ["vol-synth-LowExtreme-ph1", "vol-synth-LowCluster-ph1", "vol-human-5032922-SplitLowMulti-ph1", "vol-human-8478698-SplitLowMulti-ph1",
+                "vol-human-6403274-SplitEvenBinary-ph1", "vol-human-1774519-SplitHighMulti-ph1", "vol-human-8022671-SplitHighMulti-ph1",
+                "vol-synth-HighCluster-ph1"]
         };
 
         return (
@@ -408,7 +424,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                     shared: true
                 },
                 axisX: {
-                    minimum: ['MJ', 'IO'].includes(att) ? -0.03 : -1,
+                    minimum: evalNumber == 5 ? (['MJ', 'IO'].includes(att) ? 0.17 : -1) : (['MJ', 'IO'].includes(att) ? -0.03 : -1),
                     title: att + ' Targets',
                     interval: ['MJ', 'IO'].includes(att) ? 0.1 : 1
                 },
