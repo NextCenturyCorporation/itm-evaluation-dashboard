@@ -48,6 +48,8 @@ const typeDefs = gql`
     evaluator: Boolean
     experimenter: Boolean
     adeptUser: Boolean
+    approved: Boolean
+    rejected: Boolean
   }
 
   type Player {
@@ -243,6 +245,7 @@ const typeDefs = gql`
     updateEvaluatorUser(caller: JSON, username: String, isEvaluator: Boolean): JSON,
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
+    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
@@ -643,6 +646,30 @@ const resolvers = {
       }
       else {
         throw new GraphQLError('Users outside of the admin group cannot update ADEPT user status.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
+    updateUserApproval: async (obj, args, context, inflow) => {
+      const session = await dashboardDB.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await dashboardDB.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await dashboardDB.db.collection('users').update(
+          { "username": args["username"] },
+          {
+            $set: {
+              "approved": args["isApproved"],
+              "rejected": args["isRejected"],
+              "adeptUser": args["isAdeptUser"],
+              "experimenter": args["isExperimenter"],
+              "evaluator": args["isEvaluator"],
+              "admin": args["isAdmin"]
+            }
+          }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot approve new users.', {
           extensions: { code: '404' }
         });
       }
