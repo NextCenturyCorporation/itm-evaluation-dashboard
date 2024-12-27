@@ -3,7 +3,7 @@ import '../SurveyResults/resultsTable.css';
 import { Autocomplete, TextField } from "@mui/material";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { DownloadButtons } from "../DRE-Research/tables/download-buttons";
+import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 

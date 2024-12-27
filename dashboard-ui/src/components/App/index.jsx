@@ -37,10 +37,10 @@ import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
 import HumanResults from '../HumanResults/humanResults';
-import { RQ1 } from '../DRE-Research/RQ1';
-import { RQ2 } from '../DRE-Research/RQ2';
-import { RQ3 } from '../DRE-Research/RQ3';
-import { ExploratoryAnalysis } from '../DRE-Research/ExploratoryAnalysis';
+import { RQ1 } from '../Research/RQ1';
+import { RQ2 } from '../Research/RQ2';
+import { RQ3 } from '../Research/RQ3';
+import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis';
 import store from '../../store/store';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { PidLookup } from '../Account/pidLookup';
@@ -484,16 +484,16 @@ export class App extends React.Component {
                                                                     </NavDropdown.Item>
                                                                 </NavDropdown>
                                                                 <NavDropdown title="Data Analysis">
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
                                                                         RQ1
                                                                     </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq2">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
                                                                         RQ2
                                                                     </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq3">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
                                                                         RQ3
                                                                     </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/exploratory-analysis">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
                                                                         Exploratory Analysis
                                                                     </NavDropdown.Item>
                                                                 </NavDropdown>
@@ -613,16 +613,16 @@ export class App extends React.Component {
                                                         <Route path="/human-results">
                                                             <HumanResults />
                                                         </Route>
-                                                        <Route path="/dre-results/rq1">
+                                                        <Route path="/research-results/rq1">
                                                             <RQ1 />
                                                         </Route>
-                                                        <Route path="/dre-results/rq2">
+                                                        <Route path="/research-results/rq2">
                                                             <RQ2 />
                                                         </Route>
-                                                        <Route path="/dre-results/rq3">
+                                                        <Route path="/research-results/rq3">
                                                             <RQ3 />
                                                         </Route>
-                                                        <Route path="/dre-results/exploratory-analysis">
+                                                        <Route path="/research-results/exploratory-analysis">
                                                             <ExploratoryAnalysis />
                                                         </Route>
                                                         </>}
