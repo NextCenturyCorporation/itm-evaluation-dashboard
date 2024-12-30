@@ -18,7 +18,7 @@ import gql from 'graphql-tag';
 import AlignmentScoreBox from './alignmentScore';
 import '../../css/results-page.css';
 import { Query } from 'react-apollo';
-import { RQ2223 } from '../DRE-Research/tables/rq22-rq23';
+import { RQ2223 } from '../Research/tables/rq22-rq23';
 
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";

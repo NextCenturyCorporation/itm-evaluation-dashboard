@@ -26,7 +26,7 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Participant KDMA', 'Alignment score (Participant|high target)', 'Alignment score (Participant|low target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
+const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Participant Text KDMA', 'Participant Sim KDMA', 'Alignment score (Participant|high target)', 'Alignment score (Participant|low target)', 'Assess_patient', 'Assess_total', 'Treat_patient', 'Treat_total', 'Triage_time',
     'Triage_time_patient', 'Engage_patient', 'Tag_ACC', 'Tag_Expectant',
     'Patient1_time', 'Patient1_order', 'Patient1_evac', 'Patient1_assess', 'Patient1_treat', 'Patient1_tag',
     'Patient2_time', 'Patient2_order', 'Patient2_evac', 'Patient2_assess', 'Patient2_treat', 'Patient2_tag',
@@ -81,6 +81,10 @@ export function RQ8({ evalNum }) {
                     continue;
                 }
 
+                const simEntries = simData.filter(
+                    log => log['pid'] == pid
+                );
+
                 const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
 
                 // see if participant is in the participantLog
@@ -124,7 +128,19 @@ export function RQ8({ evalNum }) {
                         entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
                         allScenarios.push(entryObj['Scenario']);
                         const kdmas = Array.isArray(entry['kdmas']) ? entry['kdmas'] : entry['kdmas']?.['computed_kdma_profile'];
-                        entryObj['Participant KDMA'] = kdmas?.find((x) => x['kdma'] == (att == 'MJ' ? 'Moral judgement' : att == 'IO' ? 'Ingroup Bias' : att == 'QOL' ? 'QualityOfLife' : 'PerceivedQuantityOfLivesSaved'))?.value ?? '-';
+                        const att_map = {
+                            'MJ': 'Moral judgement',
+                            'IO': 'Ingroup Bias',
+                            'QOL': 'QualityOfLife',
+                            'VOL': 'PerceivedQuantityOfLivesSaved'
+                        }
+                        entryObj['Participant Text KDMA'] = kdmas?.find((x) => x['kdma'] == att_map[att])?.value ?? '-';
+                        const sim_entry = simEntries.find((x) => {
+                            const kdma_data = x?.data?.alignment?.kdmas?.computed_kdma_profile ?? x?.data?.alignment?.kdmas;
+                            return Array.isArray(kdma_data) && kdma_data?.find((y) => y.kdma == att_map[att]);
+                        });
+                        const sim_kdmas = sim_entry?.data?.alignment?.kdmas?.computed_kdma_profile ?? sim_entry?.data?.alignment?.kdmas;
+                        entryObj['Participant Sim KDMA'] = Array.isArray(sim_kdmas) ? sim_kdmas?.find((y) => y.kdma == att_map[att])?.value : '-';
                         if (evalNum == 4) {
                             entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
                             entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';

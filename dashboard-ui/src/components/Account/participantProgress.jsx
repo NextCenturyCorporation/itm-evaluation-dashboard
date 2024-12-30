@@ -3,9 +3,10 @@ import '../SurveyResults/resultsTable.css';
 import { Autocomplete, TextField } from "@mui/material";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { DownloadButtons } from "../DRE-Research/tables/download-buttons";
+import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
+import { Spinner } from 'react-bootstrap';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -48,6 +49,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [sortOptions] = React.useState(['Participant ID ↑', 'Participant ID ↓', 'Text Start Time ↑', 'Text Start Time ↓', 'Sim Count ↑', 'Sim Count ↓', 'Del Count ↑', 'Del Count ↓', 'Text Count ↑', 'Text Count ↓'])
     const [sortBy, setSortBy] = React.useState('Participant ID ↑');
     const [searchPid, setSearchPid] = React.useState('');
+    const [isRefreshing, setIsRefreshing] = React.useState(false);
     const HEADERS = canViewProlific ? HEADERS_WITH_PROLIFIC : HEADERS_NO_PROLIFIC;
 
     React.useEffect(() => {
@@ -131,14 +133,9 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 allObjs.push(obj);
                 obj['Evaluation'] && allEvals.push(obj['Evaluation']);
             }
-            // // sort
-            allObjs.sort((a, b) => {
-                // Compare PID
-                if (Number(a['Participant ID']) < Number(b['Participant ID'])) return -1;
-                if (Number(a['Participant ID']) > Number(b['Participant ID'])) return 1;
-            });
             setFormattedData(allObjs);
             setFilteredData(allObjs);
+            sortData();
             setTypes(Array.from(new Set(allTypes)));
             setEvals(Array.from(new Set(allEvals)));
         }
@@ -197,40 +194,50 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return -1;
     }
 
+    const sortData = () => {
+        const dataCopy = structuredClone(filteredData);
+        const sortKeyMap = {
+            "Participant ID": "Participant ID",
+            "Text Start Time": "Text Start Date-Time",
+            "Sim Count": "Sim Count",
+            "Del Count": "Delegation",
+            "Text Count": "Text"
+        }
+        dataCopy.sort((a, b) => {
+            const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
+            const incOrDec = sortBy.split(' ').slice(-1)[0] == '↑' ? 'i' : 'd';
+            let aVal = a[simpleK];
+            let bVal = b[simpleK];
+            if (simpleK.includes('Date-Time')) {
+                aVal = getDateFromString(aVal);
+                bVal = getDateFromString(bVal);
+            }
+            if (incOrDec == 'i') {
+                return (aVal > bVal) ? 1 : -1;
+            } else {
+                return (aVal < bVal) ? 1 : -1;
+            }
+        });
+        setFilteredData(dataCopy);
+    };
+
     React.useEffect(() => {
         if (sortBy) {
-            const dataCopy = structuredClone(filteredData);
-            const sortKeyMap = {
-                "Participant ID": "Participant ID",
-                "Text Start Time": "Text Start Date-Time",
-                "Sim Count": "Sim Count",
-                "Del Count": "Delegation",
-                "Text Count": "Text"
-            }
-            dataCopy.sort((a, b) => {
-                const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
-                const incOrDec = sortBy.split(' ').slice(-1)[0] == '↑' ? 'i' : 'd';
-                let aVal = a[simpleK];
-                let bVal = b[simpleK];
-                if (simpleK.includes('Date-Time')) {
-                    aVal = getDateFromString(aVal);
-                    bVal = getDateFromString(bVal);
-                }
-                if (incOrDec == 'i') {
-                    return (aVal > bVal) ? 1 : -1;
-                } else {
-                    return (aVal < bVal) ? 1 : -1;
-                }
-            });
-            setFilteredData(dataCopy);
+            sortData();
         }
     }, [sortBy]);
 
     const refreshData = async () => {
-        await refetchPLog();
-        await refetchSimData();
-        await refetchSurveyResults();
-        await refetchTextResults();
+        setIsRefreshing(true);
+        const resPLog = await refetchPLog();
+        const resSim = await refetchSimData();
+        const resSurvey = await refetchSurveyResults();
+        const resText = await refetchTextResults();
+        if (resPLog && resSim && resSurvey && resText) {
+            sortData();
+            setIsRefreshing(false);
+        }
+
     };
 
     const hideColumn = (val) => {
@@ -353,7 +360,17 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredData.map((dataSet, index) => {
+                    {isRefreshing ?
+                        <tr className='refreshing-row'>
+                            <td colSpan={9}>
+                                <div className='refreshing-td'>
+                                    <Spinner animation="border" role="status" variant="dark" className='refresh-spinner' size="large" />
+                                    <span className='refreshing-label'>Fetching Data...</span>
+                                </div>
+                            </td>
+
+                        </tr>
+                        : filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['Participant_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return !columnsToHide.includes(val) && formatCell(val, dataSet);
