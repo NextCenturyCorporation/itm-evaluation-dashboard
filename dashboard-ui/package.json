@@ -98,7 +98,6 @@
         ]
     },
     "devDependencies": {
-        "canvas": "^3.0.0",
         "unfetch": "^5.0.0"
     }
 }
