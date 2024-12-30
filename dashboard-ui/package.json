@@ -80,7 +80,8 @@
         "start": "react-scripts start",
         "build": "react-scripts build",
         "test": "jest --watchAll --silent",
-        "eject": "react-scripts eject"
+        "eject": "react-scripts eject",
+        "clean": "rm -rf node_modules"
     },
     "eslintConfig": {
         "extends": "react-app"

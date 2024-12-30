@@ -13,6 +13,5 @@ module.exports = {
     moduleNameMapper: {
         '\\.css$': 'identity-obj-proxy', // Mock CSS imports with identity-obj-proxy
         '\\.(xlsx|pdf|docx|png|R)$': '<rootDir>/src/__mocks__/fileMock.js', // Mock .xlsx, .pdf, .docx, .png, and .R files
-
-    },
+    }
 };
