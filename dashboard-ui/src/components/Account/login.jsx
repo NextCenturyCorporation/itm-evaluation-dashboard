@@ -96,7 +96,7 @@ class LoginApp extends React.Component {
                 }
             });
 
-            this.props.history.push('/');
+            this.props.history.push('/awaitingApproval');
             this.props.userLoginHandler(results.user);
         } catch (err) {
             $("#create-account-feedback").addClass("feedback-display");
