@@ -61,7 +61,6 @@ export function RQ13({ evalNum, tableTitle }) {
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    const [shownHeaders, setShownHeaders] = React.useState([...HEADERS]);
     // all options for filters
     const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
@@ -100,10 +99,6 @@ export function RQ13({ evalNum, tableTitle }) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             if (includeDRE) {
                 // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
-                const comparisonIndex = shownHeaders.indexOf('Alignment score (Delegator|Observed_ADM (target))');
-                const newHeaders = [...shownHeaders];
-                newHeaders.splice(comparisonIndex, 1, 'Alignment score (Delegator|Observed_ADM (target)) - Phase 1 Server', 'Alignment score (Delegator|Observed_ADM (target)) - DRE Server');
-                setShownHeaders(newHeaders);
                 const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true);
                 data.allObjs.push(...dreData.allObjs);
                 data.allTA1s.push(...dreData.allTA1s);
@@ -111,9 +106,6 @@ export function RQ13({ evalNum, tableTitle }) {
                 data.allAttributes.push(...dreData.allAttributes);
                 data.allScenarios.push(...dreData.allScenarios);
                 data.allTargets.push(...dreData.allTargets);
-            }
-            else {
-                setShownHeaders(HEADERS);
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -276,13 +268,13 @@ export function RQ13({ evalNum, tableTitle }) {
                     onChange={(_, newVal) => setDelMilFilters(newVal)}
                 />
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={shownHeaders} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
                 <thead>
                     <tr>
-                        {shownHeaders.map((val, index) => {
+                        {HEADERS.map((val, index) => {
                             return (<th key={'header-' + index}>
                                 {val}
                             </th>);
@@ -292,7 +284,7 @@ export function RQ13({ evalNum, tableTitle }) {
                 <tbody>
                     {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
-                            {shownHeaders.map((val) => {
+                            {HEADERS.map((val) => {
                                 return (<td key={dataSet['Delegator_ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
                                 </td>);
