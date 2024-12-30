@@ -375,7 +375,6 @@ export class App extends React.Component {
                                         console.error("Error fetching configs: ", error.message);
                                         return <div>Error fetching configs</div>;
                                     }
-
                                     // Setup configs
                                     setupConfigWithImages(data);
                                     setupTextBasedConfig(data);

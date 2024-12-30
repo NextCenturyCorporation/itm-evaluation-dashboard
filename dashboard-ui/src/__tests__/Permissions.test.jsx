@@ -1,31 +1,67 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import { ApolloProvider } from 'react-apollo';
-import { ApolloClient } from 'apollo-client';
-import { InMemoryCache } from 'apollo-cache-inmemory';
+import { MockedProvider } from '@apollo/react-testing';
 import { App } from '../components/App';
+import userEvent from '@testing-library/user-event';
+import { homepageMocks } from '../__mocks__/homepageMocks'; 
 
-// Create a mock Apollo Client instance
-const mockApolloClient = new ApolloClient({
-    link: "https://mock-api/graphql",  // This can be any dummy endpoint
-    cache: new InMemoryCache(),      // Use an in-memory cache for tests
-});
-
-test('renders app successfully', () => {
+const renderApp = async () => {
     const history = createMemoryHistory();
     history.push('/');
 
     render(
-        <ApolloProvider client={mockApolloClient}>
+        <MockedProvider mocks={homepageMocks} addTypename={false}>
             <Router history={history}>
-                <App client={mockApolloClient} />
+                <App />
             </Router>
-        </ApolloProvider>
+        </MockedProvider>
     );
 
-    // Now you can test components that rely on routing
-    const element = screen.getByText(/loading/i);
-    expect(element).toBeInTheDocument();
+    // Wait for the loading state to be replaced with actual data
+    await waitFor(() => {
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+    });
+}
+
+test('renders app successfully', async () => {
+    await renderApp();
+
+    // Test that the login page is rendered and defaults to sign in page
+    expect(window.location.pathname).toBe('/login');
+    const elements = screen.queryAllByText(/Sign In/i);
+    expect(elements.length).toBe(4); // tab, header, description, button
+});
+
+test('test bad login', async () => {
+    await renderApp();
+
+    const emailInput = screen.getByPlaceholderText('Email / Username');
+    const passwordInput = document.getElementById('password');
+    userEvent.type(emailInput, 'fake');
+    userEvent.type(passwordInput, 'password');
+    const btn = screen.getByRole('button', { name: /Sign In/i });
+    userEvent.click(btn);
+    // expect to stay on login with error
+    await waitFor(() => {
+        expect(screen.queryByText(/Error logging in/i)).toBeInTheDocument();
+    });
+    expect(window.location.pathname).toBe('/login');
+});
+
+test('test admin login', async () => {
+    await renderApp();
+
+    const emailInput = screen.getByPlaceholderText('Email / Username');
+    const passwordInput = document.getElementById('password');
+    userEvent.type(emailInput, 'admin');
+    userEvent.type(passwordInput, 'password');
+    const btn = screen.getByRole('button', { name: /Sign In/i });
+    userEvent.click(btn);
+    // expect to log in successfully
+    await waitFor(() => {
+        expect(window.location.pathname).toBe('/');
+    });
+
 });
