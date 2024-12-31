@@ -37,15 +37,16 @@ import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
 import HumanResults from '../HumanResults/humanResults';
-import { RQ1 } from '../DRE-Research/RQ1';
-import { RQ2 } from '../DRE-Research/RQ2';
-import { RQ3 } from '../DRE-Research/RQ3';
-import { ExploratoryAnalysis } from '../DRE-Research/ExploratoryAnalysis';
+import { RQ1 } from '../Research/RQ1';
+import { RQ2 } from '../Research/RQ2';
+import { RQ3 } from '../Research/RQ3';
+import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis';
 import store from '../../store/store';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
+import { WaitingPage } from '../Account/waitingPage';
 
 
 
@@ -114,6 +115,8 @@ const HIGH_PID = 202411499;
 function Home({ newState }) {
     if (newState.currentUser == null) {
         history.push('/login');
+    } else if (!newState.currentUser.approved) {
+        history.push('/awaitingApproval');
     } else {
         return <HomePage currentUser={newState.currentUser} />;
     }
@@ -153,7 +156,11 @@ function isUserElevated(currentUser) {
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter;
 }
 
-function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin, testerLogin }) {
+function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin, testerLogin, logout }) {
+    if (newState?.currentUser && !newState?.currentUser?.approved) {
+        logout();
+        return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
+    }
     if (testerLogin && (newState.currentUser === null || (!newState.currentUser.admin && !newState.currentUser.experimenter))) {
         history.push('/participantText');
     }
@@ -174,6 +181,8 @@ function Login({ newState, userLoginHandler, participantLoginHandler, participan
 function MyAccount({ newState, userLoginHandler }) {
     if (newState.currentUser === null) {
         history.push("/login");
+    } else if (!newState.currentUser.approved) {
+        history.push('/awaitingApproval');
     } else {
         return <MyAccountPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
     }
@@ -236,6 +245,15 @@ function ReviewDelegation({ newState, userLoginHandler }) {
         } else {
             return <Home newState={newState} />;
         }
+    }
+}
+
+function WaitingPageWrapper({ rejected, currentUser }) {
+    if (!rejected && currentUser?.approved) {
+        history.push(('/'));
+    }
+    else {
+        return <WaitingPage rejected={rejected} />
     }
 }
 
@@ -424,7 +442,7 @@ export class App extends React.Component {
                                                     </Mutation>
                                                 </>
                                             )}
-                                            {currentUser &&
+                                            {currentUser?.approved &&
                                                 <nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
                                                     <a className="navbar-brand" href="/">
                                                         <img className="nav-brand-itm" src={brandImage} alt="" />ITM
@@ -484,16 +502,16 @@ export class App extends React.Component {
                                                                     </NavDropdown.Item>
                                                                 </NavDropdown>
                                                                 <NavDropdown title="Data Analysis">
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq1">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
                                                                         RQ1
                                                                     </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq2">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
                                                                         RQ2
                                                                     </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/rq3">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
                                                                         RQ3
                                                                     </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/dre-results/exploratory-analysis">
+                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
                                                                         Exploratory Analysis
                                                                     </NavDropdown.Item>
                                                                 </NavDropdown>
@@ -547,21 +565,21 @@ export class App extends React.Component {
                                                     <Route exact path="/">
                                                         <Home newState={this.state} />
                                                     </Route>
+                                                    <Route exact path="/awaitingApproval">
+                                                        <WaitingPageWrapper currentUser={currentUser} rejected={this.state.currentUser?.rejected} />
+                                                    </Route>
                                                     <Route path="/login">
-                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} />
+                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} logout={this.logout} />
                                                     </Route>
                                                     <Route path="/participantText">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={false} />
                                                     </Route>
                                                     <Route path="/reset-password/:token" component={ResetPassPage} />
-                                                    <Route path="/myaccount">
-                                                        <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                    </Route>
                                                     <Route path="/remote-text-survey">
                                                         <StartOnline />
                                                     </Route>
-                                                    <Route path="/text-based">
-                                                        <TextBased />
+                                                    <Route path="/myaccount">
+                                                        <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
                                                     </Route>
                                                     {isUserElevated(this.state.currentUser) &&
                                                         <>
@@ -613,20 +631,25 @@ export class App extends React.Component {
                                                         <Route path="/human-results">
                                                             <HumanResults />
                                                         </Route>
-                                                        <Route path="/dre-results/rq1">
+                                                        <Route path="/research-results/rq1">
                                                             <RQ1 />
                                                         </Route>
-                                                        <Route path="/dre-results/rq2">
+                                                        <Route path="/research-results/rq2">
                                                             <RQ2 />
                                                         </Route>
-                                                        <Route path="/dre-results/rq3">
+                                                        <Route path="/research-results/rq3">
                                                             <RQ3 />
                                                         </Route>
-                                                        <Route path="/dre-results/exploratory-analysis">
+                                                        <Route path="/research-results/exploratory-analysis">
                                                             <ExploratoryAnalysis />
                                                         </Route>
                                                         </>}
-                                                    <Route path="*" render={() => <Redirect to="/" />} /> 
+                                                    {this.state.currentUser ?
+                                                        (this.state.currentUser?.approved ?
+                                                            <Route path="*" render={() => <Redirect to="/" />} />
+                                                            : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
+                                                        : <Route path="*" render={() => <Redirect to="/login" />} />
+                                                    }
                                                 </Switch>
                                             </div>
 
