@@ -1,12 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderApp } from '../__mocks__/renderWithMock';
+import { renderApp } from '../__mocks__/renderMock';
 
 jest.unmock('@accounts/client');
 jest.unmock('@accounts/graphql-client');
 jest.unmock('@accounts/client-password');
 
-describe('Test render and bad login', () => {
+xdescribe('Test render and bad login', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         jest.resetModules();

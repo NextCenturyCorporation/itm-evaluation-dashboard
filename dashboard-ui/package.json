@@ -79,7 +79,7 @@
     "scripts": {
         "start": "react-scripts start",
         "build": "react-scripts build",
-        "test": "jest --watchAll --silent",
+        "test": "jest --watchAll",
         "eject": "react-scripts eject",
         "clean": "rm -rf node_modules"
     },

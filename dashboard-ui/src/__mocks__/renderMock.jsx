@@ -7,9 +7,8 @@ import { App } from '../components/App';
 import { homepageMocks } from '../__mocks__/homepageMocks';
 
 
-export const renderApp = async () => {
+export const renderApp = async (route = '/') => {
     const history = createMemoryHistory();
-    history.push('/');
 
     render(
         <MockedProvider mocks={homepageMocks} addTypename={false}>
@@ -23,5 +22,7 @@ export const renderApp = async () => {
     await waitFor(() => {
         expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
+
+    history.push(route);
     return history;
 }
