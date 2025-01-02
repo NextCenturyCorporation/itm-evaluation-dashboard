@@ -114,7 +114,7 @@ export function RQ5({ evalNum }) {
                         for (const ta2 of ta2s) {
                             const entryObj = {};
                             entryObj['Participant_ID'] = pid;
-                            entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') ? 'ADEPT' : 'SoarTech';
+                            entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
                             allTA1s.push(entryObj['TA1_Name']);
                             entryObj['TA2_Name'] = ta2;
                             allTA2s.push(ta2);
