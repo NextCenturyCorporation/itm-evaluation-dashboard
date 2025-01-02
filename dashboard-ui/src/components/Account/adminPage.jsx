@@ -56,6 +56,64 @@ const UPDATE_SURVEY_VERSION = gql`
     }
 `;
 
+function AdminConfirmationModal({ show, onCancel, onConfirm, pendingChanges, options }) {
+    return (
+        <Modal show={show} onHide={onCancel} centered>
+            <Modal.Header closeButton className="bg-light">
+                <Modal.Title>
+                    <strong>Confirm Administrator Changes</strong>
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="px-4">
+                {pendingChanges?.usersToAdd.length > 0 && (
+                    <div className="mb-4">
+                        <h6 className="mb-3 text-dark">Add administrator privileges to:</h6>
+                        <div className="border rounded p-3 bg-light">
+                            {pendingChanges.usersToAdd.map(user => {
+                                const userOption = options.find(opt => opt.value === user);
+                                const email = userOption?.label.match(/\((.*?)\)/)?.[1] || '';
+                                return (
+                                    <div key={user} className="mb-2">
+                                        <strong>{user}</strong> {email && <span className="text-muted">({email})</span>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+                {pendingChanges?.usersToRemove.length > 0 && (
+                    <div className="mb-4">
+                        <h6 className="mb-3 text-dark">Remove administrator privileges from:</h6>
+                        <div className="border rounded p-3 bg-light">
+                            {pendingChanges.usersToRemove.map(user => {
+                                const userOption = options.find(opt => opt.value === user);
+                                const email = userOption?.label.match(/\((.*?)\)/)?.[1] || '';
+                                return (
+                                    <div key={user} className="mb-2">
+                                        <strong>{user}</strong> {email && <span className="text-muted">({email})</span>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+                <div className="alert alert-info mb-0">
+                    <i className="bi bi-info-circle me-2"></i>
+                    This action will modify administrative access. Please confirm to proceed.
+                </div>
+            </Modal.Body>
+            <Modal.Footer className="bg-light">
+                <Button variant="secondary" onClick={onCancel}>
+                    Cancel
+                </Button>
+                <Button variant="primary" onClick={onConfirm}>
+                    Confirm Changes
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+}
+
 function InputBox({ options, selectedOptions, mutation, param, header, caller, errorCallback }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
     const [updateUserCall] = useMutation(mutation);
@@ -152,42 +210,15 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
                 </Col>
             </Row>
 
-            <Modal show={showConfirmation} onHide={handleCancel} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirm Administrator Changes</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {pendingChanges?.usersToAdd.length > 0 && (
-                        <div>
-                            <p>Add administrator privileges to:</p>
-                            <ul>
-                                {pendingChanges.usersToAdd.map(user => (
-                                    <li key={user}>{user}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {pendingChanges?.usersToRemove.length > 0 && (
-                        <div>
-                            <p>Remove administrator privileges from:</p>
-                            <ul>
-                                {pendingChanges.usersToRemove.map(user => (
-                                    <li key={user}>{user}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    <p className="text-warning">This action will modify administrative access. Are you sure you want to continue?</p>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCancel}>
-                        Cancel
-                    </Button>
-                    <Button variant="primary" onClick={handleConfirm}>
-                        Confirm Changes
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+            {param === 'isAdmin' && (
+                <AdminConfirmationModal
+                    show={showConfirmation}
+                    onCancel={handleCancel}
+                    onConfirm={handleConfirm}
+                    pendingChanges={pendingChanges}
+                    options={options}
+                />
+            )}
         </>
     );
 }
