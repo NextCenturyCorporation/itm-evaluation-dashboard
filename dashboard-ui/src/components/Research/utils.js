@@ -21,6 +21,18 @@ const RATING_MAP = {
 };
 
 
+const PH1_COMPETENCE = {
+    'ST-1': ['qol-human-8022671-SplitLowMulti-ph1', 'qol-human-5032922-SplitLowMulti-ph1', 'qol-human-0000001-SplitEvenMulti-ph1', 'qol-synth-LowExtreme-ph1', 'qol-synth-LowCluster-ph1'],
+    'ST-2': ['qol-human-8022671-SplitLowMulti-ph1', 'qol-human-5032922-SplitLowMulti-ph1', 'qol-human-0000001-SplitEvenMulti-ph1', 'qol-synth-LowExtreme-ph1', 'qol-synth-LowCluster-ph1',
+        'vol-human-1774519-SplitHighMulti-ph1', 'vol-synth-LowCluster-ph1'],
+    'ST-3': ['qol-human-8022671-SplitLowMulti-ph1', 'qol-human-5032922-SplitLowMulti-ph1', 'qol-human-0000001-SplitEvenMulti-ph1', 'qol-synth-LowExtreme-ph1', 'qol-synth-LowCluster-ph1',
+        'vol-human-8022671-SplitHighMulti-ph1', 'vol-human-1774519-SplitHighMulti-ph1', 'vol-synth-LowCluster-ph1'],
+    'AD-1': [],
+    'AD-2': [],
+    'AD-3': []
+};
+
+
 const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
 const fileExtension = '.xlsx';
 
@@ -87,7 +99,7 @@ export function getAlignments(evalNum, textResults, pid) {
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
         if (evalNum == 4) {
-        // adept
+            // adept
             if (Object.keys(textRes).includes("combinedAlignmentData")) {
                 if (!addedMJ) {
                     alignments.push(...textRes['combinedAlignmentData']);
@@ -118,10 +130,61 @@ export function getAlignments(evalNum, textResults, pid) {
             else {
                 // st
                 alignments.push(...textRes['alignmentData'])
-            }  
+            }
         }
     }
     return { textResultsForPID, alignments };
+}
+
+function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
+    const good_pids = ['202411581', '202411353', '202411546']; // hard code some pids that have other problems
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && ((evalNum == 4 && isDefined(res.results['Post-Scenario Measures'])) || (evalNum == 5 && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const bad_pids = [];
+    for (const res of completed_surveys) {
+        const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
+        if (good_pids.includes(pid)) {
+            continue;
+        }
+        const logData = participantLog.find(
+            log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+        );
+        if (!logData) {
+            continue;
+        }
+        // get all scenarios the participant saw in the survey
+        const scenarios = [];
+        for (const pageName of Object.keys(res.results)) {
+            const page = res.results[pageName];
+            if (page['scenarioIndex']) {
+                scenarios.push(page['scenarioIndex']);
+            }
+        }
+        // get the scenarios the participant was supposed to see
+        const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
+        const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+        const adm_order = admOrderMapping[logData['ADMOrder']];
+        const good_scenarios = [...getDelEnvMapping(evalNum)[ad_scenario], ...getDelEnvMapping(evalNum)[st_scenario]];
+        for (const x of scenarios) {
+            if (!good_scenarios.includes(x)) {
+                bad_pids.push(pid);
+                break;
+            }
+        }
+        if (!bad_pids.includes(pid)) {
+            const comparisons = res?.results?.orderLog?.filter((pgname) => pgname.includes(' vs '));
+            for (let i = 0; i < adm_order.length; i++) {
+                const expectedAdm = adm_order[i]['TA2'];
+                const expectedAtt = adm_order[i]['Attribute'];
+                const actualAdm = res?.results?.[comparisons[i]]?.['admAuthor'].replace('kitware', 'Kitware').replace('TAD', 'Parallax');
+                const actualScenario = res?.results?.[comparisons[i]]?.['scenarioIndex'];
+                if (actualAdm != expectedAdm || !actualScenario.includes(expectedAtt.replace('QOL', 'qol').replace('VOL', 'vol'))) {
+                    bad_pids.push(pid);
+                    break;
+                }
+            }
+        }
+    }
+    return bad_pids;
 }
 
 export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false) {
@@ -139,26 +202,32 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     const allAttributes = [];
 
     // find participants that have completed the delegation survey
-    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && isDefined(res.results['Post-Scenario Measures']));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && ((evalNum == 4 && isDefined(res.results['Post-Scenario Measures'])) || (evalNum == 5 && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const wrong_del_materials = evalNum == 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
+        if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => res.results?.['Participant ID Page']?.questions['Participant ID']?.response == pid && isDefined(res.results['Post-Scenario Measures']))) {
+            // filter incomplete surveys from participants who have a complete survey
+            continue;
+        }
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         // see if participant is in the participantLog
         const logData = participantLog.find(
             log => log['ParticipantID'] == pid && log['Type'] != 'Test'
         );
-        if (!logData || logData.textEntryCount < 5) {
+        const textCount = textResults.filter((x) => x.participantID == pid).length;
+        if (!logData || textCount < 5) {
             continue;
         }
-        if (fullSetOnly && (logData.surveyEntryCount < 1 || logData.textEntryCount < 5 || logData.simEntryCount < 3)) {
+        if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < 5 || logData.simEntryCount < 3)) {
             continue;
         }
         const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
         // set up object to store participant data
-        const admOrder = admOrderMapping[logData['ADMOrder']];
+        const admOrder = pid == '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
         let trial_num = 1;
-        const st_scenario = logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2'];
-        const ad_scenario = logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2'];
+        const st_scenario = pid == '202411327' ? 'ST-2' : (wrong_del_materials.includes(pid) ? 'ST-3' : (logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2']));
+        const ad_scenario = pid == '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2']));
 
         for (const entry of admOrder) {
             const types = ['baseline', 'aligned', 'misaligned', 'comparison'];
@@ -169,13 +238,13 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     const alignMatches = obj['admAlignment'] == t || obj['pageType'] == 'comparison' && t == 'comparison';
                     const ta2Matches = obj['admAuthor'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
+
                     if (entry['TA1'] == 'Adept') {
-                        scenario = entry['Attribute'] == 'MJ' ? getDelEnvMapping(res.results.surveyVersion)[ad_scenario][0] : getDelEnvMapping(res.results.surveyVersion)[ad_scenario][1];
+                        scenario = entry['Attribute'] == 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
                     }
                     else {
-                        scenario = entry['Attribute'] == 'QOL' ? getDelEnvMapping(res.results.surveyVersion)[st_scenario][0] : getDelEnvMapping(res.results.surveyVersion)[st_scenario][1];
+                        scenario = entry['Attribute'] == 'QOL' ? getDelEnvMapping(evalNum)[st_scenario][0] : getDelEnvMapping(evalNum)[st_scenario][1];
                     }
-
                     const scenarioMatches = obj['scenarioIndex'] == scenario;
 
                     return alignMatches && ta2Matches && scenarioMatches;
@@ -186,7 +255,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 }
                 page = res.results[page];
                 const entryObj = {};
-                entryObj['ADM Order'] = logData['ADMOrder'];
+                entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
                 entryObj['Delegator_ID'] = pid;
                 entryObj['Datasource'] = evalNum == 4 ? 'DRE' : logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL';
                 entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : logData['Type'] == 'Mil' ? 'Military' : logData['Type'];
@@ -226,9 +295,15 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                 entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
                 entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
+                entryObj['Competence Error'] = evalNum == 5 && entry['TA2'] == 'Kitware' && entryObj['ADM_Type'] == 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
 
-                const comparison_entry = comparisons?.find((x) => x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                entryObj['Alignment score (Delegator|Observed_ADM (target))'] = comparison_entry?.score ?? '-';
+                const comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                const alignmentComparison = comparison_entry?.score ?? '-'
+                entryObj['Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
+                if (evalNum == 4 && fullSetOnly && entryObj['TA1_Name'] == 'Adept') {
+                    const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                    entryObj['Alignment score (Delegator|Observed_ADM (target))'] = ph1_comparison_entry?.score ?? '-';
+                }
 
                 entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
                 if (t == 'comparison') {
@@ -270,5 +345,6 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
             }
         }
     }
+    const pids = allObjs.map((x) => x['Delegator_ID']);
     return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes };
 }

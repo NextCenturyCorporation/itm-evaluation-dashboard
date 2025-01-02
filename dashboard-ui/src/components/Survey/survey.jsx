@@ -11,7 +11,7 @@ import { OmnibusComparison } from "./omnibusComparison";
 import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import { useQuery } from 'react-apollo'
+import { useQuery, useMutation } from 'react-apollo'
 import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
@@ -28,6 +28,13 @@ const COUNT_HUMAN_GROUP_FIRST = gql`
 const COUNT_AI_GROUP_FIRST = gql`
   query CountAIGroupFirst {
     countAIGroupFirst
+  }
+`;
+
+
+const GET_SERVER_TIMESTAMP = gql`
+  mutation GetServerTimestamp {
+    getServerTimestamp
   }
 `;
 
@@ -527,7 +534,7 @@ class SurveyPage extends Component {
         });
     }
 
-    onAfterRenderPage = (sender, options) => {
+    onAfterRenderPage = async (sender, options) => {
         // setTimeout makes the scroll work consistently
         setTimeout(() => {
             window.scrollTo(0, 0);
@@ -535,9 +542,10 @@ class SurveyPage extends Component {
 
         // record start time after first page completed
         if (!sender.isFirstPage && !this.state.firstPageCompleted) {
+            const timestamp = await this.props.getServerTimestamp();
             this.setState({
                 firstPageCompleted: true,
-                startTime: new Date().toString()
+                startTime: timestamp.data.getServerTimestamp
             });
         }
 
@@ -579,11 +587,15 @@ class SurveyPage extends Component {
     };
 
 
-    uploadSurveyData = (survey, finalUpload) => {
+    uploadSurveyData = async (survey, finalUpload) => {
         if (finalUpload && survey.PageCount > 1) {
             this.setState({ surveyComplete: true });
         }
         this.timerHelper()
+
+        const timestamp = await this.props.getServerTimestamp();
+        const timeComplete = timestamp.data.getServerTimestamp;
+
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
             if (this.pageStartTimes.hasOwnProperty(pageName)) {
@@ -629,7 +641,7 @@ class SurveyPage extends Component {
 
         // attach user data to results
         this.surveyData.user = this.props.currentUser;
-        this.surveyData.timeComplete = new Date().toString();
+        this.surveyData.timeComplete = timeComplete;
         this.surveyData.startTime = this.state.startTime;
         this.surveyData.surveyVersion = surveyVersion_x_0(this.state.surveyVersion);
         this.surveyData.browserInfo = this.state.browserInfo;
@@ -822,6 +834,7 @@ export const SurveyPageWrapper = (props) => {
     });
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
 
     if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
     if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
@@ -835,6 +848,7 @@ export const SurveyPageWrapper = (props) => {
             textResults={dataTextResults?.getAllScenarioResults}
             surveyResults={dataSurveyResults.getAllSurveyResults}
             surveyVersion={currentSurveyVersion}
+            getServerTimestamp={getServerTimestamp}
         />)
 };
 

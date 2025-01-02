@@ -48,6 +48,8 @@ const typeDefs = gql`
     evaluator: Boolean
     experimenter: Boolean
     adeptUser: Boolean
+    approved: Boolean
+    rejected: Boolean
   }
 
   type Player {
@@ -243,12 +245,14 @@ const typeDefs = gql`
     updateEvaluatorUser(caller: JSON, username: String, isEvaluator: Boolean): JSON,
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
+    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON
+    getServerTimestamp: String
   }
 `;
 
@@ -338,60 +342,60 @@ const resolvers = {
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
       let queryObj = {};
-      
+
       if (args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") {
         queryObj = {
           $and: [
             { "history.response.id": args["scenarioID"] }
           ]
         };
-        
+
         if (args["evalNumber"]) {
           queryObj.$and.push({ "evalNumber": args["evalNumber"] });
         }
-        
+
         queryObj[args["admQueryStr"]] = args["admName"];
       } else {
         queryObj = {
           $and: [
-            { "history.response.id": args["alignmentTarget"] }, 
+            { "history.response.id": args["alignmentTarget"] },
             { "history.response.id": args["scenarioID"] }
           ]
         };
-        
+
         if (args["evalNumber"]) {
           queryObj.$and.push({ "evalNumber": args["evalNumber"] });
         }
-        
+
         queryObj[args["admQueryStr"]] = args["admName"];
       }
-      
+
       return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
     },
     getAllTestDataForADM: async (obj, args, context, inflow) => {
       const results = [];
-      
+
       for (const target of args.alignmentTargets) {
         let queryObj = {
           $and: [
             { "history.response.id": args.scenarioID }
           ]
         };
-        
+
         if (target) {
           queryObj.$and.push({ "history.response.id": target });
         }
-        
+
         if (args.evalNumber) {
           queryObj.$and.push({ "evalNumber": args.evalNumber });
         }
-        
+
         queryObj[args.admQueryStr] = args.admName;
-        
+
         const result = await dashboardDB.db.collection('test')
           .findOne(queryObj)
           .then(result => result);
-        
+
         if (result) {
           results.push({
             alignmentTarget: target,
@@ -399,7 +403,7 @@ const resolvers = {
           });
         }
       }
-      
+
       return results;
     },
     getAllScenarios: async (obj, args, context, inflow) => {
@@ -647,6 +651,30 @@ const resolvers = {
         });
       }
     },
+    updateUserApproval: async (obj, args, context, inflow) => {
+      const session = await dashboardDB.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await dashboardDB.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await dashboardDB.db.collection('users').update(
+          { "username": args["username"] },
+          {
+            $set: {
+              "approved": args["isApproved"],
+              "rejected": args["isRejected"],
+              "adeptUser": args["isAdeptUser"],
+              "experimenter": args["isExperimenter"],
+              "evaluator": args["isEvaluator"],
+              "admin": args["isAdmin"]
+            }
+          }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot approve new users.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
     uploadSurveyResults: async (obj, args, context, inflow) => {
       const filter = { surveyId: args.surveyId }
       const update = { $set: { results: args.results } }
@@ -751,6 +779,16 @@ const resolvers = {
         { "ParticipantID": Number(args["pid"]) },
         { $set: args["updates"] }
       );
+    },
+    getServerTimestamp: async () => {
+      process.env.TZ = 'America/New_York';
+      const date = new Date();
+      
+      const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
+      const currentOffset = date.getTimezoneOffset();
+      const isDST = currentOffset < januaryOffset;
+      
+      return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
     }
 
   },
