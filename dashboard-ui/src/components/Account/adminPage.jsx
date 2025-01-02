@@ -9,6 +9,7 @@ import '../../css/admin-page.css';
 import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
+import {FaInfoCircle} from 'react-icons/fa'
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -97,9 +98,9 @@ function AdminConfirmationModal({ show, onCancel, onConfirm, pendingChanges, opt
                         </div>
                     </div>
                 )}
-                <div className="alert alert-info mb-0">
-                    <i className="bi bi-info-circle me-2"></i>
-                    This action will modify administrative access. Please confirm to proceed.
+                <div className="alert alert-info mb-0 py-2 d-flex align-items-center">
+                    <FaInfoCircle className="me-2"/>
+                    Please confirm to modify administrative access.
                 </div>
             </Modal.Body>
             <Modal.Footer className="bg-light">
