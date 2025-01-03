@@ -97,7 +97,7 @@ export function RQ6({ evalNum }) {
                     for (const att of attributes) {
                         const entryObj = {};
                         entryObj['Participant_ID'] = pid;
-                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') ? 'ADEPT' : 'SoarTech';
+                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
                         allTA1s.push(entryObj['TA1_Name']);
                         entryObj['Attribute'] = att;
                         allAttributes.push(att);
