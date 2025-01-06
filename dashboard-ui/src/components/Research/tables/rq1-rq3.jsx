@@ -286,7 +286,7 @@ export function RQ13({ evalNum, tableTitle }) {
                         return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
                                 return (<td key={dataSet['Delegator_ID'] + '-' + val}>
-                                    {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val]}
+                                    {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
                                 </td>);
                             })}
                         </tr>);

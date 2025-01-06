@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { getRQ134Data } from "../../DRE-Research/utils";
+import { getRQ134Data } from "../../Research/utils";
 import { getAlignmentComparisonVsTrustRatings, getAlignmentsByAdmType, getAlignmentsByAttribute, getDelegationPreferences, getDelegationVsAlignment, getRatingsBySelectionStatus } from "../DataFunctions";
 import CanvasJSReact from '@canvasjs/react-charts';
 import { calculateBestFitLine, getBoxWhiskerData, getLogisticData, getMean, getMeanAcrossAll, getSeAcrossAll, getStandardError } from "../statistics";
