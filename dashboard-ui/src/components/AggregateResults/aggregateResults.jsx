@@ -495,20 +495,29 @@ export default function AggregateResults({ type }) {
         }
 
         const [adeptPart, stPart] = objectKey.split('_');
-        let adeptScenario = adeptPart;
+        let adeptScenario = adeptPart === 'undefined' ? 'Incomplete' : adeptPart;
+        let stScenario = stPart === 'undefined' ? 'Incomplete' : stPart;
+
         if (adeptPart.includes('DryRunEval')) {
             adeptScenario = evalNumber === 4 ? adeptScenario : adeptScenario.replace('DryRunEval', 'Phase1');
         }
 
-        let transformedStPart = stPart;
+        let transformedStPart = stScenario;
         if (stPart && evalNumber === 5) {
-            transformedStPart = stPart
+            transformedStPart = stScenario
                 .replace(/3/g, '4')
                 .replace(/2/g, '3')
-                .replace(/1/g, '2')   
+                .replace(/1/g, '2')
         }
 
         return `ADEPT: ${adeptScenario}, SoarTech: ${transformedStPart}`;
+    };
+
+    const hasDataInColumn = (data, columnName) => {
+        return data.some(row => {
+            const value = row[columnName];
+            return value !== undefined && value !== null && value !== '' && value !== '-';
+        });
     };
 
     return (
@@ -603,38 +612,42 @@ export default function AggregateResults({ type }) {
 
                     {aggregateData["groupedSim"] !== undefined && sortedObjectKeys(Object.keys(aggregateData["groupedSim"]), selectedEval).map((objectKey, key) => {
                         const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], objectKey.split('_')[0]);
-                        return (<div className='chart-home-container' key={"container_" + key}>
-                            <div className='chart-header'>
-                                <div className='chart-header-label'>
-                                    <h4 key={"header_" + objectKey}>
-                                        {formatScenarioTitle(objectKey, selectedEval)}
-                                    </h4>
+                        const filteredHeaders = headers?.filter(header => hasDataInColumn(aggregateData["groupedSim"][objectKey], header));
+
+                        return (
+                            <div className='chart-home-container' key={"container_" + key}>
+                                <div className='chart-header'>
+                                    <div className='chart-header-label'>
+                                        <h4 key={"header_" + objectKey}>
+                                            {formatScenarioTitle(objectKey, selectedEval)}
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div key={"container_" + key} className='resultTableSection result-table-section-override'>
+                                    <table key={"table_" + objectKey} className="itm-table">
+                                        <thead>
+                                            <tr>
+                                                {filteredHeaders?.map((item) => (
+                                                    <th key={"header_" + item}>{item}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {aggregateData["groupedSim"][objectKey].map((rowObj, rowKey) => (
+                                                <tr key={"tr_" + rowKey}>
+                                                    {filteredHeaders?.map((item, itemKey) => (
+                                                        <td key={"row_" + item + itemKey}>
+                                                            {rowObj !== undefined ? formatCellData(rowObj[item]) : ""}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                            <div key={"container_" + key} className='resultTableSection result-table-section-override'>
-
-                                <table key={"table_" + objectKey} className="itm-table">
-                                    <thead>
-                                        <tr>
-                                            {
-                                                headers?.map((item) => (<th key={"header_" + item}>{item}</th>))
-                                            }
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {aggregateData["groupedSim"][objectKey].map((rowObj, rowKey) => (
-                                            <tr key={"tr_" + rowKey}>
-                                                {headers?.map((item, itemKey) => (<td key={"row_" + item + itemKey}>
-                                                    {rowObj !== undefined ? formatCellData(rowObj[item]) : ""}
-                                                </td>))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>);
-                    }
-                    )}
+                        );
+                    })}
 
                 </div>
             }
