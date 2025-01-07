@@ -422,18 +422,29 @@ export default function AggregateResults({ type }) {
             const sheets = {};
             const names = [];
             for (const objKey in aggregateData['groupedSim']) {
-                const [adeptScenario, stScenario] = objKey.split('_');
-                const data = [];
-                for (const origObj of aggregateData['groupedSim'][objKey]) {
+                const [adeptPart, stPart] = objKey.split('_');
+                // if undefined for one, just name the sheet for the one scenario that was completed
+                const sheetName = [
+                    adeptPart !== 'undefined' ? adeptPart : '',
+                    stPart !== 'undefined' ? stPart : ''
+                ].filter(Boolean).join('_');
+                
+                const rawData = aggregateData['groupedSim'][objKey];
+                const allHeaders = getHeadersEval4(HEADER_SIM_DATA[selectedEval], objKey.split('_')[0]);
+                // columns that have data in at least one row
+                const filteredHeaders = allHeaders.filter(header => hasDataInColumn(rawData, header));
+                
+                const data = rawData.map(origObj => {
                     const newObj = {};
-                    for (let x of getHeadersEval4(HEADER_SIM_DATA[selectedEval], objKey)) {
-                        newObj[x] = origObj[x] == '-' ? '' : origObj[x];
-                    }
-                    data.push(newObj);
-                }
+                    filteredHeaders.forEach(header => {
+                        newObj[header] = origObj[header] === '-' ? '' : origObj[header];
+                    });
+                    return newObj;
+                });
+                
                 const ws = XLSX.utils.json_to_sheet(data);
-                names.push(objKey);
-                sheets[objKey] = ws;
+                names.push(sheetName);
+                sheets[sheetName] = ws;
             }
             const wb = { Sheets: sheets, SheetNames: names };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
