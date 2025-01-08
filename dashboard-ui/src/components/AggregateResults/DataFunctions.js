@@ -1326,29 +1326,104 @@ const getAlignmentsByAttribute = (data) => {
     return byAttribute;
 }
 
-function getDelegationPreferences(data) {
+function getDelegationPreferences(data, evalNumber = 4) {
     const dataByPid = {};
-    for (const entry of data.filter((x) => x['ADM_Type'] === 'comparison')) {
+    const dataByTeams = {
+        'AD': { 'baseline': [], 'misaligned': [] },
+        'ST (No QOL)': { 'baseline': [], 'misaligned': [] },
+        'Kitware': { 'baseline': [], 'misaligned': [] },
+        'Parallax': { 'baseline': [], 'misaligned': [] },
+        'AD/Parallax': { 'baseline': [], 'misaligned': [] },
+        'AD/Kitware': { 'baseline': [], 'misaligned': [] },
+        'ST/Parallax': { 'baseline': [], 'misaligned': [] },
+        'ST/Kitware': { 'baseline': [], 'misaligned': [] }
+    };
+    for (const entry of data.filter((x) => x['ADM_Type'] === 'comparison' && (evalNumber == 4 || x['Attribute'] != 'QOL'))) {
         const pid = entry['Delegator_ID'];
+        const admsUsed = data.filter((x) => x['Delegator_ID'] == pid && x['Scenario'] == entry['Scenario'] && x['Attribute'] == entry['Attribute'] && x['ADM_Type'] != 'comparison');
+
         const baseline = entry['Delegation preference (A/B)'];
         const misaligned = entry['Delegation preference (A/M)'];
         if (!Object.keys(dataByPid).includes(pid)) {
             // will store 0 when baseline/misaligned is preferred, 1 otherwise
             dataByPid[pid] = { 'baseline': [], 'misaligned': [] };
         }
+        if (evalNumber == 5 && admsUsed.find((x) => x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned')?.['ADM Loading'] != 'normal') {
+            continue;
+        }
         if (['A', 'B'].includes(baseline)) {
-            dataByPid[pid]['baseline'].push(baseline == 'B' ? 0 : 1);
+            const baseVal = baseline == 'B' ? 0 : 1
+            dataByPid[pid]['baseline'].push(baseVal);
+            if (entry['TA1_Name'] == 'Adept') {
+                dataByTeams['AD']['baseline'].push(baseVal);
+                if (entry['TA2_Name'] == 'Kitware') {
+                    dataByTeams['AD/Kitware']['baseline'].push(baseVal);
+                    dataByTeams['Kitware']['baseline'].push(baseVal);
+                }
+                else {
+                    dataByTeams['AD/Parallax']['baseline'].push(baseVal);
+                    dataByTeams['Parallax']['baseline'].push(baseVal);
+                }
+            }
+            else {
+                dataByTeams['ST (No QOL)']['baseline'].push(baseVal);
+                if (entry['TA2_Name'] == 'Kitware') {
+                    dataByTeams['ST/Kitware']['baseline'].push(baseVal);
+                    dataByTeams['Kitware']['baseline'].push(baseVal);
+                }
+                else {
+                    dataByTeams['ST/Parallax']['baseline'].push(baseVal);
+                    dataByTeams['Parallax']['baseline'].push(baseVal);
+                }
+            }
+        }
+        if (evalNumber == 5 && admsUsed.find((x) => x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'misaligned')?.['ADM Loading'] != 'normal') {
+            continue;
         }
         if (['A', 'M'].includes(misaligned)) {
-            dataByPid[pid]['misaligned'].push(misaligned == 'M' ? 0 : 1);
+            const misVal = misaligned == 'M' ? 0 : 1
+            dataByPid[pid]['misaligned'].push(misVal);
+            if (entry['TA1_Name'] == 'Adept') {
+                dataByTeams['AD']['misaligned'].push(misVal);
+                if (entry['TA2_Name'] == 'Kitware') {
+                    dataByTeams['AD/Kitware']['misaligned'].push(misVal);
+                    dataByTeams['Kitware']['misaligned'].push(misVal);
+                }
+                else {
+                    dataByTeams['AD/Parallax']['misaligned'].push(misVal);
+                    dataByTeams['Parallax']['misaligned'].push(misVal);
+                }
+            }
+            else {
+                dataByTeams['ST (No QOL)']['misaligned'].push(misVal);
+                if (entry['TA2_Name'] == 'Kitware') {
+                    dataByTeams['ST/Kitware']['misaligned'].push(misVal);
+                    dataByTeams['Kitware']['misaligned'].push(misVal);
+                }
+                else {
+                    dataByTeams['ST/Parallax']['misaligned'].push(misVal);
+                    dataByTeams['Parallax']['misaligned'].push(misVal);
+                }
+            }
         }
     }
     const preferencePercents = { 'baseline': [], 'misaligned': [] };
     for (const pid of Object.keys(dataByPid)) {
-        preferencePercents['baseline'].push(dataByPid[pid]['baseline'].reduce((s, a) => s + a, 0) / dataByPid[pid]['baseline'].length);
-        preferencePercents['misaligned'].push(dataByPid[pid]['misaligned'].reduce((s, a) => s + a, 0) / dataByPid[pid]['misaligned'].length);
+        if (dataByPid[pid]['baseline'].length > 0)
+            preferencePercents['baseline'].push(dataByPid[pid]['baseline'].reduce((s, a) => s + a, 0) / dataByPid[pid]['baseline'].length);
+        if (dataByPid[pid]['misaligned'].length > 0)
+            preferencePercents['misaligned'].push(dataByPid[pid]['misaligned'].reduce((s, a) => s + a, 0) / dataByPid[pid]['misaligned'].length);
     }
-    return preferencePercents;
+    if (evalNumber == 4)
+        return preferencePercents;
+    const allPercents = { 'combined': preferencePercents };
+    for (const key of Object.keys(dataByTeams)) {
+        allPercents[key] = {
+            'baseline': dataByTeams[key]['baseline'].reduce((s, a) => s + a, 0) / dataByTeams[key]['baseline'].length,
+            'misaligned': dataByTeams[key]['misaligned'].reduce((s, a) => s + a, 0) / dataByTeams[key]['misaligned'].length
+        };
+    }
+    return allPercents;
 }
 
 function getDelegationVsAlignment(data) {

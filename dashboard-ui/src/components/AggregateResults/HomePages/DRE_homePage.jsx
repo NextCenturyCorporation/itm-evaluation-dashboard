@@ -4,7 +4,11 @@ import gql from "graphql-tag";
 import { getRQ134Data } from "../../Research/utils";
 import { getAlignmentComparisonVsTrustRatings, getAlignmentsByAdmType, getAlignmentsByAttribute, getDelegationPreferences, getDelegationVsAlignment, getRatingsBySelectionStatus } from "../DataFunctions";
 import CanvasJSReact from '@canvasjs/react-charts';
-import { calculateBestFitLine, getBoxWhiskerData, getLogisticData, getMean, getMeanAcrossAll, getSeAcrossAll, getStandardError } from "../statistics";
+import { calculateBestFitLine, getBoxWhiskerData, getMean, getMeanAcrossAll, getSeAcrossAll, getStandardError } from "../statistics";
+import Accordion from 'react-bootstrap/Accordion';
+import MenuIcon from '@material-ui/icons/Menu';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
@@ -55,6 +59,10 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
         fetchPolicy: 'no-cache'
     });
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNumber }, fetchPolicy: 'no-cache' });
+    const { data: dreAdms } = useQuery(GET_ADM_DATA, {
+        variables: { "evalNumber": 4 }
+    });
+    const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
 
     const [data, setData] = React.useState(null);
     const [alignVsTrust, setAlignVsTrust] = React.useState(null);
@@ -62,14 +70,34 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
     const [alignmentsByAdmType, setAlignmentsByAdmType] = React.useState(null);
     const [alignmentsByAttribute, setAlignmentsByAttribute] = React.useState(null);
     const [delegationPreferences, setDelegationPreferences] = React.useState(null);
+    const [teamDelegation, setTeamDelegation] = React.useState(null);
     const [delVsAlignment, setDelVsAlignment] = React.useState(null);
     const [ratingBySelection, setRatingBySelection] = React.useState(null);
     const [groupTargets, setGroupTargets] = React.useState(null);
+    const [dreDataForPh1, setDreDataForPh1] = React.useState(null);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const scrollToElement = (el) => {
+        setAnchorEl(null);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval) {
+        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison
+            && dataSim?.getAllSimAlignmentByEval && dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval) {
             const origData = getRQ134Data(evalNumber, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
-            setData(origData.allObjs);
+            setData(origData.allObjs.filter((x) => x['Competence Error'] == 0));
+            if (evalNumber == 5) {
+                const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true);
+                setDreDataForPh1(dreData.allObjs);
+            }
             const tmpGroupTargets = {};
             for (const x of dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNumber)) {
                 if (Object.keys(x).includes('group_targets')) {
@@ -83,20 +111,33 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
             }
             setGroupTargets(tmpGroupTargets);
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, fullData]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, fullData, dreSim, dreAdms]);
 
     React.useEffect(() => {
         if (data) {
             const trustData = getAlignmentComparisonVsTrustRatings(data);
-            setAlignVsTrust(trustData.byAttribute);
+            if (evalNumber == 5) {
+                const tmpData = structuredClone(data);
+                tmpData.push(...dreDataForPh1);
+                const trustWithDre = getAlignmentComparisonVsTrustRatings(tmpData);
+                setAlignVsTrust(trustWithDre.byAttribute);
+            }
+            else {
+                setAlignVsTrust(trustData.byAttribute);
+            }
+
             setTrustVsAlignStatus(trustData.byAlignment);
             setAlignmentsByAdmType(getAlignmentsByAdmType(data));
             setAlignmentsByAttribute(getAlignmentsByAttribute(data));
-            setDelegationPreferences(getDelegationPreferences(data));
+            const delPrefs = getDelegationPreferences(data, evalNumber);
+            setDelegationPreferences(evalNumber == 4 ? delPrefs : delPrefs['combined']);
+            if (evalNumber == 5) {
+                setTeamDelegation(delPrefs);
+            }
             setDelVsAlignment(getDelegationVsAlignment(data));
             setRatingBySelection(getRatingsBySelectionStatus(data));
         }
-    }, [data, fullData]);
+    }, [data, fullData, dreDataForPh1]);
 
 
     const generateAlignedBaselineChart = (alignedAdmName, baselineAdmName, targets, alignColor = '#5B89C1', baselineColor = '#C15B5B') => {
@@ -148,8 +189,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                     color: '#555',
                     toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
                     dataPoints: targets.map((t) => { return { y: getSeAcrossAll(admAlignment[baselineAdmName], t.target), label: t.label } })
-                }
-                ]
+                    }]
             }} />
         );
     };
@@ -279,12 +319,20 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                 'aligned': 'ALIGN-ADM-ComparativeRegression-ICL-Template'
             }
         };
-        const targetMap = {
+        const targetMap = evalNumber == 4 ? {
             'MJ': { 'high': 'ADEPT-DryRun-Moral judgement-Group-High', 'low': 'ADEPT-DryRun-Moral judgement-Group-Low' },
             'IO': { 'high': 'ADEPT-DryRun-Ingroup Bias-Group-High', 'low': 'ADEPT-DryRun-Ingroup Bias-Group-Low' },
             'QOL': { 'high': 'qol-group-target-dre-1', 'low': 'qol-group-target-dre-2' },
             'VOL': { 'high': 'vol-group-target-dre-1', 'low': 'vol-group-target-dre-2' },
+        } : {
+            'MJ': { 'high': 'ADEPT-Phase1Eval-Moral judgement-Group-High', 'low': 'ADEPT-Phase1Eval-Moral judgement-Group-Low' },
+            'IO': { 'high': 'ADEPT-Phase1Eval-Ingroup Bias-Group-High', 'low': 'ADEPT-Phase1Eval-Ingroup Bias-Group-Low' },
+            'QOL': { 'high': 'qol-group-target-1-final-eval', 'low': 'qol-group-target-2-final-eval' },
+            'VOL': { 'high': 'vol-group-target-1-final-eval', 'low': 'vol-group-target-2-final-eval' },
         };
+        if (!Object.keys(targetMap).includes(att) || !Object.keys(groupTargets).includes(targetMap[att]['high'])) {
+            return <></>;
+        }
         return (
             <CanvasJSChart options={{
                 width: "700",
@@ -471,54 +519,87 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
         );
     };
 
+    const generateDelPrefByTeamChart = () => {
+        return <CanvasJSChart options={{
+            width: "1200",
+            dataPointWidth: 40,
+            toolTip: {
+                shared: true
+            },
+            axisX: {
+                interval: 1
+            },
+            axisY: {
+                minimum: 0,
+                maximum: 1
+            },
+            legend: {
+                verticalAlign: "top",
+                horizontalAlign: "center",
+                cursor: "pointer"
+            },
+            data: Object.keys(teamDelegation).filter((t) => t != 'combined').map((t) => {
+                return {
+                    type: "column",
+                    name: t,
+                    // color: alignColor,
+                    showInLegend: true,
+                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                    dataPoints: [{ y: teamDelegation[t]['baseline'], label: 'vs. Baseline ADM' }, { y: teamDelegation[t]['misaligned'], label: 'vs. Misaligned ADM' }]
+                }
+            })
+        }} />
+    }
+
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
 
-    return (<>
-        <div className='chart-home-container'>
-            <div className='chart-header q1'>
-                <div className='chart-header-label q1'>
-                    <h4>1. Does alignment score predict measures of trust?</h4>
-                    {alignVsTrust &&
-                        <div className='rq1-lines'>
-                            {Object.keys(alignVsTrust).map((att) => {
-                                return <div key={att + 'trust/align'} className="boxWhisker outlinedPlot">
-                                    <h4>Trust Ratings predicted by  Alignment Score on {att}</h4>
-                                    <CanvasJSChart options={{
-                                        maintainAspectRatio: false,
-                                        height: "250",
-                                        width: "700",
-                                        axisX: {
-                                            gridThickness: 0,
-                                            title: "Alignment score (Delegator|Observed_ADM (target))",
-                                            maximum: 1.04
-                                        },
-                                        axisY: {
-                                            gridThickness: 0,
-                                            title: "Trust_Rating",
-                                            maximum: 5.25,
-                                            minimum: 0.8
-                                        },
-                                        data: [
-                                            {
-                                                color: '#5B89C130',
-                                                type: "scatter", dataPoints: alignVsTrust[att]
+    return (<div className='accordion-homepage'>
+        <Accordion defaultActiveKey={["1", "2", "3"]} alwaysOpen>
+            <Accordion.Item eventKey="1" id='rq1'>
+                <Accordion.Header className='accordion-header-homepage'>1. Does alignment score predict measures of trust?</Accordion.Header>
+                <Accordion.Body>
+                    <div className='chart-header-label q1'>
+                        {alignVsTrust &&
+                            <div className='rq1-lines'>
+                                {Object.keys(alignVsTrust).map((att) => {
+                                    return <div key={att + 'trust/align'} className="boxWhisker outlinedPlot">
+                                        <h4>Trust Ratings predicted by  Alignment Score on {att}</h4>
+                                        <CanvasJSChart options={{
+                                            maintainAspectRatio: false,
+                                            height: "250",
+                                            width: "700",
+                                            axisX: {
+                                                gridThickness: 0,
+                                                title: "Alignment score (Delegator|Observed_ADM (target))",
+                                                maximum: 1.04
                                             },
-                                            {
-                                                color: '#000',
-                                                lineThickness: 4,
-                                                markerSize: 0,
-                                                type: "line", dataPoints: calculateBestFitLine(alignVsTrust[att])
-                                            }
-                                        ]
-                                    }} />
+                                            axisY: {
+                                                gridThickness: 0,
+                                                title: "Trust_Rating",
+                                                maximum: 5.25,
+                                                minimum: 0.8
+                                            },
+                                            data: [
+                                                {
+                                                    color: '#5B89C130',
+                                                    type: "scatter", dataPoints: alignVsTrust[att]
+                                                },
+                                                {
+                                                    color: '#000',
+                                                    lineThickness: 4,
+                                                    markerSize: 0,
+                                                    type: "line", dataPoints: calculateBestFitLine(alignVsTrust[att])
+                                                }
+                                            ]
+                                        }} />
 
-                                </div>
-                            })}
-                        </div>
-                    }
+                                    </div>
+                                })}
+                            </div>
+                        }
 
-                    {/* {alignmentsByAdmType &&
+                        {alignmentsByAdmType && evalNumber == 5 &&
                         <div className='q2-adms'>
                             <div className="outlinedPlot">
                                 <h4>Alignment scores between delegator and targets (expected distribution of alignment scores by ADM classification)</h4>
@@ -644,467 +725,416 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                                 }} />
                             </div>
                         </div>
-                    } */}
+                        }
 
-                    {trustVsAlignStatus && <div className="rq1-lines">
-                        {generateTrustVsAlignedStatusChart('ADEPT')}
-                        {generateTrustVsAlignedStatusChart('SoarTech')}
+                        {trustVsAlignStatus && <div className="rq1-lines">
+                            {generateTrustVsAlignedStatusChart('ADEPT')}
+                            {generateTrustVsAlignedStatusChart('SoarTech')}
+                        </div>
+                        }
                     </div>
-                    }
-                </div>
-            </div>
-        </div>
+                </Accordion.Body>
+            </Accordion.Item>
 
-
-        <div className='chart-home-container'>
-            <div className='chart-header q2'>
-                <div className='chart-header-label q2'>
-                    <h4>2. Do aligned ADMs have the ability to tune to a subset of the attribute space?</h4>
-                    {evalNumber != 5 && admAlignment && groupTargets && <div className='q2-scatters'>
-                        <div className='outlinedPlot'>
-                            <h3>Parallax ADMs and Human DMs on Group MJ Attributes</h3>
-                            {generateAlignmentScatter('Parallax', 'MJ')}
-                        </div>
-                        <div className='outlinedPlot'>
-                            <h3>Parallax ADMs and Human DMs on Group IO Attributes</h3>
-                            {generateAlignmentScatter('Parallax', 'IO')}
-                        </div>
-                        <div className='outlinedPlot'>
-                            <h3>Parallax ADMs and Human DMs on Group QOL Attributes</h3>
-                            {generateAlignmentScatter('Parallax', 'QOL')}
-                        </div>
-                        <div className='outlinedPlot'>
-                            <h3>Parallax ADMs and Human DMs on Group VOL Attributes</h3>
-                            {generateAlignmentScatter('Parallax', 'VOL')}
-                        </div>
-                        <div className='outlinedPlot'>
-                            <h3>Kitware ADMs and Human DMs on Group MJ Attributes</h3>
-                            {generateAlignmentScatter('Kitware', 'MJ')}
-                        </div>
-                        <div className='outlinedPlot'>
-                            <h3>Kitware ADMs and Human DMs on Group IO Attributes</h3>
-                            {generateAlignmentScatter('Kitware', 'IO')}
-                        </div>
-                        <div className='outlinedPlot'>
-                            <h3>Kitware ADMs and Human DMs on Group QOL Attributes</h3>
-                            {generateAlignmentScatter('Kitware', 'QOL')}
-                        </div>
-                        <div className='outlinedPlot'>
-                            <h3>Kitware ADMs and Human DMs on Group VOL Attributes</h3>
-                            {generateAlignmentScatter('Kitware', 'VOL')}
-                        </div>
-                    </div>}
-
-                    {admAlignment &&
-                        <div className='q2-adms'>
-                            <div>
-                                <h3>Parallax Aligned and Baseline ADM Alignment Scores on Group Targets across ADEPT group-aligned targets</h3>
-                                {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
-                                    [{ 'target': 'ADEPT-DryRun-Ingroup Bias-Group-High', 'label': 'IO Group High' },
-                                    { 'target': 'ADEPT-DryRun-Moral judgement-Group-High', 'label': 'MJ Group High' },
-                                    { 'target': 'ADEPT-DryRun-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
-                                    { 'target': 'ADEPT-DryRun-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
-                            </div>
-
-                            <div>
-                                <h3>Parallax Aligned and Baseline ADM Alignment Scores on Group Targets across SoarTech group-aligned targets</h3>
-                                {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
-                                    [{ 'target': 'qol-group-target-dre-1', 'label': 'QOL Group 1' },
-                                    { 'target': 'qol-group-target-dre-2', 'label': 'QOL Group 2' },
-                                    { 'target': 'vol-group-target-dre-1', 'label': 'VOL Group 1' },
-                                    { 'target': 'vol-group-target-dre-2', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
-                            </div>
-
-                            <div>
-                                <h3>Kitware Aligned and Baseline ADM Alignment Scores on Group Targets across ADEPT group-aligned targets</h3>
-                                {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
-                                    [{ 'target': 'ADEPT-DryRun-Ingroup Bias-Group-High', 'label': 'IO Group High' },
-                                    { 'target': 'ADEPT-DryRun-Moral judgement-Group-High', 'label': 'MJ Group High' },
-                                    { 'target': 'ADEPT-DryRun-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
-                                    { 'target': 'ADEPT-DryRun-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
-                            </div>
-
-                            <div>
-                                <h3>Kitware Aligned and Baseline ADM Alignment Scores on Group Targets across SoarTech group-aligned targets</h3>
-                                {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
-                                    [{ 'target': 'qol-group-target-dre-1', 'label': 'QOL Group 1' },
-                                    { 'target': 'qol-group-target-dre-2', 'label': 'QOL Group 2' },
-                                    { 'target': 'vol-group-target-dre-1', 'label': 'VOL Group 1' },
-                                    { 'target': 'vol-group-target-dre-2', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
-                            </div>
-
-                            <div>
-                                <h3>Parallax Aligned and Baseline ADM Alignment Scores on Individual Targets across Attributes</h3>
-                                {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
-                                    [{ 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
-                                    { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
-                                    { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
-                                    { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
-                            </div>
-
-                            <div>
-                                <h3>Parallax ADMs Alignment by Target on Moral Judgments</h3>
-                                {generateAlignmentByTargetLineGraph('Parallax', 'MJ')}
-                            </div>
-
-                            <div>
-                                <h3>Parallax ADMs Alignment by Target on Ingroup/Outgroup Bias</h3>
-                                {generateAlignmentByTargetLineGraph('Parallax', 'IO')}
-                            </div>
-
-                            <div>
-                                <h3>Parallax ADMs Alignment by Target on Quality of Life</h3>
-                                {generateAlignmentByTargetLineGraph('Parallax', 'QOL')}
-                            </div>
-
-                            <div>
-                                <h3>Parallax ADMs Alignment by Target on Value of Life</h3>
-                                {generateAlignmentByTargetLineGraph('Parallax', 'VOL')}
-                            </div>
-
-                            <div>
-                                <h3>Kitware Aligned and Baseline ADM Alignment Scores on Individual Targets across Attributes</h3>
-                                {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
-                                    [{ 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
-                                    { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
-                                    { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
-                                    { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
-                            </div>
-
-                            <div>
-                                <h3>Kitware ADMs Alignment by Target on Moral Judgments</h3>
-                                {generateAlignmentByTargetLineGraph('Kitware', 'MJ')}
-                            </div>
-
-                            <div>
-                                <h3>Kitware ADMs Alignment by Target on Ingroup/Outgroup Bias</h3>
-                                {generateAlignmentByTargetLineGraph('Kitware', 'IO')}
-                            </div>
-
-                            <div>
-                                <h3>Kitware ADMs Alignment by Target on Quality of Life</h3>
-                                {generateAlignmentByTargetLineGraph('Kitware', 'QOL')}
-                            </div>
-
-                            <div>
-                                <h3>Kitware ADMs Alignment by Target on Value of Life</h3>
-                                {generateAlignmentByTargetLineGraph('Kitware', 'VOL')}
-                            </div>
-
-                        </div>}
-                </div>
-            </div>
-        </div>
-
-        <div className='chart-home-container'>
-            <div className='chart-header q3'>
-                <div className='chart-header-label q3'>
-                    <h4>3. Does alignment affect delegation preference for ADMs?</h4>
-                    {delegationPreferences &&
-                        <div className='q2-adms'>
+            <Accordion.Item eventKey="2" id='rq2'>
+                <Accordion.Header className='accordion-header-homepage spaced-header'>2. Do aligned ADMs have the ability to tune to a subset of the attribute space?</Accordion.Header>
+                <Accordion.Body>
+                    <div className='chart-header-label q2'>
+                        {admAlignment && groupTargets && <div className='q2-scatters'>
                             <div className='outlinedPlot'>
-                                <h4>Delegation (%) to Aligned DM on Forced Choice</h4>
-                                <CanvasJSChart options={{
-                                    width: "1200",
-                                    dataPointWidth: 80,
-                                    toolTip: {
-                                        shared: true
-                                    },
-                                    axisX: {
-                                        interval: 1
-                                    },
-                                    axisY: {
-                                        minimum: 0,
-                                        maximum: 1,
-                                        title: '% delegation preference for Aligned ADM',
-                                        titleFontSize: 15
-                                    },
-                                    legend: {
-                                        verticalAlign: "top",
-                                        horizontalAlign: "center",
-                                        cursor: "pointer"
-                                    },
-                                    data: [{
-                                        type: "column",
-                                        name: "Aligned",
-                                        color: '#5B89C1',
-                                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                                        dataPoints: [{ y: getMeanAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getMeanAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
-                                    },
-                                    {
-                                        type: "error",
-                                        color: "#555",
-                                        name: "Variability Range",
-                                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                                        dataPoints: [{ y: getSeAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getSeAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
-                                    }
-                                    ]
-                                }} />
+                                <h3>Parallax ADMs and Human DMs on Group MJ Attributes</h3>
+                                {generateAlignmentScatter('Parallax', 'MJ')}
+                            </div>
+                            <div className='outlinedPlot'>
+                                <h3>Parallax ADMs and Human DMs on Group IO Attributes</h3>
+                                {generateAlignmentScatter('Parallax', 'IO')}
+                            </div>
+                            <div className='outlinedPlot'>
+                                <h3>Parallax ADMs and Human DMs on Group QOL Attributes</h3>
+                                {generateAlignmentScatter('Parallax', 'QOL')}
+                            </div>
+                            <div className='outlinedPlot'>
+                                <h3>Parallax ADMs and Human DMs on Group VOL Attributes</h3>
+                                {generateAlignmentScatter('Parallax', 'VOL')}
+                            </div>
+                            <div className='outlinedPlot'>
+                                <h3>Kitware ADMs and Human DMs on Group MJ Attributes</h3>
+                                {generateAlignmentScatter('Kitware', 'MJ')}
+                            </div>
+                            <div className='outlinedPlot'>
+                                <h3>Kitware ADMs and Human DMs on Group IO Attributes</h3>
+                                {generateAlignmentScatter('Kitware', 'IO')}
+                            </div>
+                            <div className='outlinedPlot'>
+                                <h3>Kitware ADMs and Human DMs on Group QOL Attributes</h3>
+                                {generateAlignmentScatter('Kitware', 'QOL')}
+                            </div>
+                            <div className='outlinedPlot'>
+                                <h3>Kitware ADMs and Human DMs on Group VOL Attributes</h3>
+                                {generateAlignmentScatter('Kitware', 'VOL')}
                             </div>
                         </div>}
-                    {alignmentsByAttribute && <div className='q2-adms'>
-                        <div className="outlinedPlot">
-                            <h4>Alignment scores between delegator and observed ADMs by Attribute</h4>
-                            <CanvasJSChart options={{
-                                axisX: {
-                                    gridThickness: 0,
-                                    title: "Attribute",
-                                    minimum: -0.5,
-                                    maximum: 3.5,
-                                    tickLength: 0
-                                },
-                                axisY: {
-                                    gridThickness: 0,
-                                    title: "Alignment score (Delegator|Observed_ADM)",
-                                    maximum: 1.01,
-                                    minimum: 0.15
-                                },
-                                axisX2: {
-                                    gridThickness: 0,
-                                    minimum: -0.5,
-                                    maximum: 3.5,
-                                    tickLength: 0,
-                                    labelFormatter: () => ""
-                                },
-                                maintainAspectRatio: false,
-                                height: "400",
-                                width: "1200",
-                                dataPointMaxWidth: 25,
-                                data: [{
-                                    type: "boxAndWhisker", dataPoints: [
-                                        { label: "IO", y: getBoxWhiskerData(alignmentsByAttribute.IO.adms) },
-                                        { label: "MJ", y: getBoxWhiskerData(alignmentsByAttribute.MJ.adms) },
-                                        { label: "QOL", y: getBoxWhiskerData(alignmentsByAttribute.QOL.adms) },
-                                        { label: "VOL", y: getBoxWhiskerData(alignmentsByAttribute.VOL.adms) }
-                                    ],
-                                    upperBoxColor: "#78a1e3",
-                                    lowerBoxColor: "#78a1e3",
-                                    color: "black",
-                                },
-                                {
-                                    type: 'scatter',
-                                    axisXType: 'secondary',
-                                    dataPoints: [...alignmentsByAttribute.IO.admPoints,
-                                    ...alignmentsByAttribute.MJ.admPoints,
-                                    ...alignmentsByAttribute.QOL.admPoints,
-                                    ...alignmentsByAttribute.VOL.admPoints],
-                                    markerSize: 5,
-                                    color: '#55555530'
-                                },
-                                {
-                                    type: "scatter",
-                                    color: '#555',
-                                    markerType: "square",
-                                    markerSize: 12,
-                                    axisXType: 'secondary',
-                                    dataPoints: [
-                                        { x: 0, y: getMeanAcrossAll(alignmentsByAttribute.IO, 'adms'), l: "IO" },
-                                        { x: 1, y: getMeanAcrossAll(alignmentsByAttribute.MJ, 'adms'), l: "MJ" },
-                                        { x: 2, y: getMeanAcrossAll(alignmentsByAttribute.QOL, 'adms'), l: "QOL" },
-                                        { x: 3, y: getMeanAcrossAll(alignmentsByAttribute.VOL, 'adms'), l: "VOL" }
-                                    ]
-                                }
-                                ]
-                            }} />
-                        </div>
-                        <div className="outlinedPlot">
-                            <h4>Rescaled alignment scores between delegator and observed ADMs by Attribute</h4>
-                            <CanvasJSChart options={{
-                                axisX: {
-                                    gridThickness: 0,
-                                    title: "Attribute",
-                                    minimum: -0.5,
-                                    maximum: 3.5,
-                                    tickLength: 0
-                                },
-                                axisY: {
-                                    gridThickness: 0,
-                                    title: "Alignment score (Delegator|Observed_ADM)",
-                                    maximum: 1.01,
-                                    minimum: -0.01
-                                },
-                                axisX2: {
-                                    gridThickness: 0,
-                                    minimum: -0.5,
-                                    maximum: 3.5,
-                                    tickLength: 0,
-                                    labelFormatter: () => ""
-                                },
-                                maintainAspectRatio: false,
-                                height: "400",
-                                width: "1200",
-                                dataPointMaxWidth: 25,
-                                data: [{
-                                    type: "boxAndWhisker", dataPoints: [
-                                        { label: "IO", y: getBoxWhiskerData(alignmentsByAttribute.IO.rescaledAdms) },
-                                        { label: "MJ", y: getBoxWhiskerData(alignmentsByAttribute.MJ.rescaledAdms) },
-                                        { label: "QOL", y: getBoxWhiskerData(alignmentsByAttribute.QOL.rescaledAdms) },
-                                        { label: "VOL", y: getBoxWhiskerData(alignmentsByAttribute.VOL.rescaledAdms) }
-                                    ],
-                                    upperBoxColor: "#78a1e3",
-                                    lowerBoxColor: "#78a1e3",
-                                    color: "black",
-                                },
-                                {
-                                    type: 'scatter',
-                                    axisXType: 'secondary',
-                                    dataPoints: [...alignmentsByAttribute.IO.rescaledAdmPoints,
-                                    ...alignmentsByAttribute.MJ.rescaledAdmPoints,
-                                    ...alignmentsByAttribute.QOL.rescaledAdmPoints,
-                                    ...alignmentsByAttribute.VOL.rescaledAdmPoints],
-                                    markerSize: 5,
-                                    color: '#55555530'
-                                },
-                                {
-                                    type: "scatter",
-                                    color: '#555',
-                                    markerType: "square",
-                                    markerSize: 12,
-                                    axisXType: 'secondary',
-                                    dataPoints: [
-                                        { x: 0, y: getMeanAcrossAll(alignmentsByAttribute.IO, 'rescaledAdms'), l: "IO" },
-                                        { x: 1, y: getMeanAcrossAll(alignmentsByAttribute.MJ, 'rescaledAdms'), l: "MJ" },
-                                        { x: 2, y: getMeanAcrossAll(alignmentsByAttribute.QOL, 'rescaledAdms'), l: "QOL" },
-                                        { x: 3, y: getMeanAcrossAll(alignmentsByAttribute.VOL, 'rescaledAdms'), l: "VOL" }
-                                    ]
-                                }]
-                            }} />
-                        </div>
-                    </div>}
-                    {/* {delVsAlignment && <div className='rq3-lines'>
-                        {['IO', 'MJ', 'QOL', 'VOL'].map((att) => {
-                            return <div key={att + 'delegation/align'} className='rq1-lines'>
-                                <div className="outlinedPlot">
-                                    <h4>Delegation preference (aligned vs. baseline) predicted by Alignment Score on {att}</h4>
+
+                        {admAlignment &&
+                            <div className='q2-adms'>
+                                <div>
+                                    <h3>Parallax Aligned and Baseline ADM Alignment Scores on Group Targets across ADEPT group-aligned targets</h3>
+                                    {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
+                                        [{ 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-High' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-High', 'label': 'IO Group High' },
+                                            { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-High' : 'ADEPT-Phase1Eval-Moral judgement-Group-High', 'label': 'MJ Group High' },
+                                            { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-Low' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
+                                            { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-Low' : 'ADEPT-Phase1Eval-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
+                                </div>
+
+                                <div>
+                                    <h3>Parallax Aligned and Baseline ADM Alignment Scores on Group Targets across SoarTech group-aligned targets</h3>
+                                    {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
+                                        [{ 'target': evalNumber == 4 ? 'qol-group-target-dre-1' : 'qol-group-target-1-final-eval', 'label': 'QOL Group 1' },
+                                            { 'target': evalNumber == 4 ? 'qol-group-target-dre-2' : 'qol-group-target-2-final-eval', 'label': 'QOL Group 2' },
+                                            { 'target': evalNumber == 4 ? 'vol-group-target-dre-1' : 'vol-group-target-1-final-eval', 'label': 'VOL Group 1' },
+                                            { 'target': evalNumber == 4 ? 'vol-group-target-dre-2' : 'vol-group-target-2-final-eval', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
+                                </div>
+
+                                <div>
+                                    <h3>Kitware Aligned and Baseline ADM Alignment Scores on Group Targets across ADEPT group-aligned targets</h3>
+                                    {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
+                                        [{ 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-High' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-High', 'label': 'IO Group High' },
+                                            { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-High' : 'ADEPT-Phase1Eval-Moral judgement-Group-High', 'label': 'MJ Group High' },
+                                            { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-Low' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
+                                            { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-Low' : 'ADEPT-Phase1Eval-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
+                                </div>
+
+                                <div>
+                                    <h3>Kitware Aligned and Baseline ADM Alignment Scores on Group Targets across SoarTech group-aligned targets</h3>
+                                    {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
+                                        [{ 'target': evalNumber == 4 ? 'qol-group-target-dre-1' : 'qol-group-target-1-final-eval', 'label': 'QOL Group 1' },
+                                            { 'target': evalNumber == 4 ? 'qol-group-target-dre-2' : 'qol-group-target-2-final-eval', 'label': 'QOL Group 2' },
+                                            { 'target': evalNumber == 4 ? 'vol-group-target-dre-1' : 'vol-group-target-1-final-eval', 'label': 'VOL Group 1' },
+                                            { 'target': evalNumber == 4 ? 'vol-group-target-dre-2' : 'vol-group-target-2-final-eval', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
+                                </div>
+
+                                <div>
+                                    <h3>Parallax Aligned and Baseline ADM Alignment Scores on Individual Targets across Attributes</h3>
+                                    {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
+                                        [{ 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
+                                        { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
+                                        { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
+                                        { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
+                                </div>
+
+                                <div>
+                                    <h3>Parallax ADMs Alignment by Target on Moral Judgments</h3>
+                                    {generateAlignmentByTargetLineGraph('Parallax', 'MJ')}
+                                </div>
+
+                                <div>
+                                    <h3>Parallax ADMs Alignment by Target on Ingroup/Outgroup Bias</h3>
+                                    {generateAlignmentByTargetLineGraph('Parallax', 'IO')}
+                                </div>
+
+                                <div>
+                                    <h3>Parallax ADMs Alignment by Target on Quality of Life</h3>
+                                    {generateAlignmentByTargetLineGraph('Parallax', 'QOL')}
+                                </div>
+
+                                <div>
+                                    <h3>Parallax ADMs Alignment by Target on Value of Life</h3>
+                                    {generateAlignmentByTargetLineGraph('Parallax', 'VOL')}
+                                </div>
+
+                                <div>
+                                    <h3>Kitware Aligned and Baseline ADM Alignment Scores on Individual Targets across Attributes</h3>
+                                    {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
+                                        [{ 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
+                                        { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
+                                        { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
+                                        { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
+                                </div>
+
+                                <div>
+                                    <h3>Kitware ADMs Alignment by Target on Moral Judgments</h3>
+                                    {generateAlignmentByTargetLineGraph('Kitware', 'MJ')}
+                                </div>
+
+                                <div>
+                                    <h3>Kitware ADMs Alignment by Target on Ingroup/Outgroup Bias</h3>
+                                    {generateAlignmentByTargetLineGraph('Kitware', 'IO')}
+                                </div>
+
+                                <div>
+                                    <h3>Kitware ADMs Alignment by Target on Quality of Life</h3>
+                                    {generateAlignmentByTargetLineGraph('Kitware', 'QOL')}
+                                </div>
+
+                                <div>
+                                    <h3>Kitware ADMs Alignment by Target on Value of Life</h3>
+                                    {generateAlignmentByTargetLineGraph('Kitware', 'VOL')}
+                                </div>
+
+                            </div>}
+                    </div>
+                </Accordion.Body>
+            </Accordion.Item>
+
+            <Accordion.Item eventKey="3" id='rq3'>
+                <Accordion.Header className='accordion-header-homepage spaced-header'>3. Does alignment affect delegation preference for ADMs?</Accordion.Header>
+                <Accordion.Body>
+                    <div className='chart-header-label q3'>
+                        {delegationPreferences &&
+                            <div className='q2-adms'>
+                                <div className='outlinedPlot'>
+                                    <h4>Delegation (%) to Aligned DM on Forced Choice</h4>
                                     <CanvasJSChart options={{
-                                        maintainAspectRatio: false,
-                                        height: "250",
-                                        width: "700",
+                                        width: "1200",
+                                        dataPointWidth: 80,
+                                        toolTip: {
+                                            shared: true
+                                        },
                                         axisX: {
-                                            gridThickness: 0,
-                                            title: "Alignment score (Delegator|Observed_ADM (target))",
-                                            minimum: Math.min(...delVsAlignment?.delegationVsAlignmentBaseline?.[att].map((x) => x.x)) - 0.02,
-                                            maximum: 1.02
+                                            interval: 1
                                         },
                                         axisY: {
-                                            gridThickness: 0,
-                                            title: "Delegation preference (A/B)",
-                                            maximum: 1.05,
-                                            minimum: -0.05
+                                            minimum: 0,
+                                            maximum: 1,
+                                            title: '% delegation preference for Aligned ADM',
+                                            titleFontSize: 15
                                         },
-                                        data: [
-                                            {
-                                                color: '#5B89C150',
-                                                type: "scatter", dataPoints: delVsAlignment?.delegationVsAlignmentBaseline?.[att]
-                                            },
-                                            {
-                                                color: '#000',
-                                                lineThickness: 4,
-                                                markerSize: 0,
-                                                type: "line", dataPoints: getLogisticData(delVsAlignment?.delegationVsAlignmentBaseline?.[att])
-                                            }
+                                        legend: {
+                                            verticalAlign: "top",
+                                            horizontalAlign: "center",
+                                            cursor: "pointer"
+                                        },
+                                        data: [{
+                                            type: "column",
+                                            name: "Aligned",
+                                            color: '#5B89C1',
+                                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                            dataPoints: [{ y: getMeanAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getMeanAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
+                                        },
+                                        {
+                                            type: "error",
+                                            color: "#555",
+                                            name: "Variability Range",
+                                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                            dataPoints: [{ y: getSeAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getSeAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
+                                        }
                                         ]
                                     }} />
-
                                 </div>
-                                <div className="outlinedPlot">
-                                    <h4>Delegation preference (aligned vs. misaligned) predicted by Alignment Score on {att}</h4>
-                                    <CanvasJSChart options={{
-                                        maintainAspectRatio: false,
-                                        height: "250",
-                                        width: "700",
-                                        axisX: {
-                                            gridThickness: 0,
-                                            title: "Alignment score (Delegator|Observed_ADM (target))",
-                                            minimum: Math.min(...delVsAlignment?.delegationVsAlignmentMisaligned?.[att].map((x) => x.x)) - 0.02,
-                                            maximum: 1.02
-                                        },
-                                        axisY: {
-                                            gridThickness: 0,
-                                            title: "Delegation preference (A/M)",
-                                            maximum: 1.05,
-                                            minimum: -0.05
-                                        },
-                                        data: [
-                                            {
-                                                color: '#5B89C150',
-                                                type: "scatter", dataPoints: delVsAlignment?.delegationVsAlignmentMisaligned?.[att]
-                                            },
-                                            {
-                                                color: '#000',
-                                                lineThickness: 4,
-                                                markerSize: 0,
-                                                type: "line", dataPoints: getLogisticData(delVsAlignment?.delegationVsAlignmentMisaligned?.[att])
-                                            }
-                                        ]
-                                    }} />
-
+                            </div>}
+                        {evalNumber == 5 && teamDelegation &&
+                            <div className='q2-adms'>
+                                <div className='outlinedPlot'>
+                                    <h4>Proportion of Delegation Preference By Teams</h4>
+                                    {generateDelPrefByTeamChart()}
                                 </div>
-                            </div>
-                        })}
-                    </div>} */}
-                    {ratingBySelection &&
-                        <div className='q2-adms'>
-                            <div>
-                                <h3>Individual DM Ratings by Delegation Selection Status</h3>
+                            </div>}
+                        {alignmentsByAttribute && <div className='q2-adms'>
+                            <div className="outlinedPlot">
+                                <h4>Alignment scores between delegator and observed ADMs by Attribute</h4>
                                 <CanvasJSChart options={{
-                                    width: "1200",
-                                    dataPointWidth: 80,
-                                    toolTip: {
-                                        shared: true
-                                    },
                                     axisX: {
-                                        interval: 1
+                                        gridThickness: 0,
+                                        title: "Attribute",
+                                        minimum: -0.5,
+                                        maximum: 3.5,
+                                        tickLength: 0
                                     },
                                     axisY: {
-                                        minimum: 0
+                                        gridThickness: 0,
+                                        title: "Alignment score (Delegator|Observed_ADM)",
+                                        maximum: 1.01,
+                                        minimum: 0.15
                                     },
-                                    legend: {
-                                        verticalAlign: "top",
-                                        horizontalAlign: "center",
-                                        cursor: "pointer"
+                                    axisX2: {
+                                        gridThickness: 0,
+                                        minimum: -0.5,
+                                        maximum: 3.5,
+                                        tickLength: 0,
+                                        labelFormatter: () => ""
                                     },
+                                    maintainAspectRatio: false,
+                                    height: "400",
+                                    width: "1200",
+                                    dataPointMaxWidth: 25,
                                     data: [{
-                                        type: "column",
-                                        name: "Not Selected",
-                                        color: '#5B89C1',
-                                        showInLegend: true,
-                                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                                        dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
-                                        { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
+                                        type: "boxAndWhisker", dataPoints: [
+                                            { label: "IO", y: getBoxWhiskerData(alignmentsByAttribute.IO.adms) },
+                                            { label: "MJ", y: getBoxWhiskerData(alignmentsByAttribute.MJ.adms) },
+                                            { label: "QOL", y: getBoxWhiskerData(alignmentsByAttribute.QOL.adms) },
+                                            { label: "VOL", y: getBoxWhiskerData(alignmentsByAttribute.VOL.adms) }
+                                        ],
+                                        upperBoxColor: "#78a1e3",
+                                        lowerBoxColor: "#78a1e3",
+                                        color: "black",
                                     },
                                     {
-                                        type: "error",
-                                        color: "#555",
-                                        name: "Variability Range",
-                                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                                        dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
-                                        { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
+                                        type: 'scatter',
+                                        axisXType: 'secondary',
+                                        dataPoints: [...alignmentsByAttribute.IO.admPoints,
+                                        ...alignmentsByAttribute.MJ.admPoints,
+                                        ...alignmentsByAttribute.QOL.admPoints,
+                                        ...alignmentsByAttribute.VOL.admPoints],
+                                        markerSize: 5,
+                                        color: '#55555530'
                                     },
                                     {
-                                        type: "column",
-                                        name: "Selected",
-                                        color: '#edc24c',
-                                        showInLegend: true,
-                                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                                        dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
-                                        { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
-                                    },
-                                    {
-                                        type: "error",
-                                        name: "Variability Range",
+                                        type: "scatter",
                                         color: '#555',
-                                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                                        dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
-                                        { y: getSeAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
+                                        markerType: "square",
+                                        markerSize: 12,
+                                        axisXType: 'secondary',
+                                        dataPoints: [
+                                            { x: 0, y: getMeanAcrossAll(alignmentsByAttribute.IO, 'adms'), l: "IO" },
+                                            { x: 1, y: getMeanAcrossAll(alignmentsByAttribute.MJ, 'adms'), l: "MJ" },
+                                            { x: 2, y: getMeanAcrossAll(alignmentsByAttribute.QOL, 'adms'), l: "QOL" },
+                                            { x: 3, y: getMeanAcrossAll(alignmentsByAttribute.VOL, 'adms'), l: "VOL" }
+                                        ]
                                     }
                                     ]
                                 }} />
                             </div>
+                            {evalNumber == 4 && <div className="outlinedPlot">
+                                <h4>Rescaled alignment scores between delegator and observed ADMs by Attribute</h4>
+                                <CanvasJSChart options={{
+                                    axisX: {
+                                        gridThickness: 0,
+                                        title: "Attribute",
+                                        minimum: -0.5,
+                                        maximum: 3.5,
+                                        tickLength: 0
+                                    },
+                                    axisY: {
+                                        gridThickness: 0,
+                                        title: "Alignment score (Delegator|Observed_ADM)",
+                                        maximum: 1.01,
+                                        minimum: -0.01
+                                    },
+                                    axisX2: {
+                                        gridThickness: 0,
+                                        minimum: -0.5,
+                                        maximum: 3.5,
+                                        tickLength: 0,
+                                        labelFormatter: () => ""
+                                    },
+                                    maintainAspectRatio: false,
+                                    height: "400",
+                                    width: "1200",
+                                    dataPointMaxWidth: 25,
+                                    data: [{
+                                        type: "boxAndWhisker", dataPoints: [
+                                            { label: "IO", y: getBoxWhiskerData(alignmentsByAttribute.IO.rescaledAdms) },
+                                            { label: "MJ", y: getBoxWhiskerData(alignmentsByAttribute.MJ.rescaledAdms) },
+                                            { label: "QOL", y: getBoxWhiskerData(alignmentsByAttribute.QOL.rescaledAdms) },
+                                            { label: "VOL", y: getBoxWhiskerData(alignmentsByAttribute.VOL.rescaledAdms) }
+                                        ],
+                                        upperBoxColor: "#78a1e3",
+                                        lowerBoxColor: "#78a1e3",
+                                        color: "black",
+                                    },
+                                    {
+                                        type: 'scatter',
+                                        axisXType: 'secondary',
+                                        dataPoints: [...alignmentsByAttribute.IO.rescaledAdmPoints,
+                                        ...alignmentsByAttribute.MJ.rescaledAdmPoints,
+                                        ...alignmentsByAttribute.QOL.rescaledAdmPoints,
+                                        ...alignmentsByAttribute.VOL.rescaledAdmPoints],
+                                        markerSize: 5,
+                                        color: '#55555530'
+                                    },
+                                    {
+                                        type: "scatter",
+                                        color: '#555',
+                                        markerType: "square",
+                                        markerSize: 12,
+                                        axisXType: 'secondary',
+                                        dataPoints: [
+                                            { x: 0, y: getMeanAcrossAll(alignmentsByAttribute.IO, 'rescaledAdms'), l: "IO" },
+                                            { x: 1, y: getMeanAcrossAll(alignmentsByAttribute.MJ, 'rescaledAdms'), l: "MJ" },
+                                            { x: 2, y: getMeanAcrossAll(alignmentsByAttribute.QOL, 'rescaledAdms'), l: "QOL" },
+                                            { x: 3, y: getMeanAcrossAll(alignmentsByAttribute.VOL, 'rescaledAdms'), l: "VOL" }
+                                        ]
+                                    }]
+                                }} />
+                            </div>}
                         </div>}
-                </div>
-            </div>
-        </div>
-    </>);
+                        {ratingBySelection &&
+                            <div className='q2-adms'>
+                                <div>
+                                    <h3>Individual DM Ratings by Delegation Selection Status</h3>
+                                    <CanvasJSChart options={{
+                                        width: "1200",
+                                        dataPointWidth: 80,
+                                        toolTip: {
+                                            shared: true
+                                        },
+                                        axisX: {
+                                            interval: 1
+                                        },
+                                        axisY: {
+                                            minimum: 0
+                                        },
+                                        legend: {
+                                            verticalAlign: "top",
+                                            horizontalAlign: "center",
+                                            cursor: "pointer"
+                                        },
+                                        data: [{
+                                            type: "column",
+                                            name: "Not Selected",
+                                            color: '#5B89C1',
+                                            showInLegend: true,
+                                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                            dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
+                                            { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
+                                        },
+                                        {
+                                            type: "error",
+                                            color: "#555",
+                                            name: "Variability Range",
+                                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                            dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
+                                            { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
+                                        },
+                                        {
+                                            type: "column",
+                                            name: "Selected",
+                                            color: '#edc24c',
+                                            showInLegend: true,
+                                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                                            dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
+                                            { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
+                                        },
+                                        {
+                                            type: "error",
+                                            name: "Variability Range",
+                                            color: '#555',
+                                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                                            dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
+                                            { y: getSeAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
+                                        }
+                                        ]
+                                    }} />
+                                </div>
+                            </div>}
+                    </div>
+                </Accordion.Body>
+            </Accordion.Item>
+        </Accordion>
+
+        <>
+            <button className='floating-menu-btn' title='Navigate' onClick={handleClick}><MenuIcon /></button>
+            <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                className='floating-menu'
+            >
+                <MenuItem onClick={() => scrollToElement(document.getElementById('rq1'))}>RQ1</MenuItem>
+                <MenuItem onClick={() => scrollToElement(document.getElementById('rq2'))}>RQ2</MenuItem>
+                <MenuItem onClick={() => scrollToElement(document.getElementById('rq3'))}>RQ3</MenuItem>
+            </Menu>
+        </>
+    </div>);
 
 }

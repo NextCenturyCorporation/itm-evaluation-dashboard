@@ -296,11 +296,11 @@ td a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-  
-  .chart-header-download {
+}
+
+.chart-header-download {
     margin-left: auto;
-  }
+}
 
 .probe-chart-header {
     display: flex;
@@ -308,4 +308,38 @@ td a {
     align-items: center;
     padding-right: 0px;
     padding-left: 20px;
+}
+
+.accordion-homepage {
+    margin: 20px;
+}
+
+.accordion-header-homepage button {
+    font-size: 24px !important;
+}
+
+.spaced-header {
+    margin-top: 12px;
+}
+
+.floating-menu-btn {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    border-radius: 50%;
+    height: 50px;
+    width: 50px;
+}
+
+.floating-menu-btn:hover {
+    filter: brightness(90%);
+}
+
+.floating-menu-btn:active {
+    filter: brightness(85%);
+}
+
+.floating-menu {
+    margin-top: -54px;
+    margin-left: -8px;
 }
