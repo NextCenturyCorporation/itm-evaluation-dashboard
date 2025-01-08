@@ -292,7 +292,16 @@ const resolvers = {
               "qol-group-target-dre-1",
               "qol-group-target-dre-2",
               "vol-group-target-dre-1",
-              "vol-group-target-dre-2"]
+              "vol-group-target-dre-2",
+              "ADEPT-Phase1Eval-Ingroup Bias-Group-Low",
+              "ADEPT-Phase1Eval-Moral judgement-Group-Low",
+              "ADEPT-Phase1Eval-Moral judgement-Group-High",
+              "ADEPT-Phase1Eval-Ingroup Bias-Group-High",
+              "qol-group-target-1-final-eval",
+              "vol-group-target-1-final-eval",
+              "qol-group-target-2-final-eval",
+              "vol-group-target-2-final-eval"
+            ]
           ]
         }
       },
