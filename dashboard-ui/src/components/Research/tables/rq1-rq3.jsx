@@ -204,7 +204,6 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={ta1s}
                     value={ta1Filters}
-                    filterSelectedOptions
                     size="small"
                     limitTags={2}
                     renderInput={(params) => (
@@ -219,7 +218,6 @@ export function RQ13({ evalNum, tableTitle }) {
                 <Autocomplete
                     multiple
                     options={ta2s}
-                    filterSelectedOptions
                     value={ta2Filters}
                     size="small"
                     limitTags={2}
@@ -236,7 +234,6 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={scenarios}
                     value={scenarioFilters}
-                    filterSelectedOptions
                     size="small"
                     limitTags={2}
                     renderInput={(params) => (
@@ -252,7 +249,6 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={targets}
                     value={targetFilters}
-                    filterSelectedOptions
                     size="small"
                     limitTags={2}
                     renderInput={(params) => (
@@ -268,7 +264,6 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={attributes}
                     value={attributeFilters}
-                    filterSelectedOptions
                     size="small"
                     limitTags={2}
                     renderInput={(params) => (
@@ -284,7 +279,6 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={admTypes}
                     value={admTypeFilters}
-                    filterSelectedOptions
                     size="small"
                     limitTags={2}
                     renderInput={(params) => (
@@ -300,7 +294,6 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={delGrps}
                     value={delGrpFilters}
-                    filterSelectedOptions
                     size="small"
                     limitTags={2}
                     renderInput={(params) => (
@@ -316,7 +309,6 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={delMils}
                     value={delMilFilters}
-                    filterSelectedOptions
                     size="small"
                     limitTags={2}
                     renderInput={(params) => (
