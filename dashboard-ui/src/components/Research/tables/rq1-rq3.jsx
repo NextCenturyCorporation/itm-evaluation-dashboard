@@ -157,6 +157,18 @@ export function RQ13({ evalNum, tableTitle }) {
         setSearchPid('');
     };
 
+    const refineData = (origData) => {
+        // remove unwanted headers from download
+        const updatedData = structuredClone(origData);
+        updatedData.map((x) => {
+            for (const h of columnsToHide) {
+                delete x[h];
+            }
+            return x;
+        });
+        return updatedData;
+    };
+
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
@@ -333,7 +345,7 @@ export function RQ13({ evalNum, tableTitle }) {
                 />
                 <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
