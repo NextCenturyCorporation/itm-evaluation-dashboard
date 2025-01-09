@@ -350,7 +350,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
                 },
                 axisY: {
                     maximum: 1,
-                    minimum: 0.5,
+                    minimum: evalNumber == 4 ? 0.5 : 0,
                     title: "Alignment score"
                 },
                 legend: {

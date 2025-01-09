@@ -297,7 +297,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
                 entryObj['Competence Error'] = evalNum == 5 && entry['TA2'] == 'Kitware' && entryObj['ADM_Type'] == 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
 
-                const comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                const comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
                 const alignmentComparison = comparison_entry?.score ?? '-'
                 entryObj['Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
                 if (evalNum == 4 && fullSetOnly && entryObj['TA1_Name'] == 'Adept') {
