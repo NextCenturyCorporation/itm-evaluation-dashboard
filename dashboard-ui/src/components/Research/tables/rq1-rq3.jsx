@@ -10,7 +10,7 @@ import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
-
+import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -42,7 +42,7 @@ const GET_SIM_DATA = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-const HEADERS = ['ADM Order', 'Delegator_ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 
 export function RQ13({ evalNum, tableTitle }) {
@@ -82,6 +82,10 @@ export function RQ13({ evalNum, tableTitle }) {
     const [includeDRE, setIncludeDRE] = React.useState(false);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
+    // hiding columns
+    const [columnsToHide, setColumnsToHide] = React.useState([]);
+    // searching rows
+    const [searchPid, setSearchPid] = React.useState('');
 
 
     const openModal = () => {
@@ -91,6 +95,10 @@ export function RQ13({ evalNum, tableTitle }) {
     const closeModal = () => {
         setShowDefinitions(false);
     }
+
+    React.useEffect(() => {
+        setIncludeDRE(false);
+    }, [evalNum]);
 
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
@@ -129,6 +137,26 @@ export function RQ13({ evalNum, tableTitle }) {
         setIncludeDRE(event.target.checked);
     };
 
+    const hideColumn = (val) => {
+        setColumnsToHide([...columnsToHide, val]);
+    };
+
+    const updatePidSearch = (event) => {
+        setSearchPid(event.target.value);
+    };
+
+    const clearFilters = () => {
+        setTA1Filters([]);
+        setTA2Filters([]);
+        setScenarioFilters([]);
+        setTargetFilters([]);
+        setAttributeFilters([]);
+        setAdmTypeFilters([]);
+        setDelGrpFilters([]);
+        setDelMilFilters([]);
+        setSearchPid('');
+    };
+
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
@@ -139,10 +167,11 @@ export function RQ13({ evalNum, tableTitle }) {
                 (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
                 (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
                 (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
-                (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil']))
+                (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil'])) &&
+                (searchPid.length == 0 || x['Delegator_ID'].includes(searchPid))
             ));
         }
-    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters]);
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
@@ -152,14 +181,20 @@ export function RQ13({ evalNum, tableTitle }) {
             {evalNum == 5 && <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />}
         </h2>
 
-        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {filteredData.length < formattedData.length &&
+            <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters
+                <span className='reset-btn' onClick={clearFilters}>(Reset Filters)</span>
+            </p>
+        }
         <section className='tableHeader'>
-            <div className="filters">
+            <div className="too-many-filters">
                 <Autocomplete
                     multiple
                     options={ta1s}
+                    value={ta1Filters}
                     filterSelectedOptions
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -173,7 +208,9 @@ export function RQ13({ evalNum, tableTitle }) {
                     multiple
                     options={ta2s}
                     filterSelectedOptions
+                    value={ta2Filters}
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -186,8 +223,10 @@ export function RQ13({ evalNum, tableTitle }) {
                 <Autocomplete
                     multiple
                     options={scenarios}
+                    value={scenarioFilters}
                     filterSelectedOptions
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -200,8 +239,10 @@ export function RQ13({ evalNum, tableTitle }) {
                 <Autocomplete
                     multiple
                     options={targets}
+                    value={targetFilters}
                     filterSelectedOptions
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -214,8 +255,10 @@ export function RQ13({ evalNum, tableTitle }) {
                 <Autocomplete
                     multiple
                     options={attributes}
+                    value={attributeFilters}
                     filterSelectedOptions
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -228,8 +271,10 @@ export function RQ13({ evalNum, tableTitle }) {
                 <Autocomplete
                     multiple
                     options={admTypes}
+                    value={admTypeFilters}
                     filterSelectedOptions
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -242,8 +287,10 @@ export function RQ13({ evalNum, tableTitle }) {
                 <Autocomplete
                     multiple
                     options={delGrps}
+                    value={delGrpFilters}
                     filterSelectedOptions
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -256,8 +303,10 @@ export function RQ13({ evalNum, tableTitle }) {
                 <Autocomplete
                     multiple
                     options={delMils}
+                    value={delMilFilters}
                     filterSelectedOptions
                     size="small"
+                    limitTags={2}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -267,6 +316,22 @@ export function RQ13({ evalNum, tableTitle }) {
                     )}
                     onChange={(_, newVal) => setDelMilFilters(newVal)}
                 />
+                <Autocomplete
+                    multiple
+                    options={HEADERS}
+                    size="small"
+                    limitTags={1}
+                    value={columnsToHide}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Hidden Cols"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setColumnsToHide(newVal)}
+                />
+                <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
             <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
         </section>
@@ -275,8 +340,8 @@ export function RQ13({ evalNum, tableTitle }) {
                 <thead>
                     <tr>
                         {HEADERS.map((val, index) => {
-                            return (<th key={'header-' + index}>
-                                {val}
+                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val == HEADERS.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
+                                {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
                             </th>);
                         })}
                     </tr>
@@ -285,7 +350,7 @@ export function RQ13({ evalNum, tableTitle }) {
                     {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['Delegator_ID'] + '-' + val}>
+                                return (!columnsToHide.includes(val) && <td key={dataSet['Delegator_ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
                                 </td>);
                             })}
