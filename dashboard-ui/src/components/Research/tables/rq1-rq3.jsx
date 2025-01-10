@@ -199,145 +199,152 @@ export function RQ13({ evalNum, tableTitle }) {
             </p>
         }
         <section className='tableHeader'>
-            <div className="too-many-filters">
-                <Autocomplete
-                    multiple
-                    options={ta1s}
-                    value={ta1Filters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="TA1"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setTA1Filters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={ta2s}
-                    value={ta2Filters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="TA2"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setTA2Filters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={scenarios}
-                    value={scenarioFilters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Scenarios"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setScenarioFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={targets}
-                    value={targetFilters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Targets"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setTargetFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={attributes}
-                    value={attributeFilters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Attributes"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setAttributeFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={admTypes}
-                    value={admTypeFilters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="ADM Types"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setAdmTypeFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={delGrps}
-                    value={delGrpFilters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Delegator_grp"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setDelGrpFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={delMils}
-                    value={delMilFilters}
-                    size="small"
-                    limitTags={2}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Delegator_mil"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setDelMilFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={HEADERS}
-                    size="small"
-                    limitTags={1}
-                    value={columnsToHide}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Hidden Cols"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setColumnsToHide(newVal)}
-                />
-                <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
+            <div className='complexHeader'>
+                <div className="too-many-filters">
+                    <Autocomplete
+                        multiple
+                        options={ta1s}
+                        value={ta1Filters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="TA1"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setTA1Filters(newVal)}
+                    />
+                    <Autocomplete
+                        multiple
+                        options={ta2s}
+                        value={ta2Filters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="TA2"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setTA2Filters(newVal)}
+                    />
+                    <Autocomplete
+                        multiple
+                        options={scenarios}
+                        value={scenarioFilters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Scenarios"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setScenarioFilters(newVal)}
+                    />
+                    <Autocomplete
+                        multiple
+                        options={targets}
+                        value={targetFilters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Targets"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setTargetFilters(newVal)}
+                    />
+                    <Autocomplete
+                        multiple
+                        options={attributes}
+                        value={attributeFilters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Attributes"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setAttributeFilters(newVal)}
+                    />
+                    <Autocomplete
+                        multiple
+                        options={admTypes}
+                        value={admTypeFilters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="ADM Types"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setAdmTypeFilters(newVal)}
+                    />
+                    <Autocomplete
+                        multiple
+                        options={delGrps}
+                        value={delGrpFilters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Delegator_grp"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setDelGrpFilters(newVal)}
+                    />
+                    <Autocomplete
+                        multiple
+                        options={delMils}
+                        value={delMilFilters}
+                        size="small"
+                        limitTags={2}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Delegator_mil"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setDelMilFilters(newVal)}
+                    />
+                </div>
+                <div className='largeInputs'>
+                    <Autocomplete
+                        multiple
+                        options={HEADERS}
+                        size="small"
+                        limitTags={1}
+                        value={columnsToHide}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Hidden Cols"
+                                placeholder=""
+                            />
+                        )}
+                        onChange={(_, newVal) => setColumnsToHide(newVal)}
+                    />
+                    <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
+                </div>
+
             </div>
+
             <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
+
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
