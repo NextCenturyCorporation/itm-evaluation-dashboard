@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM node:18
 
 # Create app directory
@@ -12,7 +13,8 @@ ENV PORT=$PORT_ARG
 # where available (npm@5+)
 COPY package*.json ./
 
-RUN npm install --legacy-peer-deps
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --legacy-peer-deps
 # If you are building your code for production
 # RUN npm ci --only=production
 
