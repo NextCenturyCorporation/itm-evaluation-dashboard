@@ -332,7 +332,7 @@ export function RQ13({ evalNum, tableTitle }) {
                         renderInput={(params) => (
                             <TextField
                                 {...params}
-                                label="Hidden Cols"
+                                label="Hidden Columns"
                                 placeholder=""
                             />
                         )}
