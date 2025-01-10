@@ -3,8 +3,10 @@ import { RQ2223 } from "./tables/rq22-rq23";
 import './dre-rq.css';
 import { RQ21 } from "./tables/rq21";
 import Select from 'react-select';
-import rq21Code from './rcode/code_for_dashboard_RQ21.R';
-import rq2Code from './rcode/code_for_dashboard_RQ2.R';
+import rq21CodeDre from './rcode/code_for_dashboard_RQ21_dre.R';
+import rq2CodeDre from './rcode/code_for_dashboard_RQ2_dre.R';
+import rq21CodePh1 from './rcode/code_for_dashboard_RQ21_ph1.R';
+import rq2CodePh1 from './rcode/code_for_dashboard_RQ2_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
 
@@ -74,7 +76,7 @@ export function RQ2() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ3 Analysis 2.1 - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq21Code} downloadName={'RQ21_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq21CodeDre : rq21CodePh1} downloadName={'RQ21_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close21Code}>
                             Close
@@ -94,7 +96,7 @@ export function RQ2() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ3 Analysis 2.2 and 2.3 - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq2Code} downloadName={'RQ2_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq2CodeDre : rq21CodePh1} downloadName={'RQ2_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close2Code}>
                             Close

@@ -2,7 +2,8 @@ import React from 'react';
 import { RQ13 } from "./tables/rq1-rq3";
 import './dre-rq.css';
 import Select from 'react-select';
-import rq1Code from './rcode/code_for_dashboard_RQ1.R';
+import rq1CodeDre from './rcode/code_for_dashboard_RQ1_dre.R';
+import rq1CodePh1 from './rcode/code_for_dashboard_RQ1_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
 
@@ -74,7 +75,7 @@ export function RQ1() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ1 Analysis - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq1Code} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close1Code}>
                             Close
@@ -99,7 +100,7 @@ export function RQ1() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ1 Analysis - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq1Code} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close1Code}>
                             Close
