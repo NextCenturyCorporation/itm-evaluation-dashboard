@@ -240,6 +240,7 @@
 
 .rq134Header {
     position: relative;
+    padding-bottom: 12px !important;
 }
 
 .rq134Header .hide-header {
