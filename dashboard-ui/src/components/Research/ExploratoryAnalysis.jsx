@@ -1,5 +1,5 @@
 import React from 'react';
-import { RQ13 } from "./tables/rq1-rq3";
+import { RQ134 } from "./tables/rq134";
 import './dre-rq.css';
 import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
@@ -50,7 +50,7 @@ export function ExploratoryAnalysis() {
             </p>
         </div>
         <div className="section-container">
-            <RQ13 evalNum={selectedEval} tableTitle={'RQ4 Data'} />
+            <RQ134 evalNum={selectedEval} tableTitle={'RQ4 Data'} />
             <p>
                 <b>Variables used from dataset:</b>
             </p>

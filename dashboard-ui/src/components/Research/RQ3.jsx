@@ -1,5 +1,5 @@
 import React from 'react';
-import { RQ13 } from "./tables/rq1-rq3";
+import { RQ134 } from "./tables/rq134";
 import './dre-rq.css';
 import Select from 'react-select';
 import { RCodeModal } from "./rcode/RcodeModal";
@@ -62,7 +62,7 @@ export function RQ3() {
             </p>
         </div>
         <div className="section-container">
-            <RQ13 evalNum={selectedEval} tableTitle={'RQ3 Data'} />
+            <RQ134 evalNum={selectedEval} tableTitle={'RQ3 Data'} />
 
         </div>
         <div className="section-container">
