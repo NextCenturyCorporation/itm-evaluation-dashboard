@@ -5,7 +5,8 @@ import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
+import dreDefinitionXLFile from '../variables/Variable Definitions RQ1_3_DRE.xlsx';
+import ph1DefinitionXLFile from '../variables/Variable Definitions RQ1_3_PH1.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -373,7 +374,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ1_RQ3.xlsx'} xlFile={definitionXLFile} pdfFile={definitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ1_RQ3_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} pdfFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
