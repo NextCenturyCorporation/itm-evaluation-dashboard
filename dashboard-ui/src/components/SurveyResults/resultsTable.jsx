@@ -69,13 +69,16 @@ const STARTING_HEADERS = [
     "Note Page - Time Taken (mm:ss)"
 ];
 
-function formatTime(seconds) {
+function formatTime(seconds, includeHours = false) {
     seconds = Math.round(seconds);
-    let minutes = (Math.floor(seconds / 60) % 60);
-    minutes = minutes.toString().length !== 2 ? '0' + minutes.toString() : minutes.toString();
+    let hours = (Math.floor(seconds / 60 / 60) % 60);
+    hours = hours.toString().length < 2 ? '0' + hours.toString() : hours.toString();
+    let minutes = Math.floor(seconds / 60);
+    minutes = includeHours ? minutes % 60 : minutes;
+    minutes = minutes.toString().length < 2 ? '0' + minutes.toString() : minutes.toString();
     let formatted_seconds = seconds % 60;
     formatted_seconds = formatted_seconds.toString().length < 2 ? '0' + formatted_seconds.toString() : formatted_seconds.toString();
-    return `${minutes}:${formatted_seconds}`
+    return includeHours ? `${hours}:${minutes}:${formatted_seconds}` : `${minutes}:${formatted_seconds}`;
 }
 
 export function ResultsTable({ data, pLog }) {
@@ -188,7 +191,7 @@ export function ResultsTable({ data, pLog }) {
             obj['Start Time'] = entry.startTime ? new Date(entry.startTime)?.toLocaleString() : null;
             obj['End Time'] = new Date(entry.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
-            obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds) : null;
+            obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds, true) : null;
             if (lastPage) {
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
                 for (const q of Object.keys(lastPage.questions)) {
