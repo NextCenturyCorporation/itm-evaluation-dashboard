@@ -73,11 +73,19 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                <li>ADM_Type</li>
-                <ul>
-                    <li>Filter for only "comparison" trials</li>
-                </ul>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
+                <li>ADM_Type
+                    <ul>
+                        <li>Filter for only {selectedEval == 5 ? '"aligned"' : '"comparison"'} trials</li>
+                    </ul>
+                </li>
                 <li>Delegation preference (A/B)</li>
+                {selectedEval == 5 && <li>Delegation preference (A/M)</li>}
             </ul>
             <div className="buttons">
                 <button onClick={() => setRQ31CodeShowing(true)}>View R Syntax</button>
@@ -100,6 +108,12 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
                 <li>Alignment score (Delegator | Observed_ADM (target))</li>
                 <li>Delegation preference (A/B)</li>
                 <li>Delegation preference (A/M)</li>
@@ -125,6 +139,12 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
                 <li>Delegation preference (A/B)</li>
                 <li>Delegation preference (A/M)</li>
                 <li>Trust_Rating</li>
