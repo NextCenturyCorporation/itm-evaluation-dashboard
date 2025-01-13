@@ -2,9 +2,7 @@ import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import mreXlFile from './MRE_Variables.xlsx';
-import mreWordFile from './MRE_Human_Dataset_Variables_Dashboard.docx';
 import dreXlFile from './DRE_Variables.xlsx';
-import dreWordFile from './DRE_Human_Dataset_Variables_Dashboard.docx';
 
 export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
@@ -33,8 +31,8 @@ export function DefinitionTable({ evalNumber }) {
     }, []);
 
     const exportWordDoc = () => {
-        const wordFile = evalNumber == 4 ? dreWordFile : mreWordFile;
-        FileSaver.saveAs(wordFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : 'ph1_') + 'Definitions.docx');
+        const xlFile = evalNumber == 4 || evalNumber == 5 ? dreXlFile : mreXlFile;
+        FileSaver.saveAs(xlFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : 'ph1_') + 'Definitions.xlsx');
     };
 
     return (<>
