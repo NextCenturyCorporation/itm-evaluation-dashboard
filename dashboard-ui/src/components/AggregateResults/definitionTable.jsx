@@ -3,12 +3,13 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import mreXlFile from './MRE_Variables.xlsx';
 import dreXlFile from './DRE_Variables.xlsx';
+import ph1XlFile from './PH1_Variables.xlsx'
 
 export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const xlFile = evalNumber == 4 || evalNumber == 5 ? dreXlFile : mreXlFile;
+        const xlFile = evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
@@ -31,7 +32,7 @@ export function DefinitionTable({ evalNumber }) {
     }, []);
 
     const exportWordDoc = () => {
-        const xlFile = evalNumber == 4 || evalNumber == 5 ? dreXlFile : mreXlFile;
+        const xlFile = evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
         FileSaver.saveAs(xlFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : 'ph1_') + 'Definitions.xlsx');
     };
 
