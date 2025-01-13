@@ -287,11 +287,11 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                 entryObj['Alignment score (ADM|target)'] = alignment;
                 if (evalNum == 5)
-                    entryObj['DRE_ADM|Target'] = entry['TA1'] == 'Adept' ? page.dreAdmAlignment : alignment;
+                    entryObj['DRE Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.dreAdmAlignment : alignment;
 
                 // if DRE data is included in PH1 set, update DRE columns accordingly
                 if (evalNum == 4 && fullSetOnly) {
-                    entryObj['DRE_ADM|Target'] = entryObj['Alignment score (ADM|target)'];
+                    entryObj['DRE Alignment score (ADM|target)'] = entryObj['Alignment score (ADM|target)'];
                     entryObj['Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.ph1AdmAlignment : entryObj['Alignment score (ADM|target)']
                 }
 
@@ -304,10 +304,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                 entryObj['Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'] || (evalNum == 5 && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
                 if (evalNum == 5)
-                    entryObj['DRE_Delegator|Target'] = entry['TA1'] == 'Adept' ? page.dreTxtAlignment : entryObj['Alignment score (Delegator|target)'];
+                    entryObj['DRE Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? page.dreTxtAlignment : entryObj['Alignment score (Delegator|target)'];
                 // if DRE data is included in PH1 set, update DRE columns accordingly
                 if (evalNum == 4 && fullSetOnly) {
-                    entryObj['DRE_Delegator|Target'] = entryObj['Alignment score (Delegator|target)'];
+                    entryObj['DRE Alignment score (Delegator|target)'] = entryObj['Alignment score (Delegator|target)'];
                     entryObj['Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? page.ph1TxtAlignment : entryObj['Alignment score (Delegator|target)']
                 }
 
@@ -316,10 +316,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                 entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
                 if (evalNum == 5)
-                    entryObj['DRE_ADM_loading'] = entry['TA1'] == 'Adept' ? page.dreChoiceProcess : entryObj['ADM Loading'];
+                    entryObj['DRE ADM Loading'] = entry['TA1'] == 'Adept' ? page.dreChoiceProcess : entryObj['ADM Loading'];
                 // if DRE data is included in PH1 set, update DRE columns accordingly
                 if (evalNum == 4 && fullSetOnly) {
-                    entryObj['DRE_ADM_loading'] = entryObj['ADM Loading'];
+                    entryObj['DRE ADM Loading'] = entryObj['ADM Loading'];
                     entryObj['ADM Loading'] = entry['TA1'] == 'Adept' ? page.ph1ChoiceProcess : entryObj['ADM Loading']
                 }
 
@@ -330,11 +330,11 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
                 if (evalNum == 5) {
                     const dre_comparison_entry = comparisons?.find((x) => x['dre_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                    entryObj['DRE_Delegator|Observed_ADM'] = entry['TA1'] == 'Adept' ? dre_comparison_entry?.score : entryObj['Alignment score (Delegator|Observed_ADM (target))'];
+                    entryObj['DRE Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? dre_comparison_entry?.score : entryObj['Alignment score (Delegator|Observed_ADM (target))'];
                 }
                 if (evalNum == 4 && fullSetOnly) {
                     const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                    entryObj['DRE_Delegator|Observed_ADM'] = entryObj['Alignment score (Delegator|Observed_ADM (target))'];
+                    entryObj['DRE Alignment score (Delegator|Observed_ADM (target))'] = entryObj['Alignment score (Delegator|Observed_ADM (target))'];
                     if (entryObj['TA1_Name'] == 'Adept')
                         entryObj['Alignment score (Delegator|Observed_ADM (target))'] = ph1_comparison_entry?.score ?? '-';
                 }
