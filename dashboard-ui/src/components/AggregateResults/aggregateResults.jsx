@@ -549,8 +549,8 @@ export default function AggregateResults({ type }) {
                             <div className="evaluation-selector-label"><h2>{selectedEval == 3 ? "Human Participant Data: Within-Subjects Analysis" : "Participant-Level Data"}</h2></div>
                         </div>
                         <div className="aggregate-button-holder">
-                            <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
                             <button className='aggregateDownloadBtn' onClick={() => setShowDefinitions(true)}>View Definitions</button>
+                            <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
                         </div>
                     </div>
                     <div className="selection-section">
