@@ -8,7 +8,7 @@ export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const xlFile = evalNumber == 4 || evalNumber == 5 ? dreXlFile : mreXlFile; 
+        const xlFile = evalNumber == 4 || evalNumber == 5 ? dreXlFile : mreXlFile;
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
@@ -44,21 +44,22 @@ export function DefinitionTable({ evalNumber }) {
             <table className='itm-table'>
                 <thead>
                     <tr>
-                        {defs[0].map((header) => {
-                            return <th key={'head_' + header}>{header}</th>
-                        })}
+                        <th>Variables</th>
+                        {defs[0].slice(1).map((header) => (
+                            <th key={'head_' + header}>{header}</th>
+                        ))}
                     </tr>
                 </thead>
 
                 <tbody>
-                    {defs.slice(1).map((row, rind) => {
-                        return <tr key={'row_' + rind}>{
-                            row.map((cell, cind) => {
-                                return <td key={rind + '_' + cind}>{cell}</td>;
-                            })
-                        }
-                        </tr>;
-                    })}
+                    {defs.slice(1).map((row, rind) => (
+                        <tr key={'row_' + rind}>
+                            <td key={`row_header_${rind}`}>{row[0]}</td>
+                            {row.slice(1).map((cell, cind) => (
+                                <td key={rind + '_' + cind}>{cell}</td>
+                            ))}
+                        </tr>
+                    ))}
                 </tbody>
 
             </table>
