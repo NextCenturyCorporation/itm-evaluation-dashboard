@@ -4,7 +4,6 @@ import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ6.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ6.pdf';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { getAlignments } from "../utils";
@@ -232,7 +231,7 @@ export function RQ6({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ6.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={'Definitions_RQ6.xlsx'} xlFile={definitionXLFile} />
             </div>
         </Modal>
     </>);
