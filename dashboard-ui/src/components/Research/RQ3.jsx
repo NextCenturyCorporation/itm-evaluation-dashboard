@@ -85,7 +85,7 @@ export function RQ3() {
                     </ul>
                 </li>
                 <li>Delegation preference (A/B)</li>
-                {selectedEval == 5 && <li>Delegation preference (A/M)</li>}
+                <li>Delegation preference (A/M)</li>
             </ul>
             <div className="buttons">
                 <button onClick={() => setRQ31CodeShowing(true)}>View R Syntax</button>
