@@ -3,8 +3,8 @@ import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ2.1.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ2.1.pdf';
+import dreDefinitionXLFile from '../variables/Variable Definitions RQ2.1_DRE.xlsx';
+import ph1DefinitionXLFile from '../variables/Variable Definitions RQ2.1_PH1.xlsx';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { ADM_NAME_MAP, getAlignments } from "../utils";
@@ -315,7 +315,7 @@ export function RQ21({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ21.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ21_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
