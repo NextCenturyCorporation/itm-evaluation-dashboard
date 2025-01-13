@@ -29,7 +29,7 @@ export function RQDefinitionTable({ xlFile, pdfFile, downloadName }) {
     }, []);
 
     const exportWordDoc = () => {
-        FileSaver.saveAs(pdfFile, downloadName);
+        FileSaver.saveAs(pdfFile ?? xlFile, downloadName);
     };
 
     return (<>
