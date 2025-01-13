@@ -428,12 +428,12 @@ export default function AggregateResults({ type }) {
                     adeptPart !== 'undefined' ? adeptPart : '',
                     stPart !== 'undefined' ? stPart : ''
                 ].filter(Boolean).join('_');
-                
+
                 const rawData = aggregateData['groupedSim'][objKey];
                 const allHeaders = getHeadersEval4(HEADER_SIM_DATA[selectedEval], objKey.split('_')[0]);
                 // columns that have data in at least one row
                 const filteredHeaders = allHeaders.filter(header => hasDataInColumn(rawData, header));
-                
+
                 const data = rawData.map(origObj => {
                     const newObj = {};
                     filteredHeaders.forEach(header => {
@@ -441,7 +441,7 @@ export default function AggregateResults({ type }) {
                     });
                     return newObj;
                 });
-                
+
                 const ws = XLSX.utils.json_to_sheet(data);
                 names.push(sheetName);
                 sheets[sheetName] = ws;
@@ -549,8 +549,8 @@ export default function AggregateResults({ type }) {
                             <div className="evaluation-selector-label"><h2>{selectedEval == 3 ? "Human Participant Data: Within-Subjects Analysis" : "Participant-Level Data"}</h2></div>
                         </div>
                         <div className="aggregate-button-holder">
-                            <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
                             <button className='aggregateDownloadBtn' onClick={() => setShowDefinitions(true)}>View Definitions</button>
+                            <button onClick={exportToExcel} className='aggregateDownloadBtn'>Download Participant Data</button>
                         </div>
                     </div>
                     <div className="selection-section">
