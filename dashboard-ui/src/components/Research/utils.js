@@ -187,7 +187,7 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
-export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false) {
+export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true) {
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = dataTextResults.getAllScenarioResults;
@@ -290,7 +290,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['DRE Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.dreAdmAlignment : alignment;
 
                 // if DRE data is included in PH1 set, update DRE columns accordingly
-                if (evalNum == 4 && fullSetOnly) {
+                if (evalNum == 4 && fullSetOnly && includeDreServer) {
                     entryObj['DRE Alignment score (ADM|target)'] = entryObj['Alignment score (ADM|target)'];
                     entryObj['Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.ph1AdmAlignment : entryObj['Alignment score (ADM|target)']
                 }
@@ -306,7 +306,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 if (evalNum == 5)
                     entryObj['DRE Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? page.dreTxtAlignment : entryObj['Alignment score (Delegator|target)'];
                 // if DRE data is included in PH1 set, update DRE columns accordingly
-                if (evalNum == 4 && fullSetOnly) {
+                if (evalNum == 4 && fullSetOnly && includeDreServer) {
                     entryObj['DRE Alignment score (Delegator|target)'] = entryObj['Alignment score (Delegator|target)'];
                     entryObj['Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? page.ph1TxtAlignment : entryObj['Alignment score (Delegator|target)']
                 }
@@ -318,7 +318,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 if (evalNum == 5)
                     entryObj['DRE ADM Loading'] = entry['TA1'] == 'Adept' ? page.dreChoiceProcess : entryObj['ADM Loading'];
                 // if DRE data is included in PH1 set, update DRE columns accordingly
-                if (evalNum == 4 && fullSetOnly) {
+                if (evalNum == 4 && fullSetOnly && includeDreServer) {
                     entryObj['DRE ADM Loading'] = entryObj['ADM Loading'];
                     entryObj['ADM Loading'] = entry['TA1'] == 'Adept' ? page.ph1ChoiceProcess : entryObj['ADM Loading']
                 }

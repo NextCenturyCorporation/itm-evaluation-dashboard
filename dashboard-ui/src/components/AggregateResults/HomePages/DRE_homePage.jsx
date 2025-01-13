@@ -95,7 +95,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
             const origData = getRQ134Data(evalNumber, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             setData(origData.allObjs.filter((x) => x['Competence Error'] == 0));
             if (evalNumber == 5) {
-                const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true);
+                const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true, false);
                 setDreDataForPh1(dreData.allObjs);
             }
             const tmpGroupTargets = {};
