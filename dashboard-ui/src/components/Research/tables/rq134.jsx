@@ -344,7 +344,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
             </div>
 
-            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-134 data'} extraAction={openModal} />
 
         </section>
         <div className='resultTableSection'>
