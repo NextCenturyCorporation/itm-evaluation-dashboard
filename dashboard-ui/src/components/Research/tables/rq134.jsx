@@ -5,8 +5,8 @@ import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ1_RQ3.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ1_RQ3.pdf';
+import dreDefinitionXLFile from '../variables/Variable Definitions RQ134_DRE.xlsx';
+import ph1DefinitionXLFile from '../variables/Variable Definitions RQ134_PH1.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -31,7 +31,7 @@ const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
-    
+
 const GET_COMPARISON_DATA = gql`
     query getHumanToADMComparison {
         getHumanToADMComparison
@@ -45,7 +45,7 @@ const GET_SIM_DATA = gql`
 const HEADERS_DRE = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'DRE Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'DRE Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'DRE Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
-export function RQ13({ evalNum, tableTitle }) {
+export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
@@ -67,9 +67,9 @@ export function RQ13({ evalNum, tableTitle }) {
     const [scenarios, setScenarios] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
-    const [admTypes, setAdmTypes] = React.useState(['baseline', 'aligned', 'comparison']);
-    const [delGrps, setDelGrps] = React.useState(['Civilian', 'Military']);
-    const [delMils, setDelMils] = React.useState(['yes', 'no']);
+    const [admTypes] = React.useState(['baseline', 'aligned', 'comparison']);
+    const [delGrps] = React.useState(['Civilian', 'Military']);
+    const [delMils] = React.useState(['yes', 'no']);
     // filter options that have been chosen
     const [ta1Filters, setTA1Filters] = React.useState([]);
     const [ta2Filters, setTA2Filters] = React.useState([]);
@@ -344,7 +344,7 @@ export function RQ13({ evalNum, tableTitle }) {
 
             </div>
 
-            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-1_and_RQ-3 data'} extraAction={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-134 data'} extraAction={openModal} />
 
         </section>
         <div className='resultTableSection'>
@@ -374,7 +374,7 @@ export function RQ13({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ1_RQ3.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
