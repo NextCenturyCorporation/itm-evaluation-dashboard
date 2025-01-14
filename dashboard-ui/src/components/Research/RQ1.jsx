@@ -1,8 +1,9 @@
 import React from 'react';
-import { RQ13 } from "./tables/rq1-rq3";
+import { RQ134 } from "./tables/rq134";
 import './dre-rq.css';
 import Select from 'react-select';
-import rq1Code from './rcode/code_for_dashboard_RQ1.R';
+import rq1CodeDre from './rcode/code_for_dashboard_RQ1_dre.R';
+import rq1CodePh1 from './rcode/code_for_dashboard_RQ1_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
 
@@ -47,7 +48,7 @@ export function RQ1() {
             </p>
             <p>We test this hypothesis by calculating the alignment score between decisions of a human
                 decision maker and the decisions of an observed decision maker and then regressing it
-                onto the trust ratings given tot he observed decision maker by the human.
+                onto the trust ratings given to the observed decision maker by the human.
             </p>
             <p>
                 <b>Independent variable (calculated):</b> Alignment score <br />
@@ -55,7 +56,7 @@ export function RQ1() {
             </p>
         </div>
         <div className="section-container">
-            <RQ13 evalNum={selectedEval} tableTitle={'RQ1 Data'} />
+            <RQ134 evalNum={selectedEval} tableTitle={'RQ1 Data'} />
 
         </div>
         <div className="section-container">
@@ -65,6 +66,12 @@ export function RQ1() {
             </p>
             <ul>
                 <li>Participant ID</li>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
                 <li>Alignment Score (Delegator | Observed_ADM (target))</li>
                 <li>Trust_Rating</li>
             </ul>
@@ -74,7 +81,7 @@ export function RQ1() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ1 Analysis - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq1Code} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close1Code}>
                             Close
@@ -90,7 +97,19 @@ export function RQ1() {
             </p>
             <ul>
                 <li>Participant ID</li>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
                 <li>ADM_Aligned_Status (Baseline/Misaligned/Aligned)</li>
+                {selectedEval == 5 && <li>
+                    ADM_Loading
+                    <ul>
+                        <li>Use only "normal"</li>
+                    </ul>
+                </li>}
                 <li>Trust_Rating</li>
             </ul>
             <div className="buttons">
@@ -99,7 +118,7 @@ export function RQ1() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ1 Analysis - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq1Code} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close1Code}>
                             Close

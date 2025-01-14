@@ -2,15 +2,14 @@ import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import mreXlFile from './MRE_Variables.xlsx';
-import mreWordFile from './MRE_Human_Dataset_Variables_Dashboard.docx';
 import dreXlFile from './DRE_Variables.xlsx';
-import dreWordFile from './DRE_Human_Dataset_Variables_Dashboard.docx';
+import ph1XlFile from './PH1_Variables.xlsx'
 
 export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const xlFile = evalNumber == 4 || evalNumber == 5 ? dreXlFile : mreXlFile; 
+        const xlFile = evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
@@ -33,8 +32,8 @@ export function DefinitionTable({ evalNumber }) {
     }, []);
 
     const exportWordDoc = () => {
-        const wordFile = evalNumber == 4 ? dreWordFile : mreWordFile;
-        FileSaver.saveAs(wordFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : 'ph1_') + 'Definitions.docx');
+        const xlFile = evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
+        FileSaver.saveAs(xlFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : 'ph1_') + 'Definitions.xlsx');
     };
 
     return (<>
@@ -46,21 +45,22 @@ export function DefinitionTable({ evalNumber }) {
             <table className='itm-table'>
                 <thead>
                     <tr>
-                        {defs[0].map((header) => {
-                            return <th key={'head_' + header}>{header}</th>
-                        })}
+                        <th>Variables</th>
+                        {defs[0].slice(1).map((header) => (
+                            <th key={'head_' + header}>{header}</th>
+                        ))}
                     </tr>
                 </thead>
 
                 <tbody>
-                    {defs.slice(1).map((row, rind) => {
-                        return <tr key={'row_' + rind}>{
-                            row.map((cell, cind) => {
-                                return <td key={rind + '_' + cind}>{cell}</td>;
-                            })
-                        }
-                        </tr>;
-                    })}
+                    {defs.slice(1).map((row, rind) => (
+                        <tr key={'row_' + rind}>
+                            <td key={`row_header_${rind}`}>{row[0]}</td>
+                            {row.slice(1).map((cell, cind) => (
+                                <td key={rind + '_' + cind}>{cell}</td>
+                            ))}
+                        </tr>
+                    ))}
                 </tbody>
 
             </table>

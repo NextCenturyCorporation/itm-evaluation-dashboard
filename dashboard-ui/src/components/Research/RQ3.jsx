@@ -1,10 +1,12 @@
 import React from 'react';
-import { RQ13 } from "./tables/rq1-rq3";
+import { RQ134 } from "./tables/rq134";
 import './dre-rq.css';
 import Select from 'react-select';
 import { RCodeModal } from "./rcode/RcodeModal";
-import rq32Code from './rcode/code_for_dashboard_RQ32.R';
-import rq31Code from './rcode/code_for_dashboard_RQ31_and_RQ33.R';
+import rq32CodeDre from './rcode/code_for_dashboard_RQ32_dre.R';
+import rq31CodeDre from './rcode/code_for_dashboard_RQ31_and_RQ33_dre.R';
+import rq32CodePh1 from './rcode/code_for_dashboard_RQ32_ph1.R';
+import rq31CodePh1 from './rcode/code_for_dashboard_RQ31_and_RQ33_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 
 const ALLOWED_EVAL_OPTIONS = [
@@ -62,7 +64,7 @@ export function RQ3() {
             </p>
         </div>
         <div className="section-container">
-            <RQ13 evalNum={selectedEval} tableTitle={'RQ3 Data'} />
+            <RQ134 evalNum={selectedEval} tableTitle={'RQ3 Data'} />
 
         </div>
         <div className="section-container">
@@ -71,11 +73,19 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                <li>ADM_Type</li>
-                <ul>
-                    <li>Filter for only "comparison" trials</li>
-                </ul>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
+                <li>ADM_Type
+                    <ul>
+                        <li>Filter for only {selectedEval == 5 ? '"aligned"' : '"comparison"'} trials</li>
+                    </ul>
+                </li>
                 <li>Delegation preference (A/B)</li>
+                <li>Delegation preference (A/M)</li>
             </ul>
             <div className="buttons">
                 <button onClick={() => setRQ31CodeShowing(true)}>View R Syntax</button>
@@ -83,7 +93,7 @@ export function RQ3() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ3 Analysis 3.1 and 3.3 - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq31Code} downloadName={'RQ31_33_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq31CodeDre : rq31CodePh1} downloadName={'RQ31_33_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close31Code}>
                             Close
@@ -98,6 +108,12 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
                 <li>Alignment score (Delegator | Observed_ADM (target))</li>
                 <li>Delegation preference (A/B)</li>
                 <li>Delegation preference (A/M)</li>
@@ -108,7 +124,7 @@ export function RQ3() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ3 Analysis 3.2 - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={rq32Code} downloadName={'RQ32_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq32CodeDre : rq32CodePh1} downloadName={'RQ32_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close32Code}>
                             Close
@@ -123,6 +139,12 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
+                {selectedEval == 5 && <li>
+                    Competence Error
+                    <ul>
+                        <li>Use only "0"</li>
+                    </ul>
+                </li>}
                 <li>Delegation preference (A/B)</li>
                 <li>Delegation preference (A/M)</li>
                 <li>Trust_Rating</li>
