@@ -1,5 +1,6 @@
 .layout {
     background-color: #F8F8F8;
+    min-height: 100vh;
 }
 
 .layout-board {
@@ -10,10 +11,11 @@
 
 .nav-section,
 .nav-section-compare {
+    flex: 0 0 18%; 
     border: 1px solid transparent;
     margin-left: 5px;
     border-radius: 8px;
-    min-width: 275px;
+    height: fit-content;
 }
 
 .nav-header {
@@ -24,6 +26,7 @@
     height: 50px;
     padding: 12px 15px 0 15px;
     margin-top: 10px;
+    width: 100%;
 }
 
 .nav-header-text {
@@ -34,7 +37,7 @@
 .nav-menu {
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 100%;
     background-color: #F8F8F8;
 }
 
@@ -62,9 +65,9 @@ nav.MuiList-root.nav-list.MuiList-padding {
 }
 
 .test-overview-area {
-    max-width: 78%;
-    margin: 10px 20px;
-    flex: 1;
+    flex: 0 0 82%; 
+    margin: 10px 0;
+    overflow-x: auto;
 }
 
 .tableCellKey {
