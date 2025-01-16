@@ -11,7 +11,7 @@
 
 .nav-section,
 .nav-section-compare {
-    flex: 0 0 20%; 
+    flex: 0 0 18%; 
     border: 1px solid transparent;
     margin-left: 5px;
     border-radius: 8px;
@@ -65,7 +65,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
 }
 
 .test-overview-area {
-    flex: 0 0 80%; 
+    flex: 0 0 82%; 
     margin: 10px 0;
     overflow-x: auto;
 }
