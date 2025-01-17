@@ -9,6 +9,7 @@ module.exports = {
     ],
     transformIgnorePatterns: [
         '/node_modules/(?!query-string)/',  // This will allow transformation of query-string
+        "/node_modules/(?!@adobe/css-tools)/"
     ],
     moduleNameMapper: {
         '\\.css$': 'identity-obj-proxy', // Mock CSS imports with identity-obj-proxy
