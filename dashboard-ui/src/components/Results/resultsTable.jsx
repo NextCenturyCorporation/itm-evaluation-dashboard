@@ -334,7 +334,7 @@ class ResultsTable extends React.Component {
                                                                 <Table className='itm-table' stickyHeader aria-label="simple table">
                                                                     <TableBody className='TableBodyScrollable'>
                                                                         {testData.history.map((item, index) => (
-                                                                            <ActionRow key={item.command + index} item={item} index={index}/>
+                                                                            <ActionRow key={item.command + index} item={item} ta1={this.formatScenarioString(this.state.scenario).split(':')[0]} />
                                                                         ))}
                                                                     </TableBody>
                                                                 </Table>
@@ -377,12 +377,13 @@ class ResultsTable extends React.Component {
 }
 
 
-function ActionRow({ item, index }) {
+function ActionRow({ item, ta1 }) {
     const [open, setOpen] = React.useState(false);
 
-    const renderNestedItems= (item) => {
+    const renderNestedItems = (item, response = null) => {
+    // pass response through for ADEPT treatment counts
         if (isObject(item)) {
-            return renderNestedTable(item);
+            return renderNestedTable(item, response);
         } else if (Array.isArray(item)) {
             return (
                 <>
@@ -394,18 +395,37 @@ function ActionRow({ item, index }) {
         }
     }
 
-    const renderNestedTable = (tableData) => {
+    const renderNestedTable = (tableData, response = null) => {
+        const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] == 'APPLY_TREATMENT';
+        const character = tableData['character'];
+        const location = tableData['location'];
         return (
             <Table size="small">
                 <TableBody>
-                    {Object.entries(tableData).map(([key, value], i) => (
-                        <TableRow key={i}>
-                            <TableCell className='tableCellKey'>
-                                <strong>{snakeCaseToNormalCase(key)}</strong>
-                            </TableCell>
-                            <TableCell className='tableCellValue'>{renderNestedItems(value)}</TableCell>
-                        </TableRow>
-                    ))}
+                    {Object.entries(tableData).map(([key, value], i) => {
+                        if (isTreatment && response && key == 'treatment' && value == 'Hemostatic gauze') {
+                            for (const c of (response?.characters ?? [])) {
+                                if (c['id'] == character) {
+                                    for (const injury of c['injuries']) {
+                                        if (injury['location'] == location) {
+                                            if (injury['treatments_applied'])
+                                                value = value + ` (current count: ${injury['treatments_applied']})`;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        return (
+                            <TableRow key={i}>
+                                <TableCell className='tableCellKey'>
+                                    <strong>{snakeCaseToNormalCase(key)}</strong>
+                                </TableCell>
+                                <TableCell className='tableCellValue'>{renderNestedItems(value)}</TableCell>
+                            </TableRow>
+                        )
+                    })}
                 </TableBody>
             </Table>
         );
@@ -439,7 +459,7 @@ function ActionRow({ item, index }) {
                 <TableCell className="noBorderCell tableCellCommand">
                     <Typography><strong>Command:</strong> {item.command}</Typography>
                     <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>  
-                    {renderNestedItems(item.parameters)}
+                    {renderNestedItems(item.parameters, item.command == 'Take Action' && ta1 == 'Adept' ? item.response : null)}
                 </TableCell>
             </TableRow>
             <TableRow>
