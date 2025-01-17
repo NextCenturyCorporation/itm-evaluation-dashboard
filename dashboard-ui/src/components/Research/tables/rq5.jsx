@@ -3,8 +3,8 @@ import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
-import definitionXLFile from '../variables/Variable Definitions RQ5.xlsx';
-import definitionPDFFile from '../variables/Variable Definitions RQ5.pdf';
+import dreDefinitionXLFile from '../variables/Variable Definitions RQ5_DRE.xlsx';
+import ph1DefinitionXLFile from '../variables/Variable Definitions RQ5_PH1.xlsx';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
@@ -114,7 +114,7 @@ export function RQ5({ evalNum }) {
                         for (const ta2 of ta2s) {
                             const entryObj = {};
                             entryObj['Participant_ID'] = pid;
-                            entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') ? 'ADEPT' : 'SoarTech';
+                            entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
                             allTA1s.push(entryObj['TA1_Name']);
                             entryObj['TA2_Name'] = ta2;
                             allTA2s.push(ta2);
@@ -355,7 +355,7 @@ export function RQ5({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={'Definitions_RQ5.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ5_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

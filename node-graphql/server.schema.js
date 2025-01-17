@@ -252,6 +252,7 @@ const typeDefs = gql`
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON
+    getServerTimestamp: String
   }
 `;
 
@@ -291,7 +292,16 @@ const resolvers = {
               "qol-group-target-dre-1",
               "qol-group-target-dre-2",
               "vol-group-target-dre-1",
-              "vol-group-target-dre-2"]
+              "vol-group-target-dre-2",
+              "ADEPT-Phase1Eval-Ingroup Bias-Group-Low",
+              "ADEPT-Phase1Eval-Moral judgement-Group-Low",
+              "ADEPT-Phase1Eval-Moral judgement-Group-High",
+              "ADEPT-Phase1Eval-Ingroup Bias-Group-High",
+              "qol-group-target-1-final-eval",
+              "vol-group-target-1-final-eval",
+              "qol-group-target-2-final-eval",
+              "vol-group-target-2-final-eval"
+            ]
           ]
         }
       },
@@ -341,60 +351,60 @@ const resolvers = {
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
       let queryObj = {};
-      
+
       if (args["alignmentTarget"] == null || args["alignmentTarget"] == undefined || args["alignmentTarget"] == "null") {
         queryObj = {
           $and: [
             { "history.response.id": args["scenarioID"] }
           ]
         };
-        
+
         if (args["evalNumber"]) {
           queryObj.$and.push({ "evalNumber": args["evalNumber"] });
         }
-        
+
         queryObj[args["admQueryStr"]] = args["admName"];
       } else {
         queryObj = {
           $and: [
-            { "history.response.id": args["alignmentTarget"] }, 
+            { "history.response.id": args["alignmentTarget"] },
             { "history.response.id": args["scenarioID"] }
           ]
         };
-        
+
         if (args["evalNumber"]) {
           queryObj.$and.push({ "evalNumber": args["evalNumber"] });
         }
-        
+
         queryObj[args["admQueryStr"]] = args["admName"];
       }
-      
+
       return await dashboardDB.db.collection('test').findOne(queryObj).then(result => { return result });
     },
     getAllTestDataForADM: async (obj, args, context, inflow) => {
       const results = [];
-      
+
       for (const target of args.alignmentTargets) {
         let queryObj = {
           $and: [
             { "history.response.id": args.scenarioID }
           ]
         };
-        
+
         if (target) {
           queryObj.$and.push({ "history.response.id": target });
         }
-        
+
         if (args.evalNumber) {
           queryObj.$and.push({ "evalNumber": args.evalNumber });
         }
-        
+
         queryObj[args.admQueryStr] = args.admName;
-        
+
         const result = await dashboardDB.db.collection('test')
           .findOne(queryObj)
           .then(result => result);
-        
+
         if (result) {
           results.push({
             alignmentTarget: target,
@@ -402,7 +412,7 @@ const resolvers = {
           });
         }
       }
-      
+
       return results;
     },
     getAllScenarios: async (obj, args, context, inflow) => {
@@ -778,6 +788,16 @@ const resolvers = {
         { "ParticipantID": Number(args["pid"]) },
         { $set: args["updates"] }
       );
+    },
+    getServerTimestamp: async () => {
+      process.env.TZ = 'America/New_York';
+      const date = new Date();
+      
+      const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
+      const currentOffset = date.getTimezoneOffset();
+      const isDST = currentOffset < januaryOffset;
+      
+      return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
     }
 
   },

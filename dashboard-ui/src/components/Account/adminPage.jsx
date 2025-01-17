@@ -12,6 +12,7 @@ import { createBrowserHistory } from 'history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
+import {FaInfoCircle} from 'react-icons/fa'
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -64,54 +65,170 @@ const UPDATE_SURVEY_VERSION = gql`
     }
 `;
 
+function AdminConfirmationModal({ show, onCancel, onConfirm, pendingChanges, options }) {
+    return (
+        <Modal show={show} onHide={onCancel} centered>
+            <Modal.Header closeButton className="bg-light">
+                <Modal.Title>
+                    <strong>Confirm Administrator Changes</strong>
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="px-4">
+                {pendingChanges?.usersToAdd.length > 0 && (
+                    <div className="mb-4">
+                        <h6 className="mb-3 text-dark">Add administrator privileges to:</h6>
+                        <div className="border rounded p-3 bg-light">
+                            {pendingChanges.usersToAdd.map(user => {
+                                const userOption = options.find(opt => opt.value === user);
+                                const email = userOption?.label.match(/\((.*?)\)/)?.[1] || '';
+                                return (
+                                    <div key={user} className="mb-2">
+                                        <strong>{user}</strong> {email && <span className="text-muted">({email})</span>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+                {pendingChanges?.usersToRemove.length > 0 && (
+                    <div className="mb-4">
+                        <h6 className="mb-3 text-dark">Remove administrator privileges from:</h6>
+                        <div className="border rounded p-3 bg-light">
+                            {pendingChanges.usersToRemove.map(user => {
+                                const userOption = options.find(opt => opt.value === user);
+                                const email = userOption?.label.match(/\((.*?)\)/)?.[1] || '';
+                                return (
+                                    <div key={user} className="mb-2">
+                                        <strong>{user}</strong> {email && <span className="text-muted">({email})</span>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+                <div className="alert alert-info mb-0 py-2 d-flex align-items-center">
+                    <FaInfoCircle className="me-2"/>
+                    Please confirm to modify administrative access.
+                </div>
+            </Modal.Body>
+            <Modal.Footer className="bg-light">
+                <Button variant="secondary" onClick={onCancel}>
+                    Cancel
+                </Button>
+                <Button variant="primary" onClick={onConfirm}>
+                    Confirm Changes
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+}
+
 function InputBox({ options, selectedOptions, mutation, param, header, caller, errorCallback }) {
     const [selected, setSelected] = useState(selectedOptions.sort());
     const [updateUserCall] = useMutation(mutation);
-    let errored = false;
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [pendingChanges, setPendingChanges] = useState(null);
+    
+    const handleConfirm = async () => {
+        let errored = false;
+        const { usersToAdd, usersToRemove } = pendingChanges;
+        
+        for (const username of [...usersToAdd, ...usersToRemove]) {
+            try {
+                await updateUserCall({
+                    variables: {
+                        username,
+                        [param]: usersToAdd.includes(username) ? true : false,
+                        caller
+                    }
+                });
+            } catch (error) {
+                errorCallback();
+                errored = true;
+                break;
+            }
+        }
+        
+        if (!errored) {
+            setSelected(pendingChanges.newSelection);
+        }
+        
+        setShowConfirmation(false);
+        setPendingChanges(null);
+    };
+
+    const handleCancel = () => {
+        setShowConfirmation(false);
+        setPendingChanges(null);
+    };
+
     const updateUser = (newSelect) => {
         const usersToAdd = newSelect.filter(user => !selected.includes(user));
         const usersToRemove = selected.filter(user => !newSelect.includes(user));
-        [...usersToAdd, ...usersToRemove].forEach(username =>
-            updateUserCall({
-                variables: {
-                    username,
-                    [param]: usersToAdd.includes(username) ? true : false,
-                    caller
-                }
-            }).catch(() => {
-                errorCallback();
-                errored = true;
-                return;
-            })
-        );
-        if (errored) {
-            return;
+        
+        // confirm for admin changes
+        if (param === 'isAdmin') {
+            setPendingChanges({
+                usersToAdd,
+                usersToRemove,
+                newSelection: newSelect
+            });
+            setShowConfirmation(true);
+        } else {
+            let errored = false;
+            [...usersToAdd, ...usersToRemove].forEach(username =>
+                updateUserCall({
+                    variables: {
+                        username,
+                        [param]: usersToAdd.includes(username) ? true : false,
+                        caller
+                    }
+                }).catch(() => {
+                    errorCallback();
+                    errored = true;
+                    return;
+                })
+            );
+            if (!errored) {
+                setSelected(newSelect);
+            }
         }
-        setSelected(newSelect);
-    }
+    };
+
     options.sort((a, b) => (a.value > b.value) ? 1 : -1);
 
     return (
-        <Row className="mb-4">
-            <Col>
-                <Card>
-                    <Card.Header as="h5">{header}</Card.Header>
-                    <Card.Body>
-                        <h6>Modify Current {header}</h6>
-                        <DualListBox
-                            options={options}
-                            selected={selected}
-                            onChange={updateUser}
-                            showHeaderLabels={true}
-                            lang={{
-                                availableHeader: "All Users",
-                                selectedHeader: header
-                            }} />
-                    </Card.Body>
-                </Card>
-            </Col>
-        </Row>
+        <>
+            <Row className="mb-4">
+                <Col>
+                    <Card>
+                        <Card.Header as="h5">{header}</Card.Header>
+                        <Card.Body>
+                            <h6>Modify Current {header}</h6>
+                            <DualListBox
+                                options={options}
+                                selected={selected}
+                                onChange={updateUser}
+                                showHeaderLabels={true}
+                                lang={{
+                                    availableHeader: "All Users",
+                                    selectedHeader: header
+                                }} />
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
 
+            {param === 'isAdmin' && (
+                <AdminConfirmationModal
+                    show={showConfirmation}
+                    onCancel={handleCancel}
+                    onConfirm={handleConfirm}
+                    pendingChanges={pendingChanges}
+                    options={options}
+                />
+            )}
+        </>
     );
 }
 

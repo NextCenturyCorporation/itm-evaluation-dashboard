@@ -570,12 +570,16 @@ export class App extends React.Component {
                                                     <Route path="/login">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} logout={this.logout} />
                                                     </Route>
+
                                                     <Route path="/participantText">
                                                         <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={false} />
                                                     </Route>
                                                     <Route path="/reset-password/:token" component={ResetPassPage} />
                                                     <Route path="/remote-text-survey">
                                                         <StartOnline />
+                                                    </Route>
+                                                    <Route path="/text-based">
+                                                        <TextBased />
                                                     </Route>
                                                     <Route path="/myaccount">
                                                         <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
@@ -620,9 +624,6 @@ export class App extends React.Component {
                                                         </Route>
                                                         <Route path="/review-delegation">
                                                             <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                        </Route>
-                                                        <Route path="/text-based">
-                                                            <TextBased />
                                                         </Route>
                                                         <Route path="/text-based-results">
                                                             <TextBasedResults />
