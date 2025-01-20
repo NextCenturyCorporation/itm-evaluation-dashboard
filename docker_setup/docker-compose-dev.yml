@@ -1,54 +1,65 @@
 version: '3'
-
+x-build-args: &build-args
+ DOCKER_BUILDKIT: 1
 networks:
-  dashboard-net:
+ dashboard-net:
 
 services:
-  dashboard-ui:
-    container_name: dashboard-ui
-    image: dashboard-ui
-    volumes:
-      - ../dashboard-ui/public/configs/dev/config.js:/usr/src/app/src/services/config.js
-      - ../dashboard-ui/public:/usr/src//app/public
-      - ../dashboard-ui/src:/usr/src//app/src
-      - ../dashboard-ui/package.json:/usr/src//app/package.json
-    ports:
-      - 3000:3000
-    depends_on:
-      - dashboard-server
-    networks:
-      - dashboard-net
-    environment:
-      - WATCHPACK_POLLING=true
-      - FAST_REFRESH=false
-      - WDS_SOCKET_PORT=0
-  dashboard-server:
-    container_name: dashboard-graphql
-    image: dashboard-graphql
-    volumes:
-      - ../dashboard-ui/public/configs/dev/graphql-config.js:/usr/src/app/config.js
-      - $HOME/.aws/:/root/.aws/:ro
-    ports: 
-      - 9100:9100
-    expose:
-      - 9100
-    depends_on:
-      - dashboard-mongo
-    networks:
-      - dashboard-net
-    environment:
-      NODE_OPTIONS: "--max-old-space-size=16384"
-  dashboard-mongo: 
-    image: 'mongo'
-    container_name: dashboard-mongo
-    command: --port 27030
-    networks:
-      dashboard-net:
-    environment:
-      - MONGO_INITDB_DATABASE=dashboard
-      - MONGO_INITDB_ROOT_USERNAME=dashroot
-      - MONGO_INITDB_ROOT_PASSWORD=dashr00tp@ssw0rd
-    volumes:
-      - ./resources/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    ports:
-      - '27030:27030'
+ dashboard-ui:
+   build: 
+     context: ../dashboard-ui
+     args:
+       <<: *build-args
+   container_name: dashboard-ui
+   image: dashboard-ui
+   volumes:
+     - ../dashboard-ui/public/configs/dev/config.js:/usr/src/app/src/services/config.js
+     - ../dashboard-ui/public:/usr/src/app/public
+     - ../dashboard-ui/src:/usr/src/app/src
+     - ../dashboard-ui/package.json:/usr/src/app/package.json
+     - dashboard-ui-node-modules:/usr/src/app/node_modules
+   ports:
+     - 3000:3000
+   depends_on:
+     - dashboard-server
+   networks:
+     - dashboard-net
+   environment:
+     - WATCHPACK_POLLING=true
+     - FAST_REFRESH=true 
+     - WDS_SOCKET_PORT=0
+     - NODE_ENV=development
+     - CHOKIDAR_USEPOLLING=true
+ dashboard-server:
+   container_name: dashboard-graphql
+   image: dashboard-graphql
+   volumes:
+     - ../dashboard-ui/public/configs/dev/graphql-config.js:/usr/src/app/config.js
+     - $HOME/.aws/:/root/.aws/:ro
+   ports: 
+     - 9100:9100
+   expose:
+     - 9100
+   depends_on:
+     - dashboard-mongo
+   networks:
+     - dashboard-net
+   environment:
+     NODE_OPTIONS: "--max-old-space-size=16384"
+ dashboard-mongo: 
+   image: 'mongo'
+   container_name: dashboard-mongo
+   command: --port 27030
+   networks:
+     dashboard-net:
+   environment:
+     - MONGO_INITDB_DATABASE=dashboard
+     - MONGO_INITDB_ROOT_USERNAME=dashroot
+     - MONGO_INITDB_ROOT_PASSWORD=dashr00tp@ssw0rd
+   volumes:
+     - ./resources/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+   ports:
+     - '27030:27030'
+
+volumes:
+ dashboard-ui-node-modules:
