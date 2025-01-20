@@ -50,49 +50,6 @@ function getMean(lst) {
     return cleanLst.reduce((a, b) => a + b, 0) / cleanLst.length;
 }
 
-function getLogisticData(dataPoints) {
-    const data = dataPoints.map((dp) => [dp.x, dp.y]);
-    const learningRate = 0.01;
-    const maxIterations = 10000;
-    const threshold = 1e-6;
-
-    let weights = [0, 0];
-
-    const sigmoid = (z) => 1 / (1 + Math.exp(-z));
-
-    for (let iter = 0; iter < maxIterations; iter++) {
-        let gradients = [0, 0];
-        let totalError = 0;
-
-        for (const point of data) {
-            const x = point[0];
-            const y = point[1];
-            const z = weights[0] * x + weights[1];
-            const prediction = sigmoid(z);
-            totalError += (y - prediction);
-
-            gradients[0] += (y - prediction) * x;
-            gradients[1] += (y - prediction);
-        }
-
-        for (let i = 0; i < weights.length; i++) {
-            weights[i] += learningRate * gradients[i];
-        }
-
-        if (Math.abs(totalError) < threshold) {
-            break;
-        }
-    }
-
-    function predict(weights, x) {
-        const z = weights[0] * x + weights[1];
-        return 1 / (1 + Math.exp(-z));
-    }
-
-    return [...data, ...Array.from({ length: 100 }, (_, i) => i / 100)].map((x) => { return { x: x[0], y: predict(weights, x[0]) } }).sort((a, b) => a.x - b.x);
-
-}
-
 
 function getMode(lst) {
     const cleanLst = getCleanLst(lst);
@@ -207,4 +164,4 @@ const calculateBestFitLine = (data) => {
     return lineData;
 };
 
-export { getBoxWhiskerData, getMean, getMedian, getMode, getStandDev, getStandardError, getMeanAcrossAll, getSeAcrossAll, calculateBestFitLine, getLogisticData, getMeanAcrossAllWithoutOutliers };
+export { getBoxWhiskerData, getMean, getMedian, getMode, getStandDev, getStandardError, getMeanAcrossAll, getSeAcrossAll, calculateBestFitLine, getMeanAcrossAllWithoutOutliers };

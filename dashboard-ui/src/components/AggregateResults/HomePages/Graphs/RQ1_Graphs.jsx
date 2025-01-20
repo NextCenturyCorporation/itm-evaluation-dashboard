@@ -6,6 +6,171 @@ import { calculateBestFitLine, getBoxWhiskerData, getMeanAcrossAll, getMeanAcros
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust, trustVsAlignStatus }) {
+
+    const generateTrustRatingsByAttributePlots = (att) => {
+        return (<div key={att + 'trust/align'} className="boxWhisker outlinedPlot">
+            <h4>Trust Ratings predicted by Alignment Score on {att}</h4>
+            <CanvasJSChart options={{
+                maintainAspectRatio: false,
+                height: "250",
+                width: "700",
+                axisX: {
+                    gridThickness: 0,
+                    title: "Alignment score (Delegator|Observed_ADM (target))",
+                    minimum: -0.05,
+                    maximum: 1.04
+                },
+                axisY: {
+                    gridThickness: 0,
+                    title: "Trust_Rating",
+                    maximum: 5.25,
+                    minimum: 0.8
+                },
+                data: [
+                    {
+                        color: '#5B89C130',
+                        type: "scatter", dataPoints: alignVsTrust[att]
+                    },
+                    {
+                        color: '#000',
+                        lineThickness: 4,
+                        markerSize: 0,
+                        type: "line", dataPoints: calculateBestFitLine(alignVsTrust[att])
+                    }
+                ]
+            }} />
+
+        </div>);
+    };
+
+    const generateAlignmentDistributions = () => {
+        return <>
+            <div className="outlinedPlot">
+                <h4>Alignment scores between delegator and targets (expected distribution of alignment scores by ADM classification)</h4>
+                <CanvasJSChart options={{
+                    axisX: {
+                        gridThickness: 0,
+                        title: "Observed ADM (Aligned/Baseline/Misaligned)",
+                        minimum: -0.5,
+                        maximum: 2.5,
+                        tickLength: 0,
+                    },
+                    axisY: {
+                        gridThickness: 0,
+                        title: "Alignment score (Delegator|Target)",
+                        maximum: 1.01,
+                        minimum: 0.15
+                    },
+                    axisX2: {
+                        gridThickness: 0,
+                        minimum: -0.5,
+                        maximum: 2.5,
+                        tickLength: 0,
+                        labelFormatter: () => ""
+                    },
+                    maintainAspectRatio: false,
+                    height: "400",
+                    width: "1200",
+                    dataPointMaxWidth: 25,
+                    data: [
+                        {
+                            type: "boxAndWhisker", dataPoints: [
+                                { label: "aligned", y: getBoxWhiskerData(alignmentsByAdmType.aligned.targets) },
+                                { label: "baseline", y: getBoxWhiskerData(alignmentsByAdmType.baseline.targets) },
+                                { label: "misaligned", y: getBoxWhiskerData(alignmentsByAdmType.misaligned.targets) }
+                            ],
+                            upperBoxColor: "#78a1e3",
+                            lowerBoxColor: "#78a1e3",
+                            color: "black",
+                        },
+                        {
+                            type: 'scatter',
+                            axisXType: 'secondary',
+                            dataPoints: [...alignmentsByAdmType.aligned.targetPoints,
+                            ...alignmentsByAdmType.baseline.targetPoints,
+                            ...alignmentsByAdmType.misaligned.targetPoints],
+                            markerSize: 5,
+                            color: '#55555530'
+                        },
+                        {
+                            type: "scatter",
+                            color: '#555',
+                            markerType: "square",
+                            markerSize: 12,
+                            axisXType: 'secondary',
+                            dataPoints: [
+                                { x: 0, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.aligned, 'targets'), l: "aligned" },
+                                { x: 1, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.baseline, 'targets'), l: "baseline" },
+                                { x: 2, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.misaligned, 'targets'), l: "misaligned" }
+                            ]
+                        }
+                    ]
+                }} />
+            </div>
+            <div className="outlinedPlot">
+                <h4>Alignment scores between delegator and observed ADMs by ADM classification</h4>
+                <CanvasJSChart options={{
+                    axisX: {
+                        gridThickness: 0,
+                        title: "Observed ADM (Aligned/Baseline/Misaligned)",
+                        minimum: -0.5,
+                        maximum: 2.5,
+                        tickLength: 0,
+                    },
+                    axisY: {
+                        gridThickness: 0,
+                        title: "Alignment score (Delegator|Observed_ADM)",
+                        maximum: 1.01,
+                        minimum: 0.15
+                    },
+                    axisX2: {
+                        gridThickness: 0,
+                        minimum: -0.5,
+                        maximum: 2.5,
+                        tickLength: 0,
+                        labelFormatter: () => ""
+                    },
+                    maintainAspectRatio: false,
+                    height: "400",
+                    width: "1200",
+                    dataPointMaxWidth: 25,
+                    data: [{
+                        type: "boxAndWhisker", dataPoints: [
+                            { label: "aligned", y: getBoxWhiskerData(alignmentsByAdmType.aligned.adms) },
+                            { label: "baseline", y: getBoxWhiskerData(alignmentsByAdmType.baseline.adms) },
+                            { label: "misaligned", y: getBoxWhiskerData(alignmentsByAdmType.misaligned.adms) }
+                        ],
+                        upperBoxColor: "#78a1e3",
+                        lowerBoxColor: "#78a1e3",
+                        color: "black",
+                    },
+                    {
+                        type: 'scatter',
+                        axisXType: 'secondary',
+                        dataPoints: [...alignmentsByAdmType.aligned.admPoints,
+                        ...alignmentsByAdmType.baseline.admPoints,
+                        ...alignmentsByAdmType.misaligned.admPoints],
+                        markerSize: 5,
+                        color: '#55555530'
+                    },
+                    {
+                        type: "scatter",
+                        color: '#555',
+                        markerType: "square",
+                        markerSize: 12,
+                        axisXType: 'secondary',
+                        dataPoints: [
+                            { x: 0, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.aligned, 'adms'), l: "aligned" },
+                            { x: 1, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.baseline, 'adms'), l: "baseline" },
+                            { x: 2, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.misaligned, 'adms'), l: "misaligned" }
+                        ]
+                    }
+                    ]
+                }} />
+            </div>
+        </>;
+    };
+
     const generateDesignImpacts = (ta1, ta2) => {
         const alignments = getAlignmentsByAdmTypeForTA12(data, ta1 == 'ADEPT' ? 'Adept' : 'ST', ta2);
         return (
@@ -135,7 +300,7 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                 </div>
             </div>
         );
-    }
+    };
 
     const generateTrustVsAlignedStatusChart = (ta1) => {
         const att1 = ta1 == 'ADEPT' ? 'IO' : 'QOL';
@@ -256,168 +421,14 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
             {alignVsTrust &&
                 <div className='rq1-lines'>
                     {Object.keys(alignVsTrust).map((att) => {
-                        return <div key={att + 'trust/align'} className="boxWhisker outlinedPlot">
-                            <h4>Trust Ratings predicted by  Alignment Score on {att}</h4>
-                            <CanvasJSChart options={{
-                                maintainAspectRatio: false,
-                                height: "250",
-                                width: "700",
-                                axisX: {
-                                    gridThickness: 0,
-                                    title: "Alignment score (Delegator|Observed_ADM (target))",
-                                    minimum: -0.05,
-                                    maximum: 1.04
-                                },
-                                axisY: {
-                                    gridThickness: 0,
-                                    title: "Trust_Rating",
-                                    maximum: 5.25,
-                                    minimum: 0.8
-                                },
-                                data: [
-                                    {
-                                        color: '#5B89C130',
-                                        type: "scatter", dataPoints: alignVsTrust[att]
-                                    },
-                                    {
-                                        color: '#000',
-                                        lineThickness: 4,
-                                        markerSize: 0,
-                                        type: "line", dataPoints: calculateBestFitLine(alignVsTrust[att])
-                                    }
-                                ]
-                            }} />
-
-                        </div>
+                        return generateTrustRatingsByAttributePlots(att);
                     })}
                 </div>
             }
 
             {alignmentsByAdmType && evalNumber == 5 &&
                 <div className='q2-adms'>
-                    <div className="outlinedPlot">
-                        <h4>Alignment scores between delegator and targets (expected distribution of alignment scores by ADM classification)</h4>
-                        <CanvasJSChart options={{
-                            axisX: {
-                                gridThickness: 0,
-                                title: "Observed ADM (Aligned/Baseline/Misaligned)",
-                                minimum: -0.5,
-                                maximum: 2.5,
-                                tickLength: 0,
-                            },
-                            axisY: {
-                                gridThickness: 0,
-                                title: "Alignment score (Delegator|Target)",
-                                maximum: 1.01,
-                                minimum: 0.15
-                            },
-                            axisX2: {
-                                gridThickness: 0,
-                                minimum: -0.5,
-                                maximum: 2.5,
-                                tickLength: 0,
-                                labelFormatter: () => ""
-                            },
-                            maintainAspectRatio: false,
-                            height: "400",
-                            width: "1200",
-                            dataPointMaxWidth: 25,
-                            data: [
-                                {
-                                    type: "boxAndWhisker", dataPoints: [
-                                        { label: "aligned", y: getBoxWhiskerData(alignmentsByAdmType.aligned.targets) },
-                                        { label: "baseline", y: getBoxWhiskerData(alignmentsByAdmType.baseline.targets) },
-                                        { label: "misaligned", y: getBoxWhiskerData(alignmentsByAdmType.misaligned.targets) }
-                                    ],
-                                    upperBoxColor: "#78a1e3",
-                                    lowerBoxColor: "#78a1e3",
-                                    color: "black",
-                                },
-                                {
-                                    type: 'scatter',
-                                    axisXType: 'secondary',
-                                    dataPoints: [...alignmentsByAdmType.aligned.targetPoints,
-                                    ...alignmentsByAdmType.baseline.targetPoints,
-                                    ...alignmentsByAdmType.misaligned.targetPoints],
-                                    markerSize: 5,
-                                    color: '#55555530'
-                                },
-                                {
-                                    type: "scatter",
-                                    color: '#555',
-                                    markerType: "square",
-                                    markerSize: 12,
-                                    axisXType: 'secondary',
-                                    dataPoints: [
-                                        { x: 0, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.aligned, 'targets'), l: "aligned" },
-                                        { x: 1, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.baseline, 'targets'), l: "baseline" },
-                                        { x: 2, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.misaligned, 'targets'), l: "misaligned" }
-                                    ]
-                                }
-                            ]
-                        }} />
-                    </div>
-                    <div className="outlinedPlot">
-                        <h4>Alignment scores between delegator and observed ADMs by ADM classification</h4>
-                        <CanvasJSChart options={{
-                            axisX: {
-                                gridThickness: 0,
-                                title: "Observed ADM (Aligned/Baseline/Misaligned)",
-                                minimum: -0.5,
-                                maximum: 2.5,
-                                tickLength: 0,
-                            },
-                            axisY: {
-                                gridThickness: 0,
-                                title: "Alignment score (Delegator|Observed_ADM)",
-                                maximum: 1.01,
-                                minimum: 0.15
-                            },
-                            axisX2: {
-                                gridThickness: 0,
-                                minimum: -0.5,
-                                maximum: 2.5,
-                                tickLength: 0,
-                                labelFormatter: () => ""
-                            },
-                            maintainAspectRatio: false,
-                            height: "400",
-                            width: "1200",
-                            dataPointMaxWidth: 25,
-                            data: [{
-                                type: "boxAndWhisker", dataPoints: [
-                                    { label: "aligned", y: getBoxWhiskerData(alignmentsByAdmType.aligned.adms) },
-                                    { label: "baseline", y: getBoxWhiskerData(alignmentsByAdmType.baseline.adms) },
-                                    { label: "misaligned", y: getBoxWhiskerData(alignmentsByAdmType.misaligned.adms) }
-                                ],
-                                upperBoxColor: "#78a1e3",
-                                lowerBoxColor: "#78a1e3",
-                                color: "black",
-                            },
-                            {
-                                type: 'scatter',
-                                axisXType: 'secondary',
-                                dataPoints: [...alignmentsByAdmType.aligned.admPoints,
-                                ...alignmentsByAdmType.baseline.admPoints,
-                                ...alignmentsByAdmType.misaligned.admPoints],
-                                markerSize: 5,
-                                color: '#55555530'
-                            },
-                            {
-                                type: "scatter",
-                                color: '#555',
-                                markerType: "square",
-                                markerSize: 12,
-                                axisXType: 'secondary',
-                                dataPoints: [
-                                    { x: 0, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.aligned, 'adms'), l: "aligned" },
-                                    { x: 1, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.baseline, 'adms'), l: "baseline" },
-                                    { x: 2, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.misaligned, 'adms'), l: "misaligned" }
-                                ]
-                            }
-                            ]
-                        }} />
-                    </div>
+                    {generateAlignmentDistributions()}
                     {generateDesignImpacts('ADEPT', 'Kitware')}
                     {generateDesignImpacts('ADEPT', 'Parallax')}
                     {generateDesignImpacts('ADEPT', 'Overall')}

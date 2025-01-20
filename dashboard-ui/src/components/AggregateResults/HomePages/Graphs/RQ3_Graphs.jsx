@@ -1,20 +1,55 @@
 import React from "react";
-import { useQuery } from 'react-apollo'
-import gql from "graphql-tag";
-import { getRQ134Data } from "../../../Research/utils";
-import { getAlignmentComparisonVsTrustRatings, getAlignmentsByAdmType, getAlignmentsByAdmTypeForTA12, getAlignmentsByAttribute, getDelegationPreferences, getDelegationVsAlignment, getRatingsBySelectionStatus } from "../../DataFunctions";
 import CanvasJSReact from '@canvasjs/react-charts';
-import { calculateBestFitLine, getBoxWhiskerData, getMean, getMeanAcrossAll, getMeanAcrossAllWithoutOutliers, getSeAcrossAll, getStandardError } from "../../statistics";
-import Accordion from 'react-bootstrap/Accordion';
-import MenuIcon from '@material-ui/icons/Menu';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
+import { getBoxWhiskerData, getMeanAcrossAll, getSeAcrossAll } from "../../statistics";
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDelegation, alignmentsByAttribute, ratingBySelection }) {
 
-    const generateDelPrefByTeamChart = () => {
+    const generateForcedChoiceChart = () => {
+        return <div className='outlinedPlot'>
+            <h4>Delegation (%) to Aligned DM on Forced Choice</h4>
+            <CanvasJSChart options={{
+                width: "1200",
+                dataPointWidth: 80,
+                toolTip: {
+                    shared: true
+                },
+                axisX: {
+                    interval: 1
+                },
+                axisY: {
+                    minimum: 0,
+                    maximum: 1,
+                    title: '% delegation preference for Aligned ADM',
+                    titleFontSize: 15
+                },
+                legend: {
+                    verticalAlign: "top",
+                    horizontalAlign: "center",
+                    cursor: "pointer"
+                },
+                data: [{
+                    type: "column",
+                    name: "Aligned",
+                    color: '#5B89C1',
+                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                    dataPoints: [{ y: getMeanAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getMeanAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
+                },
+                    {
+                        type: "error",
+                        color: "#555",
+                        name: "Variability Range",
+                        toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                        dataPoints: [{ y: getSeAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getSeAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
+                }
+                ]
+            }} />
+        </div>;
+    };
+
+    const generateDelPrefByTeamOrAttributeChart = (teamOrAttribute) => {
+        const attributes = ['IO', 'MJ', 'QOL', 'VOL'];
         return <CanvasJSChart options={{
             width: "1200",
             dataPointWidth: 40,
@@ -33,7 +68,7 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
                 horizontalAlign: "center",
                 cursor: "pointer"
             },
-            data: Object.keys(teamDelegation).filter((t) => t != 'combined').map((t) => {
+            data: Object.keys(teamDelegation).filter((t) => t != 'combined' && ((teamOrAttribute == 'team' ? !attributes.includes(t) : attributes.includes(t)))).map((t) => {
                 return {
                     type: "column",
                     name: t,
@@ -43,59 +78,10 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
                 }
             })
         }} />
-    }
+    };
 
-    return (<div className='chart-header-label q3'>
-        {delegationPreferences &&
-            <div className='q2-adms'>
-                <div className='outlinedPlot'>
-                    <h4>Delegation (%) to Aligned DM on Forced Choice</h4>
-                    <CanvasJSChart options={{
-                        width: "1200",
-                        dataPointWidth: 80,
-                        toolTip: {
-                            shared: true
-                        },
-                        axisX: {
-                            interval: 1
-                        },
-                        axisY: {
-                            minimum: 0,
-                            maximum: 1,
-                            title: '% delegation preference for Aligned ADM',
-                            titleFontSize: 15
-                        },
-                        legend: {
-                            verticalAlign: "top",
-                            horizontalAlign: "center",
-                            cursor: "pointer"
-                        },
-                        data: [{
-                            type: "column",
-                            name: "Aligned",
-                            color: '#5B89C1',
-                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                            dataPoints: [{ y: getMeanAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getMeanAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
-                        },
-                        {
-                            type: "error",
-                            color: "#555",
-                            name: "Variability Range",
-                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                            dataPoints: [{ y: getSeAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getSeAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
-                        }
-                        ]
-                    }} />
-                </div>
-            </div>}
-        {evalNumber == 5 && teamDelegation &&
-            <div className='q2-adms'>
-                <div className='outlinedPlot'>
-                    <h4>Proportion of Delegation Preference By Teams</h4>
-                    {generateDelPrefByTeamChart()}
-                </div>
-            </div>}
-        {alignmentsByAttribute && <div className='q2-adms'>
+    const generateAlignmentByAttributePlot = () => {
+        return <>
             <div className="outlinedPlot">
                 <h4>Alignment scores between delegator and observed ADMs by Attribute</h4>
                 <CanvasJSChart options={{
@@ -223,65 +209,90 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
                     }]
                 }} />
             </div>}
+        </>;
+    };
+
+    const generateSelectionStatusChart = () => {
+        return <div>
+            <h3>Individual DM Ratings by Delegation Selection Status</h3>
+            <CanvasJSChart options={{
+                width: "1200",
+                dataPointWidth: 80,
+                toolTip: {
+                    shared: true
+                },
+                axisX: {
+                    interval: 1
+                },
+                axisY: {
+                    minimum: 0
+                },
+                legend: {
+                    verticalAlign: "top",
+                    horizontalAlign: "center",
+                    cursor: "pointer"
+                },
+                data: [{
+                    type: "column",
+                    name: "Not Selected",
+                    color: '#5B89C1',
+                    showInLegend: true,
+                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                    dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
+                    { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
+                },
+                {
+                    type: "error",
+                    color: "#555",
+                    name: "Variability Range",
+                    toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                    dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
+                    { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
+                },
+                {
+                    type: "column",
+                    name: "Selected",
+                    color: '#edc24c',
+                    showInLegend: true,
+                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                    dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
+                    { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
+                },
+                {
+                    type: "error",
+                    name: "Variability Range",
+                    color: '#555',
+                    toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
+                    dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
+                    { y: getSeAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
+                }
+                ]
+            }} />
+        </div>;
+    };
+
+    return (<div className='chart-header-label q3'>
+        {delegationPreferences &&
+            <div className='q2-adms'>
+                {generateForcedChoiceChart()}
+            </div>}
+        {evalNumber == 5 && teamDelegation &&
+            <div className='q2-adms'>
+                <div className='outlinedPlot'>
+                    <h4>Proportion of Delegation Preference By Attribute</h4>
+                    {generateDelPrefByTeamOrAttributeChart('attribute')}
+                </div>
+                <div className='outlinedPlot'>
+                    <h4>Proportion of Delegation Preference By Teams</h4>
+                    {generateDelPrefByTeamOrAttributeChart('team')}
+                </div>
+            </div>}
+        {alignmentsByAttribute && <div className='q2-adms'>
+            {generateAlignmentByAttributePlot()}
         </div>}
         {ratingBySelection &&
             <div className='q2-adms'>
-                <div>
-                    <h3>Individual DM Ratings by Delegation Selection Status</h3>
-                    <CanvasJSChart options={{
-                        width: "1200",
-                        dataPointWidth: 80,
-                        toolTip: {
-                            shared: true
-                        },
-                        axisX: {
-                            interval: 1
-                        },
-                        axisY: {
-                            minimum: 0
-                        },
-                        legend: {
-                            verticalAlign: "top",
-                            horizontalAlign: "center",
-                            cursor: "pointer"
-                        },
-                        data: [{
-                            type: "column",
-                            name: "Not Selected",
-                            color: '#5B89C1',
-                            showInLegend: true,
-                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                            dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
-                            { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
-                        },
-                        {
-                            type: "error",
-                            color: "#555",
-                            name: "Variability Range",
-                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                            dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Agree'), label: 'Agree' },
-                            { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Not Selected'], 'SRAlign'), label: 'SRAlign' }]
-                        },
-                        {
-                            type: "column",
-                            name: "Selected",
-                            color: '#edc24c',
-                            showInLegend: true,
-                            toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                            dataPoints: [{ y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
-                            { y: getMeanAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getMeanAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
-                        },
-                        {
-                            type: "error",
-                            name: "Variability Range",
-                            color: '#555',
-                            toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
-                            dataPoints: [{ y: getSeAcrossAll(ratingBySelection['Selected'], 'Trust'), label: 'Trust' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'Agree'), label: 'Agree' },
-                            { y: getSeAcrossAll(ratingBySelection['Selected'], 'Trustworthy'), label: 'Trustworthy' }, { y: getSeAcrossAll(ratingBySelection['Selected'], 'SRAlign'), label: 'SRAlign' }]
-                        }
-                        ]
-                    }} />
-                </div>
+                {generateSelectionStatusChart()}
             </div>}
     </div>);
 }
