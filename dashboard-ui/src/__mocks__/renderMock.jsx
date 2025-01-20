@@ -22,7 +22,16 @@ export const renderApp = async (route = '/') => {
     await waitFor(() => {
         expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
-
+    if (route != '/') {
+        await waitFor(() => {
+            expect(screen.queryByText(/Dashboard/i)).not.toBeInTheDocument();
+        });
+    }
+    else {
+        await waitFor(() => {
+            expect(screen.queryByText(/Dashboard/i)).toBeInTheDocument();
+        });
+    }
     history.push(route);
     return history;
 }
