@@ -59,7 +59,7 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                         gridThickness: 0,
                         title: "Alignment score (Delegator|Target)",
                         maximum: 1.01,
-                        minimum: 0.15
+                        minimum: -0.05
                     },
                     axisX2: {
                         gridThickness: 0,
@@ -121,7 +121,7 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                         gridThickness: 0,
                         title: "Alignment score (Delegator|Observed_ADM)",
                         maximum: 1.01,
-                        minimum: 0.15
+                        minimum: -0.05
                     },
                     axisX2: {
                         gridThickness: 0,
@@ -189,7 +189,7 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                             gridThickness: 0,
                             title: "Alignment score (Delegator|Target)",
                             maximum: 1.01,
-                            minimum: 0.15
+                            minimum: -0.05
                         },
                         axisX2: {
                             gridThickness: 0,
@@ -251,7 +251,7 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                             gridThickness: 0,
                             title: "Alignment score (Delegator|Observed_ADM)",
                             maximum: 1.01,
-                            minimum: 0.15
+                            minimum: -0.05
                         },
                         axisX2: {
                             gridThickness: 0,

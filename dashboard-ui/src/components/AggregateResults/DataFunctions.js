@@ -1283,7 +1283,7 @@ const getAlignmentsByAdmType = (data) => {
         const lessData = data.filter((d) => d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == admType && d['ADM Loading'] == 'normal');
         for (let x of lessData) {
             const align_adm = x['DRE Alignment score (Delegator|Observed_ADM (target))'] ?? x['Alignment score (Delegator|Observed_ADM (target))'];
-            const align_target = x['DRE Alignment score (Delegator|target)'] ?? x['Alignment score (Delegator|target)'];
+            const align_target = x['Alignment score (Delegator|target)'];
             if (isDefined(align_adm) && align_adm != '-') {
                 adms.push(align_adm);
                 admPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: admType });
@@ -1311,7 +1311,7 @@ const getAlignmentsByAdmTypeForTA12 = (data, ta1, ta2) => {
             d['ADM Loading'] == 'normal' && d['TA1_Name'] == ta1 && (d['TA2_Name'] == ta2 || ta2 == 'Overall'));
         for (let x of lessData) {
             const align_adm = x['DRE Alignment score (Delegator|Observed_ADM (target))'] ?? x['Alignment score (Delegator|Observed_ADM (target))'];
-            const align_target = x['DRE Alignment score (Delegator|target)'] ?? x['Alignment score (Delegator|target)'];
+            const align_target = x['Alignment score (Delegator|target)'];
             if (isDefined(align_adm) && align_adm != '-') {
                 adms.push(align_adm);
                 admPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: admType });

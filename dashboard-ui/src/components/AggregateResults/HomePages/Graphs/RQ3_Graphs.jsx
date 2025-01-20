@@ -29,20 +29,21 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
                     horizontalAlign: "center",
                     cursor: "pointer"
                 },
-                data: [{
-                    type: "column",
-                    name: "Aligned",
-                    color: '#5B89C1',
-                    toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
-                    dataPoints: [{ y: getMeanAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getMeanAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
-                },
+                data: [
+                    {
+                        type: "column",
+                        name: "Aligned",
+                        color: '#5B89C1',
+                        toolTipContent: "<b>{label}</b> <br> <span style=\"color:#4F81BC\">{name}</span>: {y}",
+                        dataPoints: [{ y: getMeanAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getMeanAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
+                    },
                     {
                         type: "error",
                         color: "#555",
                         name: "Variability Range",
                         toolTipContent: "<span style=\"color:#C0504E\">{name}</span>: {y[0]} - {y[1]}",
                         dataPoints: [{ y: getSeAcrossAll(delegationPreferences, 'baseline'), label: 'vs. Baseline ADM' }, { y: getSeAcrossAll(delegationPreferences, 'misaligned'), label: 'vs. Misaligned ADM' }]
-                }
+                    }
                 ]
             }} />
         </div>;
