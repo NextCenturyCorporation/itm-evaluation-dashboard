@@ -6,7 +6,7 @@ const Supplies = ({ supplies }) => {
     <Card className="border-0 shadow-sm mb-4">
       <Card.Body>
         <Card.Title className="mb-3">Supplies</Card.Title>
-        <div className="d-flex flex-wrap gap-3">
+        <div className="d-flex flex-wrap gap-3 justify-content-center">
           {supplies
             .filter(supply => !('quantity' in supply) || supply.quantity > 0)
             .map((supply, index) => (
