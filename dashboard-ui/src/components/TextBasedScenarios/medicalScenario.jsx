@@ -295,10 +295,10 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Card>
         ))}
         <Row className="mb-4">
-          <Col md={3} className="d-flex flex-column">
+          <Col md={2} className="d-flex flex-column">
             <Supplies supplies={this.supplies} />
           </Col>
-          <Col md={9}>
+          <Col md={10}>
             <Row>
               {this.patients.map((patient, index) => (
                 <Col md={6} key={index} className="mb-4">

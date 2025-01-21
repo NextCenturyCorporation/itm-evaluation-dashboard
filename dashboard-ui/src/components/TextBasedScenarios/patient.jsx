@@ -170,81 +170,67 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
         <Card.Text className="mb-3 small">
           {patient.unstructured}
         </Card.Text>
-        <Row className="mb-3">
-          {patient.imgUrl ? (
-            <>
-              <Col md={7} className="d-flex mb-3 mb-md-0">
-                <div className="text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded"
-                  style={{
-                    position: 'relative',
-                    height: patient.demographics.age ? '300px' : '',
-                    overflow: 'hidden'
-                  }}>
-                  <img
-                    src={`data:image/png;base64,${patient.imgUrl}`}
-                    alt={`${patient.id ?? patient.name}`}
-                    style={patient.demographics.age ? {
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
-                      position: 'relative'
-                    } : {
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                    }}
-                  />
-                  {!imageClickDisabled &&
-                    <ZoomInIcon
-                      className="magnifying-glass"
-                      style={{
-                        position: 'absolute',
-                        bottom: '8px',
-                        left: '8px',
-                        fontSize: '24px',
-                        cursor: 'pointer',
-                        zIndex: 1,
-                      }}
-                      onClick={() => onImageClick(patient)}
-                    />
-                  }
-                </div>
-              </Col>
-              <Col md={5} className="d-flex flex-column">
-                <Card className="w-100 border-0 flex-grow-1 vitals-card" style={{ backgroundColor: '#e7f1ff' }}>
-                  <Card.Body className="p-2 d-flex flex-column">
-                    <Card.Title className="h5 mb-2 vitals-title">Vitals</Card.Title>
-                    <div className="vitals-container flex-grow-1">
-                      {renderVitals(patient.vitals)}
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            </>
-          ) : (
+        
+        {/* Image Section */}
+        {patient.imgUrl && (
+          <Row className="mb-3">
             <Col md={12}>
-              <Card className="w-100 border-0 h-100 vitals-card" style={{ backgroundColor: '#e7f1ff' }}>
-                <Card.Body className="p-3 d-flex flex-column">
-                  <Card.Title className="h5 mb-3 vitals-title">Vitals</Card.Title>
-                  <div className="vitals-container flex-grow-1">
-                    {renderVitals(patient.vitals)}
-                  </div>
-                </Card.Body>
-              </Card>
+              <div className="text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded"
+                style={{
+                  position: 'relative',
+                  height: '300px',
+                  overflow: 'hidden'
+                }}>
+                <img
+                  src={`data:image/png;base64,${patient.imgUrl}`}
+                  alt={`${patient.id ?? patient.name}`}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    position: 'relative'
+                  }}
+                />
+                {!imageClickDisabled &&
+                  <ZoomInIcon
+                    className="magnifying-glass"
+                    style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      left: '8px',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      zIndex: 1,
+                    }}
+                    onClick={() => onImageClick(patient)}
+                  />
+                }
+              </div>
             </Col>
-          )}
+          </Row>
+        )}
+
+        {/* Vitals and Injuries Section */}
+        <Row>
+          <Col md={6}>
+            <Card className="mb-0 border-0 h-100 vitals-card" style={{ backgroundColor: '#e7f1ff' }}>
+              <Card.Body className="p-3">
+                <Card.Title className="h4 mb-2">Vitals</Card.Title>
+                {renderVitals(patient.vitals)}
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={6}>
+            <Card className="mb-0 border-0 h-100" style={{ backgroundColor: '#fff0f0' }}>
+              <Card.Body className="p-3">
+                <Card.Title className="h4 mb-2">Injuries</Card.Title>
+                {renderInjuries(patient.injuries)}
+              </Card.Body>
+            </Card>
+          </Col>
         </Row>
-        <Card className="mb-0 border-0" style={{ backgroundColor: '#fff0f0' }}>
-          <Card.Body className="p-3">
-            <Card.Title className="h4 mb-2">Injuries</Card.Title>
-            {renderInjuries(patient.injuries)}
-          </Card.Body>
-        </Card>
       </Card.Body>
     </Card>
   );
