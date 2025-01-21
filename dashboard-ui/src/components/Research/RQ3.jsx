@@ -79,9 +79,14 @@ export function RQ3() {
                         <li>Use only "0"</li>
                     </ul>
                 </li>}
-                <li>ADM_Type
+                <li>ADM_Aligned_Status
                     <ul>
                         <li>Filter for only {selectedEval == 5 ? '"aligned"' : '"comparison"'} trials</li>
+                    </ul>
+                </li>
+                <li>ADM Loading
+                    <ul>
+                        <li>Filter for only "normal" trials</li>
                     </ul>
                 </li>
                 <li>Delegation preference (A/B)</li>

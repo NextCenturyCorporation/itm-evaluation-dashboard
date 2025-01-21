@@ -1372,9 +1372,8 @@ function getDelegationPreferences(data, evalNumber = 4) {
         'QOL': { 'baseline': [], 'misaligned': [] },
         'VOL': { 'baseline': [], 'misaligned': [] }
     }
-    for (const entry of data.filter((x) => x['ADM_Type'] === 'comparison')) {
+    for (const entry of data.filter((x) => (evalNumber == 4 && x['ADM_Type'] === 'comparison') || (evalNumber == 5 && x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned' && x['ADM Loading'] == 'normal'))) {
         const pid = entry['Delegator_ID'];
-        const admsUsed = data.filter((x) => x['Delegator_ID'] == pid && x['Scenario'] == entry['Scenario'] && x['Attribute'] == entry['Attribute'] && x['ADM_Type'] != 'comparison');
 
         const baseline = entry['Delegation preference (A/B)'];
         const misaligned = entry['Delegation preference (A/M)'];
@@ -1382,11 +1381,8 @@ function getDelegationPreferences(data, evalNumber = 4) {
             // will store 0 when baseline/misaligned is preferred, 1 otherwise
             dataByPid[pid] = { 'baseline': [], 'misaligned': [] };
         }
-        if (evalNumber == 5 && admsUsed.find((x) => x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned')?.['ADM Loading'] != 'normal') {
-            continue;
-        }
-        if (['A', 'B'].includes(baseline)) {
-            const baseVal = baseline == 'B' ? 0 : 1;
+        if (['A', 'B', 'y', 'n'].includes(baseline)) {
+            const baseVal = ['B', 'n'].includes(baseline) ? 0 : 1;
             dataByAttribute[entry['Attribute']]['baseline'].push(baseVal);
             if (evalNumber == 4 || entry['Attribute'] != 'QOL') {
                 dataByPid[pid]['baseline'].push(baseVal);
@@ -1414,11 +1410,8 @@ function getDelegationPreferences(data, evalNumber = 4) {
                 }
             }
         }
-        if (evalNumber == 5 && admsUsed.find((x) => x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'misaligned')?.['ADM Loading'] != 'normal') {
-            continue;
-        }
-        if (['A', 'M'].includes(misaligned)) {
-            const misVal = misaligned == 'M' ? 0 : 1;
+        if (['A', 'M', 'y', 'n'].includes(misaligned)) {
+            const misVal = ['M', 'n'].includes(misaligned) ? 0 : 1;
             dataByAttribute[entry['Attribute']]['misaligned'].push(misVal);
             if (evalNumber == 4 || entry['Attribute'] != 'QOL') {
                 dataByPid[pid]['misaligned'].push(misVal);
@@ -1456,6 +1449,7 @@ function getDelegationPreferences(data, evalNumber = 4) {
     }
     if (evalNumber == 4)
         return preferencePercents;
+
     const allPercents = { 'combined': preferencePercents };
     for (const key of Object.keys(dataByTeams)) {
         allPercents[key] = {
@@ -1568,6 +1562,7 @@ function getRatingsBySelectionStatus(data) {
                 break;
         }
     }
+    console.log(results);
     return results;
 }
 
