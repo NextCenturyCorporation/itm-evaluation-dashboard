@@ -170,12 +170,11 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
         <Card.Text className="mb-3 small">
           {patient.unstructured}
         </Card.Text>
-        
-        {/* Image Section */}
+
         {patient.imgUrl && (
           <Row className="mb-3">
             <Col md={12}>
-              <div className="text-white p-3 text-center d-flex align-items-center justify-content-center w-100 rounded"
+              <div className="text-white text-center w-100 rounded"
                 style={{
                   position: 'relative',
                   height: '300px',
@@ -184,13 +183,22 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
                 <img
                   src={`data:image/png;base64,${patient.imgUrl}`}
                   alt={`${patient.id ?? patient.name}`}
-                  style={{
+                  style={patient.demographics.age ? {
+                    // Style for patients with age - uses contain to show full body
                     maxWidth: '100%',
                     maxHeight: '100%',
                     width: 'auto',
                     height: 'auto',
                     objectFit: 'contain',
                     position: 'relative'
+                  } : {
+                    // Style for patients without age - uses cover to fill space
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
                   }}
                 />
                 {!imageClickDisabled &&
@@ -199,10 +207,11 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
                     style={{
                       position: 'absolute',
                       bottom: '8px',
-                      left: '8px',
+                      right: '8px',
                       fontSize: '24px',
                       cursor: 'pointer',
                       zIndex: 1,
+                      color: 'white'
                     }}
                     onClick={() => onImageClick(patient)}
                   />

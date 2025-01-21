@@ -200,26 +200,26 @@ export class MedicalScenario extends SurveyQuestionElementBase {
 
   springerUptonEdgeCase() {
     const relevantProbes = [
-        'template Probe 2-A.1',
-        'template Probe 2-A.1-A.1',
-        'template Probe 2-A.1-B.1',
-        'template Probe 2-A.1-B.1-A.1',
-        'template Probe 2-B.1',
-        'template Probe 2-B.1-A.1',
-        'template Probe 2-B.1-B.1',
-        'template Probe 2-B.1-B.1-A.1',
-        'template Probe 3'
+      'template Probe 2-A.1',
+      'template Probe 2-A.1-A.1',
+      'template Probe 2-A.1-B.1',
+      'template Probe 2-A.1-B.1-A.1',
+      'template Probe 2-B.1',
+      'template Probe 2-B.1-A.1',
+      'template Probe 2-B.1-B.1',
+      'template Probe 2-B.1-B.1-A.1',
+      'template Probe 3'
     ];
-    
+
     if (!relevantProbes.includes(this.question.jsonObj.name)) {
-        return;
+      return;
     }
 
     const baseVitals = {
-        'avpu': 'ALERT',
-        'ambulatory': true,
-        'mental_status': 'UPSET',
-        'spo2': 'NORMAL'
+      'avpu': 'ALERT',
+      'ambulatory': true,
+      'mental_status': 'UPSET',
+      'spo2': 'NORMAL'
     };
 
     const normalVitals = { ...baseVitals, 'breathing': 'NORMAL', 'heart_rate': 'NORMAL' };
@@ -233,24 +233,24 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     const updatedPatients = [...this.patients];
 
     if (springerIndex !== -1) {
-        updatedPatients[springerIndex] = {
-            ...updatedPatients[springerIndex],
-            vitals: isSpringerFirst ? normalVitals : fastVitals
-        };
+      updatedPatients[springerIndex] = {
+        ...updatedPatients[springerIndex],
+        vitals: isSpringerFirst ? normalVitals : fastVitals
+      };
     }
 
     if (uptonIndex !== -1) {
-        updatedPatients[uptonIndex] = {
-            ...updatedPatients[uptonIndex],
-            vitals: isSpringerFirst ? fastVitals : normalVitals
-        };
+      updatedPatients[uptonIndex] = {
+        ...updatedPatients[uptonIndex],
+        vitals: isSpringerFirst ? fastVitals : normalVitals
+      };
     }
 
     this.question.patients = updatedPatients;
 
     // force re-render
     this.setState({});
-}
+  }
 
   renderElement() {
     return (
@@ -295,22 +295,20 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           </Card>
         ))}
         <Row className="mb-4">
-          <Col md={2} className="d-flex flex-column">
+          <Col md={12}>
             <Supplies supplies={this.supplies} />
           </Col>
-          <Col md={10}>
-            <Row>
-              {this.patients.map((patient, index) => (
-                <Col md={6} key={index} className="mb-4">
-                  <Patient
-                    patient={patient}
-                    onImageClick={this.handleImageClick}
-                    blockedVitals={this.blockedVitals}
-                  />
-                </Col>
-              ))}
-            </Row>
-          </Col>
+        </Row>
+        <Row>
+          {this.patients.map((patient, index) => (
+            <Col md={6} key={index} className="mb-4">
+              <Patient
+                patient={patient}
+                onImageClick={this.handleImageClick}
+                blockedVitals={this.blockedVitals}
+              />
+            </Col>
+          ))}
         </Row>
         <Modal show={this.state.showModal} onHide={this.handleCloseModal} size="lg">
           <Modal.Header closeButton>
