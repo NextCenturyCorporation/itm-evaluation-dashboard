@@ -2,7 +2,7 @@ import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
-import './template.css';
+import '../../css/template.css';
 
 const VitalsDropdown = ({ vitals, patientName, isVisible, toggleVisibility }) => {
     return (
