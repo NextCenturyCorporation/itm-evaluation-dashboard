@@ -5,7 +5,7 @@ import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import { FaInfoCircle } from 'react-icons/fa';
 import SituationModal from "./situationModal";
 import VitalsDropdown from "./vitalsDropdown";
-import './template.css';
+import '../../css/template.css';
 import { renderSituation } from './surveyUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import Patient from '../TextBasedScenarios/patient';
@@ -116,7 +116,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         if (index > 0 && getActionText(sceneActions[index - 1])?.includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
 
-            if ((scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) && 
+            if ((scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) &&
                 probe?.choices) {
                 return (
                     <div>
@@ -128,7 +128,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                 </div>
                                 <ListGroup variant="flush">
                                     {probe.choices.map((choice, idx) => (
-                                        <ListGroup.Item 
+                                        <ListGroup.Item
                                             key={idx}
                                             className="bg-light border-0 py-1 ps-3"
                                         >
@@ -216,38 +216,42 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 <Accordion.Item eventKey="0">
                     <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
                     <Accordion.Body className='scene'>
-                        <Col md={3}>
-                            <Supplies supplies={sceneSupplies} />
-                        </Col>
-                        <Col md={9} style={{ 'marginLeft': '12px' }}>
-                            <Accordion defaultActiveKey="1">
-                                <Accordion.Item eventKey="1">
-                                    <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
-                                    <Accordion.Body>
-                                        <ListGroup>
-                                            {sceneActions && sceneActions.map((action, index) => (
-                                                <ListGroup.Item
-                                                    key={`action-${index}`}
-                                                    className="action-item"
-                                                    style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
-                                                >
-                                                    {processActionText(action, index, sceneActions)}
-                                                </ListGroup.Item>
-                                            ))}
-                                        </ListGroup>
-                                    </Accordion.Body>
-                                </Accordion.Item>
-                            </Accordion>
+                        <Row className="mb-4">
+                            <Col md={12}>
+                                <Supplies supplies={sceneSupplies} />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={12}>
+                                <Accordion defaultActiveKey="1">
+                                    <Accordion.Item eventKey="1">
+                                        <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
+                                        <Accordion.Body>
+                                            <ListGroup>
+                                                {sceneActions && sceneActions.map((action, index) => (
+                                                    <ListGroup.Item
+                                                        key={`action-${index}`}
+                                                        className="action-item"
+                                                        style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
+                                                    >
+                                                        {processActionText(action, index, sceneActions)}
+                                                    </ListGroup.Item>
+                                                ))}
+                                            </ListGroup>
+                                        </Accordion.Body>
+                                    </Accordion.Item>
+                                </Accordion>
 
-                            <div style={{ marginBottom: '10px', marginTop: '10px' }}>
-                                {patientButtons}
-                            </div>
-                            <div className="card-container">
-                                <Row>
-                                    {patientCards}
-                                </Row>
-                            </div>
-                        </Col>
+                                <div style={{ marginBottom: '10px', marginTop: '10px' }}>
+                                    {patientButtons}
+                                </div>
+                                <div className="card-container">
+                                    <Row>
+                                        {patientCards}
+                                    </Row>
+                                </div>
+                            </Col>
+                        </Row>
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>

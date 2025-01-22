@@ -1,7 +1,7 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import './template.css'
+import '../../css/template.css';
 import Dynamic from "./dynamic";
 import { isDefined } from "../AggregateResults/DataFunctions";
 

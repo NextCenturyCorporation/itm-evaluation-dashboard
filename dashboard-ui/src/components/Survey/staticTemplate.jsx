@@ -4,7 +4,7 @@ import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Card, Row, Col, ListGroup} from "react-bootstrap";
 import SituationModal from "./situationModal";
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
-import './template.css'
+import '../../css/template.css';
 const CUSTOM_TYPE = "static-template";
 
 export class StaticTemplateModel extends Question {
