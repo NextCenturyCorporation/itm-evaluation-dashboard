@@ -1,20 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderApp } from '../__mocks__/renderMock';
-import puppeteer from 'puppeteer';
 
 jest.unmock('@accounts/client');
 jest.unmock('@accounts/graphql-client');
 jest.unmock('@accounts/client-password');
 
 describe('Test render and bad login', () => {
-    let browser;
-    let page;
-    beforeAll(async () => {
-        browser = await puppeteer.launch();
-        page = await browser.newPage();
-    });
-
     beforeEach(() => {
         jest.clearAllMocks();
         jest.resetModules();

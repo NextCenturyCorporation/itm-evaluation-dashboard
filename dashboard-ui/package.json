@@ -22,7 +22,7 @@
         "@nivo/bar": "^0.85.1",
         "@reduxjs/toolkit": "^2.2.5",
         "@testing-library/jest-dom": "^5.16.5",
-        "@testing-library/react": "^13.4.0",
+        "@testing-library/react": "^15.0.6",
         "@testing-library/user-event": "^14.5.2",
         "ajv": "^8.12.0",
         "apollo-cache-inmemory": "^1.6.6",
@@ -95,6 +95,7 @@
     },
     "devDependencies": {
         "@types/node": "^22.10.7",
+        "jest-puppeteer": "^11.0.0",
         "unfetch": "^4.2.0"
     }
 }

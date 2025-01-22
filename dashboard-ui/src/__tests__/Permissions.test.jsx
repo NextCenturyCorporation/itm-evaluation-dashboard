@@ -1,4 +1,8 @@
-import { renderApp } from "../__mocks__/renderMock";
+/**
+ * @jest-environment puppeteer
+ */
+
+// import { renderApp } from "../__mocks__/renderMock";
 import { screen, waitFor } from '@testing-library/react';
 
 const mockUser = {
@@ -43,20 +47,28 @@ jest.mock('@accounts/client-password', () => {
 });
 
 
-xdescribe('Route Redirection and Access Control Tests', () => {
+describe('Route Redirection and Access Control Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
     it('test that non-admin cannot access anything', async () => {
-        await renderApp('/');
+        // await renderApp('/');
+        await page.goto('http://localhost:3000');
 
-        // console.log('hello', screen.debug(screen.getAllByText('')[0], 100000));
-        console.log(document.html);
+        await page.waitForSelector('text/Sign In'); // Jest-puppeteer specific selector for text
 
-        // await waitFor(() => screen.queryByText(/Thank you for your interest/i));
-        // expect(screen.queryByText(/Thank you for your interest/i)).toBeInTheDocument();
+        // Retrieve the element and assert its presence
+        const loginText = await page.$eval('body', (body) => {
+            return body.textContent.includes('Sign in');
+        });
 
+        expect(loginText).toBe(true);
+        await page.goto('http://localhost:3000/remote-text-survey');
+        const currentUrl = await page.url();
+
+        // Assert the URL
+        expect(currentUrl).toBe('http://localhost:3000/remote-text-survey');
     });
     // const history = createMemoryHistory();
     // history.push('/results');

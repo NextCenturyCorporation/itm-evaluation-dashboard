@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { act } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import { MockedProvider } from '@apollo/react-testing';
 import { App } from '../components/App';
 import { homepageMocks } from '../__mocks__/homepageMocks';
-
 
 export const renderApp = async (route = '/') => {
     const history = createMemoryHistory();
@@ -32,6 +31,6 @@ export const renderApp = async (route = '/') => {
             expect(screen.queryByText(/Dashboard/i)).toBeInTheDocument();
         });
     }
-    history.push(route);
+    await act(async () => { history.push(route) });
     return history;
 }
