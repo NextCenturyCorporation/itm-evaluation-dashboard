@@ -74,12 +74,96 @@ describe('Route Redirection and Access Control Tests', () => {
         // Assert the URL
         expect(currentUrl).toBe('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
     });
-    it('test3', async () => {
+    it('redirects /results to login when not authenticated', async () => {
         await page.goto('http://localhost:3000/results');
         // await page.waitForSelector('.text-instructions');
         const currentUrl = await page.url();
 
         // Assert the URL
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /adm-results to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/adm-results');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /adm-probe-responses to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/adm-probe-responses');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /humanSimParticipant to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/humanSimParticipant');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /scenarios to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/scenarios');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /humanProbeData to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/humanProbeData');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+
+    it('redirects /human-results to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/human-results');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+
+    it('redirects /research-results/rq1 to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/research-results/rq1');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+
+    it('redirects /research-results/rq2 to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/research-results/rq2');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+
+    it('redirects /research-results/rq3 to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/research-results/rq3');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /research-results/exploratory-analysis to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/research-results/exploratory-analysis');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /randomlink to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/randomlink');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /survey to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/survey');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /review-text-based to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/review-text-based');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /review-delegation to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/review-delegation');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /survey-results to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/survey-results');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
+    it('redirects /text-based-results to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/text-based-results');
+        const currentUrl = await page.url();
         expect(currentUrl).toBe('http://localhost:3000/login');
     });
     // const history = createMemoryHistory();
