@@ -64,11 +64,23 @@ describe('Route Redirection and Access Control Tests', () => {
         });
 
         expect(loginText).toBe(true);
-        await page.goto('http://localhost:3000/remote-text-survey');
+
+    });
+    it('test2', async () => {
+        await page.goto('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
+    // await page.waitForSelector('.text-instructions');
         const currentUrl = await page.url();
 
         // Assert the URL
-        expect(currentUrl).toBe('http://localhost:3000/remote-text-survey');
+        expect(currentUrl).toBe('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
+    });
+    it('test3', async () => {
+        await page.goto('http://localhost:3000/results');
+        // await page.waitForSelector('.text-instructions');
+        const currentUrl = await page.url();
+
+        // Assert the URL
+        expect(currentUrl).toBe('http://localhost:3000/login');
     });
     // const history = createMemoryHistory();
     // history.push('/results');
