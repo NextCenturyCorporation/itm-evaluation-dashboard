@@ -5,71 +5,72 @@
 // import { renderApp } from "../__mocks__/renderMock";
 import { screen, waitFor } from '@testing-library/react';
 
-const adminUser = {
-    id: '12345',
-    username: 'adminuser',
-    emails: [{ address: 'admin@example.com', verified: true }],
-    admin: true,
-    evaluator: true,
-    experimenter: true,
-    adeptUser: true,
-    approved: true,
-    rejected: false
-};
+// const adminUser = {
+//     id: '12345',
+//     username: 'adminuser',
+//     emails: [{ address: 'admin@example.com', verified: true }],
+//     admin: true,
+//     evaluator: true,
+//     experimenter: true,
+//     adeptUser: true,
+//     approved: true,
+//     rejected: false
+// };
 
-const nonAdminUser = {
-    id: '67890',
-    username: 'regularuser',
-    emails: [{ address: 'user@example.com', verified: true }],
-    admin: false,
-    evaluator: false,
-    experimenter: false,
-    adeptUser: true,
-    approved: true,
-    rejected: false
-};
+// const nonAdminUser = {
+//     id: '67890',
+//     username: 'regularuser',
+//     emails: [{ address: 'user@example.com', verified: true }],
+//     admin: false,
+//     evaluator: false,
+//     experimenter: false,
+//     adeptUser: true,
+//     approved: true,
+//     rejected: false
+// };
 
-let currentMockUser = adminUser;
+// let currentMockUser = adminUser;
 
-jest.mock('@accounts/client', () => {
-    return {
-        AccountsClient: jest.fn().mockImplementation(() => {
-            return {
-                refreshSession: jest.fn().mockResolvedValue({ accessToken: 'dummyToken' }),
-            };
-        }),
-    };
-});
+// jest.mock('@accounts/client', () => {
+//     return {
+//         AccountsClient: jest.fn().mockImplementation(() => {
+//             return {
+//                 refreshSession: jest.fn().mockResolvedValue({ accessToken: 'dummyToken' }),
+//             };
+//         }),
+//     };
+// });
 
-jest.mock('@accounts/graphql-client', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            getUser: jest.fn().mockResolvedValue(currentMockUser),
-        };
-    });
-});
+// jest.mock('@accounts/graphql-client', () => {
+//     return jest.fn().mockImplementation(() => {
+//         return {
+//             getUser: jest.fn().mockResolvedValue(currentMockUser),
+//         };
+//     });
+// });
 
-jest.mock('@accounts/client-password', () => {
-    return {
-        AccountsClientPassword: jest.fn().mockImplementation(() => {
-            return {
-                createUser: jest.fn().mockResolvedValue(currentMockUser),
-                login: jest.fn().mockResolvedValue({ user: currentMockUser }),
-            };
-        }),
-    };
-});
+// jest.mock('@accounts/client-password', () => {
+//     return {
+//         AccountsClientPassword: jest.fn().mockImplementation(() => {
+//             return {
+//                 createUser: jest.fn().mockResolvedValue(currentMockUser),
+//                 login: jest.fn().mockResolvedValue({ user: currentMockUser }),
+//             };
+//         }),
+//     };
+// });
 
 async function testRouteRedirection(route, expectedRedirect = '/login') {
     await page.goto(`http://localhost:3000${route}`);
-    const currentUrl = await page.url();
+    await page.waitForSelector('text=Loading...', { hidden: true });
+    const currentUrl = page.url();
     expect(currentUrl).toBe(`http://localhost:3000${expectedRedirect}`);
 }
 
-xdescribe('Route Redirection and Access Control Tests', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
+describe('Route Redirection and Access Control Tests', () => {
+    // beforeEach(() => {
+    //     jest.clearAllMocks();
+    // });
 
     it('test that non-admin cannot access anything', async () => {
         // await renderApp('/');
