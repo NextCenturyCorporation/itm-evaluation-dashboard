@@ -37,7 +37,10 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                         markerSize: 0,
                         type: "line", dataPoints: calculateBestFitLine(alignVsTrust[att])
                     }
-                ]
+                ],
+                toolTip: {
+                    fontColor: "black"
+                }
             }} />
 
         </div>);
@@ -104,7 +107,10 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                                 { x: 2, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.misaligned, 'targets'), l: "misaligned" }
                             ]
                         }
-                    ]
+                    ],
+                    toolTip: {
+                        fontColor: "black"
+                    }
                 }} />
             </div>
             <div className="outlinedPlot">
@@ -165,7 +171,10 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                             { x: 2, y: getMeanAcrossAllWithoutOutliers(alignmentsByAdmType.misaligned, 'adms'), l: "misaligned" }
                         ]
                     }
-                    ]
+                    ],
+                    toolTip: {
+                        fontColor: "black"
+                    }
                 }} />
             </div>
         </>;
@@ -234,7 +243,10 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                                     { x: 2, y: getMeanAcrossAllWithoutOutliers(alignments.misaligned, 'targets'), l: "misaligned" }
                                 ]
                             }
-                        ]
+                        ],
+                        toolTip: {
+                            fontColor: "black"
+                        }
                     }} />
                 </div>
                 <div className="outlinedPlot">
@@ -295,7 +307,10 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                                 { x: 2, y: getMeanAcrossAllWithoutOutliers(alignments.misaligned, 'adms'), l: "misaligned" }
                             ]
                         }
-                        ]
+                        ],
+                        toolTip: {
+                            fontColor: "black"
+                        }
                     }} />
                 </div>
             </div>
@@ -411,7 +426,10 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                                 { x: 1.1, y: getSeAcrossAll({ 'data': trustVsAlignStatus[att2].filter((x) => x.label === 'baseline').map((x) => x.y) }), label: 'baseline' },
                                 { x: 2.1, y: getSeAcrossAll({ 'data': trustVsAlignStatus[att2].filter((x) => x.label === 'misaligned').map((x) => x.y) }), label: 'misaligned' }]
                         }
-                    ]
+                    ],
+                    toolTip: {
+                        fontColor: "black"
+                    }
                 }} />
             </div>)
     };

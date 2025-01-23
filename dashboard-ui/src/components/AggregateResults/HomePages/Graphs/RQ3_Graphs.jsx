@@ -144,7 +144,10 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
                             { x: 3, y: getMeanAcrossAll(alignmentsByAttribute.VOL, 'adms'), l: "VOL" }
                         ]
                     }
-                    ]
+                    ],
+                    toolTip: {
+                        fontColor: "black"
+                    }
                 }} />
             </div>
             {evalNumber == 4 && <div className="outlinedPlot">

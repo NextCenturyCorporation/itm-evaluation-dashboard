@@ -98,7 +98,8 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                 axisX2: {
                     tickLength: 0,
                     minimum: -0.5,
-                    maximum: 1.5
+                    maximum: 1.5,
+                    labelFormatter: function () { return ""; }
                 },
                 axisY: {
                     maximum: 1,
