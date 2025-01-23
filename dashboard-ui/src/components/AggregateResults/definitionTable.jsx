@@ -1,9 +1,9 @@
 import React from "react";
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
-import mreXlFile from './MRE_Variables.xlsx';
-import dreXlFile from './DRE_Variables.xlsx';
-import ph1XlFile from './PH1_Variables.xlsx'
+import mreXlFile from './Variable Definitions/MRE_Variables.xlsx';
+import dreXlFile from './Variable Definitions/DRE_Variables.xlsx';
+import ph1XlFile from './Variable Definitions/PH1_Variables.xlsx'
 
 export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);

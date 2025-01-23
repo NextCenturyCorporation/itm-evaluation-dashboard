@@ -31,7 +31,7 @@ const GET_SURVEY_RESULTS = gql`
 
 export default function ProgramQuestions() {
     const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [selectedEval, setSelectedEval] = React.useState(4);
+    const [selectedEval, setSelectedEval] = React.useState(5);
     const [fullData, setFullData] = React.useState(null);
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
@@ -108,7 +108,7 @@ export default function ProgramQuestions() {
             <div className="selection-section">
                 <Select
                     onChange={selectEvaluation}
-                    options={evalOptions.filter((x) => x.value != 5)}
+                    options={evalOptions}
                     defaultValue={evalOptions[0]}
                     placeholder="Select Evaluation"
                     value={evalOptions.find(option => option.value === selectedEval)}
