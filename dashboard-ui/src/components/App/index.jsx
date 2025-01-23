@@ -342,10 +342,14 @@ export class App extends React.Component {
                 }
                 else {
                     // generate a new pid by incrementing highest found
-                    const newPid = Math.max(...pLog.filter((x) =>
+                    const validEntries = pLog.filter((x) =>
                         !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
                         x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
-                    ).map((x) => Number(x['ParticipantID']))) + 1;
+                    );
+                    // bug fix first one gets :LOW_PID, Math.max was returning negative infinty
+                    const newPid = validEntries.length > 0 
+                        ? Math.max(...validEntries.map((x) => Number(x['ParticipantID']))) + 1
+                        : LOW_PID;
                     const setNum = newPid % 24;
                     const participantData = {
                         ...SURVEY_SETS[setNum], "ParticipantID": newPid, "Type": isTester ? "Test" : "emailParticipant",
