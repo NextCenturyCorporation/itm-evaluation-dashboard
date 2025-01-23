@@ -5,10 +5,10 @@
 // import { renderApp } from "../__mocks__/renderMock";
 import { screen, waitFor } from '@testing-library/react';
 
-const mockUser = {
+const adminUser = {
     id: '12345',
-    username: 'testuser',
-    emails: [{ address: 'testuser@example.com', verified: true }],
+    username: 'adminuser',
+    emails: [{ address: 'admin@example.com', verified: true }],
     admin: true,
     evaluator: true,
     experimenter: true,
@@ -16,6 +16,20 @@ const mockUser = {
     approved: true,
     rejected: false
 };
+
+const nonAdminUser = {
+    id: '67890',
+    username: 'regularuser',
+    emails: [{ address: 'user@example.com', verified: true }],
+    admin: false,
+    evaluator: false,
+    experimenter: false,
+    adeptUser: true,
+    approved: true,
+    rejected: false
+};
+
+let currentMockUser = adminUser;
 
 jest.mock('@accounts/client', () => {
     return {
@@ -30,7 +44,7 @@ jest.mock('@accounts/client', () => {
 jest.mock('@accounts/graphql-client', () => {
     return jest.fn().mockImplementation(() => {
         return {
-            getUser: jest.fn().mockResolvedValue(mockUser),
+            getUser: jest.fn().mockResolvedValue(currentMockUser),
         };
     });
 });
@@ -39,8 +53,8 @@ jest.mock('@accounts/client-password', () => {
     return {
         AccountsClientPassword: jest.fn().mockImplementation(() => {
             return {
-                createUser: jest.fn().mockResolvedValue(mockUser),
-                login: jest.fn().mockResolvedValue({ user: mockUser }),
+                createUser: jest.fn().mockResolvedValue(currentMockUser),
+                login: jest.fn().mockResolvedValue({ user: currentMockUser }),
             };
         }),
     };
@@ -71,7 +85,14 @@ describe('Route Redirection and Access Control Tests', () => {
         expect(loginText).toBe(true);
 
     });
+    it('Test unsigned in user can access adept survey entry point', async () => {
+        await page.goto('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
+        // await page.waitForSelector('.text-instructions');
+        const currentUrl = await page.url();
 
+        // Assert the URL
+        expect(currentUrl).toBe('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
+    });
     const routes = [
         '/results',
         '/adm-results',
