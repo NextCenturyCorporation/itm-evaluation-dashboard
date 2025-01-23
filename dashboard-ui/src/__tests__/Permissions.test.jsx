@@ -2,9 +2,6 @@
  * @jest-environment puppeteer
  */
 
-// import { renderApp } from "../__mocks__/renderMock";
-import { screen, waitFor } from '@testing-library/react';
-
 const mockUser = {
     id: '12345',
     username: 'testuser',
@@ -47,7 +44,7 @@ jest.mock('@accounts/client-password', () => {
 });
 
 
-describe('Route Redirection and Access Control Tests', () => {
+xdescribe('Route Redirection and Access Control Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });

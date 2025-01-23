@@ -1,6 +1,8 @@
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { renderApp } from '../__mocks__/renderMock';
+/**
+ * @jest-environment puppeteer
+ */
+
+import { countElementsWithText } from "../__mocks__/testUtils";
 
 jest.unmock('@accounts/client');
 jest.unmock('@accounts/graphql-client');
@@ -12,28 +14,38 @@ describe('Test render and bad login', () => {
         jest.resetModules();
     });
 
-    it('renders app successfully', async () => {
-        await renderApp();
+    it('app should render successfully', async () => {
+        await page.goto('http://localhost:3000/');
 
         // Test that the login page is rendered and defaults to sign in page
-        expect(window.location.pathname).toBe('/login');
-        const elements = screen.queryAllByText(/Sign In/i);
-        expect(elements.length).toBe(4); // tab, header, description, button
+        const currentUrl = page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+        // wait for the page to stop loading
+        await page.waitForSelector('text=Loading...', { hidden: true });
+
+        // look through all elements for matching text
+        const count = await countElementsWithText(page, "Sign In");
+
+        expect(count).toBe(4); // tab, header, description, button
     });
 
-    it('test bad login', async () => {
-        await renderApp();
+    it('invalid user should receive error', async () => {
+        await page.goto('http://localhost:3000/login');
+        // wait for the page to stop loading
+        await page.waitForSelector('text=Loading...', { hidden: true });
 
-        const emailInput = screen.getByPlaceholderText('Email / Username');
-        const passwordInput = document.getElementById('password');
-        userEvent.type(emailInput, 'fake');
-        userEvent.type(passwordInput, 'password');
-        const btn = screen.getByRole('button', { name: /Sign In/i });
-        userEvent.click(btn);
-        // expect to stay on login with error
-        await waitFor(() => {
-            expect(screen.queryByText(/Error logging in/i)).toBeInTheDocument();
+        const usernameInput = await page.$('input[placeholder="Email / Username"]');
+        const passwordInput = await page.$('#password');
+
+        await usernameInput.type('fake');
+        await passwordInput.type('password');
+        await page.$$eval('.form-group button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Sign In').click();
         });
-        expect(window.location.pathname).toBe('/login');
+
+        // expect to stay on login with error (will time out if the sign-in-feedback element does not appear)
+        await page.waitForSelector('#sign-in-feedback');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
     });
 });
