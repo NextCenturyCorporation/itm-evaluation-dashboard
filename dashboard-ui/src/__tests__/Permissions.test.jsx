@@ -166,6 +166,11 @@ describe('Route Redirection and Access Control Tests', () => {
         const currentUrl = await page.url();
         expect(currentUrl).toBe('http://localhost:3000/login');
     });
+    it('redirects /admin to login when not authenticated', async () => {
+        await page.goto('http://localhost:3000/admin');
+        const currentUrl = await page.url();
+        expect(currentUrl).toBe('http://localhost:3000/login');
+    });
     // const history = createMemoryHistory();
     // history.push('/results');
     // await renderApp(history);
