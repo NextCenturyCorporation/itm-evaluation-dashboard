@@ -2,10 +2,13 @@
  * @jest-environment puppeteer
  */
 
-const mockUser = {
+// import { renderApp } from "../__mocks__/renderMock";
+import { screen, waitFor } from '@testing-library/react';
+
+const adminUser = {
     id: '12345',
-    username: 'testuser',
-    emails: [{ address: 'testuser@example.com', verified: true }],
+    username: 'adminuser',
+    emails: [{ address: 'admin@example.com', verified: true }],
     admin: true,
     evaluator: true,
     experimenter: true,
@@ -13,6 +16,20 @@ const mockUser = {
     approved: true,
     rejected: false
 };
+
+const nonAdminUser = {
+    id: '67890',
+    username: 'regularuser',
+    emails: [{ address: 'user@example.com', verified: true }],
+    admin: false,
+    evaluator: false,
+    experimenter: false,
+    adeptUser: true,
+    approved: true,
+    rejected: false
+};
+
+let currentMockUser = adminUser;
 
 jest.mock('@accounts/client', () => {
     return {
@@ -27,7 +44,7 @@ jest.mock('@accounts/client', () => {
 jest.mock('@accounts/graphql-client', () => {
     return jest.fn().mockImplementation(() => {
         return {
-            getUser: jest.fn().mockResolvedValue(mockUser),
+            getUser: jest.fn().mockResolvedValue(currentMockUser),
         };
     });
 });
@@ -36,13 +53,18 @@ jest.mock('@accounts/client-password', () => {
     return {
         AccountsClientPassword: jest.fn().mockImplementation(() => {
             return {
-                createUser: jest.fn().mockResolvedValue(mockUser),
-                login: jest.fn().mockResolvedValue({ user: mockUser }),
+                createUser: jest.fn().mockResolvedValue(currentMockUser),
+                login: jest.fn().mockResolvedValue({ user: currentMockUser }),
             };
         }),
     };
 });
 
+async function testRouteRedirection(route, expectedRedirect = '/login') {
+    await page.goto(`http://localhost:3000${route}`);
+    const currentUrl = await page.url();
+    expect(currentUrl).toBe(`http://localhost:3000${expectedRedirect}`);
+}
 
 xdescribe('Route Redirection and Access Control Tests', () => {
     beforeEach(() => {
@@ -63,197 +85,39 @@ xdescribe('Route Redirection and Access Control Tests', () => {
         expect(loginText).toBe(true);
 
     });
-    it('test2', async () => {
+    it('Test unsigned in user can access adept survey entry point', async () => {
         await page.goto('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
-    // await page.waitForSelector('.text-instructions');
+        // await page.waitForSelector('.text-instructions');
         const currentUrl = await page.url();
 
         // Assert the URL
         expect(currentUrl).toBe('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
     });
-    it('redirects /results to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/results');
-        // await page.waitForSelector('.text-instructions');
-        const currentUrl = await page.url();
-
-        // Assert the URL
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /adm-results to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/adm-results');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /adm-probe-responses to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/adm-probe-responses');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /humanSimParticipant to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/humanSimParticipant');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /scenarios to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/scenarios');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /humanProbeData to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/humanProbeData');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
+    const routes = [
+        '/results',
+        '/adm-results',
+        '/adm-probe-responses',
+        '/humanSimParticipant',
+        '/scenarios',
+        '/humanProbeData',
+        '/human-results',
+        '/research-results/rq1',
+        '/research-results/rq2',
+        '/research-results/rq3',
+        '/research-results/exploratory-analysis',
+        '/randomlink',
+        '/survey',
+        '/review-text-based',
+        '/review-delegation',
+        '/survey-results',
+        '/text-based-results',
+        '/admin',
+        '/random-link'
+    ];
+    routes.forEach(route => {
+        it(`redirects ${route} to login when not authenticated`, async () => {
+            await testRouteRedirection(route);
+        });
     });
 
-    it('redirects /human-results to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/human-results');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-
-    it('redirects /research-results/rq1 to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/research-results/rq1');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-
-    it('redirects /research-results/rq2 to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/research-results/rq2');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-
-    it('redirects /research-results/rq3 to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/research-results/rq3');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /research-results/exploratory-analysis to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/research-results/exploratory-analysis');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /randomlink to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/randomlink');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /survey to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/survey');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /review-text-based to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/review-text-based');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /review-delegation to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/review-delegation');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /survey-results to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/survey-results');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /text-based-results to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/text-based-results');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    it('redirects /admin to login when not authenticated', async () => {
-        await page.goto('http://localhost:3000/admin');
-        const currentUrl = await page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
-    });
-    // const history = createMemoryHistory();
-    // history.push('/results');
-    // await renderApp(history);
-    // // await waitFor(() => {
-    // //     expect(history.location.pathname).toBe('/');
-    // // });
-    // history.push('/remote-text-survey');
-    // await renderApp(history);
-    // // await waitFor(() => {
-    // //     expect(history.location.pathname).toBe('/remote-text-survey');
-    // // });
-
-    // // expect(screen.queryByText(/Thank you for your interest/i)).toBeInTheDocument();
-    // await waitFor(() => {
-    //     expect(screen.queryByText(/Welcome to the ITM Text Scenario experiment. Thank you for your participation./i)).toBeInTheDocument();
-    // });
-
-    // expect(screen.queryByText(/Program Questions/i)).not.toBeInTheDocument();
-    // history.push('/adm-results');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/adm-probe-responses');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/humanSimParticipant');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/scenarios');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/participantTextTester');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/admin');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/participant-progress-table');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/pid-lookup');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/survey');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/survey-results');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/review-text-based');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/review-delegation');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/text-based');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/text-based-results');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/humanProbeData');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/human-results');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/research-results/rq1');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/research-results/rq2');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/research-results/rq3');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/research-results/exploratory-analysis');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/randomlink');
-    // await renderApp(history);
-    // expect(history.location.pathname).toBe('/');
-    // history.push('/remote-text-survey');
-    // await renderApp(history);
-    // await waitFor(() => {
-    //         expect(history.location.pathname).toBe('/remote-text-survey');
-    //     });
-    // expect(history.location.pathname).toBe('/remote-text-survey');
-    // });
 });
