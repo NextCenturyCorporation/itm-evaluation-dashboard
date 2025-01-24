@@ -109,8 +109,8 @@ const SURVEY_SETS = [
     { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 }
 ]
 
-const LOW_PID = 202411300;
-const HIGH_PID = 202411499;
+const LOW_PID = 202501700;
+const HIGH_PID = 202501899;
 
 function Home({ newState }) {
     if (newState.currentUser == null) {
@@ -342,10 +342,14 @@ export class App extends React.Component {
                 }
                 else {
                     // generate a new pid by incrementing highest found
-                    const newPid = Math.max(...pLog.filter((x) =>
+                    const validEntries = pLog.filter((x) =>
                         !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
                         x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
-                    ).map((x) => Number(x['ParticipantID']))) + 1;
+                    );
+                    // bug fix first one gets :LOW_PID, Math.max was returning negative infinty
+                    const newPid = validEntries.length > 0 
+                        ? Math.max(...validEntries.map((x) => Number(x['ParticipantID']))) + 1
+                        : LOW_PID;
                     const setNum = newPid % 24;
                     const participantData = {
                         ...SURVEY_SETS[setNum], "ParticipantID": newPid, "Type": isTester ? "Test" : "emailParticipant",

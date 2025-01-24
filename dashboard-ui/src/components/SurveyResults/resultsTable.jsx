@@ -14,7 +14,8 @@ import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf'
 const EVAL_MAP = {
     3: 'MRE',
     4: 'DRE',
-    5: 'PH1'
+    5: 'PH1',
+    6: 'JAN25'
 }
 
 const TRUST_MAP = {

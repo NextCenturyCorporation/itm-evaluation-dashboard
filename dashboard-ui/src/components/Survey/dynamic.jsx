@@ -115,7 +115,9 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
 
         if (index > 0 && getActionText(sceneActions[index - 1])?.includes('Question:')) {
             processedText = 'The medic chose to: ' + processedText;
-
+            if (processedText.includes(' on ')) {
+                processedText = processedText.substring(0, processedText.indexOf(' on '));
+            }
             if ((scenarioIndex.toLowerCase().includes('qol') || scenarioIndex.toLowerCase().includes('vol')) &&
                 probe?.choices) {
                 return (
