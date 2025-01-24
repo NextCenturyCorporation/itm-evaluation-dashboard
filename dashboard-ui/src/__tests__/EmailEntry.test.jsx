@@ -8,7 +8,7 @@ describe('Test email-entry text scenarios', () => {
 
     it('/participantText should only have email-entry option', async () => {
         await page.goto('http://localhost:3000/participantText');
-        await page.waitForSelector('text=Loading...', { hidden: true });
+        await page.waitForSelector('text=Text Scenario Login');
         const currentUrl = page.url();
         expect(currentUrl).toBe('http://localhost:3000/participantText');
 
@@ -25,7 +25,7 @@ describe('Test email-entry text scenarios', () => {
 
     it('/participantText should error on non-duplicate email', async () => {
         await page.goto('http://localhost:3000/participantText');
-        await page.waitForSelector('text=Loading...', { hidden: true });
+        await page.waitForSelector('input[placeholder="Email"]');
 
         const email1 = await page.$('input[placeholder="Email"]');
         const email2 = await page.$('input[placeholder="Confirm Email"]');
@@ -38,7 +38,7 @@ describe('Test email-entry text scenarios', () => {
 
     it('/participantText should not error on matching email (case insensitive)', async () => {
         await page.goto('http://localhost:3000/participantText');
-        await page.waitForSelector('text=Loading...', { hidden: true });
+        await page.waitForSelector('input[placeholder="Email"]');
 
         const email1 = await page.$('input[placeholder="Email"]');
         const email2 = await page.$('input[placeholder="Confirm Email"]');
@@ -54,7 +54,7 @@ describe('Test email-entry text scenarios', () => {
 
     it('matching emails on /participantText should navigate to /text-based', async () => {
         await page.goto('http://localhost:3000/participantText');
-        await page.waitForSelector('text=Loading...', { hidden: true });
+        await page.waitForSelector('input[placeholder="Email"]');
 
         const email1 = await page.$('input[placeholder="Email"]');
         const email2 = await page.$('input[placeholder="Confirm Email"]');

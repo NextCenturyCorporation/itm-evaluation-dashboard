@@ -21,7 +21,7 @@ describe('Test render and bad login', () => {
         let currentUrl = page.url();
         expect(currentUrl).toBe('http://localhost:3000/login');
         // wait for the page to stop loading
-        await page.waitForSelector('text=Loading...', { hidden: true });
+        await page.waitForSelector('text=Sign In');
 
         // look through all elements for matching text
         const count = await countElementsWithText(page, "Sign In");
@@ -32,7 +32,7 @@ describe('Test render and bad login', () => {
     it('invalid user should receive error', async () => {
         await page.goto('http://localhost:3000/login');
         // wait for the page to stop loading
-        await page.waitForSelector('text=Loading...', { hidden: true });
+        await page.waitForSelector('#password');
 
         const usernameInput = await page.$('input[placeholder="Email / Username"]');
         const passwordInput = await page.$('#password');
