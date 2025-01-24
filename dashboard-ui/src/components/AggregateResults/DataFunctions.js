@@ -1562,7 +1562,6 @@ function getRatingsBySelectionStatus(data) {
                 break;
         }
     }
-    console.log(results);
     return results;
 }
 
