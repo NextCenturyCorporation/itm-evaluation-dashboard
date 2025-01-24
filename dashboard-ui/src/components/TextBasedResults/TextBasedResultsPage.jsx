@@ -255,8 +255,8 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                                 headers.push(time_key);
                             }
 
-                            formatted[page['_id']][time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
-                            obj[time_key] = Math.round(page[key]['timeSpentOnPage'] * 100) / 100;
+                            formatted[page['_id']][time_key] = Math.round(page[key]?.['timeSpentOnPage'] * 100) / 100;
+                            obj[time_key] = Math.round(page[key]?.['timeSpentOnPage'] * 100) / 100;
 
                             if (page[key] && page[key].questions) {
                                 Object.keys(page[key].questions).forEach(q => {
