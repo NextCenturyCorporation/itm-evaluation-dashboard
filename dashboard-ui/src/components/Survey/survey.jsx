@@ -665,8 +665,8 @@ class SurveyPage extends Component {
             this.surveyData['orderLog'] = this.state.orderLog;
         }
         if (this.state.surveyVersion == 5.0) {
-            this.surveyData['evalNumber'] = 5;
-            this.surveyData['evalName'] = 'Phase 1 Evaluation';
+            this.surveyData['evalNumber'] = 6;
+            this.surveyData['evalName'] = 'Jan 2025 Eval';
             this.surveyData['orderLog'] = this.state.orderLog;
             this.surveyData['pid'] = this.state.pid;
             if (this.state.pid) {
