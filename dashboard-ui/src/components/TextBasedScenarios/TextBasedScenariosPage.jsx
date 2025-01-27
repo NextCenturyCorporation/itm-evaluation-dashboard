@@ -354,8 +354,8 @@ class TextBasedScenariosPage extends Component {
         });
 
         scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
-        scenarioData.evalNumber = 5
-        scenarioData.evalName = 'Phase 1 Evaluation'
+        scenarioData.evalNumber = 6
+        scenarioData.evalName = 'Jan 2025 Eval'
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 

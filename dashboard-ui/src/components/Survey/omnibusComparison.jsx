@@ -4,7 +4,7 @@ import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Button, Modal } from "react-bootstrap";
 import Dynamic from "./dynamic";
 import { Accordion } from "react-bootstrap";
-import './template.css'
+import '../../css/template.css';
 import { useSelector } from "react-redux";
 
 const CUSTOM_TYPE = "omnibusComparison";

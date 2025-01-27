@@ -3,7 +3,7 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Button, Modal, Col, Row, Card, Tab, Tabs } from "react-bootstrap";
 import { renderSituation } from "./surveyUtils";
-import './template.css'
+import '../../css/template.css';
 import { useSelector } from "react-redux";
 import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
