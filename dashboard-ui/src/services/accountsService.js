@@ -4,7 +4,12 @@ import GraphQLClient from '@accounts/graphql-client';
 import { ApolloClient } from 'apollo-client'
 import { createHttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
-import {API_URL} from './config'
+let { API_URL } = require('./config');
+// setup for testing
+if (Object.keys(API_URL).length === 0 && API_URL.constructor === Object) {
+  API_URL = `http://localhost:${process.env.REACT_APP_TESTING == 'false' ? 9100 : 4000}/api`;
+}
+
 import gql from 'graphql-tag';
 
 const httpLink = createHttpLink({

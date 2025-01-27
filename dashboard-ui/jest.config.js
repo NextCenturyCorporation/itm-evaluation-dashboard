@@ -3,6 +3,7 @@ module.exports = {
         '^.+\\.[t|j]sx?$': 'babel-jest',  // Use babel-jest to transform JS/JSX files
     },
     testEnvironment: 'jsdom', // Use jsdom for browser-like environment
+    setupFiles: ['dotenv/config'],
     setupFilesAfterEnv: [
         '@testing-library/jest-dom/extend-expect', // Optional: For better DOM assertions
         '<rootDir>/src/setupTests.js'
@@ -16,5 +17,11 @@ module.exports = {
         '\\.(xlsx|pdf|docx|png|R)$': '<rootDir>/src/__mocks__/fileMock.js', // Mock .xlsx, .pdf, .docx, .png, and .R files
     },
     preset: 'jest-puppeteer',
-    maxWorkers: 1
+    maxWorkers: 1,
+    globals: {
+        "provess.env": {
+            "REACT_APP_TESTING": "true"
+        }
+    },
+    silent: false
 };
