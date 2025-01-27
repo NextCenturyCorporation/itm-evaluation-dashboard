@@ -3,16 +3,16 @@
  */
 
 async function testRouteRedirection(route, expectedRedirect = '/login') {
-    await page.goto(`http://localhost:3000${route}`);
+    await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
     await page.waitForSelector('text=Loading...', { hidden: true });
     const currentUrl = page.url();
-    expect(currentUrl).toBe(`http://localhost:3000${expectedRedirect}`);
+    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
 }
 
 describe('Route Redirection and Access Control Tests', () => {
 
     it('test that non-admin cannot access anything', async () => {
-        await page.goto('http://localhost:3000');
+        await page.goto(`${process.env.REACT_APP_TEST_URL}`);
 
         await page.waitForSelector('text/Sign In'); // Jest-puppeteer specific selector for text
 
@@ -25,11 +25,11 @@ describe('Route Redirection and Access Control Tests', () => {
 
     });
     it('Test unsigned in user can access adept survey entry point', async () => {
-        await page.goto('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
         const currentUrl = await page.url();
 
         // Assert the URL
-        expect(currentUrl).toBe('http://localhost:3000/remote-text-survey?adeptQualtrix=true');
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
     });
     const routes = [
         '/results',

@@ -4,22 +4,14 @@
 
 import { countElementsWithText } from "../__mocks__/testUtils";
 
-jest.unmock('@accounts/client');
-jest.unmock('@accounts/graphql-client');
-jest.unmock('@accounts/client-password');
-
 describe('Test render and bad login', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-        jest.resetModules();
-    });
 
     it('app should render successfully', async () => {
-        await page.goto('http://localhost:3000/');
+        await page.goto(`${process.env.REACT_APP_TEST_URL}`);
 
         // Test that the login page is rendered and defaults to sign in page
         let currentUrl = page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
         // wait for the page to stop loading
         await page.waitForSelector('text=Sign In');
 
@@ -30,7 +22,7 @@ describe('Test render and bad login', () => {
     });
 
     it('invalid user should receive error', async () => {
-        await page.goto('http://localhost:3000/login');
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
         // wait for the page to stop loading
         await page.waitForSelector('#password');
 
@@ -46,6 +38,6 @@ describe('Test render and bad login', () => {
         // expect to stay on login with error (will time out if the sign-in-feedback element does not appear)
         await page.waitForSelector('#sign-in-feedback');
         const currentUrl = page.url();
-        expect(currentUrl).toBe('http://localhost:3000/login');
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
     });
 });

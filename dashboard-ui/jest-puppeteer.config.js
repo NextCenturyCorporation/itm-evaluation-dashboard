@@ -5,4 +5,8 @@ module.exports = {
         defaultViewport: null,  // Optional: Fullscreen viewport
     },
     browserContext: 'default',
+    server: {
+        command: 'npm run start:test',
+        port: 3001
+    }
 };

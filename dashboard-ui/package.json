@@ -73,9 +73,10 @@
     },
     "scripts": {
         "start": "react-scripts start",
+        "start:test": "BROWSER=None PORT=3001 react-scripts start",
         "build": "react-scripts build",
-        "test": "jest --watchAll --verbose",
-        "test-and-watch": "jest --watchAll",
+        "test": "REACT_APP_TESTING=true jest --watchAll --verbose",
+        "test-and-watch": "REACT_APP_TESTING=true jest --watchAll",
         "eject": "react-scripts eject",
         "clean": "rm -rf node_modules"
     },

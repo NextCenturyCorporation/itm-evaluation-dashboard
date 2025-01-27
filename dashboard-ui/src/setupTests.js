@@ -7,11 +7,7 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';  // Ensure this is imported correctly
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';  // Required for merging schemas
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import dotenv from 'dotenv';
 import { SurveyVersion } from './__mocks__/mockDbSchema.js';
-dotenv.config();
-
-process.env.REACT_APP_TESTING = "true";
 
 // Mock global fetch and other browser-specific APIs
 global.fetch = unfetch;
