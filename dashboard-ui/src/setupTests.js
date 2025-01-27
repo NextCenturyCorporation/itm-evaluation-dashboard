@@ -1,54 +1,85 @@
+// Import dependencies after mocking them to ensure mocks are applied
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
 import unfetch from 'unfetch';
-// const { MongoMemoryServer } = require('mongodb-memory-server');
-// const mongoose = require('mongoose');
-// const { ApolloServer } = require('apollo-server');
-// const { typeDefs, resolvers } = require('../../node-graphql/server.schema.js'); // Your GraphQL schema files
+const mongoose = require('mongoose');
+import { ApolloServer } from 'apollo-server';
+import { MongoMemoryServer } from 'mongodb-memory-server';  // Ensure this is imported correctly
+import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';  // Required for merging schemas
+import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
 
 // Mock global fetch and other browser-specific APIs
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
 
+// Mocking the @accounts/graphql-api module
+jest.mock('@accounts/graphql-api', () => {
+    return {
+        AccountsModule: {
+            forRoot: jest.fn(() => ({
+                typeDefs: `
+                    type User {
+                        id: ID!
+                        username: String!
+                        email: String!
+                    }
 
+                    input CreateUserInput {
+                        username: String!
+                        email: String!
+                        password: String!
+                    }
+                `,
+                resolvers: {},
+            })),
+        },
+    };
+});
 
-// let mongoServer;
-// let graphqlServer;
+// Setup MongoDB in-memory server and GraphQL server
+let mongoServer;
+let graphqlServer;
 
-// beforeAll(async () => {
-//     // Set up MongoDB in-memory server
-//     mongoServer = await MongoMemoryServer.create();
-//     const uri = mongoServer.getUri();
+beforeAll(async () => {
+    try {
+        // Set up MongoDB in-memory server
+        mongoServer = await MongoMemoryServer.create();
+        const uri = mongoServer.getUri();
 
-//     // Connect to the in-memory MongoDB
-//     await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        // Connect to the in-memory MongoDB
+        await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-//     // Set up GraphQL server
-//     graphqlServer = new ApolloServer({
-//         typeDefs,
-//         resolvers,
-//         context: ({ req }) => ({
-//             db: mongoose.connection.db, // Inject the test DB connection
-//         }),
-//     });
+        // Mock AccountsModule and merge typeDefs and resolvers
+        const { AccountsModule } = require('@accounts/graphql-api');
+        const accountsGraphQL = AccountsModule.forRoot();
 
-//     // Start the server on port 4000 (or any available port)
-//     await graphqlServer.listen({ port: 4000 });
-// });
+        // Merge typeDefs and resolvers from accounts with your own
+        const mergedTypeDefs = mergeTypeDefs([typeDefs, accountsGraphQL.typeDefs]);
+        const mergedResolvers = mergeResolvers([resolvers, accountsGraphQL.resolvers]);
 
-// afterAll(async () => {
-//     // Clean up: Disconnect from DB and stop the GraphQL server
-//     await mongoose.disconnect();
-//     await mongoServer.stop();
-//     await graphqlServer.stop();
-// });
+        graphqlServer = new ApolloServer({
+            typeDefs: mergedTypeDefs,
+            resolvers: mergedResolvers,
+            context: () => ({
+                db: mongoose.connection.db, // Inject the test DB connection
+            }),
+        });
 
-// Mock HTMLCanvasElement.getContext globally (if needed for tests)
-// try {
-//     global.HTMLCanvasElement.prototype.getContext = jest.fn(() => {
-//         return {}; // You can return an empty object or a mock function
-//     });
-// }
-// catch {
-//     console.warn(("Could not load HTMLCanvasElement"));
-// }
+        // Start the server on port 4000 (or any available port)
+        await graphqlServer.listen({ port: 4000 });
+    } catch (error) {
+        console.error("Error in beforeAll:", error);
+        throw error;
+    }
+});
+
+afterAll(async () => {
+    try {
+        // Clean up: Disconnect from DB and stop the GraphQL server
+        await mongoose.disconnect();
+        await mongoServer.stop();
+        await graphqlServer.stop();
+    } catch (error) {
+        console.error("Error in afterAll:", error);
+    }
+});

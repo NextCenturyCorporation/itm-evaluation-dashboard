@@ -3,3 +3,4 @@ docker_setup/darpaitm.key
 .DS_Store
 dashboard-ui/coverage
 node_modules
+package-lock.json
