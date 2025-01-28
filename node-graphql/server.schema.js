@@ -155,6 +155,7 @@ const typeDefs = gql`
 
   type Query {
     getUsers: JSON
+    checkUserExists(email: String!, username: String!): Boolean!
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON],
@@ -228,6 +229,15 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
+    checkUserExists: async (obj, args, context, infow) => {
+      const userByEmail = await context.db.collection('users').findOne({
+        $or: [
+          { "emails.address": args.email.toLowerCase().trim() },
+          { "username": args.username.toLowerCase().trim() }
+        ]
+      });
+      return !!userByEmail;
+    },
     getHistory: async (obj, args, context, inflow) => {
       return await context.db.collection('test').findOne(args).then(result => { return result; });
     },

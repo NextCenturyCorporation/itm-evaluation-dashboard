@@ -7,3 +7,31 @@ export async function countElementsWithText(page, text) {
             .length;  // Return the count of matching elements
     }, text);
 }
+
+export async function createAccount(page, username, email, password) {
+    await page.$$eval('button', buttons => {
+        Array.from(buttons).find(btn => btn.textContent == 'Create Account').click();
+    });
+
+    const emailInput = await page.$('#createEmail');
+    const usernameInput = await page.$('#createUserName');
+    const passwordInput = await page.$('#createPassword');
+
+    await emailInput.type(email);
+    await usernameInput.type(username);
+    await passwordInput.type(password);
+    await page.$$eval('.form-group button', buttons => {
+        Array.from(buttons).find(btn => btn.textContent == 'Create Account').click();
+    });
+}
+
+export async function login(page, username, password) {
+    const usernameInput = await page.$('input[placeholder="Email / Username"]');
+    const passwordInput = await page.$('#password');
+
+    await usernameInput.type(username);
+    await passwordInput.type(password);
+    await page.$$eval('.form-group button', buttons => {
+        Array.from(buttons).find(btn => btn.textContent == 'Sign In').click();
+    });
+}

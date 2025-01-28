@@ -2,6 +2,8 @@
  * @jest-environment puppeteer
  */
 
+import { createAccount, login } from "../__mocks__/testUtils";
+
 async function testRouteRedirection(route, expectedRedirect = '/login') {
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
     await page.waitForSelector('text=Loading...', { hidden: true });
@@ -9,28 +11,7 @@ async function testRouteRedirection(route, expectedRedirect = '/login') {
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
 }
 
-describe('Route Redirection and Access Control Tests', () => {
-
-    it('test that non-admin cannot access anything', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}`);
-
-        await page.waitForSelector('text/Sign In'); // Jest-puppeteer specific selector for text
-
-        // Retrieve the element and assert its presence
-        const loginText = await page.$eval('body', (body) => {
-            return body.textContent.includes('Sign in');
-        });
-
-        expect(loginText).toBe(true);
-
-    });
-    it('Test unsigned in user can access adept survey entry point', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
-        const currentUrl = await page.url();
-
-        // Assert the URL
-        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
-    });
+function runRoutePermissionTests() {
     const routes = [
         '/results',
         '/adm-results',
@@ -50,12 +31,154 @@ describe('Route Redirection and Access Control Tests', () => {
         '/survey-results',
         '/text-based-results',
         '/admin',
-        '/random-link'
+        '/random-link',
+        '/'
     ];
     routes.forEach(route => {
         it(`redirects ${route} to login when not authenticated`, async () => {
             await testRouteRedirection(route);
         });
     });
+}
 
+describe('Route Redirection and Access Control Tests for unauthenticated users', () => {
+    it('Test unauthenticated user can access adept survey entry point', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        const currentUrl = page.url();
+
+        // Assert the URL
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+    });
+    runRoutePermissionTests();
+});
+
+describe('Login tests', () => {
+    beforeEach(async () => {
+        page = await browser.newPage();
+    })
+    it('invalid user should receive error', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+
+        await login(page, 'fake', 'password');
+
+        // expect to stay on login with error (will time out if the sign-in-feedback element does not appear)
+        await page.waitForSelector('#sign-in-feedback');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    });
+
+    it('new user should be sent to waiting page; return to login should work', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await createAccount(page, 'tester', 'tester@123.com', 'secretPassword123');
+
+        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        let currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
+        await page.$$eval('button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Return to Login').click();
+        });
+        await page.waitForSelector('text/Sign In');
+        currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    }, 10000);
+
+    it('creating an account with a duplicate email should error', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await createAccount(page, 'tester1', 'tester@123.com', 'secretPassword123');
+
+        await page.waitForSelector('#create-account-feedback');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    }, 10000);
+
+    it('creating an account with a duplicate username should error', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await createAccount(page, 'tester', 'tester1@123.com', 'secretPassword123');
+
+        await page.waitForSelector('#create-account-feedback');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    }, 10000);
+
+    it('logging out and back in should be functional', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+
+        await login(page, 'tester', 'secretPassword123');
+
+        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
+    }, 10000);
+
+    it('admin should be sent to home page', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await createAccount(page, 'admin', 'admin@123.com', 'secretPassword123');
+
+        await page.waitForSelector('text/Program Questions');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
+    }, 10000);
+
+});
+
+describe('Route Redirection and Access Control Tests for unapproved users', () => {
+    // log in as unauthenticated user
+    beforeAll(async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await login(page, 'tester', 'secretPassword123');
+
+        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+    });
+
+    it('Test unapproved user can access adept survey entry point', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        const currentUrl = page.url();
+
+        // Assert the URL
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+    });
+    runRoutePermissionTests();
+});
+
+describe('Once logged out, no routes should be accessible', () => {
+    // log in as unauthenticated user
+    beforeAll(async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await login(page, 'admin', 'secretPassword123');
+
+        await page.waitForSelector('text/Program Questions');
+        const menu = await page.$('#basic-nav-dropdown');
+        await menu.click();
+        await page.$$eval('a', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Logout').click();
+        });
+        await page.waitForSelector('text/Sign In');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    });
+
+    it('Test unauthenticated user can access adept survey entry point', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        const currentUrl = page.url();
+
+        // Assert the URL
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+    });
+    runRoutePermissionTests();
 });
