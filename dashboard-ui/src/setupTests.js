@@ -12,11 +12,59 @@ import { surveyResultMock, userScenarioResultMock } from './__mocks__/mockData.j
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
 
-jest.mock('@accounts/graphql-api', () => {
-    return {
-        AccountsModule: {
-            forRoot: jest.fn(() => ({
-                typeDefs: `
+let mongoServer;
+let graphqlServer;
+
+beforeAll(async () => {
+    try {
+        // Set up MongoDB in-memory server
+        mongoServer = await MongoMemoryServer.create();
+        const uri = mongoServer.getUri();
+        console.log(uri);
+
+        // Connect to the in-memory MongoDB
+        await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        // mongoose.set('debug', true);
+
+        const surveyResults = new SurveyResults(surveyResultMock);
+
+        await surveyResults.save();
+
+        // Insert the mock surveyVersion data
+        const surveyVersion = new SurveyVersion({
+            version: '5',
+        });
+
+        await surveyVersion.save();
+
+        const participantLog = new ParticipantLog({
+            "Type": "Mil",
+            "ParticipantID": 202409101,
+            "Text-1": "AD-1",
+            "Text-2": "ST-1",
+            "Sim-1": "AD-2",
+            "Sim-2": "ST-2",
+            "Del-1": "AD-3",
+            "Del-2": "ST-3",
+            "ADMOrder": 1,
+            "claimed": true,
+            "simEntryCount": 4,
+            "surveyEntryCount": 1,
+            "textEntryCount": 5,
+            "hashedEmail": "595c55a027391bd9e55844e769594dd102002f9e846704568261ddbeabc19662"
+        });
+
+        await participantLog.save()
+
+        const userScenarioResults = new UserScenarioResults(userScenarioResultMock);
+
+        await userScenarioResults.save();
+
+        jest.mock('@accounts/graphql-api', () => {
+            return {
+                AccountsModule: {
+                    forRoot: jest.fn(() => ({
+                        typeDefs: `
                     type Email {
                         address: String
                         verified: Boolean
@@ -81,110 +129,70 @@ jest.mock('@accounts/graphql-api', () => {
                         getUser: User
                     }
                 `,
-                resolvers: {
-                    Mutation: {
-                        authenticate: jest.fn((parent, { params, serviceName }) => {
-                            if (params.password != 'secretPassword123') {
-                                return null;
+                        resolvers: {
+                            Mutation: {
+                                authenticate: jest.fn((parent, { params, serviceName }) => {
+                                    // for now, valid tests will use 'secretPassword123'
+                                    if (params.password != 'secretPassword123') {
+                                        return null;
+                                    }
+                                    return {
+                                        "sessionId": "67991d239acd0b5980ffbf69",
+                                        "tokens": {
+                                            "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM",
+                                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRva2VuIjoiYTljMTBkYjJhOTMxN2RmZDA1NjM5MDIwYTc2N2Y5ZDYyNWJjZmFmM2Q3NjhmYTk0NGEzMmM1N2YxYWI5MjNmZGU0ZGNkZTM1NTlmMmVkMDczMzYyYTEiLCJpc0ltcGVyc29uYXRlZCI6ZmFsc2UsInVzZXJJZCI6IjY3OTkxZDIzOWFjZDBiMWI5NGZmYmY2NCJ9LCJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODA5MzExNX0.w1x-lWGwqW2hVRNwTl3sQyaxqeyZsJJirn_qkT04ljo",
+                                        },
+                                        "user": {
+                                            "id": "67991d239acd0b1b94ffbf64",
+                                            "emails": [
+                                                {
+                                                    "address": params.user.email,
+                                                    "verified": false,
+                                                }
+                                            ],
+                                            "username": "tester1",
+                                            "admin": params.user.email == 'admin@123.com' || params.user.username == 'admin',
+                                            "evaluator": null,
+                                            "experimenter": null,
+                                            "adeptUser": null,
+                                            "approved": params.user.email == 'admin@123.com' || params.user.username == 'admin',
+                                            "rejected": null,
+                                        },
+                                    }
+                                }),
+                                createUser: jest.fn(async (parent, { user }) => {
+                                    const { User } = require('./__mocks__/mockDbSchema.js');
+                                    const newUser = new User({
+                                        username: user.username,
+                                        emails: [{ address: user.email, verified: false }],
+                                        admin: user.username == 'admin',
+                                        approved: user.username == 'admin'
+                                    });
+
+                                    await newUser.save();
+                                    return {
+                                        userId: null,
+                                        loginResult: null
+                                    };
+                                }),
+                                refreshTokens: jest.fn((parent, { accessToken, refreshToken }) => {
+                                    return {
+                                        "sessionId": "67991d239acd0b5980ffbf69",
+                                        "tokens": {
+                                            "refreshToken": refreshToken,
+                                            "accessToken": accessToken,
+                                        },
+                                    };
+                                }),
+                                logout: jest.fn(() => {
+                                    return true;
+                                })
                             }
-                            return {
-                                "sessionId": "67991d239acd0b5980ffbf69",
-                                "tokens": {
-                                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM",
-                                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRva2VuIjoiYTljMTBkYjJhOTMxN2RmZDA1NjM5MDIwYTc2N2Y5ZDYyNWJjZmFmM2Q3NjhmYTk0NGEzMmM1N2YxYWI5MjNmZGU0ZGNkZTM1NTlmMmVkMDczMzYyYTEiLCJpc0ltcGVyc29uYXRlZCI6ZmFsc2UsInVzZXJJZCI6IjY3OTkxZDIzOWFjZDBiMWI5NGZmYmY2NCJ9LCJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODA5MzExNX0.w1x-lWGwqW2hVRNwTl3sQyaxqeyZsJJirn_qkT04ljo",
-                                },
-                                "user": {
-                                    "id": "67991d239acd0b1b94ffbf64",
-                                    "emails": [
-                                        {
-                                            "address": params.user.email,
-                                            "verified": false,
-                                        }
-                                    ],
-                                    "username": "tester1",
-                                    "admin": params.user.email == 'admin@123.com' || params.user.username == 'admin',
-                                    "evaluator": null,
-                                    "experimenter": null,
-                                    "adeptUser": null,
-                                    "approved": params.user.email == 'admin@123.com' || params.user.username == 'admin',
-                                    "rejected": null,
-                                },
-                            }
-                        }),
-                        createUser: jest.fn((parent, { user }) => {
-                            return {
-                                userId: null,
-                                loginResult: null
-                            };
-                        }),
-                        refreshTokens: jest.fn((parent, { accessToken, refreshToken }) => {
-                            return {
-                                "sessionId": "67991d239acd0b5980ffbf69",
-                                "tokens": {
-                                    "refreshToken": refreshToken,
-                                    "accessToken": accessToken,
-                                },
-                            };
-                        }),
-                        logout: jest.fn(() => {
-                            return true;
-                        })
-                    }
+                        }
+                    })),
                 }
-            })),
-        }
-    };
-});
-
-
-
-let mongoServer;
-let graphqlServer;
-
-beforeAll(async () => {
-    try {
-        // Set up MongoDB in-memory server
-        mongoServer = await MongoMemoryServer.create();
-        const uri = mongoServer.getUri();
-        console.log(uri);
-
-        // Connect to the in-memory MongoDB
-        await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-        // mongoose.set('debug', true);
-
-        const surveyResults = new SurveyResults(surveyResultMock);
-
-        await surveyResults.save();
-
-        // Insert the mock surveyVersion data
-        const surveyVersion = new SurveyVersion({
-            version: '5',
+            };
         });
-
-        await surveyVersion.save();
-
-        const participantLog = new ParticipantLog({
-            "Type": "Mil",
-            "ParticipantID": 202409101,
-            "Text-1": "AD-1",
-            "Text-2": "ST-1",
-            "Sim-1": "AD-2",
-            "Sim-2": "ST-2",
-            "Del-1": "AD-3",
-            "Del-2": "ST-3",
-            "ADMOrder": 1,
-            "claimed": true,
-            "simEntryCount": 4,
-            "surveyEntryCount": 1,
-            "textEntryCount": 5,
-            "hashedEmail": "595c55a027391bd9e55844e769594dd102002f9e846704568261ddbeabc19662"
-        });
-
-        await participantLog.save()
-
-        const userScenarioResults = new UserScenarioResults(userScenarioResultMock);
-
-        await userScenarioResults.save();
 
         // Mock AccountsModule and merge typeDefs and resolvers
         const { AccountsModule } = require('@accounts/graphql-api');
@@ -208,6 +216,7 @@ beforeAll(async () => {
         throw error;
     }
 });
+
 
 afterAll(async () => {
     try {

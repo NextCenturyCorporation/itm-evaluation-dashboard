@@ -37,6 +37,19 @@ const ParticipantLog = createSchema('participantLog', {
     hashedEmail: { type: String },
 });
 
+const User = createSchema('users', {
+    team: { type: String },
+    delegator: { type: Number },
+    createdAt: { type: String },
+    username: { type: String },
+    emails: { type: Array },
+    admin: { type: Boolean },
+    approved: { type: Boolean },
+    rejected: { type: Boolean },
+    evaluator: { type: Boolean },
+    adeptUser: { type: Boolean }
+});
+
 const AdmLog = createSchema('test', {
     evaluation: { type: JSON },
     history: { type: Array, required: true },
@@ -60,4 +73,4 @@ const UserScenarioResults = createSchema('userScenarioResults', {
 });
 
 
-export { SurveyResults, SurveyVersion, ParticipantLog, AdmLog, UserScenarioResults };
+export { SurveyResults, SurveyVersion, ParticipantLog, AdmLog, UserScenarioResults, User };

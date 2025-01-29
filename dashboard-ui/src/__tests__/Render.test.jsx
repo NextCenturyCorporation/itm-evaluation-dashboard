@@ -4,7 +4,7 @@
 
 import { countElementsWithText } from "../__mocks__/testUtils";
 
-describe('Test render and bad login', () => {
+describe('Test render', () => {
     beforeEach(async () => {
         page = await browser.newPage();
     })

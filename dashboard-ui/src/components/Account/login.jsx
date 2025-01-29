@@ -234,12 +234,6 @@ class LoginApp extends React.Component {
                     username={createUserName}
                     onResult={(exists) => {
                         this.setState({ userExists: exists });
-                        if (exists) {
-                            this.setState({
-                                error: "Email or username already in use.",
-                                createAccountFailed: true
-                            });
-                        }
                     }}
                 />
                 <div className="login-header-logo">
@@ -445,7 +439,7 @@ const LoginHelper = ({ email, username, onResult }) => {
         if (!loading && data) {
             onResult(data.checkUserExists);
         }
-    }, [data, loading, onResult]);
+    }, [data, loading]);
 
     return null;
 };
