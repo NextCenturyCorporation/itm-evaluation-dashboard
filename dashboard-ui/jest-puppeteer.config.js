@@ -7,7 +7,7 @@ module.exports = {
     browserContext: 'default',
     server: {
         command: 'npm run start:test',
-        port: 3001,
+        port: process.env.REACT_APP_TEST_PORT,
         launchTimeout: 120000
     },
     globalTeardown: './testTeardown.js',

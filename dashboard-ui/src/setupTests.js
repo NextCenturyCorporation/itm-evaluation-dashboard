@@ -202,7 +202,7 @@ beforeAll(async () => {
         });
 
         // Start the server on port 4000
-        await graphqlServer.listen({ port: 4000 });
+        await graphqlServer.listen({ port: process.env.REACT_APP_GRAPHQL_TEST_PORT });
     } catch (error) {
         console.error("Error in beforeAll:", error);
         throw error;

@@ -8,7 +8,7 @@ import gql from 'graphql-tag';
 import { isDefined } from '@mui/x-charts/internals';
 let { API_URL } = require('./config');
 if (!isDefined(API_URL))
-  API_URL = `http://localhost:${process.env.REACT_APP_TESTING == 'true' ? 4000 : 9100}/api`;
+  API_URL = `http://localhost:${process.env.REACT_APP_TESTING == 'true' ? process.env.REACT_APP_GRAPHQL_TEST_PORT : 9100}/api`;
 
 const httpLink = createHttpLink({
   uri: API_URL
