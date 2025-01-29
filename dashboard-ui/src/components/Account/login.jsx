@@ -34,7 +34,8 @@ class LoginApp extends React.Component {
             viewHiddenEmail: false,
             confirmTextEmail: "",
             viewHiddenConfirmEmail: false,
-            emailsMatch: true
+            emailsMatch: true,
+            userExists: false
         };
         this.login = this.login.bind(this);
         this.createAccount = this.createAccount.bind(this);
@@ -166,11 +167,11 @@ class LoginApp extends React.Component {
     };
 
     onChangeCreateUserName = ({ target }) => {
-        this.setState({ createUserName: target.value });
+        this.setState({ createUserName: target.value, userExists: false });
     };
 
     onChangeCreateEmail = ({ target }) => {
-        this.setState({ createEmail: target.value });
+        this.setState({ createEmail: target.value, userExists: false });
     };
 
     onChangeCreatePassword = ({ target }) => {
