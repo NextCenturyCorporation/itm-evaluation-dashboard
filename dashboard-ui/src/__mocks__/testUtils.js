@@ -16,7 +16,10 @@ export async function createAccount(page, username, email, password) {
     const emailInput = await page.$('#createEmail');
     const usernameInput = await page.$('#createUserName');
     const passwordInput = await page.$('#createPassword');
-
+    // clear input
+    await page.evaluate(() => document.getElementById("createEmail").value = "");
+    await page.evaluate(() => document.getElementById("createUserName").value = "");
+    await page.evaluate(() => document.getElementById("createPassword").value = "");
     await emailInput.type(email);
     await usernameInput.type(username);
     await passwordInput.type(password);
@@ -25,13 +28,53 @@ export async function createAccount(page, username, email, password) {
     });
 }
 
-export async function login(page, username, password) {
+export async function login(page, username, password, createIfDNE = false) {
     const usernameInput = await page.$('input[placeholder="Email / Username"]');
     const passwordInput = await page.$('#password');
-
+    await page.evaluate(() => document.getElementById("userName").value = "");
+    await page.evaluate(() => document.getElementById("password").value = "");
     await usernameInput.type(username);
     await passwordInput.type(password);
     await page.$$eval('.form-group button', buttons => {
         Array.from(buttons).find(btn => btn.textContent == 'Sign In').click();
     });
+
+    if (createIfDNE) {
+        await page.waitForNavigation();
+        let currentUrl = page.url();
+        // if we're still on the login page, the user does not exist. Create a new one!
+        if (currentUrl == `${process.env.REACT_APP_TEST_URL}/login`) {
+            await createAccount(page, username, username + '@123.com', password);
+        }
+    }
+}
+
+export async function logout(page) {
+    // make sure page navigates somewhere before logging out
+    await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+    await page.waitForSelector('text/This research was developed');
+    let currentUrl = page.url();
+    if (currentUrl == `${process.env.REACT_APP_TEST_URL}/awaitingApproval`) {
+        await page.$$eval('button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Return to Login').click();
+        });
+        await page.waitForSelector('text/Sign In');
+        currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    }
+    else if (![`${process.env.REACT_APP_TEST_URL}/login`, `${process.env.REACT_APP_TEST_URL}/participantText`].includes(currentUrl)) {
+        const menu = await page.$('#basic-nav-dropdown');
+        await menu.click();
+        await page.$$eval('a', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Logout').click();
+        });
+        await page.waitForSelector('text/Sign In', { timeout: 1000 });
+    }
+}
+
+export async function testRouteRedirection(route, expectedRedirect = '/login') {
+    await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
+    await page.waitForSelector('text=Loading...', { hidden: true });
+    const currentUrl = page.url();
+    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
 }

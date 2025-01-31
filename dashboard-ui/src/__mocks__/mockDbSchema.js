@@ -72,5 +72,10 @@ const UserScenarioResults = createSchema('userScenarioResults', {
     dreSessionId: { type: String }
 });
 
+const SurveyConfig = createSchema('delegationConfig', {
+    _id: { type: String, required: true },
+    survey: { type: JSON, required: true }
+})
 
-export { SurveyResults, SurveyVersion, ParticipantLog, AdmLog, UserScenarioResults, User };
+
+export { SurveyConfig, SurveyResults, SurveyVersion, ParticipantLog, AdmLog, UserScenarioResults, User };

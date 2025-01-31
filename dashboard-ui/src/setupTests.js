@@ -6,7 +6,7 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import { ParticipantLog, SurveyResults, SurveyVersion, UserScenarioResults } from './__mocks__/mockDbSchema.js';
+import { ParticipantLog, SurveyConfig, SurveyResults, SurveyVersion, UserScenarioResults } from './__mocks__/mockDbSchema.js';
 import { surveyResultMock, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
@@ -37,6 +37,39 @@ beforeAll(async () => {
 
         await surveyVersion.save();
 
+        const surveyConfig4 = new SurveyConfig({
+            _id: 'delegation_v4.0',
+            survey: {
+                pages: [{
+                    name: "Participant ID Page",
+                    elements: [
+                        {
+                            type: "text",
+                            name: "Participant ID",
+                            title: "Enter Participant ID:",
+                            isRequired: true
+                        }]
+                }]
+            }
+        });
+        const surveyConfig5 = new SurveyConfig({
+            _id: 'delegation_v5.0',
+            survey: {
+                pages: [{
+                    name: "Participant ID Page",
+                    elements: [
+                        {
+                            type: "text",
+                            name: "Participant ID",
+                            title: "Enter Participant ID:",
+                            isRequired: true
+                        }]
+                }]
+            }
+        });
+        surveyConfig4.save();
+        surveyConfig5.save();
+
         const participantLog = new ParticipantLog({
             "Type": "Mil",
             "ParticipantID": 202409101,
@@ -61,74 +94,75 @@ beforeAll(async () => {
         await userScenarioResults.save();
 
         jest.mock('@accounts/graphql-api', () => {
+            let lastAuthenticatedUsername = null;
             return {
                 AccountsModule: {
                     forRoot: jest.fn(() => ({
                         typeDefs: `
-                    type Email {
-                        address: String
-                        verified: Boolean
-                    }
+                            type Email {
+                                address: String
+                                verified: Boolean
+                            }
 
-                    type Token {
-                        refreshToken: String
-                        accessToken: String
-                    }
+                            type Token {
+                                refreshToken: String
+                                accessToken: String
+                            }
 
-                    type LoginResult {
-                        sessionId: String
-                        tokens: Token
-                        user: User
-                    }
+                            type LoginResult {
+                                sessionId: String
+                                tokens: Token
+                                user: User
+                            }
 
-                    type User {
-                        id: ID!
-                        username: String
-                        emails: [Email]
-                        userId: String
-                        loginResult: LoginResult
-                        deactivated: Boolean
-                    }
+                            type User {
+                                id: ID!
+                                username: String
+                                emails: [Email]
+                                userId: String
+                                loginResult: LoginResult
+                                deactivated: Boolean
+                            }
 
-                    input CreateUserInput {
-                        username: String!
-                        email: String!
-                        password: String!
-                    }
+                            input CreateUserInput {
+                                username: String!
+                                email: String!
+                                password: String!
+                            }
 
-                    input UserInput {
-                        email: String
-                        username: String
-                    }
+                            input UserInput {
+                                email: String
+                                username: String
+                            }
 
-                    input LoginUserPasswordService {
-                        user: UserInput
-                        password: String
-                    }
+                            input LoginUserPasswordService {
+                                user: UserInput
+                                password: String
+                            }
 
-                    input AuthenticateParamsInput {
-                        user: UserInput
-                        password: String!
-                    }
+                            input AuthenticateParamsInput {
+                                user: UserInput
+                                password: String!
+                            }
 
 
-                    type AuthPayload {
-                        tokens: Token
-                        user: User
-                        sessionId: String
-                    }
+                            type AuthPayload {
+                                tokens: Token
+                                user: User
+                                sessionId: String
+                            }
 
-                    type Mutation {
-                        createUser(user: CreateUserInput!): User
-                        authenticate(params: AuthenticateParamsInput!, serviceName: String): AuthPayload
-                        refreshTokens(accessToken: String, refreshToken: String): AuthPayload
-                        logout: Boolean
-                    }
+                            type Mutation {
+                                createUser(user: CreateUserInput!): User
+                                authenticate(params: AuthenticateParamsInput!, serviceName: String): AuthPayload
+                                refreshTokens(accessToken: String, refreshToken: String): AuthPayload
+                                logout: Boolean
+                            }
 
-                    type Query {
-                        getUser: User
-                    }
-                `,
+                            type Query {
+                                getUser: User
+                            }
+                        `,
                         resolvers: {
                             Mutation: {
                                 authenticate: jest.fn((parent, { params, serviceName }) => {
@@ -136,6 +170,7 @@ beforeAll(async () => {
                                     if (params.password != 'secretPassword123') {
                                         return null;
                                     }
+                                    lastAuthenticatedUsername = params.user.username ?? params.user.email;
                                     return {
                                         "sessionId": "67991d239acd0b5980ffbf69",
                                         "tokens": {
@@ -185,10 +220,31 @@ beforeAll(async () => {
                                     };
                                 }),
                                 logout: jest.fn(() => {
+                                    lastAuthenticatedUsername = null;
                                     return true;
                                 })
+                            },
+                            Query: {
+                                getUser: jest.fn(() => {
+                                    if (lastAuthenticatedUsername == null)
+                                        return null;
+                                    return {
+                                        id: 'mock-user-id',
+                                        username: lastAuthenticatedUsername,
+                                        emails: [{ address: 'mock-email' }],
+                                        admin: lastAuthenticatedUsername.includes('admin'),
+                                        approved: lastAuthenticatedUsername.includes('admin')
+                                    };
+                                }),
+                            },
+                        },
+                        context: jest.fn(() => {
+                            return {
+
+                                user: { id: 'mock-user-id', username: 'mock-username', email: 'mock-email' },
+                                sessionId: 'mock-session-id',
                             }
-                        }
+                        }),
                     })),
                 }
             };
@@ -204,9 +260,9 @@ beforeAll(async () => {
         graphqlServer = new ApolloServer({
             typeDefs: mergedTypeDefs,
             resolvers: mergedResolvers,
-            context: () => ({
-                db: mongoose.connection.db, // Inject the test DB connection
-            }),
+            context: ({ req }) => {
+                return { db: mongoose.connection.db, req: req };
+            }
         });
 
         // Start the server on port 4000

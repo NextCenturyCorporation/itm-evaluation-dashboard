@@ -2,17 +2,10 @@
  * @jest-environment puppeteer
  */
 
-import { createAccount, login } from "../__mocks__/testUtils";
+import { createAccount, login, logout, testRouteRedirection } from "../__mocks__/testUtils";
 
-async function testRouteRedirection(route, expectedRedirect = '/login') {
-    await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
-    await page.waitForSelector('text=Loading...', { hidden: true });
-    const currentUrl = page.url();
-    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
-}
-
-function runRoutePermissionTests() {
-    const routes = [
+function runRoutePermissionTests(allowApprovalPage = false) {
+    let routes = [
         '/results',
         '/adm-results',
         '/adm-probe-responses',
@@ -24,24 +17,34 @@ function runRoutePermissionTests() {
         '/research-results/rq2',
         '/research-results/rq3',
         '/research-results/exploratory-analysis',
-        '/randomlink',
         '/survey',
         '/review-text-based',
         '/review-delegation',
         '/survey-results',
         '/text-based-results',
         '/admin',
+        '/pid-lookup',
+        '/myaccount',
+        // '/participantTextTester', // broken functionality!
+        '/participant-progress-table',
+        '/',
         '/random-link',
-        '/'
     ];
+    if (!allowApprovalPage) {
+        routes.push('/awaitingApproval');
+    }
     routes.forEach(route => {
-        it(`redirects ${route} to login when not authenticated`, async () => {
-            await testRouteRedirection(route);
+        it(`redirects ${route} to ${allowApprovalPage ? '/awaitingApproval' : '/login'} when not authenticated`, async () => {
+            await testRouteRedirection(route, allowApprovalPage ? '/awaitingApproval' : '/login');
         });
     });
 }
 
 describe('Route Redirection and Access Control Tests for unauthenticated users', () => {
+    beforeAll(async () => {
+        await logout(page);
+    });
+
     it('Test unauthenticated user can access adept survey entry point', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
         const currentUrl = page.url();
@@ -49,13 +52,16 @@ describe('Route Redirection and Access Control Tests for unauthenticated users',
         // Assert the URL
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
     });
-    runRoutePermissionTests();
+
+    runRoutePermissionTests(false);
 });
 
 describe('Login tests', () => {
     beforeEach(async () => {
         page = await browser.newPage();
-    })
+        await logout(page);
+    });
+
     it('invalid user should receive error', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
         // wait for the page to stop loading
@@ -135,13 +141,15 @@ describe('Login tests', () => {
 
 describe('Route Redirection and Access Control Tests for unapproved users', () => {
     // log in as unauthenticated user
-    beforeAll(async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-        // wait for the page to stop loading
-        await page.waitForSelector('#password');
-        await login(page, 'tester', 'secretPassword123');
+    beforeEach(async () => {
+        const pageContent = await page.evaluate(() => document.body.innerText);
+        // only logout/login if we have been logged out somehow
+        if (!pageContent.includes('Thank you for your interest in the DARPA In the Moment Program.')) {
+            await logout(page);
+            await login(page, 'tester', 'secretPassword123', true);
 
-        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+            await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        }
     });
 
     it('Test unapproved user can access adept survey entry point', async () => {
@@ -151,18 +159,19 @@ describe('Route Redirection and Access Control Tests for unapproved users', () =
         // Assert the URL
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
     });
-    runRoutePermissionTests();
+    runRoutePermissionTests(true);
 });
 
 describe('Once logged out, no routes should be accessible', () => {
-    // log in as unauthenticated user
     beforeAll(async () => {
+        await logout(page);
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
         // wait for the page to stop loading
         await page.waitForSelector('#password');
         await login(page, 'admin', 'secretPassword123');
 
         await page.waitForSelector('text/Program Questions');
+        // log out (not using log out function to ensure that we were logging in as authenticated user)
         const menu = await page.$('#basic-nav-dropdown');
         await menu.click();
         await page.$$eval('a', buttons => {
@@ -180,5 +189,5 @@ describe('Once logged out, no routes should be accessible', () => {
         // Assert the URL
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
     });
-    runRoutePermissionTests();
+    runRoutePermissionTests(false);
 });

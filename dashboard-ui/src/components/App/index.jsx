@@ -169,7 +169,7 @@ function Login({ newState, userLoginHandler, participantLoginHandler, participan
     }
     if (newState !== null) {
         if (newState.currentUser !== null) {
-            return <Home newState={newState} currentUser={newState.currentUser} />;
+            history.push('/');
         } else {
             return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
         }

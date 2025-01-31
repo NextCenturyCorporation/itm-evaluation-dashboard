@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText } from "../__mocks__/testUtils";
+import { countElementsWithText, createAccount, login, logout } from "../__mocks__/testUtils";
 
 let firstPid = 0;
 
@@ -62,8 +62,8 @@ describe('Test email-entry text scenarios', () => {
         const email1 = await page.$('input[placeholder="Email"]');
         const email2 = await page.$('input[placeholder="Confirm Email"]');
 
-        await email1.type('tester@123.com');
-        await email2.type('tester@123.com');
+        await email1.type('ptextTester@123.com');
+        await email2.type('ptextTester@123.com');
         await page.$$eval('.form-group button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
@@ -99,8 +99,8 @@ describe('Test email-entry text scenarios', () => {
         const email1 = await page.$('input[placeholder="Email"]');
         const email2 = await page.$('input[placeholder="Confirm Email"]');
 
-        await email1.type('tester@123.com');
-        await email2.type('TESTER@123.com');
+        await email1.type('ptextTester@123.com');
+        await email2.type('PTEXTTESTER@123.com');
         await page.$$eval('.form-group button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
@@ -110,4 +110,31 @@ describe('Test email-entry text scenarios', () => {
         expect(currentUrl).toContain(`${process.env.REACT_APP_TEST_URL}/text-based`);
         expect(thisPid).toBe(firstPid);
     }, 10000);
+
+    it('PID Lookup should show correct PID for email', async () => {
+        await logout(page);
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // try to create admin account in case tests run out of order
+        await createAccount(page, 'admin', 'admin@123.com', 'secretPassword123');
+        await logout(page);
+        // login as admin account
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        await login(page, 'admin', 'secretPassword123');
+        await page.waitForSelector('text/Program Questions');
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
+        const menu = await page.$('#basic-nav-dropdown');
+        await menu.click();
+        await page.$$eval('a', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'PID Lookup').click();
+        });
+        await page.waitForSelector('#emailOnly');
+        const emailInput = await page.$('#emailOnly');
+        await emailInput.type('pTEXTtester@123.com');
+        await page.$$eval('.form-group button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Find PID').click();
+        });
+        // will time out if it fails
+        await page.waitForSelector('text/PID: ' + firstPid.toString());
+    }, 8000000);
 });

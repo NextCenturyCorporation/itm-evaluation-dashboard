@@ -50,12 +50,9 @@ const server = new ApolloServer({
     schema,
     introspection: false,
     playground: false,
-    context: () => {
-        return {
-            db: dashboardDB.db,
-            ...accountsGraphQL.context
-        };
-    },
+    context: ({ req }) => {
+        return { db: dashboardDB.db, req: req };
+    }
 });
 
 // The `listen` method launches a web server

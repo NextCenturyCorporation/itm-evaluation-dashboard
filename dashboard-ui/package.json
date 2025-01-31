@@ -75,8 +75,8 @@
         "start:test": "BROWSER=None PORT=3001 react-scripts start",
         "stop:test": "kill $(lsof -t -i:3001) $(lsof -t -i:4000) > /dev/null 2>&1",
         "build": "react-scripts build",
-        "test": "REACT_APP_TESTING=true jest --watchAll --verbose",
-        "test-and-watch": "REACT_APP_TESTING=true jest --watchAll",
+        "test": "REACT_APP_TESTING=true jest --watchAll --verbose --runInBand",
+        "test-and-watch": "REACT_APP_TESTING=true jest --watchAll --runInBand",
         "eject": "react-scripts eject",
         "clean": "rm -rf node_modules"
     },
