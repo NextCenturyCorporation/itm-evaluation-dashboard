@@ -4,7 +4,7 @@ module.exports = {
         // slowMo: 25,       // Optional: Slow down actions to see what is happening
         defaultViewport: null,  // Optional: Fullscreen viewport
     },
-    browserContext: 'default',
+    browserContext: 'incognito',
     server: {
         command: 'npm run start:test',
         port: process.env.REACT_APP_TEST_PORT,

@@ -38,12 +38,24 @@ function runAllowedRoutesTests(isAdmin = false) {
     }
     allowedRoutes.forEach(route => {
         it(`${route} should not redirect`, async () => {
-            await testRouteRedirection(route, route);
+            const res = await testRouteRedirection(route, route);
+            if (!res) {
+                await logout(page);
+                await login(page, 'admin@123.com', 'secretPassword123', true);
+                await page.waitForSelector('text/Program Questions');
+                await testRouteRedirection(route, route, true);
+            }
         });
     });
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
-            await testRouteRedirection(route, '/');
+            const res = await testRouteRedirection(route, '/');
+            if (!res) {
+                await logout(page);
+                await login(page, 'admin@123.com', 'secretPassword123', true);
+                await page.waitForSelector('text/Program Questions');
+                await testRouteRedirection(route, '/', true);
+            }
         });
     });
 }

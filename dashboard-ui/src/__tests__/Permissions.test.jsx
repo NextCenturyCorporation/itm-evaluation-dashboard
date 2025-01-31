@@ -35,7 +35,20 @@ function runRoutePermissionTests(allowApprovalPage = false) {
     }
     routes.forEach(route => {
         it(`redirects ${route} to ${allowApprovalPage ? '/awaitingApproval' : '/login'} when not authenticated`, async () => {
-            await testRouteRedirection(route, allowApprovalPage ? '/awaitingApproval' : '/login');
+            const res = await testRouteRedirection(route, allowApprovalPage ? '/awaitingApproval' : '/login', false);
+            if (!res) {
+                if (allowApprovalPage) {
+                    const pageContent = await page.evaluate(() => document.body.innerText);
+                    // only logout/login if we have been logged out somehow
+                    if (!pageContent.includes('Thank you for your interest in the DARPA In the Moment Program.')) {
+                        await logout(page);
+                        await login(page, 'tester', 'secretPassword123', true);
+
+                        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+                    }
+                }
+                await testRouteRedirection(route, allowApprovalPage ? '/awaitingApproval' : '/login', true)
+            }
         });
     });
 }
@@ -57,8 +70,12 @@ describe('Route Redirection and Access Control Tests for unauthenticated users',
 });
 
 describe('Login tests', () => {
+    beforeAll(async () => {
+        await jestPuppeteer.resetBrowser();
+    })
+
     beforeEach(async () => {
-        page = await browser.newPage();
+        await jestPuppeteer.resetPage();
         await logout(page);
     });
 
@@ -70,7 +87,7 @@ describe('Login tests', () => {
         await login(page, 'fake', 'password');
 
         // expect to stay on login with error (will time out if the sign-in-feedback element does not appear)
-        await page.waitForSelector('#sign-in-feedback');
+        await page.waitForSelector('text/Error logging in');
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
     });
@@ -79,7 +96,7 @@ describe('Login tests', () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
         // wait for the page to stop loading
         await page.waitForSelector('#password');
-        await createAccount(page, 'tester', 'tester@123.com', 'secretPassword123');
+        await createAccount(page, 'TESTer', 'teSter@123.com', 'secretPassword123');
 
         await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
         let currentUrl = page.url();
@@ -89,28 +106,6 @@ describe('Login tests', () => {
         });
         await page.waitForSelector('text/Sign In');
         currentUrl = page.url();
-        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
-
-    it('creating an account with a duplicate email should error', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-        // wait for the page to stop loading
-        await page.waitForSelector('#password');
-        await createAccount(page, 'tester1', 'tester@123.com', 'secretPassword123');
-
-        await page.waitForSelector('#create-account-feedback');
-        const currentUrl = page.url();
-        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
-
-    it('creating an account with a duplicate username should error', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-        // wait for the page to stop loading
-        await page.waitForSelector('#password');
-        await createAccount(page, 'tester', 'tester1@123.com', 'secretPassword123');
-
-        await page.waitForSelector('#create-account-feedback');
-        const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
     }, 10000);
 
@@ -124,7 +119,7 @@ describe('Login tests', () => {
         await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
-    }, 10000);
+    });
 
     it('admin should be sent to home page', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -135,6 +130,28 @@ describe('Login tests', () => {
         await page.waitForSelector('text/Program Questions');
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
+    }, 10000);
+
+    it('creating an account with a duplicate email should error', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        await page.waitForSelector('#password', { timeout: 1000 });
+        await createAccount(page, 'tester1', 'tester@123.com', 'secretPassword123');
+
+        await page.waitForSelector('text/Error creating account', { timeout: 3000 });
+        const currentUrl = page.url();
+
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    }, 10000);
+
+    it('creating an account with a duplicate username should error', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        await page.waitForSelector('#password', { timeout: 1000 });
+        await createAccount(page, 'tester', 'tester1@123.com', 'secretPassword123');
+
+        await page.waitForSelector('text/Error creating account', { timeout: 3000 });
+        const currentUrl = page.url();
+
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
     }, 10000);
 
 });

@@ -100,4 +100,5 @@ A [mock database](https://www.npmjs.com/package/mongodb-memory-server) is used t
   - As soon as the tests are done, the database will disconnect and you will lose access to the data. If you need to access it for additional time, I recommend dumping the db as soon as the tests start.
 - To skip a test suite, change `describe` to `xdescribe`. Likewise, to skip a single test, change `it` to `xit`.
 - Press Enter to rerun tests without making file changes while in watch mode, press `w` to see all keyboard shortcuts for running tests
+- `await jestPuppeteer.debug()` can pause a test for easier debugging in the browser or database.
 

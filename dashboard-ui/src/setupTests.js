@@ -205,6 +205,7 @@ beforeAll(async () => {
                                     });
 
                                     await newUser.save();
+
                                     return {
                                         userId: null,
                                         loginResult: null
@@ -273,6 +274,9 @@ beforeAll(async () => {
     }
 });
 
+afterEach(() => {
+    jest.clearAllMocks(); // Resets mock function calls and state
+});
 
 afterAll(async () => {
     try {
