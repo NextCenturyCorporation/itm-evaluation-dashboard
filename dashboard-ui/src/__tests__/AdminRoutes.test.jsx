@@ -6,13 +6,14 @@ import { login, logout, testRouteRedirection } from "../__mocks__/testUtils";
 
 function runAllowedRoutesTests(isAdmin = false) {
     let allowedRoutes = [
-        // '/results', // needs a mock!
-        // '/adm-results', // needs a mock!
+        '/',
+        '/adm-results',
+        '/results',
         '/adm-probe-responses',
         '/humanSimParticipant',
         '/scenarios',
         '/humanProbeData',
-        // '/human-results', // needs a mock!
+        '/human-results',
         '/research-results/rq1',
         '/research-results/rq2',
         '/research-results/rq3',
@@ -25,7 +26,6 @@ function runAllowedRoutesTests(isAdmin = false) {
         '/myaccount',
         // '/participantTextTester', // broken functionality!
         '/participant-progress-table',
-        '/'
     ];
     let unallowedRoutes = [
         // '/random-link' // broken functionality!

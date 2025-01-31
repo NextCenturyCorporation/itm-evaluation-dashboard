@@ -74,7 +74,7 @@ export async function logout(page) {
 
 export async function testRouteRedirection(route, expectedRedirect = '/login') {
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
-    await page.waitForSelector('text=Loading...', { hidden: true });
+    await page.waitForSelector('text/This research was developed');
     const currentUrl = page.url();
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
 }
