@@ -32,6 +32,7 @@
         "bcryptjs": "2.4.3",
         "bootstrap": "^5.3.3",
         "bowser": "^2.11.0",
+        "cross-env": "^7.0.3",
         "enzyme": "3.11.0",
         "file-saver": "2.0.5",
         "graphql": "^16.8.1",
@@ -72,11 +73,11 @@
     },
     "scripts": {
         "start": "react-scripts start",
-        "start:test": "BROWSER=None PORT=3001 react-scripts start",
+        "start:test": "cross-env BROWSER=None cross-env PORT=3001 react-scripts start",
         "stop:test": "kill $(lsof -t -i:3001) $(lsof -t -i:4000) > /dev/null 2>&1",
         "build": "react-scripts build",
-        "test": "REACT_APP_TESTING=true jest --watchAll --verbose --runInBand",
-        "test-and-watch": "REACT_APP_TESTING=true jest --watchAll --runInBand",
+        "test": "cross-env REACT_APP_TESTING=true jest --watchAll --verbose --runInBand",
+        "test-and-watch": "cross-env REACT_APP_TESTING=true jest --watchAll --runInBand",
         "eject": "react-scripts eject",
         "clean": "rm -rf node_modules"
     },
