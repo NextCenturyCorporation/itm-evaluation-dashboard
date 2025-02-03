@@ -137,7 +137,6 @@ export const ADMProbeResponses = (props) => {
     const [queryString, setQueryString] = useState("history.parameters.adm_name");
     const [queryData, setQueryData] = useState({});
     const [alignmentTargets, setAlignmentTargets] = useState([]);
-    const [allTableData, setAllTableData] = useState({});
 
     const { loading: evalNameLoading, error: evalNameError, data: evalNameData } = useQuery(get_eval_name_numbers);
     const { loading: scenarioLoading, error: scenarioError, data: scenarioData } = useQuery(scenario_names_aggregation, {
@@ -255,9 +254,7 @@ export const ADMProbeResponses = (props) => {
     };
 
     const downloadAsExcel = (tableData, adm = null, isAllTables = false) => {
-        const excelData = isAllTables ? 
-            Object.values(tableData).flat() : 
-            formatTableData(tableData, adm);
+        const excelData = isAllTables ? tableData : formatTableData(tableData);
 
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();
@@ -368,13 +365,34 @@ export const ADMProbeResponses = (props) => {
                 {currentScenario && (
                     <div className="test-overview-area">
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-                            <button
-                                className='aggregateDownloadBtn'
-                                onClick={() => downloadAsExcel(allTableData, null, true)}
-                                disabled={Object.keys(allTableData).length === 0}
+                            <Query
+                                query={get_all_test_data}
+                                variables={{
+                                    admQueryStr: queryString,
+                                    scenarioID: currentScenario,
+                                    admName: admData?.getPerformerADMsForScenario[0],
+                                    alignmentTargets: queryData[admData?.getPerformerADMsForScenario[0]]?.alignmentTargets || [],
+                                    evalNumber: currentEval
+                                }}
                             >
-                                Download All
-                            </button>
+                                {({ loading, error, data }) => {
+                                    if (loading || error || !admData?.getPerformerADMsForScenario) return null;
+
+                                    return (
+                                        <button
+                                            className='aggregateDownloadBtn'
+                                            onClick={() => {
+                                                const allData = admData.getPerformerADMsForScenario.map(adm => (
+                                                    formatTableData(data?.getAllTestDataForADM || [], adm)
+                                                )).flat();
+                                                downloadAsExcel(allData, null, true);
+                                            }}
+                                        >
+                                            Download All
+                                        </button>
+                                    );
+                                }}
+                            </Query>
                         </div>
                         {!admLoading && !admError && admData?.getPerformerADMsForScenario?.map((adm, index) => (
                             <div className='chart-home-container' key={index}>
@@ -397,13 +415,7 @@ export const ADMProbeResponses = (props) => {
                                         >
                                             {({ loading, error, data }) => {
                                                 if (loading || error || !data?.getAllTestDataForADM) return null;
-                                                const formattedData = formatTableData(data.getAllTestDataForADM, adm);
-                                                if (!allTableData[adm] || allTableData[adm] !== formattedData) {
-                                                    setAllTableData(prev => ({
-                                                        ...prev,
-                                                        [adm]: formattedData
-                                                    }));
-                                                }
+
                                                 return (
                                                     <button
                                                         className="aggregateDownloadBtn"
