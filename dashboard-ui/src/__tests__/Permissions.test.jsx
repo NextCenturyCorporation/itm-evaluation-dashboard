@@ -99,6 +99,25 @@ describe('Login tests', () => {
         await createAccount(page, 'TESTer', 'teSter@123.com', 'secretPassword123');
 
         await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        await page.waitForSelector('text/Status: Awaiting Approval', { timeout: 500 });
+        let currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
+        await page.$$eval('button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Return to Login').click();
+        });
+        await page.waitForSelector('text/Sign In');
+        currentUrl = page.url();
+        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+    }, 10000);
+
+    it('rejected user should be sent to waiting page; return to login should work', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await createAccount(page, 'rejected', 'rejected@123.com', 'secretRejectedPassword123');
+
+        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        await page.waitForSelector('text/Status: Account Rejected', { timeout: 500 });
         let currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
         await page.$$eval('button', buttons => {

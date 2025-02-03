@@ -38,6 +38,12 @@ export const testUsers = [
         'approved': true
     },
     {
+        'username': 'rejected',
+        'email': 'rejected@123.com',
+        'password': 'secretRejectedPassword123',
+        'rejected': true
+    },
+    {
         'username': 'tester',
         'email': 'tester@123.com',
         'password': 'secretPassword123'
