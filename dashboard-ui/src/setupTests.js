@@ -94,7 +94,8 @@ beforeAll(async () => {
         await userScenarioResults.save();
 
         jest.mock('@accounts/graphql-api', () => {
-            let lastAuthenticatedUsername = null;
+            const { testUsers } = require('./__mocks__/mockUsers.js');
+            let lastAuthenticatedUser = null;
             return {
                 AccountsModule: {
                     forRoot: jest.fn(() => ({
@@ -166,11 +167,11 @@ beforeAll(async () => {
                         resolvers: {
                             Mutation: {
                                 authenticate: jest.fn((parent, { params, serviceName }) => {
-                                    // for now, valid tests will use 'secretPassword123'
-                                    if (params.password != 'secretPassword123') {
+                                    const foundUser = testUsers.find((user) => params.user?.username?.toLowerCase() == user.username.toLowerCase() || params.user?.email?.toLowerCase() == user.email.toLowerCase());
+                                    if (foundUser?.password != params.password) {
                                         return null;
                                     }
-                                    lastAuthenticatedUsername = params.user.username ?? params.user.email;
+                                    lastAuthenticatedUser = foundUser;
                                     return {
                                         "sessionId": "67991d239acd0b5980ffbf69",
                                         "tokens": {
@@ -186,22 +187,31 @@ beforeAll(async () => {
                                                 }
                                             ],
                                             "username": "tester1",
-                                            "admin": params.user.email == 'admin@123.com' || params.user.username == 'admin',
-                                            "evaluator": null,
-                                            "experimenter": null,
-                                            "adeptUser": null,
-                                            "approved": params.user.email == 'admin@123.com' || params.user.username == 'admin',
-                                            "rejected": null,
+                                            "admin": foundUser.admin,
+                                            "evaluator": foundUser.evaluator,
+                                            "experimenter": foundUser.experimenter,
+                                            "adeptUser": foundUser.adeptUser,
+                                            "approved": foundUser.approved,
+                                            "rejected": foundUser.rejected,
                                         },
                                     }
                                 }),
                                 createUser: jest.fn(async (parent, { user }) => {
+                                    const foundUser = testUsers.find((testUser) => testUser.username.toLowerCase() == user.username.toLowerCase());
+                                    if (!foundUser) {
+                                        console.warn(`Error creating user with username ${user.username}. Please check the mockUsers.js file and ensure you have entered the information correctly.`);
+                                        return null;
+                                    }
                                     const { User } = require('./__mocks__/mockDbSchema.js');
                                     const newUser = new User({
                                         username: user.username,
                                         emails: [{ address: user.email, verified: false }],
-                                        admin: user.username == 'admin',
-                                        approved: user.username == 'admin'
+                                        admin: foundUser.admin,
+                                        evaluator: foundUser.evaluator,
+                                        experimenter: foundUser.experimenter,
+                                        adeptUser: foundUser.adeptUser,
+                                        approved: foundUser.approved,
+                                        rejected: foundUser.rejected
                                     });
 
                                     await newUser.save();
@@ -221,20 +231,24 @@ beforeAll(async () => {
                                     };
                                 }),
                                 logout: jest.fn(() => {
-                                    lastAuthenticatedUsername = null;
+                                    lastAuthenticatedUser = null;
                                     return true;
                                 })
                             },
                             Query: {
                                 getUser: jest.fn(() => {
-                                    if (lastAuthenticatedUsername == null)
+                                    if (lastAuthenticatedUser == null)
                                         return null;
                                     return {
                                         id: 'mock-user-id',
-                                        username: lastAuthenticatedUsername,
-                                        emails: [{ address: 'mock-email' }],
-                                        admin: lastAuthenticatedUsername.includes('admin'),
-                                        approved: lastAuthenticatedUsername.includes('admin')
+                                        username: lastAuthenticatedUser.username,
+                                        emails: [{ address: lastAuthenticatedUser.email }],
+                                        admin: lastAuthenticatedUser.admin,
+                                        evaluator: lastAuthenticatedUser.evaluator,
+                                        adeptUser: lastAuthenticatedUser.adeptUser,
+                                        experimenter: lastAuthenticatedUser.experimenter,
+                                        approved: lastAuthenticatedUser.approved,
+                                        rejected: lastAuthenticatedUser.rejected
                                     };
                                 }),
                             },

@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText, createAccount, login, logout } from "../__mocks__/testUtils";
+import { countElementsWithText, loginAdmin, logout } from "../__mocks__/testUtils";
 
 let firstPid = 0;
 
@@ -115,12 +115,7 @@ describe('Test email-entry text scenarios', () => {
         await logout(page);
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
         // try to create admin account in case tests run out of order
-        await createAccount(page, 'admin', 'admin@123.com', 'secretPassword123');
-        await logout(page);
-        // login as admin account
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-        await login(page, 'admin', 'secretPassword123');
-        await page.waitForSelector('text/Program Questions');
+        await loginAdmin(page);
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
         const menu = await page.$('#basic-nav-dropdown');

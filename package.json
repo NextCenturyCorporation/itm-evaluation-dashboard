@@ -1,4 +1,5 @@
 {
+  "name": "itm-dashboard",
   "scripts": {
     "setup-tests": "npm i && npm --prefix ./dashboard-ui i --legacy-peer-deps && npm --prefix ./node-graphql i",
     "watch-tests": "npm --prefix ./dashboard-ui run test-and-watch",

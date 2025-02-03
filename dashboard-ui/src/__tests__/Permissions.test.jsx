@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { createAccount, login, logout, testRouteRedirection } from "../__mocks__/testUtils";
+import { createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
 
 function runRoutePermissionTests(allowApprovalPage = false) {
     let routes = [
@@ -125,7 +125,7 @@ describe('Login tests', () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
         // wait for the page to stop loading
         await page.waitForSelector('#password');
-        await createAccount(page, 'admin', 'admin@123.com', 'secretPassword123');
+        await createAccount(page, 'admin', 'admin@123.com', 'secretAdminPassword123');
 
         await page.waitForSelector('text/Program Questions');
         const currentUrl = page.url();
@@ -185,9 +185,7 @@ describe('Once logged out, no routes should be accessible', () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
         // wait for the page to stop loading
         await page.waitForSelector('#password');
-        await login(page, 'admin', 'secretPassword123');
-
-        await page.waitForSelector('text/Program Questions');
+        await loginAdmin(page);
         // log out (not using log out function to ensure that we were logging in as authenticated user)
         const menu = await page.$('#basic-nav-dropdown');
         await menu.click();

@@ -89,3 +89,33 @@ export async function testRouteRedirection(route, expectedRedirect = '/login', r
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
     return true;
 }
+
+export async function loginAdmin(page) {
+    await logout(page);
+    await login(page, 'admin', 'secretAdminPassword123', true);
+    await page.waitForSelector('text/Program Questions');
+}
+
+export async function loginEvaluator(page) {
+    await logout(page);
+    await login(page, 'eval', 'secretEvalPassword123', true);
+    await page.waitForSelector('text/Program Questions');
+}
+
+export async function loginExperimenter(page) {
+    await logout(page);
+    await login(page, 'exp', 'secretExperimenterPassword123', true);
+    await page.waitForSelector('text/Program Questions');
+}
+
+export async function loginAdeptUser(page) {
+    await logout(page);
+    await login(page, 'adept', 'secretAdeptPassword123', true);
+    await page.waitForSelector('text/Program Questions');
+}
+
+export async function loginBasicApprovedUser(page) {
+    await logout(page);
+    await login(page, 'basic', 'secretBasicPassword123', true);
+    await page.waitForSelector('text/Welcome to the ITM Program!');
+}

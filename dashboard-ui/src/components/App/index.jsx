@@ -151,9 +151,8 @@ function AdmResults() {
     return <ADMChartPage />
 }
 
-function isUserElevated(currentUser) {
-    // ignoring adeptUser, because they should already be admins, evaluators, or experimenters
-    return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter;
+export function isUserElevated(currentUser) {
+    return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
 }
 
 function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin, testerLogin, logout }) {
@@ -195,7 +194,7 @@ function Admin({ newState, userLoginHandler }) {
         if (newState.currentUser.admin === true) {
             return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
         } else {
-            return <Home newState={newState} />;
+            history.push("/");
         }
     }
 }
@@ -207,7 +206,7 @@ function PidLookupPage({ newState }) {
         if (newState.currentUser.experimenter === true || newState.currentUser.admin === true) {
             return <PidLookup />
         } else {
-            return <Home newState={newState} />;
+            history.push("/");
         }
     }
 }
@@ -219,7 +218,7 @@ function ProgressTable({ newState }) {
         if (newState.currentUser.experimenter || newState.currentUser.admin || newState.currentUser.evaluator || newState.currentUser.adeptUser) {
             return <ParticipantProgressTable canViewProlific={newState.currentUser.adeptUser || newState.currentUser.admin} />
         } else {
-            return <Home newState={newState} />;
+            history.push("/");
         }
     }
 }
@@ -474,7 +473,7 @@ export class App extends React.Component {
                                                                 )}
                                                             </NavDropdown>
                                                         )}
-                                                        {(this.state.currentUser.admin === true || this.state.currentUser.evaluator === true) && (
+                                                        {isUserElevated(this.state.currentUser) && (
                                                             <>
                                                                 <NavDropdown title="Human Evaluation Segments">
                                                                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
