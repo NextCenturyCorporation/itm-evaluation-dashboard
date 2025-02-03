@@ -173,6 +173,7 @@ export const ADMProbeResponses = (props) => {
             });
 
             setQueryData(newQueryData);
+            setAllTableData({});
         }
     }, [admData, currentScenario, currentEval, alignmentTargets]);
 
@@ -181,6 +182,7 @@ export const ADMProbeResponses = (props) => {
         setQueryString("history.parameters.adm_name");
         setQueryData({});
         setAlignmentTargets([]);
+        setAllTableData({});
     }, [currentEval]);
 
     const getChoiceForProbe = (history, probeId) => {
