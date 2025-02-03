@@ -118,11 +118,11 @@ describe('Route Redirection and Access Control Tests for adeptUsers', () => {
     runAllowedRoutesTests(false, false, false, true);
 });
 
-// describe('Route Redirection and Access Control Tests for approved users with no elevation', () => {
-//     // log in as experimenter
-//     beforeAll(async () => {
-//         await loginBasicApprovedUser(page);
-//     });
+describe('Route Redirection and Access Control Tests for approved users with no elevation', () => {
+    // log in as experimenter
+    beforeAll(async () => {
+        await loginBasicApprovedUser(page);
+    });
 
-//     runAllowedRoutesTests(false, false, false, false);
-// });
+    runAllowedRoutesTests(false, false, false, false);
+});
