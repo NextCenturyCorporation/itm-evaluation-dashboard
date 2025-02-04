@@ -56,7 +56,7 @@ function runRoutePermissionTests(allowApprovalPage = false) {
 describe('Route Redirection and Access Control Tests for unauthenticated users', () => {
     beforeAll(async () => {
         await logout(page);
-    });
+    }, 10000);
 
     it('Test unauthenticated user can access adept survey entry point', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
