@@ -19,7 +19,7 @@ module.exports = {
     preset: 'jest-puppeteer',
     maxWorkers: 1,
     globals: {
-        "provess.env": {
+        "process.env": {
             "REACT_APP_TESTING": "true"
         }
     },

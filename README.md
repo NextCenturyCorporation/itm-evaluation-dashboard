@@ -73,6 +73,7 @@ The dashboard uses [jest-puppeteer](https://www.npmjs.com/package/jest-puppeteer
 - `npm run setup-tests` - This will install all the necessary dependencies throughout the project in order to run the tests
 - `npm run test` - This will run the UI tests in watch-mode
 - `npm run clean` - This removes all of the package-lock files and node_modules directories throughout the entire project to ensure a clean start
+- `npm run clean-win` - The matching Windows command
 
 ## Quick Start
 In the root directory, run 
@@ -88,7 +89,7 @@ A [mock database](https://www.npmjs.com/package/mongodb-memory-server) is used t
 
 ## Troubleshooting and Tips
 - Ensure you are using node 16 or higher when testing. Use your node version manager to achieve this (i.e. `nvm use 16`)
-- If the tests are not running, it is possible your ports did not get cleaned properly. Run `npm run clean-ports`. If you changed the ports in the .env file, you will have to run this manually with your chosen ports
+- If the tests are not running, it is possible your ports did not get cleaned properly. Run `npm run clean-ports` (or, if on Windows, `npm run clean-ports-win`). If you changed the ports in the .env file, you will have to run this manually with your chosen ports
 - Tests are run in headless mode by default, meaning there is no physical browser doing the testing. To run in headful mode in order to watch execution:
   - In `dashboard-ui/jest-puppeteer.config.js`, set `headless` to `false` and uncomment the `slowMo` line.
   - If you need to slow down execution in order to check out console logs, add a line such as `await page.waitForSelector('text/nonsense');` to the end of your test, then set the timeout for the test to a very large number. This should give you enough time to investigate any problems

@@ -5,7 +5,9 @@
     "watch-tests": "npm --prefix ./dashboard-ui run test-and-watch",
     "test": "npm --prefix ./dashboard-ui run test",
     "clean": "npm --prefix ./dashboard-ui run stop:test ; find . -type d -name 'node_modules' -exec rm -rf {} + && find . -type f -name 'package-lock.json' -exec rm -f {} +",
-    "clean-ports": "npm --prefix ./dashboard-ui run stop:test"
+    "clean-win": "npm --prefix ./dashboard-ui run stop:test-win ; find . -type d -name 'node_modules' -exec rm -rf {} + && find . -type f -name 'package-lock.json' -exec rm -f {} +",
+    "clean-ports": "npm --prefix ./dashboard-ui run stop:test",
+    "clean-ports-win": "npm --prefix ./dashboard-ui run stop:test-win"
   },
   "dependencies": {
     "@material-ui/core": "^4.11.2",
