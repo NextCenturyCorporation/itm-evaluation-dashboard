@@ -25,7 +25,7 @@ function runRoutePermissionTests(allowApprovalPage = false) {
         '/admin',
         '/pid-lookup',
         '/myaccount',
-        // '/participantTextTester', // broken functionality!
+        // '/participantTextTester', //broken functionality!
         '/participant-progress-table',
         '/',
         '/random-link',
@@ -35,20 +35,7 @@ function runRoutePermissionTests(allowApprovalPage = false) {
     }
     routes.forEach(route => {
         it(`redirects ${route} to ${allowApprovalPage ? '/awaitingApproval' : '/login'} when not authenticated`, async () => {
-            const res = await testRouteRedirection(route, allowApprovalPage ? '/awaitingApproval' : '/login', false);
-            if (!res) {
-                if (allowApprovalPage) {
-                    const pageContent = await page.evaluate(() => document.body.innerText);
-                    // only logout/login if we have been logged out somehow
-                    if (!pageContent.includes('Thank you for your interest in the DARPA In the Moment Program.')) {
-                        await logout(page);
-                        await login(page, 'tester', 'secretPassword123', true);
-
-                        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
-                    }
-                }
-                await testRouteRedirection(route, allowApprovalPage ? '/awaitingApproval' : '/login', true)
-            }
+            await testRouteRedirection(route, allowApprovalPage ? '/awaitingApproval' : '/login');
         });
     });
 }

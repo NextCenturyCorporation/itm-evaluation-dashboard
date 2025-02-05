@@ -23,8 +23,6 @@ export async function createAccount(page, username, email, password) {
     await emailInput.type(email);
     await usernameInput.type(username);
     await passwordInput.type(password);
-    // needs explicit browser-interaction
-    await page.screenshot();
     await page.$$eval('.form-group button', buttons => {
         Array.from(buttons).find(btn => btn.textContent == 'Create Account').click();
     });
@@ -74,20 +72,12 @@ export async function logout(page) {
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
 }
 
-export async function testRouteRedirection(route, expectedRedirect = '/login', retry = false) {
+export async function testRouteRedirection(route, expectedRedirect = '/login') {
     let currentUrl = page.url();
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
     await page.waitForSelector('text/This research was developed');
     currentUrl = page.url();
-    // sometimes we may need to retry the redirection if something has caused us to be logged out
-    if (!retry && currentUrl != `${process.env.REACT_APP_TEST_URL}${expectedRedirect}`) {
-        return false;
-    }
-    if (retry) {
-        console.log(`Retrying ${route} to ${expectedRedirect}`)
-    }
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
-    return true;
 }
 
 export async function loginAdmin(page) {

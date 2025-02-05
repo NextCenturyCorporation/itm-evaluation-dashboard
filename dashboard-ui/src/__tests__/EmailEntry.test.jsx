@@ -131,5 +131,5 @@ describe('Test email-entry text scenarios', () => {
         });
         // will time out if it fails
         await page.waitForSelector('text/PID: ' + firstPid.toString());
-    }, 8000000);
+    }, 10000);
 });

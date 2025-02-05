@@ -111,13 +111,18 @@ export function App() {
     const { data: configData, loading: configLoading, error: configError } = useQuery(GET_CONFIGS, { fetchPolicy: 'cache-first' });
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [isSetup, setIsSetup] = React.useState(false);
+    const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
+    const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
 
     React.useEffect(() => {
-        if (isDefined(versionData))
+        if (isDefined(versionData)) {
             setSurveyVersion(versionData);
+            setIsVersionDataLoaded(true);
+        }
         if (isDefined(configData)) {
             setupConfigWithImages(configData);
             setupTextBasedConfig(configData);
+            setIsConfigDataLoaded(true);
         }
     }, [versionData, configData]);
 
@@ -127,10 +132,12 @@ export function App() {
         const noTokenNeeded = ['reset-password', '/participantText', '/remote-text-survey?'];
 
         if (noTokenNeeded.some(substring => window.location.href.toLowerCase().includes(substring.toLowerCase()))) {
+            setIsSetup(true);
             return;
         }
 
         if (!tokens) {
+            setIsSetup(true);
             history.push('/login');
             return;
         }
@@ -169,6 +176,9 @@ export function App() {
     };
 
     const WaitingPageWrapper = ({ rejected, currentUser }) => {
+        if (!currentUser) {
+            return <Redirect push to="/login" />;
+        }
         if (!rejected && currentUser?.approved) {
             return <Redirect push to="/" />;
         }
@@ -177,7 +187,7 @@ export function App() {
         }
     };
 
-    const Login = ({ participantTextLogin, testerLogin, logout }) => {
+    const Login = ({ participantTextLogin, testerLogin }) => {
         if (currentUser && !currentUser?.approved) {
             logout();
             return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
@@ -201,7 +211,7 @@ export function App() {
         // get current plog
         const dbPLog = await fetchParticipantLog();
         // see if pid exists in db already
-        const foundParticipant = dbPLog.data.find((x) => x.hashedEmail == hashedEmail);
+        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail == hashedEmail);
         if (foundParticipant) {
             // Email in use (participant found in db), bring participant to their specific text-based scenario
             const pid = foundParticipant['ParticipantID'];
@@ -221,7 +231,7 @@ export function App() {
                 "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": hashedEmail
             };
             // update database
-            const addRes = await addParticipant({ variables: { participantData, LOW_PID, HIGH_PID } });
+            const addRes = await addParticipant({ variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID } });
             if (addRes?.data?.addNewParticipantToLog == -1) {
                 alert("This email address is taken. Please enter a different email.");
                 return;
@@ -296,7 +306,7 @@ export function App() {
             if (currentUser.admin === true || currentUser.evaluator) {
                 return <ReviewTextBasedPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
-                return <Home newState={newState} />;
+                return <Home />;
             }
         }
     };
@@ -308,7 +318,7 @@ export function App() {
             if (currentUser.admin === true || currentUser.evaluator) {
                 return <ReviewDelegationPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
-                return <Home newState={newState} />;
+                return <Home />;
             }
         }
     };
@@ -324,20 +334,20 @@ export function App() {
 
     return (
         <Router history={history}>
-            <div className="itm-app">
+            {isSetup && isVersionDataLoaded && isConfigDataLoaded && <div className="itm-app">
                 {currentUser?.approved &&
                     <Header currentUser={currentUser} logout={logout} />
                 }
-                {isSetup && <div className="main-content">
+                <div className="main-content">
                     <Switch>
                         <Route exact path="/" component={Home} />
                         <Route exact path="/awaitingApproval">
                             <WaitingPageWrapper currentUser={currentUser} rejected={currentUser?.rejected} />
                         </Route>
                         <Route path="/login">
-                            <Login testerLogin={false} logout={logout} />
+                            <Login testerLogin={false} />
                         </Route>
-                        <Route path="/participantText">
+                        <Route exact path="/participantText">
                             <Login participantTextLogin={true} testerLogin={false} />
                         </Route>
                         <Route path="/reset-password/:token" component={ResetPassPage} />
@@ -380,18 +390,18 @@ export function App() {
                         {currentUser ?
                             (currentUser?.approved ?
                                 <Route path="*" render={() => <Redirect to="/" />} />
-                                : <Route path="*" render={() => <Redirect push to="/awaitingApproval" />} />)
-                            : <Route path="*" render={() => <Redirect push to="/login" />} />
+                                : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
+                            : <Route path="*" render={() => <Redirect to="/login" />} />
                         }
 
                     </Switch>
-                </div>}
+                </div>
 
                 <div className="itm-footer">
                     <div className="footer-text">This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.</div>
                     <div className="footer-link"><a href="https://www.darpa.mil/program/in-the-moment" target="_blank" rel="noopener noreferrer">DARPA's In the Moment (ITM) Program Page</a></div>
                 </div>
-            </div>
+            </div>}
         </Router>
     );
 }

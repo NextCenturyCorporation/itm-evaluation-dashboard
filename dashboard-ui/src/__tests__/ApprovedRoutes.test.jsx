@@ -27,7 +27,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         '/participant-progress-table',
     ];
     let unallowedRoutes = [
-        // '/random-link' // broken functionality!
+        '/random-link'
     ];
     if (isAdmin) {
         // admins can access all pages
@@ -44,40 +44,18 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
     }
     else {
         // users with no elevation cannot access any routes
-        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup'].filter((x) => x != '/myaccount'); // '/participantTextTester'
+        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup', '/random-link'].filter((x) => x != '/myaccount'); // '/participantTextTester'
         allowedRoutes = ['/', '/myaccount'];
 
     }
     allowedRoutes.forEach(route => {
         it(`${route} should not redirect`, async () => {
-            const res = await testRouteRedirection(route, route);
-            if (!res) {
-                if (isAdmin)
-                    await loginAdmin(page);
-                else if (isEvaluator)
-                    await loginEvaluator(page);
-                else if (isExperimenter)
-                    await loginExperimenter(page);
-                else if (isAdeptUser)
-                    await loginAdeptUser(page);
-                await testRouteRedirection(route, route, true);
-            }
+            await testRouteRedirection(route, route);
         });
     });
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
-            const res = await testRouteRedirection(route, '/');
-            if (!res) {
-                if (isAdmin)
-                    await loginAdmin(page);
-                else if (isEvaluator)
-                    await loginEvaluator(page);
-                else if (isExperimenter)
-                    await loginExperimenter(page);
-                else if (isAdeptUser)
-                    await loginAdeptUser(page);
-                await testRouteRedirection(route, '/', true);
-            }
+            await testRouteRedirection(route, '/');
         });
     });
 }

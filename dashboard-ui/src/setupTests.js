@@ -259,7 +259,7 @@ beforeAll(async () => {
                                 user: { id: 'mock-user-id', username: 'mock-username', email: 'mock-email' },
                                 sessionId: 'mock-session-id',
                             }
-                        }),
+                        })
                     })),
                 }
             };
