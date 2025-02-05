@@ -1,5 +1,13 @@
 import React from 'react';
-import queryString from 'query-string';
+import { Router, Switch, Route, Redirect } from 'react-router-dom';
+import { accountsClient, accountsGraphQL } from '../../services/accountsService';
+import { createBrowserHistory } from 'history';
+import gql from "graphql-tag";
+import { useMutation, useQuery } from '@apollo/react-hooks';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion } from './setupUtils';
+import { isDefined } from '../AggregateResults/DataFunctions';
+
+// Components
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import ScenarioPage from '../ScenarioPage/scenarioPage';
@@ -8,46 +16,32 @@ import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedSc
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
 import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
-import { Router, Switch, Route, Link, Redirect } from 'react-router-dom';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
 import AdminPage from '../Account/adminPage';
 import AggregateResults from '../AggregateResults/aggregateResults';
-import { accountsClient, accountsGraphQL } from '../../services/accountsService';
-import NavDropdown from 'react-bootstrap/NavDropdown';
-import { createBrowserHistory } from 'history';
 import ADMChartPage from '../AdmCharts/admChartPage';
 import { ADMProbeResponses } from '../AdmCharts/admProbeResponses';
-import gql from "graphql-tag";
-import { Query, Mutation } from '@apollo/react-components';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setParticipantLogInStore } from './setupUtils';
-
-// CSS and Image Stuff 
-import '../../css/app.css';
-import 'rc-slider/assets/index.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.min.js';
-import 'jquery/dist/jquery.min.js';
-import 'material-design-icons/iconfont/material-icons.css';
-import 'react-dropdown/style.css';
-import 'react-dual-listbox/lib/react-dual-listbox.css';
-
-import brandImage from '../../img/itm-logo.png';
-import userImage from '../../img/account_icon.png';
 import { SurveyResults } from '../SurveyResults/surveyResults';
 import HumanResults from '../HumanResults/humanResults';
 import { RQ1 } from '../Research/RQ1';
 import { RQ2 } from '../Research/RQ2';
 import { RQ3 } from '../Research/RQ3';
 import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis';
-import store from '../../store/store';
-import { isDefined } from '../AggregateResults/DataFunctions';
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
+import { Header } from './Header';
 
+// CSS and Image Stuff 
+import '../../css/app.css';
+import 'rc-slider/assets/index.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'material-design-icons/iconfont/material-icons.css';
+import 'react-dropdown/style.css';
+import 'react-dual-listbox/lib/react-dual-listbox.css';
 
 
 const history = createBrowserHistory();
@@ -59,28 +53,25 @@ const GET_SURVEY_VERSION = gql`
 `;
 
 const GET_PARTICIPANT_LOG = gql`
-  query GetParticipantLog {
-    getParticipantLog
-  }`;
-
-
-const GET_CONFIGS = gql`
-  query GetConfigs($includeImageUrls: Boolean!) {
-    getAllSurveyConfigs
-    getAllImageUrls @include(if: $includeImageUrls)
-    getAllTextBasedConfigs
-    getAllTextBasedImages
-  }`;
-
-const UPDATE_PARTICIPANT_LOG = gql`
-    mutation updateParticipantLog($pid: String!, $updates: JSON!) {
-        updateParticipantLog(pid: $pid, updates: $updates) 
+    query GetParticipantLog {
+        getParticipantLog
     }`;
 
 const ADD_PARTICIPANT = gql`
     mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
         addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
     }`;
+
+const GET_CONFIGS = gql`
+  query GetConfigs {
+    getAllSurveyConfigs
+    getAllTextBasedConfigs
+    getAllTextBasedImages
+  }`;
+
+
+const LOW_PID = 202501700;
+const HIGH_PID = 202501899;
 
 const SURVEY_SETS = [
     { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
@@ -109,180 +100,33 @@ const SURVEY_SETS = [
     { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 }
 ]
 
-const LOW_PID = 202501700;
-const HIGH_PID = 202501899;
-
-function Home({ newState }) {
-    if (newState.currentUser == null) {
-        history.push('/login');
-    } else if (!newState.currentUser.approved) {
-        history.push('/awaitingApproval');
-    } else {
-        return <HomePage currentUser={newState.currentUser} />;
-    }
-}
-
-function Results() {
-    return <ResultsPage />;
-}
-
-function Scenarios() {
-    return <ScenarioPage />;
-}
-
-function Survey(currentUser) {
-    if (isUserElevated(currentUser?.currentUser)) {
-        return <SurveyPageWrapper currentUser={currentUser?.currentUser} />
-    }
-    else {
-        return <HomePage currentUser={currentUser} />;
-    }
-}
-
-function TextBased() {
-    return <TextBasedScenariosPageWrapper />;
-}
-
-function TextBasedResults() {
-    return <TextBasedResultsPage />;
-}
-
-function AdmResults() {
-    return <ADMChartPage />
-}
-
 export function isUserElevated(currentUser) {
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
 }
 
-function Login({ newState, userLoginHandler, participantLoginHandler, participantTextLogin, testerLogin, logout }) {
-    if (newState?.currentUser && !newState?.currentUser?.approved) {
-        logout();
-        return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
-    }
-    if (testerLogin && (newState.currentUser === null || (!newState.currentUser.admin && !newState.currentUser.experimenter))) {
-        history.push('/participantText');
-    }
-    else if (participantTextLogin) {
-        return <LoginApp userLoginHandler={userLoginHandler} isParticipant={participantTextLogin} participantLoginHandler={participantLoginHandler} />;
-    }
-    if (newState !== null) {
-        if (newState.currentUser !== null) {
-            history.push('/');
-        } else {
-            return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
+export function App() {
+    const [currentUser, setCurrentUser] = React.useState(null);
+    const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
+    const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
+    const { data: configData, loading: configLoading, error: configError } = useQuery(GET_CONFIGS, { fetchPolicy: 'cache-first' });
+    const [addParticipant] = useMutation(ADD_PARTICIPANT);
+    const [isSetup, setIsSetup] = React.useState(false);
+
+    React.useEffect(() => {
+        if (isDefined(versionData))
+            setSurveyVersion(versionData);
+        if (isDefined(configData)) {
+            setupConfigWithImages(configData);
+            setupTextBasedConfig(configData);
         }
-    } else {
-        return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
-    }
-}
+    }, [versionData, configData]);
 
-function MyAccount({ newState, userLoginHandler }) {
-    if (newState.currentUser === null) {
-        history.push("/login");
-    } else if (!newState.currentUser.approved) {
-        history.push('/awaitingApproval');
-    } else {
-        return <MyAccountPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
-    }
-}
-
-function Admin({ newState, userLoginHandler }) {
-    if (newState.currentUser === null) {
-        history.push("/login");
-    } else {
-        if (newState.currentUser.admin === true) {
-            return <AdminPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
-        } else {
-            history.push("/");
-        }
-    }
-}
-
-function PidLookupPage({ newState }) {
-    if (newState.currentUser === null) {
-        history.push("/login");
-    } else {
-        if (newState.currentUser.experimenter === true || newState.currentUser.admin === true) {
-            return <PidLookup />
-        } else {
-            history.push("/");
-        }
-    }
-}
-
-function ProgressTable({ newState }) {
-    if (newState.currentUser === null) {
-        history.push("/login");
-    } else {
-        if (newState.currentUser.experimenter || newState.currentUser.admin || newState.currentUser.evaluator || newState.currentUser.adeptUser) {
-            return <ParticipantProgressTable canViewProlific={newState.currentUser.adeptUser || newState.currentUser.admin} />
-        } else {
-            history.push("/");
-        }
-    }
-}
-
-function ReviewTextBased({ newState, userLoginHandler }) {
-    if (newState.currentUser === null) {
-        history.push("/login");
-    } else {
-        if (newState.currentUser.admin === true || newState.currentUser.evaluator) {
-            return <ReviewTextBasedPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
-        } else {
-            return <Home newState={newState} />;
-        }
-    }
-}
-
-function ReviewDelegation({ newState, userLoginHandler }) {
-    if (newState.currentUser === null) {
-        history.push("/login");
-    } else {
-        if (newState.currentUser.admin === true || newState.currentUser.evaluator) {
-            return <ReviewDelegationPage currentUser={newState.currentUser} updateUserHandler={userLoginHandler} />
-        } else {
-            return <Home newState={newState} />;
-        }
-    }
-}
-
-function WaitingPageWrapper({ rejected, currentUser }) {
-    if (!rejected && currentUser?.approved) {
-        history.push(('/'));
-    }
-    else {
-        return <WaitingPage rejected={rejected} />
-    }
-}
-
-export class App extends React.Component {
-
-    constructor(props) {
-        super(props);
-
-        this.state = queryString.parse(window.location.search);
-        this.state.currentUser = null;
-        this.state.allUsers = null;
-        this.state.participantLog = null;
-        this.state.updatePLog = false;
-        this.state.pLogUpdate = null;
-        this.state.pid = null;
-        this.state.newParticipantData = null;
-        this.state.loadPLog = false;
-
-        this.logout = this.logout.bind(this);
-        this.userLoginHandler = this.userLoginHandler.bind(this);
-        this.participantLoginHandler = this.participantLoginHandler.bind(this);
-        this.uploadButtonRef = React.createRef();
-        this.addPButtonRef = React.createRef();
-    }
-
-    async componentDidMount() {
-        //refresh the session to get a new accessToken if expired
+    const setup = async () => {
+        // refresh the session to get a new accessToken if expired
         const tokens = await accountsClient.refreshSession();
+        const noTokenNeeded = ['reset-password', '/participantText', '/remote-text-survey?'];
 
-        if (window.location.href.indexOf("reset-password") > -1 || window.location.href.indexOf("/participantText") > -1 || window.location.href.indexOf('/remote-text-survey?') > -1) {
+        if (noTokenNeeded.some(substring => window.location.href.toLowerCase().includes(substring.toLowerCase()))) {
             return;
         }
 
@@ -294,383 +138,260 @@ export class App extends React.Component {
         const user = await accountsGraphQL.getUser(
             tokens ? tokens.accessToken : ''
         );
-        this.setState({ currentUser: user, loadPLog: true });
-    }
+        setCurrentUser(user);
+        setIsSetup(true);
+    };
 
-    async logout() {
+    React.useEffect(() => {
+        // runs when the app renders; 
+        setup();
+    }, []);
+
+
+    const logout = async () => {
         await accountsClient.logout();
         history.push('/login');
-        this.setState({ currentUser: null });
-    }
+        setCurrentUser(null);
+    };
 
-    userLoginHandler(userObject) {
-        this.setState({ currentUser: userObject });
-    }
+    const userLoginHandler = (userObject) => {
+        setCurrentUser(userObject);
+    };
 
-    participantLoginHandler(hashedEmail, isTester) {
-        // get fresh participant log from database to minimize race conditions
-        setParticipantLogInStore(null);
-        const sleep = (ms) => {
-            return new Promise(resolve => setTimeout(resolve, ms));
+    const Home = () => {
+        if (currentUser == null) {
+            return <Redirect push to="/login" />;
+        } else if (!currentUser.approved) {
+            return <Redirect push to="/awaitingApproval" />;
+        } else {
+            return <HomePage currentUser={currentUser} />;
         }
-        this.setState({ loadPLog: true }, async () => {
-            while (!isDefined(store.getState().participants.participantLog)) {
-                await sleep(200);
-            }
-            this.setState({ loadPLog: false });
-            const pLog = store.getState().participants.participantLog;
-            const foundParticipant = pLog.find((x) => x.hashedEmail == hashedEmail);
-            if (foundParticipant) {
-                const pid = foundParticipant['ParticipantID'];
-                this.setState({ pid: pid }, () => {
-                    history.push("/text-based?pid=" + this.state.pid);
-                });
-            }
-            else {
-                // create a user account and get a pid for this user using pre-populated entries in the participant log
-                const nextAvailablePid = pLog.find((x) => !x.claimed && x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID)?.['ParticipantID'];
-                if (isDefined(nextAvailablePid)) {
-                    this.setState({ updatePLog: true, pLogUpdate: { updates: { hashedEmail: hashedEmail, claimed: true }, pid: nextAvailablePid } }, () => {
-                        if (this.uploadButtonRef.current) {
-                            this.uploadButtonRef.current.click();
-                        }
-                        this.setState({ pid: nextAvailablePid }, () => {
-                            history.push("/text-based?pid=" + this.state.pid);
-                        });
-                    });
-                }
-                else {
-                    // generate a new pid by incrementing highest found
-                    const validEntries = pLog.filter((x) =>
-                        !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
-                        x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
-                    );
-                    // bug fix first one gets :LOW_PID, Math.max was returning negative infinty
-                    const newPid = validEntries.length > 0 
-                        ? Math.max(...validEntries.map((x) => Number(x['ParticipantID']))) + 1
-                        : LOW_PID;
-                    const setNum = newPid % 24;
-                    const participantData = {
-                        ...SURVEY_SETS[setNum], "ParticipantID": newPid, "Type": isTester ? "Test" : "emailParticipant",
-                        "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": hashedEmail
-                    };
-                    this.setState({ updatePLog: true, newParticipantData: participantData }, () => {
-                        if (this.addPButtonRef.current) {
-                            this.addPButtonRef.current.click();
-                        }
-                    });
-                }
-            }
-        });
+    };
+
+    const WaitingPageWrapper = ({ rejected, currentUser }) => {
+        if (!rejected && currentUser?.approved) {
+            return <Redirect push to="/" />;
+        }
+        else {
+            return <WaitingPage rejected={rejected} />
+        }
+    };
+
+    const Login = ({ participantTextLogin, testerLogin, logout }) => {
+        if (currentUser && !currentUser?.approved) {
+            logout();
+            return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
+        }
+        if (testerLogin && (currentUser === null || (!currentUser.admin && !currentUser.experimenter))) {
+            return <Redirect push to="/participantText" />;
+        }
+        else if (participantTextLogin) {
+            return <LoginApp userLoginHandler={userLoginHandler} isParticipant={participantTextLogin}
+                participantLoginHandler={participantLoginHandler} />;
+        }
+        if (currentUser !== null) {
+            return <Redirect push to="/" />;
+        } else {
+            return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
+        }
     }
 
+    const participantLoginHandler = async (hashedEmail, isTester) => {
+        // sets up text-based email participants and their pids
+        // get current plog
+        const dbPLog = await fetchParticipantLog();
+        // see if pid exists in db already
+        const foundParticipant = dbPLog.data.find((x) => x.hashedEmail == hashedEmail);
+        if (foundParticipant) {
+            // Email in use (participant found in db), bring participant to their specific text-based scenario
+            const pid = foundParticipant['ParticipantID'];
+            history.push("/text-based?pid=" + pid);
+            return;
+        }
+        else {
+            // calculate new pid
+            let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
+                !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
+                x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
+            ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
+            // get correct plog data
+            const setNum = newPid % 24;
+            const participantData = {
+                ...SURVEY_SETS[setNum], "ParticipantID": newPid, "Type": isTester ? "Test" : "emailParticipant",
+                "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": hashedEmail
+            };
+            // update database
+            const addRes = await addParticipant({ variables: { participantData, LOW_PID, HIGH_PID } });
+            if (addRes?.data?.addNewParticipantToLog == -1) {
+                alert("This email address is taken. Please enter a different email.");
+                return;
+            }
+            // extra step to prevent duplicate pids
+            newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
+            history.push("/text-based?pid=" + newPid);
+            return;
+        }
+    };
 
-    render() {
-        const { currentUser } = this.state;
-        return (
-            <Router history={history}>
-                {this.state.loadPLog && <Query query={GET_PARTICIPANT_LOG} fetchPolicy={'no-cache'}>
-                    {({ loading: participantLoading, error: participantError, data: participantData }) => {
-                        if (participantLoading) return <div>Loading...</div>;
-                        if (participantError) return <div>Error fetching participant log</div>;
-                        setParticipantLogInStore(participantData.getParticipantLog);
-                    }}
-                </Query>}
-                <Query query={GET_SURVEY_VERSION}>
-                    {({ loading: versionLoading, error: versionError, data: versionData }) => {
-                        if (versionLoading) return <div>Loading...</div>;
-                        if (versionError) return <div>Error fetching survey version data</div>;
+    const MyAccount = () => {
+        if (currentUser === null) {
+            return <Redirect push to="/login" />;
+        } else if (!currentUser.approved) {
+            return <Redirect push to="/awaitingApproval" />;
+        } else {
+            return <MyAccountPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
+        }
+    };
 
-                        const surveyVersion = versionData.getCurrentSurveyVersion;
-                        const includeImageUrls = surveyVersion < 4;
+    const Admin = () => {
+        if (currentUser === null) {
+            return <Redirect push to="/login" />;
+        } else {
+            if (currentUser.admin === true) {
+                return <AdminPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
+            } else {
+                return <Redirect push to="/" />;
+            }
+        }
+    };
 
-                        return (
-                            <Query
-                                query={GET_CONFIGS}
-                                variables={{ includeImageUrls }}
-                                fetchPolicy={'cache-first'}
-                            >
-                                {({ loading, error, data }) => {
-                                    if (loading) return <div>Loading configs...</div>;
-                                    if (error) {
-                                        console.error("Error fetching configs: ", error.message);
-                                        return <div>Error fetching configs</div>;
-                                    }
-                                    // Setup configs
-                                    setupConfigWithImages(data);
-                                    setupTextBasedConfig(data);
-                                    setSurveyVersion(surveyVersion);
+    const ProgressTable = () => {
+        if (currentUser === null) {
+            return <Redirect push to="/login" />;
+        } else {
+            if (isUserElevated(currentUser)) {
+                return <ParticipantProgressTable canViewProlific={currentUser.adeptUser || currentUser.admin} />
+            } else {
+                return <Redirect push to="/" />;
+            }
+        }
+    };
 
-                                    return (
-                                        <div className="itm-app">
-                                            {this.state.updatePLog && (
-                                                <>
-                                                    <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
-                                                        {(updateParticipantLog) => (
-                                                            <div>
-                                                                <button ref={this.uploadButtonRef} hidden onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    updateParticipantLog({
-                                                                        variables: { pid: this.state.pLogUpdate.pid.toString(), updates: this.state.pLogUpdate.updates }
-                                                                    });
-                                                                    this.setState({ updatePLog: false });
-                                                                }}></button>
-                                                            </div>
-                                                        )}
-                                                    </Mutation>
-                                                    <Mutation mutation={ADD_PARTICIPANT} onCompleted={(data) => {
-                                                        if (data?.addNewParticipantToLog == -1) {
-                                                            alert("This email address is taken. Please enter a different email.");
-                                                        }
-                                                        else {
-                                                            const finalPid = data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
+    const PidLookupPage = () => {
+        if (currentUser === null) {
+            return <Redirect push to="/login" />;
+        } else {
+            if (currentUser.experimenter === true || currentUser.admin === true) {
+                return <PidLookup />
+            } else {
+                return <Redirect push to="/" />;
+            }
+        }
+    };
 
-                                                            this.setState({ pid: finalPid }, () => {
-                                                                history.push("/text-based?pid=" + finalPid);
-                                                            });
-                                                        }
-                                                    }}>
-                                                        {(addNewParticipantToLog) => (
-                                                            <div>
-                                                                <button ref={this.addPButtonRef} hidden onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    addNewParticipantToLog({
-                                                                        variables: { participantData: this.state.newParticipantData, lowPid: LOW_PID, highPid: HIGH_PID }
-                                                                    });
-                                                                    this.setState({ updatePLog: false });
-                                                                }}></button>
-                                                            </div>
-                                                        )}
-                                                    </Mutation>
-                                                </>
-                                            )}
-                                            {currentUser?.approved &&
-                                                <nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
-                                                    <a className="navbar-brand" href="/">
-                                                        <img className="nav-brand-itm" src={brandImage} alt="" />ITM
-                                                    </a>
-                                                    <ul className="navbar-nav custom-nav">
-                                                        <li className="nav-item">
-                                                            <Link className="nav-link" to="/">Home</Link>
-                                                        </li>
-                                                        {(isUserElevated(this.state.currentUser) &&
-                                                            <NavDropdown title="Data Collection">
-                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
-                                                                    Take Delegation Survey
-                                                                </NavDropdown.Item>
-                                                                <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based" disabled>
-                                                                    Complete Text Scenarios
-                                                                </NavDropdown.Item>
-                                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
-                                                                        Review Text Scenarios
-                                                                    </NavDropdown.Item>
-                                                                )}
-                                                                {(this.state.currentUser.admin === true || this.state.currentUser.evaluator) && (
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
-                                                                        Review Delegation Survey
-                                                                    </NavDropdown.Item>
-                                                                )}
-                                                            </NavDropdown>
-                                                        )}
-                                                        {isUserElevated(this.state.currentUser) && (
-                                                            <>
-                                                                <NavDropdown title="Human Evaluation Segments">
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
-                                                                        Delegation Survey Results
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based-results">
-                                                                        Text Scenario Results
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanSimParticipant">
-                                                                        Human Participant Data: Within-Subjects Analysis
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/humanProbeData">
-                                                                        Human Sim Probe Data
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/human-results">
-                                                                        Play by Play: Humans in Sim
-                                                                    </NavDropdown.Item>
-                                                                </NavDropdown>
-                                                                <NavDropdown title="ADM Evaluation Segments">
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/results">
-                                                                        ADM Data
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/adm-results">
-                                                                        ADM Alignment Results
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className='dropdown-item' to="/adm-probe-responses">
-                                                                        ADM Probe Responses
-                                                                    </NavDropdown.Item>
-                                                                </NavDropdown>
-                                                                <NavDropdown title="Data Analysis">
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
-                                                                        RQ1
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
-                                                                        RQ2
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
-                                                                        RQ3
-                                                                    </NavDropdown.Item>
-                                                                    <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
-                                                                        Exploratory Analysis
-                                                                    </NavDropdown.Item>
-                                                                </NavDropdown>
-                                                            </>
-                                                        )}
-                                                    </ul>
-                                                    <ul className="navbar-nav ml-auto">
-                                                        <li className="login-user">
-                                                            <div className="login-user-content">
-                                                                <img className="nav-login-icon" src={userImage} alt="" />
-                                                                <NavDropdown
-                                                                    title={currentUser.emails[0].address}
-                                                                    id="basic-nav-dropdown"
-                                                                    show={this.state.menuIsOpened}
-                                                                    onToggle={this.handleToggle}
-                                                                >
-                                                                    <Link className="dropdown-item" to="/myaccount" onClick={this.handleToggle}>
-                                                                        My Account
-                                                                    </Link>
-                                                                    {this.state.currentUser.admin === true && (
-                                                                        <Link className="dropdown-item" to="/admin" onClick={this.handleToggle}>
-                                                                            Administrator
-                                                                        </Link>
-                                                                    )}
-                                                                    {isUserElevated(this.state.currentUser) && (
-                                                                        <Link className="dropdown-item" to="/participant-progress-table" onClick={this.handleToggle}>
-                                                                            Progress Table
-                                                                        </Link>
-                                                                    )}
-                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true) && (
-                                                                        <Link className="dropdown-item" to="/pid-lookup" onClick={this.handleToggle}>
-                                                                            PID Lookup
-                                                                        </Link>
-                                                                    )}
-                                                                    {(this.state.currentUser.experimenter === true || this.state.currentUser.admin === true) && (
-                                                                        <Link className="dropdown-item" to="/participantTextTester" onClick={this.handleToggle}>
-                                                                            Test Text Scenario
-                                                                        </Link>
-                                                                    )}
-                                                                    <Link className="dropdown-item" to={{}} onClick={this.logout}>
-                                                                        Logout
-                                                                    </Link>
-                                                                </NavDropdown>
-                                                            </div>
-                                                        </li>
-                                                    </ul>
-                                                </nav>
-                                            }
-                                            <div className="main-content">
-                                                <Switch>
-                                                    <Route exact path="/">
-                                                        <Home newState={this.state} />
-                                                    </Route>
-                                                    <Route exact path="/awaitingApproval">
-                                                        <WaitingPageWrapper currentUser={currentUser} rejected={this.state.currentUser?.rejected} />
-                                                    </Route>
-                                                    <Route path="/login">
-                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} testerLogin={false} logout={this.logout} />
-                                                    </Route>
+    const Survey = () => {
+        if (isUserElevated(currentUser)) {
+            return <SurveyPageWrapper currentUser={currentUser} />;
+        }
+        else {
+            return <HomePage currentUser={currentUser} />;
+        }
+    };
 
-                                                    <Route path="/participantText">
-                                                        <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={false} />
-                                                    </Route>
-                                                    <Route path="/reset-password/:token" component={ResetPassPage} />
-                                                    <Route path="/remote-text-survey">
-                                                        <StartOnline />
-                                                    </Route>
-                                                    <Route path="/text-based">
-                                                        <TextBased />
-                                                    </Route>
-                                                    <Route path="/myaccount">
-                                                        <MyAccount newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                    </Route>
-                                                    {isUserElevated(this.state.currentUser) &&
-                                                        <>
-                                                        <Route exact path="/results">
-                                                            <Results />
-                                                        </Route>
-                                                        <Route exact path="/adm-results">
-                                                            <AdmResults />
-                                                        </Route>
-                                                        <Route exact path='/adm-probe-responses'>
-                                                            <ADMProbeResponses />
-                                                        </Route>
-                                                        <Route exact path="/humanSimParticipant">
-                                                            <AggregateResults type="HumanSimParticipant" />
-                                                        </Route>
-                                                        <Route exact path="/scenarios">
-                                                            <Scenarios />
-                                                        </Route>
-                                                        <Route path="/participantTextTester">
-                                                            <Login newState={this.state} userLoginHandler={this.userLoginHandler} participantLoginHandler={this.participantLoginHandler} participantTextLogin={true} testerLogin={true} />
-                                                        </Route>
-                                                        <Route path="/admin">
-                                                            <Admin newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                        </Route>
-                                                        <Route path="/participant-progress-table">
-                                                            <ProgressTable newState={this.state} />
-                                                        </Route>
-                                                        <Route path="/pid-lookup">
-                                                            <PidLookupPage newState={this.state} />
-                                                        </Route>
-                                                        <Route path="/survey">
-                                                            <Survey currentUser={this.state.currentUser} />
-                                                        </Route>
-                                                        <Route path="/survey-results">
-                                                            <SurveyResults />
-                                                        </Route>
-                                                        <Route path="/review-text-based">
-                                                            <ReviewTextBased newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                        </Route>
-                                                        <Route path="/review-delegation">
-                                                            <ReviewDelegation newState={this.state} userLoginHandler={this.userLoginHandler} />
-                                                        </Route>
-                                                        <Route path="/text-based-results">
-                                                            <TextBasedResults />
-                                                        </Route>
-                                                        <Route path="/humanProbeData">
-                                                            <AggregateResults type="HumanProbeData" />
-                                                        </Route>
-                                                        <Route path="/human-results">
-                                                            <HumanResults />
-                                                        </Route>
-                                                        <Route path="/research-results/rq1">
-                                                            <RQ1 />
-                                                        </Route>
-                                                        <Route path="/research-results/rq2">
-                                                            <RQ2 />
-                                                        </Route>
-                                                        <Route path="/research-results/rq3">
-                                                            <RQ3 />
-                                                        </Route>
-                                                        <Route path="/research-results/exploratory-analysis">
-                                                            <ExploratoryAnalysis />
-                                                        </Route>
-                                                        </>}
-                                                    {this.state.currentUser ?
-                                                        (this.state.currentUser?.approved ?
-                                                            <Route path="*" render={() => <Redirect to="/" />} />
-                                                            : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
-                                                        : <Route path="*" render={() => <Redirect to="/login" />} />
-                                                    }
-                                                </Switch>
-                                            </div>
 
-                                            <div className="itm-footer">
-                                                <div className="footer-text">This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.</div>
-                                                <div className="footer-link"><a href="https://www.darpa.mil/program/in-the-moment" target="_blank" rel="noopener noreferrer">DARPA's In the Moment (ITM) Program Page</a></div>
-                                            </div>
-                                        </div>
-                                    );
-                                }}
-                            </Query>
-                        );
-                    }}
-                </Query>
-            </Router>
-        );
+    const ReviewTextBased = () => {
+        if (currentUser === null) {
+            return <Redirect push to="/login" />;
+        } else {
+            if (currentUser.admin === true || currentUser.evaluator) {
+                return <ReviewTextBasedPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
+            } else {
+                return <Home newState={newState} />;
+            }
+        }
+    };
+
+    const ReviewDelegation = () => {
+        if (currentUser === null) {
+            return <Redirect push to="/login" />;
+        } else {
+            if (currentUser.admin === true || currentUser.evaluator) {
+                return <ReviewDelegationPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
+            } else {
+                return <Home newState={newState} />;
+            }
+        }
+    };
+    if (versionLoading || configLoading) {
+        return <div>Loading...</div>;
     }
+    if (versionError) {
+        return <div>Error fetching survey version data</div>;
+    }
+    if (configError) {
+        return <div>Error fetching survey configs</div>;
+    }
+
+    return (
+        <Router history={history}>
+            <div className="itm-app">
+                {currentUser?.approved &&
+                    <Header currentUser={currentUser} logout={logout} />
+                }
+                {isSetup && <div className="main-content">
+                    <Switch>
+                        <Route exact path="/" component={Home} />
+                        <Route exact path="/awaitingApproval">
+                            <WaitingPageWrapper currentUser={currentUser} rejected={currentUser?.rejected} />
+                        </Route>
+                        <Route path="/login">
+                            <Login testerLogin={false} logout={logout} />
+                        </Route>
+                        <Route path="/participantText">
+                            <Login participantTextLogin={true} testerLogin={false} />
+                        </Route>
+                        <Route path="/reset-password/:token" component={ResetPassPage} />
+                        <Route path="/remote-text-survey" component={StartOnline} />
+                        <Route path="/text-based" component={TextBasedScenariosPageWrapper} />
+                        <Route path="/myaccount" component={MyAccount} />
+                        {isUserElevated(currentUser) && <Route exact path="/results" component={ResultsPage} />}
+                        {isUserElevated(currentUser) && <Route exact path="/adm-results" component={ADMChartPage} />}
+                        {isUserElevated(currentUser) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
+                        {isUserElevated(currentUser) && <Route exact path="/humanSimParticipant" component={ADMChartPage} />}
+                        {isUserElevated(currentUser) && <Route exact path="/humanSimParticipant">
+                            <AggregateResults type="HumanSimParticipant" />
+                        </Route>}
+                        {isUserElevated(currentUser) && <Route path="/participantTextTester">
+                            <Login participantTextLogin={true} testerLogin={true} />
+                        </Route>}
+                        {isUserElevated(currentUser) && <Route path="/admin" component={Admin} />}
+                        {isUserElevated(currentUser) && <Route path="/participant-progress-table" component={ProgressTable} />}
+                        {isUserElevated(currentUser) && <Route path="/pid-lookup" component={PidLookupPage} />}
+                        {isUserElevated(currentUser) && <Route path="/survey" component={Survey} />}
+                        {isUserElevated(currentUser) && <Route path="/survey-results" component={SurveyResults} />}
+                        {isUserElevated(currentUser) && <Route path="/review-text-based" component={ReviewTextBased} />}
+                        {isUserElevated(currentUser) && <Route path="/review-delegation" component={ReviewDelegation} />}
+                        {isUserElevated(currentUser) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
+                        {isUserElevated(currentUser) && <Route path="/humanProbeData">
+                            <AggregateResults type="HumanProbeData" />
+                        </Route>}
+
+                        {isUserElevated(currentUser) && <Route exact path="/scenarios" component={ScenarioPage} />}
+                        {isUserElevated(currentUser) && <Route exact path="/human-results" component={HumanResults} />}
+                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq1" component={RQ1} />}
+                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
+                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
+                        {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
+                        {/*
+}
+                        {/* Redirection logic: If user is not logged in, send to /login. 
+                            If user is not approved, send to /awaitingApproval.
+                            Otherwise, send to homepage */}
+                        {currentUser ?
+                            (currentUser?.approved ?
+                                <Route path="*" render={() => <Redirect to="/" />} />
+                                : <Route path="*" render={() => <Redirect push to="/awaitingApproval" />} />)
+                            : <Route path="*" render={() => <Redirect push to="/login" />} />
+                        }
+
+                    </Switch>
+                </div>}
+
+                <div className="itm-footer">
+                    <div className="footer-text">This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.</div>
+                    <div className="footer-link"><a href="https://www.darpa.mil/program/in-the-moment" target="_blank" rel="noopener noreferrer">DARPA's In the Moment (ITM) Program Page</a></div>
+                </div>
+            </div>
+        </Router>
+    );
 }
