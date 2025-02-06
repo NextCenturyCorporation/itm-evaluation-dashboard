@@ -67,8 +67,8 @@ beforeAll(async () => {
                 }]
             }
         });
-        surveyConfig4.save();
-        surveyConfig5.save();
+        await surveyConfig4.save();
+        await surveyConfig5.save();
 
         const participantLog = new ParticipantLog({
             "Type": "Mil",
