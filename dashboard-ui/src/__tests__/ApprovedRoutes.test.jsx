@@ -18,7 +18,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         '/research-results/rq2',
         '/research-results/rq3',
         '/research-results/exploratory-analysis',
-        // '/survey', // will need new browser page after this test!!
+        '/survey', // will need new browser page after this test!!
         '/review-text-based',
         '/review-delegation',
         '/survey-results',
@@ -51,6 +51,9 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
     allowedRoutes.forEach(route => {
         it(`${route} should not redirect`, async () => {
             await testRouteRedirection(route, route);
+            if (route == '/survey') {
+                page = await browser.newPage();
+            }
         });
     });
     unallowedRoutes.forEach(route => {

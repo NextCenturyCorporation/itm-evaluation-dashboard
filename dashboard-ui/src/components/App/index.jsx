@@ -116,7 +116,7 @@ export function App() {
 
     React.useEffect(() => {
         if (isDefined(versionData)) {
-            setSurveyVersion(versionData);
+            setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
         }
         if (isDefined(configData)) {
