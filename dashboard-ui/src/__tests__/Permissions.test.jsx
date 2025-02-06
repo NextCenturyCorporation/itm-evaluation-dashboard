@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
+import { HOME_TEXT, WAITING_TEXT, createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
 
 function runRoutePermissionTests(allowApprovalPage = false) {
     let routes = [
@@ -85,7 +85,7 @@ describe('Login tests', () => {
         await page.waitForSelector('#password');
         await createAccount(page, 'TESTer', 'teSter@123.com', 'secretPassword123');
 
-        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        await page.waitForSelector('text/' + WAITING_TEXT);
         await page.waitForSelector('text/Status: Awaiting Approval', { timeout: 500 });
         let currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
@@ -103,7 +103,7 @@ describe('Login tests', () => {
         await page.waitForSelector('#password');
         await createAccount(page, 'rejected', 'rejected@123.com', 'secretRejectedPassword123');
 
-        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        await page.waitForSelector('text/' + WAITING_TEXT);
         await page.waitForSelector('text/Status: Account Rejected', { timeout: 500 });
         let currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
@@ -122,7 +122,7 @@ describe('Login tests', () => {
 
         await login(page, 'tester', 'secretPassword123');
 
-        await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+        await page.waitForSelector('text/' + WAITING_TEXT);
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
     });
@@ -133,7 +133,7 @@ describe('Login tests', () => {
         await page.waitForSelector('#password');
         await createAccount(page, 'admin', 'admin@123.com', 'secretAdminPassword123');
 
-        await page.waitForSelector('text/Program Questions');
+        await page.waitForSelector(HOME_TEXT);
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
     }, 10000);
@@ -167,11 +167,11 @@ describe('Route Redirection and Access Control Tests for unapproved users', () =
     beforeEach(async () => {
         const pageContent = await page.evaluate(() => document.body.innerText);
         // only logout/login if we have been logged out somehow
-        if (!pageContent.includes('Thank you for your interest in the DARPA In the Moment Program.')) {
+        if (!pageContent.includes(WAITING_TEXT)) {
             await logout(page);
             await login(page, 'tester', 'secretPassword123', true);
 
-            await page.waitForSelector('text/Thank you for your interest in the DARPA In the Moment Program.');
+            await page.waitForSelector('text/' + WAITING_TEXT);
         }
     });
 

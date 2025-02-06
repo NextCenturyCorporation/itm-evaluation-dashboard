@@ -94,7 +94,7 @@ beforeAll(async () => {
         await userScenarioResults.save();
 
         jest.mock('@accounts/graphql-api', () => {
-            const { testUsers } = require('./__mocks__/mockUsers.js');
+            const { testUsers, usernamesToIgnoreWarnings } = require('./__mocks__/mockUsers.js');
             let lastAuthenticatedUser = null;
             return {
                 AccountsModule: {
@@ -199,7 +199,10 @@ beforeAll(async () => {
                                 createUser: jest.fn(async (parent, { user }) => {
                                     const foundUser = testUsers.find((testUser) => testUser.username.toLowerCase() == user.username.toLowerCase());
                                     if (!foundUser) {
-                                        console.warn(`Error creating user with username ${user.username}. Please check the mockUsers.js file and ensure you have entered the information correctly.`);
+                                        if (usernamesToIgnoreWarnings.find((uname) => uname.toLowerCase() == user.username.toLowerCase()) == null) {
+                                        // do not warn if we are expecting this to fail. 
+                                            console.warn(`Error creating user with username ${user.username}. Please check the mockUsers.js file and ensure you have entered the information correctly.`);
+                                        }
                                         return null;
                                     }
                                     const { User } = require('./__mocks__/mockDbSchema.js');

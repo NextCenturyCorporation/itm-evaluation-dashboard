@@ -49,3 +49,5 @@ export const testUsers = [
         'password': 'secretPassword123'
     },
 ];
+
+export const usernamesToIgnoreWarnings = ['tester1'];
