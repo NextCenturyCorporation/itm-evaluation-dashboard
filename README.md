@@ -73,7 +73,7 @@ The dashboard uses [jest-puppeteer](https://www.npmjs.com/package/jest-puppeteer
 - `npm run setup-tests` - This will install all the necessary dependencies throughout the project in order to run the tests
 - `npm run test` - This will run the UI tests in watch-mode
 - `npm run clean` - This removes all of the package-lock files and node_modules directories throughout the entire project to ensure a clean start
-- `npm run clean-win` - The matching Windows command
+- To clean on Windows, you will need to manually remove all package-lock files and node_modules directories
 
 ## Quick Start
 In the root directory, run 
