@@ -80,6 +80,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const [delGrpFilters, setDelGrpFilters] = React.useState([]);
     const [delMilFilters, setDelMilFilters] = React.useState([]);
     const [includeDRE, setIncludeDRE] = React.useState(false);
+    const [includeJAN, setIncludeJAN] = React.useState(false);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
     // hiding columns
@@ -116,6 +117,17 @@ export function RQ134({ evalNum, tableTitle }) {
                 data.allScenarios.push(...dreData.allScenarios);
                 data.allTargets.push(...dreData.allTargets);
             }
+            if (includeJAN) {
+                // TODO: change sim to eval 6
+                const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+                console.log(janData);
+                data.allObjs.push(...janData.allObjs);
+                data.allTA1s.push(...janData.allTA1s);
+                data.allTA2s.push(...janData.allTA2s);
+                data.allAttributes.push(...janData.allAttributes);
+                data.allScenarios.push(...janData.allScenarios);
+                data.allTargets.push(...janData.allTargets);
+            }
             data.allObjs.sort((a, b) => {
                 // Compare PID
                 if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
@@ -132,10 +144,14 @@ export function RQ134({ evalNum, tableTitle }) {
             setScenarios(Array.from(new Set(data.allScenarios)));
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, dreAdms, dreSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim]);
 
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);
+    };
+
+    const updateJANStatus = (event) => {
+        setIncludeJAN(event.target.checked);
     };
 
     const hideColumn = (val) => {
@@ -190,8 +206,12 @@ export function RQ134({ evalNum, tableTitle }) {
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
-        <h2>{tableTitle}
-            {evalNum == 5 && <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />}
+        <h2 className='rq134-header'>{tableTitle}
+            {evalNum == 5 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                </div>}
         </h2>
 
         {filteredData.length < formattedData.length &&

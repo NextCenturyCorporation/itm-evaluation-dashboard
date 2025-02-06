@@ -11,10 +11,9 @@ import { Button, Modal } from 'react-bootstrap';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
-    { value: 5, label: 'Phase 1 Evaluation' }
+    { value: 5, label: 'Phase 1 Evaluation' },
+    { value: 6, label: 'Jan 2025 Evaluation' }
 ];
-
-
 
 export function RQ3() {
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
