@@ -31,20 +31,20 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
     ];
     if (isAdmin) {
         // admins can access all pages
-        allowedRoutes.push(...['/admin', '/pid-lookup']); // '/participantTextTester'
+        allowedRoutes.push(...['/admin', '/pid-lookup', '/participantTextTester']);
     }
     else if (isExperimenter) {
         // experimenters can access /pid-lookup and /participantTextTester, but not /admin
-        allowedRoutes.push(...['/pid-lookup']); // '/participantTextTester',
+        allowedRoutes.push(...['/pid-lookup', '/participantTextTester']); 
         unallowedRoutes.push('/admin');
     }
     else if (isEvaluator || isAdeptUser) {
         // evaluators and AdeptUsers cannot access /admin, /pid-lookup, or /participantTextTester
-        unallowedRoutes.push(...['/admin', '/pid-lookup']); // '/participantTextTester'
+        unallowedRoutes.push(...['/admin', '/pid-lookup', '/participantTextTester']); 
     }
     else {
         // users with no elevation cannot access any routes
-        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup', '/random-link'].filter((x) => x != '/myaccount'); // '/participantTextTester'
+        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup', '/random-link', '/participantTextTester'].filter((x) => x != '/myaccount'); 
         allowedRoutes = ['/', '/myaccount'];
 
     }

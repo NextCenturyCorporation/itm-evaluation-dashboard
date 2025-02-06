@@ -131,7 +131,7 @@ export function App() {
         const tokens = await accountsClient.refreshSession();
         const noTokenNeeded = ['reset-password', '/participantText', '/remote-text-survey?'];
 
-        if (noTokenNeeded.some(substring => window.location.href.toLowerCase().includes(substring.toLowerCase()))) {
+        if (noTokenNeeded.some(substring => window.location.href.toLowerCase().includes(substring.toLowerCase()) && !window.location.href.toLowerCase().includes('/participanttexttester'))) {
             setIsSetup(true);
             return;
         }
@@ -357,11 +357,10 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/results" component={ResultsPage} />}
                         {isUserElevated(currentUser) && <Route exact path="/adm-results" component={ADMChartPage} />}
                         {isUserElevated(currentUser) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
-                        {isUserElevated(currentUser) && <Route exact path="/humanSimParticipant" component={ADMChartPage} />}
                         {isUserElevated(currentUser) && <Route exact path="/humanSimParticipant">
                             <AggregateResults type="HumanSimParticipant" />
                         </Route>}
-                        {isUserElevated(currentUser) && <Route path="/participantTextTester">
+                        {(currentUser?.admin || currentUser?.experimenter) && <Route path="/participantTextTester">
                             <Login participantTextLogin={true} testerLogin={true} />
                         </Route>}
                         {isUserElevated(currentUser) && <Route path="/admin" component={Admin} />}

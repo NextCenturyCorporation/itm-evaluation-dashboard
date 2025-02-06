@@ -25,7 +25,7 @@ function runRoutePermissionTests(allowApprovalPage = false) {
         '/admin',
         '/pid-lookup',
         '/myaccount',
-        // '/participantTextTester', //broken functionality!
+        '/participantTextTester',
         '/participant-progress-table',
         '/',
         '/random-link',
