@@ -22,7 +22,7 @@ const submitSoartechProbes = async (sessionId, scenarioId) => {
   }
 };
 
-describe('TA1 Server Integration Tests', () => {
+describe('TA1 Server Tests', () => {
   // if these tests two fail, the others have no hope
   describe('Session Creation', () => {
     it('should create a new ADEPT session successfully', async () => {
