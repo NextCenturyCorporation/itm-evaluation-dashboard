@@ -1,6 +1,26 @@
 import axios from 'axios';
 import soartechProbes from './dummySoartechResponses.json';
+import alignmentIDs from '../components/TextBasedScenarios/alignmentID.json'
 // Note: soartech has a mix of 201 or 200 being success codes, hence different expect statements
+
+const submitSoartechProbes = async (sessionId, scenarioId) => {
+  const probes = soartechProbes[scenarioId];
+
+  for (const probe of probes) {
+    const payload = {
+      response: {
+        ...probe,
+        scenario_id: scenarioId
+      },
+      session_id: sessionId
+    };
+
+    await axios.post(
+      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/response`,
+      payload
+    );
+  }
+};
 
 describe('TA1 Server Integration Tests', () => {
   // if these tests two fail, the others have no hope
@@ -98,7 +118,6 @@ describe('KDMA Profile', () => {
     );
 
     expect(response.status).toBe(200);
-    console.log(response.data)
     expect(response.data).toBeTruthy();
   });
 });
@@ -142,24 +161,7 @@ describe('Ordered Alignment', () => {
     const sessionId = sessionResponse.data;
 
     const scenarioId = 'qol-ph1-eval-2';
-    const probes = soartechProbes[scenarioId];
-
-    // soartech needs all of the probes for a scenario to be responded to for me to call the endpoint
-    for (const probe of probes) {
-      const payload = {
-        response: {
-          ...probe,
-          scenario_id: scenarioId
-        },
-        session_id: sessionId
-      };
-
-      const response = await axios.post(
-        `${process.env.REACT_APP_SOARTECH_URL}/api/v1/response`,
-        payload
-      );
-    }
-
+    await submitSoartechProbes(sessionId, scenarioId);
 
     const response = await axios.get(
       `${process.env.REACT_APP_SOARTECH_URL}/api/v1/get_ordered_alignment`,
@@ -173,30 +175,39 @@ describe('Ordered Alignment', () => {
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.data)).toBeTruthy();
-  // needed longer timeout (took me about 17 seconds, may need to be messed with if failing for other people)
+    // needed longer timeout (took me about 17 seconds, may need to be messed with if failing for other people)
   }, 20000);
 });
 
 describe('Alignment Data', () => {
+  // endpoint for adept is out dated and not used, so no test for adept here
   it('should fetch SoarTech alignment endpoint successfully', async () => {
     const sessionResponse = await axios.post(
       `${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session?user_id=default_user`
     );
     const sessionId = sessionResponse.data;
 
-    const response = await axios.get(
-      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/alignment/session`,
-      {
-        params: {
-          session_id: sessionId,
-          target_id: 'QualityOfLife'
-        }
-      }
-    );
+    const scenarioId = 'qol-ph1-eval-2';
+    await submitSoartechProbes(sessionId, scenarioId);
 
-    expect(response.status).toBe(200);
-    expect(response.data).toBeTruthy();
-  });
+    // list of alignment targets for st qol
+    const qolTargets = alignmentIDs['stQOL'];
+
+    for (const target of qolTargets) {
+      const response = await axios.get(
+        `${process.env.REACT_APP_SOARTECH_URL}/api/v1/alignment/session`,
+        {
+          params: {
+            session_id: sessionId,
+            target_id: target
+          }
+        }
+      );
+      // check each target being called is successful
+      expect(response.status).toBe(200);
+      expect(response.data).toBeTruthy();
+    }
+  }, 20000);
 });
 
 
@@ -251,15 +262,18 @@ describe('Full Workflow Test', () => {
     const sessionId = sessionResponse.data;
     expect(sessionResponse.status).toBe(201);
 
+    const scenarioId = 'qol-ph1-eval-2';
+    await submitSoartechProbes(sessionId, scenarioId);
     const alignmentResponse = await axios.get(
       `${process.env.REACT_APP_SOARTECH_URL}/api/v1/get_ordered_alignment`,
       {
         params: {
           session_id: sessionId,
-          target_id: 'QualityOfLife'
+          kdma_id: 'QualityOfLife'
         }
       }
     );
     expect(alignmentResponse.status).toBe(200);
-  });
+
+  }, 20000);
 });
