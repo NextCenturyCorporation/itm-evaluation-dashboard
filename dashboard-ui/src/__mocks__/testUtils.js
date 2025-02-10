@@ -1,3 +1,7 @@
+export const FOOTER_TEXT = 'text/This research was developed';
+export const WAITING_TEXT = 'Thank you for your interest in the DARPA In the Moment Program.';
+export const HOME_TEXT = 'text/Program Questions';
+
 export async function countElementsWithText(page, text) {
     return await page.$$eval('*', (elements, regexString) => {
         const regex = new RegExp(regexString, 'i');  // case-insensitive regex
@@ -23,8 +27,6 @@ export async function createAccount(page, username, email, password) {
     await emailInput.type(email);
     await usernameInput.type(username);
     await passwordInput.type(password);
-    // needs explicit browser-interaction
-    await page.screenshot();
     await page.$$eval('.form-group button', buttons => {
         Array.from(buttons).find(btn => btn.textContent == 'Create Account').click();
     });
@@ -54,7 +56,7 @@ export async function login(page, username, password, createIfDNE = false) {
 export async function logout(page) {
     // make sure page navigates somewhere before logging out
     await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-    await page.waitForSelector('text/This research was developed');
+    await page.waitForSelector(FOOTER_TEXT);
     let currentUrl = page.url();
     if (currentUrl == `${process.env.REACT_APP_TEST_URL}/awaitingApproval`) {
         await page.$$eval('button', buttons => {
@@ -74,44 +76,36 @@ export async function logout(page) {
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
 }
 
-export async function testRouteRedirection(route, expectedRedirect = '/login', retry = false) {
+export async function testRouteRedirection(route, expectedRedirect = '/login') {
     let currentUrl = page.url();
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
-    await page.waitForSelector('text/This research was developed');
+    await page.waitForSelector(FOOTER_TEXT);
     currentUrl = page.url();
-    // sometimes we may need to retry the redirection if something has caused us to be logged out
-    if (!retry && currentUrl != `${process.env.REACT_APP_TEST_URL}${expectedRedirect}`) {
-        return false;
-    }
-    if (retry) {
-        console.log(`Retrying ${route} to ${expectedRedirect}`)
-    }
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
-    return true;
 }
 
 export async function loginAdmin(page) {
     await logout(page);
     await login(page, 'admin', 'secretAdminPassword123', true);
-    await page.waitForSelector('text/Program Questions');
+    await page.waitForSelector(HOME_TEXT);
 }
 
 export async function loginEvaluator(page) {
     await logout(page);
     await login(page, 'eval', 'secretEvalPassword123', true);
-    await page.waitForSelector('text/Program Questions');
+    await page.waitForSelector(HOME_TEXT);
 }
 
 export async function loginExperimenter(page) {
     await logout(page);
     await login(page, 'exp', 'secretExperimenterPassword123', true);
-    await page.waitForSelector('text/Program Questions');
+    await page.waitForSelector(HOME_TEXT);
 }
 
 export async function loginAdeptUser(page) {
     await logout(page);
     await login(page, 'adept', 'secretAdeptPassword123', true);
-    await page.waitForSelector('text/Program Questions');
+    await page.waitForSelector(HOME_TEXT);
 }
 
 export async function loginBasicApprovedUser(page) {
