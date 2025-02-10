@@ -120,6 +120,21 @@ describe('KDMA Profile', () => {
     expect(response.status).toBe(200);
     expect(response.data).toBeTruthy();
   });
+  it('should fetch soartech KDMA profile successfully', async () => {
+    const sessionResponse = await axios.post(`${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
+    const sessionId = sessionResponse.data;
+
+    const scenarioId = 'qol-ph1-eval-2';
+    await submitSoartechProbes(sessionId, scenarioId);
+
+    const response = await axios.get(
+      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/computed_kdma_profile`,
+      { params: { session_id: sessionId } }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.data).toBeTruthy();
+  }, 20000);
 });
 
 describe('Ordered Alignment', () => {
@@ -264,6 +279,14 @@ describe('Full Workflow Test', () => {
 
     const scenarioId = 'qol-ph1-eval-2';
     await submitSoartechProbes(sessionId, scenarioId);
+
+    // Get KDMA profile
+    const kdmaResponse = await axios.get(
+      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/computed_kdma_profile`,
+      { params: { session_id: sessionId } }
+    );
+    expect(kdmaResponse.status).toBe(200);
+
     const alignmentResponse = await axios.get(
       `${process.env.REACT_APP_SOARTECH_URL}/api/v1/get_ordered_alignment`,
       {
@@ -274,6 +297,5 @@ describe('Full Workflow Test', () => {
       }
     );
     expect(alignmentResponse.status).toBe(200);
-
   }, 20000);
 });
