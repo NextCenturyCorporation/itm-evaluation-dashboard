@@ -1,4 +1,6 @@
 import axios from 'axios';
+import soartechProbes from './dummySoartechResponses.json';
+// Note: soartech has a mix of 201 or 200 being success codes, hence different expect statements
 
 describe('TA1 Server Integration Tests', () => {
   // if these tests two fail, the others have no hope
@@ -45,32 +47,32 @@ describe('TA1 Server Integration Tests', () => {
       expect(response.status).toBe(200);
     });
     it('should submit responses to SoarTech server successfully', async () => {
-      const sessionResponse = await axios.post(`${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session`);
+      const sessionResponse = await axios.post(`${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
       const sessionId = sessionResponse.data;
-  
+
       // dummy probe response for st
       const responsePayload = {
-        response: {
-          choice: 'choice-0',
-          justification: 'justification',
-          probe_id: 'qol-ph1-eval-2-Probe-1',
-          scenario_id: 'qol-ph1-eval-2',
+        "response": {
+          "choice": 'choice-0',
+          "justification": 'justification',
+          "probe_id": 'qol-ph1-eval-2-Probe-1',
+          "scenario_id": 'qol-ph1-eval-2',
         },
-        session_id: sessionId
+        "session_id": sessionId
       };
-  
+
       const response = await axios.post(
         `${process.env.REACT_APP_SOARTECH_URL}/api/v1/response`,
         responsePayload
       );
-  
-      expect(response.status).toBe(200);
+
+      expect(response.status).toBe(201);
     });
   });
 });
 
 describe('KDMA Profile', () => {
-  it('should fetch KDMA profile successfully', async () => {
+  it('should fetch adept KDMA profile successfully', async () => {
     const sessionResponse = await axios.post(`${process.env.REACT_APP_ADEPT_URL}/api/v1/new_session`);
     const sessionId = sessionResponse.data;
 
@@ -136,23 +138,28 @@ describe('Ordered Alignment', () => {
     expect(Array.isArray(response.data)).toBeTruthy();
   });
   it('should fetch soartech ordered alignment data successfully', async () => {
-    const sessionResponse = await axios.post(`${process.env.REACT_APP_ADEPT_URL}/api/v1/new_session`);
+    const sessionResponse = await axios.post(`${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
     const sessionId = sessionResponse.data;
 
-    const responsePayload = {
-      response: {
-        choice: 'choice-0',
-        justification: 'justification',
-        probe_id: 'qol-ph1-eval-2-Probe-1',
-        scenario_id: 'qol-ph1-eval-2',
-      },
-      session_id: sessionId
-    };
+    const scenarioId = 'qol-ph1-eval-2';
+    const probes = soartechProbes[scenarioId];
 
-    await axios.post(
-      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/response`,
-      responsePayload
-    );
+    // soartech needs all of the probes for a scenario to be responded to for me to call the endpoint
+    for (const probe of probes) {
+      const payload = {
+        response: {
+          ...probe,
+          scenario_id: scenarioId
+        },
+        session_id: sessionId
+      };
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_SOARTECH_URL}/api/v1/response`,
+        payload
+      );
+    }
+
 
     const response = await axios.get(
       `${process.env.REACT_APP_SOARTECH_URL}/api/v1/get_ordered_alignment`,
@@ -166,11 +173,12 @@ describe('Ordered Alignment', () => {
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.data)).toBeTruthy();
-  });
+  // needed longer timeout (took me about 17 seconds, may need to be messed with if failing for other people)
+  }, 20000);
 });
 
 describe('Alignment Data', () => {
-  it('should fetch SoarTech alignment data successfully', async () => {
+  it('should fetch SoarTech alignment endpoint successfully', async () => {
     const sessionResponse = await axios.post(
       `${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session?user_id=default_user`
     );
