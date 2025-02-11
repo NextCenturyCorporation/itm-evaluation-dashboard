@@ -91,7 +91,6 @@ export function ExploratoryAnalysis() {
             </p>
         </div>
         <div className="section-container">
-            <h2>RQ5 Data</h2>
             <RQ5 evalNum={selectedEval} />
         </div>
 
@@ -105,7 +104,6 @@ export function ExploratoryAnalysis() {
             </p>
         </div>
         <div className="section-container">
-            <h2>RQ6 Data</h2>
             <RQ6 evalNum={selectedEval} />
         </div>
 
@@ -129,7 +127,6 @@ export function ExploratoryAnalysis() {
             </p>
         </div>
         <div className="section-container">
-            <h2>RQ8 Data</h2>
             <RQ8 evalNum={selectedEval} />
         </div>
     </div>);

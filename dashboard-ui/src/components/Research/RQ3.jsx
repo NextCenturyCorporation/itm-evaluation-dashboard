@@ -72,7 +72,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -80,7 +80,7 @@ export function RQ3() {
                 </li>}
                 <li>ADM_Aligned_Status
                     <ul>
-                        <li>Filter for only {selectedEval == 5 ? '"aligned"' : '"comparison"'} trials</li>
+                        <li>Filter for only {(selectedEval == 5 || selectedEval == 6) ? '"aligned"' : '"comparison"'} trials</li>
                     </ul>
                 </li>
                 <li>ADM Loading
@@ -112,7 +112,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -143,7 +143,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>

@@ -67,7 +67,7 @@ export function RQ1() {
             </p>
             <ul>
                 <li>Participant ID</li>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -98,14 +98,14 @@ export function RQ1() {
             </p>
             <ul>
                 <li>Participant ID</li>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
                     </ul>
                 </li>}
                 <li>ADM_Aligned_Status (Baseline/Misaligned/Aligned)</li>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     ADM_Loading
                     <ul>
                         <li>Use only "normal"</li>

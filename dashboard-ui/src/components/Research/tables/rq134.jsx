@@ -99,7 +99,9 @@ export function RQ134({ evalNum, tableTitle }) {
     }
 
     React.useEffect(() => {
+        // reset toggles on render
         setIncludeDRE(false);
+        setIncludeJAN(false);
     }, [evalNum]);
 
     React.useEffect(() => {
@@ -394,7 +396,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

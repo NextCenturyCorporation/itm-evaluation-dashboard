@@ -10,6 +10,7 @@ import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
+import { Checkbox, FormControlLabel } from "@material-ui/core";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -56,107 +57,127 @@ export function RQ5({ evalNum }) {
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [groupTargetFilters, setGroupTargetFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const [includeDRE, setIncludeDRE] = React.useState(false);
+    const [includeJAN, setIncludeJAN] = React.useState(false);
+
+    React.useEffect(() => {
+        // reset toggles on render
+        setIncludeDRE(false);
+        setIncludeJAN(false);
+    }, [evalNum]);
 
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
-            const participantLog = dataParticipantLog.getParticipantLog;
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
-            const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber == evalNum);
-            const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber == evalNum);
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
             const allScenarios = [];
             const allGroupTargets = [];
             const allAttributes = [];
-            const pids = [];
-            const recorded = {};
+            const participantLog = dataParticipantLog.getParticipantLog;
 
-            for (const res of textResults) {
-                const pid = res['participantID'];
-                if (pids.includes(pid)) {
-                    continue;
-                }
-                recorded[pid] = [];
+            const evals = [evalNum];
+            if (includeDRE && evalNum != 4) {
+                evals.push(4);
+            }
+            if (includeJAN && evalNum != 6) {
+                evals.push(6);
+            };
 
-                const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
+            for (let evalNum of evals) {
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
+                const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber == evalNum);
+                const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber == evalNum);
 
-                // see if participant is in the participantLog
-                const logData = participantLog.find(
-                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
-                );
-                if (!logData) {
-                    continue;
-                }
-                const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
-                const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
-                for (const entry of textResultsForPID) {
-                    // don't include duplicate entries
-                    if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                const pids = [];
+                const recorded = {};
+
+                for (const res of textResults) {
+                    const pid = res['participantID'];
+                    if (pids.includes(pid)) {
                         continue;
                     }
-                    else {
-                        recorded[pid].push(entry['serverSessionId']);
-                    }
-                    // ignore training scenarios
-                    if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                    recorded[pid] = [];
+
+                    const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
+
+                    // see if participant is in the participantLog
+                    const logData = participantLog.find(
+                        log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                    );
+                    if (!logData) {
                         continue;
                     }
-                    let attributes = ['MJ', 'IO'];
-                    if (entry['scenario_id'].includes('qol')) {
-                        attributes = ['QOL'];
-                    }
-                    else if (entry['scenario_id'].includes('vol')) {
-                        attributes = ['VOL'];
-                    }
-                    for (const att of attributes) {
-                        const ta2s = ['Kitware', 'Parallax'];
-                        for (const ta2 of ta2s) {
-                            const entryObj = {};
-                            entryObj['Participant_ID'] = pid;
-                            entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
-                            allTA1s.push(entryObj['TA1_Name']);
-                            entryObj['TA2_Name'] = ta2;
-                            allTA2s.push(ta2);
-                            entryObj['Attribute'] = att;
-                            allAttributes.push(att);
-                            entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
-                            allScenarios.push(entryObj['Scenario']);
-                            const group_targets = entry['group_targets'];
-                            if (isDefined(group_targets)) {
-                                for (const t of Object.keys(group_targets)) {
-                                    if ((t.includes('Moral') && att == 'MJ') || (t.includes('qol') && att == 'QOL') ||
-                                        (t.includes('vol') && att == 'VOL') || (t.includes('Ingroup') && att == 'IO')) {
-                                        entryObj['Group target'] = t;
-                                        allGroupTargets.push(t);
-                                        entryObj['Alignment score (Participant|group target)'] = group_targets[t];
-                                        break;
+                    const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
+                    const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
+                    for (const entry of textResultsForPID) {
+                        // don't include duplicate entries
+                        if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                            continue;
+                        }
+                        else {
+                            recorded[pid].push(entry['serverSessionId']);
+                        }
+                        // ignore training scenarios
+                        if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                            continue;
+                        }
+                        let attributes = ['MJ', 'IO'];
+                        if (entry['scenario_id'].includes('qol')) {
+                            attributes = ['QOL'];
+                        }
+                        else if (entry['scenario_id'].includes('vol')) {
+                            attributes = ['VOL'];
+                        }
+                        for (const att of attributes) {
+                            const ta2s = ['Kitware', 'Parallax'];
+                            for (const ta2 of ta2s) {
+                                const entryObj = {};
+                                entryObj['Participant_ID'] = pid;
+                                entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
+                                allTA1s.push(entryObj['TA1_Name']);
+                                entryObj['TA2_Name'] = ta2;
+                                allTA2s.push(ta2);
+                                entryObj['Attribute'] = att;
+                                allAttributes.push(att);
+                                entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                                allScenarios.push(entryObj['Scenario']);
+                                const group_targets = entry['group_targets'];
+                                if (isDefined(group_targets)) {
+                                    for (const t of Object.keys(group_targets)) {
+                                        if ((t.includes('Moral') && att == 'MJ') || (t.includes('qol') && att == 'QOL') ||
+                                            (t.includes('vol') && att == 'VOL') || (t.includes('Ingroup') && att == 'IO')) {
+                                            entryObj['Group target'] = t;
+                                            allGroupTargets.push(t);
+                                            entryObj['Alignment score (Participant|group target)'] = group_targets[t];
+                                            break;
+                                        }
                                     }
                                 }
-                            }
 
-                            // get most/least aligned targets
-                            const { most, least } = getMostLeastTarget(alignments, entryObj['Attribute']);
-                            entryObj['Most aligned target'] = most.target;
-                            entryObj['Least aligned target'] = least.target;
-                            entryObj['Alignment score (Participant|Most aligned target)'] = most.score;
-                            entryObj['Alignment score (Participant|Least aligned target)'] = least.score;
-                            const comparison_entry_most = comparisons?.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
-                            entryObj['Alignment score (Participant|ADM(most))'] = comparison_entry_most?.score ?? '-';
-                            const comparison_entry_least = comparisons?.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
-                            entryObj['Alignment score (Participant|ADM(least))'] = comparison_entry_least?.score ?? '-';
-                            const probe_matches_most = matches.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
-                            entryObj['Match_MostAligned'] = probe_matches_most?.score ?? '-';
-                            const probe_matches_least = matches.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
-                            entryObj['Match_LeastAligned'] = probe_matches_least?.score ?? '-';
-                            if (isDefined(entryObj['Group target'])) {
-                                const group_matches = matches.find((x) => x['adm_type'] == 'group target' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
-                                entryObj['Match_GrpMembers'] = group_matches?.score ?? '-';
+                                // get most/least aligned targets
+                                const { most, least } = getMostLeastTarget(alignments, entryObj['Attribute']);
+                                entryObj['Most aligned target'] = most.target;
+                                entryObj['Least aligned target'] = least.target;
+                                entryObj['Alignment score (Participant|Most aligned target)'] = most.score;
+                                entryObj['Alignment score (Participant|Least aligned target)'] = least.score;
+                                const comparison_entry_most = comparisons?.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                                entryObj['Alignment score (Participant|ADM(most))'] = comparison_entry_most?.score ?? '-';
+                                const comparison_entry_least = comparisons?.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                                entryObj['Alignment score (Participant|ADM(least))'] = comparison_entry_least?.score ?? '-';
+                                const probe_matches_most = matches.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                entryObj['Match_MostAligned'] = probe_matches_most?.score ?? '-';
+                                const probe_matches_least = matches.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                entryObj['Match_LeastAligned'] = probe_matches_least?.score ?? '-';
+                                if (isDefined(entryObj['Group target'])) {
+                                    const group_matches = matches.find((x) => x['adm_type'] == 'group target' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                    entryObj['Match_GrpMembers'] = group_matches?.score ?? '-';
+                                }
+                                allObjs.push(entryObj);
                             }
-                            allObjs.push(entryObj);
                         }
+                        pids.push(pid);
                     }
-                    pids.push(pid);
                 }
             }
             // sort
@@ -184,7 +205,7 @@ export function RQ5({ evalNum }) {
             setScenarios(Array.from(new Set(allScenarios)));
             setGroupTargets(Array.from(new Set(allGroupTargets)));
         }
-    }, [dataParticipantLog, dataTextResults, comparisonData, evalNum]);
+    }, [dataParticipantLog, dataTextResults, comparisonData, evalNum, includeDRE, includeJAN]);
 
     const admAuthorMatch = (ta2, entry2) => {
         return ((ta2 == 'Parallax' && entry2['adm_author'] == 'TAD') || (ta2 == 'Kitware' && entry2['adm_author'] == 'kitware'));
@@ -220,6 +241,14 @@ export function RQ5({ evalNum }) {
         setShowDefinitions(false);
     }
 
+    const updateDREStatus = (event) => {
+        setIncludeDRE(event.target.checked);
+    };
+
+    const updateJANStatus = (event) => {
+        setIncludeJAN(event.target.checked);
+    };
+
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
@@ -252,6 +281,13 @@ export function RQ5({ evalNum }) {
     if (errorParticipantLog || errorTextResults || errorComparisonData) return <p>Error :</p>;
 
     return (<>
+        <h2 className='rq134-header'>RQ5 Data
+            {evalNum == 5 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                </div>}
+        </h2>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
@@ -355,7 +391,7 @@ export function RQ5({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ5_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ5_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
