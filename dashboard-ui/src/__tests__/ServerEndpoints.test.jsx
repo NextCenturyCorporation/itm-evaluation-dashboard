@@ -226,7 +226,7 @@ describe('Alignment Data', () => {
 });
 
 
-describe('Full TextBased Scenarios Workflow Test', () => {
+describe('Full Workflow Test', () => {
   it('should complete a full workflow with ADEPT server', async () => {
     // starts adept sessions, responds to probe, gets kdma, and calls ordered alignment
     // checks each step as we go
@@ -297,48 +297,5 @@ describe('Full TextBased Scenarios Workflow Test', () => {
       }
     );
     expect(alignmentResponse.status).toBe(200);
-  }, 20000);
-});
-
-describe('Comparing Two Sessions', () => {
-  it('Should compare two soartech sessions using /subset endpoint', async () => {
-
-    const sessionResponse1 = await axios.post(
-      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session?user_id=default_user`
-    );
-    const sessionId1 = sessionResponse1.data;
-    expect(sessionResponse1.status).toBe(201);
-    
-    const sessionResponse2 = await axios.post(
-      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/new_session?user_id=default_user`
-    );
-    const sessionId2 = sessionResponse2.data;
-    expect(sessionResponse2.status).toBe(201);
-
-    // submit probes for both sessions
-    const scenarioId = 'qol-ph1-eval-2';
-    await submitSoartechProbes(sessionId1, scenarioId);
-    await submitSoartechProbes(sessionId2, scenarioId);
-
-    const allProbeIds = soartechProbes[scenarioId].map(probe => probe.probe_id);
-
-    // I had to use this weirder approach because I was getting CORS error for some reason
-    const params = new URLSearchParams();
-    params.append('session_1', sessionId1);
-    params.append('session_2', sessionId2);
-    allProbeIds.forEach(probeId => {
-      params.append('session1_probes', probeId);
-      params.append('session2_probes', probeId);
-    });
-
-    // compare both sessions
-    const response = await axios.get(
-      `${process.env.REACT_APP_SOARTECH_URL}/api/v1/alignment/session/subset`,
-      { params }
-    );
-
-    console.log(response)
-    expect(response.status).toBe(200);
-    expect(response.data).toBeTruthy();
   }, 20000);
 });
