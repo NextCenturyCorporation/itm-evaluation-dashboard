@@ -50,7 +50,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": evalNum }
+        variables: { "evalNumber": (evalNum == 6 ? 5 : evalNum) }
     });
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
@@ -58,6 +58,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
     const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
+    const { data: janSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 6 } });
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -107,7 +108,7 @@ export function RQ134({ evalNum, tableTitle }) {
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
-            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval) {
+            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             if (includeDRE) {
                 // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
@@ -120,9 +121,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 data.allTargets.push(...dreData.allTargets);
             }
             if (includeJAN) {
-                // TODO: change sim to eval 6
-                const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
-                console.log(janData);
+                const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, janSim);
                 data.allObjs.push(...janData.allObjs);
                 data.allTA1s.push(...janData.allTA1s);
                 data.allTA2s.push(...janData.allTA2s);
@@ -146,7 +145,7 @@ export function RQ134({ evalNum, tableTitle }) {
             setScenarios(Array.from(new Set(data.allScenarios)));
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim, janSim]);
 
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);

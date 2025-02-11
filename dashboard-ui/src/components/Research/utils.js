@@ -281,6 +281,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 if (entryObj['Target'] != '-') {
                     allTargets.push(entryObj['Target']);
                 }
+
                 const foundADM = admData.find((adm) => adm.history[0].parameters.adm_name == page['admName'] && (adm.history[0].response?.id ?? adm.history[1].response?.id) == page['scenarioIndex'].replace('IO', 'MJ') &&
                     adm.history[adm.history.length - 1].parameters.target_id == page['admTarget']);
                 const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
