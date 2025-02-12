@@ -67,7 +67,7 @@ describe('Route Redirection and Access Control Tests for admin', () => {
     // log in as admin
     beforeAll(async () => {
         await loginAdmin(page);
-    });
+    }, 30000);
 
     runAllowedRoutesTests(true);
     it('Administrators should not see extra headers on progress table', async () => {

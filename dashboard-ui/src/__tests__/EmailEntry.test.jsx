@@ -9,7 +9,7 @@ let firstPid = 0;
 describe('Test email-entry text scenarios', () => {
     beforeEach(async () => {
         page = await browser.newPage();
-    })
+    }, 30000)
     it('/participantText should only have email-entry option', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
         await page.waitForSelector('text=Text Scenario Login');

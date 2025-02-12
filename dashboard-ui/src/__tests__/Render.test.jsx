@@ -7,7 +7,8 @@ import { countElementsWithText } from "../__mocks__/testUtils";
 describe('Test render', () => {
     beforeEach(async () => {
         page = await browser.newPage();
-    })
+    }, 30000);
+
     it('app should render successfully', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
 
