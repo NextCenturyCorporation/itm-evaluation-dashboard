@@ -1,5 +1,8 @@
+/**
+ * @jest-environment puppeteer
+ */
 import axios from 'axios';
-import soartechProbes from './dummySoartechResponses.json';
+import soartechProbes from '../__mocks__/dummySoartechResponses.json';
 import alignmentIDs from '../components/TextBasedScenarios/alignmentID.json'
 
 const ADEPT_URL = process.env.REACT_APP_ADEPT_URL;
@@ -35,7 +38,7 @@ describe('TA1 Server Tests', () => {
       // check response status and that the session id is returned
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
-    });
+    }, 10000);
 
     it('should create a new SoarTech session successfully', async () => {
       const response = await axios.post(
@@ -44,7 +47,7 @@ describe('TA1 Server Tests', () => {
 
       expect(response.status).toBe(201);
       expect(response.data).toBeTruthy();
-    });
+    }, 10000);
   });
 
   describe('Response Submission', () => {
