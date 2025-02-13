@@ -343,7 +343,6 @@ describe('TA1 Server Tests', () => {
         { params }
       );
 
-      console.log(response)
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
     }, 20000);
@@ -388,7 +387,6 @@ describe('TA1 Server Tests', () => {
           }
         }
       );
-      console.log(response)
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
     })
