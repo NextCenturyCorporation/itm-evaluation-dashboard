@@ -7,6 +7,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import '../../css/humanResults.css';
 import Select from 'react-select';
+import { POST_MRE_EVALS } from "../AggregateResults/DataFunctions";
 
 const get_eval_name_numbers = gql`
     query getEvalIdsForHumanResults{
@@ -153,10 +154,10 @@ export default function HumanResults() {
                                 break;
                             }
                         }
-                        if (soartech_start !== -1 && soartech_end === -1 || ([4, 5].includes(version) && (scene.includes('qol') || scene.includes('vol')))) {
+                        if (soartech_start !== -1 && soartech_end === -1 || (POST_MRE_EVALS.includes(version) && (scene.includes('qol') || scene.includes('vol')))) {
                             entry['soartech'].push(action);
                         }
-                        if (adept_start !== -1 && adept_end === -1 || ([4, 5].includes(version) && scene.includes('DryRunEval'))) {
+                        if (adept_start !== -1 && adept_end === -1 || (POST_MRE_EVALS.includes(version) && scene.includes('DryRunEval'))) {
                             entry['adept'].push(action);
                         }
                         if (freeform_start !== -1) {
@@ -194,7 +195,7 @@ export default function HumanResults() {
     const getScenarioName = () => {
         if (selectedEval == 4) {
             return selectedScene
-        } else if (selectedEval == 5) {
+        } else if (selectedEval == 5 || selectedEval == 6) {
             return PH1_MAP[selectedScene]
         } else {
             return MRE_ENV_MAP[selectedScene] || selectedScene
@@ -222,7 +223,7 @@ export default function HumanResults() {
                         value={evalOptions.find(option => option.value === selectedEval)}
                     />
                 </div>}
-            {selectedEval && ![4, 5].includes(selectedEval) && dataByScene &&
+            {selectedEval && !POST_MRE_EVALS.includes(selectedEval) && dataByScene &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Environment</span>
@@ -242,7 +243,7 @@ export default function HumanResults() {
                         }
                     </List>
                 </div>}
-            {[4, 5].includes(selectedEval) &&
+            {POST_MRE_EVALS.includes(selectedEval) &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Scenario</span>
@@ -348,7 +349,7 @@ export default function HumanResults() {
                     </table>
                 </div>
             </div>
-            : <h2 className="not-found">Please select {[4, 5].includes(selectedEval) ? "a scenario" : "an environment"} and participant to view results</h2>
+            : <h2 className="not-found">Please select {POST_MRE_EVALS.includes(selectedEval) ? "a scenario" : "an environment"} and participant to view results</h2>
         }
     </div >);
 }

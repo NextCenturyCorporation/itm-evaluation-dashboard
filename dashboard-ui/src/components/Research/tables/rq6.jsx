@@ -8,6 +8,8 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
+import { Checkbox, FormControlLabel } from "@material-ui/core";
+
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -32,7 +34,7 @@ export function RQ6({ evalNum }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
         fetchPolicy: 'no-cache'
-    });    
+    });
     const [formattedData, setFormattedData] = React.useState([]);
     const [ta1s, setTA1s] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
@@ -42,74 +44,94 @@ export function RQ6({ evalNum }) {
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const [includeDRE, setIncludeDRE] = React.useState(false);
+    const [includeJAN, setIncludeJAN] = React.useState(false);
+
+    React.useEffect(() => {
+        // reset toggles on render
+        setIncludeDRE(false);
+        setIncludeJAN(false);
+    }, [evalNum]);
 
     React.useEffect(() => {
         if (dataTextResults?.getAllScenarioResults && dataParticipantLog?.getParticipantLog && dataSim?.getAllSimAlignmentByEval) {
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
             const participantLog = dataParticipantLog.getParticipantLog;
             const simData = dataSim.getAllSimAlignmentByEval;
             const allObjs = [];
             const allTA1s = [];
             const allScenarios = [];
             const allAttributes = [];
-            const pids = [];
-            const recorded = {};
 
-            for (const res of textResults) {
-                const pid = res['participantID'];
-                if (pids.includes(pid)) {
-                    continue;
-                }
-                recorded[pid] = [];
+            const evals = [evalNum];
+            if (includeDRE && evalNum != 4) {
+                evals.push(4);
+            }
+            if (includeJAN && evalNum != 6) {
+                evals.push(6);
+            };
 
-                const { textResultsForPID, _ } = getAlignments(evalNum, textResults, pid);
+            for (let evalNum of evals) {
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
 
-                // see if participant is in the participantLog
-                const logData = participantLog.find(
-                    log => log['ParticipantID'] == pid && log['Type'] != 'Test' && log['Type'] != 'Online'
-                );
-                if (!logData) {
-                    continue;
-                }
-                const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
-                const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
+                const pids = [];
+                const recorded = {};
 
-                for (const entry of textResultsForPID) {
-                    // don't include duplicate entries
-                    if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                for (const res of textResults) {
+                    const pid = res['participantID'];
+                    if (pids.includes(pid)) {
                         continue;
                     }
-                    else {
-                        recorded[pid].push(entry['serverSessionId']);
-                    }
-                    // ignore training scenarios
-                    if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                    recorded[pid] = [];
+
+                    const { textResultsForPID, _ } = getAlignments(evalNum, textResults, pid);
+
+                    // see if participant is in the participantLog
+                    const logData = participantLog.find(
+                        log => log['ParticipantID'] == pid && log['Type'] != 'Test' && log['Type'] != 'Online'
+                    );
+                    if (!logData) {
                         continue;
                     }
-                    let attributes = ['MJ', 'IO'];
-                    if (entry['scenario_id'].includes('qol')) {
-                        attributes = ['QOL'];
-                    }
-                    else if (entry['scenario_id'].includes('vol')) {
-                        attributes = ['VOL'];
-                    }
-                    for (const att of attributes) {
-                        const entryObj = {};
-                        entryObj['Participant_ID'] = pid;
-                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
-                        allTA1s.push(entryObj['TA1_Name']);
-                        entryObj['Attribute'] = att;
-                        allAttributes.push(att);
-                        entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
-                        allScenarios.push(entryObj['Scenario']);
-                        const vrVsText = simData.find((x) => x.pid == pid &&
-                            (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
-                            x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')))?.data?.alignment?.vr_vs_text;
-                        entryObj['Alignment score (Participant_Text|Participant_Sim)'] = ['QOL', 'VOL'].includes(att) ? vrVsText : vrVsText?.[att];
-                        allObjs.push(entryObj);
-                    }
-                    pids.push(pid);
+                    const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
+                    const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
 
+                    for (const entry of textResultsForPID) {
+                        // don't include duplicate entries
+                        if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                            continue;
+                        }
+                        else {
+                            recorded[pid].push(entry['serverSessionId']);
+                        }
+                        // ignore training scenarios
+                        if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                            continue;
+                        }
+                        let attributes = ['MJ', 'IO'];
+                        if (entry['scenario_id'].includes('qol')) {
+                            attributes = ['QOL'];
+                        }
+                        else if (entry['scenario_id'].includes('vol')) {
+                            attributes = ['VOL'];
+                        }
+                        for (const att of attributes) {
+                            const entryObj = {};
+                            entryObj['Participant_ID'] = pid;
+                            entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
+                            allTA1s.push(entryObj['TA1_Name']);
+                            entryObj['Attribute'] = att;
+                            allAttributes.push(att);
+                            entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                            allScenarios.push(entryObj['Scenario']);
+                            const vrVsText = simData.find((x) => x.pid == pid &&
+                                (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
+                                x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')))?.data?.alignment?.vr_vs_text;
+                            entryObj['Alignment score (Participant_Text|Participant_Sim)'] = ['QOL', 'VOL'].includes(att) ? vrVsText : vrVsText?.[att];
+                            allObjs.push(entryObj);
+                        }
+                        pids.push(pid);
+
+                    }
                 }
             }
             // sort
@@ -131,16 +153,24 @@ export function RQ6({ evalNum }) {
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataParticipantLog, dataTextResults, dataSim, evalNum]);
+    }, [dataParticipantLog, dataTextResults, dataSim, evalNum, includeDRE, includeJAN]);
 
 
     const openModal = () => {
         setShowDefinitions(true);
-    }
+    };
 
     const closeModal = () => {
         setShowDefinitions(false);
-    }
+    };
+
+    const updateDREStatus = (event) => {
+        setIncludeDRE(event.target.checked);
+    };
+
+    const updateJANStatus = (event) => {
+        setIncludeJAN(event.target.checked);
+    };
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
@@ -156,6 +186,13 @@ export function RQ6({ evalNum }) {
     if (errorParticipantLog || errorTextResults || errorSim) return <p>Error :</p>;
 
     return (<>
+        <h2 className='rq134-header'>RQ6 Data
+            {evalNum == 5 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                </div>}
+        </h2>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
