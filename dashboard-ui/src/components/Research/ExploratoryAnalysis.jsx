@@ -5,6 +5,7 @@ import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
+import { RQ5_Jen } from './tables/rq5_jen';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
@@ -91,6 +92,7 @@ export function ExploratoryAnalysis() {
             </p>
         </div>
         <div className="section-container">
+            <RQ5_Jen evalNum={selectedEval} />
             <RQ5 evalNum={selectedEval} />
         </div>
 
