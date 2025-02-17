@@ -96,7 +96,7 @@ export function RQ2() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ3 Analysis 2.2 and 2.3 - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq2CodeDre : rq21CodePh1} downloadName={'RQ2_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq2CodeDre : rq2CodePh1} downloadName={'RQ2_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close2Code}>
                             Close
