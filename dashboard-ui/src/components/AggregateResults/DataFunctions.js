@@ -144,6 +144,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
+export const POST_MRE_EVALS = [4, 5, 6];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -465,7 +466,7 @@ function getOverallDelRate(res) {
     // gets the overall delegation rate (1=delegated, 0=no delegation) for a participant
     let val = 0;
     let tally = 0;
-    if (![4, 5].includes(res.results.evalNumber)) {
+    if (!POST_MRE_EVALS.includes(res.results.evalNumber)) {
         const st = getStDelRate(res);
         const ad = getAdDelRate(res);
         val = st['val'] + ad['val'];
@@ -494,7 +495,7 @@ function getOverallTrust(res) {
     // gets the overall trust level of a participant
     let val = 0;
     let tally = 0;
-    if (![4, 5].includes(res.results.evalNumber)) {
+    if (!POST_MRE_EVALS.includes(res.results.evalNumber)) {
         const adMedics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
         const stMedics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
 
@@ -603,7 +604,7 @@ function populateHumanDataRow(rowObject, version) {
             }
         }
     }
-    else if ([4, 5].includes(version)) {
+    else if (POST_MRE_EVALS.includes(version)) {
         returnObj = {
             "Participant": rowObject[0].pid
         };
@@ -686,7 +687,7 @@ function populateHumanDataRow(rowObject, version) {
 function getGroupKey(row, selectedEval) {
     if (selectedEval === 3) {
         return row.SimEnv;
-    } else if ([4, 5].includes(selectedEval)) {
+    } else if (POST_MRE_EVALS.includes(selectedEval)) {
         const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
         const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
         return `${adeptName}_${stName}`;
@@ -702,7 +703,7 @@ function formatCellData(data) {
 
 function sortedObjectKeys(objectKeys, selectedEval) {
     // sorting tables for humanProbeData, compare adept, if same, then compare st
-    if ([4, 5].includes(selectedEval)) {
+    if (POST_MRE_EVALS.includes(selectedEval)) {
         return objectKeys.sort((a, b) => {
             const [aAdept, aSoarTech] = a.split('_');
             const [bAdept, bSoarTech] = b.split('_');
@@ -747,7 +748,7 @@ function populateDataSet(data) {
             }
         });
         // for version 4, we will only separate by ADEPT, since they have different probes and we want to combine ST and Adept into one row per participant
-        if ([4, 5].includes(version)) {
+        if (POST_MRE_EVALS.includes(version)) {
             tempGroupHumanSimData = Object.values(tempGroupHumanSimData).flat();
             const adept_mapping = { 1: ["DryRunEval-MJ2-eval"], 2: ["DryRunEval-MJ4-eval"], 3: ["DryRunEval-MJ5-eval"] }
             tempGroupHumanSimData = Object.groupBy(tempGroupHumanSimData, ({ ADEPT_Scenario }) => adept_mapping[ADEPT_Scenario]);
@@ -760,7 +761,7 @@ function populateDataSet(data) {
     const allResults = [];
     for (const res of data.getAllSurveyResultsByEval) {
         // if survey instructions does not exist, we don't want the entry
-        if ([2, 4, 5].includes(res.results?.surveyVersion) && Object.keys(res.results).includes('Survey Introduction')) {
+        if ([2, 4, 5, 6].includes(res.results?.surveyVersion) && Object.keys(res.results).includes('Survey Introduction')) {
             // use this result!
             const tmpSet = {};
 
@@ -773,7 +774,7 @@ function populateDataSet(data) {
                 // ignore some pids
                 continue;
             }
-            if ([4, 5].includes(res.results.evalNumber)) {
+            if (POST_MRE_EVALS.includes(res.results.evalNumber)) {
                 const valid_id = data?.getParticipantLog?.filter((x) => x?.ParticipantID?.toString() == pid && x['Type'] != 'Test');
                 if (valid_id.length == 0) {
                     // only include valid ids for survey version 4 & 5
@@ -836,7 +837,7 @@ function populateDataSet(data) {
             const textOrder = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
 
 
-            if ([4, 5].includes(res.results.evalNumber)) {
+            if (POST_MRE_EVALS.includes(res.results.evalNumber)) {
                 tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('adept'))] ?? '-';
                 tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('qol'))] ?? '-';
                 tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('vol'))] ?? '-';
@@ -878,7 +879,7 @@ function populateDataSet(data) {
             }
 
 
-            if (![4, 5].includes(res.results.evalNumber)) {
+            if (!POST_MRE_EVALS.includes(res.results.evalNumber)) {
                 // get order of text based
                 tmpSet['TextOrder'] = textOrder;
 
@@ -1372,7 +1373,7 @@ function getDelegationPreferences(data, evalNumber = 4) {
         'QOL': { 'baseline': [], 'misaligned': [] },
         'VOL': { 'baseline': [], 'misaligned': [] }
     }
-    for (const entry of data.filter((x) => (evalNumber == 4 && x['ADM_Type'] === 'comparison') || (evalNumber == 5 && x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned' && x['ADM Loading'] == 'normal'))) {
+    for (const entry of data.filter((x) => (evalNumber == 4 && x['ADM_Type'] === 'comparison') || ((evalNumber == 5 || evalNumber == 6) && x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned' && x['ADM Loading'] == 'normal'))) {
         const pid = entry['Delegator_ID'];
 
         const baseline = entry['Delegation preference (A/B)'];

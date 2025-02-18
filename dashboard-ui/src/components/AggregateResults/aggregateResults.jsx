@@ -407,7 +407,7 @@ export default function AggregateResults({ type }) {
     };
 
     const exportHumanSimToExcel = async () => {
-        if (selectedEval !== 4 && selectedEval !== 5) {
+        if (selectedEval !== 4 && selectedEval !== 5 && selectedEval !== 6) {
             let humanSimData = [];
             for (var objkey in aggregateData["groupedSim"]) {
                 humanSimData = humanSimData.concat(aggregateData["groupedSim"][objkey]);
@@ -430,7 +430,7 @@ export default function AggregateResults({ type }) {
                 ].filter(Boolean).join('_');
 
                 const rawData = aggregateData['groupedSim'][objKey];
-                const allHeaders = getHeadersEval4(HEADER_SIM_DATA[selectedEval], objKey.split('_')[0]);
+                const allHeaders = getHeadersEval4(HEADER_SIM_DATA[selectedEval == 6 ? 5 : selectedEval], objKey.split('_')[0]);
                 // columns that have data in at least one row
                 const filteredHeaders = allHeaders.filter(header => hasDataInColumn(rawData, header));
 
@@ -570,7 +570,7 @@ export default function AggregateResults({ type }) {
                         <table className='itm-table'>
                             <thead>
                                 <tr>
-                                    {HEADER[selectedEval]?.map((val, index) => {
+                                    {HEADER[selectedEval == 6 ? 5 : selectedEval]?.map((val, index) => {
                                         return (<th key={'header-' + index}>
                                             {val}
                                         </th>);
@@ -580,7 +580,7 @@ export default function AggregateResults({ type }) {
                             <tbody>
                                 {fullData.map((dataSet, index) => {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
-                                        {HEADER[selectedEval]?.map((val) => {
+                                        {HEADER[selectedEval == 6 ? 5 : selectedEval]?.map((val) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
                                                 {formatData(dataSet, val)}
                                             </td>);
@@ -622,7 +622,7 @@ export default function AggregateResults({ type }) {
                     </div>
 
                     {aggregateData["groupedSim"] !== undefined && sortedObjectKeys(Object.keys(aggregateData["groupedSim"]), selectedEval).map((objectKey, key) => {
-                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval], objectKey.split('_')[0]);
+                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval == 6 ? 5 : selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval == 6 ? 5 : selectedEval], objectKey.split('_')[0]);
                         const filteredHeaders = headers?.filter(header => hasDataInColumn(aggregateData["groupedSim"][objectKey], header));
 
                         return (

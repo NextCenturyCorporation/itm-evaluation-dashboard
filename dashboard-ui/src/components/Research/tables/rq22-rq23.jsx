@@ -299,7 +299,7 @@ export function RQ2223({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ22_23_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ22_23_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

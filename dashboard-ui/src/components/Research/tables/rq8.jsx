@@ -9,6 +9,7 @@ import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
+import { Checkbox, FormControlLabel } from "@material-ui/core";
 
 
 const GET_HUMAN_RESULTS = gql`
@@ -54,124 +55,145 @@ export function RQ8({ evalNum }) {
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const [includeDRE, setIncludeDRE] = React.useState(false);
+    const [includeJAN, setIncludeJAN] = React.useState(false);
+
+    React.useEffect(() => {
+        // reset toggles on render
+        setIncludeDRE(false);
+        setIncludeJAN(false);
+    }, [evalNum]);
+
 
     React.useEffect(() => {
         if (dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment && dataParticipantLog?.getParticipantLog) {
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
-            const simData = dataSim.getAllSimAlignment;
-            const participantLog = dataParticipantLog.getParticipantLog;
             const allObjs = [];
             const allTA1s = [];
             const allScenarios = [];
             const allAttributes = [];
-            const pids = [];
-            const recorded = {};
+            const simData = dataSim.getAllSimAlignment;
+            const participantLog = dataParticipantLog.getParticipantLog;
 
-            for (const res of textResults) {
-                const pid = res['participantID'];
-                if (pids.includes(pid)) {
-                    continue;
-                }
-                recorded[pid] = [];
-                // see if participant has completed the open world scenario
-                const openWorld = simData.find(
-                    log => log['pid'] == pid && log['openWorld'] == true 
-                );
-                if (!openWorld) {
-                    continue;
-                }
+            const evals = [evalNum];
+            if (includeDRE && evalNum != 4) {
+                evals.push(4);
+            }
+            if (includeJAN && evalNum != 6) {
+                evals.push(6);
+            };
 
-                const simEntries = simData.filter(
-                    log => log['pid'] == pid
-                );
+            for (let evalNum of evals) {
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
 
-                const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
+                const pids = [];
+                const recorded = {};
 
-                // see if participant is in the participantLog
-                const logData = participantLog.find(
-                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
-                );
-                if (!logData) {
-                    continue;
-                }
-
-                const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
-                const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
-
-
-                for (const entry of textResultsForPID) {
-                    // don't include duplicate entries
-                    if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                for (const res of textResults) {
+                    const pid = res['participantID'];
+                    if (pids.includes(pid)) {
                         continue;
                     }
-                    else {
-                        recorded[pid].push(entry['serverSessionId']);
-                    }
-                    // ignore training scenarios
-                    if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                    recorded[pid] = [];
+                    // see if participant has completed the open world scenario
+                    const openWorld = simData.find(
+                        log => log['pid'] == pid && log['openWorld'] == true
+                    );
+                    if (!openWorld) {
                         continue;
                     }
-                    let attributes = ['MJ', 'IO'];
-                    if (entry['scenario_id'].includes('qol')) {
-                        attributes = ['QOL'];
+
+                    const simEntries = simData.filter(
+                        log => log['pid'] == pid
+                    );
+
+                    const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
+
+                    // see if participant is in the participantLog
+                    const logData = participantLog.find(
+                        log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                    );
+                    if (!logData) {
+                        continue;
                     }
-                    else if (entry['scenario_id'].includes('vol')) {
-                        attributes = ['VOL'];
-                    }
-                    for (const att of attributes) {
-                        const entryObj = {};
-                        entryObj['Participant_ID'] = pid;
-                        entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
-                        allTA1s.push(entryObj['TA1_Name']);
-                        entryObj['Attribute'] = att;
-                        allAttributes.push(att);
-                        entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
-                        allScenarios.push(entryObj['Scenario']);
-                        const kdmas = Array.isArray(entry['kdmas']) ? entry['kdmas'] : entry['kdmas']?.['computed_kdma_profile'];
-                        const att_map = {
-                            'MJ': 'Moral judgement',
-                            'IO': 'Ingroup Bias',
-                            'QOL': 'QualityOfLife',
-                            'VOL': 'PerceivedQuantityOfLivesSaved'
-                        }
-                        entryObj['Participant Text KDMA'] = kdmas?.find((x) => x['kdma'] == att_map[att])?.value ?? '-';
-                        const sim_entry = simEntries.find((x) => {
-                            const kdma_data = x?.data?.alignment?.kdmas?.computed_kdma_profile ?? x?.data?.alignment?.kdmas;
-                            return Array.isArray(kdma_data) && kdma_data?.find((y) => y.kdma == att_map[att]);
-                        });
-                        const sim_kdmas = sim_entry?.data?.alignment?.kdmas?.computed_kdma_profile ?? sim_entry?.data?.alignment?.kdmas;
-                        entryObj['Participant Sim KDMA'] = Array.isArray(sim_kdmas) ? sim_kdmas?.find((y) => y.kdma == att_map[att])?.value : '-';
-                        if (evalNum == 4) {
-                            entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
-                            entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
+
+                    const st_scenario = logData['Text-1'].includes('ST') ? logData['Text-1'] : logData['Text-2'];
+                    const ad_scenario = logData['Text-1'].includes('AD') ? logData['Text-1'] : logData['Text-2'];
+
+
+                    for (const entry of textResultsForPID) {
+                        // don't include duplicate entries
+                        if (recorded[pid]?.includes(entry['serverSessionId'])) {
+                            continue;
                         }
                         else {
-                            entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-08' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-08' : att == 'QOL' ? 'qol-synth-HighExtreme-ph1' : att == 'VOL' ? 'vol-synth-HighCluster-ph1' : ''))?.score ?? '-';
-                            entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-02' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-02' : att == 'QOL' ? 'qol-synth-LowExtreme-ph1' : att == 'VOL' ? 'vol-synth-LowExtreme-ph1' : ''))?.score ?? '-';
+                            recorded[pid].push(entry['serverSessionId']);
                         }
-                        const owData = openWorld['data'];
-                        entryObj['Assess_patient'] = owData?.assess_patient;
-                        entryObj['Assess_total'] = owData?.assess_total;
-                        entryObj['Treat_patient'] = owData?.treat_patient;
-                        entryObj['Treat_total'] = owData?.treat_total;
-                        entryObj['Triage_time'] = owData?.triage_time;
-                        entryObj['Triage_time_patient'] = owData?.triage_time_patient;
-                        entryObj['Engage_patient'] = owData?.engage_patient;
-                        entryObj['Tag_ACC'] = owData?.tag_acc;
-                        entryObj['Tag_Expectant'] = owData?.tag_expectant;
-
-                        for (let i = 1; i < 9; i++) {
-                            entryObj[`Patient${i}_time`] = owData?.[`Patient ${i}_time`];
-                            entryObj[`Patient${i}_order`] = owData?.[`Patient ${i}_order`];
-                            entryObj[`Patient${i}_evac`] = owData?.[`Patient ${i}_evac`];
-                            entryObj[`Patient${i}_assess`] = owData?.[`Patient ${i}_assess`];
-                            entryObj[`Patient${i}_treat`] = owData?.[`Patient ${i}_treat`];
-                            entryObj[`Patient${i}_tag`] = owData?.[`Patient ${i}_tag`];
+                        // ignore training scenarios
+                        if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                            continue;
                         }
+                        let attributes = ['MJ', 'IO'];
+                        if (entry['scenario_id'].includes('qol')) {
+                            attributes = ['QOL'];
+                        }
+                        else if (entry['scenario_id'].includes('vol')) {
+                            attributes = ['VOL'];
+                        }
+                        for (const att of attributes) {
+                            const entryObj = {};
+                            entryObj['Participant_ID'] = pid;
+                            entryObj['TA1_Name'] = entry['scenario_id'].includes('DryRunEval') || entry['scenario_id'].includes('adept') ? 'ADEPT' : 'SoarTech';
+                            allTA1s.push(entryObj['TA1_Name']);
+                            entryObj['Attribute'] = att;
+                            allAttributes.push(att);
+                            entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                            allScenarios.push(entryObj['Scenario']);
+                            const kdmas = Array.isArray(entry['kdmas']) ? entry['kdmas'] : entry['kdmas']?.['computed_kdma_profile'];
+                            const att_map = {
+                                'MJ': 'Moral judgement',
+                                'IO': 'Ingroup Bias',
+                                'QOL': 'QualityOfLife',
+                                'VOL': 'PerceivedQuantityOfLivesSaved'
+                            }
+                            entryObj['Participant Text KDMA'] = kdmas?.find((x) => x['kdma'] == att_map[att])?.value ?? '-';
+                            const sim_entry = simEntries.find((x) => {
+                                const kdma_data = x?.data?.alignment?.kdmas?.computed_kdma_profile ?? x?.data?.alignment?.kdmas;
+                                return Array.isArray(kdma_data) && kdma_data?.find((y) => y.kdma == att_map[att]);
+                            });
+                            const sim_kdmas = sim_entry?.data?.alignment?.kdmas?.computed_kdma_profile ?? sim_entry?.data?.alignment?.kdmas;
+                            entryObj['Participant Sim KDMA'] = Array.isArray(sim_kdmas) ? sim_kdmas?.find((y) => y.kdma == att_map[att])?.value : '-';
+                            if (evalNum == 4) {
+                                entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
+                                entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
+                            }
+                            else {
+                                entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-08' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-08' : att == 'QOL' ? 'qol-synth-HighExtreme-ph1' : att == 'VOL' ? 'vol-synth-HighCluster-ph1' : ''))?.score ?? '-';
+                                entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-02' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-02' : att == 'QOL' ? 'qol-synth-LowExtreme-ph1' : att == 'VOL' ? 'vol-synth-LowExtreme-ph1' : ''))?.score ?? '-';
+                            }
+                            const owData = openWorld['data'];
+                            entryObj['Assess_patient'] = owData?.assess_patient;
+                            entryObj['Assess_total'] = owData?.assess_total;
+                            entryObj['Treat_patient'] = owData?.treat_patient;
+                            entryObj['Treat_total'] = owData?.treat_total;
+                            entryObj['Triage_time'] = owData?.triage_time;
+                            entryObj['Triage_time_patient'] = owData?.triage_time_patient;
+                            entryObj['Engage_patient'] = owData?.engage_patient;
+                            entryObj['Tag_ACC'] = owData?.tag_acc;
+                            entryObj['Tag_Expectant'] = owData?.tag_expectant;
 
-                        allObjs.push(entryObj);
+                            for (let i = 1; i < 9; i++) {
+                                entryObj[`Patient${i}_time`] = owData?.[`Patient ${i}_time`];
+                                entryObj[`Patient${i}_order`] = owData?.[`Patient ${i}_order`];
+                                entryObj[`Patient${i}_evac`] = owData?.[`Patient ${i}_evac`];
+                                entryObj[`Patient${i}_assess`] = owData?.[`Patient ${i}_assess`];
+                                entryObj[`Patient${i}_treat`] = owData?.[`Patient ${i}_treat`];
+                                entryObj[`Patient${i}_tag`] = owData?.[`Patient ${i}_tag`];
+                            }
+
+                            allObjs.push(entryObj);
+                        }
+                        pids.push(pid);
                     }
-                    pids.push(pid);
                 }
             }
             // sort
@@ -193,16 +215,24 @@ export function RQ8({ evalNum }) {
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataSim, dataTextResults, dataParticipantLog, evalNum]);
+    }, [dataSim, dataTextResults, dataParticipantLog, evalNum, includeDRE, includeJAN]);
 
 
     const openModal = () => {
         setShowDefinitions(true);
-    }
+    };
 
     const closeModal = () => {
         setShowDefinitions(false);
-    }
+    };
+
+    const updateDREStatus = (event) => {
+        setIncludeDRE(event.target.checked);
+    };
+
+    const updateJANStatus = (event) => {
+        setIncludeJAN(event.target.checked);
+    };
 
     React.useEffect(() => {
         setFilteredData(formattedData.filter((x) =>
@@ -216,6 +246,13 @@ export function RQ8({ evalNum }) {
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
 
     return (<>
+        <h2 className='rq134-header'>RQ8 Data
+            {evalNum == 5 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                </div>}
+        </h2>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
@@ -291,7 +328,7 @@ export function RQ8({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ8_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ8_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
