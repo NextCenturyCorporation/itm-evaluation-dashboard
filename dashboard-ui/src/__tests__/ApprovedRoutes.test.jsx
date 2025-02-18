@@ -35,16 +35,16 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
     }
     else if (isExperimenter) {
         // experimenters can access /pid-lookup and /participantTextTester, but not /admin
-        allowedRoutes.push(...['/pid-lookup', '/participantTextTester']); 
+        allowedRoutes.push(...['/pid-lookup', '/participantTextTester']);
         unallowedRoutes.push('/admin');
     }
     else if (isEvaluator || isAdeptUser) {
         // evaluators and AdeptUsers cannot access /admin, /pid-lookup, or /participantTextTester
-        unallowedRoutes.push(...['/admin', '/pid-lookup', '/participantTextTester']); 
+        unallowedRoutes.push(...['/admin', '/pid-lookup', '/participantTextTester']);
     }
     else {
         // users with no elevation cannot access any routes
-        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup', '/random-link', '/participantTextTester'].filter((x) => x != '/myaccount'); 
+        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup', '/random-link', '/participantTextTester'].filter((x) => x != '/myaccount');
         allowedRoutes = ['/', '/myaccount'];
 
     }
@@ -70,7 +70,7 @@ describe('Route Redirection and Access Control Tests for admin', () => {
     }, 30000);
 
     runAllowedRoutesTests(true);
-    it('Administrators should not see extra headers on progress table', async () => {
+    it('Administrators should see extra headers on progress table', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
         await page.waitForSelector(FOOTER_TEXT);
         await page.waitForSelector('text/Participant Progress', { timeout: 500 });
