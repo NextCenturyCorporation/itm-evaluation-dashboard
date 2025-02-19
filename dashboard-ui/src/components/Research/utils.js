@@ -287,7 +287,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
 
                 entryObj['Alignment score (ADM|target)'] = alignment;
-                if (evalNum == 5)
+                if (evalNum == 5 || evalNum == 6)
                     entryObj['DRE Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.dreAdmAlignment : alignment;
 
                 // if DRE data is included in PH1 set, update DRE columns accordingly

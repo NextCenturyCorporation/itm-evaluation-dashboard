@@ -88,7 +88,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const [columnsToHide, setColumnsToHide] = React.useState([]);
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
-    const HEADERS = evalNum == 5 ? HEADERS_PH1 : HEADERS_DRE;
+    const HEADERS = evalNum == 5 || evalNum == 6 ? HEADERS_PH1 : HEADERS_DRE;
 
 
     const openModal = () => {
