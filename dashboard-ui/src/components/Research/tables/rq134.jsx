@@ -110,6 +110,14 @@ export function RQ134({ evalNum, tableTitle }) {
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
             dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            
+            if (evalNum === 6) {
+                data.allObjs = data.allObjs.map(obj => ({
+                    ...obj,
+                    Delegator_mil: 'yes'
+                }));
+            }
+
             if (includeDRE) {
                 // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
                 const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true);
@@ -122,6 +130,10 @@ export function RQ134({ evalNum, tableTitle }) {
             }
             if (includeJAN) {
                 const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, janSim);
+                janData.allObjs = janData.allObjs.map(obj => ({
+                    ...obj,
+                    Delegator_mil: 'yes'
+                }));
                 data.allObjs.push(...janData.allObjs);
                 data.allTA1s.push(...janData.allTA1s);
                 data.allTA2s.push(...janData.allTA2s);
