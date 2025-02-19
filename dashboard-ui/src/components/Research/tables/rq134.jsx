@@ -50,7 +50,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": evalNum }
+        variables: { "evalNumber": (evalNum == 6 ? 5 : evalNum) }
     });
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
@@ -58,6 +58,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
     const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
+    const { data: janSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 6 } });
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -80,13 +81,14 @@ export function RQ134({ evalNum, tableTitle }) {
     const [delGrpFilters, setDelGrpFilters] = React.useState([]);
     const [delMilFilters, setDelMilFilters] = React.useState([]);
     const [includeDRE, setIncludeDRE] = React.useState(false);
+    const [includeJAN, setIncludeJAN] = React.useState(false);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
     // hiding columns
     const [columnsToHide, setColumnsToHide] = React.useState([]);
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
-    const HEADERS = evalNum == 5 ? HEADERS_PH1 : HEADERS_DRE;
+    const HEADERS = evalNum == 5 || evalNum == 6 ? HEADERS_PH1 : HEADERS_DRE;
 
 
     const openModal = () => {
@@ -98,13 +100,15 @@ export function RQ134({ evalNum, tableTitle }) {
     }
 
     React.useEffect(() => {
+        // reset toggles on render
         setIncludeDRE(false);
+        setIncludeJAN(false);
     }, [evalNum]);
 
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
-            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval) {
+            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             if (includeDRE) {
                 // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
@@ -115,6 +119,15 @@ export function RQ134({ evalNum, tableTitle }) {
                 data.allAttributes.push(...dreData.allAttributes);
                 data.allScenarios.push(...dreData.allScenarios);
                 data.allTargets.push(...dreData.allTargets);
+            }
+            if (includeJAN) {
+                const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, janSim);
+                data.allObjs.push(...janData.allObjs);
+                data.allTA1s.push(...janData.allTA1s);
+                data.allTA2s.push(...janData.allTA2s);
+                data.allAttributes.push(...janData.allAttributes);
+                data.allScenarios.push(...janData.allScenarios);
+                data.allTargets.push(...janData.allTargets);
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -132,10 +145,14 @@ export function RQ134({ evalNum, tableTitle }) {
             setScenarios(Array.from(new Set(data.allScenarios)));
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, dreAdms, dreSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim, janSim]);
 
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);
+    };
+
+    const updateJANStatus = (event) => {
+        setIncludeJAN(event.target.checked);
     };
 
     const hideColumn = (val) => {
@@ -190,8 +207,12 @@ export function RQ134({ evalNum, tableTitle }) {
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
-        <h2>{tableTitle}
-            {evalNum == 5 && <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />}
+        <h2 className='rq134-header'>{tableTitle}
+            {evalNum == 5 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                </div>}
         </h2>
 
         {filteredData.length < formattedData.length &&
@@ -374,7 +395,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum == 5 ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

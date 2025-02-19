@@ -5,7 +5,7 @@ import { ApolloClient } from 'apollo-client'
 import { createHttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import gql from 'graphql-tag';
-import { isDefined } from '@mui/x-charts/internals';
+import { isDefined } from '../components/AggregateResults/DataFunctions';
 let { API_URL } = require('./config');
 if (!isDefined(API_URL))
   API_URL = `http://localhost:${process.env.REACT_APP_TESTING == 'true' ? process.env.REACT_APP_GRAPHQL_TEST_PORT : 9100}/api`;

@@ -140,7 +140,7 @@ describe('TA1 Server Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
-    }, 20000);
+    }, 40000);
   });
 
   describe('Ordered Alignment', () => {
@@ -197,7 +197,7 @@ describe('TA1 Server Tests', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBeTruthy();
       // needed longer timeout (took me about 17 seconds, may need to be messed with if failing for other people)
-    }, 20000);
+    }, 40000);
   });
 
   describe('Alignment Data', () => {
@@ -228,7 +228,7 @@ describe('TA1 Server Tests', () => {
         expect(response.status).toBe(200);
         expect(response.data).toBeTruthy();
       }
-    }, 20000);
+    }, 40000);
   });
 
 
@@ -303,7 +303,7 @@ describe('TA1 Server Tests', () => {
         }
       );
       expect(alignmentResponse.status).toBe(200);
-    }, 20000);
+    }, 40000);
   });
 
   describe('Comparing Two Sessions', () => {
@@ -345,7 +345,7 @@ describe('TA1 Server Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
-    }, 20000);
+    }, 40000);
     it('Should compare two adept sessions using /compare_sessions', async () => {
       // start sessions
       const sessionResponse1 = await axios.post(`${ADEPT_URL}/api/v1/new_session`);

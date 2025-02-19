@@ -11,10 +11,9 @@ import { Button, Modal } from 'react-bootstrap';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
-    { value: 5, label: 'Phase 1 Evaluation' }
+    { value: 5, label: 'Phase 1 Evaluation' },
+    { value: 6, label: 'Jan 2025 Evaluation' }
 ];
-
-
 
 export function RQ3() {
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
@@ -73,7 +72,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -81,7 +80,7 @@ export function RQ3() {
                 </li>}
                 <li>ADM_Aligned_Status
                     <ul>
-                        <li>Filter for only {selectedEval == 5 ? '"aligned"' : '"comparison"'} trials</li>
+                        <li>Filter for only {(selectedEval == 5 || selectedEval == 6) ? '"aligned"' : '"comparison"'} trials</li>
                     </ul>
                 </li>
                 <li>ADM Loading
@@ -113,7 +112,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -144,7 +143,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {selectedEval == 5 && <li>
+                {(selectedEval == 5 || selectedEval == 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
