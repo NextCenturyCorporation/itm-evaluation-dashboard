@@ -257,7 +257,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const entryObj = {};
                 entryObj['Delegator_ID'] = pid;
                 entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
-                entryObj['Datasource'] = evalNum == 4 ? 'DRE' : logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL';
+                entryObj['Datasource'] = evalNum == 4 ? 'DRE' : evalNum == 5 ? (logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type == 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025');
                 entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : logData['Type'] == 'Mil' ? 'Military' : logData['Type'];
                 const roles = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'];
                 // override 102, who is military
