@@ -296,3 +296,7 @@
     cursor: pointer;
     background-color: rgba(225, 223, 223, 0.603);
 }
+
+.lowered-table {
+    margin-top: 40px;
+}
