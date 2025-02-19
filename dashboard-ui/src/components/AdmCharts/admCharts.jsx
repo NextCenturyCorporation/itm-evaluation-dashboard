@@ -69,7 +69,7 @@ class AdmCharts extends React.Component {
                     </div>
                 </div>
                 {this.state.currentEval !== '' &&
-                    <Query query={scenario_names_aggregation} variables={{"evalNumber": this.state.currentEval.value}}>
+                    <Query query={scenario_names_aggregation} variables={{ "evalNumber": this.state?.currentEval?.value }}>
                     {
                         ({ loading, error, data }) => {
                             if (loading) return <div>Loading ...</div> 

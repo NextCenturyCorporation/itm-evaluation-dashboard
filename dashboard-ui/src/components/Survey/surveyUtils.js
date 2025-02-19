@@ -731,7 +731,7 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'qol-ph1-eval-2':
-            cols1to3 = ['qqol-human-0000001-SplitEvenMulti-ph1'];
+            cols1to3 = ['qol-human-0000001-SplitEvenMulti-ph1'];
             validAdms = getValidADM(getAllQolTargets(surveyVersion), qolTargets, cols1to3, [], [], []);
             alignedTarget = validAdms['aligned'];
             misalignedTarget = validAdms['misaligned'];
