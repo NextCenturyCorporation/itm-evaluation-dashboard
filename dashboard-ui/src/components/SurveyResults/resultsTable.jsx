@@ -8,6 +8,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { RQDefinitionTable } from "../Research/variables/rq-variables";
 import definitionXLFile from './Survey Delegation Variables.xlsx';
 import definitionPDFFile from './Survey Delegation Variables.pdf';
+import definitionXLFileExploratory from './Exploratory Delegation Variables.xlsx';
 import definitionXLFileLegacy from './Survey Delegation Variables - Legacy.xlsx';
 import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf';
 
@@ -557,7 +558,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                 {showLegacy ? <RQDefinitionTable downloadName={'Survey Results Definitions - Legacy.pdf'} xlFile={definitionXLFileLegacy} pdfFile={definitionPDFFileLegacy} /> :
-                    exploratory ? <RQDefinitionTable downloadName={'Delegation Data By Block Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} /> :
+                    exploratory ? <RQDefinitionTable downloadName={'Delegation Data By Block Definitions.xlsx'} xlFile={definitionXLFileExploratory} pdfFile={definitionXLFileExploratory} /> :
                     <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />}
             </div>
         </Modal>
