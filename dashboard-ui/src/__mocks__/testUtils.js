@@ -113,3 +113,25 @@ export async function loginBasicApprovedUser(page) {
     await login(page, 'basic', 'secretBasicPassword123', true);
     await page.waitForSelector('text/Welcome to the ITM Program!');
 }
+
+export async function checkRouteContent(page, route, expectedText) {
+    await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
+    await page.waitForSelector(FOOTER_TEXT);
+    for (const txt of expectedText) {
+        await page.waitForSelector(`text/${txt}`, { timeout: 500 });
+    }
+}
+
+export async function useMenuNavigation(page, header, selection, expectedRoute, userMenu = false) {
+    await page.$$eval((userMenu ? '.login-user-content ' : '') + '.dropdown-toggle', (buttons, header) => {
+        if (header != '')
+            Array.from(buttons).find(btn => btn.textContent == header).click();
+        else
+            Array.from(buttons)[0].click();
+    }, header);
+    await page.$$eval('.dropdown-item', (buttons, selection) => {
+        Array.from(buttons).find(btn => btn.textContent == selection).click();
+    }, selection);
+    const currentUrl = page.url();
+    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRoute}`);
+}

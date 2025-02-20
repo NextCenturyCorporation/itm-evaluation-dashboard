@@ -11,7 +11,6 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         '/results',
         '/adm-probe-responses',
         '/humanSimParticipant',
-        '/scenarios',
         '/humanProbeData',
         '/human-results',
         '/research-results/rq1',
@@ -27,7 +26,8 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         '/participant-progress-table',
     ];
     let unallowedRoutes = [
-        '/random-link'
+        '/random-link',
+        '/text-based'
     ];
     if (isAdmin) {
         // admins can access all pages
@@ -59,6 +59,9 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
             await testRouteRedirection(route, '/');
+            if (route == '/text-based') {
+                page = await browser.newPage();
+            }
         });
     });
 }
