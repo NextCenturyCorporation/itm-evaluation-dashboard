@@ -5,6 +5,7 @@ import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
+import { BlockedTable } from './tables/BlockedTable';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
@@ -128,6 +129,9 @@ export function ExploratoryAnalysis() {
         </div>
         <div className="section-container">
             <RQ8 evalNum={selectedEval} />
+        </div>
+        <div className="section-container">
+            <BlockedTable evalNum={selectedEval} />
         </div>
     </div>);
 }

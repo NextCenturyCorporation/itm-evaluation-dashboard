@@ -8,6 +8,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { RQDefinitionTable } from "../Research/variables/rq-variables";
 import definitionXLFile from './Survey Delegation Variables.xlsx';
 import definitionPDFFile from './Survey Delegation Variables.pdf';
+import definitionXLFileExploratory from './Exploratory Delegation Variables.xlsx';
 import definitionXLFileLegacy from './Survey Delegation Variables - Legacy.xlsx';
 import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf';
 
@@ -82,12 +83,12 @@ function formatTime(seconds, includeHours = false) {
     return includeHours ? `${hours}:${minutes}:${formatted_seconds}` : `${minutes}:${formatted_seconds}`;
 }
 
-export function ResultsTable({ data, pLog }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '5', 'label': '5 - PH1' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
-    const [evalFilters, setEvalFilters] = React.useState([{ 'value': '5', 'label': '5 - PH1' }]);
+    const [evalFilters, setEvalFilters] = React.useState(evalNumbers);
     const [roles, setRoles] = React.useState([]);
     const [roleFilters, setRoleFilters] = React.useState([]);
     const [surveyStatus] = React.useState(['Complete', 'Incomplete']);
@@ -106,6 +107,26 @@ export function ResultsTable({ data, pLog }) {
         }
     }, [data, pLog, showLegacy]);
 
+    React.useEffect(() => {
+        setEvalFilters(evalNumbers);
+    }, [evalNumbers]);
+
+    const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
+        const basicChecks = comparisonEntry['pid'] == pid && comparisonEntry['adm_type'] == admType && comparisonEntry['adm_scenario'] == scenario;
+        // we don't care about servers when it comes to ST. check for DRE server for 5&6, and NOT ph1 server for 4
+        const dreCheck = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
+            ([5, 6].includes(comparisonEntry['evalNumber']) && comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] == 4 && !comparisonEntry['ph1_server']);
+        return basicChecks && dreCheck;
+    };
+
+    const searchForPh1Comparison = (comparisonEntry, pid, admType, scenario) => {
+        const basicChecks = comparisonEntry['pid'] == pid && comparisonEntry['adm_type'] == admType && comparisonEntry['adm_scenario'] == scenario;
+        // we don't care about servers when it comes to ST. check for PH1 server for 4, and NOT dre server for 5&6
+        const ph1Check = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
+            ([5, 6].includes(comparisonEntry['evalNumber']) && !comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] == 4 && comparisonEntry['ph1_server']);
+        return basicChecks && ph1Check;
+    };
+
     const formatData = (data) => {
         const allObjs = [];
         const allEvals = [];
@@ -113,7 +134,10 @@ export function ResultsTable({ data, pLog }) {
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
         // set up block headers
-        const subheaders = (showLegacy ? [] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
+        let subheaders = (showLegacy ? [] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
+        if (exploratory) {
+            subheaders = subheaders.concat(['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
+        }
         const dmCount = showLegacy ? 2 : 3;
         for (let block = 1; block < 5; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
@@ -121,7 +145,10 @@ export function ResultsTable({ data, pLog }) {
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
                 }
             }
-            const comparisons = showLegacy ? ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'] : ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
+            const legacyCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
+            const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
+            const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', 'FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'];
+            const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
             for (let subhead of comparisons) {
                 updatedHeaders.push(`B${block}_${subhead}`);
             }
@@ -237,6 +264,7 @@ export function ResultsTable({ data, pLog }) {
                     }
                     continue;
                 }
+
                 if ((page.pageType == 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
                     if (!showLegacy) {
@@ -252,6 +280,10 @@ export function ResultsTable({ data, pLog }) {
                     obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
                     obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
                     obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
+                    if (exploratory) {
+                        obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                        obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                    }
                     dm += 1;
                 }
                 else if ((page.pageType == 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
@@ -268,10 +300,26 @@ export function ResultsTable({ data, pLog }) {
                         obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
                         obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
+                        if (exploratory && comparisonData) {
+                            const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                            const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                            const dreBaseline = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
+                            const ph1Baseline = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
+                            obj[`B${block}_FC1_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreBaseline)) ? (dreAligned - dreBaseline) : null;
+                            obj[`B${block}_FC1_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Baseline)) ? (ph1Aligned - ph1Baseline) : null;
+                        }
                         const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
                         obj[`B${block}_Compare_FC2`] = fc2 + ' - ' + alignment[order.indexOf(fc2)];
                         obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
+                        if (exploratory && comparisonData) {
+                            const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                            const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                            const dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                            const ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                            obj[`B${block}_FC2_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
+                            obj[`B${block}_FC2_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
+                        }
                     }
                     else {
                         const order = pageName.split(' vs ');
@@ -391,11 +439,16 @@ export function ResultsTable({ data, pLog }) {
         setShowDefinitions(false);
     };
 
-    return (<>
-        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+    const isFiltered = () => {
+        return filteredData.length < (exploratory ? (evalFilters.length == 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length);
+    }
+
+    return (<div className={!isFiltered() && exploratory ? 'lowered-table' : ''}>
+        {isFiltered() &&
+            <p className='filteredText'>Showing {filteredData.length} of {(exploratory ? (evalFilters.length == 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length)} rows based on filters</p>}
         <section className='tableHeader results-download-btns'>
             <div className="filters">
-                {!showLegacy && evals.length > 0 && <Autocomplete
+                {!showLegacy && !exploratory && evals.length > 0 && <Autocomplete
                     multiple
                     options={evals}
                     filterSelectedOptions
@@ -469,13 +522,13 @@ export function ResultsTable({ data, pLog }) {
                     )}
                     onChange={(_, newVal) => setStatusFilters(newVal)}
                 />
-                <RadioGroup className='simple-radios' row defaultValue="DRE/PH1" onChange={toggleDataType}>
+                {!exploratory && <RadioGroup className='simple-radios' row defaultValue="DRE/PH1" onChange={toggleDataType}>
                     <FormControlLabel value="Legacy" control={<Radio />} label=" Legacy" />
                     <FormControlLabel value="DRE/PH1" control={<Radio />} label=" DRE/PH1" />
-                </RadioGroup>
+                </RadioGroup>}
             </div>
 
-            <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={'Survey Results'} extraAction={openModal} />
+            <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={exploratory ? 'Delegation Data By Block' : 'Survey Results'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
@@ -505,8 +558,9 @@ export function ResultsTable({ data, pLog }) {
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                 {showLegacy ? <RQDefinitionTable downloadName={'Survey Results Definitions - Legacy.pdf'} xlFile={definitionXLFileLegacy} pdfFile={definitionPDFFileLegacy} /> :
+                    exploratory ? <RQDefinitionTable downloadName={'Delegation Data By Block Definitions.xlsx'} xlFile={definitionXLFileExploratory} pdfFile={definitionXLFileExploratory} /> :
                     <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />}
             </div>
         </Modal>
-    </>);
+    </div>);
 }

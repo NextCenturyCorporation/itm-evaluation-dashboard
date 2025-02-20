@@ -5,7 +5,6 @@ import { getMean, getMeanAcrossAll, getSeAcrossAll, getStandardError } from "../
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
-
     const generateAlignedBaselineChart = (alignedAdmName, baselineAdmName, targets, alignColor = '#5B89C1', baselineColor = '#C15B5B') => {
         return (
             <CanvasJSChart options={{
@@ -308,7 +307,7 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
             </div>
         </div>}
 
-        {admAlignment &&
+        {admAlignment && Object.keys(admAlignment).length > 0 && 
             <div className='q2-adms'>
                 <div>
                     <h3>Parallax Aligned and Baseline ADM Alignment Scores on Group Targets across ADEPT group-aligned targets</h3>
