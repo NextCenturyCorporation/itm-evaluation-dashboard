@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText, loginAdmin, logout } from "../__mocks__/testUtils";
+import { countElementsWithText, loginAdmin, logout, takeTextScenario, pressAllKeys } from "../__mocks__/testUtils";
 
 let firstPid = 0;
 
@@ -132,4 +132,48 @@ describe('Test email-entry text scenarios', () => {
         // will time out if it fails
         await page.waitForSelector('text/PID: ' + firstPid.toString());
     }, 10000);
+
+    it('any key combo on text-scenario page should have no effect on progress', async () => {
+        // pid should be 702, which should use vol4 for ST. If this test starts failing, the pid has likely changed
+        // and more text configs will need to be added to the mock database
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
+        await page.waitForSelector('input[placeholder="Email"]');
+
+        const email1 = await page.$('input[placeholder="Email"]');
+        const email2 = await page.$('input[placeholder="Confirm Email"]');
+
+        await email1.type('keyTester@702.com');
+        await email2.type('KeyTester@702.com');
+        await page.$$eval('.form-group button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
+        });
+        await page.waitForSelector('text/Welcome');
+        await page.$$eval('button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
+        });
+        await pressAllKeys(page, 'Move Springer to evac');
+    }, 10000);
+
+    it('text-scenario through email-entry should be navigable', async () => {
+        // pid should be 702, which should use vol4 for ST. If this test starts failing, the pid has likely changed
+        // and more text configs will need to be added to the mock database
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
+        await page.waitForSelector('input[placeholder="Email"]');
+
+        const email1 = await page.$('input[placeholder="Email"]');
+        const email2 = await page.$('input[placeholder="Confirm Email"]');
+
+        await email1.type('keyTester@702.com');
+        await email2.type('KeyTester@702.com');
+        await page.$$eval('.form-group button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
+        });
+        await page.waitForSelector('text/Welcome');
+        await page.$$eval('button', buttons => {
+            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
+        });
+        await takeTextScenario(page);
+        await page.waitForSelector('text/Uploading documents');
+
+    }, 40000);
 });
