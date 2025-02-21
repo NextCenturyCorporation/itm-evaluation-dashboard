@@ -1,3 +1,1086 @@
+export const textConfigMock = {
+    "_id": "67374e0298f4ae6dabcc0722",
+    "scenario_id": "vol-ph1-eval-4",
+    "name": "Urban VoL Fire Ph1 Eval 4",
+    "pages": [
+        {
+            "name": "id-0",
+            "title": " ",
+            "scenario_id": "vol-ph1-eval-4",
+            "scenario_name": "Urban VoL Fire Ph1 Eval 4",
+            "elements": [
+                {
+                    "name": "template id-0",
+                    "title": " ",
+                    "type": "medicalScenario",
+                    "unstructured": "You are part of a special operations tactical team tasked for extraction of hostages in enemy territory. The hostages are being kept in a building guarded by 25 hostile narco-terrorists. Intel suggests the building may be wired with explosives, hostiles are threatening to kill the hostages in the next hour. Local support is unlikely, and the plan is for immediate extraction via Blackhawk. Upon entering the building you are immediately notified of two casualties. Who do you treat or assess first?",
+                    "supplies": [
+                        {
+                            "quantity": 5,
+                            "reusable": false,
+                            "type": "Burn Dressing"
+                        },
+                        {
+                            "quantity": 2,
+                            "reusable": false,
+                            "type": "Epi Pen"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Hemostatic gauze"
+                        },
+                        {
+                            "quantity": 20,
+                            "reusable": false,
+                            "type": "Pain Medications"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Pressure bandage"
+                        },
+                        {
+                            "quantity": 4,
+                            "reusable": false,
+                            "type": "Tourniquet"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": true,
+                            "type": "Pulse Oximeter"
+                        }
+                    ],
+                    "patients": [
+                        {
+                            "demographics": {
+                                "age": 28,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "M",
+                                "skills": []
+                            },
+                            "id": "casualty_x",
+                            "injuries": [
+                                {
+                                    "location": "left thigh",
+                                    "name": "Laceration",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "right stomach",
+                                    "name": "Laceration",
+                                    "severity": "moderate",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty X",
+                            "rapport": "neutral",
+                            "unstructured": "Has a laceration to the leg and is bleeding. TRISS probability of survival estimate of 87% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "VOICE",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 87
+                            }
+                        },
+                        {
+                            "demographics": {
+                                "age": 72,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "M",
+                                "skills": []
+                            },
+                            "id": "casualty_y",
+                            "injuries": [
+                                {
+                                    "location": "right shoulder",
+                                    "name": "Puncture",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left stomach",
+                                    "name": "Puncture",
+                                    "severity": "substantial",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "right chest",
+                                    "name": "Laceration",
+                                    "severity": "substantial",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty Y",
+                            "rapport": "neutral",
+                            "unstructured": "Has multiple punctures that are bleeding. TRISS probability of survival estimate of 30% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "PAIN",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 30
+                            }
+                        }
+                    ],
+                    "events": [],
+                    "blockedVitals": [],
+                    "mission": {
+                        "roe": "Medical Rules of Engagement are that for this mission the health of the hostages takes precedence",
+                        "medical_policies": [
+                            "Treat Enemy LLE"
+                        ],
+                        "unstructured": "You are part of a special operations tactical team tasked for extraction of hostages in enemy territory. Local support is unlikely, and the plan is for immediate extraction via Blackhawk. Extraction will take place following intial triage. The building has several small fires and is becoming increasingly less stable.\nTo assist in your triage decisions, each casualty will have a pre-calculated Trauma and Injury Severity Score (TRISS) based on their injuries and current vital signs. \nThe TRISS score estimates the patient’s probability of survival based on initial factors like injury severity and age, offering a standardized reference for prioritizing early treatment within the initial evaluation period.\nPlease note that the score may change if injuries worsen or vital signs change over time."
+                    }
+                },
+                {
+                    "type": "radiogroup",
+                    "choices": [
+                        {
+                            "value": "Treat Casualty X with hemostatic gauze",
+                            "text": "Treat Casualty X with hemostatic gauze"
+                        },
+                        {
+                            "value": "Treat Casualty Y with a tourniquet",
+                            "text": "Treat Casualty Y with a tourniquet"
+                        },
+                        {
+                            "value": "Treat Casualty Y with hemostatic gauze",
+                            "text": "Treat Casualty Y with hemostatic gauze"
+                        },
+                        {
+                            "value": "Assess Casualty X",
+                            "text": "Assess Casualty X"
+                        },
+                        {
+                            "value": "Assess Casualty Y",
+                            "text": "Assess Casualty Y"
+                        }
+                    ],
+                    "isRequired": true,
+                    "title": "What action do you take?",
+                    "name": "probe id-0",
+                    "probe_id": "vol-ph1-eval-4-Probe-1",
+                    "question_mapping": {
+                        "Treat Casualty X with hemostatic gauze": {
+                            "probe_id": "vol-ph1-eval-4-Probe-1",
+                            "choice": "choice-0"
+                        },
+                        "Treat Casualty Y with a tourniquet": {
+                            "probe_id": "vol-ph1-eval-4-Probe-1",
+                            "choice": "choice-1"
+                        },
+                        "Treat Casualty Y with hemostatic gauze": {
+                            "probe_id": "vol-ph1-eval-4-Probe-1",
+                            "choice": "choice-2"
+                        },
+                        "Assess Casualty X": {
+                            "probe_id": "vol-ph1-eval-4-Probe-1",
+                            "choice": "choice-3"
+                        },
+                        "Assess Casualty Y": {
+                            "probe_id": "vol-ph1-eval-4-Probe-1",
+                            "choice": "choice-4"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "id-1",
+            "title": " ",
+            "scenario_id": "vol-ph1-eval-4",
+            "scenario_name": "Urban VoL Fire Ph1 Eval 4",
+            "elements": [
+                {
+                    "name": "template id-1",
+                    "title": " ",
+                    "type": "medicalScenario",
+                    "unstructured": "You move on to the next room and discover two more casualties. Who do you treat first?",
+                    "supplies": [
+                        {
+                            "quantity": 5,
+                            "reusable": false,
+                            "type": "Burn Dressing"
+                        },
+                        {
+                            "quantity": 2,
+                            "reusable": false,
+                            "type": "Epi Pen"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": false,
+                            "type": "Hemostatic gauze"
+                        },
+                        {
+                            "quantity": 20,
+                            "reusable": false,
+                            "type": "Pain Medications"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": false,
+                            "type": "Pressure bandage"
+                        },
+                        {
+                            "quantity": 0,
+                            "reusable": false,
+                            "type": "Tourniquet"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": true,
+                            "type": "Pulse Oximeter"
+                        }
+                    ],
+                    "patients": [
+                        {
+                            "demographics": {
+                                "age": 24,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "M",
+                                "skills": []
+                            },
+                            "id": "casualty_g",
+                            "injuries": [
+                                {
+                                    "location": "left thigh",
+                                    "name": "Laceration",
+                                    "severity": "major",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left stomach",
+                                    "name": "Puncture",
+                                    "severity": "moderate",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty G",
+                            "rapport": "neutral",
+                            "unstructured": "Has a laceration to the leg and is bleeding. TRISS probability of survival estimate of 93% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "VOICE",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 93
+                            }
+                        },
+                        {
+                            "demographics": {
+                                "age": 70,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "M",
+                                "skills": []
+                            },
+                            "id": "casualty_h",
+                            "injuries": [
+                                {
+                                    "location": "right stomach",
+                                    "name": "Puncture",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left forearm",
+                                    "name": "Laceration",
+                                    "severity": "major",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty H",
+                            "rapport": "neutral",
+                            "unstructured": "Has penetrating abdominal trauma and is bleeding. TRISS probability of survival estimate of 33% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "PAIN",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 33
+                            }
+                        }
+                    ],
+                    "events": [],
+                    "blockedVitals": [],
+                    "mission": {
+                        "roe": "Medical Rules of Engagement are that for this mission the health of the hostages takes precedence",
+                        "medical_policies": [
+                            "Treat Enemy LLE"
+                        ],
+                        "unstructured": "You are part of a special operations tactical team tasked for extraction of hostages in enemy territory. Local support is unlikely, and the plan is for immediate extraction via Blackhawk. Extraction will take place following intial triage. The building has several small fires and is becoming increasingly less stable.\nTo assist in your triage decisions, each casualty will have a pre-calculated Trauma and Injury Severity Score (TRISS) based on their injuries and current vital signs. \nThe TRISS score estimates the patient’s probability of survival based on initial factors like injury severity and age, offering a standardized reference for prioritizing early treatment within the initial evaluation period.\nPlease note that the score may change if injuries worsen or vital signs change over time."
+                    }
+                },
+                {
+                    "type": "radiogroup",
+                    "choices": [
+                        {
+                            "value": "Treat Casualty G with pressure bandage",
+                            "text": "Treat Casualty G with pressure bandage"
+                        },
+                        {
+                            "value": "Treat Casualty H with pressure bandage",
+                            "text": "Treat Casualty H with pressure bandage"
+                        },
+                        {
+                            "value": "Treat Casualty G with hemostatic gauze",
+                            "text": "Treat Casualty G with hemostatic gauze"
+                        },
+                        {
+                            "value": "Treat Casualty H with hemostatic gauze",
+                            "text": "Treat Casualty H with hemostatic gauze"
+                        }
+                    ],
+                    "isRequired": true,
+                    "title": "What action do you take?",
+                    "name": "probe id-1",
+                    "probe_id": "vol-ph1-eval-4-Probe-2",
+                    "question_mapping": {
+                        "Treat Casualty G with pressure bandage": {
+                            "probe_id": "vol-ph1-eval-4-Probe-2",
+                            "choice": "choice-0"
+                        },
+                        "Treat Casualty H with pressure bandage": {
+                            "probe_id": "vol-ph1-eval-4-Probe-2",
+                            "choice": "choice-1"
+                        },
+                        "Treat Casualty G with hemostatic gauze": {
+                            "probe_id": "vol-ph1-eval-4-Probe-2",
+                            "choice": "choice-2"
+                        },
+                        "Treat Casualty H with hemostatic gauze": {
+                            "probe_id": "vol-ph1-eval-4-Probe-2",
+                            "choice": "choice-3"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "id-2",
+            "title": " ",
+            "scenario_id": "vol-ph1-eval-4",
+            "scenario_name": "Urban VoL Fire Ph1 Eval 4",
+            "elements": [
+                {
+                    "name": "template id-2",
+                    "title": " ",
+                    "type": "medicalScenario",
+                    "unstructured": "You move on to the next room and discover two more casualties. You only have one burn kit. Who do you treat?",
+                    "supplies": [
+                        {
+                            "quantity": 1,
+                            "reusable": false,
+                            "type": "Burn Dressing"
+                        },
+                        {
+                            "quantity": 2,
+                            "reusable": false,
+                            "type": "Epi Pen"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Hemostatic gauze"
+                        },
+                        {
+                            "quantity": 20,
+                            "reusable": false,
+                            "type": "Pain Medications"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Pressure bandage"
+                        },
+                        {
+                            "quantity": 4,
+                            "reusable": false,
+                            "type": "Tourniquet"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": true,
+                            "type": "Pulse Oximeter"
+                        }
+                    ],
+                    "patients": [
+                        {
+                            "demographics": {
+                                "age": 37,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "F",
+                                "skills": []
+                            },
+                            "id": "casualty_b",
+                            "injuries": [
+                                {
+                                    "location": "right chest",
+                                    "name": "Burn",
+                                    "severity": "substantial",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "head",
+                                    "name": "Traumatic Brain Injury",
+                                    "severity": "substantial",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left forearm",
+                                    "name": "Burn",
+                                    "severity": "major",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty B",
+                            "rapport": "neutral",
+                            "unstructured": "Has a 30% body surface area burn and a head injury. TRISS probability of survival estimate of 81% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "VOICE",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 81
+                            }
+                        },
+                        {
+                            "demographics": {
+                                "age": 37,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "F",
+                                "skills": []
+                            },
+                            "id": "casualty_c",
+                            "injuries": [
+                                {
+                                    "location": "right chest",
+                                    "name": "Burn",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left face",
+                                    "name": "Burn",
+                                    "severity": "major",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "right stomach",
+                                    "name": "Burn",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left shoulder",
+                                    "name": "Burn",
+                                    "severity": "moderate",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "right shoulder",
+                                    "name": "Burn",
+                                    "severity": "moderate",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty C",
+                            "rapport": "neutral",
+                            "unstructured": "Has a 70% body surface area burn. TRISS probability of survival estimate of 23% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "VOICE",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 23
+                            }
+                        }
+                    ],
+                    "events": [],
+                    "blockedVitals": [],
+                    "mission": {
+                        "roe": "Medical Rules of Engagement are that for this mission the health of the hostages takes precedence",
+                        "medical_policies": [
+                            "Treat Enemy LLE"
+                        ],
+                        "unstructured": "You are part of a special operations tactical team tasked for extraction of hostages in enemy territory. Local support is unlikely, and the plan is for immediate extraction via Blackhawk. Extraction will take place following intial triage. The building has several small fires and is becoming increasingly less stable.\nTo assist in your triage decisions, each casualty will have a pre-calculated Trauma and Injury Severity Score (TRISS) based on their injuries and current vital signs. \nThe TRISS score estimates the patient’s probability of survival based on initial factors like injury severity and age, offering a standardized reference for prioritizing early treatment within the initial evaluation period.\nPlease note that the score may change if injuries worsen or vital signs change over time."
+                    }
+                },
+                {
+                    "type": "radiogroup",
+                    "choices": [
+                        {
+                            "value": "Treat Casualty C with burn dressing",
+                            "text": "Treat Casualty C with burn dressing"
+                        },
+                        {
+                            "value": "Treat Casualty B with burn dressing",
+                            "text": "Treat Casualty B with burn dressing"
+                        }
+                    ],
+                    "isRequired": true,
+                    "title": "What action do you take?",
+                    "name": "probe id-2",
+                    "probe_id": "vol-ph1-eval-4-Probe-3",
+                    "question_mapping": {
+                        "Treat Casualty C with burn dressing": {
+                            "probe_id": "vol-ph1-eval-4-Probe-3",
+                            "choice": "choice-0"
+                        },
+                        "Treat Casualty B with burn dressing": {
+                            "probe_id": "vol-ph1-eval-4-Probe-3",
+                            "choice": "choice-1"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "id-3",
+            "title": " ",
+            "scenario_id": "vol-ph1-eval-4",
+            "scenario_name": "Urban VoL Fire Ph1 Eval 4",
+            "elements": [
+                {
+                    "name": "template id-3",
+                    "title": " ",
+                    "type": "medicalScenario",
+                    "unstructured": "You move on to the next room and discover two more casualties. You only have one tourniquet left. Who do you treat?",
+                    "supplies": [
+                        {
+                            "quantity": 5,
+                            "reusable": false,
+                            "type": "Burn Dressing"
+                        },
+                        {
+                            "quantity": 2,
+                            "reusable": false,
+                            "type": "Epi Pen"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Hemostatic gauze"
+                        },
+                        {
+                            "quantity": 20,
+                            "reusable": false,
+                            "type": "Pain Medications"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Pressure bandage"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": false,
+                            "type": "Tourniquet"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": true,
+                            "type": "Pulse Oximeter"
+                        }
+                    ],
+                    "patients": [
+                        {
+                            "demographics": {
+                                "age": 26,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "M",
+                                "skills": []
+                            },
+                            "id": "casualty_p",
+                            "injuries": [
+                                {
+                                    "location": "right thigh",
+                                    "name": "Puncture",
+                                    "severity": "major",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "head",
+                                    "name": "Abrasion",
+                                    "severity": "substantial",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty P",
+                            "rapport": "neutral",
+                            "unstructured": "Has a gunshot to the leg and a head injury. TRISS probability of survival estimate of 93% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": false,
+                                "avpu": "ALERT",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 93
+                            }
+                        },
+                        {
+                            "demographics": {
+                                "age": 26,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "White",
+                                "sex": "M",
+                                "skills": []
+                            },
+                            "id": "casualty_v",
+                            "injuries": [
+                                {
+                                    "location": "right thigh",
+                                    "name": "Amputation",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "head",
+                                    "name": "Traumatic Brain Injury",
+                                    "severity": "substantial",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "right stomach",
+                                    "name": "Laceration",
+                                    "severity": "major",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty V",
+                            "rapport": "neutral",
+                            "unstructured": "Has an amputation of the leg, an abdominal wound, and a head injury. TRISS probability of survival estimate of 39% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": false,
+                                "avpu": "PAIN",
+                                "breathing": "SLOW",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 39
+                            }
+                        }
+                    ],
+                    "events": [],
+                    "blockedVitals": [],
+                    "mission": {
+                        "roe": "Medical Rules of Engagement are that for this mission the health of the hostages takes precedence",
+                        "medical_policies": [
+                            "Treat Enemy LLE"
+                        ],
+                        "unstructured": "You are part of a special operations tactical team tasked for extraction of hostages in enemy territory. Local support is unlikely, and the plan is for immediate extraction via Blackhawk. Extraction will take place following intial triage. The building has several small fires and is becoming increasingly less stable.\nTo assist in your triage decisions, each casualty will have a pre-calculated Trauma and Injury Severity Score (TRISS) based on their injuries and current vital signs. \nThe TRISS score estimates the patient’s probability of survival based on initial factors like injury severity and age, offering a standardized reference for prioritizing early treatment within the initial evaluation period.\nPlease note that the score may change if injuries worsen or vital signs change over time."
+                    }
+                },
+                {
+                    "type": "radiogroup",
+                    "choices": [
+                        {
+                            "value": "Treat Casualty V with tourniquet",
+                            "text": "Treat Casualty V with tourniquet"
+                        },
+                        {
+                            "value": "Treat Casualty P with tourniquet",
+                            "text": "Treat Casualty P with tourniquet"
+                        },
+                        {
+                            "value": "Save your last tourniquet",
+                            "text": "Save your last tourniquet"
+                        }
+                    ],
+                    "isRequired": true,
+                    "title": "What action do you take?",
+                    "name": "probe id-3",
+                    "probe_id": "vol-ph1-eval-4-Probe-4",
+                    "question_mapping": {
+                        "Treat Casualty V with tourniquet": {
+                            "probe_id": "vol-ph1-eval-4-Probe-4",
+                            "choice": "choice-0"
+                        },
+                        "Treat Casualty P with tourniquet": {
+                            "probe_id": "vol-ph1-eval-4-Probe-4",
+                            "choice": "choice-1"
+                        },
+                        "Save your last tourniquet": {
+                            "probe_id": "vol-ph1-eval-4-Probe-4",
+                            "choice": "choice-2"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "id-4",
+            "title": " ",
+            "scenario_id": "vol-ph1-eval-4",
+            "scenario_name": "Urban VoL Fire Ph1 Eval 4",
+            "elements": [
+                {
+                    "name": "template id-4",
+                    "title": " ",
+                    "type": "medicalScenario",
+                    "unstructured": "You move on to the next room and discover two more casualties. Who do you treat first?",
+                    "supplies": [
+                        {
+                            "quantity": 5,
+                            "reusable": false,
+                            "type": "Burn Dressing"
+                        },
+                        {
+                            "quantity": 2,
+                            "reusable": false,
+                            "type": "Epi Pen"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Hemostatic gauze"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": false,
+                            "type": "Nasopharyngeal airway"
+                        },
+                        {
+                            "quantity": 20,
+                            "reusable": false,
+                            "type": "Pain Medications"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Pressure bandage"
+                        },
+                        {
+                            "quantity": 4,
+                            "reusable": false,
+                            "type": "Tourniquet"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": true,
+                            "type": "Pulse Oximeter"
+                        }
+                    ],
+                    "patients": [
+                        {
+                            "demographics": {
+                                "age": 29,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "Black",
+                                "sex": "F",
+                                "skills": []
+                            },
+                            "id": "casualty_n",
+                            "injuries": [
+                                {
+                                    "location": "head",
+                                    "name": "Traumatic Brain Injury",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left chest",
+                                    "name": "Laceration",
+                                    "severity": "major",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty N",
+                            "rapport": "neutral",
+                            "unstructured": "Has a head injury with periorbital ecchymosis and a laceration on the chest. TRISS probability of survival estimate of 18% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": false,
+                                "avpu": "UNRESPONSIVE",
+                                "breathing": "NONE",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 18
+                            }
+                        },
+                        {
+                            "demographics": {
+                                "age": 32,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "Black",
+                                "sex": "F",
+                                "skills": []
+                            },
+                            "id": "casualty_o",
+                            "injuries": [
+                                {
+                                    "location": "left shoulder",
+                                    "name": "Puncture",
+                                    "severity": "major",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty O",
+                            "rapport": "neutral",
+                            "unstructured": "Has a puncture wound to the arm with severe bleeding. TRISS probability of survival estimate of 95% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "VOICE",
+                                "breathing": "FAST",
+                                "heart_rate": "NORMAL",
+                                "spo2": "NORMAL",
+                                "triss": 95
+                            }
+                        }
+                    ],
+                    "events": [],
+                    "blockedVitals": [],
+                    "mission": {
+                        "roe": "Medical Rules of Engagement are that for this mission the health of the hostages takes precedence",
+                        "medical_policies": [
+                            "Treat Enemy LLE"
+                        ],
+                        "unstructured": "You are part of a special operations tactical team tasked for extraction of hostages in enemy territory. Local support is unlikely, and the plan is for immediate extraction via Blackhawk. Extraction will take place following intial triage. The building has several small fires and is becoming increasingly less stable.\nTo assist in your triage decisions, each casualty will have a pre-calculated Trauma and Injury Severity Score (TRISS) based on their injuries and current vital signs. \nThe TRISS score estimates the patient’s probability of survival based on initial factors like injury severity and age, offering a standardized reference for prioritizing early treatment within the initial evaluation period.\nPlease note that the score may change if injuries worsen or vital signs change over time."
+                    }
+                },
+                {
+                    "type": "radiogroup",
+                    "choices": [
+                        {
+                            "value": "Treat Casualty O with hemostatic gauze",
+                            "text": "Treat Casualty O with hemostatic gauze"
+                        },
+                        {
+                            "value": "Treat Casualty N with nasopharyngeal airway",
+                            "text": "Treat Casualty N with nasopharyngeal airway"
+                        }
+                    ],
+                    "isRequired": true,
+                    "title": "What action do you take?",
+                    "name": "probe id-4",
+                    "probe_id": "vol-ph1-eval-4-Probe-5",
+                    "question_mapping": {
+                        "Treat Casualty O with hemostatic gauze": {
+                            "probe_id": "vol-ph1-eval-4-Probe-5",
+                            "choice": "choice-0"
+                        },
+                        "Treat Casualty N with nasopharyngeal airway": {
+                            "probe_id": "vol-ph1-eval-4-Probe-5",
+                            "choice": "choice-1"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "id-5",
+            "title": " ",
+            "scenario_id": "vol-ph1-eval-4",
+            "scenario_name": "Urban VoL Fire Ph1 Eval 4",
+            "elements": [
+                {
+                    "name": "template id-5",
+                    "title": " ",
+                    "type": "medicalScenario",
+                    "unstructured": "You move on to the final room and discover two more casualties. Who do you treat first?",
+                    "supplies": [
+                        {
+                            "quantity": 5,
+                            "reusable": false,
+                            "type": "Burn Dressing"
+                        },
+                        {
+                            "quantity": 2,
+                            "reusable": false,
+                            "type": "Epi Pen"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Hemostatic gauze"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": false,
+                            "type": "Nasopharyngeal airway"
+                        },
+                        {
+                            "quantity": 20,
+                            "reusable": false,
+                            "type": "Pain Medications"
+                        },
+                        {
+                            "quantity": 3,
+                            "reusable": false,
+                            "type": "Pressure bandage"
+                        },
+                        {
+                            "quantity": 4,
+                            "reusable": false,
+                            "type": "Tourniquet"
+                        },
+                        {
+                            "quantity": 1,
+                            "reusable": true,
+                            "type": "Pulse Oximeter"
+                        }
+                    ],
+                    "patients": [
+                        {
+                            "demographics": {
+                                "age": 28,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "Black",
+                                "sex": "F",
+                                "skills": []
+                            },
+                            "id": "casualty_u",
+                            "injuries": [
+                                {
+                                    "location": "head",
+                                    "name": "Traumatic Brain Injury",
+                                    "severity": "extreme",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left shoulder",
+                                    "name": "Laceration",
+                                    "severity": "major",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty U",
+                            "rapport": "neutral",
+                            "unstructured": "Has a head injury with periorbital ecchymosis and a deep laceration. TRISS probability of survival estimate of 18% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": false,
+                                "avpu": "UNRESPONSIVE",
+                                "breathing": "NONE",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 18
+                            }
+                        },
+                        {
+                            "demographics": {
+                                "age": 27,
+                                "military_disposition": "Civilian",
+                                "mission_importance": "normal",
+                                "race": "Black",
+                                "sex": "F",
+                                "skills": []
+                            },
+                            "id": "casualty_w",
+                            "injuries": [
+                                {
+                                    "location": "right stomach",
+                                    "name": "Puncture",
+                                    "severity": "major",
+                                    "status": "visible"
+                                },
+                                {
+                                    "location": "left chest",
+                                    "name": "Abrasion",
+                                    "severity": "substantial",
+                                    "status": "visible"
+                                }
+                            ],
+                            "name": "Casualty W",
+                            "rapport": "neutral",
+                            "unstructured": "Has a puncture wound to the abdomen and is bleeding. TRISS probability of survival estimate of 93% if treated immediately.",
+                            "visited": true,
+                            "vitals": {
+                                "ambulatory": true,
+                                "avpu": "ALERT",
+                                "breathing": "FAST",
+                                "heart_rate": "FAST",
+                                "spo2": "NORMAL",
+                                "triss": 93
+                            }
+                        }
+                    ],
+                    "events": [],
+                    "blockedVitals": [],
+                    "mission": {
+                        "roe": "Medical Rules of Engagement are that for this mission the health of the hostages takes precedence",
+                        "medical_policies": [
+                            "Treat Enemy LLE"
+                        ],
+                        "unstructured": "You are part of a special operations tactical team tasked for extraction of hostages in enemy territory. Local support is unlikely, and the plan is for immediate extraction via Blackhawk. Extraction will take place following intial triage. The building has several small fires and is becoming increasingly less stable.\nTo assist in your triage decisions, each casualty will have a pre-calculated Trauma and Injury Severity Score (TRISS) based on their injuries and current vital signs. \nThe TRISS score estimates the patient’s probability of survival based on initial factors like injury severity and age, offering a standardized reference for prioritizing early treatment within the initial evaluation period.\nPlease note that the score may change if injuries worsen or vital signs change over time."
+                    }
+                },
+                {
+                    "type": "radiogroup",
+                    "choices": [
+                        {
+                            "value": "Treat Casualty U with nasopharyngeal airway",
+                            "text": "Treat Casualty U with nasopharyngeal airway"
+                        },
+                        {
+                            "value": "Treat Casualty W with pressure bandage",
+                            "text": "Treat Casualty W with pressure bandage"
+                        }
+                    ],
+                    "isRequired": true,
+                    "title": "What action do you take?",
+                    "name": "probe id-5",
+                    "probe_id": "vol-ph1-eval-4-Probe-6",
+                    "question_mapping": {
+                        "Treat Casualty U with nasopharyngeal airway": {
+                            "probe_id": "vol-ph1-eval-4-Probe-6",
+                            "choice": "choice-0"
+                        },
+                        "Treat Casualty W with pressure bandage": {
+                            "probe_id": "vol-ph1-eval-4-Probe-6",
+                            "choice": "choice-1"
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "author": "soartech",
+    "showQuestionNumbers": false,
+    "showPrevButton": false,
+    "title": "vol-ph1-eval-4",
+    "logoPosition": "right",
+    "completedHtml": "<h3>Thank you for completing the scenario</h3>",
+    "widthMode": "responsive",
+    "showProgressBar": "top",
+    "eval": "phase1"
+};
+
 export const userScenarioResultMock = {
     "scenario_id": "phase1-adept-eval-MJ2",
     "participantID": "202411309",
@@ -76,7 +1159,7 @@ export const userScenarioResultMock = {
         }
     ],
     "dreSessionId": "73c7e03a-c11c-4dd2-9c54-e1194a20454f"
-}
+};
 
 export const surveyResultMock = {
     "results": {
@@ -856,4 +1939,4 @@ export const surveyResultMock = {
             }
         }
     }
-}
+};

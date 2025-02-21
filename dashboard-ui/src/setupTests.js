@@ -6,8 +6,8 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import { ParticipantLog, SurveyConfig, SurveyResults, SurveyVersion, UserScenarioResults } from './__mocks__/mockDbSchema.js';
-import { surveyResultMock, userScenarioResultMock } from './__mocks__/mockData.js';
+import { ParticipantLog, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UserScenarioResults } from './__mocks__/mockDbSchema.js';
+import { surveyResultMock, textConfigMock, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
@@ -29,6 +29,10 @@ beforeAll(async () => {
         const surveyResults = new SurveyResults(surveyResultMock);
 
         await surveyResults.save();
+
+        const textConfig = new TextBasedConfig(textConfigMock);
+
+        await textConfig.save();
 
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
