@@ -209,8 +209,12 @@ const HEADER = {
         "VOL_KDE_Sim",
         "VOL_KDMA_Sim",
         "MJ_KDMA_Text",
+        "MJ_KDMA_Text_Narr",
+        "MJ_KDMA_Text_NonNarr",
         "MJ_KDMA_Sim",
         "IO_KDMA_Text",
+        "IO_KDMA_Text_Narr",
+        "IO_KDMA_Text_NonNarr",
         "IO_KDMA_Sim"
     ],
     5: [
