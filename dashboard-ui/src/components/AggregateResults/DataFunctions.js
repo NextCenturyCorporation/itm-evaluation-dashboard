@@ -867,6 +867,12 @@ function populateDataSet(data) {
                     tmpSet['IO_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
                 }
 
+                // add new individual kdmas for adept
+                tmpSet['MJ_KDMA_Text_Narr'] = getKDMAValue(data, pid, "Moral judgement", true);
+                tmpSet['MJ_KDMA_Text_NonNarr'] = getKDMAValue(data, pid, "Moral judgement", false);
+                tmpSet['IO_KDMA_Text_Narr'] = getKDMAValue(data, pid, "Ingroup Bias", true);
+                tmpSet['IO_KDMA_Text_NonNarr'] = getKDMAValue(data, pid, "Ingroup Bias", false);
+
                 const qol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.serverSessionId;
                 const qol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('qol'))?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
                 tmpSet['QOL_KDMA_Text'] = qol_text_kdma?.value;
@@ -1215,6 +1221,37 @@ function populateDataSet(data) {
 
     return allResults.filter((x) => isDefined(x['Date']));
 }
+
+// grabs the INDIVIDUAL kdma for an adept scenario
+function getKDMAValue(data, pid, kdmaType, isNarrative) {
+    const text_scenarios = data.getAllScenarioResultsByEval;
+    
+    if (isNarrative) {
+        const narr = ['MJ2', 'MJ4', 'MJ5'];
+        const matching = text_scenarios.find(doc => 
+            narr.some(n => doc.scenario_id?.includes(n)) && 
+            doc.participantID === pid
+        );
+
+        if (matching?.individual_kdma) {
+            const kdma = matching.individual_kdma.find(k => k.kdma === kdmaType);
+            return kdma?.value ?? null;
+        }
+    } else {
+        const prefix = kdmaType === "Moral judgement" ? "MJ" : "IO";
+        const matching = text_scenarios.find(doc => 
+            doc.scenario_id?.includes(`${prefix}1`) && 
+            doc.participantID === pid
+        );
+
+        if (matching?.individual_kdma?.[0]) {
+            return matching.individual_kdma[0].value;
+        }
+    }
+    
+    return null;
+}
+
 
 function getAggregatedData() {
     return AGGREGATED_DATA;
