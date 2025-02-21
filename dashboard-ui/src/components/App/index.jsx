@@ -10,7 +10,6 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 // Components
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
-import ScenarioPage from '../ScenarioPage/scenarioPage';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
@@ -375,7 +374,6 @@ export function App() {
                             <AggregateResults type="HumanProbeData" />
                         </Route>}
 
-                        {isUserElevated(currentUser) && <Route exact path="/scenarios" component={ScenarioPage} />}
                         {isUserElevated(currentUser) && <Route exact path="/human-results" component={HumanResults} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq1" component={RQ1} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}

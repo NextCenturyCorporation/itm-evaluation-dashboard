@@ -10,7 +10,6 @@ function runRoutePermissionTests(allowApprovalPage = false) {
         '/adm-results',
         '/adm-probe-responses',
         '/humanSimParticipant',
-        '/scenarios',
         '/humanProbeData',
         '/human-results',
         '/research-results/rq1',

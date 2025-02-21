@@ -270,6 +270,9 @@ class TextBasedScenariosPage extends Component {
             }
 
         }
+        else {
+            history.push('/');
+        }
     }
 
     resetState() {

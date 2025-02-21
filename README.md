@@ -71,7 +71,8 @@ After running the script with your username added, you should be able to see all
 # Testing
 The dashboard uses [jest-puppeteer](https://www.npmjs.com/package/jest-puppeteer) for testing. Use the following scripts at the root level of the project to run tests:
 - `npm run setup-tests` - This will install all the necessary dependencies throughout the project in order to run the tests
-- `npm run test` - This will run the UI tests in watch-mode
+- `npm run test` - This will run the UI tests in single test-run mode
+- `npm run watch-tests` - This will run the UI tests in watch mode
 - `npm run clean` - This removes all of the package-lock files and node_modules directories throughout the entire project to ensure a clean start
 - To clean on Windows, you will need to manually remove all package-lock files and node_modules directories
 

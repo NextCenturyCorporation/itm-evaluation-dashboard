@@ -19,9 +19,6 @@ export function Header({ currentUser, logout }) {
                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
                         Take Delegation Survey
                     </NavDropdown.Item>
-                    <NavDropdown.Item as={Link} className="dropdown-item" to="/text-based" disabled>
-                        Complete Text Scenarios
-                    </NavDropdown.Item>
                     {(currentUser.admin === true || currentUser.evaluator) && (
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
                             Review Text Scenarios
