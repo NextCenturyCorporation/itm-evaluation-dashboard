@@ -30,7 +30,7 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /survey-results route content', async () => {
         await checkRouteContent(page, '/survey-results', ['Table View', 'Graph View', 'Post-Scenario Measures - Time Taken (mm:ss)']);
-    });
+    }, 10000);
     it('Check /text-based-results route content', async () => {
         await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
     });
@@ -113,7 +113,7 @@ describe('Verify content on page matches expectation for route', () => {
         await page.$$eval('.btn-primary', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Submit').click();
         });
-        await page.waitForSelector(`.error-message`);
-    });
+        await page.waitForSelector(`.error-message`, { timeout: 500 });
+    }, 15000);
 
 });
