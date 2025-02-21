@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedScenariosPage";
 import { useHistory, useLocation } from 'react-router-dom';
 import bcrypt from 'bcryptjs';
-
+import '../../css/scenario-page.css';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {

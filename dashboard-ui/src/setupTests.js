@@ -7,7 +7,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
 import { ParticipantLog, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UserScenarioResults } from './__mocks__/mockDbSchema.js';
-import { surveyResultMock, textConfigMock, userScenarioResultMock } from './__mocks__/mockData.js';
+import { surveyResultMock, surveyV5, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
@@ -30,9 +30,11 @@ beforeAll(async () => {
 
         await surveyResults.save();
 
-        const textConfig = new TextBasedConfig(textConfigMock);
+        for (const textConfigMock of textConfigMocks) {
+            const textConfig = new TextBasedConfig(textConfigMock);
 
-        await textConfig.save();
+            await textConfig.save();
+        }
 
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
@@ -56,21 +58,7 @@ beforeAll(async () => {
                 }]
             }
         });
-        const surveyConfig5 = new SurveyConfig({
-            _id: 'delegation_v5.0',
-            survey: {
-                pages: [{
-                    name: "Participant ID Page",
-                    elements: [
-                        {
-                            type: "text",
-                            name: "Participant ID",
-                            title: "Enter Participant ID:",
-                            isRequired: true
-                        }]
-                }]
-            }
-        });
+        const surveyConfig5 = new SurveyConfig(surveyV5);
         await surveyConfig4.save();
         await surveyConfig5.save();
 
@@ -204,7 +192,7 @@ beforeAll(async () => {
                                     const foundUser = testUsers.find((testUser) => testUser.username.toLowerCase() == user.username.toLowerCase());
                                     if (!foundUser) {
                                         if (usernamesToIgnoreWarnings.find((uname) => uname.toLowerCase() == user.username.toLowerCase()) == null) {
-                                        // do not warn if we are expecting this to fail. 
+                                            // do not warn if we are expecting this to fail. 
                                             console.warn(`Error creating user with username ${user.username}. Please check the mockUsers.js file and ensure you have entered the information correctly.`);
                                         }
                                         return null;
