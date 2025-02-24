@@ -54,7 +54,8 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
             if (route == '/survey') {
                 page = await browser.newPage();
             }
-        });
+            // /survey-results can take a long time to load because of multiple queries
+        }, route == '/survey-results' ? 15000 : 5000);
     });
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {

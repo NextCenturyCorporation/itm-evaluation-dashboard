@@ -96,7 +96,7 @@ export function SurveyResults() {
             if (!pid) {
                 continue;
             }
-            const logData = dataParticipantLog.getParticipantLog.find(
+            const logData = dataParticipantLog?.getParticipantLog.find(
                 log => log['ParticipantID'] == pid && log['Type'] != 'Test'
             );
             if ((filterBySurveyVersion == 4 || filterBySurveyVersion == 5) && !logData) {

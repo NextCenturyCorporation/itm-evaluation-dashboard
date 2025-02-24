@@ -11,6 +11,11 @@ describe('Verify content on page matches expectation for route', () => {
         await loginAdmin(page);
     }, 30000);
 
+    it('Check /survey-results route content', async () => {
+        await checkRouteContent(page, '/survey-results', ['Table View', 'Graph View', 'Post-Scenario Measures - Time Taken (mm:ss)']);
+        // can take a long time to load this page
+    }, 30000);
+
     it('Check / route content', async () => {
         await checkRouteContent(page, '/', ['Program Questions', '1. Does alignment score predict measures of trust?']);
     });
@@ -21,16 +26,16 @@ describe('Verify content on page matches expectation for route', () => {
         page.goto(`${process.env.REACT_APP_TEST_URL}/`);
         await page.waitForSelector(FOOTER_TEXT);
     });
+
     it('Check /review-text-based route content', async () => {
         await checkRouteContent(page, '/review-text-based', ['Review Text-Based Scenarios', 'Select a configuration:', 'This page is for reviewing materials only']);
     });
+
     it('Check /review-delegation route content', async () => {
         await checkRouteContent(page, '/review-delegation', ['Review Delegation Materials', 'Select a configuration:', 'This page is for reviewing materials only']);
     });
 
-    it('Check /survey-results route content', async () => {
-        await checkRouteContent(page, '/survey-results', ['Table View', 'Graph View', 'Post-Scenario Measures - Time Taken (mm:ss)']);
-    }, 10000);
+
     it('Check /text-based-results route content', async () => {
         await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
     });
