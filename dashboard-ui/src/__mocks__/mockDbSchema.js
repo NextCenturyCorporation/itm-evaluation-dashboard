@@ -75,7 +75,25 @@ const UserScenarioResults = createSchema('userScenarioResults', {
 const SurveyConfig = createSchema('delegationConfig', {
     _id: { type: String, required: true },
     survey: { type: JSON, required: true }
-})
+});
+
+const TextBasedConfig = createSchema('textBasedConfig', {
+    _id: { type: String, required: true },
+    scenario_id: { type: String, required: true },
+    name: { type: String, required: true },
+    pages: { type: JSON, required: true },
+    author: { type: String, required: true },
+    showQuestionNumbers: { type: Boolean, required: true },
+    showPrevButton: { type: Boolean, required: true },
+    title: { type: String, required: true },
+    logoPosition: { type: String, required: true },
+    completedHtml: { type: String, required: true },
+    widthMode: { type: String, required: true },
+    showProgressBar: { type: String, required: true },
+    eval: { type: String, required: true }
+});
 
 
-export { SurveyConfig, SurveyResults, SurveyVersion, ParticipantLog, AdmLog, UserScenarioResults, User };
+
+
+export { SurveyConfig, SurveyResults, SurveyVersion, ParticipantLog, AdmLog, UserScenarioResults, User, TextBasedConfig };

@@ -25,6 +25,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
+import '../../css/scenario-page.css';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
