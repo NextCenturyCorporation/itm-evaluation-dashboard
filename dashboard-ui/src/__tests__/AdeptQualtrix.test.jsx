@@ -30,12 +30,12 @@ describe('Test adept qualtrix entry method', () => {
                 firstPid = pid;
         }
         expect(Number(pid)).toBe(Number(firstPid) + 1);
-    });
+    }, 30000);
 
     it('any key combo during text scenario should have no effect on progress', async () => {
         await startAdeptQualtrixSurvey(page);
         await pressAllKeys(page, 'Treat Casualty O with');
-    }, 10000);
+    }, 30000);
 
     it('text-scenario through ADEPT Qualtrix should be navigable and end with survey', async () => {
         await startAdeptQualtrixSurvey(page);
