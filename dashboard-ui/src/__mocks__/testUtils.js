@@ -1,3 +1,5 @@
+import { isDefined } from "../components/AggregateResults/DataFunctions";
+
 export const FOOTER_TEXT = 'text/This research was developed';
 export const WAITING_TEXT = 'Thank you for your interest in the DARPA In the Moment Program.';
 export const HOME_TEXT = 'text/Program Questions';
@@ -112,4 +114,78 @@ export async function loginBasicApprovedUser(page) {
     await logout(page);
     await login(page, 'basic', 'secretBasicPassword123', true);
     await page.waitForSelector('text/Welcome to the ITM Program!');
+}
+
+export async function checkRouteContent(page, route, expectedText) {
+    await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
+    await page.waitForSelector(FOOTER_TEXT);
+    for (const txt of expectedText) {
+        await page.waitForSelector(`text/${txt}`, { timeout: 500 });
+    }
+}
+
+export async function useMenuNavigation(page, header, selection, expectedRoute, userMenu = false) {
+    await page.$$eval((userMenu ? '.login-user-content ' : '') + '.dropdown-toggle', (buttons, header) => {
+        if (header != '')
+            Array.from(buttons).find(btn => btn.textContent == header).click();
+        else
+            Array.from(buttons)[0].click();
+    }, header);
+    await page.$$eval('.dropdown-item', (buttons, selection) => {
+        Array.from(buttons).find(btn => btn.textContent == selection).click();
+    }, selection);
+    const currentUrl = page.url();
+    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRoute}`);
+}
+
+export async function startAdeptQualtrixSurvey(page) {
+    await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+    await page.waitForSelector('text=Welcome to the ITM Text Scenario experiment. Thank you for your participation.', { timeout: 500 });
+    await page.$$eval('button', buttons => {
+        Array.from(buttons).find(btn => btn.textContent == 'Start').click();
+    });
+    await page.waitForSelector('text/Page 1 of', { timeout: 500 });
+}
+
+export async function pressAllKeys(page, uniqueExpectedText) {
+    // https://pptr.dev/api/puppeteer.keyinput
+    const keysToPress = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Power', 'Eject', 'Abort', 'Help', 'Backspace', 'Numpad5', 'NumpadEnter',
+        'Enter', '\r', '\n', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'Pause', 'CapsLock', 'Escape', 'Convert', 'NonConvert',
+        'Space', 'Numpad9', 'PageUp', 'Numpad3', 'PageDown', 'End', 'Numpad1', 'Home', 'Numpad7', 'ArrowLeft', 'Numpad4', 'Numpad8', 'ArrowUp', 'ArrowRight', 'Numpad6',
+        'Numpad2', 'ArrowDown', 'Select', 'Open', 'PrintScreen', 'Insert', 'Numpad0', 'Delete', 'NumpadDecimal', 'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4',
+        'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE', 'KeyF', 'KeyG', 'KeyH', 'KeyI', 'KeyJ', 'KeyK', 'KeyL', 'KeyM', 'KeyN',
+        'KeyO', 'KeyP', 'KeyQ', 'KeyR', 'KeyS', 'KeyT', 'KeyU', 'KeyV', 'KeyW', 'KeyX', 'KeyY', 'KeyZ', 'MetaLeft', 'MetaRight', 'ContextMenu', 'NumpadMultiply', 'NumpadAdd',
+        'NumpadSubtract', 'NumpadDivide', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F19', 'F20',
+        'F21', 'F22', 'F23', 'F24', 'NumLock', 'ScrollLock', 'AudioVolumeMute', 'AudioVolumeDown', 'AudioVolumeUp', 'MediaTrackNext', 'MediaTrackPrevious', 'MediaStop',
+        'MediaPlayPause', 'Semicolon', 'Equal', 'NumpadEqual', 'Comma', 'Minus', 'Period', 'Slash', 'Backquote', 'BracketLeft', 'Backslash', 'BracketRight', 'Quote', 'AltGraph',
+        'Props', 'Cancel', 'Clear', 'Shift', 'Control', 'Alt', 'Accept', 'ModeChange', ' ', 'Print', 'Execute', '\u0000', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+        'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'Meta', '*', '+', '-', '/', ';', '=', ',', '.', '`', '[', '\\', ']', "'", 'Attn', 'CrSel',
+        'ExSel', 'EraseEof', 'Play', 'ZoomOut', ')', '!', '@', '#', '$', '%', '^', '&', '(', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+        'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ':', '<', '_', '>', '?', '~', '{', '|', '}', '"', 'SoftLeft', 'SoftRight', 'Camera', 'Call', 'EndCall', 'VolumeDown',
+        'VolumeUp', 'Tab'];
+    for (const key of keysToPress) {
+        await page.keyboard.press(key);
+        // first question in vol4 for ST should be visible no matter what key is pressed
+        await page.waitForSelector(`text/${uniqueExpectedText}`);
+    }
+}
+
+export async function takeTextScenario(page) {
+    let pageNum = 1;
+    let scenarios = 0;
+    while (scenarios < 5) {
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        await page.focus('input[type="radio"]');
+        await page.keyboard.press(' ');
+        await page.keyboard.press('Tab');
+        const completeBtn = await page.$('text/Complete');
+        if (isDefined(completeBtn)) {
+            pageNum = 1;
+            scenarios += 1;
+        }
+        else {
+            pageNum += 1;
+        }
+        await page.keyboard.press('Enter');
+    }
 }

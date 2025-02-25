@@ -11,7 +11,6 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         '/results',
         '/adm-probe-responses',
         '/humanSimParticipant',
-        '/scenarios',
         '/humanProbeData',
         '/human-results',
         '/research-results/rq1',
@@ -27,7 +26,8 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         '/participant-progress-table',
     ];
     let unallowedRoutes = [
-        '/random-link'
+        '/random-link',
+        '/text-based'
     ];
     if (isAdmin) {
         // admins can access all pages
@@ -35,16 +35,16 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
     }
     else if (isExperimenter) {
         // experimenters can access /pid-lookup and /participantTextTester, but not /admin
-        allowedRoutes.push(...['/pid-lookup', '/participantTextTester']); 
+        allowedRoutes.push(...['/pid-lookup', '/participantTextTester']);
         unallowedRoutes.push('/admin');
     }
     else if (isEvaluator || isAdeptUser) {
         // evaluators and AdeptUsers cannot access /admin, /pid-lookup, or /participantTextTester
-        unallowedRoutes.push(...['/admin', '/pid-lookup', '/participantTextTester']); 
+        unallowedRoutes.push(...['/admin', '/pid-lookup', '/participantTextTester']);
     }
     else {
         // users with no elevation cannot access any routes
-        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup', '/random-link', '/participantTextTester'].filter((x) => x != '/myaccount'); 
+        unallowedRoutes = [...allowedRoutes, '/admin', '/pid-lookup', '/random-link', '/participantTextTester'].filter((x) => x != '/myaccount');
         allowedRoutes = ['/', '/myaccount'];
 
     }
@@ -54,11 +54,15 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
             if (route == '/survey') {
                 page = await browser.newPage();
             }
-        });
+            // /survey-results can take a long time to load because of multiple queries
+        }, route == '/survey-results' ? 15000 : 5000);
     });
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
             await testRouteRedirection(route, '/');
+            if (route == '/text-based') {
+                page = await browser.newPage();
+            }
         });
     });
 }
@@ -70,7 +74,7 @@ describe('Route Redirection and Access Control Tests for admin', () => {
     }, 30000);
 
     runAllowedRoutesTests(true);
-    it('Administrators should not see extra headers on progress table', async () => {
+    it('Administrators should see extra headers on progress table', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
         await page.waitForSelector(FOOTER_TEXT);
         await page.waitForSelector('text/Participant Progress', { timeout: 500 });
