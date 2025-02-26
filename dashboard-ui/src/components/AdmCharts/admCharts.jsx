@@ -31,13 +31,13 @@ class AdmCharts extends React.Component {
     }
 
     getHeaderLabel(id, name) {
-        if(this.state.currentEval < 3) {
+        if (this.state.currentEval.value < 3) {
             if(id.toLowerCase().indexOf("adept") > -1 ) {
                 return ("BBN: " + id + " " + name);
             } else {
                 return ("Soartech: " + id + " " + name);
             }
-        } else if (this.state.currentEval == 3) {
+        } else if (this.state.currentEval.value == 3) {
             if(id.toLowerCase().indexOf("metricseval") > -1 ) {
                 return ("ADEPT: " + id + " " + name);
             } else {
