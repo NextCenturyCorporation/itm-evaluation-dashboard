@@ -332,6 +332,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 if (evalNum == 5 || evalNum == 6) {
                     const dre_comparison_entry = comparisons?.find((x) => x['dre_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
                     entryObj['DRE Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? dre_comparison_entry?.score : entryObj['Alignment score (Delegator|Observed_ADM (target))'];
+                
+                    entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;
                 }
                 if (evalNum == 4 && fullSetOnly) {
                     const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
