@@ -62,12 +62,12 @@
         "start": "react-scripts start",
         "start:test": "cross-env BROWSER=None cross-env PORT=3001 react-scripts start",
         "stop:test": "kill $(lsof -t -i:3001) $(lsof -t -i:4000) > /dev/null 2>&1",
-        "stop:test-win": "kill $(lsof -t -i:3001) $(lsof -t -i:4000) > NUL 2>&1",
+        "stop:test-win": "npx kill-port 3001  > NUL 2>&1 ; npx kill-port 4000 > NUL 2>&1",
         "build": "react-scripts build",
         "test": "cross-env REACT_APP_TESTING=true jest --no-cache --verbose --runInBand",
         "test-and-watch": "cross-env REACT_APP_TESTING=true jest --watchAll --runInBand",
         "eject": "react-scripts eject",
-        "clean": "rm -rf node_modules"
+        "clean": "rimraf node_modules package-lock.json"
     },
     "eslintConfig": {
         "extends": "react-app"

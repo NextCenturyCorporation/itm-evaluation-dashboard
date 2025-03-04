@@ -2,6 +2,9 @@
   "name": "node-graphql",
   "version": "0.0.1",
   "author": "Brian Pippin",
+  "scripts": {
+    "clean": "rimraf node_modules package-lock.json"
+},
   "dependencies": {
     "@accounts/graphql-api": "^0.33.1",
     "@accounts/magic-link": "^0.1.1",
