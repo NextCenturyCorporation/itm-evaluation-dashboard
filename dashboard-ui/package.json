@@ -67,7 +67,7 @@
         "test": "cross-env REACT_APP_TESTING=true jest --no-cache --verbose --runInBand",
         "test-and-watch": "cross-env REACT_APP_TESTING=true jest --watchAll --runInBand",
         "eject": "react-scripts eject",
-        "clean": "rimraf node_modules package-lock.json"
+        "clean": "npx rimraf node_modules package-lock.json"
     },
     "eslintConfig": {
         "extends": "react-app"

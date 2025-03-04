@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "author": "Brian Pippin",
   "scripts": {
-    "clean": "rimraf node_modules package-lock.json"
+    "clean": "npx rimraf node_modules package-lock.json"
   },
   "dependencies": {
     "@accounts/graphql-api": "^0.33.1",

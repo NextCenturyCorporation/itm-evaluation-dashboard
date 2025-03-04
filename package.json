@@ -4,7 +4,7 @@
     "setup-tests": "npm i && npm --prefix ./dashboard-ui i --legacy-peer-deps && npm --prefix ./node-graphql i",
     "watch-tests": "npm --prefix ./dashboard-ui run test-and-watch",
     "test": "npm --prefix ./dashboard-ui run test",
-    "clean-root": "rimraf node_modules package-lock.json",
+    "clean-root": "npx rimraf node_modules package-lock.json",
     "clean": "npm --prefix ./dashboard-ui run stop:test ; npm run clean-root ; npm --prefix ./dashboard-ui run clean ; npm --prefix ./node-graphql run clean",
     "clean-win": "npm --prefix ./dashboard-ui run stop:test-win ; npm run clean-root ; npm --prefix ./dashboard-ui run clean ; npm --prefix ./node-graphql run clean",
     "clean-ports": "npm --prefix ./dashboard-ui run stop:test",
