@@ -4,7 +4,7 @@
   "author": "Brian Pippin",
   "scripts": {
     "clean": "rimraf node_modules package-lock.json"
-},
+  },
   "dependencies": {
     "@accounts/graphql-api": "^0.33.1",
     "@accounts/magic-link": "^0.1.1",
@@ -24,5 +24,8 @@
     "mongoose": "^5.13.14",
     "nodemailer": "^6.4.16",
     "url-exist": "^2.0.0"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.10"
   }
 }
