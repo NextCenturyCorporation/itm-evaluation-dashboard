@@ -6,7 +6,7 @@
     "test": "npm --prefix ./dashboard-ui run test",
     "clean-root": "npx rimraf node_modules package-lock.json",
     "clean": "npm --prefix ./dashboard-ui run stop:test ; npm run clean-root ; npm --prefix ./dashboard-ui run clean ; npm --prefix ./node-graphql run clean",
-    "clean-win": "npm --prefix ./dashboard-ui run stop:test-win ; npm run clean-root ; npm --prefix ./dashboard-ui run clean ; npm --prefix ./node-graphql run clean",
+    "clean-win": "npm --prefix ./dashboard-ui run stop:test-win & npm run clean-root & npm --prefix ./dashboard-ui run clean & npm --prefix ./node-graphql run clean",
     "clean-ports": "npm --prefix ./dashboard-ui run stop:test",
     "clean-ports-win": "npm --prefix ./dashboard-ui run stop:test-win"
   },
