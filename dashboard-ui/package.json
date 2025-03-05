@@ -29,7 +29,7 @@
         "file-saver": "2.0.5",
         "graphql": "^16.8.1",
         "graphql-tag": "^2.12.6",
-                "jquery": "^3.7.1",
+        "jquery": "^3.7.1",
         "material-design-icons": "^3.0.1",
         "query-string": "^9.0.0",
         "rc-slider": "^10.5.0",
