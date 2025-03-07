@@ -171,7 +171,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 </div>
             )
         ));
-
+    
         const patientCards = patients.map(patient => {
             if (visiblePatients[patient.name] && sceneCharacters.includes(patient.name)) {
                 return (
@@ -212,7 +212,30 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             }
             return null;
         });
-
+    
+        // Group actions by events
+        const groupedActions = [];
+        let currentGroup = [];
+        
+        if (sceneActions) {
+            sceneActions.forEach((action, index) => {
+                const text = getActionText(action);
+                
+                // Start a new group when we encounter an update
+                if (text.includes('Update:') && currentGroup.length > 0) {
+                    groupedActions.push([...currentGroup]);
+                    currentGroup = [action];
+                } else {
+                    currentGroup.push(action);
+                }
+                
+                // Add the last group
+                if (index === sceneActions.length - 1 && currentGroup.length > 0) {
+                    groupedActions.push([...currentGroup]);
+                }
+            });
+        }
+    
         return (
             <Accordion className='sceneAccordion' defaultActiveKey="0">
                 <Accordion.Item eventKey="0">
@@ -225,25 +248,43 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         </Row>
                         <Row>
                             <Col md={12}>
-                                <Accordion defaultActiveKey="1">
+                                <Accordion defaultActiveKey="1" className="medic-actions-accordion">
                                     <Accordion.Item eventKey="1">
-                                        <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
+                                        <Accordion.Header className="medic-actions-header">
+                                            <strong>Medic Actions</strong>
+                                        </Accordion.Header>
                                         <Accordion.Body>
-                                            <ListGroup>
-                                                {sceneActions && sceneActions.map((action, index) => (
-                                                    <ListGroup.Item
-                                                        key={`action-${index}`}
-                                                        className="action-item"
-                                                        style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
-                                                    >
-                                                        {processActionText(action, index, sceneActions)}
-                                                    </ListGroup.Item>
+                                            <div className="actions-container">
+                                                {groupedActions.map((group, groupIndex) => (
+                                                    <div key={`group-${groupIndex}`} className="event-action-group mb-4">
+                                                        {group.map((action, index) => {
+                                                            const text = typeof action === 'string' ? action : action?.text || '';
+                                                            const isUpdate = text.includes('Update:') || text.includes('Note:');
+                                                            const isQuestion = text.includes('Question:');
+                                                            const isHighlight = text.includes('<HIGHLIGHT>');
+                                                            
+                                                            let actionClass = 'action-item';
+                                                            if (isUpdate) actionClass += ' update';
+                                                            else if (isQuestion) actionClass += ' question';
+                                                            else actionClass += ' choice';
+                                                            if (isHighlight) actionClass += ' highlight';
+    
+                                                            return (
+                                                                <div
+                                                                    key={`action-${groupIndex}-${index}`}
+                                                                    className={actionClass}
+                                                                >
+                                                                    {processActionText(action, index, group)}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 ))}
-                                            </ListGroup>
+                                            </div>
                                         </Accordion.Body>
                                     </Accordion.Item>
                                 </Accordion>
-
+    
                                 <div style={{ marginBottom: '10px', marginTop: '10px' }}>
                                     {patientButtons}
                                 </div>
