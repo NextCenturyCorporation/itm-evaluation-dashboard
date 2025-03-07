@@ -74,7 +74,7 @@ The dashboard uses [jest-puppeteer](https://www.npmjs.com/package/jest-puppeteer
 - `npm run test` - This will run the UI tests in single test-run mode
 - `npm run watch-tests` - This will run the UI tests in watch mode
 - `npm run clean` - This removes all of the package-lock files and node_modules directories throughout the entire project to ensure a clean start
-- To clean on Windows, you will need to manually remove all package-lock files and node_modules directories
+- To clean on Windows, run `npm run clean-win` instead. 
 
 ## Quick Start
 In the root directory, run 

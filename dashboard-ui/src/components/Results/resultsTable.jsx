@@ -129,7 +129,7 @@ class ResultsTable extends React.Component {
             } else {
                 return ("Soartech: " + id);
             }
-        } else if (this.state.currentEval == 3) {
+        } else if (this.state.evalNumber == 3) {
             if (id.toLowerCase().indexOf("metricseval") > -1) {
                 return ("ADEPT: " + id);
             } else {
@@ -348,7 +348,11 @@ class ResultsTable extends React.Component {
                                 }
                             </Query> :
                             <>
-                                <RQ2223 evalNum={this.state.evalNumber} />
+                                {this.state.evalNumber >= 4 ?
+                                    <RQ2223 evalNum={this.state.evalNumber} /> :
+                                    <div className="graph-section">
+                                        <h2>Please select a{this.state.scenario == "" ? " scenario" : this.state.adm == "" ? "n ADM" : "n alignment target"} to view results</h2>
+                                    </div>}
                             </>
                         }
                     </div>
