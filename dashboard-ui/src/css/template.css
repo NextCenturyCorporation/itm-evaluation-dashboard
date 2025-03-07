@@ -2,78 +2,78 @@
   background-color: #f7f7f7;
   font-weight: bold;
   font-size: 16px;
- }
- 
- .patient-card {
+}
+
+.patient-card {
   width: 30%;
- }
- 
- .scene {
+}
+
+.scene {
   display: flex;
   flex-direction: column;
   width: 100%;
- }
- 
- .patient-buttons {
+}
+
+.patient-buttons {
   display: inline;
- }
- 
- .sceneAccordion {
+}
+
+.sceneAccordion {
   border: 1px solid #ddd;
   border-radius: 8px;
   margin-bottom: 8px;
- }
- 
- .card {
+}
+
+.card {
   margin-bottom: 1rem;
   overflow-wrap: break-word;
   white-space: normal;
- }
- 
- .card-text {
+}
+
+.card-text {
   font-weight: normal;
   font-size: 14px;
- }
- 
- .card-container {
+}
+
+.card-container {
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
- }
- 
- .patient-card {
+}
+
+.patient-card {
   width: 100%;
   margin-right: 0.33%;
   display: inline-block;
   vertical-align: top;
- }
- 
- .patient-image {
+}
+
+.patient-image {
   width: 100%;
   object-fit: fit;
- }
- 
- .list-group {
+}
+
+.list-group {
   font-size: 14px; 
- }
- 
- .modal-body {
+}
+
+.modal-body {
   font-size: 14px;  
- }
- 
- .accordion-body {
+}
+
+.accordion-body {
   white-space: normal;
   word-break: break-word;
   font-size: 14px; 
- }
- 
- .magnifying-glass-icon:hover {
+}
+
+.magnifying-glass-icon:hover {
   transform: scale(1.25);
   cursor: pointer;
   transition: transform 0.5s ease-in-out;
- }
- 
- .magnifying-glass {
+}
+
+.magnifying-glass {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -81,83 +81,78 @@
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 50%;
   padding: 5px;
- }
- 
- .magnifying-glass:hover {
+}
+
+.magnifying-glass:hover {
   transform: scale(1.5);
   cursor: pointer;
   transition: transform 0.5s ease-in-out;
- }
- 
- .vitals-list-group {
+}
+
+.vitals-list-group {
   overflow-y: auto;
- }
- 
- .patient-row {
+}
+
+.patient-row {
   align-items: start;
   overflow: hidden;
- }
- 
- .accordion-button {
+}
+
+.accordion-button {
   background-color: rgb(217, 216, 216) !important;
   font-size: 16px;  
- }
- 
- .accordion-button:not(.collapsed) {
+}
+
+.accordion-button:not(.collapsed) {
   color: #212529;
- }
- 
- .action-item {
-  font-size: 14px; 
-  padding: 10px 15px; 
- }
- 
- .scenario-info-icon {
+}
+
+.scenario-info-icon {
   font-size: 14px;  
- }
- 
- body, button, input, select, textarea {
+}
+
+body, button, input, select, textarea {
   font-size: 14px;
- }
- 
- .action-comparison-modal {
+}
+
+.action-comparison-modal {
   padding: 0 !important;
- }
- 
- .action-comparison-modal .modal-dialog {
+}
+
+.action-comparison-modal .modal-dialog {
   max-width: 100% !important;
   margin: 0;
   height: 100vh;
- }
- 
- .action-comparison-modal .modal-content {
+}
+
+.action-comparison-modal .modal-content {
   min-height: 100vh;
   border: none;
   border-radius: 0;
- }
- 
- .action-comparison-modal .modal-body {
+}
+
+.action-comparison-modal .modal-body {
   padding: 1.5rem;
   height: calc(100vh - 60px);
   overflow-y: auto;
- }
- 
- .action-comparison-modal .modal-header {
+}
+
+.action-comparison-modal .modal-header {
   background-color: #f7f7f7;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #dee2e6;
- }
- 
- .action-comparison-modal .tab-content {
+}
+
+.action-comparison-modal .tab-content {
   height: calc(100vh - 160px); 
   overflow-y: auto;
- }
- 
- .action-comparison-modal .card-body.overflow-auto {
+}
+
+.action-comparison-modal .card-body.overflow-auto {
   max-height: calc(100vh - 300px) !important;
- }
- 
- .medic-actions-header {
+}
+
+.medic-actions-header {
   background-color: #f0f0f0;
   border: none;
   border-radius: 5px 5px 0 0;
@@ -166,13 +161,13 @@
   font-size: 16px;
   color: #333;
   transition: background-color 0.2s ease;
- }
- 
- .medic-actions-header:hover {
+}
+
+.medic-actions-header:hover {
   background-color: #e0e0e0;
- }
- 
- .actions-container {
+}
+
+.actions-container {
   max-height: calc(70vh - 200px);
   overflow-y: auto;
   scrollbar-width: thin;
@@ -181,28 +176,28 @@
   background-color: #fff;
   border-radius: 0 0 5px 5px;
   border: 1px solid #eaeaea;
- }
- 
- .actions-container::-webkit-scrollbar {
+}
+
+.actions-container::-webkit-scrollbar {
   width: 8px;
- }
- 
- .actions-container::-webkit-scrollbar-track {
+}
+
+.actions-container::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 10px;
- }
- 
- .actions-container::-webkit-scrollbar-thumb {
+}
+
+.actions-container::-webkit-scrollbar-thumb {
   background-color: #b15e2f;
   border-radius: 10px;
   border: 2px solid rgba(0, 0, 0, 0.05);
- }
- 
- .actions-container::-webkit-scrollbar-thumb:hover {
+}
+
+.actions-container::-webkit-scrollbar-thumb:hover {
   background-color: #a04e1f;
- }
- 
- .action-item {
+}
+
+.action-item {
   position: relative;
   margin-bottom: 8px !important;
   padding: 12px 16px !important;
@@ -210,93 +205,94 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
   transition: all 0.2s ease-in-out !important;
   border-radius: 0 !important;
- }
- 
- .action-item:last-child {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+
+.action-item:last-child {
   margin-bottom: 0 !important;
- }
- 
- .action-item:hover {
+}
+
+.action-item:hover {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
- }
- 
- .action-item.update {
+}
+
+.action-item.update {
   background-color: #f8f9fa !important;
   border-left-color: #6c757d !important;
- }
- 
- .action-item.question {
+}
+
+.action-item.question {
   background-color: #f0f7ff !important;
   border-left-color: #0d6efd !important;
-  font-size: 18px !important;
   font-weight: 600 !important;
- }
- 
- .action-item.choice {
+}
+
+.action-item.choice {
   background-color: #ffffff !important;
   border-left-color: #28a745 !important;
- }
- 
- .action-item.highlight {
+}
+
+.action-item.highlight {
   background-color: rgb(251, 252, 152) !important;
   border-left-color: #ffc107 !important;
- }
- 
- .action-sequence {
+}
+
+.action-sequence {
   border-left: 3px solid #eaeaea;
   margin-left: 10px;
   padding-left: 20px;
   position: relative;
- }
- 
- .action-sequence .action-item {
+}
+
+.action-sequence .action-item {
   margin-bottom: 0 !important;
   border-bottom: 1px solid #f0f0f0 !important;
- }
- 
- .action-sequence .action-item:last-child {
+}
+
+.action-sequence .action-item:last-child {
   border-bottom: none !important;
- }
- 
- .medic-actions-accordion .accordion-button:not(.collapsed) {
+}
+
+.medic-actions-accordion .accordion-button:not(.collapsed) {
   background-color: #f7f7f7;
   box-shadow: none;
   color: #333;
- }
- 
- .medic-actions-accordion .accordion-button:focus {
+}
+
+.medic-actions-accordion .accordion-button:focus {
   box-shadow: none;
   border-color: rgba(177, 94, 47, 0.5);
- }
- 
- .medic-actions-accordion .accordion-body {
+}
+
+.medic-actions-accordion .accordion-body {
   padding: 0;
- }
- 
- .event-action-group {
+}
+
+.event-action-group {
   margin-bottom: 0;
- }
- 
- .action-item.update::before,
- .action-item.question::before,
- .action-item.choice::before {
+}
+
+.action-item.update::before,
+.action-item.question::before,
+.action-item.choice::before {
   display: inline-block;
   margin-right: 8px;
   font-family: "Font Awesome 5 Free";
   font-weight: 900;
- }
- 
- .action-item.update::before {
+}
+
+.action-item.update::before {
   content: "\f05a";
   color: #6c757d;
- }
- 
- .action-item.question::before {
+}
+
+.action-item.question::before {
   content: "\f059";
   color: #0d6efd;
- }
- 
- .action-item.choice::before {
+}
+
+.action-item.choice::before {
   content: "\f00c";
   color: #28a745;
- }
+}
