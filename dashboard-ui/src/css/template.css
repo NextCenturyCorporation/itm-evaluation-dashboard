@@ -319,11 +319,6 @@ body, button, input, select, textarea {
   font-size: 15px;
 }
 
-.supply-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
 .supply-name {
   font-weight: 500;
 }
@@ -335,4 +330,166 @@ body, button, input, select, textarea {
 .supply-badge {
   font-weight: 500;
   font-size: 0.85rem;
+}
+
+.patient-card-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  height: 100%;
+}
+
+.patient-card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eaeaea;
+  padding: 12px 16px;
+}
+
+.patient-card-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.patient-card-subtitle {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.patient-description {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.patient-image-container {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.stats-section {
+  margin-top: 16px;
+}
+
+.stats-card {
+  border-radius: 8px;
+  border: none;
+  height: 100%;
+  transition: box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.vitals-card {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e7f1ff 100%);
+  border-left: 4px solid #0d6efd;
+}
+
+.injuries-card {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+  border-left: 4px solid #dc3545;
+}
+
+.stats-header {
+  text-align: center;
+  padding: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.stats-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.stats-content {
+  padding: 12px;
+}
+
+/* Vitals items styling */
+.vital-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.vital-item:last-child {
+  border-bottom: none;
+}
+
+.vital-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d6efd;
+  flex-shrink: 0;
+}
+
+.vital-name-and-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 1;
+  margin-left: 10px;
+}
+
+.vital-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.vital-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.injury-item {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.injury-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.injury-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.injury-severity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.injury-severity-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.severity-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
