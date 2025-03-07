@@ -213,15 +213,13 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             return null;
         });
     
-        // Group actions by events
         const groupedActions = [];
         let currentGroup = [];
-        
+        // group action list by updates, makes it a little more readable
         if (sceneActions) {
             sceneActions.forEach((action, index) => {
                 const text = getActionText(action);
                 
-                // Start a new group when we encounter an update
                 if (text.includes('Update:') && currentGroup.length > 0) {
                     groupedActions.push([...currentGroup]);
                     currentGroup = [action];
@@ -229,7 +227,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     currentGroup.push(action);
                 }
                 
-                // Add the last group
                 if (index === sceneActions.length - 1 && currentGroup.length > 0) {
                     groupedActions.push([...currentGroup]);
                 }

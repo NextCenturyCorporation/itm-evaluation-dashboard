@@ -152,6 +152,46 @@ body, button, input, select, textarea {
   max-height: calc(100vh - 300px) !important;
 }
 
+.medic-actions-accordion .accordion-button {
+  background: #f0f0f0 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 14px 20px !important;
+  color: #333 !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.medic-actions-accordion .accordion-button:not(.collapsed) {
+  background: #e0e0e0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.medic-actions-accordion .accordion-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.medic-actions-accordion .accordion-body {
+  padding: 0 !important;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  background-color: #fff;
+}
+
+.medic-actions-accordion {
+  margin-bottom: 20px;
+}
+
+.medic-actions-header {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
 .medic-actions-header {
   background-color: #f0f0f0;
   border: none;
@@ -252,17 +292,6 @@ body, button, input, select, textarea {
 
 .action-sequence .action-item:last-child {
   border-bottom: none !important;
-}
-
-.medic-actions-accordion .accordion-button:not(.collapsed) {
-  background-color: #f7f7f7;
-  box-shadow: none;
-  color: #333;
-}
-
-.medic-actions-accordion .accordion-button:focus {
-  box-shadow: none;
-  border-color: rgba(177, 94, 47, 0.5);
 }
 
 .medic-actions-accordion .accordion-body {
@@ -415,7 +444,6 @@ body, button, input, select, textarea {
   padding: 12px;
 }
 
-/* Vitals items styling */
 .vital-item {
   display: flex;
   align-items: center;
