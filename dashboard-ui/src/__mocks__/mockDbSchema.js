@@ -50,7 +50,7 @@ const User = createSchema('users', {
     adeptUser: { type: Boolean }
 });
 
-const AdmLog = createSchema('test', {
+const AdmLog = createSchema('admTargetRuns', {
     evaluation: { type: JSON },
     history: { type: Array, required: true },
     evalNumber: { type: Number, required: true },
