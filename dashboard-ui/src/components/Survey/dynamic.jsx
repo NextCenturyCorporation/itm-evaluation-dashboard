@@ -171,7 +171,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 </div>
             )
         ));
-    
+
         const patientCards = patients.map(patient => {
             if (visiblePatients[patient.name] && sceneCharacters.includes(patient.name)) {
                 return (
@@ -212,27 +212,27 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             }
             return null;
         });
-    
+
         const groupedActions = [];
         let currentGroup = [];
         // group action list by updates, makes it a little more readable
         if (sceneActions) {
             sceneActions.forEach((action, index) => {
                 const text = getActionText(action);
-                
+
                 if (text.includes('Update:') && currentGroup.length > 0) {
                     groupedActions.push([...currentGroup]);
                     currentGroup = [action];
                 } else {
                     currentGroup.push(action);
                 }
-                
+
                 if (index === sceneActions.length - 1 && currentGroup.length > 0) {
                     groupedActions.push([...currentGroup]);
                 }
             });
         }
-    
+
         return (
             <Accordion className='sceneAccordion' defaultActiveKey="0">
                 <Accordion.Item eventKey="0">
@@ -259,13 +259,13 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                                             const isUpdate = text.includes('Update:') || text.includes('Note:');
                                                             const isQuestion = text.includes('Question:');
                                                             const isHighlight = text.includes('<HIGHLIGHT>');
-                                                            
+
                                                             let actionClass = 'action-item';
                                                             if (isUpdate) actionClass += ' update';
                                                             else if (isQuestion) actionClass += ' question';
                                                             else actionClass += ' choice';
                                                             if (isHighlight) actionClass += ' highlight';
-    
+
                                                             return (
                                                                 <div
                                                                     key={`action-${groupIndex}-${index}`}
@@ -281,7 +281,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                         </Accordion.Body>
                                     </Accordion.Item>
                                 </Accordion>
-    
+
                                 <div style={{ marginBottom: '10px', marginTop: '10px' }}>
                                     {patientButtons}
                                 </div>
@@ -349,13 +349,29 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                 />
             }
 
-            <Modal show={showPatientModal} onHide={() => toggleImageModal("", activeTitle, "")}>
+            <Modal
+                show={showPatientModal}
+                onHide={() => toggleImageModal("", activeTitle, "")}
+                size="xl"
+                centered
+                className="w-100 mw-100"
+            >
                 <Modal.Header closeButton>
                     <Modal.Title>{activeTitle}</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                    {activeDescription}
-                    <img src={`data:image/jpeg;base64,${activeImage}`} alt="Enlarged view" style={{ width: '100%' }} />
+                <Modal.Body className="p-3">
+                    <p>{activeDescription}</p>
+                    <div className="d-flex justify-content-center align-items-center">
+                        <img
+                            src={`data:image/jpeg;base64,${activeImage}`}
+                            alt="Enlarged view"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '70vh',
+                                objectFit: 'contain'
+                            }}
+                        />
+                    </div>
                 </Modal.Body>
             </Modal>
 
