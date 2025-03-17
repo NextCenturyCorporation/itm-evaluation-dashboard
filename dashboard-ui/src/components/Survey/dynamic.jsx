@@ -241,10 +241,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             </Row>
             <Row>
                 <Col md={12}>
-                    <Accordion defaultActiveKey="1" className="medic-actions-accordion">
+                    <Accordion defaultActiveKey="1" className="medic-actions-accordion mb-3">
                         <Accordion.Item eventKey="1">
                             <Accordion.Header className="medic-actions-header">
-                                <strong className="w-100 text-center">Medic Actions</strong>
+                                <strong className="w-100 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>Medic Actions</strong>
                             </Accordion.Header>
                             <Accordion.Body>
                                 <div className="actions-container">
@@ -278,14 +278,23 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         </Accordion.Item>
                     </Accordion>
 
-                    <div style={{ marginBottom: '10px', marginTop: '10px' }}>
-                        {patientButtons}
-                    </div>
-                    <div className="card-container">
-                        <Row>
-                            {patientCards}
-                        </Row>
-                    </div>
+                    <Accordion defaultActiveKey="1" className="mb-3">
+                        <Accordion.Item eventKey="1">
+                            <Accordion.Header>
+                                <strong className="w-100 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>Patients</strong>
+                            </Accordion.Header>
+                            <Accordion.Body className="border border-top-0 rounded-bottom">
+                                <div className="mb-3 d-flex flex-wrap">
+                                    {patientButtons}
+                                </div>
+                                <div className="card-container">
+                                    <Row>
+                                        {patientCards}
+                                    </Row>
+                                </div>
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    </Accordion>
                 </Col>
             </Row>
         </>
@@ -319,33 +328,33 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     situation={situation} />
             }
             <Card className="mb-3">
-    <Card.Header className="bg-light border">
-        <div className="position-relative">
-            <h5 className="text-center mb-0" style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                Situation
-                <ZoomInIcon
-                    className="magnifying-glass-icon ms-2"
-                    onClick={handleShowSituationModal}
-                    style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-                />
-            </h5>
+                <Card.Header className="bg-light border">
+                    <div className="position-relative">
+                        <h5 className="text-center mb-0" style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                            Situation
+                            <ZoomInIcon
+                                className="magnifying-glass-icon ms-2"
+                                onClick={handleShowSituationModal}
+                                style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                            />
+                        </h5>
 
-            {mission?.roe && mission.roe !== "" && (
-                <div
-                    className="d-flex align-items-center scenario-info-icon position-absolute"
-                    style={{ cursor: 'pointer', top: '50%', right: '0', transform: 'translateY(-50%)' }}
-                    onClick={handleShowMoreDetailsModal}
-                >
-                    <FaInfoCircle size={28} color="#17a2b8" />
-                    <span className="ms-2 small text-muted d-none d-md-inline">Click For More Info</span>
-                </div>
-            )}
-        </div>
-    </Card.Header>
-    <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
-        {renderSituation(situation)}
-    </Card.Body>
-</Card>
+                        {mission?.roe && mission.roe !== "" && (
+                            <div
+                                className="d-flex align-items-center scenario-info-icon position-absolute"
+                                style={{ cursor: 'pointer', top: '50%', right: '0', transform: 'translateY(-50%)' }}
+                                onClick={handleShowMoreDetailsModal}
+                            >
+                                <FaInfoCircle size={28} color="#17a2b8" />
+                                <span className="ms-2 small text-muted d-none d-md-inline">Click For More Info</span>
+                            </div>
+                        )}
+                    </div>
+                </Card.Header>
+                <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
+                    {renderSituation(situation)}
+                </Card.Body>
+            </Card>
             {isDefined(scenes) ?
                 scenes.map((scene) => (
                     <Scene
