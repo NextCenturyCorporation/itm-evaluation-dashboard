@@ -329,11 +329,11 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             }
             <Card className="mb-3">
                 <Card.Header className="bg-light border">
-                    <div className="position-relative">
-                        <h5 className="text-center mb-0" style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                    <div className="d-flex justify-content-center align-items-center position-relative py-2">
+                        <h5 className="mb-0 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>
                             Situation
                             <ZoomInIcon
-                                className="magnifying-glass-icon ms-2"
+                                className="ms-2"
                                 onClick={handleShowSituationModal}
                                 style={{ cursor: 'pointer', verticalAlign: 'middle' }}
                             />
@@ -341,8 +341,8 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
 
                         {mission?.roe && mission.roe !== "" && (
                             <div
-                                className="d-flex align-items-center scenario-info-icon position-absolute"
-                                style={{ cursor: 'pointer', top: '50%', right: '0', transform: 'translateY(-50%)' }}
+                                className="d-flex align-items-center position-absolute end-0 me-2"
+                                style={{ cursor: 'pointer', top: '50%', transform: 'translateY(-50%)' }}
                                 onClick={handleShowMoreDetailsModal}
                             >
                                 <FaInfoCircle size={28} color="#17a2b8" />
