@@ -4,7 +4,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion } from './setupUtils';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 
 // Components
@@ -41,6 +41,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'material-design-icons/iconfont/material-icons.css';
 import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
+import { styled } from '@material-ui/core';
 
 
 const history = createBrowserHistory();
@@ -48,6 +49,12 @@ const history = createBrowserHistory();
 const GET_SURVEY_VERSION = gql`
   query GetSurveyVersion {
     getCurrentSurveyVersion
+  }
+`;
+
+const GET_CURRENT_STYLE = gql`
+  query GetCurrentStyle {
+    getCurrentStyle
   }
 `;
 
@@ -108,6 +115,8 @@ export function App() {
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
     const { data: configData, loading: configLoading, error: configError } = useQuery(GET_CONFIGS, { fetchPolicy: 'cache-first' });
+    const { data: styleData, loading: styleLoading, error: styleError } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
+    const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [isSetup, setIsSetup] = React.useState(false);
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
@@ -123,7 +132,11 @@ export function App() {
             setupTextBasedConfig(configData);
             setIsConfigDataLoaded(true);
         }
-    }, [versionData, configData]);
+        if (isDefined(styleData)) {
+            setCurrentUIStyle(styleData.getCurrentStyle);
+            setIsStyleDataLoaded(true);
+        }
+    }, [versionData, configData, styleData]);
 
     const setup = async () => {
         // refresh the session to get a new accessToken if expired
@@ -333,7 +346,7 @@ export function App() {
 
     return (
         <Router history={history}>
-            {isSetup && isVersionDataLoaded && isConfigDataLoaded && <div className="itm-app">
+            {isSetup && isVersionDataLoaded && isConfigDataLoaded && isStyleDataLoaded && <div className="itm-app">
                 {currentUser?.approved &&
                     <Header currentUser={currentUser} logout={logout} />
                 }

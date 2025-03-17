@@ -4,9 +4,13 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { FaBell, FaInfoCircle, } from 'react-icons/fa';
 import Supplies from './supplies';
+import SuppliesPhase1 from './suppliesPhase1';
 import Patient from './patient';
+import PatientPhase1 from './patientPhase1';
 import MoreDetailsModal from "./moreDetailsModal";
 import '../../css/medical-scenario.css';
+import store from '../../store/store';
+
 
 const CUSTOM_TYPE = "medicalScenario";
 
@@ -101,8 +105,22 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       showModal: false,
       selectedImage: null,
       showSituationModal: false,
-      showTransitionModal: false
+      showTransitionModal: false,
+      currentStyle: store.getState()?.configs?.currentStyle
     };
+
+    this.unsubscribe = store.subscribe(() => {
+      const newStyle = store.getState()?.configs?.currentStyle;
+      if (newStyle !== this.state.currentStyle) {
+        this.setState({ currentStyle: newStyle });
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
   }
 
   get question() {
@@ -253,6 +271,11 @@ export class MedicalScenario extends SurveyQuestionElementBase {
   }
 
   renderElement() {
+    const isPhase1Style = this.state.currentStyle === 'phase1';
+    
+    const PatientComponent = isPhase1Style ? PatientPhase1 : Patient;
+    const SuppliesComponent = isPhase1Style ? SuppliesPhase1 : Supplies;
+
     return (
       <Container fluid className="p-3" style={{ backgroundColor: '#f8f9fa' }}>
         <Row className="mb-4">
@@ -296,13 +319,13 @@ export class MedicalScenario extends SurveyQuestionElementBase {
         ))}
         <Row className="mb-4">
           <Col md={12}>
-            <Supplies supplies={this.supplies} />
+            <SuppliesComponent supplies={this.supplies} />
           </Col>
         </Row>
         <Row>
           {this.patients.map((patient, index) => (
             <Col md={6} key={index} className="mb-4">
-              <Patient
+              <PatientComponent
                 patient={patient}
                 onImageClick={this.handleImageClick}
                 blockedVitals={this.blockedVitals}

@@ -3,8 +3,9 @@ import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import '../../css/template.css';
 import Dynamic from "./dynamic";
+import DynamicPhase1 from "./dynamicPhase1";
 import { isDefined } from "../AggregateResults/DataFunctions";
-
+import store from '../../store/store';
 const CUSTOM_TYPE = "dynamic-template";
 
 export class DynamicTemplateModel extends Question {
@@ -144,6 +145,7 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         super(props);
         this.state = {
             userActions: [],
+            currentStyle: store.getState()?.configs?.currentStyle
         };
         this.updateActionLogs = this.updateActionLogs.bind(this);
         // review pages need parent.data, the actual survey needs parent.jsonObj
@@ -151,7 +153,20 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
         if (!isDefined(this.scenarioIndex)) {
             this.scenarioIndex = this.question.parent.data.jsonObj.scenarioIndex;
         }
+
+        this.unsubscribe = store.subscribe(() => {
+            const newStyle = store.getState()?.configs?.currentStyle;
+            if (newStyle !== this.state.currentStyle) {
+              this.setState({ currentStyle: newStyle });
+            }
+          });
     }
+
+    componentWillUnmount() {
+        if (this.unsubscribe) {
+          this.unsubscribe();
+        }
+      }
 
     get question() {
         return this.questionBase;
@@ -194,8 +209,10 @@ export class DynamicTemplate extends SurveyQuestionElementBase {
     }
 
     renderElement() {
+        const isPhase1Style = this.state.currentStyle === 'phase1';
+        const DynamicComponent = isPhase1Style ? DynamicPhase1 : Dynamic;
         return (
-            <Dynamic 
+            <DynamicComponent 
                 patients={this.patients} 
                 situation={this.situation} 
                 supplies={this.supplies} 
