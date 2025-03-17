@@ -244,7 +244,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     <Accordion defaultActiveKey="1" className="medic-actions-accordion">
                         <Accordion.Item eventKey="1">
                             <Accordion.Header className="medic-actions-header">
-                                <strong>Medic Actions</strong>
+                                <strong className="w-100 text-center">Medic Actions</strong>
                             </Accordion.Header>
                             <Accordion.Body>
                                 <div className="actions-container">
@@ -319,30 +319,33 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     situation={situation} />
             }
             <Card className="mb-3">
-                <Card.Header className="d-flex justify-content-between align-items-center">
-                    <div className="d-flex align-items-center">
-                        Situation
-                        <ZoomInIcon
-                            className="magnifying-glass-icon ms-2"
-                            onClick={handleShowSituationModal}
-                            style={{ cursor: 'pointer' }}
-                        />
-                    </div>
-                    {mission?.roe && mission.roe !== "" && (
-                        <div
-                            className="d-flex align-items-center scenario-info-icon"
-                            style={{ cursor: 'pointer' }}
-                            onClick={handleShowMoreDetailsModal}
-                        >
-                            <FaInfoCircle size={28} color="#17a2b8" />
-                            <span className="ms-2 small text-muted">Click For More Info</span>
-                        </div>
-                    )}
-                </Card.Header>
-                <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
-                    {renderSituation(situation)}
-                </Card.Body>
-            </Card>
+    <Card.Header className="bg-light border">
+        <div className="position-relative">
+            <h5 className="text-center mb-0" style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                Situation
+                <ZoomInIcon
+                    className="magnifying-glass-icon ms-2"
+                    onClick={handleShowSituationModal}
+                    style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                />
+            </h5>
+
+            {mission?.roe && mission.roe !== "" && (
+                <div
+                    className="d-flex align-items-center scenario-info-icon position-absolute"
+                    style={{ cursor: 'pointer', top: '50%', right: '0', transform: 'translateY(-50%)' }}
+                    onClick={handleShowMoreDetailsModal}
+                >
+                    <FaInfoCircle size={28} color="#17a2b8" />
+                    <span className="ms-2 small text-muted d-none d-md-inline">Click For More Info</span>
+                </div>
+            )}
+        </div>
+    </Card.Header>
+    <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
+        {renderSituation(situation)}
+    </Card.Body>
+</Card>
             {isDefined(scenes) ?
                 scenes.map((scene) => (
                     <Scene
