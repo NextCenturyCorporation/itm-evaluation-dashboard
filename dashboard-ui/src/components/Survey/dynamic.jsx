@@ -157,7 +157,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         }
     }
 
-    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
+    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength }) {
         const patientButtons = patients.map(patient => (
             sceneCharacters.includes(patient.name) && (
                 <div className="patient-buttons" key={`button-${patient.name}`}>
@@ -233,68 +233,80 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             });
         }
 
-        return (
-            <Accordion className='sceneAccordion' defaultActiveKey="0">
-                <Accordion.Item eventKey="0">
-                    <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
-                    <Accordion.Body className='scene'>
-                        <Row className="mb-4">
-                            <Col md={12}>
-                                <Supplies supplies={sceneSupplies} />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={12}>
-                                <Accordion defaultActiveKey="1" className="medic-actions-accordion">
-                                    <Accordion.Item eventKey="1">
-                                        <Accordion.Header className="medic-actions-header">
-                                            <strong>Medic Actions</strong>
-                                        </Accordion.Header>
-                                        <Accordion.Body>
-                                            <div className="actions-container">
-                                                {groupedActions.map((group, groupIndex) => (
-                                                    <div key={`group-${groupIndex}`} className="event-action-group mb-4">
-                                                        {group.map((action, index) => {
-                                                            const text = typeof action === 'string' ? action : action?.text || '';
-                                                            const isUpdate = text.includes('Update:') || text.includes('Note:');
-                                                            const isQuestion = text.includes('Question:');
-                                                            const isHighlight = text.includes('<HIGHLIGHT>');
+        const sceneBody = <>
+            <Row className="mb-4">
+                <Col md={12}>
+                    <Supplies supplies={sceneSupplies} />
+                </Col>
+            </Row>
+            <Row>
+                <Col md={12}>
+                    <Accordion defaultActiveKey="1" className="medic-actions-accordion">
+                        <Accordion.Item eventKey="1">
+                            <Accordion.Header className="medic-actions-header">
+                                <strong>Medic Actions</strong>
+                            </Accordion.Header>
+                            <Accordion.Body>
+                                <div className="actions-container">
+                                    {groupedActions.map((group, groupIndex) => (
+                                        <div key={`group-${groupIndex}`} className="event-action-group mb-4">
+                                            {group.map((action, index) => {
+                                                const text = typeof action === 'string' ? action : action?.text || '';
+                                                const isUpdate = text.includes('Update:') || text.includes('Note:');
+                                                const isQuestion = text.includes('Question:');
+                                                const isHighlight = text.includes('<HIGHLIGHT>');
 
-                                                            let actionClass = 'action-item';
-                                                            if (isUpdate) actionClass += ' update';
-                                                            else if (isQuestion) actionClass += ' question';
-                                                            else actionClass += ' choice';
-                                                            if (isHighlight) actionClass += ' highlight';
+                                                let actionClass = 'action-item';
+                                                if (isUpdate) actionClass += ' update';
+                                                else if (isQuestion) actionClass += ' question';
+                                                else actionClass += ' choice';
+                                                if (isHighlight) actionClass += ' highlight';
 
-                                                            return (
-                                                                <div
-                                                                    key={`action-${groupIndex}-${index}`}
-                                                                    className={actionClass}
-                                                                >
-                                                                    {processActionText(action, index, group)}
-                                                                </div>
-                                                            );
-                                                        })}
+                                                return (
+                                                    <div
+                                                        key={`action-${groupIndex}-${index}`}
+                                                        className={actionClass}
+                                                    >
+                                                        {processActionText(action, index, group)}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </Accordion.Body>
-                                    </Accordion.Item>
-                                </Accordion>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
+                                </div>
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    </Accordion>
 
-                                <div style={{ marginBottom: '10px', marginTop: '10px' }}>
-                                    {patientButtons}
-                                </div>
-                                <div className="card-container">
-                                    <Row>
-                                        {patientCards}
-                                    </Row>
-                                </div>
-                            </Col>
+                    <div style={{ marginBottom: '10px', marginTop: '10px' }}>
+                        {patientButtons}
+                    </div>
+                    <div className="card-container">
+                        <Row>
+                            {patientCards}
                         </Row>
-                    </Accordion.Body>
-                </Accordion.Item>
-            </Accordion>
+                    </div>
+                </Col>
+            </Row>
+        </>
+
+        return (
+            <>
+                {scenesLength > 1 ? (
+                    <Accordion className='sceneAccordion' defaultActiveKey="0">
+                        <Accordion.Item eventKey="0">
+                            <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
+                            <Accordion.Body className='scene'>
+                                {sceneBody}
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    </Accordion>
+                ) : (
+                    <div className="scene">
+                        {sceneBody}
+                    </div>
+                )}
+            </>
         );
     }
 
@@ -339,6 +351,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         sceneActions={scene.actions}
                         sceneSupplies={scene.supplies}
                         sceneCharacters={scene.char_ids}
+                        scenesLength={scenes.length}
                     />
                 ))
                 : <Scene
@@ -346,6 +359,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     sceneActions={actions}
                     sceneSupplies={supplies}
                     sceneCharacters={patients.map((p) => p.name)}
+                    scenesLength={1}
                 />
             }
 
