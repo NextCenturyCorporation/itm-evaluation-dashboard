@@ -3,18 +3,22 @@ import { Card, Badge } from 'react-bootstrap';
 
 const Supplies = ({ supplies }) => {
   return (
-    <Card className="border-0 shadow-sm mb-4 supplies-card">
-      <Card.Header>
-        <h5>Supplies</h5>
+    <Card className="mb-3 supplies-card border border-light shadow-sm">
+      <Card.Header className="bg-light border">
+        <h5 className="text-center mb-0">Supplies</h5>
       </Card.Header>
-      <Card.Body className="pt-3 pb-4">
-        <div className="d-flex flex-wrap gap-3 justify-content-center">
+      <Card.Body className="py-3">
+        <div className="d-flex flex-wrap gap-2 justify-content-center">
           {supplies
             .filter(supply => !('quantity' in supply) || supply.quantity > 0)
             .map((supply, index) => (
               <div 
                 key={index} 
-                className="d-flex align-items-center supply-item rounded px-3 py-2"
+                className="d-flex align-items-center supply-item rounded py-2 px-3"
+                style={{
+                  border: '1px solid #dee2e6',
+                  backgroundColor: '#f8f9fa'
+                }}
               >
                 <span className="supply-name">
                   {supply.type}
