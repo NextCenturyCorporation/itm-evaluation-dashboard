@@ -29,6 +29,43 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const [showSituationModal, setShowSituationModal] = useState(showModal);
     const [showMoreDetailsModal, setShowMoreDetailsModal] = useState(false);
     const [actionLogs, setActionLogs] = useState([]);
+    
+    const [openScenes, setOpenScenes] = useState(() => {
+        const initialOpenScenes = {};
+        if (scenes) {
+            scenes.forEach(scene => {
+                initialOpenScenes[scene.id] = true;
+            });
+        } else {
+            initialOpenScenes['Scene 1'] = true;
+        }
+        return initialOpenScenes;
+    });
+    
+    const [openMedicAccordions, setOpenMedicAccordions] = useState(() => {
+        const initialOpenMedicAccordions = {};
+        if (scenes) {
+            scenes.forEach(scene => {
+                initialOpenMedicAccordions[scene.id] = true;
+            });
+        } else {
+            initialOpenMedicAccordions['Scene 1'] = true;
+        }
+        return initialOpenMedicAccordions;
+    });
+    
+    const [openPatientAccordions, setOpenPatientAccordions] = useState(() => {
+        const initialOpenPatientAccordions = {};
+        if (scenes) {
+            scenes.forEach(scene => {
+                initialOpenPatientAccordions[scene.id] = true;
+            });
+        } else {
+            initialOpenPatientAccordions['Scene 1'] = true;
+        }
+        return initialOpenPatientAccordions;
+    });
+    
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const matchingScenario = textBasedConfigs[scenarioIndex];
 
@@ -46,7 +83,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         return null
     }
 
-    // log actions
     const logAction = (actionName) => {
         const newLog = { dmName, actionName, timestamp: new Date().toISOString() };
         const updatedLogs = [...actionLogs, newLog];
@@ -54,6 +90,30 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             updateActionLogs(newLog);
         }
         setActionLogs(updatedLogs);
+    };
+
+    const toggleSceneAccordion = (sceneId) => {
+        setOpenScenes(prev => ({
+            ...prev,
+            [sceneId]: !prev[sceneId]
+        }));
+        logAction(`Toggle scene accordion: ${sceneId}`);
+    };
+
+    const toggleMedicAccordion = (sceneId) => {
+        setOpenMedicAccordions(prev => ({
+            ...prev,
+            [sceneId]: !prev[sceneId]
+        }));
+        logAction(`Toggle medic actions accordion: ${sceneId}`);
+    };
+
+    const togglePatientAccordion = (sceneId) => {
+        setOpenPatientAccordions(prev => ({
+            ...prev,
+            [sceneId]: !prev[sceneId]
+        }));
+        logAction(`Toggle patients accordion: ${sceneId}`);
     };
 
     const togglePatientVisibility = (patientName) => {
@@ -158,6 +218,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     }
 
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength }) {
+        const isSceneOpen = openScenes[sceneId] === undefined ? true : openScenes[sceneId];
+        const isMedicAccordionOpen = openMedicAccordions[sceneId] === undefined ? true : openMedicAccordions[sceneId];
+        const isPatientAccordionOpen = openPatientAccordions[sceneId] === undefined ? true : openPatientAccordions[sceneId];
+
         const patientButtons = patients.map(patient => (
             sceneCharacters.includes(patient.name) && (
                 <div className="patient-buttons" key={`button-${patient.name}`}>
@@ -193,7 +257,10 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Col md={8} className="mr-4">
                                         <div style={{ position: 'relative' }}>
                                             <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
-                                            <ZoomInIcon className="magnifying-glass" onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
+                                            <ZoomInIcon 
+                                                className="magnifying-glass" 
+                                                onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} 
+                                            />
                                         </div>
                                     </Col>
                                     <Col md={4}>
@@ -241,9 +308,15 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             </Row>
             <Row>
                 <Col md={12}>
-                    <Accordion defaultActiveKey="1" className="medic-actions-accordion mb-3">
+                    <Accordion 
+                        activeKey={isMedicAccordionOpen ? "1" : ""} 
+                        className="medic-actions-accordion mb-3"
+                    >
                         <Accordion.Item eventKey="1">
-                            <Accordion.Header className="medic-actions-header">
+                            <Accordion.Header 
+                                className="medic-actions-header"
+                                onClick={() => toggleMedicAccordion(sceneId)}
+                            >
                                 <strong className="w-100 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>Medic Actions</strong>
                             </Accordion.Header>
                             <Accordion.Body>
@@ -278,9 +351,14 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         </Accordion.Item>
                     </Accordion>
 
-                    <Accordion defaultActiveKey="1" className="mb-3">
+                    <Accordion 
+                        activeKey={isPatientAccordionOpen ? "1" : ""} 
+                        className="mb-3"
+                    >
                         <Accordion.Item eventKey="1">
-                            <Accordion.Header>
+                            <Accordion.Header
+                                onClick={() => togglePatientAccordion(sceneId)}
+                            >
                                 <strong className="w-100 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>Patients</strong>
                             </Accordion.Header>
                             <Accordion.Body className="border border-top-0 rounded-bottom">
@@ -302,9 +380,14 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         return (
             <>
                 {scenesLength > 1 ? (
-                    <Accordion className='sceneAccordion' defaultActiveKey="0">
+                    <Accordion 
+                        className='sceneAccordion' 
+                        activeKey={isSceneOpen ? "0" : ""}
+                    >
                         <Accordion.Item eventKey="0">
-                            <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
+                            <Accordion.Header onClick={() => toggleSceneAccordion(sceneId)}>
+                                <strong>{sceneId}</strong>
+                            </Accordion.Header>
                             <Accordion.Body className='scene'>
                                 {sceneBody}
                             </Accordion.Body>
