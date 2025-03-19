@@ -75,6 +75,14 @@ const GET_CONFIGS = gql`
     getAllTextBasedImages
   }`;
 
+const GET_CONFIGS_DEL_MEDIA = gql`
+    query GetConfigsWithImages {
+        getAllSurveyConfigs
+        getAllTextBasedConfigs
+        getAllTextBasedImages
+        getAllImageUrls
+    }`;
+
 
 const LOW_PID = 202501700;
 const HIGH_PID = 202501899;
@@ -114,29 +122,48 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
-    const { data: configData, loading: configLoading, error: configError } = useQuery(GET_CONFIGS, { fetchPolicy: 'cache-first' });
     const { data: styleData, loading: styleLoading, error: styleError } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
     const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [isSetup, setIsSetup] = React.useState(false);
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
-
+    const [configQuery, setConfigQuery] = React.useState(GET_CONFIGS)
+    const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
+ 
     React.useEffect(() => {
-        if (isDefined(versionData)) {
+        if (versionData && versionData.getCurrentSurveyVersion) {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
+            if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {
+                setConfigQuery(GET_CONFIGS_DEL_MEDIA);
+            } else {
+                setConfigQuery(GET_CONFIGS);
+            }
+            setSendConfigQuery(true);
         }
-        if (isDefined(configData)) {
+    }, [versionData]);
+
+    const { data: configData, loading: configLoading, error: configError } =
+        useQuery(configQuery, {
+            skip: !sendConfigQuery, // dont exec query till we know what survey version 
+            fetchPolicy: 'cache-first'
+        });
+
+    React.useEffect(() => {
+        if (configData) {
             setupConfigWithImages(configData);
             setupTextBasedConfig(configData);
             setIsConfigDataLoaded(true);
         }
+    }, [configData]);
+
+    React.useEffect(() => {
         if (isDefined(styleData)) {
             setCurrentUIStyle(styleData.getCurrentStyle);
             setIsStyleDataLoaded(true);
         }
-    }, [versionData, configData, styleData]);
+    }, [styleData]);
 
     const setup = async () => {
         // refresh the session to get a new accessToken if expired
