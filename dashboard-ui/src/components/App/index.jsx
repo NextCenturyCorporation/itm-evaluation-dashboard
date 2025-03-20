@@ -180,7 +180,7 @@ export function App() {
                 console.log("User is admin:", currentUser.admin);
                 
                 // hard code password (change between admin account and dummy test account)
-                const testPassword = "test";
+                const testPassword = "dummy password";
                 
                 const loginResult = await accountsPassword.login({
                     password: testPassword,
