@@ -6,6 +6,7 @@
         "@accounts/client": "^0.33.1",
         "@accounts/client-password": "^0.32.2",
         "@accounts/graphql-client": "^0.33.1",
+        "@apollo/react-testing": "^3.1.4",
         "@canvasjs/charts": "3.8.0",
         "@canvasjs/react-charts": "1.0.2",
         "@emotion/react": "^11.11.4",
@@ -16,16 +17,16 @@
         "@mui/x-charts": "^7.1.0",
         "@nivo/bar": "^0.85.1",
         "@reduxjs/toolkit": "^2.2.5",
+        "ajv": "^8.12.0",
         "apollo-cache-inmemory": "^1.6.6",
         "apollo-client": "^2.6.10",
         "apollo-link-http": "^1.5.17",
-        "ajv": "^8.12.0",
         "axios": "^1.6.8",
         "bcryptjs": "2.4.3",
         "bootstrap": "^5.3.3",
         "bowser": "^2.11.0",
+        "cross-env": "^7.0.3",
         "file-saver": "2.0.5",
-        "enzyme": "3.11.0",
         "graphql": "^16.8.1",
         "graphql-tag": "^2.12.6",
         "jquery": "^3.7.1",
@@ -54,14 +55,19 @@
         "survey-analytics": "^1.9.137",
         "survey-core": "^1.9.137",
         "survey-react-ui": "^1.9.137",
-        "typescript": "5.4.3",
+        "web-vitals": "^2.1.4",
         "xlsx-js-style": "1.2.0"
     },
     "scripts": {
         "start": "react-scripts start",
+        "start:test": "cross-env BROWSER=None cross-env PORT=3001 react-scripts start",
+        "stop:test": "kill $(lsof -t -i:3001) $(lsof -t -i:4000) > /dev/null 2>&1",
+        "stop:test-win": "npx kill-port 3001 & npx kill-port 4000",
         "build": "react-scripts build",
-        "test": "react-scripts test",
-        "eject": "react-scripts eject"
+        "test": "cross-env REACT_APP_TESTING=true jest --no-cache --verbose --runInBand",
+        "test-and-watch": "cross-env REACT_APP_TESTING=true jest --watchAll --runInBand",
+        "eject": "react-scripts eject",
+        "clean": "npx rimraf node_modules package-lock.json"
     },
     "eslintConfig": {
         "extends": "react-app"
@@ -77,5 +83,35 @@
             "last 1 firefox version",
             "last 1 safari version"
         ]
+    },
+    "overrides": {
+        "react-scripts": {
+            "@babel/core": "^7.26.0"
+        }
+    },
+    "devDependencies": {
+        "@accounts/graphql-api": "^0.33.2",
+        "@babel/core": "^7.26.0",
+        "@babel/plugin-syntax-dynamic-import": "7.8.3",
+        "@babel/preset-env": "^7.26.0",
+        "@babel/preset-react": "^7.26.3",
+        "@testing-library/jest-dom": "^5.16.5",
+        "@testing-library/react": "^15.0.6",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.10.7",
+        "apollo-server": "^3.13.0",
+        "babel-jest": "^28.1.3",
+        "jest": "^28.1.3",
+        "jest-environment-jsdom": "^28.1.3",
+        "jest-puppeteer": "^10.1.4",
+        "kill-port": "^2.0.1",
+        "mongodb": "^3.7.3",
+        "mongodb-memory-server": "^7.0.0",
+        "mongoose": "^5.13.14",
+        "puppeteer": "^23.11.1",
+        "react-test-renderer": "^19.0.0",
+        "rimraf": "^5.0.10",
+        "typescript": "5.4.3",
+        "unfetch": "^4.2.0"
     }
 }

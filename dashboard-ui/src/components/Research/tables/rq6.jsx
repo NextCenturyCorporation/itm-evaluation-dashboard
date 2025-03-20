@@ -9,6 +9,7 @@ import gql from "graphql-tag";
 import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
+import { isDefined } from "../../AggregateResults/DataFunctions";
 
 
 const GET_PARTICIPANT_LOG = gql`
@@ -134,8 +135,10 @@ export function RQ6({ evalNum }) {
                     }
                 }
             }
+            // remove empty rows
+            const nonEmpty = allObjs.filter((x) => isDefined(x['Alignment score (Participant_Text|Participant_Sim)']));
             // sort
-            allObjs.sort((a, b) => {
+            nonEmpty.sort((a, b) => {
                 // Compare PID
                 if (Number(a['Participant_ID']) < Number(b['Participant_ID'])) return -1;
                 if (Number(a['Participant_ID']) > Number(b['Participant_ID'])) return 1;
@@ -147,8 +150,8 @@ export function RQ6({ evalNum }) {
                 // if TA1 is equal, compare attribute
                 return a.Attribute - b.Attribute;
             });
-            setFormattedData(allObjs);
-            setFilteredData(allObjs);
+            setFormattedData(nonEmpty);
+            setFilteredData(nonEmpty);
             setTA1s(Array.from(new Set(allTA1s)));
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));

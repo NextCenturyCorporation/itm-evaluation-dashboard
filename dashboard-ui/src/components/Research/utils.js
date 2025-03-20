@@ -257,7 +257,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const entryObj = {};
                 entryObj['Delegator_ID'] = pid;
                 entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
-                entryObj['Datasource'] = evalNum == 4 ? 'DRE' : logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL';
+                entryObj['Datasource'] = evalNum == 4 ? 'DRE' : evalNum == 5 ? (logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type == 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025');
                 entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : logData['Type'] == 'Mil' ? 'Military' : logData['Type'];
                 const roles = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'];
                 // override 102, who is military
@@ -287,7 +287,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
 
                 entryObj['Alignment score (ADM|target)'] = alignment;
-                if (evalNum == 5)
+                if (evalNum == 5 || evalNum == 6)
                     entryObj['DRE Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.dreAdmAlignment : alignment;
 
                 // if DRE data is included in PH1 set, update DRE columns accordingly
@@ -332,6 +332,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 if (evalNum == 5 || evalNum == 6) {
                     const dre_comparison_entry = comparisons?.find((x) => x['dre_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
                     entryObj['DRE Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? dre_comparison_entry?.score : entryObj['Alignment score (Delegator|Observed_ADM (target))'];
+                
+                    entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;
                 }
                 if (evalNum == 4 && fullSetOnly) {
                     const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));

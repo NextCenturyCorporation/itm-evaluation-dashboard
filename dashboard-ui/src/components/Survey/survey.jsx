@@ -353,7 +353,7 @@ class SurveyPage extends Component {
                     baselineAdm['alignment'] = 'baseline';
                     baselineAdm['target'] = baselineADMTarget;
                     pagesToShuffle.push(baselineAdm);
-                } else { console.warn("Missing Baseline ADM"); }
+                } else { console.warn("Missing Baseline ADM for " + expectedScenario + " - " + expectedAuthor + " - " + baselineADMTarget); }
                 if (isDefined(alignedAdm)) {
                     alignedAdm['admStatus'] = adms['alignedStatus'];
                     alignedAdm['alignment'] = 'aligned';
@@ -367,10 +367,11 @@ class SurveyPage extends Component {
                     misalignedAdm['alignment'] = 'misaligned';
                     misalignedAdm['target'] = misalignedADMTarget;
                     pagesToShuffle.push(misalignedAdm);
-                } else { console.warn("Missing Misaligned ADM"); }
+                } else { console.warn("Missing Misaligned ADM for " + expectedScenario + " - " + expectedAuthor + " - " + misalignedADMTarget); }
                 shuffle(pagesToShuffle);
                 pages.push(...pagesToShuffle);
-                pages.push(generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm));
+                if (baselineAdm)
+                    pages.push(generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm));
             }
             pages.push(allPages.slice(-1)[0]);
             this.surveyConfigClone.pages = pages;

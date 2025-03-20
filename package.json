@@ -1,7 +1,23 @@
 {
+  "name": "itm-dashboard",
+  "scripts": {
+    "setup-tests": "npm i && npm --prefix ./dashboard-ui i --legacy-peer-deps && npm --prefix ./node-graphql i",
+    "watch-tests": "npm --prefix ./dashboard-ui run test-and-watch",
+    "test": "npm --prefix ./dashboard-ui run test",
+    "clean-root": "npx rimraf node_modules package-lock.json",
+    "clean": "npm --prefix ./dashboard-ui run stop:test ; npm run clean-root ; npm --prefix ./dashboard-ui run clean ; npm --prefix ./node-graphql run clean",
+    "clean-win": "npm --prefix ./dashboard-ui run stop:test-win & npm run clean-root & npm --prefix ./dashboard-ui run clean & npm --prefix ./node-graphql run clean",
+    "clean-ports": "npm --prefix ./dashboard-ui run stop:test",
+    "clean-ports-win": "npm --prefix ./dashboard-ui run stop:test-win"
+  },
   "dependencies": {
     "@material-ui/core": "^4.11.2",
     "@material-ui/icons": "^4.11.2",
     "react-bootstrap": "^2.2.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-syntax-dynamic-import": "7.8.3",
+    "kill-port": "^2.0.1",
+    "rimraf": "^5.0.10"
   }
 }

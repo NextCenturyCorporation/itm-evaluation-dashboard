@@ -43,7 +43,7 @@ const GET_SIM_DATA = gql`
     }`;
 
 const HEADERS_DRE = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
-const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'DRE Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'DRE Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'DRE Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'DRE Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'DRE Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'DRE Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -88,7 +88,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const [columnsToHide, setColumnsToHide] = React.useState([]);
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
-    const HEADERS = evalNum == 5 ? HEADERS_PH1 : HEADERS_DRE;
+    const HEADERS = evalNum == 5 || evalNum == 6 ? HEADERS_PH1 : HEADERS_DRE;
 
 
     const openModal = () => {
@@ -110,6 +110,14 @@ export function RQ134({ evalNum, tableTitle }) {
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
             dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            
+            if (evalNum === 6) {
+                data.allObjs = data.allObjs.map(obj => ({
+                    ...obj,
+                    Delegator_mil: 'yes'
+                }));
+            }
+
             if (includeDRE) {
                 // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
                 const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true);
@@ -122,6 +130,10 @@ export function RQ134({ evalNum, tableTitle }) {
             }
             if (includeJAN) {
                 const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, janSim);
+                janData.allObjs = janData.allObjs.map(obj => ({
+                    ...obj,
+                    Delegator_mil: 'yes'
+                }));
                 data.allObjs.push(...janData.allObjs);
                 data.allTA1s.push(...janData.allTA1s);
                 data.allTA2s.push(...janData.allTA2s);

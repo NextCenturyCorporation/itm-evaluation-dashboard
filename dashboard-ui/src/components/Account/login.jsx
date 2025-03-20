@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { accountsPassword } from '../../services/accountsService';
 import { withRouter } from 'react-router-dom';
 import $ from 'jquery';
@@ -8,7 +8,13 @@ import './login.css';
 import bcrypt from 'bcryptjs';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
-
+import gql from "graphql-tag";
+import { useQuery } from 'react-apollo';
+const CHECK_USER_EXISTS = gql`
+  query CheckUserExists($email: String!, $username: String!) {
+    checkUserExists(email: $email, username: $username)
+  }
+`;
 class LoginApp extends React.Component {
 
     constructor(props) {
@@ -28,7 +34,8 @@ class LoginApp extends React.Component {
             viewHiddenEmail: false,
             confirmTextEmail: "",
             viewHiddenConfirmEmail: false,
-            emailsMatch: true
+            emailsMatch: true,
+            userExists: false
         };
         this.login = this.login.bind(this);
         this.createAccount = this.createAccount.bind(this);
@@ -69,37 +76,44 @@ class LoginApp extends React.Component {
     };
 
     createAccount = async (e) => {
-        e.preventDefault();  // Prevent the default form submission
-        const { createEmail, createUserName, createPassword } = this.state;
-
-        // removing leading and trailing white space 
-        const trimmedEmail = createEmail.trim()
-        const trimmedUserName = createUserName.trim()
+        e.preventDefault();
+        const { createEmail, createUserName, createPassword, userExists } = this.state;
 
         if (!createEmail || !createUserName || !createPassword) {
             $("#create-account-feedback").addClass("feedback-display").text("All fields are required.");
-            return; // Stop the function if any field is empty
+            return;
+        }
+
+        if (userExists) {
+            this.setState({
+                error: "Email or username already in use.",
+                createAccountFailed: true
+            });
+            return;  // Stop here if user exists
         }
 
         $("#create-account-feedback").removeClass("feedback-display");
+        await this.createUserAccount(createEmail, createUserName, createPassword);
+    };
+
+    // helper for actually creating the account
+    createUserAccount = async (email, username, password) => {
         try {
             let results = await accountsPassword.createUser({
-                username: trimmedUserName,
-                password: createPassword,
-                email: trimmedEmail
+                username: username,
+                password: password,
+                email: email
             });
-
             results = await accountsPassword.login({
-                password: createPassword,
+                password: password,
                 user: {
-                    email: trimmedEmail,
+                    email: email,
                 }
             });
 
             this.props.history.push('/awaitingApproval');
             this.props.userLoginHandler(results.user);
         } catch (err) {
-            $("#create-account-feedback").addClass("feedback-display");
             this.setState({ error: err.message, createAccountFailed: true });
         }
     };
@@ -153,11 +167,11 @@ class LoginApp extends React.Component {
     };
 
     onChangeCreateUserName = ({ target }) => {
-        this.setState({ createUserName: target.value });
+        this.setState({ createUserName: target.value, userExists: false });
     };
 
     onChangeCreateEmail = ({ target }) => {
-        this.setState({ createEmail: target.value });
+        this.setState({ createEmail: target.value, userExists: false });
     };
 
     onChangeCreatePassword = ({ target }) => {
@@ -212,8 +226,16 @@ class LoginApp extends React.Component {
     }
 
     render() {
+        const { createEmail, createUserName } = this.state;
         return (
             <div className='full-page'>
+                <LoginHelper
+                    email={createEmail}
+                    username={createUserName}
+                    onResult={(exists) => {
+                        this.setState({ userExists: exists });
+                    }}
+                />
                 <div className="login-header-logo">
                     <div className="d-flex justify-content-center">
                         <img src={brandImage} alt="" />
@@ -405,3 +427,19 @@ class LoginApp extends React.Component {
 }
 
 export default withRouter(LoginApp);
+
+const LoginHelper = ({ email, username, onResult }) => {
+    const { loading, error, data } = useQuery(CHECK_USER_EXISTS, {
+        variables: {
+            email: email.trim().toLowerCase(),
+            username: username.trim().toLowerCase()
+        }
+    });
+    React.useEffect(() => {
+        if (!loading && data) {
+            onResult(data.checkUserExists);
+        }
+    }, [data, loading]);
+
+    return null;
+};
