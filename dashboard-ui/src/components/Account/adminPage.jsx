@@ -13,7 +13,6 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
 import { FaInfoCircle } from 'react-icons/fa'
-import { current } from '@reduxjs/toolkit';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
