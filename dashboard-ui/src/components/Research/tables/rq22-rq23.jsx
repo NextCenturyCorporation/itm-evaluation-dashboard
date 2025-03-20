@@ -17,7 +17,7 @@ const getAdmData = gql`
     }`;
 
 const DRE_HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 'Scenario', 'Target_Type (Group/Individual)', 'Aligned ADM Alignment score (ADM|target)', 'Aligned Server Session ID', 'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'];
-const PH1_HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 'Scenario', 'Target_Type (Group/Individual)', 'Aligned ADM Alignment score (ADM|target)', 'Aligned Server Session ID', 'DRE Aligned ADM Alignment score (ADM|target)', 'DRE Aligned Server Session ID', 'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID', 'DRE Baseline ADM Alignment score (ADM|target)', 'DRE Baseline Server Session ID'];
+const PH1_HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 'Scenario', 'Target_Type (Group/Individual)', 'P1E Aligned ADM Alignment score (ADM|target)', 'P1E Aligned Server Session ID', 'DRE Aligned ADM Alignment score (ADM|target)', 'DRE Aligned Server Session ID', 'P1E Baseline ADM Alignment score (ADM|target)', 'P1E Baseline Server Session ID', 'DRE Baseline ADM Alignment score (ADM|target)', 'DRE Baseline Server Session ID'];
 
 
 export function RQ2223({ evalNum }) {
@@ -114,18 +114,28 @@ export function RQ2223({ evalNum }) {
                         allScenarios.push(scenario);
                         entryObj['Target_Type (Group/Individual)'] = target.toLowerCase().includes('-group') ? 'Group' : 'Individual';
                         const aligned = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
-                        entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
-                        entryObj['Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+
                         if (evalNum == 5 || evalNum == 6) {
-                            entryObj['DRE Aligned ADM Alignment score (ADM|target)'] = aligned?.dre_alignment;
-                            entryObj['DRE Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
+                            entryObj['P1E Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
+                            entryObj['P1E Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                            entryObj['DRE Aligned ADM Alignment score (ADM|target)'] = entryObj['TA1_Name'] == 'SoarTech' ? aligned?.alignment : aligned?.dre_alignment;
+                            entryObj['DRE Aligned Server Session ID'] = entryObj['TA1_Name'] == 'SoarTech' ? entryObj['P1E Aligned Server Session ID'] : aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
+                        }
+                        else {
+                            entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
+                            entryObj['Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                         }
                         const baseline = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-severity-baseline' : "ALIGN-ADM-OutlinesBaseline"];
-                        entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
-                        entryObj['Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+
                         if (evalNum == 5 || evalNum == 6) {
-                            entryObj['DRE Baseline ADM Alignment score (ADM|target)'] = baseline?.dre_alignment;
-                            entryObj['DRE Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
+                            entryObj['P1E Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
+                            entryObj['P1E Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                            entryObj['DRE Baseline ADM Alignment score (ADM|target)'] = entryObj['TA1_Name'] == 'SoarTech' ? baseline?.alignment : baseline?.dre_alignment;
+                            entryObj['DRE Baseline Server Session ID'] = entryObj['TA1_Name'] == 'SoarTech' ? entryObj['P1E Baseline Server Session ID'] : baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
+                        }
+                        else {
+                            entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
+                            entryObj['Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                         }
                         allObjs.push(entryObj);
                     }
