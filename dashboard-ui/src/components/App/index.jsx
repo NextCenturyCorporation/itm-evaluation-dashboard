@@ -132,7 +132,7 @@ export function App() {
     const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
  
     React.useEffect(() => {
-        if (versionData && versionData.getCurrentSurveyVersion) {
+        if (versionData?.getCurrentSurveyVersion) {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
             if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {

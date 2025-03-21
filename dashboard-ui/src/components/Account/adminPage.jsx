@@ -665,7 +665,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     show={showStyleConfirmation}
                     onConfirm={confirmStylingChange}
                     onCancel={cancelStylingChange}
-                    message={`Are you sure you want to change to ${pendingStyleVersion === 'phase1' ? 'Phase 1' : 'Updated'} UI Style? This will affect the appearance for all users.`}
+                    message={`Are you sure you want to change to the ${pendingStyleVersion === 'phase1' ? 'Phase 1' : 'Updated'} UI Style? This will affect the appearance for all users.`}
                 />
 
                 <Query query={GET_USERS} fetchPolicy={'no-cache'}>
