@@ -1,9 +1,9 @@
 import React from 'react';
 import { Router, Switch, Route, Redirect } from 'react-router-dom';
-import { accountsClient, accountsPassword, accountsGraphQL } from '../../services/accountsService';
+import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
-import { useMutation, useQuery, useLazyQuery } from '@apollo/react-hooks';
+import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 
@@ -68,14 +68,6 @@ const GET_CONFIGS = gql`
     getAllTextBasedImages
   }`;
 
-// Admin query test
-const TEST_ADMIN_QUERY = gql`
-  query testAdminQuery($caller: JSON!) {
-    getUsers(caller: $caller)
-  }
-`;
-
-
 const LOW_PID = 202501700;
 const HIGH_PID = 202501899;
 
@@ -120,17 +112,6 @@ export function App() {
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
 
-    // Use lazy query for admin test
-    const [testQuery, { data: adminQueryData, loading: adminQueryLoading, error: adminQueryError }] = useLazyQuery(TEST_ADMIN_QUERY, {
-        fetchPolicy: 'no-cache',
-        onCompleted: (data) => {
-            console.log("Test query succeeded:", data);
-        },
-        onError: (error) => {
-            console.error("Test query failed:", error.message);
-        }
-    });
-
     React.useEffect(() => {
         if (isDefined(versionData)) {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
@@ -170,50 +151,6 @@ export function App() {
         // runs when the app renders; 
         setup();
     }, []);
-
-    React.useEffect(() => {
-        const testAdminQuery = async () => {
-            if (!currentUser) return;
-            
-            try {
-                console.log("Testing admin-only query with user:", currentUser.username);
-                console.log("User is admin:", currentUser.admin);
-                
-                // hard code password (change between admin account and dummy test account)
-                const testPassword = "dummy password";
-                
-                const loginResult = await accountsPassword.login({
-                    password: testPassword,
-                    user: {
-                        username: currentUser.username,
-                    }
-                });
-                
-                if (!loginResult || !loginResult.sessionId) {
-                    console.error("Could not get session ID from login. Check your hard coded password");
-                    return;
-                }
-                
-                testQuery({
-                    variables: {
-                        caller: {
-                            username: currentUser.username,
-                            sessionId: loginResult.sessionId
-                        }
-                    }
-                });
-                
-            } catch (error) {
-                console.error("Login failed, check the hard coded password:", error.message);
-            }
-        };
-        
-        if (currentUser && isSetup) {
-            setTimeout(() => {
-                testAdminQuery();
-            }, 2000);
-        }
-    }, [currentUser, isSetup, testQuery]);
 
     const logout = async () => {
         await accountsClient.logout();
