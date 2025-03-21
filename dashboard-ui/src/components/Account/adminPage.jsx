@@ -645,9 +645,6 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                     <option value="updated">Updated Styling</option>
                                     <option value="phase1">Use Phase 1 Styling</option>
                                 </Form.Select>
-                                <Form.Text className="text-muted">
-                                    Phase 1 styling will replace updated UI with the phase 1 evaluation version. 
-                                </Form.Text>
                             </Form.Group>
                         </Card.Body>
                     </Card>
