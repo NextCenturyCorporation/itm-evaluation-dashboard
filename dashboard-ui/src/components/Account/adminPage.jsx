@@ -12,14 +12,14 @@ import { createBrowserHistory } from 'history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
-import {FaInfoCircle} from 'react-icons/fa'
+import { FaInfoCircle } from 'react-icons/fa'
 
 const history = createBrowserHistory({ forceRefresh: true });
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
-    query getUsers {
-        getUsers
+    query getUsers($caller: JSON!) {
+        getUsers(caller: $caller)
     }
 `;
 
@@ -119,7 +119,7 @@ function AdminConfirmationModal({ show, onCancel, onConfirm, pendingChanges, opt
                     </div>
                 )}
                 <div className="alert alert-info mb-0 py-2 d-flex align-items-center">
-                    <FaInfoCircle className="me-2"/>
+                    <FaInfoCircle className="me-2" />
                     Please confirm to modify administrative access.
                 </div>
             </Modal.Body>
@@ -140,11 +140,11 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
     const [updateUserCall] = useMutation(mutation);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [pendingChanges, setPendingChanges] = useState(null);
-    
+
     const handleConfirm = async () => {
         let errored = false;
         const { usersToAdd, usersToRemove } = pendingChanges;
-        
+
         for (const username of [...usersToAdd, ...usersToRemove]) {
             try {
                 await updateUserCall({
@@ -160,11 +160,11 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
                 break;
             }
         }
-        
+
         if (!errored) {
             setSelected(pendingChanges.newSelection);
         }
-        
+
         setShowConfirmation(false);
         setPendingChanges(null);
     };
@@ -177,7 +177,7 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
     const updateUser = (newSelect) => {
         const usersToAdd = newSelect.filter(user => !selected.includes(user));
         const usersToRemove = selected.filter(user => !newSelect.includes(user));
-        
+
         // confirm for admin changes
         if (param === 'isAdmin') {
             setPendingChanges({
@@ -367,7 +367,6 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
 };
 
 function AdminPage({ currentUser, updateUserHandler }) {
-    const { data: users } = useQuery(GET_USERS, { fetchPolicy: 'no-cache' });
     const [surveyVersion, setLocalSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -395,6 +394,18 @@ function AdminPage({ currentUser, updateUserHandler }) {
         }
     });
     const [updateUIStyle] = useMutation(UPDATE_UI_STYLE);
+
+    const [getUsersQuery, { data: users }] = useLazyQuery(GET_USERS, {
+        fetchPolicy: 'no-cache'
+    });
+
+    useEffect(() => {
+        if (sessionId && currentUser) {
+          getUsersQuery({
+            variables: { caller: { username: currentUser.username, sessionId } }
+          });
+        }
+      }, [sessionId, currentUser, getUsersQuery]);
 
     useEffect(() => {
         if (users)
@@ -665,7 +676,12 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     message={`Are you sure you want to change to the ${pendingStyleVersion === 'phase1' ? 'Phase 1' : 'Updated'} UI Style? This will affect the appearance for all users.`}
                 />
 
-                <Query query={GET_USERS} fetchPolicy={'no-cache'}>
+                <Query
+                    query={GET_USERS}
+                    variables={{ caller: { username: currentUser.username, sessionId } }}
+                    fetchPolicy='no-cache'
+                    skip={!sessionId || !currentUser}
+                >
                     {({ loading, error, data }) => {
                         if (loading) return <div className="loading">Loading ...</div>;
                         if (error) return <div className="error">Error: {error.message}</div>;

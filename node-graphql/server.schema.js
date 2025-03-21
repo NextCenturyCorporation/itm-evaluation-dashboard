@@ -154,7 +154,7 @@ const typeDefs = gql`
   }
 
   type Query {
-    getUsers: JSON
+    getUsers(caller: JSON): JSON
     checkUserExists(email: String!, username: String!): Boolean!
     getHistory(id: ID): JSON
     getAllHistory(id: ID): [JSON]
@@ -553,7 +553,29 @@ const resolvers = {
       return await context.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });
     },
     getUsers: async (obj, args, context, infow) => {
-      return await context.db.collection('users').find().project({ "services": 0, "createdAt": 0, "updatedAt": 0 }).toArray().then(result => { return result });
+      const session = await context.db.collection('sessions')
+        .find({ "_id": new ObjectId(args['caller']?.['sessionId']) })
+        ?.project({ "userId": 1, "valid": 1 })
+        .toArray()
+        .then(result => { return result[0] });
+      
+      const user = await context.db.collection('users')
+        .find({ "username": args['caller']?.['username'] })
+        ?.project({ "_id": 1, "username": 1, "admin": 1 })
+        .toArray()
+        .then(result => { return result[0] });
+      
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await context.db.collection('users')
+          .find()
+          .project({ "services": 0, "createdAt": 0, "updatedAt": 0 })
+          .toArray()
+          .then(result => { return result });
+      } else {
+        throw new GraphQLError('Users outside of the admin group cannot access user data.', {
+          extensions: { code: '404' }
+        });
+      }
     },
     getAllSurveyConfigs: async (obj, args, context, inflow) => {
       return await context.db.collection('delegationConfig').find().toArray().then(result => { return result; });

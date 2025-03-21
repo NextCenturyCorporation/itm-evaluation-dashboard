@@ -193,7 +193,6 @@ export function App() {
         setup();
     }, []);
 
-
     const logout = async () => {
         await accountsClient.logout();
         history.push('/login');
