@@ -83,13 +83,6 @@ const GET_CONFIGS_DEL_MEDIA = gql`
         getAllImageUrls
     }`;
 
-const GET_CONFIGS_DEL_MEDIA = gql`
-    query GetConfigsWithImages {
-        getAllSurveyConfigs
-        getAllTextBasedConfigs
-        getAllTextBasedImages
-        getAllImageUrls
-    }`;
 
 const LOW_PID = 202501700;
 const HIGH_PID = 202501899;
