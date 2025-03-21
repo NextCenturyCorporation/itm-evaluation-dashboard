@@ -2,18 +2,18 @@ import React from 'react';
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine } from 'react-icons/fa';
-import { BsPersonFillGear } from 'react-icons/bs'
+import { BsPersonFillGear } from 'react-icons/bs';
 
 const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) => {
   const vitalIcons = {
-    avpu: <FaEye />,
-    ambulatory: <FaAmbulance />,
-    breathing: <FaLungs />,
-    heart_rate: <FaHeartbeat />,
-    spo2: <FaPercent />,
-    mental_status: <FaBrain />,
-    conscious: <BsPersonFillGear />,
-    triss: <FaChartLine />
+    avpu: <FaEye size={18} />,
+    ambulatory: <FaAmbulance size={18} />,
+    breathing: <FaLungs size={18} />,
+    heart_rate: <FaHeartbeat size={18} />,
+    spo2: <FaPercent size={18} />,
+    mental_status: <FaBrain size={18} />,
+    conscious: <BsPersonFillGear size={18} />,
+    triss: <FaChartLine size={18} />
   };
 
   const vitalNames = {
@@ -122,16 +122,17 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
     }
 
     const vitalsVisible = !blockedVitals?.includes(patient.id);
+    
     return (
-      <div className="d-flex flex-column gap-1 h-100">
+      <div>
         {Object.entries(vitals).map(([key, value]) => (
           <div key={key} className="vital-item">
-            <span className="vital-icon">
+            <div className="vital-icon">
               {vitalIcons[key] || key}
-            </span>
+            </div>
             <div className="vital-name-and-badge">
               <span className="vital-name">
-                {vitalNames[key]}
+                {vitalNames[key] || key}
               </span>
               <Badge
                 bg={vitalsVisible ? getVitalBadgeColor(key, value) : 'info'}
@@ -148,98 +149,108 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
 
   const renderInjuries = (injuries) => {
     return injuries.map((injury, i) => (
-      <div key={i} className="mb-2">
-        <strong>{injury.location != 'internal' ? capitalizeWords(injury.location) : ''} {injury.name}</strong>
-        <br />
-        Severity: <Badge bg={getInjurySeverityColor(injury.severity)}>{injury.severity.toUpperCase()}</Badge>
+      <div key={i} className="injury-item">
+        <div className="injury-name">
+          {injury.location !== 'internal' ? capitalizeWords(injury.location) : ''} {injury.name}
+        </div>
+        <div className="injury-severity">
+          <span className="injury-severity-label">Severity:</span>
+          <Badge 
+            bg={getInjurySeverityColor(injury.severity)} 
+            className="severity-badge"
+          >
+            {injury.severity.toUpperCase()}
+          </Badge>
+        </div>
       </div>
     ));
   };
 
   return (
-    <Card className="h-100 border-0 shadow-sm">
-      <Card.Body>
-        <Card.Title className="h4 mb-1">
-          {patient.name}
-        </Card.Title>
-        {patient.demographics.age &&
-          <Card.Subtitle className="mb-2 text-muted">
-            {patient.demographics.age} years old, {patient.demographics.sex === 'F' ? 'Female' : 'Male'}
-          </Card.Subtitle>
-        }
-        <Card.Text className="mb-3 small">
-          {patient.unstructured}
-        </Card.Text>
+    <Card className="patient-card-container">
+      <Card.Body className="p-0">
+        <div className="patient-card-header">
+          <h4 className="patient-card-title">{patient.name}</h4>
+          {patient.demographics.age && (
+            <div className="patient-card-subtitle">
+              {patient.demographics.age} years old, {patient.demographics.sex === 'F' ? 'Female' : 'Male'}
+            </div>
+          )}
+        </div>
+        
+        <div className="p-3">
+          <p className="patient-description mb-3">
+            {patient.unstructured}
+          </p>
 
-        {patient.imgUrl && (
-          <Row className="mb-3">
-            <Col md={12}>
-              <div className="text-white text-center w-100 rounded"
-                style={{
-                  position: 'relative',
-                  height: '300px',
-                  overflow: 'hidden'
-                }}>
-                <img
-                  src={`data:image/png;base64,${patient.imgUrl}`}
-                  alt={`${patient.id ?? patient.name}`}
-                  style={patient.demographics.age ? {
-                    // Style for patients with age - uses contain to show full body
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    position: 'relative'
-                  } : {
-                    // Style for patients without age - uses cover to fill space
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
-                  }}
-                />
-                {!imageClickDisabled &&
-                  <ZoomInIcon
-                    className="magnifying-glass"
-                    style={{
+          {patient.imgUrl && (
+            <Row className="mb-3">
+              <Col md={12}>
+                <div className="text-white text-center w-100 rounded" style={{ position: 'relative', height: '300px', overflow: 'hidden', backgroundColor: '#fff' }}>
+                  <img
+                    src={`data:image/png;base64,${patient.imgUrl}`}
+                    alt={`${patient.id ?? patient.name}`}
+                    style={patient.demographics.age ? {
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      position: 'relative'
+                    } : {
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
                       position: 'absolute',
-                      bottom: '8px',
-                      right: '8px',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      zIndex: 1,
-                      color: 'white'
+                      top: 0,
+                      left: 0
                     }}
-                    onClick={() => onImageClick(patient)}
                   />
-                }
-              </div>
-            </Col>
-          </Row>
-        )}
+                  {!imageClickDisabled && (
+                    <ZoomInIcon
+                      className="magnifying-glass"
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        zIndex: 1,
+                        color: 'white'
+                      }}
+                      onClick={() => onImageClick(patient)}
+                    />
+                  )}
+                </div>
+              </Col>
+            </Row>
+          )}
 
-        {/* Vitals and Injuries Section */}
-        <Row>
-          <Col md={6}>
-            <Card className="mb-0 border-0 h-100 vitals-card" style={{ backgroundColor: '#e7f1ff' }}>
-              <Card.Body className="p-3">
-                <Card.Title className="h4 mb-2">Vitals</Card.Title>
-                {renderVitals(patient.vitals)}
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={6}>
-            <Card className="mb-0 border-0 h-100" style={{ backgroundColor: '#fff0f0' }}>
-              <Card.Body className="p-3">
-                <Card.Title className="h4 mb-2">Injuries</Card.Title>
-                {renderInjuries(patient.injuries)}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+          <div className="stats-section">
+            <Row>
+              <Col md={6}>
+                <Card className="stats-card vitals-card">
+                  <div className="stats-header">
+                    <h5 className="stats-title">Vitals</h5>
+                  </div>
+                  <div className="stats-content">
+                    {renderVitals(patient.vitals)}
+                  </div>
+                </Card>
+              </Col>
+              <Col md={6}>
+                <Card className="stats-card injuries-card">
+                  <div className="stats-header">
+                    <h5 className="stats-title">Injuries</h5>
+                  </div>
+                  <div className="stats-content">
+                    {renderInjuries(patient.injuries)}
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+          </div>
+        </div>
       </Card.Body>
     </Card>
   );

@@ -208,6 +208,7 @@ const typeDefs = gql`
     getParticipantLog: [JSON],
     getHumanToADMComparison: [JSON],
     getCurrentSurveyVersion: String,
+    getCurrentStyle: String,
     getADMTextProbeMatches: [JSON]
   }
 
@@ -222,6 +223,7 @@ const typeDefs = gql`
     addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
+    updateUIStyle(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON
     getServerTimestamp: String
   }
@@ -253,7 +255,9 @@ const resolvers = {
           "history.response.kdma_values.value": 1,
           "history.parameters.target_id": 1,
           "history.response.score": 1,
+          "history.response.dre_alignment.score": 1,
           "history.parameters.session_id": 1,
+          "history.parameters.dreSessionId": 1,
           "history.command": 1
         }
       }).toArray().then(result => { return result; });
@@ -597,6 +601,9 @@ const resolvers = {
     getCurrentSurveyVersion: async (obj, args, context, info) => {
       return await context.db.collection('surveyVersion').findOne().then(result => { return result.version });
     },
+    getCurrentStyle: async (obj, args, context, info) => {
+      return await context.db.collection('uiStyle').findOne().then(result => {return result.version})
+    },
     getADMTextProbeMatches: async (obj, args, context, info) => {
       return await context.db.collection('admVsTextProbeMatches').find().toArray().then(result => { return result });
     }
@@ -784,6 +791,14 @@ const resolvers = {
         { upsert: true }
       );
       return result.value.version;
+    },
+    updateUIStyle: async (obj, args, context, inflow) => {
+      const result = await context.db.collection('uiStyle').findOneAndUpdate(
+        {},
+        {$set : {version: args['version']}},
+        {upsert: true}
+      )
+      return result.value.version
     },
     updateParticipantLog: async (obj, args, context, inflow) => {
       return await context.db.collection('participantLog').update(
