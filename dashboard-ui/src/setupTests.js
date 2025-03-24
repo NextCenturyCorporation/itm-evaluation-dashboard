@@ -6,7 +6,7 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import { ParticipantLog, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UserScenarioResults } from './__mocks__/mockDbSchema.js';
+import { ParticipantLog, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
 import { surveyResultMock, surveyV5, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
@@ -35,6 +35,12 @@ beforeAll(async () => {
 
             await textConfig.save();
         }
+
+        const uiStyle = new UiStyle({
+            version: 'updated',
+        });
+
+        await uiStyle.save();
 
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
