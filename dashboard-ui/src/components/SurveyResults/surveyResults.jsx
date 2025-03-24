@@ -40,6 +40,7 @@ const VIZ_PANEL_OPTIONS = {
 
 export function SurveyResults() {
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'network-only' });
+    console.log(data)
     const { data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState("");

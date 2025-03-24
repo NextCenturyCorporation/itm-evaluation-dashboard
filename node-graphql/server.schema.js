@@ -455,14 +455,14 @@ const resolvers = {
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
-
+      
       const excludeTestID = {
         "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
         "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
         "Participant ID.questions.Participant ID.response": { $not: /test/i },
         "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       };
-
+      
       // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
       const surveyVersionFilter = {
         $or: [
@@ -475,20 +475,25 @@ const resolvers = {
           }
         ]
       };
+    
       return await context.db.collection('surveyResults').find({
         $and: [excludeTestID, surveyVersionFilter]
+      }).project({
+        // dont return user field
+        "results.user": 0,
+        "user": 0
       }).toArray().then(result => { return result; });
     },
     getAllSurveyResultsByEval: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
-
+      
       const excludeTestID = {
         "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
         "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
         "Participant ID.questions.Participant ID.response": { $not: /test/i },
         "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       };
-
+      
       // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
       const surveyVersionFilter = {
         $or: [
@@ -501,11 +506,15 @@ const resolvers = {
           }
         ]
       };
+      
       return await context.db.collection('surveyResults').find({
         $and: [excludeTestID, surveyVersionFilter, {
           $or: [{ "evalNumber": args["evalNumber"] }, { "results.evalNumber": args["evalNumber"] }]
         }]
-
+      }).project({
+        // dont return user field
+        "results.user": 0,
+        "user": 0
       }).toArray().then(result => { return result; });
     },
     getAllScenarioResults: async (obj, args, context, inflow) => {
