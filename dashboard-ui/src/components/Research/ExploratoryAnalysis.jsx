@@ -5,6 +5,7 @@ import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
+import { RQ5_PH1 } from './tables/rq5_ph1';
 import { BlockedTable } from './tables/BlockedTable';
 
 const ALLOWED_EVAL_OPTIONS = [
@@ -92,7 +93,11 @@ export function ExploratoryAnalysis() {
             </p>
         </div>
         <div className="section-container">
-            <RQ5 evalNum={selectedEval} />
+            {selectedEval == 5 ?
+                <RQ5_PH1 evalNum={selectedEval} /> :
+                <RQ5 evalNum={selectedEval} />}
+
+
         </div>
 
         <div className="section-container">

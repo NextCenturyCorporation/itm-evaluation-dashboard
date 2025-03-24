@@ -4,7 +4,7 @@ import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ5_DRE.xlsx';
-import ph1DefinitionXLFile from '../variables/Variable Definitions RQ5_PH1.xlsx';
+import janDefinitionXLFile from '../variables/Variable Definitions RQ5_JAN.xlsx';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
@@ -391,7 +391,7 @@ export function RQ5({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ5_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ5_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? janDefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
