@@ -1,5 +1,5 @@
 import store from '../../store/store';
-import { addConfig, addTextBasedConfig, setCurrentSurveyVersion } from '../../store/slices/configSlice';
+import { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle } from '../../store/slices/configSlice';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { setParticipantLog } from '../../store/slices/participantSlice';
 
@@ -74,4 +74,8 @@ export function setSurveyVersion(version) {
 
 export function setParticipantLogInStore(participants) {
     store.dispatch(setParticipantLog(participants));
+}
+
+export function setCurrentUIStyle(version) {
+    store.dispatch(setCurrentStyle(version));
 }

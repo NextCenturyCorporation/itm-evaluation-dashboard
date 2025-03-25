@@ -8,12 +8,12 @@ import VitalsDropdown from "./vitalsDropdown";
 import '../../css/template.css';
 import { renderSituation } from './surveyUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
-import Patient from '../TextBasedScenarios/patient';
-import Supplies from '../TextBasedScenarios/supplies';
+import PatientPhase1 from '../TextBasedScenarios/patientPhase1';
+import SuppliesPhase1 from '../TextBasedScenarios/suppliesPhase1';
 import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
 import { useSelector } from 'react-redux';
 
-const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission, scenarioIndex }) => {
+const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission, scenarioIndex }) => {
     const [visiblePatients, setVisiblePatients] = useState(() => {
         const initialVisibility = {};
         patients.forEach(patient => {
@@ -29,43 +29,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     const [showSituationModal, setShowSituationModal] = useState(showModal);
     const [showMoreDetailsModal, setShowMoreDetailsModal] = useState(false);
     const [actionLogs, setActionLogs] = useState([]);
-    
-    const [openScenes, setOpenScenes] = useState(() => {
-        const initialOpenScenes = {};
-        if (scenes) {
-            scenes.forEach(scene => {
-                initialOpenScenes[scene.id] = true;
-            });
-        } else {
-            initialOpenScenes['Scene 1'] = true;
-        }
-        return initialOpenScenes;
-    });
-    
-    const [openMedicAccordions, setOpenMedicAccordions] = useState(() => {
-        const initialOpenMedicAccordions = {};
-        if (scenes) {
-            scenes.forEach(scene => {
-                initialOpenMedicAccordions[scene.id] = true;
-            });
-        } else {
-            initialOpenMedicAccordions['Scene 1'] = true;
-        }
-        return initialOpenMedicAccordions;
-    });
-    
-    const [openPatientAccordions, setOpenPatientAccordions] = useState(() => {
-        const initialOpenPatientAccordions = {};
-        if (scenes) {
-            scenes.forEach(scene => {
-                initialOpenPatientAccordions[scene.id] = true;
-            });
-        } else {
-            initialOpenPatientAccordions['Scene 1'] = true;
-        }
-        return initialOpenPatientAccordions;
-    });
-    
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const matchingScenario = textBasedConfigs[scenarioIndex];
 
@@ -83,6 +46,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         return null
     }
 
+    // log actions
     const logAction = (actionName) => {
         const newLog = { dmName, actionName, timestamp: new Date().toISOString() };
         const updatedLogs = [...actionLogs, newLog];
@@ -90,30 +54,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             updateActionLogs(newLog);
         }
         setActionLogs(updatedLogs);
-    };
-
-    const toggleSceneAccordion = (sceneId) => {
-        setOpenScenes(prev => ({
-            ...prev,
-            [sceneId]: !prev[sceneId]
-        }));
-        logAction(`Toggle scene accordion: ${sceneId}`);
-    };
-
-    const toggleMedicAccordion = (sceneId) => {
-        setOpenMedicAccordions(prev => ({
-            ...prev,
-            [sceneId]: !prev[sceneId]
-        }));
-        logAction(`Toggle medic actions accordion: ${sceneId}`);
-    };
-
-    const togglePatientAccordion = (sceneId) => {
-        setOpenPatientAccordions(prev => ({
-            ...prev,
-            [sceneId]: !prev[sceneId]
-        }));
-        logAction(`Toggle patients accordion: ${sceneId}`);
     };
 
     const togglePatientVisibility = (patientName) => {
@@ -217,11 +157,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         }
     }
 
-    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength }) {
-        const isSceneOpen = openScenes[sceneId] === undefined ? true : openScenes[sceneId];
-        const isMedicAccordionOpen = openMedicAccordions[sceneId] === undefined ? true : openMedicAccordions[sceneId];
-        const isPatientAccordionOpen = openPatientAccordions[sceneId] === undefined ? true : openPatientAccordions[sceneId];
-
+    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
         const patientButtons = patients.map(patient => (
             sceneCharacters.includes(patient.name) && (
                 <div className="patient-buttons" key={`button-${patient.name}`}>
@@ -242,7 +178,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     <Col md={6} key={`card-${patient.name}`}>
                         {patient.demographics ? (
                             <div className='patient-card'>
-                                <Patient
+                                <PatientPhase1
                                     patient={patient}
                                     onImageClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)}
                                     blockedVitals={[]}
@@ -257,10 +193,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                     <Col md={8} className="mr-4">
                                         <div style={{ position: 'relative' }}>
                                             <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
-                                            <ZoomInIcon 
-                                                className="magnifying-glass" 
-                                                onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} 
-                                            />
+                                            <ZoomInIcon className="magnifying-glass" onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
                                         </div>
                                     </Col>
                                     <Col md={4}>
@@ -280,89 +213,38 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
             return null;
         });
 
-        const groupedActions = [];
-        let currentGroup = [];
-        // group action list by updates, makes it a little more readable
-        if (sceneActions) {
-            sceneActions.forEach((action, index) => {
-                const text = getActionText(action);
-
-                if (text.includes('Update:') && currentGroup.length > 0) {
-                    groupedActions.push([...currentGroup]);
-                    currentGroup = [action];
-                } else {
-                    currentGroup.push(action);
-                }
-
-                if (index === sceneActions.length - 1 && currentGroup.length > 0) {
-                    groupedActions.push([...currentGroup]);
-                }
-            });
-        }
-
-        const sceneBody = <>
-            <Row className="mb-4">
-                <Col md={12}>
-                    <Supplies supplies={sceneSupplies} />
-                </Col>
-            </Row>
-            <Row>
-                <Col md={12}>
-                    <Accordion 
-                        activeKey={isMedicAccordionOpen ? "1" : ""} 
-                        className="medic-actions-accordion mb-3"
-                    >
-                        <Accordion.Item eventKey="1">
-                            <Accordion.Header 
-                                className="medic-actions-header"
-                                onClick={() => toggleMedicAccordion(sceneId)}
-                            >
-                                <strong className="w-100 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>Medic Actions</strong>
-                            </Accordion.Header>
-                            <Accordion.Body>
-                                <div className="actions-container">
-                                    {groupedActions.map((group, groupIndex) => (
-                                        <div key={`group-${groupIndex}`} className="event-action-group mb-4">
-                                            {group.map((action, index) => {
-                                                const text = typeof action === 'string' ? action : action?.text || '';
-                                                const isUpdate = text.includes('Update:') || text.includes('Note:');
-                                                const isQuestion = text.includes('Question:');
-                                                const isHighlight = text.includes('<HIGHLIGHT>');
-
-                                                let actionClass = 'action-item';
-                                                if (isUpdate) actionClass += ' update';
-                                                else if (isQuestion) actionClass += ' question';
-                                                else actionClass += ' choice';
-                                                if (isHighlight) actionClass += ' highlight';
-
-                                                return (
-                                                    <div
-                                                        key={`action-${groupIndex}-${index}`}
-                                                        className={actionClass}
+        return (
+            <Accordion className='sceneAccordion' defaultActiveKey="0">
+                <Accordion.Item eventKey="0">
+                    <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
+                    <Accordion.Body className='scene'>
+                        <Row className="mb-4">
+                            <Col md={12}>
+                                <SuppliesPhase1 supplies={sceneSupplies} />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={12}>
+                                <Accordion defaultActiveKey="1">
+                                    <Accordion.Item eventKey="1">
+                                        <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
+                                        <Accordion.Body>
+                                            <ListGroup>
+                                                {sceneActions && sceneActions.map((action, index) => (
+                                                    <ListGroup.Item
+                                                        key={`action-${index}`}
+                                                        className="action-item"
+                                                        style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
                                                     >
-                                                        {processActionText(action, index, group)}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ))}
-                                </div>
-                            </Accordion.Body>
-                        </Accordion.Item>
-                    </Accordion>
+                                                        {processActionText(action, index, sceneActions)}
+                                                    </ListGroup.Item>
+                                                ))}
+                                            </ListGroup>
+                                        </Accordion.Body>
+                                    </Accordion.Item>
+                                </Accordion>
 
-                    <Accordion 
-                        activeKey={isPatientAccordionOpen ? "1" : ""} 
-                        className="mb-3"
-                    >
-                        <Accordion.Item eventKey="1">
-                            <Accordion.Header
-                                onClick={() => togglePatientAccordion(sceneId)}
-                            >
-                                <strong className="w-100 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>Patients</strong>
-                            </Accordion.Header>
-                            <Accordion.Body className="border border-top-0 rounded-bottom">
-                                <div className="mb-3 d-flex flex-wrap">
+                                <div style={{ marginBottom: '10px', marginTop: '10px' }}>
                                     {patientButtons}
                                 </div>
                                 <div className="card-container">
@@ -370,35 +252,11 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                         {patientCards}
                                     </Row>
                                 </div>
-                            </Accordion.Body>
-                        </Accordion.Item>
-                    </Accordion>
-                </Col>
-            </Row>
-        </>
-
-        return (
-            <>
-                {scenesLength > 1 ? (
-                    <Accordion 
-                        className='sceneAccordion' 
-                        activeKey={isSceneOpen ? "0" : ""}
-                    >
-                        <Accordion.Item eventKey="0">
-                            <Accordion.Header onClick={() => toggleSceneAccordion(sceneId)}>
-                                <strong>{sceneId}</strong>
-                            </Accordion.Header>
-                            <Accordion.Body className='scene'>
-                                {sceneBody}
-                            </Accordion.Body>
-                        </Accordion.Item>
-                    </Accordion>
-                ) : (
-                    <div className="scene">
-                        {sceneBody}
-                    </div>
-                )}
-            </>
+                            </Col>
+                        </Row>
+                    </Accordion.Body>
+                </Accordion.Item>
+            </Accordion>
         );
     }
 
@@ -411,28 +269,25 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     situation={situation} />
             }
             <Card className="mb-3">
-                <Card.Header className="bg-light border">
-                    <div className="d-flex justify-content-center align-items-center position-relative py-2">
-                        <h5 className="mb-0 text-center" style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                            Situation
-                            <ZoomInIcon
-                                className="ms-2"
-                                onClick={handleShowSituationModal}
-                                style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-                            />
-                        </h5>
-
-                        {mission?.roe && mission.roe !== "" && (
-                            <div
-                                className="d-flex align-items-center position-absolute end-0 me-2"
-                                style={{ cursor: 'pointer', top: '50%', transform: 'translateY(-50%)' }}
-                                onClick={handleShowMoreDetailsModal}
-                            >
-                                <FaInfoCircle size={28} color="#17a2b8" />
-                                <span className="ms-2 small text-muted d-none d-md-inline">Click For More Info</span>
-                            </div>
-                        )}
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                    <div className="d-flex align-items-center">
+                        Situation
+                        <ZoomInIcon
+                            className="magnifying-glass-icon ms-2"
+                            onClick={handleShowSituationModal}
+                            style={{ cursor: 'pointer' }}
+                        />
                     </div>
+                    {mission?.roe && mission.roe !== "" && (
+                        <div
+                            className="d-flex align-items-center scenario-info-icon"
+                            style={{ cursor: 'pointer' }}
+                            onClick={handleShowMoreDetailsModal}
+                        >
+                            <FaInfoCircle size={28} color="#17a2b8" />
+                            <span className="ms-2 small text-muted">Click For More Info</span>
+                        </div>
+                    )}
                 </Card.Header>
                 <Card.Body className="overflow-auto" style={{ maxHeight: '200px' }}>
                     {renderSituation(situation)}
@@ -446,7 +301,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         sceneActions={scene.actions}
                         sceneSupplies={scene.supplies}
                         sceneCharacters={scene.char_ids}
-                        scenesLength={scenes.length}
                     />
                 ))
                 : <Scene
@@ -454,33 +308,16 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                     sceneActions={actions}
                     sceneSupplies={supplies}
                     sceneCharacters={patients.map((p) => p.name)}
-                    scenesLength={1}
                 />
             }
 
-            <Modal
-                show={showPatientModal}
-                onHide={() => toggleImageModal("", activeTitle, "")}
-                size="xl"
-                centered
-                className="w-100 mw-100"
-            >
+            <Modal show={showPatientModal} onHide={() => toggleImageModal("", activeTitle, "")}>
                 <Modal.Header closeButton>
                     <Modal.Title>{activeTitle}</Modal.Title>
                 </Modal.Header>
-                <Modal.Body className="p-3">
-                    <p>{activeDescription}</p>
-                    <div className="d-flex justify-content-center align-items-center">
-                        <img
-                            src={`data:image/jpeg;base64,${activeImage}`}
-                            alt="Enlarged view"
-                            style={{
-                                maxWidth: '100%',
-                                maxHeight: '70vh',
-                                objectFit: 'contain'
-                            }}
-                        />
-                    </div>
+                <Modal.Body>
+                    {activeDescription}
+                    <img src={`data:image/jpeg;base64,${activeImage}`} alt="Enlarged view" style={{ width: '100%' }} />
                 </Modal.Body>
             </Modal>
 
@@ -493,4 +330,4 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
     );
 };
 
-export default Dynamic;
+export default DynamicPhase1;

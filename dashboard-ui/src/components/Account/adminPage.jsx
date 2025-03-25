@@ -6,20 +6,20 @@ import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
-import { setSurveyVersion, setupConfigWithImages } from '../App/setupUtils';
+import { setSurveyVersion, setupConfigWithImages, setCurrentUIStyle } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
-import {FaInfoCircle} from 'react-icons/fa'
+import { FaInfoCircle } from 'react-icons/fa'
 
 const history = createBrowserHistory({ forceRefresh: true });
 
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
-    query getUsers {
-        getUsers
+    query getUsers($caller: JSON!) {
+        getUsers(caller: $caller)
     }
 `;
 
@@ -59,9 +59,21 @@ const GET_CURRENT_SURVEY_VERSION = gql`
     }
 `;
 
+const GET_CURRENT_UI_STYLE = gql`
+    query getCurrentStyle {
+        getCurrentStyle
+    }
+`;
+
 const UPDATE_SURVEY_VERSION = gql`
     mutation updateSurveyVersion($version: String!) {
         updateSurveyVersion(version: $version)
+    }
+`;
+
+const UPDATE_UI_STYLE = gql`
+    mutation updateUIStyle($version: String!) {
+        updateUIStyle(version: $version)
     }
 `;
 
@@ -107,7 +119,7 @@ function AdminConfirmationModal({ show, onCancel, onConfirm, pendingChanges, opt
                     </div>
                 )}
                 <div className="alert alert-info mb-0 py-2 d-flex align-items-center">
-                    <FaInfoCircle className="me-2"/>
+                    <FaInfoCircle className="me-2" />
                     Please confirm to modify administrative access.
                 </div>
             </Modal.Body>
@@ -128,11 +140,11 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
     const [updateUserCall] = useMutation(mutation);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [pendingChanges, setPendingChanges] = useState(null);
-    
+
     const handleConfirm = async () => {
         let errored = false;
         const { usersToAdd, usersToRemove } = pendingChanges;
-        
+
         for (const username of [...usersToAdd, ...usersToRemove]) {
             try {
                 await updateUserCall({
@@ -148,11 +160,11 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
                 break;
             }
         }
-        
+
         if (!errored) {
             setSelected(pendingChanges.newSelection);
         }
-        
+
         setShowConfirmation(false);
         setPendingChanges(null);
     };
@@ -165,7 +177,7 @@ function InputBox({ options, selectedOptions, mutation, param, header, caller, e
     const updateUser = (newSelect) => {
         const usersToAdd = newSelect.filter(user => !selected.includes(user));
         const usersToRemove = selected.filter(user => !newSelect.includes(user));
-        
+
         // confirm for admin changes
         if (param === 'isAdmin') {
             setPendingChanges({
@@ -355,10 +367,10 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
 };
 
 function AdminPage({ currentUser, updateUserHandler }) {
-    const { data: users } = useQuery(GET_USERS, { fetchPolicy: 'no-cache' });
     const [surveyVersion, setLocalSurveyVersion] = useState('');
     const [pendingSurveyVersion, setPendingSurveyVersion] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showStyleConfirmation, setShowStyleConfirmation] = useState(false);
     const surveyConfigs = useSelector(state => state.configs.surveyConfigs);
     const [surveyVersions, setSurveyVersions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -368,6 +380,32 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const [sessionId, setSessionId] = useState(null);
     const [errorCount, setErrorCount] = useState(0);
     const [unapproved, setUnapproved] = useState([]);
+    // UI Style state
+    const [usePhase1Styling, setUsePhase1Styling] = useState(false);
+    const [pendingStyleVersion, setPendingStyleVersion] = useState(null);
+
+    // Query and mutation for UI styling
+    const { loading: uiStyleLoading, error: uiStyleError, data: uiStyleData } = useQuery(GET_CURRENT_UI_STYLE, {
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            if (data && data.getCurrentStyle) {
+                setUsePhase1Styling(data.getCurrentStyle === 'phase1');
+            }
+        }
+    });
+    const [updateUIStyle] = useMutation(UPDATE_UI_STYLE);
+
+    const [getUsersQuery, { data: users }] = useLazyQuery(GET_USERS, {
+        fetchPolicy: 'no-cache'
+    });
+
+    useEffect(() => {
+        if (sessionId && currentUser) {
+          getUsersQuery({
+            variables: { caller: { username: currentUser.username, sessionId } }
+          });
+        }
+      }, [sessionId, currentUser, getUsersQuery]);
 
     useEffect(() => {
         if (users)
@@ -389,7 +427,6 @@ function AdminPage({ currentUser, updateUserHandler }) {
             }
         `;
     }, [pendingSurveyVersion]);
-
 
     const [getConfigs, { loading: configsLoading, error: configsError, data: configsData }] = useLazyQuery(GET_CONFIGS, {
         fetchPolicy: 'no-cache',
@@ -425,6 +462,43 @@ function AdminPage({ currentUser, updateUserHandler }) {
             setPendingSurveyVersion(newVersion);
             setShowConfirmation(true);
         }
+    };
+
+    // Handler for UI style change
+    const handleStylingChange = (event) => {
+        const newStyle = event.target.value;
+        setPendingStyleVersion(newStyle);
+        setShowStyleConfirmation(true);
+    };
+
+    const confirmStylingChange = async () => {        
+        try {
+            setIsLoading(true);
+            
+            const { data } = await updateUIStyle({
+                variables: { version: pendingStyleVersion }
+            });
+            
+            if (data && data.updateUIStyle !== undefined) {
+                setUsePhase1Styling(pendingStyleVersion === 'phase1');
+                
+                setCurrentUIStyle(pendingStyleVersion);
+                
+                setPendingStyleVersion(null);
+                setShowStyleConfirmation(false);
+            } else {
+                throw new Error("Failed to update UI style");
+            }
+        } catch (error) {
+            alert("Failed to update UI style. Error: " + error.message );
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const cancelStylingChange = () => {
+        setPendingStyleVersion(null);
+        setShowStyleConfirmation(false);
     };
 
     const confirmSurveyVersionChange = async () => {
@@ -494,8 +568,9 @@ function AdminPage({ currentUser, updateUserHandler }) {
         }
     };
 
-    if (surveyVersionLoading) return <div className="loading">Loading survey version...</div>;
+    if (surveyVersionLoading || uiStyleLoading) return <div className="loading">Loading data...</div>;
     if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
+    if (uiStyleError) return <div className="error">Error loading UI style: {uiStyleError.message}</div>;
 
     return (
         <Container className="admin-page">
@@ -564,6 +639,27 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         </Card.Body>
                     </Card>
                 </Col>
+
+                <Col md={6}>
+                    <Card>
+                        <Card.Header as="h5">Delegation/Text Scenarios Styling</Card.Header>
+                        <Card.Body>
+                            <Card.Text>
+                                Current UI Style: <strong>{usePhase1Styling ? 'Phase 1 Styling' : 'Updated Styling'}</strong>
+                            </Card.Text>
+                            <Form.Group>
+                                <Form.Label>Change UI Style:</Form.Label>
+                                <Form.Select
+                                    value={usePhase1Styling ? 'phase1' : 'updated'}
+                                    onChange={handleStylingChange}
+                                >
+                                    <option value="updated">Updated Styling</option>
+                                    <option value="phase1">Use Phase 1 Styling</option>
+                                </Form.Select>
+                            </Form.Group>
+                        </Card.Body>
+                    </Card>
+                </Col>
             </Row>
 
                 <ConfirmationDialog
@@ -573,7 +669,19 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
                 />
 
-                <Query query={GET_USERS} fetchPolicy={'no-cache'}>
+                <ConfirmationDialog
+                    show={showStyleConfirmation}
+                    onConfirm={confirmStylingChange}
+                    onCancel={cancelStylingChange}
+                    message={`Are you sure you want to change to the ${pendingStyleVersion === 'phase1' ? 'Phase 1' : 'Updated'} UI Style? This will affect the appearance for all users.`}
+                />
+
+                <Query
+                    query={GET_USERS}
+                    variables={{ caller: { username: currentUser.username, sessionId } }}
+                    fetchPolicy='no-cache'
+                    skip={!sessionId || !currentUser}
+                >
                     {({ loading, error, data }) => {
                         if (loading) return <div className="loading">Loading ...</div>;
                         if (error) return <div className="error">Error: {error.message}</div>;

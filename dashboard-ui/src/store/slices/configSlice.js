@@ -5,7 +5,8 @@ const configSlice = createSlice({
     initialState: {
         surveyConfigs: {},
         textBasedConfigs: {},
-        currentSurveyVersion: null
+        currentSurveyVersion: null,
+        currentStyle: null
     },
     reducers: {
         addConfig: (state, action) => {
@@ -20,10 +21,14 @@ const configSlice = createSlice({
 
         setCurrentSurveyVersion: (state, action) => {
             state.currentSurveyVersion = action.payload;
+        },
+
+        setCurrentStyle: (state, action) => {
+            state.currentStyle = action.payload
         }
     }
 });
 
-export const { addConfig, addTextBasedConfig, setCurrentSurveyVersion } = configSlice.actions;
+export const { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle } = configSlice.actions;
 export default configSlice.reducer;
 

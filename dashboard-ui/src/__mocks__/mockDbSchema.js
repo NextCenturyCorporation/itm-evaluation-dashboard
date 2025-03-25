@@ -20,6 +20,10 @@ const SurveyVersion = createSchema('surveyVersion', {
     version: { type: String, required: true }
 });
 
+const UiStyle = createSchema('uiStyle', {
+    version: { type: String, required: true }
+});
+
 const ParticipantLog = createSchema('participantLog', {
     Type: { type: String, required: true },
     ParticipantID: { type: Number, required: true },
@@ -50,7 +54,7 @@ const User = createSchema('users', {
     adeptUser: { type: Boolean }
 });
 
-const AdmLog = createSchema('test', {
+const AdmLog = createSchema('admTargetRuns', {
     evaluation: { type: JSON },
     history: { type: Array, required: true },
     evalNumber: { type: Number, required: true },
@@ -96,4 +100,4 @@ const TextBasedConfig = createSchema('textBasedConfig', {
 
 
 
-export { SurveyConfig, SurveyResults, SurveyVersion, ParticipantLog, AdmLog, UserScenarioResults, User, TextBasedConfig };
+export { SurveyConfig, SurveyResults, SurveyVersion, UiStyle, ParticipantLog, AdmLog, UserScenarioResults, User, TextBasedConfig };
