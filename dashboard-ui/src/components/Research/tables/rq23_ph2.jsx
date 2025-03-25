@@ -5,7 +5,7 @@ import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
-import ph1DefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_PH1.xlsx';
+import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.3_PH2.xlsx';
 import { DownloadButtons } from "./download-buttons";
 
 const getAnalysisData = gql`
@@ -215,7 +215,7 @@ export function Phase2_RQ23() {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ23_eval7.xlsx`} xlFile={ph1DefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ23_eval7.xlsx`} xlFile={ph2DefinitionXLFile} />
             </div>
         </Modal>
     </>);
