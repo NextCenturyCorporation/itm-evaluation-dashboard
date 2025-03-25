@@ -77,6 +77,11 @@ export function Phase2_RQ23() {
                 entryObj['Alignment (Target|ADM) - MJ4'] = admGroup['AD2_align'];
                 entryObj['Alignment (Target|ADM) - MJ5'] = admGroup['AD3_align'];
                 entryObj['Alignment (Target|ADM) - AVE'] = admGroup['ave_align'];
+                for (const key of Array.from(Object.keys(entryObj))) {
+                    if (entryObj[key] == -1) {
+                        entryObj[key] = '-';
+                    }
+                }
                 allObjs.push(entryObj);
             }
 
