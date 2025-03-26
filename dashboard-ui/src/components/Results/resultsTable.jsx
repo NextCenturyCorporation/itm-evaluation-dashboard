@@ -37,8 +37,8 @@ const scenario_names_aggregation = gql`
         getScenarioNamesByEval(evalNumber: $evalNumber)
     }`;
 const performer_adm_by_scenario = gql`
-    query getPerformerADMsForScenario($admQueryStr: String, $scenarioID: ID){
-        getPerformerADMsForScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID)
+    query getPerformerADMsForScenario($admQueryStr: String, $scenarioID: ID, $evalNumber: Float){
+        getPerformerADMsForScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, evalNumber: $evalNumber)
     }`;
 const test_by_adm_and_scenario = gql`
     query getTestByADMandScenario($admQueryStr: String, $scenarioID: ID, $admName: ID, $alignmentTarget: String, $evalNumber: Int){
@@ -137,7 +137,7 @@ class ResultsTable extends React.Component {
                 return ("Soartech: " + id);
             }
         } else {
-            if(id.toLowerCase().includes("qol") || id.toLowerCase().includes("vol") ) {
+            if (id.toLowerCase().includes("qol") || id.toLowerCase().includes("vol")) {
                 return ("Soartech: " + id);
             } else {
                 return ("Adept: " + id);
@@ -206,7 +206,7 @@ class ResultsTable extends React.Component {
                                             ({ loading, error, data }) => {
                                                 if (loading) return <div>Loading ...</div>
                                                 if (error) return <div>Error</div>
-                                                
+
                                                 const scenarioNameOptions = data[getScenarioNamesQueryName];
                                                 let scenariosArray = [];
                                                 for (const element of scenarioNameOptions) {
@@ -241,7 +241,7 @@ class ResultsTable extends React.Component {
                                     <span className="nav-header-text">Performer/ADM</span>
                                 </div>
                                 <div className="nav-menu">
-                                    <Query query={performer_adm_by_scenario} variables={{ "admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario }}>
+                                    <Query query={performer_adm_by_scenario} variables={{ "admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "evalNumber": this.state.evalNumber }}>
                                         {
                                             ({ loading, error, data }) => {
                                                 if (loading) return <div>Loading ...</div>
@@ -276,42 +276,42 @@ class ResultsTable extends React.Component {
                                 </div>
                             </>
                         }
-                        {(this.state.evalNumber >= 3 && this.state.scenario !== ""  && this.state.adm !== "")&&
+                        {(this.state.evalNumber >= 3 && this.state.scenario !== "" && this.state.adm !== "") &&
                             <>
                                 <div className="nav-header">
                                     <span className="nav-header-text">Alignment Target</span>
                                 </div>
                                 <div className="nav-menu">
-                                <Query query={alignment_target_by_scenario} variables={{"evalNumber": this.state.evalNumber, "scenarioID": this.state.scenario}}>
-                                    {
-                                        ({ loading, error, data }) => {
-                                            if (loading) return <div>Loading ...</div> 
-                                            if (error) return <div>Error</div>
+                                    <Query query={alignment_target_by_scenario} variables={{ "evalNumber": this.state.evalNumber, "scenarioID": this.state.scenario }}>
+                                        {
+                                            ({ loading, error, data }) => {
+                                                if (loading) return <div>Loading ...</div>
+                                                if (error) return <div>Error</div>
 
-                                            const alignmentTargetOptions = data[getAlignmentTargetsPerScenario];
-                                            let alignmentTargetArray = [];
-                                            for(const element of alignmentTargetOptions) {
-                                                alignmentTargetArray.push({
-                                                    "value": element,
-                                                    "name": element
-                                                });
+                                                const alignmentTargetOptions = data[getAlignmentTargetsPerScenario];
+                                                let alignmentTargetArray = [];
+                                                for (const element of alignmentTargetOptions) {
+                                                    alignmentTargetArray.push({
+                                                        "value": element,
+                                                        "name": element
+                                                    });
+                                                }
+                                                alignmentTargetArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+                                                return (
+                                                    <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
+                                                        {alignmentTargetArray.map((item, key) =>
+                                                            <ListItem className="nav-list-item" id={"alignTarget_" + key} key={"alignTarget_" + key}
+                                                                button
+                                                                selected={this.state.alignmentTarget === item.value}
+                                                                onClick={() => this.setAlignmentTarget(item.value)}>
+                                                                <ListItemText primary={item.value} />
+                                                            </ListItem>
+                                                        )}
+                                                    </List>
+                                                )
                                             }
-                                            alignmentTargetArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
-
-                                            return (
-                                                <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
-                                                    {alignmentTargetArray.map((item,key) =>
-                                                        <ListItem className="nav-list-item" id={"alignTarget_" + key} key={"alignTarget_" + key}
-                                                            button
-                                                            selected={this.state.alignmentTarget === item.value}
-                                                            onClick={() => this.setAlignmentTarget(item.value)}>
-                                                            <ListItemText primary={item.value} />
-                                                        </ListItem>
-                                                    )}
-                                                </List>
-                                            )
                                         }
-                                    }
                                     </Query>
                                 </div>
                             </>
@@ -320,10 +320,10 @@ class ResultsTable extends React.Component {
                     <div className="test-overview-area">
                         {((this.state.evalNumber < 3 && this.state.scenario !== "" && this.state.adm !== "") || (
                             this.state.evalNumber >= 3 && this.state.scenario !== "" && this.state.adm !== "" && this.state.alignmentTarget !== null)) ?
-                            <Query query={test_by_adm_and_scenario} variables={{"admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm, "alignmentTarget": this.state.alignmentTarget, "evalNumber": this.state.evalNumber}}>
+                            <Query query={test_by_adm_and_scenario} variables={{ "admQueryStr": this.state.ADMQueryString, "scenarioID": this.state.scenario, "admName": this.state.adm, "alignmentTarget": this.state.alignmentTarget, "evalNumber": this.state.evalNumber }}>
                                 {
                                     ({ loading, error, data }) => {
-                                        if (loading) return <div>Loading ...</div> 
+                                        if (loading) return <div>Loading ...</div>
                                         if (error) return <div>Error</div>
                                         const testData = data[getTestByADMandScenarioName];
                                         return (
@@ -368,13 +368,13 @@ class ResultsTable extends React.Component {
                         left: '20px',
                         bottom: '20px',
                         borderRadius: '10px',
-                        backgroundColor: '#592610', 
-                        color: 'white', 
+                        backgroundColor: '#592610',
+                        color: 'white',
                         cursor: 'pointer',
-                        zIndex: 1000, 
-                        boxShadow: '0px 2px 10px rgba(0,0,0,0.3)' 
+                        zIndex: 1000,
+                        boxShadow: '0px 2px 10px rgba(0,0,0,0.3)'
                     }}>
-                        Back To Top <ArrowUpwardIcon fontSize='large'/>
+                        Back To Top <ArrowUpwardIcon fontSize='large' />
                     </IconButton>
                 )}
             </div>
@@ -452,19 +452,19 @@ function ActionRow({ item }) {
         <React.Fragment>
             <TableRow className='noBorderRow' onClick={() => setOpen(!open)}>
                 <TableCell className="noBorderCell tableCellIcon">
-                <IconButton
+                    <IconButton
                         aria-label="expand row"
                         onClick={(e) => {
                             e.stopPropagation();
                             setOpen(!open);
                         }}
                     >
-                        {open ? <KeyboardArrowUpIcon fontSize='large'/> : <KeyboardArrowDownIcon fontSize='large'/>}
+                        {open ? <KeyboardArrowUpIcon fontSize='large' /> : <KeyboardArrowDownIcon fontSize='large' />}
                     </IconButton>
                 </TableCell>
                 <TableCell className="noBorderCell tableCellCommand">
                     <Typography><strong>Command:</strong> {item.command}</Typography>
-                    <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>  
+                    <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>
                     {renderNestedItems(item.parameters, item.command == 'Take Action' ? item.response : null)}
                 </TableCell>
             </TableRow>

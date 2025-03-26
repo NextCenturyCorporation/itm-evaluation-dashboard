@@ -8,7 +8,7 @@ const AlignmentScoreBox = ({ performer, data, scenario }) => {
 
   if (data.history !== null && data.history !== undefined) {
     const lastHistoryItem = data.history[data.history.length - 1];
-    if (lastHistoryItem?.response?.score !== undefined) {
+    if (lastHistoryItem?.response?.score) {
       score = lastHistoryItem.response.score.toFixed(4);
     }
 
