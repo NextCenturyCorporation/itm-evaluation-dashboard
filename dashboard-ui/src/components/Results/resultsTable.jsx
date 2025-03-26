@@ -45,8 +45,8 @@ const test_by_adm_and_scenario = gql`
         getTestByADMandScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, admName: $admName, alignmentTarget: $alignmentTarget, evalNumber: $evalNumber)
     }`;
 const alignment_target_by_scenario = gql`
-    query getAlignmentTargetsPerScenario($evalNumber: Float!, $scenarioID: ID){
-        getAlignmentTargetsPerScenario(evalNumber: $evalNumber, scenarioID: $scenarioID)
+    query getAlignmentTargetsPerScenario($evalNumber: Float!, $scenarioID: ID, $admName: ID){
+        getAlignmentTargetsPerScenario(evalNumber: $evalNumber, scenarioID: $scenarioID, admName: $admName)
     }`;
 
 
@@ -282,7 +282,7 @@ class ResultsTable extends React.Component {
                                     <span className="nav-header-text">Alignment Target</span>
                                 </div>
                                 <div className="nav-menu">
-                                    <Query query={alignment_target_by_scenario} variables={{ "evalNumber": this.state.evalNumber, "scenarioID": this.state.scenario }}>
+                                    <Query query={alignment_target_by_scenario} variables={{ "evalNumber": this.state.evalNumber, "scenarioID": this.state.scenario, "admName": this.state.adm }}>
                                         {
                                             ({ loading, error, data }) => {
                                                 if (loading) return <div>Loading ...</div>
