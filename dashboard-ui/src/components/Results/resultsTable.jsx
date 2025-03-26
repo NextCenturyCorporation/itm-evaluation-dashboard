@@ -49,6 +49,19 @@ const alignment_target_by_scenario = gql`
         getAlignmentTargetsPerScenario(evalNumber: $evalNumber, scenarioID: $scenarioID, admName: $admName)
     }`;
 
+export const multiSort = (a, b) => {
+    const aMatch = a.match(/^([a-zA-Z]+)(\d+)$/);
+    const bMatch = b.match(/^([a-zA-Z]+)(\d+)$/);
+
+    // only if same base string
+    if (aMatch && bMatch && aMatch[1] === bMatch[1]) {
+        return parseInt(aMatch[2], 10) - parseInt(bMatch[2], 10);
+    }
+
+    // if different base string just use alph.
+    return a.localeCompare(b);
+};
+
 
 class ResultsTable extends React.Component {
 
@@ -294,7 +307,8 @@ class ResultsTable extends React.Component {
                                                         "name": element
                                                     });
                                                 }
-                                                alignmentTargetArray.sort((a, b) => (a.value > b.value) ? 1 : -1);
+
+                                                alignmentTargetArray.sort((a, b) => multiSort(a.value, b.value))
 
                                                 return (
                                                     <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
