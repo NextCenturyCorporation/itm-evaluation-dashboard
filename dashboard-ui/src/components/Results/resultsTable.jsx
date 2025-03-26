@@ -99,7 +99,6 @@ class ResultsTable extends React.Component {
             ADMQueryString: target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name",
             alignmentTarget: null
         });
-        console.log(this.state.ADMQueryString)
     }
 
     setScenario(target) {
@@ -247,7 +246,6 @@ class ResultsTable extends React.Component {
                                                 if (loading) return <div>Loading ...</div>
                                                 if (error) return <div>Error</div>
 
-                                                console.log(data)
                                                 const performerADMOptions = data[getPerformerADMByScenarioName];
                                                 let performerADMArray = [];
                                                 for (const element of performerADMOptions) {
