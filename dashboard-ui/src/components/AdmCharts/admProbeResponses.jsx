@@ -7,6 +7,7 @@ import * as XLSX from 'sheetjs-style';
 import { saveAs } from 'file-saver';
 import '../../css/results-page.css';
 import '../../css/aggregateResults.css';
+import { multiSort } from '../Results/resultsTable';
 
 const get_eval_name_numbers = gql`
     query getEvalNameNumbers {
@@ -155,7 +156,8 @@ export const ADMProbeResponses = (props) => {
 
     useEffect(() => {
         if (alignmentData?.getAlignmentTargetsPerScenario) {
-            setAlignmentTargets(alignmentData.getAlignmentTargetsPerScenario);
+            const sortedTargets = [...alignmentData.getAlignmentTargetsPerScenario].sort(multiSort);
+            setAlignmentTargets(sortedTargets);
         }
     }, [alignmentData]);
 
