@@ -348,7 +348,7 @@ class ResultsTable extends React.Component {
                                 }
                             </Query> :
                             <>
-                                {this.state.evalNumber >= 4 ?
+                                {(this.state.evalNumber >= 4) && (this.state.evalNumber != 7) ?
                                     <RQ2223 evalNum={this.state.evalNumber} /> :
                                     <div className="graph-section">
                                         <h2>Please select a{this.state.scenario == "" ? " scenario" : this.state.adm == "" ? "n ADM" : "n alignment target"} to view results</h2>
