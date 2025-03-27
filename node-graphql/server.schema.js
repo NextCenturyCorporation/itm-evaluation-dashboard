@@ -209,7 +209,8 @@ const typeDefs = gql`
     getHumanToADMComparison: [JSON],
     getCurrentSurveyVersion: String,
     getCurrentStyle: String,
-    getADMTextProbeMatches: [JSON]
+    getADMTextProbeMatches: [JSON],
+    getMultiKdmaAnalysisData: [JSON]
   }
 
   type Mutation {
@@ -615,6 +616,9 @@ const resolvers = {
     },
     getADMTextProbeMatches: async (obj, args, context, info) => {
       return await context.db.collection('admVsTextProbeMatches').find().toArray().then(result => { return result });
+    },
+    getMultiKdmaAnalysisData: async (obj, args, context, info) => {
+      return await context.db.collection('multiKdmaData').find().toArray().then(result => { return result });
     }
   },
   Mutation: {
