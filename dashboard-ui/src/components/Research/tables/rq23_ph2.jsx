@@ -7,6 +7,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.3_PH2.xlsx';
 import { DownloadButtons } from "./download-buttons";
+import { isDefined } from "../../AggregateResults/DataFunctions";
 
 const getAnalysisData = gql`
     query getMultiKdmaAnalysisData {
@@ -24,9 +25,9 @@ export function Phase2_RQ23() {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     // all options for filters
     const [admNames, setAdmNames] = React.useState([]);
-    const admTypes = ['aligned', 'baseline'];
+    const admTypes = ['Aligned', 'Baseline'];
     const scenarios = ['MJ2', 'MJ4', 'MJ5'];
-    const targetTypes = ['overall', 'narr', 'train'];
+    const targetTypes = ['Overall', 'Narr', 'Train'];
     // filter options that have been chosen
     const [admNameFilters, setAdmNameFilters] = React.useState([]);
     const [admTypeFilters, setAdmTypeFilters] = React.useState([]);
@@ -60,9 +61,9 @@ export function Phase2_RQ23() {
                     admType = 'baseline';
                 else if (ALIGNED_ADMS.includes(admName))
                     admType = 'aligned';
-                entryObj['ADM Type'] = admType;
+                entryObj['ADM Type'] = capitalizeFirstLetter(admType);
                 entryObj['Human Scenario'] = admGroup['humanScenario'];
-                entryObj['Target Type'] = admGroup['targetType'];
+                entryObj['Target Type'] = capitalizeFirstLetter(admGroup['targetType']);
                 entryObj['MJ Alignment Target'] = admGroup['mjTarget'];
                 entryObj['IO Alignment Target'] = admGroup['ioTarget'];
                 entryObj['MJ KDMA - MJ2'] = admGroup['mjAD1_kdma'];
@@ -121,6 +122,11 @@ export function Phase2_RQ23() {
         }
     }, [formattedData, admNameFilters, admTypeFilters, scenarioFilters, targetTypeFilters]);
 
+    const capitalizeFirstLetter = (str) => {
+        if (!isDefined(str) || str.length < 2)
+            return str;
+        return str[0].toUpperCase() + str.slice(1);
+    };
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error :</p>;
