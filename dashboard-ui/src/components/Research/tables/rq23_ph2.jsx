@@ -16,7 +16,7 @@ const getAnalysisData = gql`
 const HEADERS = ['ADM Name', 'ADM Type', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA - MJ2', 'MJ KDMA - MJ4', 'MJ KDMA - MJ5', 'MJ KDMA - AVE', 'IO KDMA - MJ2', 'IO KDMA - MJ4', 'IO KDMA - MJ5', 'IO KDMA - AVE', 'Alignment (Target|ADM) - MJ2', 'Alignment (Target|ADM) - MJ4', 'Alignment (Target|ADM) - MJ5', 'Alignment (Target|ADM) - AVE'];
 
 const BASELINE_ADMS = [];
-const ALIGNED_ADMS = ['ALIGN-ADM-RelevanceComparativeRegression-ADEPT__4e570b6d-8f9e-4e3c-8d0f-ffcde73a5792', 'ALIGN-ADM-ComparativeRegression-ADEPT__b3da51ed-57ff-429b-8ae8-6ff9dc44b65d'];
+const ALIGNED_ADMS = ['ALIGN-ADM-RelevanceComparativeRegression-ADEPT__4e570b6d-8f9e-4e3c-8d0f-ffcde73a5792', 'ALIGN-ADM-ComparativeRegression-ADEPT__b3da51ed-57ff-429b-8ae8-6ff9dc44b65d', 'ALIGN-ADM-RelevanceComparativeRegression-ADEPT__785ccc32-bf56-4bfc-a034-b64a3222102b'];
 
 export function Phase2_RQ23() {
     const { loading: loading, error: error, data: data } = useQuery(getAnalysisData);
