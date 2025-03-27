@@ -166,8 +166,8 @@ const typeDefs = gql`
     getScenario(scenarioId: ID): JSON
     getScenarioNames: [JSON]
     getScenarioNamesByEval(evalNumber: Float): [JSON]
-    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID): JSON,
-    getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID): JSON,
+    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID, evalNumber: Float): JSON,
+    getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID, admName: ID): JSON,
     getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON
     getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON]
     getAllScenarios(id: ID): [Scenario]
@@ -325,13 +325,36 @@ const resolvers = {
         .toArray().then(result => { return result });
     },
     getPerformerADMsForScenario: async (obj, args, context, inflow) => {
-      return await context.db.collection('admTargetRuns').distinct(args["admQueryStr"], { "history.response.id": args["scenarioID"] }).then(result => { return result });
+      const query = { "scenario": args["scenarioID"] };
+      
+      if (args["evalNumber"] !== undefined && args["evalNumber"] !== null) {
+        query["evalNumber"] = args["evalNumber"];
+      }
+      
+      return await context.db.collection('admTargetRuns')
+        .distinct(args["admQueryStr"], query)
+        .then(result => { return result });
     },
     getAlignmentTargetsPerScenario: async (obj, args, context, inflow) => {
-      let alignmentTargets = await context.db.collection('admTargetRuns').distinct("history.response.id", { "history.response.id": args["scenarioID"], "evalNumber": args["evalNumber"] }).then(result => { return result });
+      const query = { 
+        "scenario": args["scenarioID"], 
+        "evalNumber": args["evalNumber"] 
+      };
+      
+      if (args["admName"] !== undefined && args["admName"] !== null) {
+        query["adm_name"] = args["admName"];
+      }
+      
+      let alignmentTargets = await context.db.collection('admTargetRuns')
+        .distinct("history.response.id", query)
+        .then(result => { return result });
+      
       // The scenarioID still comes back in this distinct because of the way the JSON is configured, remove it before sending the array
       const indexOfScenario = alignmentTargets.indexOf(args["scenarioID"]);
-      alignmentTargets.splice(indexOfScenario, 1);
+      if (indexOfScenario >= 0) {
+        alignmentTargets.splice(indexOfScenario, 1);
+      }
+      
       return alignmentTargets;
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {

@@ -3,17 +3,18 @@ import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 
 const AlignmentScoreBox = ({ performer, data, scenario }) => {
-  let score = "Not Available"
+  let score = null
   let sessionId = null;
 
-  if(data.history !== null && data.history !== undefined) {
-    if( data.history[data.history.length - 1].response.score !== undefined) {
-        score = data.history[data.history.length - 1].response.score.toFixed(4);
+  if (data.history !== null && data.history !== undefined) {
+    const lastHistoryItem = data.history[data.history.length - 1];
+    if (lastHistoryItem?.response?.score) {
+      score = lastHistoryItem.response.score.toFixed(4);
     }
 
-    for(let i=0; i < data.history.length - 1; i++) {
-      if(data.history[i].command === "TA1 Alignment Target Session ID") {
-        sessionId = data.history[i].response; 
+    for (let i = 0; i < data.history.length - 1; i++) {
+      if (data.history[i].command === "TA1 Alignment Target Session ID") {
+        sessionId = data.history[i].response;
       }
     }
   }
@@ -22,14 +23,22 @@ const AlignmentScoreBox = ({ performer, data, scenario }) => {
     <Box className="scoreBox">
       <Typography variant="h5">
         {performer}
-        <br />
       </Typography>
-      <Typography variant="h5">
-        Alignment Score: {score}
-        {scenario === 'kickoff-demo-scenario-1' && 
-          <iframe src={"http://localhost:8084/graph/session/" + sessionId} title="SoarGraph" width="800px" height="800px"></iframe>
-        }
-      </Typography>
+      
+      {score !== null && (
+        <Typography variant="h5">
+          Alignment Score: {score}
+        </Typography>
+      )}
+      
+      {scenario === 'kickoff-demo-scenario-1' && sessionId && (
+        <iframe 
+          src={`http://localhost:8084/graph/session/${sessionId}`} 
+          title="SoarGraph" 
+          width="800px" 
+          height="800px"
+        />
+      )}
     </Box>
   );
 }
