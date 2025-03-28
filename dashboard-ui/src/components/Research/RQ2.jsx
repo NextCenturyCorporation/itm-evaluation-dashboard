@@ -9,10 +9,12 @@ import rq21CodePh1 from './rcode/code_for_dashboard_RQ21_ph1.R';
 import rq2CodePh1 from './rcode/code_for_dashboard_RQ2_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
+import { Phase2_RQ23 } from './tables/rq23_ph2';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
-    { value: 5, label: 'Phase 1 Evaluation' }
+    { value: 5, label: 'Phase 1 Evaluation' },
+    { value: 7, label: 'Phase II Experiment 1' }
 ];
 
 
@@ -66,44 +68,49 @@ export function RQ2() {
                 <b>Dependent variable:</b> Alignment score between ADM and target
             </p>
         </div>
-        <h3>RQ2 Analysis 2.1: Alignable ADM tuned within largest cluster of human attributes</h3>
-        <div className="section-container">
-            <h2>RQ2.1 Data</h2>
-            <RQ21 evalNum={selectedEval} />
-            <div className="buttons">
-                <button onClick={() => setRQ21CodeShowing(true)}>View R Syntax</button>
-                <Modal className='rCodeModal' show={rq21CodeShowing} onHide={close21Code} centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title>RQ3 Analysis 2.1 - Code</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq21CodeDre : rq21CodePh1} downloadName={'RQ21_code.R'} /></Modal.Body>
-                    <Modal.Footer>
-                        <Button className='downloadBtn' onClick={close21Code}>
-                            Close
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+        {selectedEval != 7 && <>
+            <h3>RQ2 Analysis 2.1: Alignable ADM tuned within largest cluster of human attributes</h3>
+            <div className="section-container">
+                <h2>RQ2.1 Data</h2>
+                <RQ21 evalNum={selectedEval} />
+                <div className="buttons">
+                    <button onClick={() => setRQ21CodeShowing(true)}>View R Syntax</button>
+                    <Modal className='rCodeModal' show={rq21CodeShowing} onHide={close21Code} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>RQ3 Analysis 2.1 - Code</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq21CodeDre : rq21CodePh1} downloadName={'RQ21_code.R'} /></Modal.Body>
+                        <Modal.Footer>
+                            <Button className='downloadBtn' onClick={close21Code}>
+                                Close
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                </div>
             </div>
-        </div>
-        <h3>RQ2 Analysis 2.2: T-tests comparing Alignable ADM versus Baseline ADM on group-aligned targets</h3>
-        <h3>RQ2 Analysis 2.3: T-tests comparing Alignable ADM versus Baseline ADM on individual-aligned targets</h3>
+            <h3>RQ2 Analysis 2.2: T-tests comparing Alignable ADM versus Baseline ADM on group-aligned targets</h3>
+        </>}
+        {selectedEval == 7 ?
+            <h3>RQ2 Analysis 2.3: T-tests on Individual Targets - Alignable ADM tuned to Human Multi-KDMA Targets</h3>
+            : <h3>RQ2 Analysis 2.3: T-tests comparing Alignable ADM versus Baseline ADM on individual-aligned targets</h3>}
         <div className="section-container">
-            <h2>RQ2.2 & 2.3 Data</h2>
-            <RQ2223 evalNum={selectedEval} />
-            <div className="buttons">
-                <button onClick={() => setRQ2CodeShowing(true)}>View R Syntax</button>
-                <Modal className='rCodeModal' show={rq2CodeShowing} onHide={close2Code} centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title>RQ3 Analysis 2.2 and 2.3 - Code</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq2CodeDre : rq2CodePh1} downloadName={'RQ2_code.R'} /></Modal.Body>
-                    <Modal.Footer>
-                        <Button className='downloadBtn' onClick={close2Code}>
-                            Close
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
+            <h2>{selectedEval == 7 ? 'RQ2.3 Data' : 'RQ2.2 & 2.3 Data'}</h2>
+            {selectedEval == 7 ? <Phase2_RQ23 /> : <RQ2223 evalNum={selectedEval} />}
+            {selectedEval != 7 &&
+                <div className="buttons">
+                    <button onClick={() => setRQ2CodeShowing(true)}>View R Syntax</button>
+                    <Modal className='rCodeModal' show={rq2CodeShowing} onHide={close2Code} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>RQ3 Analysis 2.2 and 2.3 - Code</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq2CodeDre : rq2CodePh1} downloadName={'RQ2_code.R'} /></Modal.Body>
+                        <Modal.Footer>
+                            <Button className='downloadBtn' onClick={close2Code}>
+                                Close
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                </div>}
         </div>
     </div>);
 }

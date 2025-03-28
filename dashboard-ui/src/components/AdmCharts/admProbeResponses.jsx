@@ -7,6 +7,7 @@ import * as XLSX from 'sheetjs-style';
 import { saveAs } from 'file-saver';
 import '../../css/results-page.css';
 import '../../css/aggregateResults.css';
+import { multiSort } from '../Results/resultsTable';
 
 const get_eval_name_numbers = gql`
     query getEvalNameNumbers {
@@ -21,11 +22,9 @@ const scenario_names_aggregation = gql`
 `;
 
 const performer_adm_by_scenario = gql`
-    query getPerformerADMsForScenario($admQueryStr: String, $scenarioID: ID){
-        getPerformerADMsForScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID)
-    }
-`;
-
+    query getPerformerADMsForScenario($admQueryStr: String, $scenarioID: ID, $evalNumber: Float){
+        getPerformerADMsForScenario(admQueryStr: $admQueryStr, scenarioID: $scenarioID, evalNumber: $evalNumber)
+    }`;
 const alignment_target_by_scenario = gql`
     query getAlignmentTargetsPerScenario($evalNumber: Float!, $scenarioID: ID) {
         getAlignmentTargetsPerScenario(evalNumber: $evalNumber, scenarioID: $scenarioID)
@@ -144,19 +143,21 @@ export const ADMProbeResponses = (props) => {
         variables: { evalNumber: currentEval },
         skip: !currentEval
     });
+
     const { loading: alignmentLoading, error: alignmentError, data: alignmentData } = useQuery(alignment_target_by_scenario, {
         variables: { evalNumber: currentEval, scenarioID: currentScenario },
         skip: !currentScenario
     });
     const { loading: admLoading, error: admError, data: admData } = useQuery(performer_adm_by_scenario, {
-        variables: { admQueryStr: queryString, scenarioID: currentScenario },
+        variables: { admQueryStr: queryString, scenarioID: currentScenario, evalNumber: currentEval },
         skip: !currentScenario,
         fetchPolicy: "network-only"
     });
 
     useEffect(() => {
         if (alignmentData?.getAlignmentTargetsPerScenario) {
-            setAlignmentTargets(alignmentData.getAlignmentTargetsPerScenario);
+            const sortedTargets = [...alignmentData.getAlignmentTargetsPerScenario].sort(multiSort);
+            setAlignmentTargets(sortedTargets);
         }
     }, [alignmentData]);
 
