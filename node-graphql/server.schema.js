@@ -21,49 +21,49 @@ const typeDefs = gql`
   }
 
   type Query {
-    getUsers(caller: JSON): JSON
-    checkUserExists(email: String!, username: String!): Boolean!
-    getHistory(id: ID): JSON
-    getAllHistory(id: ID): [JSON]
-    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON],
-    getGroupAdmAlignmentByEval(evalNumber: Float): [JSON],
-    getEvalIds: [JSON],
-    getEvalIdsForAllHistory: [JSON],
-    getAllHistoryByID(historyId: ID): JSON
-    getScenario(scenarioId: ID): JSON
-    getScenarioNames: [JSON]
-    getScenarioNamesByEval(evalNumber: Float): [JSON]
-    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID, evalNumber: Float): JSON,
-    getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID, admName: ID): JSON,
-    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON
-    getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON]
-    getAllScenarios(id: ID): [JSON]
-    getAllHumanRuns: [JSON]
-    getAllImages: [JSON],
-    getAllSurveyResults: [JSON],
-    getAllSurveyResultsByEval(evalNumber: Float): [JSON],
-    getAllScenarioResults: [JSON],
-    getAllScenarioResultsByEval(evalNumber: Float): [JSON],
-    getAllTextScenariosDRE: [JSON],
-    getEvalIdsForAllScenarioResults: [JSON],
-    getAllSimAlignment: [JSON],
-    getAllSimAlignmentByEval(evalNumber: Float): [JSON],
-    getEvalIdsForSimAlignment: [JSON],
-    getEvalNameNumbers: [JSON],
-    getEvalIdsForHumanResults: [JSON],
-    getAllRawSimData: [JSON],
-    getAllSurveyConfigs: [JSON],
-    getAllTextBasedConfigs: [JSON],
-    getAllImageUrls: [JSON],
-    getAllTextBasedImages: [JSON],
-    countHumanGroupFirst: Int,
-    countAIGroupFirst: Int,
-    getParticipantLog: [JSON],
-    getHumanToADMComparison: [JSON],
-    getCurrentSurveyVersion: String,
-    getCurrentStyle: String,
-    getADMTextProbeMatches: [JSON],
-    getMultiKdmaAnalysisData: [JSON]
+    getUsers(caller: JSON): JSON @complexity(value: 50)
+    checkUserExists(email: String!, username: String!): Boolean! @complexity(value: 5)
+    getHistory(id: ID): JSON @complexity(value: 10)
+    getAllHistory(id: ID): [JSON] @complexity(value: 150)
+    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
+    getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
+    getEvalIds: [JSON] @complexity(value: 10)
+    getEvalIdsForAllHistory: [JSON] @complexity(value: 10)
+    getAllHistoryByID(historyId: ID): JSON @complexity(value: 25)
+    getScenario(scenarioId: ID): JSON @complexity(value: 10)
+    getScenarioNames: [JSON] @complexity(value: 15)
+    getScenarioNamesByEval(evalNumber: Float): [JSON] @complexity(value: 20)
+    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID, evalNumber: Float): JSON @complexity(value: 30)
+    getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID, admName: ID): JSON @complexity(value: 30)
+    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON @complexity(value: 50)
+    getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON] @complexity(value: 100)
+    getAllScenarios(id: ID): [JSON] @complexity(value: 30)
+    getAllHumanRuns: [JSON] @complexity(value: 5)
+    getAllImages: [JSON] @complexity(value: 20)
+    getAllSurveyResults: [JSON] @complexity(value: 100)
+    getAllSurveyResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getAllScenarioResults: [JSON] @complexity(value: 100)
+    getAllScenarioResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getAllTextScenariosDRE: [JSON] @complexity(value: 30)
+    getEvalIdsForAllScenarioResults: [JSON] @complexity(value: 25)
+    getAllSimAlignment: [JSON] @complexity(value: 90)
+    getAllSimAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 85)
+    getEvalIdsForSimAlignment: [JSON] @complexity(value: 20)
+    getEvalNameNumbers: [JSON] @complexity(value: 15)
+    getEvalIdsForHumanResults: [JSON] @complexity(value: 20)
+    getAllRawSimData: [JSON] @complexity(value: 180)
+    getAllSurveyConfigs: [JSON] @complexity(value: 200)
+    getAllTextBasedConfigs: [JSON] @complexity(value: 200)
+    getAllImageUrls: [JSON] @complexity(value: 150)
+    getAllTextBasedImages: [JSON] @complexity(value: 150)
+    countHumanGroupFirst: Int @complexity(value: 10)
+    countAIGroupFirst: Int @complexity(value: 10)
+    getParticipantLog: [JSON] @complexity(value: 50)
+    getHumanToADMComparison: [JSON] @complexity(value: 250)
+    getCurrentSurveyVersion: String @complexity(value: 5)
+    getCurrentStyle: String @complexity(value: 5)
+    getADMTextProbeMatches: [JSON] @complexity(value: 250)
+    getMultiKdmaAnalysisData: [JSON] @complexity(value: 200)
   }
 
   type Mutation {
@@ -81,6 +81,8 @@ const typeDefs = gql`
     updateParticipantLog(pid: String, updates: JSON): JSON
     getServerTimestamp: String
   }
+
+  directive @complexity(value: Int) on FIELD_DEFINITION
 `;
 
 const resolvers = {
