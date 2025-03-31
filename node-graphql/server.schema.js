@@ -7,11 +7,10 @@ const typeDefs = gql`
 
   scalar StringOrFloat
 
-  scalar ThreatsDict
-
   extend input CreateUserInput {
     admin: Boolean
   }
+
 
   extend type User {
     admin: Boolean
@@ -20,137 +19,6 @@ const typeDefs = gql`
     adeptUser: Boolean
     approved: Boolean
     rejected: Boolean
-  }
-
-  type Player {
-    firstName: String,
-    lastName: String
-  }
-
-  type Scenario {
-    id: ID
-    name: String
-    startTime: String
-    state: State
-    triage_categories: [TriageCategory]
-  }
-
-
-  type State {
-    unstructured: String
-    elapsedTime: Float
-    scenario_complete: Boolean
-    mission: Mission
-    environment: Environment
-    threat_state: ThreatState
-    supplies: [Supplies]
-    casualties: [Casualty]
-  }
-
-  type Mission {
-    unstructured: String
-    mission_type: MissionType
-  }
-
-  type Environment {
-    unstructured: String
-    aidDelay: Float
-    weather: String
-    location: String
-    visibility: Float
-    noise_ambient: Float
-    noise_peak: Float
-  }
-
-  type ThreatState {
-    unstructured: String
-    threats: ThreatsDict
-  }
-
-  type Probe {
-    id: ID
-    question: String
-    patient_ids: [String]
-  }
-
-  type Casualty {
-    id: ID
-    unstructured: String
-    name: String
-    demographics: Demographics
-    injuries: [Injury]
-    vitals: Vitals
-    mental_status: MentalStatus
-    assessed: Boolean
-    tag: TriageTag
-  }
-
-  type Demographics {
-    age: Int
-    sex: Sex
-    rank: Rank
-  }
-
-  type Injury {
-    name: String
-    location: String
-    severity: Float
-  }
-
-  type Vitals {
-    hrpmin: Int
-    mm_hg: Int
-    rr: Int
-    sp_o2: Int
-    pain: Int
-  }
-
-  type TriageCategory {
-    tagLabel: TriageTag
-    description: String
-    criteria: String
-  }
-
-  type Supplies {
-    type: String
-    quantity: Int
-  }
-
-  enum Sex {
-    M
-    F
-    unknown
-  }
-
-  enum Rank {
-    Military
-    Enemy
-    Civilian
-    VIP
-  }
-
-  enum MentalStatus {
-    calm
-    confused
-    upset
-    agony
-    unresponsive
-  }
-
-  enum TriageTag {
-    none
-    minimal
-    delayed
-    immediate
-    expectant
-    deceased
-  }
-
-  enum MissionType {
-    ProtectVIP
-    ProtectCivilians
-    DeliverCargo
-    DefendBase
   }
 
   type Query {
@@ -170,21 +38,7 @@ const typeDefs = gql`
     getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID, admName: ID): JSON,
     getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON
     getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON]
-    getAllScenarios(id: ID): [Scenario]
-    getScenarioState(id: ID): State
-    getAllScenarioStates: [State]
-    getProbe(id: ID): Probe
-    getAllProbes: [Probe]
-    getPatient(id: ID): Casualty
-    getAllPatients: [Casualty]
-    getInjury(id: ID): Injury
-    getAllInjuries: [Injury]
-    getVitals(id: ID): Vitals
-    getAllVitals: [Vitals]
-    getTriageCategory(id: ID): TriageCategory
-    getAllTriageCategories: [TriageCategory]
-    getSupply(id: ID): Supplies
-    getAllSupplies: [Supplies]
+    getAllScenarios(id: ID): [JSON]
     getAllHumanRuns: [JSON]
     getAllImages: [JSON],
     getAllSurveyResults: [JSON],
@@ -425,48 +279,6 @@ const resolvers = {
     },
     getAllScenarios: async (obj, args, context, inflow) => {
       return await context.db.collection('scenarios').find().toArray().then(result => { return result; });
-    },
-    getScenarioState: async (obj, args, context, inflow) => {
-      return await context.db.collection('scenarioStates').findOne(args).then(result => { return result; });
-    },
-    getAllScenarioStates: async (obj, args, context, inflow) => {
-      return await context.db.collection('scenarioStates').find().toArray().then(result => { return result; });
-    },
-    getProbe: async (obj, args, context, inflow) => {
-      return await context.db.collection('probes').findOne(args).then(result => { return result; });
-    },
-    getAllProbes: async (obj, args, context, inflow) => {
-      return await context.db.collection('probes').find().toArray().then(result => { return result; });
-    },
-    getPatient: async (obj, args, context, inflow) => {
-      return await context.db.collection('patients').findOne(args).then(result => { return result; });
-    },
-    getAllPatients: async (obj, args, context, inflow) => {
-      return await context.db.collection('patients').find().toArray().then(result => { return result; });
-    },
-    getInjury: async (obj, args, context, inflow) => {
-      return await context.db.collection('injuries').findOne(args).then(result => { return result; });
-    },
-    getAllInjuries: async (obj, args, context, inflow) => {
-      return await context.db.collection('injuries').find().toArray().then(result => { return result; });
-    },
-    getVitals: async (obj, args, context, inflow) => {
-      return await context.db.collection('vitals').findOne(args).then(result => { return result; });
-    },
-    getAllVitals: async (obj, args, context, inflow) => {
-      return await context.db.collection('vitals').find().toArray().then(result => { return result; });
-    },
-    getTriageCategory: async (obj, args, context, inflow) => {
-      return await context.db.collection('triageCategories').findOne(args).then(result => { return result; });
-    },
-    getAllTriageCategories: async (obj, args, context, inflow) => {
-      return await context.db.collection('triageCategories').find().toArray().then(result => { return result; });
-    },
-    getSupply: async (obj, args, context, inflow) => {
-      return await context.db.collection('medicalSupplies').findOne(args).then(result => { return result; });
-    },
-    getAllSupplies: async (obj, args, context, inflow) => {
-      return await context.db.collection('medicalSupplies').find().toArray().then(result => { return result; });
     },
     getAllHumanRuns: async (obj, args, context, inflow) => {
       return await context.db.collection('humanRuns').find({ "runId": { $exists: true } }).toArray().then(result => { return result; });
