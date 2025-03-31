@@ -3,7 +3,7 @@ const { getComplexity, simpleEstimator } = require('graphql-query-complexity');
 const { separateOperations } = require('graphql');
 
 // maximum total complexity of any query
-const MAX_COMPLEXITY = 2000;
+const MAX_COMPLEXITY = 1000;
 
 // grab all of the complexities from server schema
 function extractComplexityValues(schema) {
