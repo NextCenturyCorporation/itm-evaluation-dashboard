@@ -11,7 +11,6 @@ const typeDefs = gql`
     admin: Boolean
   }
 
-
   extend type User {
     admin: Boolean
     evaluator: Boolean
