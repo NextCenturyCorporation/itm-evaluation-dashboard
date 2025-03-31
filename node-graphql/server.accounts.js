@@ -41,7 +41,7 @@ async function createUniqueIndex() {
 
 createUniqueIndex().catch(console.error);
 
-// Create merged schema
+// Merge our schema and the accounts-js schema
 const schema = makeExecutableSchema({
     typeDefs: mergeTypeDefs([typeDefs, accountsGraphQL.typeDefs]),
     resolvers: mergeResolvers([accountsGraphQL.resolvers, resolvers]),
