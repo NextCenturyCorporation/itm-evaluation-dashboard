@@ -50,7 +50,7 @@ const schema = makeExecutableSchema({
     }
 });
 
-// Extract complexity values from schema
+// grab custom complexities from server schema
 const complexityMap = extractComplexityValues(schema);
 
 const server = new ApolloServer({
