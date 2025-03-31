@@ -52,7 +52,7 @@ const typeDefs = gql`
     getEvalNameNumbers: [JSON] @complexity(value: 15)
     getEvalIdsForHumanResults: [JSON] @complexity(value: 20)
     getAllRawSimData: [JSON] @complexity(value: 180)
-    getAllSurveyConfigs: [JSON] @complexity(value: 200)
+    getAllSurveyConfigs: [JSON] @complexity(value: 800)
     getAllTextBasedConfigs: [JSON] @complexity(value: 200)
     getAllImageUrls: [JSON] @complexity(value: 150)
     getAllTextBasedImages: [JSON] @complexity(value: 150)

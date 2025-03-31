@@ -78,12 +78,11 @@ function processQueryComplexity(schema, complexityMap, request, document) {
             ],
         });
         
-        console.log(`Operation "${operationName}" has complexity: ${queryComplexity}`);
         
         if (queryComplexity > MAX_COMPLEXITY) {
             console.error(`Operation "${operationName}" blocked: complexity of ${queryComplexity} exceeds threshold: ${MAX_COMPLEXITY}`);
             throw new Error(
-                `Query complexity of ${queryComplexity} exceeds maximum allowed complexity of ${MAX_COMPLEXITY}`
+                `Query complexity of ${queryComplexity} exceeds maximum complexity of ${MAX_COMPLEXITY}`
             );
         }
         
