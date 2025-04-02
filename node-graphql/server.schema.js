@@ -332,7 +332,7 @@ const resolvers = {
       }
       
       return await context.db.collection('admTargetRuns')
-        .distinct(args["admQueryStr"], query)
+        .distinct("adm_name", query)
         .then(result => { return result });
     },
     getAlignmentTargetsPerScenario: async (obj, args, context, inflow) => {
@@ -346,7 +346,7 @@ const resolvers = {
       }
       
       let alignmentTargets = await context.db.collection('admTargetRuns')
-        .distinct("history.response.id", query)
+        .distinct("alignment_target", query)
         .then(result => { return result });
       
       // The scenarioID still comes back in this distinct because of the way the JSON is configured, remove it before sending the array
@@ -375,8 +375,8 @@ const resolvers = {
       } else {
         queryObj = {
           $and: [
-            { "history.response.id": args["alignmentTarget"] },
-            { "history.response.id": args["scenarioID"] }
+            { "alignment_target": args["alignmentTarget"] },
+            { "scenario": args["scenarioID"] }
           ]
         };
 
@@ -384,7 +384,7 @@ const resolvers = {
           queryObj.$and.push({ "evalNumber": args["evalNumber"] });
         }
 
-        queryObj[args["admQueryStr"]] = args["admName"];
+        queryObj["adm_name"] = args["admName"];
       }
 
       return await context.db.collection('admTargetRuns').findOne(queryObj).then(result => { return result });
