@@ -10,6 +10,7 @@ const {
     extractComplexityValues, 
     processQueryComplexity 
 } = require('./complexityUtil');
+const { rateLimit } = require('./rateLimiter');
 
 // Generate the accounts-js GraphQL module
 const accountsGraphQL = AccountsModule.forRoot({ accountsServer });
@@ -59,11 +60,21 @@ const server = new ApolloServer({
     playground: false,
     plugins: [
         {
-            requestDidStart: () => ({
-                didResolveOperation({ request, document }) {
-                    return processQueryComplexity(schema, complexityMap, request, document);
-                },
-            }),
+            requestDidStart: async ({ request, context }) => {
+                // rate limiting
+                try {
+                    const rateLimitInfo = rateLimit(context.req);
+                    console.log(`Request from ${rateLimitInfo.ip}: ${rateLimitInfo.requestCount}/${rateLimitInfo.limit}`);
+                } catch (error) {
+                    throw error;
+                }
+                
+                return {
+                    didResolveOperation({ request, document }) {
+                        return processQueryComplexity(schema, complexityMap, request, document);
+                    },
+                };
+            },
         },
     ],
     context: ({ req }) => {
