@@ -56,29 +56,70 @@ const complexityMap = extractComplexityValues(schema);
 
 const server = new ApolloServer({
     schema,
-    introspection: false,
-    playground: false,
+    introspection: true,
+    playground: true,
     plugins: [
         {
             requestDidStart: async ({ request, context }) => {
-                // rate limiting
-                try {
-                    const rateLimitInfo = rateLimit(context.req);
-                    console.log(`Request from ${rateLimitInfo.ip}: ${rateLimitInfo.requestCount}/${rateLimitInfo.limit}`);
-                } catch (error) {
-                    throw error;
-                }
-                
                 return {
                     didResolveOperation({ request, document }) {
-                        return processQueryComplexity(schema, complexityMap, request, document);
+                        try {
+                            // check rate limit first
+                            const rateLimitInfo = rateLimit(context.req);
+                            context.rateLimitInfo = rateLimitInfo;
+                            
+                            // check complexity if rate limit passes
+                            const complexity = processQueryComplexity(
+                                schema, 
+                                complexityMap, 
+                                request, 
+                                document
+                            );
+                            
+                            return complexity;
+                        } catch (error) {
+                            if (error.isRateLimit || error.message.includes('Rate limit exceeded')) {
+                                context.isRateLimit = true;
+                                context.retryAfter = error.retryAfter;
+                            }
+                            throw error
+                        }
                     },
+                    
+                    willSendResponse({ response, context }) {
+                        // add rate limit info to headers
+                        try {
+                            if (context.rateLimitInfo) {
+                                if (!response.http) response.http = {};
+                                if (!response.http.headers) response.http.headers = new Map();
+                                
+                                response.http.headers.set('X-RateLimit-Limit', context.rateLimitInfo.limit);
+                                response.http.headers.set('X-RateLimit-Remaining', context.rateLimitInfo.remaining);
+                                response.http.headers.set('X-RateLimit-Reset', context.rateLimitInfo.reset);
+                            }
+
+                            if (context.isRateLimit) {
+                                response.http = response.http || {};
+                                response.http.status = 429;
+                                
+                                if (context.retryAfter && response.http.headers) {
+                                    response.http.headers.set('Retry-After', context.retryAfter);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error setting rate limit headers:', error);
+                        }
+                    }
                 };
             },
         },
     ],
     context: ({ req }) => {
         return { db: dashboardDB.db, req: req };
+    },
+    formatError: (error) => {
+        console.log(error)
+        return error
     }
 });
 
