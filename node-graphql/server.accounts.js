@@ -56,8 +56,8 @@ const complexityMap = extractComplexityValues(schema);
 
 const server = new ApolloServer({
     schema,
-    introspection: true,
-    playground: true,
+    introspection: false,
+    playground: false,
     plugins: [
         {
             requestDidStart: async ({ request, context }) => {

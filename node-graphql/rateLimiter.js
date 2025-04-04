@@ -1,5 +1,3 @@
-const { GraphQLError } = require('graphql');
-
 const RATE_LIMIT_WINDOW = 60 * 1000;
 // 300 seems sufficiently high that no honest user would ever come close
 const RATE_LIMIT = 300;
