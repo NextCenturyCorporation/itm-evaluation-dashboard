@@ -6,6 +6,11 @@ const { accountsServer } = require('./server.mongo');
 const { typeDefs, resolvers } = require('./server.schema');
 const { dashboardDB } = require('./server.mongo.js');
 const { GRAPHQL_PORT } = require('./config');
+const { 
+    extractComplexityValues, 
+    processQueryComplexity 
+} = require('./complexityUtil');
+const { rateLimit } = require('./rateLimiter');
 
 // Generate the accounts-js GraphQL module
 const accountsGraphQL = AccountsModule.forRoot({ accountsServer });
@@ -46,16 +51,79 @@ const schema = makeExecutableSchema({
     }
 });
 
+// grab custom complexities from server schema
+const complexityMap = extractComplexityValues(schema);
+
 const server = new ApolloServer({
     schema,
     introspection: false,
     playground: false,
+    plugins: [
+        {
+            requestDidStart: async ({ request, context }) => {
+                return {
+                    didResolveOperation({ request, document }) {
+                        try {
+                            // check rate limit first
+                            const rateLimitInfo = rateLimit(context.req);
+                            context.rateLimitInfo = rateLimitInfo;
+                            
+                            // check complexity if rate limit passes
+                            const complexity = processQueryComplexity(
+                                schema, 
+                                complexityMap, 
+                                request, 
+                                document
+                            );
+                            
+                            return complexity;
+                        } catch (error) {
+                            if (error.isRateLimit || error.message.includes('Rate limit exceeded')) {
+                                context.isRateLimit = true;
+                                context.retryAfter = error.retryAfter;
+                            }
+                            throw error
+                        }
+                    },
+                    
+                    willSendResponse({ response, context }) {
+                        // add rate limit info to headers
+                        try {
+                            if (context.rateLimitInfo) {
+                                if (!response.http) response.http = {};
+                                if (!response.http.headers) response.http.headers = new Map();
+                                
+                                response.http.headers.set('X-RateLimit-Limit', context.rateLimitInfo.limit);
+                                response.http.headers.set('X-RateLimit-Remaining', context.rateLimitInfo.remaining);
+                                response.http.headers.set('X-RateLimit-Reset', context.rateLimitInfo.reset);
+                            }
+
+                            if (context.isRateLimit) {
+                                response.http = response.http || {};
+                                response.http.status = 429;
+                                
+                                if (context.retryAfter && response.http.headers) {
+                                    response.http.headers.set('Retry-After', context.retryAfter);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error setting rate limit headers:', error);
+                        }
+                    }
+                };
+            },
+        },
+    ],
     context: ({ req }) => {
         return { db: dashboardDB.db, req: req };
+    },
+    formatError: (error) => {
+        console.log(error)
+        return error
     }
 });
 
 // The `listen` method launches a web server
 server.listen(GRAPHQL_PORT).then(({ url }) => {
-    console.log(`🚀  Server ready at ${url}`);
+    console.log(`🚀 Server ready at ${url}`);
 });

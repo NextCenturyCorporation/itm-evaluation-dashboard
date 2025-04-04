@@ -19,6 +19,7 @@
     "express": "^4.17.2",
     "express-graphql": "^0.12.0",
     "graphql": "^15.3.0",
+    "graphql-query-complexity": "^1.0.0",
     "lodash": "^4.17.21",
     "mongodb": "^3.7.3",
     "mongoose": "^5.13.14",
