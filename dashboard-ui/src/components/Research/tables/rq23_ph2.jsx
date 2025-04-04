@@ -14,10 +14,10 @@ const getAnalysisData = gql`
         getMultiKdmaAnalysisData
     }`;
 
-const HEADERS = ['ADM Name', 'ADM Type', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA - MJ2', 'MJ KDMA - MJ4', 'MJ KDMA - MJ5', 'MJ KDMA - AVE', 'IO KDMA - MJ2', 'IO KDMA - MJ4', 'IO KDMA - MJ5', 'IO KDMA - AVE', 'Alignment (Target|ADM) - MJ2', 'Alignment (Target|ADM) - MJ4', 'Alignment (Target|ADM) - MJ5', 'Alignment (Target|ADM) - AVE'];
+const HEADERS = ['ADM Name', 'ADM Type', 'PID', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA - MJ2', 'MJ KDMA - MJ4', 'MJ KDMA - MJ5', 'MJ KDMA - AVE', 'IO KDMA - MJ2', 'IO KDMA - MJ4', 'IO KDMA - MJ5', 'IO KDMA - AVE', 'Alignment (Target|ADM_MJ2)', 'Alignment (Target|ADM_MJ4)', 'Alignment (Target|ADM_MJ5)', 'Alignment Average (Target|ADM)'];
 
 const BASELINE_ADMS = [];
-const ALIGNED_ADMS = ['ALIGN-ADM-RelevanceComparativeRegression-ADEPT__4e570b6d-8f9e-4e3c-8d0f-ffcde73a5792', 'ALIGN-ADM-ComparativeRegression-ADEPT__b3da51ed-57ff-429b-8ae8-6ff9dc44b65d', 'ALIGN-ADM-RelevanceComparativeRegression-ADEPT__785ccc32-bf56-4bfc-a034-b64a3222102b'];
+const ALIGNED_ADMS = ['ALIGN-ADM-ComparativeRegression-ADEPT', 'ALIGN-ADM-RelevanceComparativeRegression-ADEPT'];
 
 export function Phase2_RQ23() {
     const { loading: loading, error: error, data: data } = useQuery(getAnalysisData);
@@ -62,6 +62,7 @@ export function Phase2_RQ23() {
                 else if (ALIGNED_ADMS.includes(admName))
                     admType = 'aligned';
                 entryObj['ADM Type'] = capitalizeFirstLetter(admType);
+                entryObj['PID'] = admGroup['pid'];
                 entryObj['Human Scenario'] = admGroup['humanScenario'];
                 entryObj['Target Type'] = capitalizeFirstLetter(admGroup['targetType']);
                 entryObj['MJ Alignment Target'] = admGroup['mjTarget'];
@@ -74,10 +75,10 @@ export function Phase2_RQ23() {
                 entryObj['IO KDMA - MJ4'] = admGroup['ioAD2_kdma'];
                 entryObj['IO KDMA - MJ5'] = admGroup['ioAD3_kdma'];
                 entryObj['IO KDMA - AVE'] = admGroup['ioAve_kdma'];
-                entryObj['Alignment (Target|ADM) - MJ2'] = admGroup['AD1_align'];
-                entryObj['Alignment (Target|ADM) - MJ4'] = admGroup['AD2_align'];
-                entryObj['Alignment (Target|ADM) - MJ5'] = admGroup['AD3_align'];
-                entryObj['Alignment (Target|ADM) - AVE'] = admGroup['ave_align'];
+                entryObj['Alignment (Target|ADM_MJ2)'] = admGroup['AD1_align'];
+                entryObj['Alignment (Target|ADM_MJ4)'] = admGroup['AD2_align'];
+                entryObj['Alignment (Target|ADM_MJ5)'] = admGroup['AD3_align'];
+                entryObj['Alignment Average (Target|ADM)'] = admGroup['ave_align'];
                 for (const key of Array.from(Object.keys(entryObj))) {
                     if (entryObj[key] == -1) {
                         entryObj[key] = '-';
@@ -136,6 +137,7 @@ export function Phase2_RQ23() {
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
+                    style={{ 'min-width': '300px' }}
                     multiple
                     options={admNames}
                     filterSelectedOptions
