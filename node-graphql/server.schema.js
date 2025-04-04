@@ -256,6 +256,7 @@ const resolvers = {
           "history.response.kdma_values.value": 1,
           "history.parameters.target_id": 1,
           "history.response.score": 1,
+          "history.response.distance_based_score": 1,
           "history.response.dre_alignment.score": 1,
           "history.parameters.session_id": 1,
           "history.parameters.dreSessionId": 1,
