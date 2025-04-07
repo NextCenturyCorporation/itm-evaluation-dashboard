@@ -14,10 +14,7 @@ const getAnalysisData = gql`
         getMultiKdmaAnalysisData
     }`;
 
-const HEADERS = ['ADM Name', 'ADM Type', 'PID', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA - MJ2', 'MJ KDMA - MJ4', 'MJ KDMA - MJ5', 'MJ KDMA - AVE', 'IO KDMA - MJ2', 'IO KDMA - MJ4', 'IO KDMA - MJ5', 'IO KDMA - AVE', 'Alignment (Target|ADM_MJ2)', 'Alignment (Target|ADM_MJ4)', 'Alignment (Target|ADM_MJ5)', 'Alignment Average (Target|ADM)'];
-
-const BASELINE_ADMS = ['ALIGN-ADM-OutlinesBaseline-ADEPT'];
-const ALIGNED_ADMS = ['ALIGN-ADM-ComparativeRegression-ADEPT', 'ALIGN-ADM-RelevanceComparativeRegression-ADEPT'];
+const HEADERS = ['ADM Name', 'PID', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA_Aligned - MJ2', 'MJ KDMA_Aligned - MJ4', 'MJ KDMA_Aligned - MJ5', 'MJ KDMA_Aligned - AVE', 'IO KDMA_Aligned - MJ2', 'IO KDMA_Aligned - MJ4', 'IO KDMA_Aligned - MJ5', 'IO KDMA_Aligned - AVE', 'Alignment (Target|ADM_MJ2)_Aligned', 'Alignment (Target|ADM_MJ4)_Aligned', 'Alignment (Target|ADM_MJ5)_Aligned', 'Alignment Average (Target|ADM)_Aligned', 'MJ KDMA_Baseline - MJ2', 'MJ KDMA_Baseline - MJ4', 'MJ KDMA_Baseline - MJ5', 'MJ KDMA_Baseline - AVE', 'IO KDMA_Baseline - MJ2', 'IO KDMA_Baseline - MJ4', 'IO KDMA_Baseline - MJ5', 'IO KDMA_Baseline - AVE', 'Alignment (Target|ADM_MJ2)_Baseline', 'Alignment (Target|ADM_MJ4)_Baseline', 'Alignment (Target|ADM_MJ5)_Baseline', 'Alignment Average (Target|ADM)_Baseline'];
 
 export function Phase2_RQ23() {
     const { loading: loading, error: error, data: data } = useQuery(getAnalysisData);
@@ -25,12 +22,10 @@ export function Phase2_RQ23() {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     // all options for filters
     const [admNames, setAdmNames] = React.useState([]);
-    const admTypes = ['Aligned', 'Baseline'];
     const scenarios = ['MJ2', 'MJ4', 'MJ5'];
     const targetTypes = ['Overall', 'Narr', 'Train'];
     // filter options that have been chosen
     const [admNameFilters, setAdmNameFilters] = React.useState([]);
-    const [admTypeFilters, setAdmTypeFilters] = React.useState([]);
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
     // data with filters applied
@@ -54,31 +49,43 @@ export function Phase2_RQ23() {
             for (const admGroup of analysisData) {
                 const entryObj = {};
                 const admName = admGroup.admName;
+                if (admName.toLowerCase().includes('baseline'))
+                    continue;
                 entryObj['ADM Name'] = admName;
                 allAdmNames.push(admName);
-                let admType = '-';
-                if (BASELINE_ADMS.includes(admName))
-                    admType = 'baseline';
-                else if (ALIGNED_ADMS.includes(admName))
-                    admType = 'aligned';
-                entryObj['ADM Type'] = capitalizeFirstLetter(admType);
                 entryObj['PID'] = admGroup['pid'];
                 entryObj['Human Scenario'] = admGroup['humanScenario'];
                 entryObj['Target Type'] = capitalizeFirstLetter(admGroup['targetType']);
                 entryObj['MJ Alignment Target'] = admGroup['mjTarget'];
                 entryObj['IO Alignment Target'] = admGroup['ioTarget'];
-                entryObj['MJ KDMA - MJ2'] = admGroup['mjAD1_kdma'];
-                entryObj['MJ KDMA - MJ4'] = admGroup['mjAD2_kdma'];
-                entryObj['MJ KDMA - MJ5'] = admGroup['mjAD3_kdma'];
-                entryObj['MJ KDMA - AVE'] = admGroup['mjAve_kdma'];
-                entryObj['IO KDMA - MJ2'] = admGroup['ioAD1_kdma'];
-                entryObj['IO KDMA - MJ4'] = admGroup['ioAD2_kdma'];
-                entryObj['IO KDMA - MJ5'] = admGroup['ioAD3_kdma'];
-                entryObj['IO KDMA - AVE'] = admGroup['ioAve_kdma'];
-                entryObj['Alignment (Target|ADM_MJ2)'] = admGroup['AD1_align'];
-                entryObj['Alignment (Target|ADM_MJ4)'] = admGroup['AD2_align'];
-                entryObj['Alignment (Target|ADM_MJ5)'] = admGroup['AD3_align'];
-                entryObj['Alignment Average (Target|ADM)'] = admGroup['ave_align'];
+                entryObj['MJ KDMA_Aligned - MJ2'] = admGroup['mjAD1_kdma'];
+                entryObj['MJ KDMA_Aligned - MJ4'] = admGroup['mjAD2_kdma'];
+                entryObj['MJ KDMA_Aligned - MJ5'] = admGroup['mjAD3_kdma'];
+                entryObj['MJ KDMA_Aligned - AVE'] = admGroup['mjAve_kdma'];
+                entryObj['IO KDMA_Aligned - MJ2'] = admGroup['ioAD1_kdma'];
+                entryObj['IO KDMA_Aligned - MJ4'] = admGroup['ioAD2_kdma'];
+                entryObj['IO KDMA_Aligned - MJ5'] = admGroup['ioAD3_kdma'];
+                entryObj['IO KDMA_Aligned - AVE'] = admGroup['ioAve_kdma'];
+                entryObj['Alignment (Target|ADM_MJ2)_Aligned'] = admGroup['AD1_align'];
+                entryObj['Alignment (Target|ADM_MJ4)_Aligned'] = admGroup['AD2_align'];
+                entryObj['Alignment (Target|ADM_MJ5)_Aligned'] = admGroup['AD3_align'];
+                entryObj['Alignment Average (Target|ADM)_Aligned'] = admGroup['ave_align'];
+
+                const baseline = analysisData.find((x) => x['pid'] == admGroup['pid'] && x['admName'].toLowerCase().includes('baseline') && capitalizeFirstLetter(x['targetType']) == entryObj['Target Type']);
+                if (baseline) {
+                    entryObj['MJ KDMA_Baseline - MJ2'] = baseline['mjAD1_kdma'];
+                    entryObj['MJ KDMA_Baseline - MJ4'] = baseline['mjAD2_kdma'];
+                    entryObj['MJ KDMA_Baseline - MJ5'] = baseline['mjAD3_kdma'];
+                    entryObj['MJ KDMA_Baseline - AVE'] = baseline['mjAve_kdma'];
+                    entryObj['IO KDMA_Baseline - MJ2'] = baseline['ioAD1_kdma'];
+                    entryObj['IO KDMA_Baseline - MJ4'] = baseline['ioAD2_kdma'];
+                    entryObj['IO KDMA_Baseline - MJ5'] = baseline['ioAD3_kdma'];
+                    entryObj['IO KDMA_Baseline - AVE'] = baseline['ioAve_kdma'];
+                    entryObj['Alignment (Target|ADM_MJ2)_Baseline'] = baseline['AD1_align'];
+                    entryObj['Alignment (Target|ADM_MJ4)_Baseline'] = baseline['AD2_align'];
+                    entryObj['Alignment (Target|ADM_MJ5)_Baseline'] = baseline['AD3_align'];
+                    entryObj['Alignment Average (Target|ADM)_Baseline'] = baseline['ave_align'];
+                }
                 for (const key of Array.from(Object.keys(entryObj))) {
                     if (entryObj[key] == -1) {
                         entryObj[key] = '-';
@@ -116,12 +123,11 @@ export function Phase2_RQ23() {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
                 (admNameFilters.length == 0 || admNameFilters.includes(x['ADM Name'])) &&
-                (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM Type'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.filter((sf) => x['Human Scenario'].includes(sf)).length > 0) &&
                 (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target Type']))
             ));
         }
-    }, [formattedData, admNameFilters, admTypeFilters, scenarioFilters, targetTypeFilters]);
+    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters]);
 
     const capitalizeFirstLetter = (str) => {
         if (!isDefined(str) || str.length < 2)
@@ -150,20 +156,6 @@ export function Phase2_RQ23() {
                         />
                     )}
                     onChange={(_, newVal) => setAdmNameFilters(newVal)}
-                />
-                <Autocomplete
-                    multiple
-                    options={admTypes}
-                    filterSelectedOptions
-                    size="small"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="ADM Type"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setAdmTypeFilters(newVal)}
                 />
                 <Autocomplete
                     multiple
