@@ -81,7 +81,9 @@ export async function logout(page) {
 export async function testRouteRedirection(route, expectedRedirect = '/login') {
     let currentUrl = page.url();
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
-    await page.waitForSelector(FOOTER_TEXT);
+    if (route == '/text-based')
+        await page.waitForNavigation();
+    await page.waitForSelector(FOOTER_TEXT, { timeout: 6000 });
     currentUrl = page.url();
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
 }
