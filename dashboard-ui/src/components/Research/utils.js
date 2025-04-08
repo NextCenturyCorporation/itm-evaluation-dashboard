@@ -96,6 +96,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
 export function getAlignments(evalNum, textResults, pid) {
     const textResultsForPID = textResults.filter((data) => data.evalNumber == evalNum && data.participantID == pid);
     const alignments = [];
+    const distanceAlignments = [];
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
         if (evalNum == 4) {
@@ -114,16 +115,29 @@ export function getAlignments(evalNum, textResults, pid) {
         else {
             // adept
             if (!Object.keys(textRes).includes("alignmentData")) {
-                if (!addedMJ && textRes['mostLeastAligned']) {
-                    const atts = [];
-                    for (const attSet of textRes['mostLeastAligned']) {
-                        for (const att of attSet.response) {
-                            for (const k of Object.keys(att)) {
-                                atts.push({ 'target': k, 'score': att[k] });
+                if (!addedMJ) {
+                    if (textRes['mostLeastAligned']) {
+                        const atts = [];
+                        for (const attSet of textRes['mostLeastAligned']) {
+                            for (const att of attSet.response) {
+                                for (const k of Object.keys(att)) {
+                                    atts.push({ 'target': k, 'score': att[k] });
+                                }
                             }
                         }
+                        alignments.push(...atts);
                     }
-                    alignments.push(...atts);
+                    if (textRes['distance_based_most_least_aligned']) {
+                        const distanceAtts = [];
+                        for (const attSet of textRes['distance_based_most_least_aligned']) {
+                            for (const att of attSet.response) {
+                                for (const k of Object.keys(att)) {
+                                    distanceAtts.push({ 'target': k, 'score': att[k] });
+                                }
+                            }
+                        }
+                        distanceAlignments.push(...distanceAtts);
+                    }
                     addedMJ = true;
                 }
             }
@@ -133,7 +147,7 @@ export function getAlignments(evalNum, textResults, pid) {
             }
         }
     }
-    return { textResultsForPID, alignments };
+    return { textResultsForPID, alignments, distanceAlignments };
 }
 
 function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
@@ -200,6 +214,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     const allScenarios = [];
     const allTargets = [];
     const allAttributes = [];
+    let populationHeader = true;
+    if (evalNum == 4 && (!fullSetOnly || !includeDreServer)) {
+        populationHeader = false;
+    }
 
     // find participants that have completed the delegation survey
     const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && ((evalNum == 4 && isDefined(res.results['Post-Scenario Measures'])) || ((evalNum == 5 || evalNum == 6) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
@@ -222,7 +240,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < 5 || logData.simEntryCount < 3)) {
             continue;
         }
-        const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
+        const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
         // set up object to store participant data
         const admOrder = pid == '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
         let trial_num = 1;
@@ -285,15 +303,16 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const foundADM = admData.find((adm) => adm.history[0].parameters.adm_name == page['admName'] && (adm.history[0].response?.id ?? adm.history[1].response?.id) == page['scenarioIndex'].replace('IO', 'MJ') &&
                     adm.history[adm.history.length - 1].parameters.target_id == page['admTarget']);
                 const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
+                const distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
 
-                entryObj['Alignment score (ADM|target)'] = alignment;
+                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (ADM|target)'] = alignment;
                 if (evalNum == 5 || evalNum == 6)
-                    entryObj['DRE Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.dreAdmAlignment : alignment;
+                    entryObj['DRE/Distance Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? distance_alignment : alignment;
 
                 // if DRE data is included in PH1 set, update DRE columns accordingly
                 if (evalNum == 4 && fullSetOnly && includeDreServer) {
-                    entryObj['DRE Alignment score (ADM|target)'] = entryObj['Alignment score (ADM|target)'];
-                    entryObj['Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.ph1AdmAlignment : entryObj['Alignment score (ADM|target)']
+                    entryObj['DRE/Distance Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)'];
+                    entryObj['P1E/Population Alignment score (ADM|target)'] = entry['TA1'] == 'Adept' ? page.ph1AdmAlignment : entryObj['P1E/Population Alignment score (ADM|target)']
                 }
 
                 const simEntry = simData.find((x) => x.evalNumber == evalNum && x.pid == pid &&
@@ -303,13 +322,14 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD')) &&
                     x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] == page['admTarget'])?.score ?? '-';
 
-                entryObj['Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
+                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
+                const txt_distance = distanceAlignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
                 if (evalNum == 5 || evalNum == 6)
-                    entryObj['DRE Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? page.dreTxtAlignment : entryObj['Alignment score (Delegator|target)'];
+                    entryObj['DRE/Distance Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
                 // if DRE data is included in PH1 set, update DRE columns accordingly
                 if (evalNum == 4 && fullSetOnly && includeDreServer) {
-                    entryObj['DRE Alignment score (Delegator|target)'] = entryObj['Alignment score (Delegator|target)'];
-                    entryObj['Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? page.ph1TxtAlignment : entryObj['Alignment score (Delegator|target)']
+                    entryObj['DRE/Distance Alignment score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)'];
+                    entryObj['P1E/Population Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? page.ph1TxtAlignment : entryObj['P1E/Population Alignment score (Delegator|target)']
                 }
 
                 entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
@@ -328,18 +348,17 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                 const comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
                 const alignmentComparison = comparison_entry?.score ?? '-'
-                entryObj['Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
+                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
                 if (evalNum == 5 || evalNum == 6) {
-                    const dre_comparison_entry = comparisons?.find((x) => x['dre_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                    entryObj['DRE Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? dre_comparison_entry?.score : entryObj['Alignment score (Delegator|Observed_ADM (target))'];
+                    entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? comparison_entry?.distance_based_score : entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
                 
                     entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;
                 }
                 if (evalNum == 4 && fullSetOnly) {
                     const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                    entryObj['DRE Alignment score (Delegator|Observed_ADM (target))'] = entryObj['Alignment score (Delegator|Observed_ADM (target))'];
+                    entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
                     if (entryObj['TA1_Name'] == 'Adept')
-                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = ph1_comparison_entry?.score ?? '-';
+                        entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] = ph1_comparison_entry?.score ?? '-';
                 }
 
                 entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];

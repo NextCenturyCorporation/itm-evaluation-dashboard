@@ -130,6 +130,14 @@ const compareProbeIds = (a, b) => {
     return parsedA.raw - parsedB.raw;
 };
 
+const getKdmaTargets = (doc) => {
+    const alignmentCommand = doc['history'].find((entry) => entry.command === 'Alignment Target');
+    const mj = alignmentCommand?.response?.kdma_values?.find((value) => value.kdma === 'Moral judgement')?.value || '-';
+    const io = alignmentCommand?.response?.kdma_values?.find((value) => value.kdma === 'Ingroup Bias')?.value || '-';
+
+    return { mj, io };
+}
+
 export const ADMProbeResponses = (props) => {
     const [currentEval, setCurrentEval] = useState(5);
     const [currentScenario, setCurrentScenario] = useState("");
@@ -287,7 +295,11 @@ export const ADMProbeResponses = (props) => {
                     'Alignment Target': alignmentTarget,
                     'TA1 Session ID': getSessionId(data.history)
                 };
-            if (getCurrentScenarioName().includes('Adept')) {
+            if (currentEval == 7) {
+                const kdmaValues = getKdmaTargets(data);
+                row['MJ KDMA'] = kdmaValues.mj;
+                row['IO KDMA'] = kdmaValues.io;
+            } else if (getCurrentScenarioName().includes('Adept')) {
                 row['KDMA'] = getKdma(data.history, alignmentTarget.includes('Moral') ? 'Moral judgement' : 'Ingroup Bias');
             }
 
@@ -461,8 +473,15 @@ export const ADMProbeResponses = (props) => {
                                                                 {currentEval >= 3 && (
                                                                     <>
                                                                         <th>Alignment Target</th>
+                                                                        {currentEval === 7 ? (
+                                                                            <>
+                                                                                <th>MJ KDMA Target</th>
+                                                                                <th>IO KDMA Target</th>
+                                                                            </>
+                                                                        ) : (
+                                                                            getCurrentScenarioName().includes('Adept') && <th>KDMA</th>
+                                                                        )}
                                                                         <th>TA1 Session ID</th>
-                                                                        {getCurrentScenarioName().includes('Adept') && <th>KDMA</th>}
                                                                     </>
                                                                 )}
                                                                 {sortedProbeColumns.map(probeId => (
@@ -476,8 +495,16 @@ export const ADMProbeResponses = (props) => {
                                                                     {currentEval >= 3 && (
                                                                         <>
                                                                             <td>{alignmentTarget}</td>
+                                                                            {currentEval === 7 ? (
+                                                                                <>
+                                                                                    <td>{getKdmaTargets(data).mj}</td>
+                                                                                    <td>{getKdmaTargets(data).io}</td>
+                                                                                </>
+                                                                            ) : (
+                                                                                getCurrentScenarioName().includes('Adept') &&
+                                                                                <td>{getKdma(data.history, alignmentTarget.includes('Moral') ? 'Moral judgement' : 'Ingroup Bias')}</td>
+                                                                            )}
                                                                             <td>{getSessionId(data.history)}</td>
-                                                                            {getCurrentScenarioName().includes('Adept') && <td>{getKdma(data.history, alignmentTarget.includes('Moral') ? 'Moral judgement' : 'Ingroup Bias')}</td>}
                                                                         </>
                                                                     )}
                                                                     {sortedProbeColumns.map(probeId => (
