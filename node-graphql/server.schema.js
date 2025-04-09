@@ -7,8 +7,6 @@ const typeDefs = gql`
 
   scalar StringOrFloat
 
-  scalar ThreatsDict
-
   extend input CreateUserInput {
     admin: Boolean
   }
@@ -22,195 +20,50 @@ const typeDefs = gql`
     rejected: Boolean
   }
 
-  type Player {
-    firstName: String,
-    lastName: String
-  }
-
-  type Scenario {
-    id: ID
-    name: String
-    startTime: String
-    state: State
-    triage_categories: [TriageCategory]
-  }
-
-
-  type State {
-    unstructured: String
-    elapsedTime: Float
-    scenario_complete: Boolean
-    mission: Mission
-    environment: Environment
-    threat_state: ThreatState
-    supplies: [Supplies]
-    casualties: [Casualty]
-  }
-
-  type Mission {
-    unstructured: String
-    mission_type: MissionType
-  }
-
-  type Environment {
-    unstructured: String
-    aidDelay: Float
-    weather: String
-    location: String
-    visibility: Float
-    noise_ambient: Float
-    noise_peak: Float
-  }
-
-  type ThreatState {
-    unstructured: String
-    threats: ThreatsDict
-  }
-
-  type Probe {
-    id: ID
-    question: String
-    patient_ids: [String]
-  }
-
-  type Casualty {
-    id: ID
-    unstructured: String
-    name: String
-    demographics: Demographics
-    injuries: [Injury]
-    vitals: Vitals
-    mental_status: MentalStatus
-    assessed: Boolean
-    tag: TriageTag
-  }
-
-  type Demographics {
-    age: Int
-    sex: Sex
-    rank: Rank
-  }
-
-  type Injury {
-    name: String
-    location: String
-    severity: Float
-  }
-
-  type Vitals {
-    hrpmin: Int
-    mm_hg: Int
-    rr: Int
-    sp_o2: Int
-    pain: Int
-  }
-
-  type TriageCategory {
-    tagLabel: TriageTag
-    description: String
-    criteria: String
-  }
-
-  type Supplies {
-    type: String
-    quantity: Int
-  }
-
-  enum Sex {
-    M
-    F
-    unknown
-  }
-
-  enum Rank {
-    Military
-    Enemy
-    Civilian
-    VIP
-  }
-
-  enum MentalStatus {
-    calm
-    confused
-    upset
-    agony
-    unresponsive
-  }
-
-  enum TriageTag {
-    none
-    minimal
-    delayed
-    immediate
-    expectant
-    deceased
-  }
-
-  enum MissionType {
-    ProtectVIP
-    ProtectCivilians
-    DeliverCargo
-    DefendBase
-  }
-
   type Query {
-    getUsers(caller: JSON): JSON
-    checkUserExists(email: String!, username: String!): Boolean!
-    getHistory(id: ID): JSON
-    getAllHistory(id: ID): [JSON]
-    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON],
-    getGroupAdmAlignmentByEval(evalNumber: Float): [JSON],
-    getEvalIds: [JSON],
-    getEvalIdsForAllHistory: [JSON],
-    getAllHistoryByID(historyId: ID): JSON
-    getScenario(scenarioId: ID): JSON
-    getScenarioNames: [JSON]
-    getScenarioNamesByEval(evalNumber: Float): [JSON]
-    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID, evalNumber: Float): JSON,
-    getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID, admName: ID): JSON,
-    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON
-    getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON]
-    getAllScenarios(id: ID): [Scenario]
-    getScenarioState(id: ID): State
-    getAllScenarioStates: [State]
-    getProbe(id: ID): Probe
-    getAllProbes: [Probe]
-    getPatient(id: ID): Casualty
-    getAllPatients: [Casualty]
-    getInjury(id: ID): Injury
-    getAllInjuries: [Injury]
-    getVitals(id: ID): Vitals
-    getAllVitals: [Vitals]
-    getTriageCategory(id: ID): TriageCategory
-    getAllTriageCategories: [TriageCategory]
-    getSupply(id: ID): Supplies
-    getAllSupplies: [Supplies]
-    getAllHumanRuns: [JSON]
-    getAllImages: [JSON],
-    getAllSurveyResults: [JSON],
-    getAllSurveyResultsByEval(evalNumber: Float): [JSON],
-    getAllScenarioResults: [JSON],
-    getAllScenarioResultsByEval(evalNumber: Float): [JSON],
-    getAllTextScenariosDRE: [JSON],
-    getEvalIdsForAllScenarioResults: [JSON],
-    getAllSimAlignment: [JSON],
-    getAllSimAlignmentByEval(evalNumber: Float): [JSON],
-    getEvalIdsForSimAlignment: [JSON],
-    getEvalNameNumbers: [JSON],
-    getEvalIdsForHumanResults: [JSON],
-    getAllRawSimData: [JSON],
-    getAllSurveyConfigs: [JSON],
-    getAllTextBasedConfigs: [JSON],
-    getAllImageUrls: [JSON],
-    getAllTextBasedImages: [JSON],
-    countHumanGroupFirst: Int,
-    countAIGroupFirst: Int,
-    getParticipantLog: [JSON],
-    getHumanToADMComparison: [JSON],
-    getCurrentSurveyVersion: String,
-    getCurrentStyle: String,
-    getADMTextProbeMatches: [JSON],
-    getMultiKdmaAnalysisData: [JSON]
+    getUsers(caller: JSON): JSON @complexity(value: 50)
+    checkUserExists(email: String!, username: String!): Boolean! @complexity(value: 5)
+    getHistory(id: ID): JSON @complexity(value: 10)
+    getAllHistory(id: ID): [JSON] @complexity(value: 150)
+    getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
+    getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
+    getEvalIds: [JSON] @complexity(value: 10)
+    getEvalIdsForAllHistory: [JSON] @complexity(value: 10)
+    getAllHistoryByID(historyId: ID): JSON @complexity(value: 25)
+    getScenario(scenarioId: ID): JSON @complexity(value: 10)
+    getScenarioNames: [JSON] @complexity(value: 15)
+    getScenarioNamesByEval(evalNumber: Float): [JSON] @complexity(value: 20)
+    getPerformerADMsForScenario(admQueryStr: String, scenarioID: ID, evalNumber: Float): JSON @complexity(value: 30)
+    getAlignmentTargetsPerScenario(evalNumber: Float, scenarioID: ID, admName: ID): JSON @complexity(value: 30)
+    getTestByADMandScenario(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTarget: String, evalNumber: Int): JSON @complexity(value: 50)
+    getAllTestDataForADM(admQueryStr: String, scenarioID: ID, admName: ID, alignmentTargets: [String], evalNumber: Int): [JSON] @complexity(value: 100)
+    getAllScenarios(id: ID): [JSON] @complexity(value: 30)
+    getAllHumanRuns: [JSON] @complexity(value: 5)
+    getAllImages: [JSON] @complexity(value: 20)
+    getAllSurveyResults: [JSON] @complexity(value: 100)
+    getAllSurveyResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getAllScenarioResults: [JSON] @complexity(value: 100)
+    getAllScenarioResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getAllTextScenariosDRE: [JSON] @complexity(value: 30)
+    getEvalIdsForAllScenarioResults: [JSON] @complexity(value: 25)
+    getAllSimAlignment: [JSON] @complexity(value: 90)
+    getAllSimAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 85)
+    getEvalIdsForSimAlignment: [JSON] @complexity(value: 20)
+    getEvalNameNumbers: [JSON] @complexity(value: 15)
+    getEvalIdsForHumanResults: [JSON] @complexity(value: 20)
+    getAllRawSimData: [JSON] @complexity(value: 180)
+    getAllSurveyConfigs: [JSON] @complexity(value: 200)
+    getAllTextBasedConfigs: [JSON] @complexity(value: 150)
+    getAllImageUrls: [JSON] @complexity(value: 150)
+    getAllTextBasedImages: [JSON] @complexity(value: 200)
+    countHumanGroupFirst: Int @complexity(value: 10)
+    countAIGroupFirst: Int @complexity(value: 10)
+    getParticipantLog: [JSON] @complexity(value: 50)
+    getHumanToADMComparison: [JSON] @complexity(value: 250)
+    getCurrentSurveyVersion: String @complexity(value: 5)
+    getCurrentStyle: String @complexity(value: 5)
+    getADMTextProbeMatches: [JSON] @complexity(value: 250)
+    getMultiKdmaAnalysisData: [JSON] @complexity(value: 200)
   }
 
   type Mutation {
@@ -228,6 +81,8 @@ const typeDefs = gql`
     updateParticipantLog(pid: String, updates: JSON): JSON
     getServerTimestamp: String
   }
+
+  directive @complexity(value: Int) on FIELD_DEFINITION
 `;
 
 const resolvers = {
@@ -426,48 +281,6 @@ const resolvers = {
     },
     getAllScenarios: async (obj, args, context, inflow) => {
       return await context.db.collection('scenarios').find().toArray().then(result => { return result; });
-    },
-    getScenarioState: async (obj, args, context, inflow) => {
-      return await context.db.collection('scenarioStates').findOne(args).then(result => { return result; });
-    },
-    getAllScenarioStates: async (obj, args, context, inflow) => {
-      return await context.db.collection('scenarioStates').find().toArray().then(result => { return result; });
-    },
-    getProbe: async (obj, args, context, inflow) => {
-      return await context.db.collection('probes').findOne(args).then(result => { return result; });
-    },
-    getAllProbes: async (obj, args, context, inflow) => {
-      return await context.db.collection('probes').find().toArray().then(result => { return result; });
-    },
-    getPatient: async (obj, args, context, inflow) => {
-      return await context.db.collection('patients').findOne(args).then(result => { return result; });
-    },
-    getAllPatients: async (obj, args, context, inflow) => {
-      return await context.db.collection('patients').find().toArray().then(result => { return result; });
-    },
-    getInjury: async (obj, args, context, inflow) => {
-      return await context.db.collection('injuries').findOne(args).then(result => { return result; });
-    },
-    getAllInjuries: async (obj, args, context, inflow) => {
-      return await context.db.collection('injuries').find().toArray().then(result => { return result; });
-    },
-    getVitals: async (obj, args, context, inflow) => {
-      return await context.db.collection('vitals').findOne(args).then(result => { return result; });
-    },
-    getAllVitals: async (obj, args, context, inflow) => {
-      return await context.db.collection('vitals').find().toArray().then(result => { return result; });
-    },
-    getTriageCategory: async (obj, args, context, inflow) => {
-      return await context.db.collection('triageCategories').findOne(args).then(result => { return result; });
-    },
-    getAllTriageCategories: async (obj, args, context, inflow) => {
-      return await context.db.collection('triageCategories').find().toArray().then(result => { return result; });
-    },
-    getSupply: async (obj, args, context, inflow) => {
-      return await context.db.collection('medicalSupplies').findOne(args).then(result => { return result; });
-    },
-    getAllSupplies: async (obj, args, context, inflow) => {
-      return await context.db.collection('medicalSupplies').find().toArray().then(result => { return result; });
     },
     getAllHumanRuns: async (obj, args, context, inflow) => {
       return await context.db.collection('humanRuns').find({ "runId": { $exists: true } }).toArray().then(result => { return result; });
