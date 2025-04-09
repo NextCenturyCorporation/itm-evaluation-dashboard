@@ -95,9 +95,6 @@ function rateLimit(req) {
             throw error;
         }
 
-        // Will remove, for debugging only!
-        console.log(`Rate limit for IP ${ip}: ${rateLimitInfo.count}/${rateLimitInfo.limit} requests`)
-
         return {
             success: true,
             ip,
