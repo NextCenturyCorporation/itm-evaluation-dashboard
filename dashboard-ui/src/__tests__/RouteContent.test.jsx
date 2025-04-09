@@ -2,12 +2,16 @@
  * @jest-environment puppeteer
  */
 
-import { checkRouteContent, loginAdmin, FOOTER_TEXT } from "../__mocks__/testUtils";
+import { checkRouteContent, loginAdmin, createAccount, FOOTER_TEXT } from "../__mocks__/testUtils";
 
 
 describe('Verify content on page matches expectation for route', () => {
     // log in as admin
     beforeAll(async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
+        // wait for the page to stop loading
+        await page.waitForSelector('#password');
+        await createAccount(page, 'admin', 'admin@123.com', 'secretAdminPassword123');
         await loginAdmin(page);
     }, 30000);
 
@@ -50,7 +54,8 @@ describe('Verify content on page matches expectation for route', () => {
     });
 
     it('Check /results route content', async () => {
-        await checkRouteContent(page, '/results', ['Evaluation', 'Scenario', 'Trial_ID', 'Target Type']);
+        // based off ph2 RQ2 table
+        await checkRouteContent(page, '/results', ['Evaluation', 'Scenario', 'ADM Name', 'Target Type']);
     });
     it('Check /adm-results route content', async () => {
         // TODO: find how to check this a little better (more unique)

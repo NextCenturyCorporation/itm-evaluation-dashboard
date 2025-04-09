@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb');
 
 function createSchema(collectionName, schema) {
     const namedSchema = new mongoose.Schema(
@@ -97,7 +98,12 @@ const TextBasedConfig = createSchema('textBasedConfig', {
     eval: { type: String, required: true }
 });
 
+const SessionConfig = createSchema("sessions", {
+    _id: { type: ObjectId, required: true },
+    userId: { type: String, required: true },
+    token: { type: String, required: true },
+    valid: { type: Boolean, required: true },
+});
 
 
-
-export { SurveyConfig, SurveyResults, SurveyVersion, UiStyle, ParticipantLog, AdmLog, UserScenarioResults, User, TextBasedConfig };
+export { SurveyConfig, SurveyResults, SurveyVersion, UiStyle, ParticipantLog, AdmLog, UserScenarioResults, User, TextBasedConfig, SessionConfig };
