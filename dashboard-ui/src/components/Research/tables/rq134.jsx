@@ -88,8 +88,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const [columnsToHide, setColumnsToHide] = React.useState([]);
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
-    const HEADERS = evalNum == 5 || evalNum == 6 ? HEADERS_PH1 : HEADERS_DRE;
-
+    const [headers, setHeaders] = React.useState([]);
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -104,6 +103,15 @@ export function RQ134({ evalNum, tableTitle }) {
         setIncludeDRE(false);
         setIncludeJAN(false);
     }, [evalNum]);
+
+    React.useEffect(() => {
+        let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
+        if (!(evalNum === 6 || (evalNum === 5 && includeJAN))) {
+            currentHeaders = currentHeaders.filter(header => header !== 'Truncation Error');
+        }
+        
+        setHeaders(currentHeaders);
+    }, [evalNum, includeJAN]);
 
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
@@ -359,7 +367,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 <div className='largeInputs'>
                     <Autocomplete
                         multiple
-                        options={HEADERS}
+                        options={headers}
                         size="small"
                         limitTags={1}
                         value={columnsToHide}
@@ -377,15 +385,15 @@ export function RQ134({ evalNum, tableTitle }) {
 
             </div>
 
-            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-134 data'} extraAction={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={headers.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-134 data'} extraAction={openModal} />
 
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
                 <thead>
                     <tr>
-                        {HEADERS.map((val, index) => {
-                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val == HEADERS.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
+                        {headers.map((val, index) => {
+                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val == headers.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
                                 {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
                             </th>);
                         })}
@@ -394,7 +402,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 <tbody>
                     {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
-                            {HEADERS.map((val) => {
+                            {headers.map((val) => {
                                 return (!columnsToHide.includes(val) && <td key={dataSet['Delegator_ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
                                 </td>);
@@ -412,5 +420,3 @@ export function RQ134({ evalNum, tableTitle }) {
         </Modal>
     </>);
 }
-
-
