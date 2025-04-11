@@ -89,6 +89,8 @@ export function RQ134({ evalNum, tableTitle }) {
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
+    
+    const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -198,8 +200,14 @@ export function RQ134({ evalNum, tableTitle }) {
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
+        
+        const headersToRemove = [...columnsToHide];
+        if (!shouldShowTruncationError) {
+            headersToRemove.push('Truncation Error');
+        }
+        
         updatedData.map((x) => {
-            for (const h of columnsToHide) {
+            for (const h of headersToRemove) {
                 delete x[h];
             }
             return x;
@@ -222,6 +230,10 @@ export function RQ134({ evalNum, tableTitle }) {
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
+
+    const getFilteredHeaders = () => {
+        return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
+    };
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
@@ -385,7 +397,13 @@ export function RQ134({ evalNum, tableTitle }) {
 
             </div>
 
-            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={headers.filter((x) => !columnsToHide.includes(x))} fileName={'RQ-134 data'} extraAction={openModal} />
+            <DownloadButtons 
+                formattedData={refineData(formattedData)}
+                filteredData={refineData(filteredData)} 
+                HEADERS={getFilteredHeaders()} 
+                fileName={'RQ-134 data'} 
+                extraAction={openModal} 
+            />
 
         </section>
         <div className='resultTableSection'>
