@@ -30,6 +30,8 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
+const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAlignmentData'];
+
 function shortenAnswer(answer) {
     // shortens an answer so the whole thing is visible and understandable without taking up too much screen real estate
     switch (answer) {
@@ -247,7 +249,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                             formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
                             obj['Alignment Data'] = temp;
                         }
-                    } else if (key !== 'lowAlignmentData' && key !== 'highAlignmentData') {
+                    } else if (!KEYS_WITHOUT_TIME.includes(key)) {
                         // top level pages with timing
                         const time_key = key + ' time (s)';
                         if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
