@@ -6,8 +6,13 @@ import '../../css/template.css';
 
 const VitalsDropdown = ({ vitals, patientName, isVisible, toggleVisibility }) => {
     return (
-        <ListGroup className="ms-1 vitals-list-group">
-            <ListGroup.Item action variant="light" onClick={toggleVisibility}>
+        <ListGroup className="vitals-list-group" style={{ borderRadius: 0 }}>
+            <ListGroup.Item 
+                action 
+                variant="light" 
+                onClick={toggleVisibility}
+                style={{ borderRadius: 0 }}
+            >
                 <strong>
                 Vitals
                 </strong>
@@ -16,7 +21,7 @@ const VitalsDropdown = ({ vitals, patientName, isVisible, toggleVisibility }) =>
 
             {isVisible && (
                 vitals.map((vital, index) => (
-                    <ListGroup.Item key={index}>
+                    <ListGroup.Item key={index} style={{ borderRadius: 0 }}>
                         <strong>{vital.name}:</strong> {vital.value}
                     </ListGroup.Item>
                 ))
