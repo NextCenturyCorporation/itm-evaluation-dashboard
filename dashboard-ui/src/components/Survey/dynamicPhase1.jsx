@@ -156,8 +156,7 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
             "fontSize": text.includes('Question:') ? '20px' : '16px'
         }
     }
-
-    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
+    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength }) {
         const patientButtons = patients.map(patient => (
             sceneCharacters.includes(patient.name) && (
                 <div className="patient-buttons" key={`button-${patient.name}`}>
@@ -171,7 +170,7 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                 </div>
             )
         ));
-
+    
         const patientCards = patients.map(patient => {
             if (visiblePatients[patient.name] && sceneCharacters.includes(patient.name)) {
                 return (
@@ -212,51 +211,65 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
             }
             return null;
         });
-
+    
+        const sceneBody = (
+            <>
+                <Row className="mb-4">
+                    <Col md={12}>
+                        <SuppliesPhase1 supplies={sceneSupplies} />
+                    </Col>
+                </Row>
+                <Row>
+                    <Col md={12}>
+                        <Accordion defaultActiveKey="1">
+                            <Accordion.Item eventKey="1">
+                                <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
+                                <Accordion.Body>
+                                    <ListGroup>
+                                        {sceneActions && sceneActions.map((action, index) => (
+                                            <ListGroup.Item
+                                                key={`action-${index}`}
+                                                className="action-item"
+                                                style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
+                                            >
+                                                {processActionText(action, index, sceneActions)}
+                                            </ListGroup.Item>
+                                        ))}
+                                    </ListGroup>
+                                </Accordion.Body>
+                            </Accordion.Item>
+                        </Accordion>
+    
+                        <div style={{ marginBottom: '10px', marginTop: '10px' }}>
+                            {patientButtons}
+                        </div>
+                        <div className="card-container">
+                            <Row>
+                                {patientCards}
+                            </Row>
+                        </div>
+                    </Col>
+                </Row>
+            </>
+        );
+    
         return (
-            <Accordion className='sceneAccordion' defaultActiveKey="0">
-                <Accordion.Item eventKey="0">
-                    <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
-                    <Accordion.Body className='scene'>
-                        <Row className="mb-4">
-                            <Col md={12}>
-                                <SuppliesPhase1 supplies={sceneSupplies} />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={12}>
-                                <Accordion defaultActiveKey="1">
-                                    <Accordion.Item eventKey="1">
-                                        <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
-                                        <Accordion.Body>
-                                            <ListGroup>
-                                                {sceneActions && sceneActions.map((action, index) => (
-                                                    <ListGroup.Item
-                                                        key={`action-${index}`}
-                                                        className="action-item"
-                                                        style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
-                                                    >
-                                                        {processActionText(action, index, sceneActions)}
-                                                    </ListGroup.Item>
-                                                ))}
-                                            </ListGroup>
-                                        </Accordion.Body>
-                                    </Accordion.Item>
-                                </Accordion>
-
-                                <div style={{ marginBottom: '10px', marginTop: '10px' }}>
-                                    {patientButtons}
-                                </div>
-                                <div className="card-container">
-                                    <Row>
-                                        {patientCards}
-                                    </Row>
-                                </div>
-                            </Col>
-                        </Row>
-                    </Accordion.Body>
-                </Accordion.Item>
-            </Accordion>
+            <>
+                {scenesLength > 1 ? (
+                    <Accordion className='sceneAccordion' defaultActiveKey="0">
+                        <Accordion.Item eventKey="0">
+                            <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
+                            <Accordion.Body className='scene'>
+                                {sceneBody}
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    </Accordion>
+                ) : (
+                    <div className="scene">
+                        {sceneBody}
+                    </div>
+                )}
+            </>
         );
     }
 
@@ -301,6 +314,7 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                         sceneActions={scene.actions}
                         sceneSupplies={scene.supplies}
                         sceneCharacters={scene.char_ids}
+                        sceneseLength={scenes.length}
                     />
                 ))
                 : <Scene
@@ -308,6 +322,7 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                     sceneActions={actions}
                     sceneSupplies={supplies}
                     sceneCharacters={patients.map((p) => p.name)}
+                    scenesLength={1}
                 />
             }
 
