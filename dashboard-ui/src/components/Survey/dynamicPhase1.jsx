@@ -21,7 +21,13 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
         });
         return initialVisibility;
     });
-    const [visibleVitals, setVisibleVitals] = useState({});
+    const [visibleVitals, setVisibleVitals] = useState(() => {
+        const initialVitalsVisibility = {};
+        patients.forEach(patient => {
+            initialVitalsVisibility[patient.name] = true;
+        });
+        return initialVitalsVisibility;
+    });
     const [showPatientModal, setShowPatientModal] = useState(false);
     const [activeImage, setActiveImage] = useState(null);
     const [activeTitle, setActiveTitle] = useState('');
