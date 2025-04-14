@@ -156,7 +156,8 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
             "fontSize": text.includes('Question:') ? '20px' : '16px'
         }
     }
-    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength }) {
+    
+    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength, sceneDecision, sceneExplanation }) {
         const patientButtons = patients.map(patient => (
             sceneCharacters.includes(patient.name) && (
                 <div className="patient-buttons" key={`button-${patient.name}`}>
@@ -226,6 +227,15 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                                 <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
                                 <Accordion.Body>
                                     <ListGroup>
+                                        {sceneDecision && (
+                                            <ListGroup.Item
+                                                className="action-item"
+                                                style={{ fontWeight: "700", backgroundColor: "#eee", fontSize: "20px" }}
+                                            >
+                                                The medic was asked: {sceneDecision}
+                                            </ListGroup.Item>
+                                        )}
+                                        
                                         {sceneActions && sceneActions.map((action, index) => (
                                             <ListGroup.Item
                                                 key={`action-${index}`}
@@ -235,6 +245,15 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                                                 {processActionText(action, index, sceneActions)}
                                             </ListGroup.Item>
                                         ))}
+                                        
+                                        {sceneExplanation && (
+                                            <ListGroup.Item
+                                                className="action-item"
+                                                style={{ fontWeight: "500", backgroundColor: "#f8f9fa", fontSize: "16px", fontStyle: "italic" }}
+                                            >
+                                                <strong>Explanation:</strong> {sceneExplanation}
+                                            </ListGroup.Item>
+                                        )}
                                     </ListGroup>
                                 </Accordion.Body>
                             </Accordion.Item>
@@ -314,7 +333,9 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                         sceneActions={scene.actions}
                         sceneSupplies={scene.supplies}
                         sceneCharacters={scene.char_ids}
-                        sceneseLength={scenes.length}
+                        scenesLength={scenes.length}
+                        sceneDecision={scene.decision}
+                        sceneExplanation={scene.explanation}
                     />
                 ))
                 : <Scene
@@ -323,6 +344,8 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                     sceneSupplies={supplies}
                     sceneCharacters={patients.map((p) => p.name)}
                     scenesLength={1}
+                    sceneDecision={decision}
+                    sceneExplanation={explanation}
                 />
             }
 
