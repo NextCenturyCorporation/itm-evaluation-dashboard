@@ -355,13 +355,29 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                 />
             }
 
-            <Modal show={showPatientModal} onHide={() => toggleImageModal("", activeTitle, "")}>
+            <Modal 
+                show={showPatientModal} 
+                onHide={() => toggleImageModal("", activeTitle, "")}
+                size="xl"
+                centered
+                className="w-100 mw-100"
+            >
                 <Modal.Header closeButton>
                     <Modal.Title>{activeTitle}</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                    {activeDescription}
-                    <img src={`data:image/jpeg;base64,${activeImage}`} alt="Enlarged view" style={{ width: '100%' }} />
+                <Modal.Body className="p-3">
+                    <p>{activeDescription}</p>
+                    <div className="d-flex justify-content-center align-items-center">
+                        <img 
+                            src={`data:image/jpeg;base64,${activeImage}`} 
+                            alt="Enlarged view" 
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '70vh',
+                                objectFit: 'contain'
+                            }} 
+                        />
+                    </div>
                 </Modal.Body>
             </Modal>
 
