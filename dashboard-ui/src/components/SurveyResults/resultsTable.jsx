@@ -108,7 +108,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     }, [data, pLog, showLegacy]);
 
     React.useEffect(() => {
-        setEvalFilters(evalNumbers);
+        if (exploratory)
+            setEvalFilters(evalNumbers);
     }, [evalNumbers]);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
