@@ -116,6 +116,7 @@ class SurveyPage extends Component {
     postConfigSetup = () => {
         // clone surveyConfig, don't edit directly
         this.surveyConfigClone = structuredClone(this.state.surveyConfig);
+        console.log(this.surveyConfigClone)
         this.initializeSurvey();
 
         this.survey = new Model(this.surveyConfigClone);
@@ -196,12 +197,29 @@ class SurveyPage extends Component {
         }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
         if ((this.state.surveyVersion != 4.0 && this.state.surveyVersion != 5.0)) {
+            if (this.state.surveyVersion == 1.3) {
+                this.assign_omnibus_1_3(groupedDMs)
+            }
             this.applyPageRandomization(groupedDMs, comparisonPages, removed);
         } else if (this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: true
             });
         }
+    }
+
+    assign_omnibus_1_3 = (groupedDMs) => {
+        let firstOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-301")
+        let secondOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-502")
+        groupedDMs.forEach(pairing => {
+            if (Math.random() < 0.5) {
+                firstOmnibus.elements[0].decisionMakers.push(pairing[0]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[1]);
+            } else {
+                firstOmnibus.elements[0].decisionMakers.push(pairing[1]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[0]);
+            }
+        })
     }
 
     prepareSurveyInitialization = () => {
@@ -383,7 +401,7 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else if (this.state.surveyVersion == 1) {
+        else if (this.state.surveyVersion == 1.3 || this.state.surveyVersion == 1.0) {
             let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
             // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
             let removed = groupedDMs.pop();
@@ -516,7 +534,8 @@ class SurveyPage extends Component {
             shuffledGroupedPages.unshift(shuffledInstructionPages[0])
             shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
         }
-        this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
+        this.surveyConfigClone.pages = [...omnibusPages, ...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
+        console.log(this.surveyConfigClone.pages)
     }
 
     orderLogHelper = (group, orderLog, offset) => {
