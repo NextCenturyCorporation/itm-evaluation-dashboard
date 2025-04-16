@@ -307,7 +307,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD')) &&
                     x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] == page['admTarget'])?.score ?? '-';
 
-                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
+                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target ==  page['admTarget']?.replace('.', '') || a.target == page['admTarget'])?.score ?? '-';
                 const txt_distance = distanceAlignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
                 if (evalNum == 5 || evalNum == 6)
                     entryObj['DRE/Distance Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
