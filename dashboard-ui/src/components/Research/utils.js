@@ -99,22 +99,8 @@ export function getAlignments(evalNum, textResults, pid) {
     const distanceAlignments = [];
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
-        if (evalNum == 4) {
             // adept
-            if (Object.keys(textRes).includes("combinedAlignmentData")) {
-                if (!addedMJ) {
-                    alignments.push(...textRes['combinedAlignmentData']);
-                    addedMJ = true;
-                }
-            }
-            else {
-                // st
-                alignments.push(...textRes['alignmentData'])
-            }
-        }
-        else {
-            // adept
-            if (!Object.keys(textRes).includes("alignmentData")) {
+            if (Object.keys(textRes).includes('combinedAlignmentData') || !Object.keys(textRes).includes("alignmentData")) {
                 if (!addedMJ) {
                     if (textRes['mostLeastAligned']) {
                         const atts = [];
@@ -146,7 +132,6 @@ export function getAlignments(evalNum, textResults, pid) {
                 alignments.push(...textRes['alignmentData'])
             }
         }
-    }
     return { textResultsForPID, alignments, distanceAlignments };
 }
 
@@ -322,7 +307,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD')) &&
                     x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] == page['admTarget'])?.score ?? '-';
 
-                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
+                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target ==  page['admTarget']?.replace('.', '') || a.target == page['admTarget'])?.score ?? '-';
                 const txt_distance = distanceAlignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
                 if (evalNum == 5 || evalNum == 6)
                     entryObj['DRE/Distance Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
