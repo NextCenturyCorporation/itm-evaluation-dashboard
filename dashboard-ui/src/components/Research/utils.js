@@ -99,20 +99,6 @@ export function getAlignments(evalNum, textResults, pid) {
     const distanceAlignments = [];
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
-        if (evalNum == 4) {
-            // adept
-            if (Object.keys(textRes).includes("combinedAlignmentData")) {
-                if (!addedMJ) {
-                    alignments.push(...textRes['combinedAlignmentData']);
-                    addedMJ = true;
-                }
-            }
-            else {
-                // st
-                alignments.push(...textRes['alignmentData'])
-            }
-        }
-        else {
             // adept
             if (!Object.keys(textRes).includes("alignmentData")) {
                 if (!addedMJ) {
@@ -146,7 +132,6 @@ export function getAlignments(evalNum, textResults, pid) {
                 alignments.push(...textRes['alignmentData'])
             }
         }
-    }
     return { textResultsForPID, alignments, distanceAlignments };
 }
 
