@@ -6,7 +6,7 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import { ParticipantLog, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
+import { ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
 import { surveyResultMock, surveyV5, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
@@ -67,6 +67,15 @@ beforeAll(async () => {
         const surveyConfig5 = new SurveyConfig(surveyV5);
         await surveyConfig4.save();
         await surveyConfig5.save();
+        const { ObjectId } = require('mongodb');
+
+        const sessionConfig = new SessionConfig({
+            _id: new ObjectId("67991d239acd0b5980ffbf69"),
+            userId: "67991d239acd0b1b94ffbf64",
+            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM",
+            valid: true
+        });
+        await sessionConfig.save();
 
         const participantLog = new ParticipantLog({
             "Type": "Mil",
@@ -204,7 +213,7 @@ beforeAll(async () => {
                                         return null;
                                     }
                                     const { User } = require('./__mocks__/mockDbSchema.js');
-                                    const newUser = new User({
+                                    const userData = {
                                         username: user.username,
                                         emails: [{ address: user.email, verified: false }],
                                         admin: foundUser.admin,
@@ -213,7 +222,12 @@ beforeAll(async () => {
                                         adeptUser: foundUser.adeptUser,
                                         approved: foundUser.approved,
                                         rejected: foundUser.rejected
-                                    });
+                                    };
+                                    const { ObjectId } = require('mongodb');
+                                    if (user.username == 'admin')
+                                        userData['_id'] = new ObjectId("67991d239acd0b1b94ffbf64");
+
+                                    const newUser = new User(userData);
 
                                     await newUser.save();
 

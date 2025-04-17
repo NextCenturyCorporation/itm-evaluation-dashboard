@@ -8,16 +8,35 @@ import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.3_PH2.xlsx';
 import { DownloadButtons } from "./download-buttons";
 import { isDefined } from "../../AggregateResults/DataFunctions";
+import { Checkbox, FormControlLabel } from "@material-ui/core";
 
 const getAnalysisData = gql`
     query getMultiKdmaAnalysisData {
         getMultiKdmaAnalysisData
     }`;
 
+const GET_SURVEY_RESULTS = gql`
+    query GetAllResults {
+        getAllSurveyResults
+    }`;
+
+const GET_PARTICIPANT_LOG = gql`
+    query GetParticipantLog {
+        getParticipantLog
+    }`;
+
+const GET_TEXT_RESULTS = gql`
+    query GetAllResults {
+        getAllScenarioResults
+    }`;
+
 const HEADERS = ['ADM Name', 'PID', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA_Aligned - MJ2', 'MJ KDMA_Aligned - MJ4', 'MJ KDMA_Aligned - MJ5', 'MJ KDMA_Aligned - AVE', 'IO KDMA_Aligned - MJ2', 'IO KDMA_Aligned - MJ4', 'IO KDMA_Aligned - MJ5', 'IO KDMA_Aligned - AVE', 'Alignment (Target|ADM_MJ2)_Aligned', 'Alignment (Target|ADM_MJ4)_Aligned', 'Alignment (Target|ADM_MJ5)_Aligned', 'Alignment Average (Target|ADM)_Aligned', 'MJ KDMA_Baseline - MJ2', 'MJ KDMA_Baseline - MJ4', 'MJ KDMA_Baseline - MJ5', 'MJ KDMA_Baseline - AVE', 'IO KDMA_Baseline - MJ2', 'IO KDMA_Baseline - MJ4', 'IO KDMA_Baseline - MJ5', 'IO KDMA_Baseline - AVE', 'Alignment (Target|ADM_MJ2)_Baseline', 'Alignment (Target|ADM_MJ4)_Baseline', 'Alignment (Target|ADM_MJ5)_Baseline', 'Alignment Average (Target|ADM)_Baseline'];
 
 export function Phase2_RQ23() {
     const { loading: loading, error: error, data: data } = useQuery(getAnalysisData);
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     // all options for filters
@@ -30,7 +49,9 @@ export function Phase2_RQ23() {
     const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
-
+    // variables for checking completed surveys
+    const [onlyShowCompletedSurveys, setOnlyShowCompletedSurveys] = React.useState(false);
+    const [pidsWithCompleteSurveys, setPidsWithCompleteSurveys] = React.useState([]);
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -40,9 +61,38 @@ export function Phase2_RQ23() {
         setShowDefinitions(false);
     }
 
+    const updateOnlyShowSurveyStatus = (event) => {
+        setOnlyShowCompletedSurveys(event.target.checked);
+    };
+
     React.useEffect(() => {
-        if (data?.getMultiKdmaAnalysisData) {
+        if (data?.getMultiKdmaAnalysisData && dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults) {
             const analysisData = data.getMultiKdmaAnalysisData;
+
+            // find participants shown in RQ 134
+            const rq134Pids = [];
+            const surveyResults = dataSurveyResults?.getAllSurveyResults;
+            const participantLog = dataParticipantLog?.getParticipantLog;
+            const textResults = dataTextResults?.getAllScenarioResults;
+            const completed_surveys = surveyResults.filter((res) => (res.results?.evalNumber == 4 && isDefined(res.results['Post-Scenario Measures'])) || ((res.results?.evalNumber == 5 || res.results?.evalNumber == 6) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0));
+            for (const res of completed_surveys) {
+                const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
+                if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => res.results?.['Participant ID Page']?.questions['Participant ID']?.response == pid && isDefined(res.results['Post-Scenario Measures']))) {
+                    // filter incomplete surveys from participants who have a complete survey
+                    continue;
+                }
+                // see if participant is in the participantLog
+                const logData = participantLog.find(
+                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                );
+                const textCount = textResults.filter((x) => x.participantID == pid).length;
+                if (!logData || textCount < 5) {
+                    continue;
+                }
+                rq134Pids.push(pid);
+            }
+            setPidsWithCompleteSurveys(rq134Pids);
+
             const allObjs = [];
             const allAdmNames = [];
 
@@ -117,17 +167,18 @@ export function Phase2_RQ23() {
             }
             setAdmNames(Array.from(new Set(allAdmNames)));
         }
-    }, [data]);
+    }, [data, dataSurveyResults, dataParticipantLog, dataTextResults]);
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
                 (admNameFilters.length == 0 || admNameFilters.includes(x['ADM Name'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.filter((sf) => x['Human Scenario'].includes(sf)).length > 0) &&
-                (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target Type']))
+                (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target Type'])) &&
+                (!onlyShowCompletedSurveys || pidsWithCompleteSurveys.length == 0 || pidsWithCompleteSurveys.includes(x['PID']))
             ));
         }
-    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters]);
+    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters, onlyShowCompletedSurveys]);
 
     const capitalizeFirstLetter = (str) => {
         if (!isDefined(str) || str.length < 2)
@@ -135,10 +186,15 @@ export function Phase2_RQ23() {
         return str[0].toUpperCase() + str.slice(1);
     };
 
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error :</p>;
+    if (loading || loadingParticipantLog || loadingSurveyResults || loadingTextResults) return <p>Loading...</p>;
+    if (error || errorParticipantLog || errorSurveyResults || errorTextResults) return <p>Error :</p>;
 
     return (<>
+        <h2 className='rq134-header'>RQ 2.3 Data
+            <div>
+                <FormControlLabel control={<Checkbox value={onlyShowCompletedSurveys} onChange={updateOnlyShowSurveyStatus} />} label="Only Show Participants with Survey Data" />
+            </div>
+        </h2>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
