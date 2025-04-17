@@ -63,7 +63,10 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResults
     }`;
 
-
+const ADD_PARTICIPANT = gql`
+    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
+        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
+    }`;
 class SurveyPage extends Component {
 
     constructor(props) {
@@ -116,7 +119,6 @@ class SurveyPage extends Component {
     postConfigSetup = () => {
         // clone surveyConfig, don't edit directly
         this.surveyConfigClone = structuredClone(this.state.surveyConfig);
-        console.log(this.surveyConfigClone)
         this.initializeSurvey();
 
         this.survey = new Model(this.surveyConfigClone);
@@ -534,7 +536,7 @@ class SurveyPage extends Component {
             shuffledGroupedPages.unshift(shuffledInstructionPages[0])
             shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
         }
-        this.surveyConfigClone.pages = [...omnibusPages, ...ungroupedPages, ...shuffledGroupedPages, postScenarioPage];
+        this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
         console.log(this.surveyConfigClone.pages)
     }
 
@@ -567,6 +569,25 @@ class SurveyPage extends Component {
                 firstPageCompleted: true,
                 startTime: timestamp.data.getServerTimestamp
             });
+
+            if (this.state.surveyVersion == 1.3 && this.props.addParticipant) {
+                try {
+                    const participantData = {
+                        claimed: true
+                    }
+                    const result = await this.props.addParticipant({
+                        variables: {
+                            participantData: participantData,
+                            lowPid: 202504000,
+                            highPid: 202504199
+                        }
+                    })
+                    const generatedPid = result.data.addNewParticipantToLog.generatedPid
+                    this.setState({pid: generatedPid})
+                } catch (error) {
+                    console.error("Error generating new PID", error)
+                }
+            }
         }
 
         const pageName = options.page.name;
@@ -678,6 +699,12 @@ class SurveyPage extends Component {
                 this.surveyData['aiGroupFirst'] = !humanGroupFirst;
             }
         }
+
+        if (this.state.surveyVersion == 1.3) {
+            this.surveyData['evalName'] = 'April 2025 Evaluation';
+            this.surveyData['evalNumber'] = 8;
+            this.surveyData['pid'] = this.state.pid;
+        } 
 
         if (this.state.surveyVersion == 4.0) {
             this.surveyData['evalNumber'] = 4;
@@ -855,6 +882,7 @@ export const SurveyPageWrapper = (props) => {
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
+    const [addParticipant] = useMutation(ADD_PARTICIPANT);
 
     if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
     if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
@@ -869,6 +897,7 @@ export const SurveyPageWrapper = (props) => {
             surveyResults={dataSurveyResults.getAllSurveyResults}
             surveyVersion={currentSurveyVersion}
             getServerTimestamp={getServerTimestamp}
+            addParticipant={addParticipant}
         />)
 };
 
