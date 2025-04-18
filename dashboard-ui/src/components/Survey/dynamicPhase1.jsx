@@ -195,14 +195,14 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                                 <Card.Header>
                                     <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
                                 </Card.Header>
-                                <Row className="g-0">
-                                    <Col md={8} className="mr-4">
-                                        <div style={{ position: 'relative' }}>
+                                <Row className="g-0 patient-card-content">
+                                    <Col md={8} className="patient-image-col">
+                                        <div className="patient-image-container">
                                             <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
                                             <ZoomInIcon className="magnifying-glass" onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
                                         </div>
                                     </Col>
-                                    <Col md={4}>
+                                    <Col md={4} className="patient-vitals-col">
                                         <VitalsDropdown
                                             vitals={patient.vitals}
                                             patientName={patient.name}
