@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
@@ -203,6 +203,9 @@ class SurveyPage extends Component {
                 this.assign_omnibus_1_3(groupedDMs)
             }
             this.applyPageRandomization(groupedDMs, comparisonPages, removed);
+            if (this.state.orderLog.length < 1) {
+                this.setState({orderLog: orderLog13(this.surveyConfigClone.pages)})
+            }
         } else if (this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: true
@@ -704,6 +707,7 @@ class SurveyPage extends Component {
             this.surveyData['evalName'] = 'April 2025 Evaluation';
             this.surveyData['evalNumber'] = 8;
             this.surveyData['pid'] = this.state.pid;
+            this.surveyData['orderLog'] = this.state.orderLog
         } 
 
         if (this.state.surveyVersion == 4.0) {

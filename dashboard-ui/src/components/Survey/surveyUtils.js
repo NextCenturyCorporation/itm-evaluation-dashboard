@@ -9,6 +9,16 @@ export const renderSituation = (situation) => {
     return <p>{situation}</p>;
 };
 
+export const orderLog13 = (pages) => {
+    let orderLog = []
+    for (const page of pages) {
+        if (page.name.includes("Medic")) {
+            orderLog.push(page.name)
+        }
+    }
+    return orderLog
+}
+
 export function getUID() {
     return Date.now().toString(36)
 }
