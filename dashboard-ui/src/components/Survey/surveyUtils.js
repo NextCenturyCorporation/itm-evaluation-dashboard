@@ -12,8 +12,16 @@ export const renderSituation = (situation) => {
 export const orderLog13 = (pages) => {
     let orderLog = []
     for (const page of pages) {
-        if (page.name.includes("Medic")) {
-            orderLog.push(page.name)
+        if (page.name.includes("Medic") && !page.name.toLowerCase().includes("vs")) {
+            if (!page.name.includes("Omnibus")) {
+                orderLog.push(page.name)
+            } else {
+                let log = page.name + ":"
+                for (const medic of page.elements[0]['decisionMakers']) {
+                    log += " " + medic
+                }
+                orderLog.push(log)
+            }
         }
     }
     return orderLog
