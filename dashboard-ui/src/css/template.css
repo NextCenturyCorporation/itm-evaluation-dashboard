@@ -31,14 +31,13 @@
   font-size: 14px;
 }
 
-/* Card container fixes */
+
 .card-container {
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
 }
 
-/* Patient card fixes */
 .patient-card {
   width: 100%;
   margin-right: 0;
@@ -47,15 +46,14 @@
   overflow: hidden;
 }
 
-/* Fix row layout inside patient card */
+
 .patient-card .row.g-0 {
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
-  height: 250px; /* Fixed height container */
+  height: 250px; 
 }
 
-/* Image column */
 .patient-card .col-md-8 {
   flex: 0 0 auto;
   width: 66.666667%;
@@ -64,7 +62,6 @@
   overflow: hidden;
 }
 
-/* Vitals column */
 .patient-card .col-md-4 {
   flex: 1 0 33.333333%;
   height: 100%;
@@ -73,7 +70,6 @@
   flex-direction: column;
 }
 
-/* Image container */
 .patient-card .col-md-8 > div {
   position: relative;
   height: 100%;
@@ -84,7 +80,6 @@
   background-color: #f8f9fa;
 }
 
-/* Patient image */
 .patient-image {
   max-width: 100%;
   max-height: 100%;
@@ -93,7 +88,6 @@
   object-fit: contain;
 }
 
-/* Vitals list group */
 .vitals-list-group {
   overflow-y: auto;
   height: 100%;
@@ -101,7 +95,6 @@
   flex-direction: column;
 }
 
-/* Magnifying glass */
 .magnifying-glass {
   position: absolute;
   bottom: 10px;
@@ -126,7 +119,6 @@
   transition: transform 0.5s ease-in-out;
 }
 
-/* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .patient-card .row.g-0 {
     flex-direction: column;
