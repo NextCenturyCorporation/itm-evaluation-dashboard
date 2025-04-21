@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Button, Modal } from "react-bootstrap";
-import Dynamic from "./dynamic";
+import DynamicPhase1 from "./dynamicPhase1";
 import { Accordion } from "react-bootstrap";
 import '../../css/template.css';
 import { useSelector } from "react-redux";
@@ -163,7 +163,7 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
                                         <Accordion.Item eventKey={index.toString()} key={dm.name}>
                                             <Accordion.Header>{this.getScenarioHeader(dm.title)} Scenario</Accordion.Header>
                                             <Accordion.Body>
-                                                <Dynamic
+                                                <DynamicPhase1
                                                     actions={dm.actions}
                                                     decision={dm.decision}
                                                     explanation={dm.explanation}

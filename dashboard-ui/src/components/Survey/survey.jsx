@@ -12,13 +12,14 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0 } from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 import { useHistory } from 'react-router-dom';
+
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
     countHumanGroupFirst
@@ -63,7 +64,10 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResults
     }`;
 
-
+const ADD_PARTICIPANT = gql`
+    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
+        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
+    }`;
 class SurveyPage extends Component {
 
     constructor(props) {
@@ -196,12 +200,32 @@ class SurveyPage extends Component {
         }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
         if ((this.state.surveyVersion != 4.0 && this.state.surveyVersion != 5.0)) {
+            if (this.state.surveyVersion == 1.3) {
+                this.assign_omnibus_1_3(groupedDMs)
+            }
             this.applyPageRandomization(groupedDMs, comparisonPages, removed);
+            if (this.state.orderLog.length < 1) {
+                this.setState({orderLog: orderLog13(this.surveyConfigClone.pages)})
+            }
         } else if (this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: true
             });
         }
+    }
+
+    assign_omnibus_1_3 = (groupedDMs) => {
+        let firstOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-301")
+        let secondOmnibus = this.surveyConfigClone.pages.find(page => page.name === "Omnibus: Medic-502")
+        groupedDMs.forEach(pairing => {
+            if (Math.random() < 0.5) {
+                firstOmnibus.elements[0].decisionMakers.push(pairing[0]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[1]);
+            } else {
+                firstOmnibus.elements[0].decisionMakers.push(pairing[1]);
+                secondOmnibus.elements[0].decisionMakers.push(pairing[0]);
+            }
+        })
     }
 
     prepareSurveyInitialization = () => {
@@ -383,7 +407,7 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else if (this.state.surveyVersion == 1) {
+        else if (this.state.surveyVersion == 1.3 || this.state.surveyVersion == 1.0) {
             let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
             // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
             let removed = groupedDMs.pop();
@@ -548,6 +572,25 @@ class SurveyPage extends Component {
                 firstPageCompleted: true,
                 startTime: timestamp.data.getServerTimestamp
             });
+
+            if (this.state.surveyVersion == 1.3 && this.props.addParticipant) {
+                try {
+                    const participantData = {
+                        claimed: true
+                    }
+                    const result = await this.props.addParticipant({
+                        variables: {
+                            participantData: participantData,
+                            lowPid: 202504000,
+                            highPid: 202504199
+                        }
+                    })
+                    const generatedPid = result.data.addNewParticipantToLog.generatedPid
+                    this.setState({pid: generatedPid})
+                } catch (error) {
+                    console.error("Error generating new PID", error)
+                }
+            }
         }
 
         const pageName = options.page.name;
@@ -659,6 +702,13 @@ class SurveyPage extends Component {
                 this.surveyData['aiGroupFirst'] = !humanGroupFirst;
             }
         }
+
+        if (this.state.surveyVersion == 1.3) {
+            this.surveyData['evalName'] = 'April 2025 Evaluation';
+            this.surveyData['evalNumber'] = 8;
+            this.surveyData['pid'] = this.state.pid;
+            this.surveyData['orderLog'] = this.state.orderLog
+        } 
 
         if (this.state.surveyVersion == 4.0) {
             this.surveyData['evalNumber'] = 4;
@@ -836,6 +886,7 @@ export const SurveyPageWrapper = (props) => {
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
+    const [addParticipant] = useMutation(ADD_PARTICIPANT);
 
     if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
     if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
@@ -850,6 +901,7 @@ export const SurveyPageWrapper = (props) => {
             surveyResults={dataSurveyResults.getAllSurveyResults}
             surveyVersion={currentSurveyVersion}
             getServerTimestamp={getServerTimestamp}
+            addParticipant={addParticipant}
         />)
 };
 

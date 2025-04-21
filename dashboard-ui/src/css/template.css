@@ -4,10 +4,6 @@
   font-size: 16px;
 }
 
-.patient-card {
-  width: 30%;
-}
-
 .scene {
   display: flex;
   flex-direction: column;
@@ -35,6 +31,7 @@
   font-size: 14px;
 }
 
+
 .card-container {
   overflow-x: auto;
   overflow-y: hidden;
@@ -43,14 +40,104 @@
 
 .patient-card {
   width: 100%;
-  margin-right: 0.33%;
+  margin-right: 0;
   display: inline-block;
   vertical-align: top;
+  overflow: hidden;
+}
+
+
+.patient-card .row.g-0 {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  height: 250px; 
+}
+
+.patient-card .col-md-8 {
+  flex: 0 0 auto;
+  width: 66.666667%;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.patient-card .col-md-4 {
+  flex: 1 0 33.333333%;
+  height: 100%;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.patient-card .col-md-8 > div {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
 }
 
 .patient-image {
-  width: 100%;
-  object-fit: fit;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.vitals-list-group {
+  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.magnifying-glass {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  padding: 5px;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.magnifying-glass:hover {
+  transform: scale(1.5);
+  cursor: pointer;
+  transition: transform 0.5s ease-in-out;
+}
+
+.magnifying-glass-icon:hover {
+  transform: scale(1.25);
+  cursor: pointer;
+  transition: transform 0.5s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .patient-card .row.g-0 {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .patient-card .col-md-8,
+  .patient-card .col-md-4 {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .patient-card .col-md-8 > div {
+    height: 250px;
+  }
+  
+  .patient-card .col-md-4 {
+    min-height: 200px;
+  }
 }
 
 .list-group {
@@ -65,32 +152,6 @@
   white-space: normal;
   word-break: break-word;
   font-size: 14px; 
-}
-
-.magnifying-glass-icon:hover {
-  transform: scale(1.25);
-  cursor: pointer;
-  transition: transform 0.5s ease-in-out;
-}
-
-.magnifying-glass {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
-  padding: 5px;
-}
-
-.magnifying-glass:hover {
-  transform: scale(1.5);
-  cursor: pointer;
-  transition: transform 0.5s ease-in-out;
-}
-
-.vitals-list-group {
-  overflow-y: auto;
 }
 
 .patient-row {

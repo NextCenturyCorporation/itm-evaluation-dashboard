@@ -560,7 +560,7 @@ const resolvers = {
     addNewParticipantToLog: async (obj, args, context, inflow) => {
       try {
         const timestamp = new Date().toISOString();
-
+        let generatedPid;
         if (!Number.isFinite(args.participantData.ParticipantID)) {
           console.log(`[${timestamp}] Invalid PID detected, querying for highest PID`);
 
@@ -572,16 +572,18 @@ const resolvers = {
             .limit(1)
             .toArray();
 
-          const nextPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : args.lowPid;
+          generatedPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : args.lowPid;
 
-          args.participantData.ParticipantID = nextPid;
+          args.participantData.ParticipantID = generatedPid;
+        } else {
+          generatedPid = args.participantData.ParticipantID
         }
 
         // try to insert with our validated PID
         try {
           const result = await context.db.collection('participantLog').insertOne(args.participantData);
           console.log(`[${timestamp}] Insert SUCCESS for PID: ${args.participantData.ParticipantID}`);
-          return result;
+          return {...result, generatedPid};
         } catch (error) {
           if (error.code === 11000) { // ff we hit a duplicate
             console.log(`[${timestamp}] DUPLICATE KEY ERROR for PID: ${args.participantData.ParticipantID}`);

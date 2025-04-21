@@ -28,15 +28,26 @@ async function createUniqueIndex() {
         }
     }
     try {
+        const indexes = await dashboardDB.db.collection('participantLog').indexes();
+        const hashedEmailIndex = indexes.find(idx => idx.name === 'hashedEmail_1');
+        
+        // Need to drop current index that blocks us from having multiple null hashed emails
+        if (hashedEmailIndex) {
+            await dashboardDB.db.collection('participantLog').dropIndex("hashedEmail_1");
+            console.log("Dropped existing hashedEmail index");
+        }
+        
+        // This should allow for multiple hashedEmail fields to be null (april eval 2025)
         await dashboardDB.db.collection('participantLog').createIndex(
             { "hashedEmail": 1 },
-            { unique: true }
+            { 
+                unique: true,
+                partialFilterExpression: { hashedEmail: { $type: "string" } }
+            }
         );
-        console.log("Unique index on hashedEmail created successfully.");
+        console.log("Partial unique index on hashedEmail created successfully.");
     } catch (error) {
-        if (error.code !== 85) { // Index already exists
-            console.error("Error creating unique index (hashedEmail):", error);
-        }
+        console.error("Error creating partial unique index (hashedEmail):", error);
     }
 }
 

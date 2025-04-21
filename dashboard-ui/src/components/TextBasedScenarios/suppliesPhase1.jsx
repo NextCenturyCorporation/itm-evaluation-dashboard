@@ -15,7 +15,7 @@ const SuppliesPhase1 = ({ supplies }) => {
                 className="d-flex align-items-center bg-light rounded px-3 py-2"
               >
                 <span style={{ fontSize: '1rem' }}>
-                  {supply.type}
+                  {supply.type.charAt(0).toUpperCase()}{supply.type.slice(1)}
                 </span>
                 {supply.quantity && (
                   <Badge 
