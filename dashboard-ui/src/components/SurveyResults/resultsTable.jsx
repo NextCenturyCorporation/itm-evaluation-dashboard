@@ -43,6 +43,7 @@ const STARTING_HEADERS = [
     "Start Time",
     "End Time",
     "Total Time",
+    "April 2025",
     "Post-Scenario Measures - Time Taken (mm:ss)",
     "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
     "I was easily able to imagine myself as the medic in these scenarios",
@@ -139,6 +140,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         if (exploratory) {
             subheaders = subheaders.concat(['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
         }
+
         const dmCount = showLegacy ? 2 : 3;
         for (let block = 1; block < 5; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
@@ -207,6 +209,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             if (showLegacy && !lastPage) {
                 // don't ignore those without last page in versions 4 & 5 bc of 12/10 collection problem
                 continue;
+            }
+
+            if (entry['surveyVersion'] === 1.3) {
+                console.log(entry['evalNumber'])
+                obj['April 2025'] = entry['evalNumber'] == 8 ? 1 : 0;
             }
 
             // add data to filter options
