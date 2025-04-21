@@ -21,7 +21,13 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
         });
         return initialVisibility;
     });
-    const [visibleVitals, setVisibleVitals] = useState({});
+    const [visibleVitals, setVisibleVitals] = useState(() => {
+        const initialVitalsVisibility = {};
+        patients.forEach(patient => {
+            initialVitalsVisibility[patient.name] = true;
+        });
+        return initialVitalsVisibility;
+    });
     const [showPatientModal, setShowPatientModal] = useState(false);
     const [activeImage, setActiveImage] = useState(null);
     const [activeTitle, setActiveTitle] = useState('');
@@ -156,8 +162,8 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
             "fontSize": text.includes('Question:') ? '20px' : '16px'
         }
     }
-
-    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters }) {
+    
+    function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength, sceneDecision, sceneExplanation }) {
         const patientButtons = patients.map(patient => (
             sceneCharacters.includes(patient.name) && (
                 <div className="patient-buttons" key={`button-${patient.name}`}>
@@ -171,7 +177,7 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                 </div>
             )
         ));
-
+    
         const patientCards = patients.map(patient => {
             if (visiblePatients[patient.name] && sceneCharacters.includes(patient.name)) {
                 return (
@@ -189,9 +195,9 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                                 <Card.Header>
                                     <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
                                 </Card.Header>
-                                <Row className="g-0">
-                                    <Col md={8} className="mr-4">
-                                        <div style={{ position: 'relative' }}>
+                                <Row className="g-0 patient-card-content">
+                                    <Col md={8}>
+                                        <div className="patient-image-container">
                                             <img src={`data:image/jpeg;base64,${patient.imgUrl}`} alt={patient.name} className="patient-image" />
                                             <ZoomInIcon className="magnifying-glass" onClick={() => toggleImageModal(patient.imgUrl, patient.name, patient.description)} />
                                         </div>
@@ -212,51 +218,83 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
             }
             return null;
         });
-
+    
+        const sceneBody = (
+            <>
+                <Row className="mb-4">
+                    <Col md={12}>
+                        <SuppliesPhase1 supplies={sceneSupplies} />
+                    </Col>
+                </Row>
+                <Row>
+                    <Col md={12}>
+                        <Accordion defaultActiveKey="1">
+                            <Accordion.Item eventKey="1">
+                                <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
+                                <Accordion.Body>
+                                    <ListGroup>
+                                        {sceneDecision && (
+                                            <ListGroup.Item
+                                                className="action-item"
+                                                style={{ fontWeight: "700", backgroundColor: "#eee", fontSize: "20px" }}
+                                            >
+                                                The medic was asked: {sceneDecision}
+                                            </ListGroup.Item>
+                                        )}
+                                        
+                                        {sceneActions && sceneActions.map((action, index) => (
+                                            <ListGroup.Item
+                                                key={`action-${index}`}
+                                                className="action-item"
+                                                style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
+                                            >
+                                                {processActionText(action, index, sceneActions)}
+                                            </ListGroup.Item>
+                                        ))}
+                                        
+                                        {sceneExplanation && (
+                                            <ListGroup.Item
+                                                className="action-item"
+                                                style={{ fontWeight: "500", backgroundColor: "#f8f9fa", fontSize: "16px", fontStyle: "italic" }}
+                                            >
+                                                <strong>Explanation:</strong> {sceneExplanation}
+                                            </ListGroup.Item>
+                                        )}
+                                    </ListGroup>
+                                </Accordion.Body>
+                            </Accordion.Item>
+                        </Accordion>
+    
+                        <div style={{ marginBottom: '10px', marginTop: '10px' }}>
+                            {patientButtons}
+                        </div>
+                        <div className="card-container">
+                            <Row>
+                                {patientCards}
+                            </Row>
+                        </div>
+                    </Col>
+                </Row>
+            </>
+        );
+    
         return (
-            <Accordion className='sceneAccordion' defaultActiveKey="0">
-                <Accordion.Item eventKey="0">
-                    <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
-                    <Accordion.Body className='scene'>
-                        <Row className="mb-4">
-                            <Col md={12}>
-                                <SuppliesPhase1 supplies={sceneSupplies} />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={12}>
-                                <Accordion defaultActiveKey="1">
-                                    <Accordion.Item eventKey="1">
-                                        <Accordion.Header><strong>Medic Actions</strong></Accordion.Header>
-                                        <Accordion.Body>
-                                            <ListGroup>
-                                                {sceneActions && sceneActions.map((action, index) => (
-                                                    <ListGroup.Item
-                                                        key={`action-${index}`}
-                                                        className="action-item"
-                                                        style={{ ...getSceneStyle(action), whiteSpace: 'pre-line' }}
-                                                    >
-                                                        {processActionText(action, index, sceneActions)}
-                                                    </ListGroup.Item>
-                                                ))}
-                                            </ListGroup>
-                                        </Accordion.Body>
-                                    </Accordion.Item>
-                                </Accordion>
-
-                                <div style={{ marginBottom: '10px', marginTop: '10px' }}>
-                                    {patientButtons}
-                                </div>
-                                <div className="card-container">
-                                    <Row>
-                                        {patientCards}
-                                    </Row>
-                                </div>
-                            </Col>
-                        </Row>
-                    </Accordion.Body>
-                </Accordion.Item>
-            </Accordion>
+            <>
+                {scenesLength > 1 ? (
+                    <Accordion className='sceneAccordion' defaultActiveKey="0">
+                        <Accordion.Item eventKey="0">
+                            <Accordion.Header><strong>{sceneId}</strong></Accordion.Header>
+                            <Accordion.Body className='scene'>
+                                {sceneBody}
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    </Accordion>
+                ) : (
+                    <div className="scene">
+                        {sceneBody}
+                    </div>
+                )}
+            </>
         );
     }
 
@@ -301,6 +339,9 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                         sceneActions={scene.actions}
                         sceneSupplies={scene.supplies}
                         sceneCharacters={scene.char_ids}
+                        scenesLength={scenes.length}
+                        sceneDecision={scene.decision}
+                        sceneExplanation={scene.explanation}
                     />
                 ))
                 : <Scene
@@ -308,16 +349,35 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                     sceneActions={actions}
                     sceneSupplies={supplies}
                     sceneCharacters={patients.map((p) => p.name)}
+                    scenesLength={1}
+                    sceneDecision={decision}
+                    sceneExplanation={explanation}
                 />
             }
 
-            <Modal show={showPatientModal} onHide={() => toggleImageModal("", activeTitle, "")}>
+            <Modal 
+                show={showPatientModal} 
+                onHide={() => toggleImageModal("", activeTitle, "")}
+                size="xl"
+                centered
+                className="w-100 mw-100"
+            >
                 <Modal.Header closeButton>
                     <Modal.Title>{activeTitle}</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                    {activeDescription}
-                    <img src={`data:image/jpeg;base64,${activeImage}`} alt="Enlarged view" style={{ width: '100%' }} />
+                <Modal.Body className="p-3">
+                    <p>{activeDescription}</p>
+                    <div className="d-flex justify-content-center align-items-center">
+                        <img 
+                            src={`data:image/jpeg;base64,${activeImage}`} 
+                            alt="Enlarged view" 
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '70vh',
+                                objectFit: 'contain'
+                            }} 
+                        />
+                    </div>
                 </Modal.Body>
             </Modal>
 

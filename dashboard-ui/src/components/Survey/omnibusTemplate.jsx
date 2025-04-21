@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
 import { Accordion } from "react-bootstrap";
-import Dynamic from "./dynamic";
+import DynamicPhase1 from "./dynamicPhase1";
 import '../../css/template.css';
 import { useSelector } from "react-redux";
 
@@ -120,10 +120,10 @@ export class Omnibus extends SurveyQuestionElementBase {
                 <this.ConfigGetter />
                 {this.state.isSurveyLoaded && <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3']}>
                     {dmDetails.map((dm, index) => (
-                        <Accordion.Item eventKey={index.toString()} key={dm.name}>
-                            <Accordion.Header>{this.getScenarioHeader(dm.title)} Scenario</Accordion.Header>
+                        <Accordion.Item eventKey={index.toString()} key={dm.name} className="my-2">
+                            <Accordion.Header>{this.getScenarioHeader(dm.title)} Scenario {index + 1}</Accordion.Header>
                             <Accordion.Body>
-                                <Dynamic
+                                <DynamicPhase1
                                     actions={dm.actions}
                                     decision={dm.decision}
                                     explanation={dm.explanation}
