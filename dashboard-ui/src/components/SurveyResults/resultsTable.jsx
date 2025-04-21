@@ -212,7 +212,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
 
             if (entry['surveyVersion'] === 1.3) {
-                console.log(entry['evalNumber'])
                 obj['April 2025'] = entry['evalNumber'] == 8 ? 1 : 0;
             }
 
