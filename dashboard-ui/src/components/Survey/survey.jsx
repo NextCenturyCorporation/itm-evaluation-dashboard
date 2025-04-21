@@ -540,7 +540,6 @@ class SurveyPage extends Component {
             shuffledGroupedPages.splice(7, 0, shuffledInstructionPages[1]);
         }
         this.surveyConfigClone.pages = [...ungroupedPages, ...shuffledGroupedPages, ...omnibusPages, postScenarioPage];
-        console.log(this.surveyConfigClone.pages)
     }
 
     orderLogHelper = (group, orderLog, offset) => {
