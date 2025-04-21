@@ -168,6 +168,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 }
             }
         }
+
         for (let entry of data) {
             const obj = {};
             // not shown in table, just for filters
@@ -256,7 +257,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             // get blocks of dms
             let block = 1;
             let dm = 1;
-            for (const pageName of (entry['orderLog'] ?? Object.keys(entry)).filter((x) => x.includes('Medic'))) {
+            for (const pageName of ((!showLegacy && entry['orderLog']) ? entry['orderLog'] : Object.keys(entry)).filter((x) => x.includes('Medic'))) {
                 const page = entry[pageName];
                 if (!page) {
                     // should never occur

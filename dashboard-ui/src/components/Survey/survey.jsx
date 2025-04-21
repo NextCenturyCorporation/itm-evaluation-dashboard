@@ -19,6 +19,7 @@ import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 import { useHistory } from 'react-router-dom';
+
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
     countHumanGroupFirst

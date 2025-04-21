@@ -57,7 +57,7 @@ export function surveyVersion_x_0(surveyVersion) {
     if (surveyVersion.toString().endsWith('.0')) {
         return parseInt(surveyVersion);
     }
-    return surveyVersion;
+    return Number(surveyVersion);
 }
 
 
