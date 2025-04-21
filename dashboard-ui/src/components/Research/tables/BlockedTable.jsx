@@ -47,7 +47,13 @@ export function BlockedTable({ evalNum }) {
         }
         else {
             const newEvalNumbers = structuredClone(evalNumbers);
-            const index = newEvalNumbers.indexOf(evalObj);
+            let index = -1;
+            for (let i = 0; i < newEvalNumbers.length; i++) {
+                if (newEvalNumbers[i]['value'] == evalObj["value"]) {
+                    index = i;
+                    break;
+                }
+            }
             if (index > -1) {
                 newEvalNumbers.splice(index, 1);
             }

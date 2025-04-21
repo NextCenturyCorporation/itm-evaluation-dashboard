@@ -94,7 +94,7 @@ export function RQ2() {
             <h3>RQ2 Analysis 2.3: T-tests on Individual Targets - Alignable ADM tuned to Human Multi-KDMA Targets</h3>
             : <h3>RQ2 Analysis 2.3: T-tests comparing Alignable ADM versus Baseline ADM on individual-aligned targets</h3>}
         <div className="section-container">
-            <h2>{selectedEval == 7 ? 'RQ2.3 Data' : 'RQ2.2 & 2.3 Data'}</h2>
+            {selectedEval != 7 && <h2>RQ2.2 & 2.3 Data</h2>}
             {selectedEval == 7 ? <Phase2_RQ23 /> : <RQ2223 evalNum={selectedEval} />}
             {selectedEval != 7 &&
                 <div className="buttons">
