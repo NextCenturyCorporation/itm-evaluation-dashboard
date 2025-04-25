@@ -87,7 +87,7 @@ export function CalibrationData({ evalNum }) {
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
-    
+
     const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
     const openModal = () => {
@@ -108,7 +108,7 @@ export function CalibrationData({ evalNum }) {
         if (!(evalNum === 6 || (evalNum === 5 && includeJAN))) {
             currentHeaders = currentHeaders.filter(header => header !== 'Truncation Error');
         }
-        
+
         setHeaders(currentHeaders);
     }, [evalNum, includeJAN]);
 
@@ -116,7 +116,7 @@ export function CalibrationData({ evalNum }) {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
             dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
-            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, {calibrationScores: true});
+            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             console.log(data)
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -138,13 +138,15 @@ export function CalibrationData({ evalNum }) {
                 data.allScenarios.push(...janData.allScenarios);
                 data.allTargets.push(...janData.allTargets);
             }
-    
+
             // git rid of comparison rows, only VOL
             data.allObjs = data.allObjs.filter(obj => 
                 obj['Attribute'] == 'VOL' && 
                 obj['ADM_Type'] !== 'comparison'
             );
-            data.allObjs = expandCalibrationRows(data.allObjs)
+            console.log("Before expansion, unique participant IDs:", Array.from(new Set(data.allObjs.map(obj => obj['Delegator_ID']))));
+            data.allObjs = expandCalibrationRows(data.allObjs);
+            console.log("After expansion, unique participant IDs:", Array.from(new Set(data.allObjs.map(obj => obj['Delegator_ID']))));
 
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -158,7 +160,7 @@ export function CalibrationData({ evalNum }) {
                 // if PID is equal, compare trial id
                 return a.Trial_ID - b.Trial_ID;
             });
-            
+
             setFormattedData(data.allObjs);
             setFilteredData(data.allObjs);
             setTA1s(Array.from(new Set(data.allTA1s)));
@@ -176,19 +178,26 @@ export function CalibrationData({ evalNum }) {
             if (obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']) {
                 try {
                     const calibrationScores = JSON.parse(obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']);
-                    
+
                     // Create a row for each calibration score
                     Object.entries(calibrationScores).forEach(([scoreName, scoreValue]) => {
-                        const newRow = {...obj};
+                        const newRow = { ...obj };
                         newRow['Attribute'] = scoreName;
                         newRow['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = scoreValue;
                         expandedRows.push(newRow);
                     });
                 }
                 catch (error) {
+                    console.log("error parsing scores")
+                    console.log(obj)
                     expandedRows.push(obj);
                 }
+            } else {
+                console.log("No calibration scores found")
+                console.log(obj)
+                expandedRows.push(obj)
             }
+
         })
         return expandedRows;
     }
@@ -220,12 +229,12 @@ export function CalibrationData({ evalNum }) {
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
-        
+
         const headersToRemove = [...columnsToHide];
         if (!shouldShowTruncationError) {
             headersToRemove.push('Truncation Error');
         }
-        
+
         updatedData.map((x) => {
             for (const h of headersToRemove) {
                 delete x[h];
@@ -416,12 +425,12 @@ export function CalibrationData({ evalNum }) {
 
             </div>
 
-            <DownloadButtons 
+            <DownloadButtons
                 formattedData={refineData(formattedData)}
-                filteredData={refineData(filteredData)} 
-                HEADERS={getFilteredHeaders()} 
-                fileName={'RQ-134 data'} 
-                extraAction={openModal} 
+                filteredData={refineData(filteredData)}
+                HEADERS={getFilteredHeaders()}
+                fileName={'RQ-134 data'}
+                extraAction={openModal}
             />
 
         </section>
