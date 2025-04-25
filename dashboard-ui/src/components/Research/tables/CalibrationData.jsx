@@ -42,7 +42,7 @@ const GET_SIM_DATA = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating', 'Calibration Alignment Score (Delegator|Observed_ADM (target))'];
+const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating', 'Calibration Alignment Score (Delegator|Observed_ADM (target))'];
 
 export function CalibrationData({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -227,20 +227,26 @@ export function CalibrationData({ evalNum }) {
     };
 
     const refineData = (origData) => {
-        // remove unwanted headers from download
+        // Create a copy of the data
         const updatedData = structuredClone(origData);
-
-        const headersToRemove = [...columnsToHide];
-        if (!shouldShowTruncationError) {
-            headersToRemove.push('Truncation Error');
-        }
-
+        
+        // Get the headers that should be displayed
+        const visibleHeaders = getFilteredHeaders();
+        
+        // For each data row, keep only the visible columns
         updatedData.map((x) => {
-            for (const h of headersToRemove) {
-                delete x[h];
+            // Get all keys in the object
+            const allKeys = Object.keys(x);
+            
+            // For each key, if it's not in visibleHeaders, delete it
+            for (const key of allKeys) {
+                if (!visibleHeaders.includes(key)) {
+                    delete x[key];
+                }
             }
             return x;
         });
+        
         return updatedData;
     };
 
