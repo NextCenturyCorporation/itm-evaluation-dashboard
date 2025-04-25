@@ -435,7 +435,7 @@ export function CalibrationData({ evalNum }) {
                 formattedData={refineData(formattedData)}
                 filteredData={refineData(filteredData)}
                 HEADERS={getFilteredHeaders()}
-                fileName={'RQ-134 data'}
+                fileName={'Calibration data'}
                 extraAction={openModal}
             />
 
