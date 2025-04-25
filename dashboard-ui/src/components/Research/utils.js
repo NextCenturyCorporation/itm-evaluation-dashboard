@@ -186,7 +186,7 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
-export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true) {
+export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = true) {
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = dataTextResults.getAllScenarioResults;
@@ -336,6 +336,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
                 if (evalNum == 5 || evalNum == 6) {
                     entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? comparison_entry?.distance_based_score : entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+                }
+
+                if (calibrationScores) {
+                    entryObj['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = JSON.stringify(comparison_entry?.calibration_scores)
                 }
 
                 // include truncation error status for all, column visibility toggled from rq134.jsx

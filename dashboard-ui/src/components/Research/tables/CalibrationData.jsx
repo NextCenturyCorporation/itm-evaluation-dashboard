@@ -42,9 +42,9 @@ const GET_SIM_DATA = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'DRE/Distance Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'DRE/Distance Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'DRE/Distance Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'DRE/Distance Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating', 'Calibration Alignment Score (Delegator|Observed_ADM (target))'];
 
-export function CalibrationData({ evalNum, tableTitle }) {
+export function CalibrationData({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
@@ -116,7 +116,7 @@ export function CalibrationData({ evalNum, tableTitle }) {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
             dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
-            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, {calibrationScores: true});
             console.log(data)
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -138,16 +138,26 @@ export function CalibrationData({ evalNum, tableTitle }) {
                 data.allScenarios.push(...janData.allScenarios);
                 data.allTargets.push(...janData.allTargets);
             }
+    
+            // git rid of comparison rows, only VOL
+            data.allObjs = data.allObjs.filter(obj => 
+                obj['Attribute'] == 'VOL' && 
+                obj['ADM_Type'] !== 'comparison'
+            );
+            data.allObjs = expandCalibrationRows(data.allObjs)
+
             data.allObjs.sort((a, b) => {
                 // Compare PID
                 if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
                 if (Number(a['Delegator_ID']) > Number(b['Delegator_ID'])) return 1;
 
+                // attribute as second filter
+                if (a['Attribute'] < b['Attribute']) return -1;
+                if (a['Attribute'] > b['Attribute']) return 1;
+
                 // if PID is equal, compare trial id
                 return a.Trial_ID - b.Trial_ID;
             });
-            // git rid of comparison rows
-            data.allObjs = data.allObjs.filter(obj => obj['ADM_Type'] !== 'comparison');
             
             setFormattedData(data.allObjs);
             setFilteredData(data.allObjs);
@@ -158,6 +168,30 @@ export function CalibrationData({ evalNum, tableTitle }) {
             setTargets(Array.from(new Set(data.allTargets)));
         }
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, dreAdms, dreSim, janSim]);
+
+
+    const expandCalibrationRows = (objs) => {
+        const expandedRows = []
+        objs.forEach(obj => {
+            if (obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']) {
+                try {
+                    const calibrationScores = JSON.parse(obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']);
+                    
+                    // Create a row for each calibration score
+                    Object.entries(calibrationScores).forEach(([scoreName, scoreValue]) => {
+                        const newRow = {...obj};
+                        newRow['Attribute'] = scoreName;
+                        newRow['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = scoreValue;
+                        expandedRows.push(newRow);
+                    });
+                }
+                catch (error) {
+                    expandedRows.push(obj);
+                }
+            }
+        })
+        return expandedRows;
+    }
 
     const updateJANStatus = (event) => {
         setIncludeJAN(event.target.checked);
