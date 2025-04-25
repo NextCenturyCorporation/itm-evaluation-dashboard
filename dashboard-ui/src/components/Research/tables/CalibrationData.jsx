@@ -5,7 +5,6 @@ import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
-import dreDefinitionXLFile from '../variables/Variable Definitions RQ134_DRE.xlsx';
 import ph1DefinitionXLFile from '../variables/Variable Definitions RQ134_PH1.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
@@ -51,18 +50,14 @@ export function CalibrationData({ evalNum }) {
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": (evalNum == 6 ? 5 : evalNum) }
     });
-    const { data: dreAdms } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 4 }
-    });
+
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
-    const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
     const { data: janSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 6 } });
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     // all options for filters
-    const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
@@ -71,7 +66,6 @@ export function CalibrationData({ evalNum }) {
     const [delGrps] = React.useState(['Civilian', 'Military']);
     const [delMils] = React.useState(['yes', 'no']);
     // filter options that have been chosen
-    const [ta1Filters, setTA1Filters] = React.useState([]);
     const [ta2Filters, setTA2Filters] = React.useState([]);
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
@@ -115,7 +109,7 @@ export function CalibrationData({ evalNum }) {
     React.useEffect(() => {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
-            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
+             janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
             console.log(data)
             if (evalNum === 6) {
@@ -132,7 +126,6 @@ export function CalibrationData({ evalNum }) {
                     Delegator_mil: 'yes'
                 }));
                 data.allObjs.push(...janData.allObjs);
-                data.allTA1s.push(...janData.allTA1s);
                 data.allTA2s.push(...janData.allTA2s);
                 data.allAttributes.push(...janData.allAttributes);
                 data.allScenarios.push(...janData.allScenarios);
@@ -144,11 +137,10 @@ export function CalibrationData({ evalNum }) {
                 obj['Attribute'] == 'VOL' && 
                 obj['ADM_Type'] !== 'comparison'
             );
-            console.log("Before expansion, unique participant IDs:", Array.from(new Set(data.allObjs.map(obj => obj['Delegator_ID']))));
-            data.allObjs = expandCalibrationRows(data.allObjs);
-            console.log("After expansion, unique participant IDs:", Array.from(new Set(data.allObjs.map(obj => obj['Delegator_ID']))));
 
-            data.allObjs.sort((a, b) => {
+            const expandedData = expandCalibrationRows(data.allObjs);
+            
+            expandedData.sort((a, b) => {
                 // Compare PID
                 if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
                 if (Number(a['Delegator_ID']) > Number(b['Delegator_ID'])) return 1;
@@ -161,15 +153,31 @@ export function CalibrationData({ evalNum }) {
                 return a.Trial_ID - b.Trial_ID;
             });
 
-            setFormattedData(data.allObjs);
-            setFilteredData(data.allObjs);
-            setTA1s(Array.from(new Set(data.allTA1s)));
-            setTA2s(Array.from(new Set(data.allTA2s)));
-            setAttributes(Array.from(new Set(data.allAttributes)));
-            setScenarios(Array.from(new Set(data.allScenarios)));
-            setTargets(Array.from(new Set(data.allTargets)));
+            
+            const updatedTA2s = Array.from(new Set(expandedData.map(obj => obj['TA2_Name']).filter(Boolean)));
+            const updatedAttributes = Array.from(new Set(expandedData.map(obj => obj['Attribute']).filter(Boolean)));
+            const updatedScenarios = Array.from(new Set(expandedData.map(obj => obj['Scenario']).filter(Boolean)));
+            const updatedTargets = Array.from(new Set(expandedData.map(obj => obj['Target']).filter(Boolean)));
+
+            
+            setFormattedData(expandedData);
+            setFilteredData(expandedData);
+            
+            setTA2s(updatedTA2s);
+            setAttributes(updatedAttributes);
+            setScenarios(updatedScenarios);
+            setTargets(updatedTargets);
+            
+            setTA2Filters([]);
+            setScenarioFilters([]);
+            setTargetFilters([]);
+            setAttributeFilters([]);
+            setAdmTypeFilters([]);
+            setDelGrpFilters([]);
+            setDelMilFilters([]);
+            setSearchPid('');
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, dreAdms, dreSim, janSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, janSim]);
 
 
     const expandCalibrationRows = (objs) => {
@@ -215,7 +223,6 @@ export function CalibrationData({ evalNum }) {
     };
 
     const clearFilters = () => {
-        setTA1Filters([]);
         setTA2Filters([]);
         setScenarioFilters([]);
         setTargetFilters([]);
@@ -253,7 +260,6 @@ export function CalibrationData({ evalNum }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
                 (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
                 (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
@@ -264,7 +270,7 @@ export function CalibrationData({ evalNum }) {
                 (searchPid.length == 0 || x['Delegator_ID'].includes(searchPid))
             ));
         }
-    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
+    }, [formattedData, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
 
     const getFilteredHeaders = () => {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
@@ -289,21 +295,6 @@ export function CalibrationData({ evalNum }) {
         <section className='tableHeader'>
             <div className='complexHeader'>
                 <div className="too-many-filters">
-                    <Autocomplete
-                        multiple
-                        options={ta1s}
-                        value={ta1Filters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="TA1"
-                                placeholder=""
-                            />
-                        )}
-                        onChange={(_, newVal) => setTA1Filters(newVal)}
-                    />
                     <Autocomplete
                         multiple
                         options={ta2s}
@@ -467,7 +458,7 @@ export function CalibrationData({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_Calibration_Scores_eval${evalNum}.xlsx`} xlFile={ph1DefinitionXLFile} />
             </div>
         </Modal>
     </>);
