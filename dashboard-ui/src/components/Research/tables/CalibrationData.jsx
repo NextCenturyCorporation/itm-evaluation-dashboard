@@ -5,7 +5,7 @@ import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
-import ph1DefinitionXLFile from '../variables/Variable Definitions RQ134_PH1.xlsx';
+import calibrationDefinitions from '../variables/Variable Definitions Calibration_Scores.xlsx'
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -280,7 +280,7 @@ export function CalibrationData({ evalNum }) {
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
-        <h2 className='rq134-header'>Calibration Data
+        <h2 className='rq134-header'>Calibration Scores
             {evalNum == 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
@@ -458,7 +458,7 @@ export function CalibrationData({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_Calibration_Scores_eval${evalNum}.xlsx`} xlFile={ph1DefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_Calibration_Scores_eval${evalNum}.xlsx`} xlFile={calibrationDefinitions} />
             </div>
         </Modal>
     </>);
