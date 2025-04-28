@@ -111,7 +111,7 @@ export function CalibrationData({ evalNum }) {
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
              janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
-            console.log(data)
+            
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
                     ...obj,
@@ -197,12 +197,10 @@ export function CalibrationData({ evalNum }) {
                 }
                 catch (error) {
                     console.log("error parsing scores")
-                    console.log(obj)
                     expandedRows.push(obj);
                 }
             } else {
                 console.log("No calibration scores found")
-                console.log(obj)
                 expandedRows.push(obj)
             }
 
