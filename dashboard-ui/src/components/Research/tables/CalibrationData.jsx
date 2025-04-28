@@ -179,6 +179,11 @@ export function CalibrationData({ evalNum }) {
         }
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, janSim]);
 
+    const attributeMap = {
+        "MissionSuccess": "Mission",
+        "PerceivedQuantityOfLivesSaved": "VOL",
+        "QualityOfLife": "QOL"
+    }
 
     const expandCalibrationRows = (objs) => {
         const expandedRows = []
@@ -190,7 +195,7 @@ export function CalibrationData({ evalNum }) {
                     // Create a row for each calibration score
                     Object.entries(calibrationScores).forEach(([scoreName, scoreValue]) => {
                         const newRow = { ...obj };
-                        newRow['Attribute'] = scoreName;
+                        newRow['Attribute'] = attributeMap[scoreName] || scoreName;
                         newRow['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = scoreValue;
                         expandedRows.push(newRow);
                     });
@@ -232,18 +237,13 @@ export function CalibrationData({ evalNum }) {
     };
 
     const refineData = (origData) => {
-        // Create a copy of the data
         const updatedData = structuredClone(origData);
         
-        // Get the headers that should be displayed
         const visibleHeaders = getFilteredHeaders();
         
-        // For each data row, keep only the visible columns
         updatedData.map((x) => {
-            // Get all keys in the object
             const allKeys = Object.keys(x);
             
-            // For each key, if it's not in visibleHeaders, delete it
             for (const key of allKeys) {
                 if (!visibleHeaders.includes(key)) {
                     delete x[key];
