@@ -41,7 +41,7 @@ const GET_SIM_DATA = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating', 'Calibration Alignment Score (Delegator|Observed_ADM (target))'];
+const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E Alignment score (ADM|target)', 'P1E Alignment Score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'P1E Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating', 'Calibration Alignment Score (Delegator|Observed_ADM (target))'];
 
 export function CalibrationData({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -110,7 +110,7 @@ export function CalibrationData({ evalNum }) {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
              janSim?.getAllSimAlignmentByEval) {
-            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, false, false, true);
             
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -120,7 +120,7 @@ export function CalibrationData({ evalNum }) {
             }
 
             if (includeJAN) {
-                const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, janSim);
+                const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, janSim, false, false, true);
                 janData.allObjs = janData.allObjs.map(obj => ({
                     ...obj,
                     Delegator_mil: 'yes'
