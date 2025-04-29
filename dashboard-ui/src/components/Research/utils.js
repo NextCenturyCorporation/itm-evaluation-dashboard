@@ -186,7 +186,7 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
-export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true) {
+export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = dataTextResults.getAllScenarioResults;
@@ -337,6 +337,14 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 if (evalNum == 5 || evalNum == 6) {
                     entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? comparison_entry?.distance_based_score : entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
                 }
+
+                if (calibrationScores) {
+                    entryObj['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = JSON.stringify(comparison_entry?.calibration_scores)
+                    // st only files so don't use adpet specific column labels
+                    entryObj['P1E Alignment Score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)']
+                    entryObj['P1E Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))']
+                    entryObj['P1E Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)']
+                }   
 
                 // include truncation error status for all, column visibility toggled from rq134.jsx
                 entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;
