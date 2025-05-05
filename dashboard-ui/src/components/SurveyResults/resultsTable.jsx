@@ -44,6 +44,7 @@ const STARTING_HEADERS = [
     "End Time",
     "Total Time",
     "April 2025",
+    "Condition",
     "Post-Scenario Measures - Time Taken (mm:ss)",
     "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
     "I was easily able to imagine myself as the medic in these scenarios",
@@ -129,6 +130,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return basicChecks && ph1Check;
     };
 
+
+
     const formatData = (data) => {
         const allObjs = [];
         const allEvals = [];
@@ -213,6 +216,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             if (entry['surveyVersion'] === 1.3) {
                 obj['April 2025'] = entry['evalNumber'] == 8 ? 1 : 0;
+                obj['Condition'] = entry['Participant ID']?.questions['Condition']?.response ?? '-'
             }
 
             // add data to filter options
@@ -264,7 +268,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             let block = 1;
             let dm = 1;
             for (const pageName of ((!showLegacy && entry['orderLog']) ? entry['orderLog'] : Object.keys(entry)).filter((x) => x.includes('Medic'))) {
-                const page = entry[pageName];
+                const page = entry[pageName.trimEnd()];
                 if (!page) {
                     // should never occur
                     if (lastPage) {
