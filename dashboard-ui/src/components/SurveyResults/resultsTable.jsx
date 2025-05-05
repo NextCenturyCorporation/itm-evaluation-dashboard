@@ -130,6 +130,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return basicChecks && ph1Check;
     };
 
+
+
     const formatData = (data) => {
         const allObjs = [];
         const allEvals = [];
@@ -266,7 +268,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             let block = 1;
             let dm = 1;
             for (const pageName of ((!showLegacy && entry['orderLog']) ? entry['orderLog'] : Object.keys(entry)).filter((x) => x.includes('Medic'))) {
-                const page = entry[pageName];
+                const page = entry[pageName.trimEnd()];
                 if (!page) {
                     // should never occur
                     if (lastPage) {
