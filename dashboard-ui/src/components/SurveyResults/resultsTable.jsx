@@ -73,16 +73,10 @@ const STARTING_HEADERS = [
     "Note Page - Time Taken (mm:ss)"
 ];
 
-function formatTime(seconds, includeHours = false) {
-    seconds = Math.round(seconds);
-    let hours = (Math.floor(seconds / 60 / 60) % 60);
-    hours = hours.toString().length < 2 ? '0' + hours.toString() : hours.toString();
-    let minutes = Math.floor(seconds / 60);
-    minutes = includeHours ? minutes % 60 : minutes;
-    minutes = minutes.toString().length < 2 ? '0' + minutes.toString() : minutes.toString();
-    let formatted_seconds = seconds % 60;
-    formatted_seconds = formatted_seconds.toString().length < 2 ? '0' + formatted_seconds.toString() : formatted_seconds.toString();
-    return includeHours ? `${hours}:${minutes}:${formatted_seconds}` : `${minutes}:${formatted_seconds}`;
+function formatTime(seconds) {
+    const minutes = (seconds / 60).toFixed(3);
+    // if trailing zeroes just do a whole number
+    return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
 export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '5', 'label': '5 - PH1' }] }) {
