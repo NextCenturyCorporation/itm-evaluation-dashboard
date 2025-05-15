@@ -45,7 +45,7 @@ const STARTING_HEADERS = [
     "Total Time",
     "April 2025",
     "Condition",
-    "Post-Scenario Measures - Time Taken (Minutes)",
+    "Post-Scenario Measures - Time Taken (mm:ss)",
     "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
     "I was easily able to imagine myself as the medic in these scenarios",
     "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
