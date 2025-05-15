@@ -45,7 +45,7 @@ const STARTING_HEADERS = [
     "Total Time",
     "April 2025",
     "Condition",
-    "Post-Scenario Measures - Time Taken (mm:ss)",
+    "Post-Scenario Measures - Time Taken (Minutes)",
     "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
     "I was easily able to imagine myself as the medic in these scenarios",
     "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
@@ -70,7 +70,7 @@ const STARTING_HEADERS = [
     "VR Experience Level",
     "VR Comfort Level",
     "Additional Information About Discomfort",
-    "Note Page - Time Taken (mm:ss)"
+    "Note Page - Time Taken (Minutes)"
 ];
 
 function formatTime(seconds) {
@@ -227,7 +227,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
             obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds, true) : null;
             if (lastPage) {
-                obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
+                obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTime(lastPage.timeSpentOnPage);
                 for (const q of Object.keys(lastPage.questions)) {
                     if (q != 'What is your current role (choose all that apply):') {
                         obj[q] = lastPage.questions[q].response?.toString();
@@ -255,7 +255,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 const vrScenarios = entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response?.join(',');
                 obj["VR Scenarios Completed"] = vrScenarios ? vrScenarios.split('I have completed the VR').join('').replaceAll(' ,', ',').replaceAll('sub', 'Sub').replaceAll('urb', 'Urb').replaceAll('jung', 'Jung').replaceAll('desert', 'Desert') : null;
             }
-            obj["Note Page - Time Taken (mm:ss)"] = formatTime(entry['Note page'].timeSpentOnPage);
+            obj["Note Page - Time Taken (Minutes)"] = formatTime(entry['Note page'].timeSpentOnPage);
 
 
             // get blocks of dms
@@ -384,8 +384,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             (versionFilters.length == 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
             (evalFilters.length == 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
             (roleFilters.length == 0 || roleFilters.some((filter) => x['What is your current role (choose all that apply):']?.split('; ').includes(filter))) &&
-            (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (mm:ss)'])) &&
-            (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (mm:ss)'])) &&
+            (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
+            (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
             (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))
         );
