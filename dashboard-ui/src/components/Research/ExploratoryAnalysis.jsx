@@ -7,6 +7,7 @@ import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
 import { BlockedTable } from './tables/BlockedTable';
+import { CalibrationData } from './tables/CalibrationData';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
@@ -137,6 +138,9 @@ export function ExploratoryAnalysis() {
         </div>
         <div className="section-container">
             <BlockedTable evalNum={selectedEval} />
+        </div>
+        <div className="section-container">
+            <CalibrationData evalNum={selectedEval}/>
         </div>
     </div>);
 }

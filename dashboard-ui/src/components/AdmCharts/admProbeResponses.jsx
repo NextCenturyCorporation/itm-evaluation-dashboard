@@ -195,10 +195,24 @@ export const ADMProbeResponses = (props) => {
     }, [currentEval]);
 
     const getChoiceForProbe = (history, probeId) => {
-        const probeResponse = history
+        const probeResponses = history
             .filter(entry => entry.command === 'Respond to TA1 Probe')
-            .find(entry => entry.parameters?.probe_id === probeId);
-        return probeResponse?.parameters?.choice || '-';
+            .filter(entry => entry.parameters?.probe_id === probeId);
+        
+        // no response found
+        if (probeResponses.length === 0) {
+            return '-';
+        }
+        
+        // more than response, include all of them
+        if (probeResponses.length > 1) {
+            return probeResponses
+                .map(response => response.parameters?.choice || '-')
+                .join(', ');
+        }
+        
+        // normal case, one response
+        return probeResponses[0].parameters?.choice || '-';
     };
 
     const getKdma = (history, attribute) => {
