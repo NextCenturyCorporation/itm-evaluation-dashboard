@@ -42,9 +42,11 @@ const STARTING_HEADERS = [
     "Survey Version",
     "Start Time",
     "End Time",
-    "Total Time",
+    "Total Time (Minutes)",
+    "Total Time (mm:ss)",
     "April 2025",
     "Condition",
+    "Post-Scenario Measures - Time Taken (Minutes)",
     "Post-Scenario Measures - Time Taken (mm:ss)",
     "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
     "I was easily able to imagine myself as the medic in these scenarios",
@@ -70,10 +72,11 @@ const STARTING_HEADERS = [
     "VR Experience Level",
     "VR Comfort Level",
     "Additional Information About Discomfort",
+    "Note Page - Time Taken (Minutes)",
     "Note Page - Time Taken (mm:ss)"
 ];
 
-function formatTime(seconds, includeHours = false) {
+function formatTimeMMSS(seconds, includeHours = false) {
     seconds = Math.round(seconds);
     let hours = (Math.floor(seconds / 60 / 60) % 60);
     hours = hours.toString().length < 2 ? '0' + hours.toString() : hours.toString();
@@ -83,6 +86,12 @@ function formatTime(seconds, includeHours = false) {
     let formatted_seconds = seconds % 60;
     formatted_seconds = formatted_seconds.toString().length < 2 ? '0' + formatted_seconds.toString() : formatted_seconds.toString();
     return includeHours ? `${hours}:${minutes}:${formatted_seconds}` : `${minutes}:${formatted_seconds}`;
+}
+
+function formatTimeMinutes(seconds) {
+    const minutes = (seconds / 60).toFixed(3);
+    // if trailing zeroes just do a whole number
+    return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
 export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '5', 'label': '5 - PH1' }] }) {
@@ -130,8 +139,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return basicChecks && ph1Check;
     };
 
-
-
     const formatData = (data) => {
         const allObjs = [];
         const allEvals = [];
@@ -139,7 +146,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
         // set up block headers
-        let subheaders = (showLegacy ? [] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
+        let subheaders = (showLegacy ? [] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
         if (exploratory) {
             subheaders = subheaders.concat(['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
         }
@@ -151,9 +158,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
                 }
             }
-            const legacyCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
-            const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
-            const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', 'FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'];
+            const legacyCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
+            const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
+            const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', 'FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'];
             const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
             for (let subhead of comparisons) {
                 updatedHeaders.push(`B${block}_${subhead}`);
@@ -167,7 +174,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         updatedHeaders.push(`B${block}_Omni${omni}_${subhead}`);
                     }
                 }
-                const comparisons = ['Compare_Omni1', 'Compare_Omni2', 'Omni_Compare_Time', 'Omni_Compare_FC1', 'Omni_Compare_FC1_Conf', 'Omni_Compare_FC1_Explain'];
+                const comparisons = ['Compare_Omni1', 'Compare_Omni2', 'Omni_Compare_Time', 'Omni_Compare_Time (mm:ss)', 'Omni_Compare_FC1', 'Omni_Compare_FC1_Conf', 'Omni_Compare_FC1_Explain'];
                 for (let subhead of comparisons) {
                     updatedHeaders.push(`B${block}_${subhead}`);
                 }
@@ -231,9 +238,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             obj['Start Time'] = entry.startTime ? new Date(entry.startTime)?.toLocaleString() : null;
             obj['End Time'] = new Date(entry.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
-            obj['Total Time'] = entry.startTime ? formatTime(timeDifSeconds, true) : null;
+            obj['Total Time (Minutes)'] = entry.startTime ? formatTimeMinutes(timeDifSeconds) : null;
+            obj['Total Time (mm:ss)'] = entry.startTime ? formatTimeMMSS(timeDifSeconds) : null;
             if (lastPage) {
-                obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTime(lastPage.timeSpentOnPage);
+                obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
+                obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
                 for (const q of Object.keys(lastPage.questions)) {
                     if (q != 'What is your current role (choose all that apply):') {
                         obj[q] = lastPage.questions[q].response?.toString();
@@ -261,8 +270,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 const vrScenarios = entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response?.join(',');
                 obj["VR Scenarios Completed"] = vrScenarios ? vrScenarios.split('I have completed the VR').join('').replaceAll(' ,', ',').replaceAll('sub', 'Sub').replaceAll('urb', 'Urb').replaceAll('jung', 'Jung').replaceAll('desert', 'Desert') : null;
             }
-            obj["Note Page - Time Taken (mm:ss)"] = formatTime(entry['Note page'].timeSpentOnPage);
-
+            obj["Note Page - Time Taken (Minutes)"] = formatTimeMinutes(entry['Note page'].timeSpentOnPage);
+            obj["Note Page - Time Taken (mm:ss)"] = formatTimeMMSS(entry['Note page'].timeSpentOnPage);
 
             // get blocks of dms
             let block = 1;
@@ -286,7 +295,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_Target`] = page.admTarget;
                     }
                     obj[`B${block}_DM${dm}_Name`] = cleanPageName;
-                    obj[`B${block}_DM${dm}_Time`] = formatTime(page.timeSpentOnPage);
+                    obj[`B${block}_DM${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
+                    obj[`B${block}_DM${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                     obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
                     obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
                     obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
@@ -307,7 +317,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_Compare_DM1`] = order[0] + ' - ' + alignment[0];
                         obj[`B${block}_Compare_DM2`] = order[1] + ' - ' + alignment[1];
                         obj[`B${block}_Compare_DM3`] = order[2] + ' - ' + alignment[2];
-                        obj[`B${block}_Compare_Time`] = formatTime(page.timeSpentOnPage);
+                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
+                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
                         obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
                         obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
@@ -337,7 +348,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         const order = pageName.split(' vs ');
                         obj[`B${block}_Compare_DM1`] = order[0];
                         obj[`B${block}_Compare_DM2`] = order[1];
-                        obj[`B${block}_Compare_Time`] = formatTime(page.timeSpentOnPage);
+                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
+                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         obj[`B${block}_Compare_FC1`] = page.questions?.[pageName + ': Forced Choice']?.response ?? page.questions?.[pageName + ': Given the information provided']?.response;
                         obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
@@ -350,7 +362,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
                     if (page.pageType == 'singleMedic') {
                         obj[`B${block}_Omni${dm}_Name`] = cleanPageName;
-                        obj[`B${block}_Omni${dm}_Time`] = formatTime(page.timeSpentOnPage);
+                        obj[`B${block}_Omni${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
+                        obj[`B${block}_Omni${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         obj[`B${block}_Omni${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
                         obj[`B${block}_Omni${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
                         obj[`B${block}_Omni${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
@@ -362,7 +375,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         const order = cleanPageName.split(' vs ');
                         obj[`B${block}_Compare_Omni1`] = order[0];
                         obj[`B${block}_Compare_Omni2`] = order[1];
-                        obj[`B${block}_Omni_Compare_Time`] = formatTime(page.timeSpentOnPage);
+                        obj[`B${block}_Omni_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
+                        obj[`B${block}_Omni_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         obj[`B${block}_Omni_Compare_FC1`] = page.questions?.[cleanPageName + ': Forced Choice']?.response ?? page.questions?.[cleanPageName + ': Given the information provided']?.response;
                         obj[`B${block}_Omni_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[cleanPageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Omni_Compare_FC1_Explain`] = page.questions?.[cleanPageName + ': Explain your response to the delegation preference question']?.response;
@@ -390,8 +404,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             (versionFilters.length == 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
             (evalFilters.length == 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
             (roleFilters.length == 0 || roleFilters.some((filter) => x['What is your current role (choose all that apply):']?.split('; ').includes(filter))) &&
-            (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (mm:ss)'])) &&
-            (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (mm:ss)'])) &&
+            (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
+            (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
             (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))
         );
