@@ -3,7 +3,7 @@ import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui"
 import surveyTheme from './surveyTheme.json';
-import { StaticTemplate } from "./staticTemplate";
+import { DynamicTemplatePhase2 } from "./dynamicTemplatePhase2";
 import { DynamicTemplate } from "./dynamicTemplate";
 import { Omnibus } from "./omnibusTemplate";
 import { Comparison } from "./comparison";
@@ -19,6 +19,7 @@ import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 import { useHistory } from 'react-router-dom';
+import testConfig from "./testConfig.json"
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
@@ -122,7 +123,7 @@ class SurveyPage extends Component {
         this.surveyConfigClone = structuredClone(this.state.surveyConfig);
         this.initializeSurvey();
 
-        this.survey = new Model(this.surveyConfigClone);
+        this.survey = new Model(testConfig.survey);
         this.survey.applyTheme(surveyTheme);
 
         this.surveyData = {};
@@ -981,10 +982,6 @@ export const NavigationGuard = ({ surveyComplete }) => {
 
 export default SurveyPage;
 
-ReactQuestionFactory.Instance.registerQuestion("static-template", (props) => {
-    return React.createElement(StaticTemplate, props);
-});
-
 ReactQuestionFactory.Instance.registerQuestion("dynamic-template", (props) => {
     return React.createElement(DynamicTemplate, props);
 });
@@ -1004,4 +1001,8 @@ ReactQuestionFactory.Instance.registerQuestion("adeptComparison", (props) => {
 
 ReactQuestionFactory.Instance.registerQuestion("omnibusComparison", (props) => {
     return React.createElement(OmnibusComparison, props)
+})
+
+ReactQuestionFactory.Instance.registerQuestion("dynamic-template-phase-2", (props) => {
+    return React.createElement(DynamicTemplatePhase2, props)
 })
