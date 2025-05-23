@@ -22,6 +22,14 @@ export class DynamicTemplatePhase2Model extends Question {
     set rows(rows) {
         this.setPropertyValue("rows", rows)
     }
+
+    get scenarioDescription() {
+        return this.getPropertyValue("scenarioDescription")
+    }
+
+    set scenarioDescription(scenarioDescription) {
+        this.setPropertyValue("scenarioDescription", scenarioDescription)
+    }
 }
 
 Serializer.addClass(
@@ -31,6 +39,10 @@ Serializer.addClass(
             name: "rows",
             default: []
         
+        },
+        {
+            name: "scenarioDescription",
+            default: ""
         }
     ],
     function () {
@@ -74,9 +86,13 @@ export class DynamicTemplatePhase2 extends SurveyQuestionElementBase {
         return this.question.rows;
     }
 
+    get scenarioDescription() {
+        return this.question.scenarioDescription;
+    }
+
     renderElement() {
         return (
-            <DynamicPhase2 rows={this.rows}/>
+            <DynamicPhase2 rows={this.rows} scenarioDescription={this.scenarioDescription}/>
         )
     }
 }
