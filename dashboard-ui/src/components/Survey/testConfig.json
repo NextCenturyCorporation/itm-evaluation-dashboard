@@ -44,6 +44,58 @@
                 "title": "Phase 2 Mockup",
                 "dmName": "Test phase 2",
                 "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic available at the site of a multi-casualty event and it will be at least 30 minutes before any patient can be evacuated. Which patient do you treat first?",
+                "supplies": [
+  {
+    "type": "Hemostatic gauze",
+    "quantity": 1
+  },
+  {
+    "type": "Tourniquet",
+    "quantity": 1
+  },
+  {
+    "type": "Pressure bandage",
+    "quantity": 1
+  },
+  {
+    "type": "Decompression Needle",
+    "quantity": 1
+  },
+  {
+    "type": "Nasopharyngeal airway",
+    "quantity": 1
+  },
+  {
+    "type": "Pulse Oximeter",
+    "quantity": 1,
+    "reusable": true
+  },
+  {
+    "type": "Blanket",
+    "quantity": 1
+  },
+  {
+    "type": "Epi Pen",
+    "quantity": 1,
+    "reusable": false
+  },
+  {
+    "type": "Vented Chest Seal",
+    "quantity": 1
+  },
+  {
+    "type": "Pain Medications",
+    "quantity": 1
+  },
+  {
+    "type": "Splint",
+    "quantity": 1
+  },
+  {
+    "type": "Blood",
+    "quantity": 1
+  }
+],
                 "rows": [
                     {
                         "Patient A": "Massive bleeding from their right calf. A mass shooter who killed 1 person and seriously injured 5 people at a marketplace.",

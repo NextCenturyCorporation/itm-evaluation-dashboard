@@ -704,6 +704,13 @@ class SurveyPage extends Component {
             }
         }
 
+        if (this.state.surveyVersion == 6.0){
+            this.surveyData['evalName'] = 'June 2025 Collaboration'
+            this.surveyData['evalNumber'] = 9
+            this.surveyData['pid'] = this.state.pid;
+            this.surveyData['orderLog'] = this.state.orderLog;
+        }
+
         if (this.state.surveyVersion == 1.3) {
             this.surveyData['evalName'] = 'April 2025 Evaluation';
             this.surveyData['evalNumber'] = 8;

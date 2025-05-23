@@ -1,28 +1,28 @@
 import React from 'react';
-import { Table, Container } from 'react-bootstrap';
+import { Table, Container, Row, Col } from 'react-bootstrap';
 import '../../css/dynamicPhase2.css';
 
-const DynamicPhase2 = ({rows, scenarioDescription}) => {
-    const parsePatientData = (text) => {
-        const sentences = text.split(/\.\s+(?=[A-Z])|\.$/);
-        
-        const cleanSentences = sentences.filter(sentence => sentence.trim().length > 0);
-        
-        if (cleanSentences.length >= 2) {
-            return {
-                injury: cleanSentences[0].trim() + '.',
-                role: cleanSentences[1].trim() + (cleanSentences[1].trim().endsWith('.') ? '' : '.')
-            };
-        } else {
-            return {
-                injury: text,
-                role: ''
-            };
-        }
+const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
+    const renderSupplies = () => {
+        if (!supplies || supplies.length === 0) return null;
+
+        return (
+            <div className="supplies-section">
+                <h5 className="supplies-title">Supplies</h5>
+                <div className="supplies-grid">
+                    {supplies.map((supply, index) => (
+                        <div key={index} className="supply-item">
+                            <span className="supply-name">{supply.type}</span>
+                            <span className="supply-quantity">Qty: {supply.quantity}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     };
 
     return (
-        <Container className="py-4" style={{maxWidth: '1200px', width: '100%'}}>
+        <Container className="py-4" style={{ maxWidth: '1200px', width: '100%' }}>
             <div className="instruction-section">
                 <h4 className="instruction-title">
                     Consider a decision maker who chose to treat the highlighted patients first, when given the following choices.
@@ -31,74 +31,53 @@ const DynamicPhase2 = ({rows, scenarioDescription}) => {
                     {scenarioDescription}
                 </p>
             </div>
-            
+
+            {renderSupplies()}
+
             <Table className="table-borderless decision-table">
                 <thead>
                     <tr>
                         <th className="table-header table-header-number"></th>
-                        <th className="table-header table-header-patient">Patient A</th>
-                        <th className="table-header table-header-patient">Patient B</th>
+                        <th className="table-header table-header-patient">Choice A</th>
+                        <th className="table-header table-header-patient">Choice B</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map((row, index) => {
-                        const patientAData = parsePatientData(row['Patient A']);
-                        const patientBData = parsePatientData(row['Patient B']);
-                        
-                        return (
-                            <tr key={index} className="border-bottom">
-                                <td className="row-number">
-                                    {index + 1}
-                                </td>
-                                <td className={`patient-cell ${row['choice'] === 'Patient A' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
-                                    <div className="badge-container">
-                                        {row['choice'] === 'Patient A' ? (
-                                            <div className="selected-badge">
-                                                ✓ SELECTED
-                                            </div>
-                                        ) : (
-                                            <div className="badge-spacer"></div>
-                                        )}
-                                    </div>
-                                    <div className="patient-description">
-                                        <div className="patient-info-section">
-                                            <span className="info-label">Injury:</span>
-                                            <span className="info-text">{patientAData.injury}</span>
+                    {rows.map((row, index) => (
+                        <tr key={index} className="border-bottom">
+                            <td className="row-number">
+                                {index + 1}
+                            </td>
+                            <td className={`patient-cell ${row['choice'] === 'Patient A' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
+                                <div className="badge-container">
+                                    {row['choice'] === 'Patient A' ? (
+                                        <div className="selected-badge">
+                                            ✓ SELECTED
                                         </div>
-                                        {patientAData.role && (
-                                            <div className="patient-info-section">
-                                                <span className="info-label">Role:</span>
-                                                <span className="info-text">{patientAData.role}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className={`patient-cell ${row['choice'] === 'Patient B' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
-                                    <div className="badge-container">
-                                        {row['choice'] === 'Patient B' ? (
-                                            <div className="selected-badge">
-                                                ✓ SELECTED
-                                            </div>
-                                        ) : (
-                                            <div className="badge-spacer"></div>
-                                        )}
-                                    </div>
-                                    <div className="patient-description">
-                                        <div className="patient-info-section">
-                                            <span className="info-label">Injury:</span>
-                                            <span className="info-text">{patientBData.injury}</span>
+                                    ) : (
+                                        <div className="badge-spacer"></div>
+                                    )}
+                                </div>
+                                <div className="patient-description">
+                                    {row['Patient A']}
+                                </div>
+                            </td>
+                            <td className={`patient-cell ${row['choice'] === 'Patient B' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
+                                <div className="badge-container">
+                                    {row['choice'] === 'Patient B' ? (
+                                        <div className="selected-badge">
+                                            ✓ SELECTED
                                         </div>
-                                        {patientBData.role && (
-                                            <div className="patient-info-section">
-                                                <span className="info-label">Role:</span>
-                                                <span className="info-text">{patientBData.role}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        );
-                    })}
+                                    ) : (
+                                        <div className="badge-spacer"></div>
+                                    )}
+                                </div>
+                                <div className="patient-description">
+                                    {row['Patient B']}
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </Table>
         </Container>
