@@ -20,6 +20,7 @@ import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 import { useHistory } from 'react-router-dom';
 import testConfig from "./testConfig.json"
+import { ComparisonPhase2 } from "./comparisonPhase2";
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
@@ -1012,4 +1013,8 @@ ReactQuestionFactory.Instance.registerQuestion("omnibusComparison", (props) => {
 
 ReactQuestionFactory.Instance.registerQuestion("dynamic-template-phase-2", (props) => {
     return React.createElement(DynamicTemplatePhase2, props)
+})
+
+ReactQuestionFactory.Instance.registerQuestion("comparison-phase-2", (props) => {
+    return React.createElement(ComparisonPhase2, props)
 })

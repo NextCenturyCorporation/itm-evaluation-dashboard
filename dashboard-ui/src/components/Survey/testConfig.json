@@ -1,423 +1,577 @@
 {
-  "_id": "delegation_v6.0",
-  "survey": {
-    "title": "ITM Delegation Survey",
-    "logoPosition": "right",
-    "version": 6.0,
-    "completedHtml": "<h3>Thank you for completing the survey</h3>",
-    "showProgressBar": "top",
-    "pages": [
-      {
-        "name": "Participant ID",
-        "elements": [
-          {
-            "type": "radiogroup",
-            "name": "Condition",
-            "title": "Condition",
-            "isRequired": true,
-            "choices": [
-              "Participant has NOT completed simulator",
-              "Participant has completed simulator"
-            ]
-          }
-        ]
-      },
-      {
-        "name": "Survey Introduction",
-        "elements": [
-          {
-            "type": "html",
-            "name": "Survey Introduction",
-            "title": "Welcome to the Mass Casualty Incident Delegation Experiment. Here you will have the chance to review the decisions of other medical professionals in difficult triage scenarios to assess whether you would delegate a triage situation in the future to those decision makers.o The medical professionals whose decisions you will review were triage officers as a part of a 2-man Tactical EMS team that responded to the scene of a subway bombing. The scene was deemed secure prior to the arrival of the team. The triage officer had a triage kit that allowed them to sort and tag victims and, to a limited degree, use tools such as tourniquets to attend to patient injuries.”o Each scenario is presented followed by how two different medics carried out their assessment and treatment separately for that situation. Each medic vignette is then followed by a few questions to assess how you perceived the medic’s decision-making style and the way the information was presented.While you work your way through each vignette Imagine you haveseen a lot of other observations of this medic, and that the behavior you see here is typical for how they behave.The survey should take about 30 minutes to complete. Thank you for your participation.",
-            "html": "Welcome to the <strong>Mass Casualty Incident Delegation Experiment</strong>. Here you will have the chance to review the decisions of other medical professionals in difficult triage scenarios to assess whether you would delegate a triage situation in the future to those decision makers. \n<br/><br/>\nThe medical professionals whose decisions you will review were triage officers as a part of a 2-man Tactical EMS team that responded to the scene of a subway bombing. The scene was deemed secure prior to the arrival of the team. The triage officer had a triage kit that allowed them to sort and tag victims and, to a limited degree, use tools such as tourniquets to attend to patient injuries.\n<br/><br/>\nEach scenario is presented followed by how two different medics carried out their assessment and treatment separately for that situation. Each medic vignette is then followed by a few questions to assess how you perceived the medic’s decision-making style and the way the information was presented.\n<br/><br/>\nWhile you work your way through each vignette Imagine you have\n\nseen a lot of other observations of this medic, and the behavior you see here is typical for how they behave.\n<br/><br/>\nThe survey should take about 30 minutes to complete. Thank you for your participation."
-          }
-        ]
-      },
-      {
-        "name": "Test phase 2 medic",
-        "scenarioIndex": 0,
-        "pageType": "singleMedic",
-        "elements": [
+    "_id": "delegation_v6.0",
+    "survey": {
+        "title": "ITM Delegation Survey",
+        "logoPosition": "right",
+        "version": 6.0,
+        "completedHtml": "<h3>Thank you for completing the survey</h3>",
+        "showProgressBar": "top",
+        "pages": [
             {
-                "type": "dynamic-template-phase-2",
-                "name": "Test phase 2 medic scenario 0",
-                "title": "Phase 2 Mockup",
-                "dmName": "Test phase 2",
-                "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic available at the site of a multi-casualty event and it will be at least 30 minutes before any patient can be evacuated. Which patient do you treat first?",
-                "supplies": [
-  {
-    "type": "Hemostatic gauze",
-    "quantity": 1
-  },
-  {
-    "type": "Tourniquet",
-    "quantity": 1
-  },
-  {
-    "type": "Pressure bandage",
-    "quantity": 1
-  },
-  {
-    "type": "Decompression Needle",
-    "quantity": 1
-  },
-  {
-    "type": "Nasopharyngeal airway",
-    "quantity": 1
-  },
-  {
-    "type": "Pulse Oximeter",
-    "quantity": 1,
-    "reusable": true
-  },
-  {
-    "type": "Blanket",
-    "quantity": 1
-  },
-  {
-    "type": "Epi Pen",
-    "quantity": 1,
-    "reusable": false
-  },
-  {
-    "type": "Vented Chest Seal",
-    "quantity": 1
-  },
-  {
-    "type": "Pain Medications",
-    "quantity": 1
-  },
-  {
-    "type": "Splint",
-    "quantity": 1
-  },
-  {
-    "type": "Blood",
-    "quantity": 1
-  }
-],
-                "rows": [
+                "name": "Participant ID",
+                "elements": [
                     {
-                        "Patient A": "Massive bleeding from their right calf. A mass shooter who killed 1 person and seriously injured 5 people at a marketplace.",
-                        "Patient B": "Massive bleeding from their left shoulder. A victim in the shooting.",
-                        "choice": "Patient B"
-                    },
-                    {
-                        "Patient A": "Massive bleeding from their left calf. Shot and seriously injured 2 people in an armed robbery.",
-                        "Patient B": "A chest wound and is gasping for breath. A victim in the shooting.",
-                        "choice": "Patient B"
-                    },
-                    {
-                        "Patient A": "Massive bleeding from a partial amputation of their left foot. Shot and seriously injured 2 people in a hold-up.",
-                        "Patient B": "Moderate bleeding from their left thigh. A victim in the shooting.",
-                        "choice": "Patient A"
-                    },
-                    {
-                        "Patient A": "No visible bleeding but is not breathing. Sabotaged a train and seriously injured 2 people.",
-                        "Patient B": "Moderate bleeding from their right thigh. Injured in the incident.",
-                        "choice": "Patient A"
-                    },
-                    {
-                        "Patient A": "Massive bleeding from their left arm. Abandoned their military duty station during a high threat condition, so there was no warning for an enemy attack that seriously injured 2 people.",
-                        "Patient B": "Moderate bleeding from their left shoulder. Injured in the attack.",
-                        "choice": "Patient A"
+                        "type": "radiogroup",
+                        "name": "Condition",
+                        "title": "Condition",
+                        "isRequired": true,
+                        "choices": [
+                            "Participant has NOT completed simulator",
+                            "Participant has completed simulator"
+                        ]
                     }
                 ]
             },
             {
-            "type": "radiogroup",
-            "name": "Test phase 2: Do you agree with the decision that this medic made?",
-            "title": "Do you agree with the decision that this medic made?",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "Test phase 2: The way this medic makes medical decisions is how I make decisions",
-            "title": "The way this medic makes medical decisions is how I make decisions",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "Test phase 2: this medic is trustworthy",
-            "title": "This medic is trustworthy",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "Test phase 2: I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it",
-            "title": "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "Medic-55 vs Medic-66",
-        "scenarioIndex": 4,
-        "pageType": "comparison",
-        "elements": [
-          {
-            "type": "radiogroup",
-            "name": "Medic-55 vs Medic-66: Given the information provided",
-            "title": "Given the information provided...",
-            "choices": [
-              "I would prefer to delegate to both Medic-55 and Medic-66",
-              "I would prefer to delegate Medic-55 only",
-              "I would prefer to delegate to Medic-66 only",
-              "I would prefer not to delegate to either Medic"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "Medic-55 vs Medic-66: Forced Choice",
-            "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-            "choices": [
-              "Medic-55",
-              "Medic-66"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "Medic-55 vs Medic-66: Rate your confidence about the delegation decision indicated in the previous question",
-            "title": "Rate your confidence about the delegation decision indicated in the previous question",
-            "choices": [
-              "Not confidence at all",
-              "Not confident",
-              "Somewhat confident",
-              "Confident",
-              "Completely confident"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "comment",
-            "name": "Medic-55 vs Medic-66: Explain your response to the delegation preference question",
-            "title": "Explain your response to the delegation preference question:",
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "Medic-55 vs Medic-66: The information about the situation and the medical decisions were presented in an understandable, easy-to-use format",
-            "title": "The information about the situation and the medical decisions were presented in an understandable, easy-to-use format",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "comment",
-            "name": "Medic-55 vs Medic-66: What, if anything, would you have done differently in the presented scenario?",
-            "title": "What, if anything, would you have done differently in the presented scenario?"
-          }
-        ]
-      },
-      {
-        "name": "Post-Scenario Measures",
-        "elements": [
-          {
-            "type": "radiogroup",
-            "name": "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
-            "title": "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I was easily able to imagine myself as the medic in these scenarios",
-            "title": "I was easily able to imagine myself as the medic in these scenarios",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
-            "title": "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "The VR training experience was helpful in making the delegation decisions in these scenarios",
-            "title": "The VR training experience was helpful in making the delegation decisions in these scenarios",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "visibleIf": "{Condition} = 'Participant has completed simulator'",
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
-            "title": "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "comment",
-            "name": "What other information would you need (if any) to help you understand how the Medics make decisions?",
-            "title": "What other information would you need (if any) to help you understand how the Medics make decisions?",
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "The ability to explore the information in conditions where the display was interactive was very useful",
-            "title": "The ability to explore the information in conditions where the display was interactive was very useful",
-            "choices": [
-              "Strongly disagree",
-              "Disagree",
-              "Neither agree nor disagree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I am a computer gaming enthusiast",
-            "title": "I am a computer gaming enthusiast",
-            "choices": [
-              "No",
-              "Not sure",
-              "Yes"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I consider myself a seasoned first responder",
-            "title": "I consider myself a seasoned first responder",
-            "choices": [
-              "No",
-              "Not sure",
-              "Yes"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I have completed the SALT Triage Certificate Training Course",
-            "title": "I have completed the SALT Triage Certificate Training Course",
-            "choices": [
-              "No",
-              "Not sure",
-              "Yes"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
-            "title": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
-            "choices": [
-              "No",
-              "Not sure",
-              "Yes"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "radiogroup",
-            "name": "I have completed disaster response training provided by the United States Military",
-            "title": "I have completed disaster response training provided by the United States Military",
-            "choices": [
-              "No",
-              "Not sure",
-              "Yes"
-            ],
-            "isRequired": true
-          },
-          {
-            "type": "text",
-            "name": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
-            "title": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
-            "inputType": "number",
-            "min": 0,
-            "isRequired": true
-          },
-          {
-            "type": "checkbox",
-            "name": "What is your current role (choose all that apply):",
-            "title": "What is your current role (choose all that apply):",
-            "choices": [
-              "M-3 medical student",
-              "M-4 medical student",
-              "EM resident",
-              "EM/IM resident",
-              "EM faculty",
-              "Emergency medical technician",
-              "Paramedic",
-              "Military Background (Branch, level of training, Active/Retired, etc)"
-            ],
-            "isRequired": true,
-            "showOtherItem": true,
-            "otherText": "Other (specify)"
-          }
-        ]
-      }
-    ],
-    "widthMode": "responsive",
-    "showTitle": false,
-    "showQuestionNumbers": false
-  }
+                "name": "Survey Introduction",
+                "elements": [
+                    {
+                        "type": "html",
+                        "name": "Survey Introduction",
+                        "title": "Welcome to the Mass Casualty Incident Delegation Experiment. Here you will have the chance to review the decisions of other medical professionals in difficult triage scenarios to assess whether you would delegate a triage situation in the future to those decision makers.o The medical professionals whose decisions you will review were triage officers as a part of a 2-man Tactical EMS team that responded to the scene of a subway bombing. The scene was deemed secure prior to the arrival of the team. The triage officer had a triage kit that allowed them to sort and tag victims and, to a limited degree, use tools such as tourniquets to attend to patient injuries.”o Each scenario is presented followed by how two different medics carried out their assessment and treatment separately for that situation. Each medic vignette is then followed by a few questions to assess how you perceived the medic’s decision-making style and the way the information was presented.While you work your way through each vignette Imagine you haveseen a lot of other observations of this medic, and that the behavior you see here is typical for how they behave.The survey should take about 30 minutes to complete. Thank you for your participation.",
+                        "html": "Welcome to the <strong>Mass Casualty Incident Delegation Experiment</strong>. Here you will have the chance to review the decisions of other medical professionals in difficult triage scenarios to assess whether you would delegate a triage situation in the future to those decision makers. \n<br/><br/>\nThe medical professionals whose decisions you will review were triage officers as a part of a 2-man Tactical EMS team that responded to the scene of a subway bombing. The scene was deemed secure prior to the arrival of the team. The triage officer had a triage kit that allowed them to sort and tag victims and, to a limited degree, use tools such as tourniquets to attend to patient injuries.\n<br/><br/>\nEach scenario is presented followed by how two different medics carried out their assessment and treatment separately for that situation. Each medic vignette is then followed by a few questions to assess how you perceived the medic’s decision-making style and the way the information was presented.\n<br/><br/>\nWhile you work your way through each vignette Imagine you have\n\nseen a lot of other observations of this medic, and the behavior you see here is typical for how they behave.\n<br/><br/>\nThe survey should take about 30 minutes to complete. Thank you for your participation."
+                    }
+                ]
+            },
+            {
+                "name": "Test phase 2 medic",
+                "scenarioIndex": 0,
+                "pageType": "singleMedic",
+                "elements": [
+                    {
+                        "type": "dynamic-template-phase-2",
+                        "name": "Test medic 1",
+                        "title": "Phase 2 Mockup",
+                        "dmName": "Test medic 1",
+                        "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic available at the site of a multi-casualty event and it will be at least 30 minutes before any patient can be evacuated. Which patient do you treat first?",
+                        "supplies": [
+                            {
+                                "type": "Hemostatic gauze",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Tourniquet",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Pressure bandage",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Decompression Needle",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Nasopharyngeal airway",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Pulse Oximeter",
+                                "quantity": 1,
+                                "reusable": true
+                            },
+                            {
+                                "type": "Blanket",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Epi Pen",
+                                "quantity": 1,
+                                "reusable": false
+                            },
+                            {
+                                "type": "Vented Chest Seal",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Pain Medications",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Splint",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Blood",
+                                "quantity": 1
+                            }
+                        ],
+                        "rows": [
+                            {
+                                "Patient A": "Massive bleeding from their right calf. A mass shooter who killed 1 person and seriously injured 5 people at a marketplace.",
+                                "Patient B": "Massive bleeding from their left shoulder. A victim in the shooting.",
+                                "choice": "Patient B"
+                            },
+                            {
+                                "Patient A": "Massive bleeding from their left calf. Shot and seriously injured 2 people in an armed robbery.",
+                                "Patient B": "A chest wound and is gasping for breath. A victim in the shooting.",
+                                "choice": "Patient B"
+                            },
+                            {
+                                "Patient A": "Massive bleeding from a partial amputation of their left foot. Shot and seriously injured 2 people in a hold-up.",
+                                "Patient B": "Moderate bleeding from their left thigh. A victim in the shooting.",
+                                "choice": "Patient A"
+                            },
+                            {
+                                "Patient A": "No visible bleeding but is not breathing. Sabotaged a train and seriously injured 2 people.",
+                                "Patient B": "Moderate bleeding from their right thigh. Injured in the incident.",
+                                "choice": "Patient A"
+                            },
+                            {
+                                "Patient A": "Massive bleeding from their left arm. Abandoned their military duty station during a high threat condition, so there was no warning for an enemy attack that seriously injured 2 people.",
+                                "Patient B": "Moderate bleeding from their left shoulder. Injured in the attack.",
+                                "choice": "Patient A"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1: Do you agree with the decision that this medic made?",
+                        "title": "Do you agree with the decision that this medic made?",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1: The way this medic makes medical decisions is how I make decisions",
+                        "title": "The way this medic makes medical decisions is how I make decisions",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1: this medic is trustworthy",
+                        "title": "This medic is trustworthy",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1: I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it",
+                        "title": "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    }
+                ]
+            },
+            {
+                "name": "Test phase 2 medic",
+                "scenarioIndex": 0,
+                "pageType": "singleMedic",
+                "elements": [
+                    {
+                        "type": "dynamic-template-phase-2",
+                        "name": "Test medic 2",
+                        "title": "Phase 2 Mockup",
+                        "dmName": "Test medic 2",
+                        "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic available at the site of a multi-casualty event and it will be at least 30 minutes before any patient can be evacuated. Which patient do you treat first?",
+                        "supplies": [
+                            {
+                                "type": "Hemostatic gauze",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Tourniquet",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Pressure bandage",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Decompression Needle",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Nasopharyngeal airway",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Pulse Oximeter",
+                                "quantity": 1,
+                                "reusable": true
+                            },
+                            {
+                                "type": "Blanket",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Epi Pen",
+                                "quantity": 1,
+                                "reusable": false
+                            },
+                            {
+                                "type": "Vented Chest Seal",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Pain Medications",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Splint",
+                                "quantity": 1
+                            },
+                            {
+                                "type": "Blood",
+                                "quantity": 1
+                            }
+                        ],
+                        "rows": [
+                            {
+                                "Patient A": "Massive bleeding from their right calf. A mass shooter who killed 1 person and seriously injured 5 people at a marketplace.",
+                                "Patient B": "Massive bleeding from their left shoulder. A victim in the shooting.",
+                                "choice": "Patient A"
+                            },
+                            {
+                                "Patient A": "Massive bleeding from their left calf. Shot and seriously injured 2 people in an armed robbery.",
+                                "Patient B": "A chest wound and is gasping for breath. A victim in the shooting.",
+                                "choice": "Patient B"
+                            },
+                            {
+                                "Patient A": "Massive bleeding from a partial amputation of their left foot. Shot and seriously injured 2 people in a hold-up.",
+                                "Patient B": "Moderate bleeding from their left thigh. A victim in the shooting.",
+                                "choice": "Patient B"
+                            },
+                            {
+                                "Patient A": "No visible bleeding but is not breathing. Sabotaged a train and seriously injured 2 people.",
+                                "Patient B": "Moderate bleeding from their right thigh. Injured in the incident.",
+                                "choice": "Patient A"
+                            },
+                            {
+                                "Patient A": "Massive bleeding from their left arm. Abandoned their military duty station during a high threat condition, so there was no warning for an enemy attack that seriously injured 2 people.",
+                                "Patient B": "Moderate bleeding from their left shoulder. Injured in the attack.",
+                                "choice": "Patient B"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 2: Do you agree with the decision that this medic made?",
+                        "title": "Do you agree with the decision that this medic made?",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 2: The way this medic makes medical decisions is how I make decisions",
+                        "title": "The way this medic makes medical decisions is how I make decisions",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 2: this medic is trustworthy",
+                        "title": "This medic is trustworthy",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 2: I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it",
+                        "title": "I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    }
+                ]
+            },
+            {
+                "name": "Test medic 1 vs Test medic 2",
+                "scenarioIndex": 4,
+                "pageType": "comparison",
+                "elements": [
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1 vs Test medic 2 Given the information provided",
+                        "title": "Given the information provided...",
+                        "choices": [
+                            "I would prefer to delegate to both Medic-55 and Medic-66",
+                            "I would prefer to delegate Medic-55 only",
+                            "I would prefer to delegate to Medic-66 only",
+                            "I would prefer not to delegate to either Medic"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "comparison-phase-2",
+                        "name": "Test medic 1 vs Test medic 2: Review",
+                        "title": "",
+                        "decisionMakers": [
+                            "Test medic 1",
+                            "Test medic 2"
+                        ]
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1 vs Test medic 2: Forced Choice",
+                        "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                        "choices": [
+                             "Test medic 1",
+                            "Test medic 2"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1 vs Test medic 2: Rate your confidence about the delegation decision indicated in the previous question",
+                        "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                        "choices": [
+                            "Not confidence at all",
+                            "Not confident",
+                            "Somewhat confident",
+                            "Confident",
+                            "Completely confident"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "comment",
+                        "name": "Test medic 1 vs Test medic 2: Explain your response to the delegation preference question",
+                        "title": "Explain your response to the delegation preference question:",
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "Test medic 1 vs Test medic 2: The information about the situation and the medical decisions were presented in an understandable, easy-to-use format",
+                        "title": "The information about the situation and the medical decisions were presented in an understandable, easy-to-use format",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "comment",
+                        "name": "Test medic 1 vs Test medic 2: What, if anything, would you have done differently in the presented scenario?",
+                        "title": "What, if anything, would you have done differently in the presented scenario?"
+                    }
+                ]
+            },
+            {
+                "name": "Post-Scenario Measures",
+                "elements": [
+                    {
+                        "type": "radiogroup",
+                        "name": "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
+                        "title": "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I was easily able to imagine myself as the medic in these scenarios",
+                        "title": "I was easily able to imagine myself as the medic in these scenarios",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
+                        "title": "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "The VR training experience was helpful in making the delegation decisions in these scenarios",
+                        "title": "The VR training experience was helpful in making the delegation decisions in these scenarios",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "visibleIf": "{Condition} = 'Participant has completed simulator'",
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+                        "title": "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "comment",
+                        "name": "What other information would you need (if any) to help you understand how the Medics make decisions?",
+                        "title": "What other information would you need (if any) to help you understand how the Medics make decisions?",
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "The ability to explore the information in conditions where the display was interactive was very useful",
+                        "title": "The ability to explore the information in conditions where the display was interactive was very useful",
+                        "choices": [
+                            "Strongly disagree",
+                            "Disagree",
+                            "Neither agree nor disagree",
+                            "Agree",
+                            "Strongly agree"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I am a computer gaming enthusiast",
+                        "title": "I am a computer gaming enthusiast",
+                        "choices": [
+                            "No",
+                            "Not sure",
+                            "Yes"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I consider myself a seasoned first responder",
+                        "title": "I consider myself a seasoned first responder",
+                        "choices": [
+                            "No",
+                            "Not sure",
+                            "Yes"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I have completed the SALT Triage Certificate Training Course",
+                        "title": "I have completed the SALT Triage Certificate Training Course",
+                        "choices": [
+                            "No",
+                            "Not sure",
+                            "Yes"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
+                        "title": "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
+                        "choices": [
+                            "No",
+                            "Not sure",
+                            "Yes"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "radiogroup",
+                        "name": "I have completed disaster response training provided by the United States Military",
+                        "title": "I have completed disaster response training provided by the United States Military",
+                        "choices": [
+                            "No",
+                            "Not sure",
+                            "Yes"
+                        ],
+                        "isRequired": true
+                    },
+                    {
+                        "type": "text",
+                        "name": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
+                        "title": "How many disaster drills (or simulated mass casualty events with live actors) have you participated in before today (Please enter a whole number)",
+                        "inputType": "number",
+                        "min": 0,
+                        "isRequired": true
+                    },
+                    {
+                        "type": "checkbox",
+                        "name": "What is your current role (choose all that apply):",
+                        "title": "What is your current role (choose all that apply):",
+                        "choices": [
+                            "M-3 medical student",
+                            "M-4 medical student",
+                            "EM resident",
+                            "EM/IM resident",
+                            "EM faculty",
+                            "Emergency medical technician",
+                            "Paramedic",
+                            "Military Background (Branch, level of training, Active/Retired, etc)"
+                        ],
+                        "isRequired": true,
+                        "showOtherItem": true,
+                        "otherText": "Other (specify)"
+                    }
+                ]
+            }
+        ],
+        "widthMode": "responsive",
+        "showTitle": false,
+        "showQuestionNumbers": false
+    }
 }

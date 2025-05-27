@@ -21,8 +21,10 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
         );
     };
 
-    return (
-        <Container className="py-4" style={{ maxWidth: '1200px', width: '100%' }}>
+    const renderInstructions = () => {
+        if (!scenarioDescription) return null;
+
+        return (
             <div className="instruction-section">
                 <h4 className="instruction-title">
                     Consider a decision maker who chose to treat the highlighted patients first, when given the following choices.
@@ -31,7 +33,12 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
                     {scenarioDescription}
                 </p>
             </div>
+        );
+    };
 
+    return (
+        <Container className="py-4" style={{ maxWidth: '1200px', width: '100%' }}>
+            {renderInstructions()}
             {renderSupplies()}
 
             <Table className="table-borderless decision-table">
