@@ -1,10 +1,8 @@
 import React from "react";
 import { ElementFactory, Question, Serializer } from "survey-core";
 import { SurveyQuestionElementBase } from "survey-react-ui";
-import testConfig from "./testConfig.json"
 import '../../css/template.css';
 import DynamicPhase2 from "./dynamicPhase2";
-import { isDefined } from "../AggregateResults/DataFunctions";
 const CUSTOM_TYPE = "comparison-phase-2";
 
 
@@ -44,7 +42,6 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
     return new ComparisonPhase2Model(name);
 });
 
-// A class that renders questions of the new type in the UI
 export class ComparisonPhase2 extends SurveyQuestionElementBase {
     constructor(props) {
         super(props);
@@ -52,11 +49,6 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
             userActions: [],
         };
         this.updateActionLogs = this.updateActionLogs.bind(this);
-        // review pages need parent.data, the actual survey needs parent.jsonObj
-        this.scenarioIndex = this.question.parent.jsonObj.scenarioIndex;
-        if (!isDefined(this.scenarioIndex)) {
-            this.scenarioIndex = this.question.parent.data.jsonObj.scenarioIndex;
-        }
     }
 
     updateActionLogs = (newAction) => {
@@ -98,14 +90,13 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
     renderElement() {
         const decisionMakers = this.decisionMakers || [];
         
-        // Get shared data from the first decision maker
+        // get shared data from the first decision maker
         const firstDmData = decisionMakers.length > 0 ? this.getDecisionMakerData(decisionMakers[0]) : null;
         const sharedScenarioDescription = firstDmData?.scenarioDescription;
         const sharedSupplies = firstDmData?.supplies;
         
         return (
             <div className="comparison-container">
-                {/* Shared header section */}
                 {firstDmData && (
                     <div className="shared-scenario-section" style={{ marginBottom: '20px' }}>
                         <div className="instruction-section">
@@ -117,7 +108,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                             </p>
                         </div>
 
-                        {/* Render supplies */}
+
                         {sharedSupplies && sharedSupplies.length > 0 && (
                             <div className="supplies-section">
                                 <h5 className="supplies-title">Supplies</h5>
@@ -134,7 +125,6 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                     </div>
                 )}
 
-                {/* Side by side decision makers */}
                 <div className="decision-makers-comparison" style={{
                     display: 'flex',
                     gap: '20px',
@@ -172,9 +162,9 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                                 </h3>
                                 <DynamicPhase2 
                                     rows={dmData.rows} 
-                                    scenarioDescription={null} // Don't repeat the scenario
-                                    supplies={null} // Don't repeat the supplies
-                                    showHeaderOnly={false} // Pass a prop to hide headers
+                                    scenarioDescription={null} 
+                                    supplies={null}
+                                    showHeaderOnly={false} 
                                 />
                             </div>
                         );
