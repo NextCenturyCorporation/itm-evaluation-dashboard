@@ -75,13 +75,10 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
         return this.question.decisionMakers;
     }
 
-    // Helper method to get decision maker data from testConfig
     getDecisionMakerData(dmName) {
-        const config = testConfig;
-        
-        if (!config.survey || !config.survey.pages) return null;
+        const config = this.question.survey.jsonObj.pages;
 
-        for (const page of config.survey.pages) {
+        for (const page of config) {
             if (page.elements) {
                 for (const element of page.elements) {
                     if (element.type === "dynamic-template-phase-2" && element.dmName === dmName) {
