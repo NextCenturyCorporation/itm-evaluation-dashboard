@@ -2,14 +2,6 @@ import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
-import adeptJungleConfig from './adeptJungleConfig.json';
-import adeptSubConfig from './adeptSubConfig.json';
-import adeptDesertConfig from './adeptDesertConfig.json';
-import adeptUrbanConfig from './adeptUrbanConfig.json';
-import stUrbanConfig from './stUrbanConfig.json'
-import stDesertConfig from './stDesertConfig.json'
-import stJungleConfig from './stJungleConfig.json'
-import stSubConfig from './stSubConfig.json'
 import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
@@ -26,6 +18,7 @@ import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
 import '../../css/scenario-page.css';
+import { Phase2Text } from './phase2Text';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -57,19 +50,9 @@ const UPDATE_PARTICIPANT_LOG = gql`
     }`;
 
 
-export const scenarioMappings = {
-    "SoarTech Jungle": stJungleConfig,
-    "SoarTech Urban": stUrbanConfig,
-    "SoarTech Desert": stDesertConfig,
-    "SoarTech Submarine": stSubConfig,
-    "Adept Jungle": adeptJungleConfig,
-    "Adept Urban": adeptUrbanConfig,
-    "Adept Desert": adeptDesertConfig,
-    "Adept Submarine": adeptSubConfig
-}
-
 export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    console.log(textBasedConfigs)
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
     const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
@@ -208,6 +191,11 @@ class TextBasedScenariosPage extends Component {
     }
 
     scenariosFromLog = (entry) => {
+        console.log(p1Mappings[entry].flatMap(scenarioId =>
+            Object.values(this.props.textBasedConfigs).filter(config =>
+                config.scenario_id === scenarioId
+            )
+        ))
         return p1Mappings[entry].flatMap(scenarioId =>
             Object.values(this.props.textBasedConfigs).filter(config =>
                 config.scenario_id === scenarioId
@@ -757,40 +745,6 @@ class TextBasedScenariosPage extends Component {
 
 export default withRouter(TextBasedScenariosPage);
 
-ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
-    return React.createElement(MedicalScenario, props)
-})
-
-const p1Mappings = {
-    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
-    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
-    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
-}
-
-export const simNameMappings = {
-    'AD-1': ['Eval_Adept_Urban'],
-    'AD-2': ['Eval_Adept_Jungle'],
-    'AD-3': ['Eval-Adept_Desert'],
-    'ST-1': ['stq2_ph1', 'stv2_ph1'],
-    'ST-2': ['stq3_ph1', 'stv3_ph1'],
-    'ST-3': ['stq4_ph1', 'stv4_ph1'],
-}
-
-/* 
-    I needed to save these configs separately from the dre configs despite the fact they have the same ids.
-    Using this mapping to get id that matches up with ADEPT ta1 server for server calls
-*/
-const adeptScenarioIdMap = {
-    'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
-    'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
-    'phase1-adept-eval-MJ5': 'DryRunEval-MJ5-eval',
-    'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
-    'phase1-adept-train-IO1': 'DryRunEval.IO1'
-}
-
 const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
@@ -839,3 +793,50 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation })
         </>
     );
 };
+
+ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
+    return React.createElement(MedicalScenario, props)
+})
+
+
+ReactQuestionFactory.Instance.registerQuestion("phase2Text", (props) => {
+    return React.createElement(Phase2Text, props)
+})
+
+
+const p2Mappings = {
+    'AD-1': 'June2025-AF-eval',
+    'AD-2': 'June2025-MF-eval',
+    'AD-3': 'June2025-PS-eval',
+    'AD-4': 'June2025-SS-eval'
+}
+
+const p1Mappings = {
+    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
+    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
+    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
+}
+
+export const simNameMappings = {
+    'AD-1': ['Eval_Adept_Urban'],
+    'AD-2': ['Eval_Adept_Jungle'],
+    'AD-3': ['Eval-Adept_Desert'],
+    'ST-1': ['stq2_ph1', 'stv2_ph1'],
+    'ST-2': ['stq3_ph1', 'stv3_ph1'],
+    'ST-3': ['stq4_ph1', 'stv4_ph1'],
+}
+
+/* 
+    I needed to save these configs separately from the dre configs despite the fact they have the same ids.
+    Using this mapping to get id that matches up with ADEPT ta1 server for server calls
+*/
+const adeptScenarioIdMap = {
+    'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
+    'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
+    'phase1-adept-eval-MJ5': 'DryRunEval-MJ5-eval',
+    'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
+    'phase1-adept-train-IO1': 'DryRunEval.IO1'
+}
