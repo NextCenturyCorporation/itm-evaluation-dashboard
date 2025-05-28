@@ -52,11 +52,10 @@ const UPDATE_PARTICIPANT_LOG = gql`
 
 export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    console.log(textBasedConfigs)
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
     const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
-    
+
     // server side time stamps
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
@@ -191,14 +190,10 @@ class TextBasedScenariosPage extends Component {
     }
 
     scenariosFromLog = (entry) => {
-        console.log(p1Mappings[entry].flatMap(scenarioId =>
-            Object.values(this.props.textBasedConfigs).filter(config =>
-                config.scenario_id === scenarioId
-            )
-        ))
-        return p1Mappings[entry].flatMap(scenarioId =>
-            Object.values(this.props.textBasedConfigs).filter(config =>
-                config.scenario_id === scenarioId
+        return Object.values(this.props.textBasedConfigs).filter(config =>
+            config.scenario_id && (
+                config.scenario_id.includes('June2025') ||
+                config.scenario_id.includes('2025')
             )
         );
     }
@@ -208,7 +203,7 @@ class TextBasedScenariosPage extends Component {
         if (currentScenarioIndex < scenarios.length) {
             const currentScenario = scenarios[currentScenarioIndex];
             this.loadSurveyConfig([currentScenario], currentScenario.title);
-        
+
             this.props.getServerTimestamp().then(newStartTime => {
                 this.setState({ startTime: newStartTime.data.getServerTimestamp });
             });
@@ -444,8 +439,8 @@ class TextBasedScenariosPage extends Component {
     attachKdmaValue = async (sessionId, url) => {
         const endpoint = '/api/v1/computed_kdma_profile?session_id='
         try {
-        const response = await axios.get(`${url}${endpoint}${sessionId}`)
-        return response.data
+            const response = await axios.get(`${url}${endpoint}${sessionId}`)
+            return response.data
         } catch (e) {
             console.error('Error getting kdmas: ' + e);
             return null;
@@ -475,7 +470,7 @@ class TextBasedScenariosPage extends Component {
                     }
                 });
 
-                const filteredData = response.data.filter(obj => 
+                const filteredData = response.data.filter(obj =>
                     !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
                 );
 
