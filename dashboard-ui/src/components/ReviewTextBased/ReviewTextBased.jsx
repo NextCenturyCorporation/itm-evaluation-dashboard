@@ -58,7 +58,7 @@ export function ReviewTextBasedPage() {
 
         if (config) {
             try {
-                config.showTitle = false;
+                config.showTitle = true;
                 const surveyModel = new Model(config);
                 surveyModel.applyTheme(surveyTheme);
                 surveyModel.focusOnFirstError = false;

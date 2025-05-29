@@ -167,10 +167,10 @@ class TextBasedScenariosPage extends Component {
                 // if you want to go through with a non-matched or duplicate PID, giving default experience
                 if (!matchedLog && !isDuplicate) {
                     matchedLog = {
-                        'AF-scenario': Math.floor(Math.random() * 3) + 1,
-                        'MF-scenario': Math.floor(Math.random() * 3) + 1,
-                        'PS-scenario': Math.floor(Math.random() * 3) + 1,
-                        'SS-scenario': Math.floor(Math.random() * 3) + 1
+                        'AF-text-scenario': Math.floor(Math.random() * 3) + 1,
+                        'MF-text-scenario': Math.floor(Math.random() * 3) + 1,
+                        'PS-text-scenario': Math.floor(Math.random() * 3) + 1,
+                        'SS-text-scenario': Math.floor(Math.random() * 3) + 1
                     };
                 }
             }
@@ -193,10 +193,10 @@ class TextBasedScenariosPage extends Component {
 
     scenariosFromLog = (participantLog) => {
         const scenarioIds = [
-            `June2025-AF${participantLog['AF-scenario']}-eval`,
-            `June2025-MF${participantLog['MF-scenario']}-eval`,
-            `June2025-PS${participantLog['PS-scenario']}-eval`,
-            `June2025-SS${participantLog['SS-scenario']}-eval`
+            `June2025-AF${participantLog['AF-text-scenario']}-eval`,
+            `June2025-MF${participantLog['MF-text-scenario']}-eval`,
+            `June2025-PS${participantLog['PS-text-scenario']}-eval`,
+            `June2025-SS${participantLog['SS-text-scenario']}-eval`
         ];
 
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
@@ -354,9 +354,9 @@ class TextBasedScenariosPage extends Component {
             });
         });
 
-        scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
-        scenarioData.evalNumber = 6
-        scenarioData.evalName = 'Jan 2025 Eval'
+        scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id);
+        scenarioData.evalNumber = 8
+        scenarioData.evalName = 'June 2025 Collaboration'
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -379,7 +379,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept')) {
+        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('June2025')) {
             if (this.state.adeptSessionsCompleted === 0) {
                 await this.beginRunningSession(scenario)
             } else {
@@ -605,7 +605,7 @@ class TextBasedScenariosPage extends Component {
         };
 
         config.title = title;
-        config.showTitle = false;
+        config.showTitle = true;
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
         this.survey.focusOnFirstError = false;
