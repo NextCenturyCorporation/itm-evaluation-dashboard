@@ -85,8 +85,8 @@ export function PidLookup() {
                     {pid &&
                         <>
                             <h3 className='pid-shower'>PID: {pid}</h3>
-                            <h3 className='pid-shower'>SIM-1: {formatSimValue(sim1)}</h3>
-                            <h3 className='pid-shower'>SIM-2: {formatSimValue(sim2)}</h3>
+                            {sim1 && <h3 className='pid-shower'>SIM-1: {formatSimValue(sim1)}</h3>}
+                            {sim2 && <h3 className='pid-shower'>SIM-2: {formatSimValue(sim2)}</h3>}
                         </>
                     }
                     {notFound && <h3 className='error-text'>PID Not Found</h3>}
@@ -95,4 +95,3 @@ export function PidLookup() {
         </div>
     </div>);
 }
-
