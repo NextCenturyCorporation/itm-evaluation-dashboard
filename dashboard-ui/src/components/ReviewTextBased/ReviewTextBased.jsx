@@ -70,7 +70,7 @@ export function ReviewTextBasedPage() {
     };
 
     const renderConfigButtons = () => {
-        
+
         const phase1AdeptConfigs = [];
         const phase1SoarTechConfigs = [];
         const phase2AdeptConfigs = [];
@@ -102,6 +102,12 @@ export function ReviewTextBasedPage() {
                     mreSoarTechConfigs.push(configName);
                 }
             }
+        });
+
+        phase2AdeptConfigs.sort((a, b) => {
+            const scenarioA = textBasedConfigs[a].scenario_id || a;
+            const scenarioB = textBasedConfigs[b].scenario_id || b;
+            return scenarioA.localeCompare(scenarioB);
         });
 
         const getAdeptLabel = (configName) => {
@@ -137,7 +143,7 @@ export function ReviewTextBasedPage() {
 
         return (
             <>
-                 <Card className="mb-4 border-0 shadow">
+                <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 2 Scenarios (June 2025)</Card.Header>
                     <Card.Body className="bg-light">
                         {renderConfigGroup(phase2AdeptConfigs, "ADEPT")}
