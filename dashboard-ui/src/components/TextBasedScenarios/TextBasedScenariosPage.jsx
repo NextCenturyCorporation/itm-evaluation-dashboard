@@ -392,7 +392,7 @@ class TextBasedScenariosPage extends Component {
                 adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
                 adeptScenarios: updatedAdeptScenarios
             }), async () => {
-                if (this.state.adeptSessionsCompleted === 3) {
+                if (this.state.adeptSessionsCompleted === 4) {
                     await this.uploadAdeptScenarios(updatedAdeptScenarios)
                 }
             });
@@ -412,7 +412,7 @@ class TextBasedScenariosPage extends Component {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
                 this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
+                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
                 })
             }
         } catch (e) {
@@ -422,7 +422,7 @@ class TextBasedScenariosPage extends Component {
 
     continueRunningSession = async (scenario) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-        await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
+        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
@@ -471,7 +471,7 @@ class TextBasedScenariosPage extends Component {
                 targets = ['PerceivedQuantityOfLivesSaved']
             }
         } else {
-            targets = ['Moral judgement', 'Ingroup Bias']
+            targets = ['affiliation', 'merit', 'search', 'personal_safety']
         }
 
         let responses = []
@@ -729,7 +729,7 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
-                {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios != this.state.scenarios.length) && (
+                {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
                         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
                             <Spinner animation="border" role="status">
