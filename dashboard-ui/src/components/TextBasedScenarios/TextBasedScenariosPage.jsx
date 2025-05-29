@@ -166,15 +166,17 @@ class TextBasedScenariosPage extends Component {
             } else {
                 // if you want to go through with a non-matched or duplicate PID, giving default experience
                 if (!matchedLog && !isDuplicate) {
-                    matchedLog = { 'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3' }
+                    matchedLog = {
+                        'AF-scenario': Math.floor(Math.random() * 3) + 1,
+                        'MF-scenario': Math.floor(Math.random() * 3) + 1,
+                        'PS-scenario': Math.floor(Math.random() * 3) + 1,
+                        'SS-scenario': Math.floor(Math.random() * 3) + 1
+                    };
                 }
             }
         }
 
-        const text1Scenarios = this.scenariosFromLog(matchedLog['Text-1']);
-        const text2Scenarios = this.scenariosFromLog(matchedLog['Text-2']);
-
-        scenarios = [...text1Scenarios, ...text2Scenarios];
+        scenarios = this.scenariosFromLog(matchedLog)
 
         this.setState({
             scenarios,
@@ -189,13 +191,25 @@ class TextBasedScenariosPage extends Component {
         });
     }
 
-    scenariosFromLog = (entry) => {
-        return Object.values(this.props.textBasedConfigs).filter(config =>
-            config.scenario_id && (
-                config.scenario_id.includes('June2025') ||
-                config.scenario_id.includes('2025')
-            )
+    scenariosFromLog = (participantLog) => {
+        const scenarioIds = [
+            `June2025-AF${participantLog['AF-scenario']}-eval`,
+            `June2025-MF${participantLog['MF-scenario']}-eval`,
+            `June2025-PS${participantLog['PS-scenario']}-eval`,
+            `June2025-SS${participantLog['SS-scenario']}-eval`
+        ];
+
+        const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
+            config.scenario_id && scenarioIds.includes(config.scenario_id)
         );
+
+        for (let i = scenarios.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
+        }
+
+        console.log(scenarios)
+        return scenarios;
     }
 
     loadNextScenario = async () => {
@@ -797,14 +811,6 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
 ReactQuestionFactory.Instance.registerQuestion("phase2Text", (props) => {
     return React.createElement(Phase2Text, props)
 })
-
-
-const p2Mappings = {
-    'AD-1': 'June2025-AF-eval',
-    'AD-2': 'June2025-MF-eval',
-    'AD-3': 'June2025-PS-eval',
-    'AD-4': 'June2025-SS-eval'
-}
 
 const p1Mappings = {
     'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],

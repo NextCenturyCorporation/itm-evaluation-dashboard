@@ -104,7 +104,7 @@ export function App() {
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
     const [configQuery, setConfigQuery] = React.useState(GET_CONFIGS)
     const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
- 
+
     React.useEffect(() => {
         if (versionData?.getCurrentSurveyVersion) {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
@@ -219,36 +219,44 @@ export function App() {
     }
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
-        // sets up text-based email participants and their pids
-        // get current plog
         const dbPLog = await fetchParticipantLog();
-        // see if pid exists in db already
+
         const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail == hashedEmail);
+
         if (foundParticipant) {
-            // Email in use (participant found in db), bring participant to their specific text-based scenario
             const pid = foundParticipant['ParticipantID'];
             history.push("/text-based?pid=" + pid);
             return;
-        }
-        else {
-            // calculate new pid
+        } else {
             let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
                 !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
                 x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
             ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
-            // get correct plog data
-            const setNum = newPid % 24;
+
             const participantData = {
-                ...PH1_SURVEY_SETS[setNum], "ParticipantID": newPid, "Type": isTester ? "Test" : "emailParticipant",
-                "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": hashedEmail
+                "ParticipantID": newPid,
+                "Type": isTester ? "Test" : "emailParticipant",
+                "claimed": true,
+                "simEntryCount": 0,
+                "surveyEntryCount": 0,
+                "textEntryCount": 0,
+                "hashedEmail": hashedEmail,
+                
+                "AF-text-scenario": Math.floor(Math.random() * 3) + 1,
+                "MF-text-scenario": Math.floor(Math.random() * 3) + 1,
+                "PS-text-scenario": Math.floor(Math.random() * 3) + 1,
+                "SS-text-scenario": Math.floor(Math.random() * 3) + 1
             };
-            // update database
-            const addRes = await addParticipant({ variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID } });
+
+            const addRes = await addParticipant({
+                variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }
+            });
+
             if (addRes?.data?.addNewParticipantToLog == -1) {
                 alert("This email address is taken. Please enter a different email.");
                 return;
             }
-            // extra step to prevent duplicate pids
+
             newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
             history.push("/text-based?pid=" + newPid);
             return;
