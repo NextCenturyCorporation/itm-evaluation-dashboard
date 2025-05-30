@@ -14,6 +14,7 @@ import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import { shuffle } from '../Survey/surveyUtils';
 import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
@@ -207,8 +208,6 @@ class TextBasedScenariosPage extends Component {
             const j = Math.floor(Math.random() * (i + 1));
             [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
         }
-
-        console.log(scenarios)
         return scenarios;
     }
 
@@ -603,6 +602,11 @@ class TextBasedScenariosPage extends Component {
             ...scenarioConfigs[0],
             pages: [...scenarioConfigs[0].pages]
         };
+        console.log('default probe order')
+        console.log(config.pages)
+        config.pages = shuffle([...config.pages])
+        console.log('probe order after randomized')
+        console.log(config.pages)
 
         config.title = title;
         config.showTitle = true;
