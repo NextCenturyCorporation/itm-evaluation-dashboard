@@ -27,7 +27,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
         return (
             <div className="instruction-section">
                 <h4 className="instruction-title">
-                    Consider a decision maker who chose to treat the highlighted patients first, when given the following choices.
+                    Consider a decision-maker who chose to treat the highlighted patients first, when given the following choices.
                 </h4>
                 <p className="instruction-subtitle">
                     {scenarioDescription}

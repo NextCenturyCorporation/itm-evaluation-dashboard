@@ -347,7 +347,6 @@ class TextBasedScenariosPage extends Component {
                 const questionValue = survey.data[questionName];
                 scenarioData[pageName].questions[questionName] = {
                     response: questionValue,
-                    probe: question.probe_id || '',
                     question_mapping: question.jsonObj['question_mapping'] || {}
                 };
             });

@@ -90,7 +90,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
     renderElement() {
         const decisionMakers = this.decisionMakers || [];
         
-        // get shared data from the first decision maker
+        // get shared data from the first decision-maker
         const firstDmData = decisionMakers.length > 0 ? this.getDecisionMakerData(decisionMakers[0]) : null;
         const sharedScenarioDescription = firstDmData?.scenarioDescription;
         const sharedSupplies = firstDmData?.supplies;
@@ -101,7 +101,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                     <div className="shared-scenario-section" style={{ marginBottom: '20px' }}>
                         <div className="instruction-section">
                             <h4 className="instruction-title">
-                                Consider a decision maker who chose to treat the highlighted patients first, when given the following choices.
+                                Consider a decision-maker who chose to treat the highlighted patients first, when given the following choices.
                             </h4>
                             <p className="instruction-subtitle">
                                 {sharedScenarioDescription}
@@ -141,7 +141,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                                     padding: '15px',
                                     borderRadius: '5px'
                                 }}>
-                                    <p>Decision maker data not found for: {dmName}</p>
+                                    <p>Decision-maker data not found for: {dmName}</p>
                                 </div>
                             );
                         }
