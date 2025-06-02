@@ -58,7 +58,7 @@ export function ReviewTextBasedPage() {
 
         if (config) {
             try {
-                config.showTitle = false;
+                config.showTitle = true;
                 const surveyModel = new Model(config);
                 surveyModel.applyTheme(surveyTheme);
                 surveyModel.focusOnFirstError = false;
@@ -70,8 +70,10 @@ export function ReviewTextBasedPage() {
     };
 
     const renderConfigButtons = () => {
+
         const phase1AdeptConfigs = [];
         const phase1SoarTechConfigs = [];
+        const phase2AdeptConfigs = [];
         const dreAdeptConfigs = [];
         const dreSoarTechConfigs = [];
         const mreAdeptConfigs = [];
@@ -84,6 +86,9 @@ export function ReviewTextBasedPage() {
                 } else {
                     phase1SoarTechConfigs.push(configName);
                 }
+            } else if (config.eval && config.eval.includes('June 2025')) {
+                // All Phase 2 scenarios are ADEPT scenarios
+                phase2AdeptConfigs.push(configName);
             } else if (config.eval === 'dre') {
                 if (configName.includes('DryRunEval')) {
                     dreAdeptConfigs.push(configName);
@@ -97,6 +102,12 @@ export function ReviewTextBasedPage() {
                     mreSoarTechConfigs.push(configName);
                 }
             }
+        });
+
+        phase2AdeptConfigs.sort((a, b) => {
+            const scenarioA = textBasedConfigs[a].scenario_id || a;
+            const scenarioB = textBasedConfigs[b].scenario_id || b;
+            return scenarioA.localeCompare(scenarioB);
         });
 
         const getAdeptLabel = (configName) => {
@@ -132,6 +143,13 @@ export function ReviewTextBasedPage() {
 
         return (
             <>
+                <Card className="mb-4 border-0 shadow">
+                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 2 Scenarios (June 2025)</Card.Header>
+                    <Card.Body className="bg-light">
+                        {renderConfigGroup(phase2AdeptConfigs, "ADEPT")}
+                    </Card.Body>
+                </Card>
+
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
                     <Card.Body className="bg-light">

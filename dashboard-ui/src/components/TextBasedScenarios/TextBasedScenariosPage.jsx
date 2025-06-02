@@ -2,14 +2,6 @@ import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
-import adeptJungleConfig from './adeptJungleConfig.json';
-import adeptSubConfig from './adeptSubConfig.json';
-import adeptDesertConfig from './adeptDesertConfig.json';
-import adeptUrbanConfig from './adeptUrbanConfig.json';
-import stUrbanConfig from './stUrbanConfig.json'
-import stDesertConfig from './stDesertConfig.json'
-import stJungleConfig from './stJungleConfig.json'
-import stSubConfig from './stSubConfig.json'
 import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
@@ -22,10 +14,12 @@ import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
+import { shuffle } from '../Survey/surveyUtils';
 import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
 import '../../css/scenario-page.css';
+import { Phase2Text } from './phase2Text';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -57,23 +51,12 @@ const UPDATE_PARTICIPANT_LOG = gql`
     }`;
 
 
-export const scenarioMappings = {
-    "SoarTech Jungle": stJungleConfig,
-    "SoarTech Urban": stUrbanConfig,
-    "SoarTech Desert": stDesertConfig,
-    "SoarTech Submarine": stSubConfig,
-    "Adept Jungle": adeptJungleConfig,
-    "Adept Urban": adeptUrbanConfig,
-    "Adept Desert": adeptDesertConfig,
-    "Adept Submarine": adeptSubConfig
-}
-
 export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
     const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
-    
+
     // server side time stamps
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
@@ -184,15 +167,17 @@ class TextBasedScenariosPage extends Component {
             } else {
                 // if you want to go through with a non-matched or duplicate PID, giving default experience
                 if (!matchedLog && !isDuplicate) {
-                    matchedLog = { 'Text-1': 'AD-1', 'Text-2': 'ST-2', 'Sim-1': 'AD-2', 'Sim-2': 'ST-3' }
+                    matchedLog = {
+                        'AF-text-scenario': Math.floor(Math.random() * 3) + 1,
+                        'MF-text-scenario': Math.floor(Math.random() * 3) + 1,
+                        'PS-text-scenario': Math.floor(Math.random() * 3) + 1,
+                        'SS-text-scenario': Math.floor(Math.random() * 3) + 1
+                    };
                 }
             }
         }
 
-        const text1Scenarios = this.scenariosFromLog(matchedLog['Text-1']);
-        const text2Scenarios = this.scenariosFromLog(matchedLog['Text-2']);
-
-        scenarios = [...text1Scenarios, ...text2Scenarios];
+        scenarios = this.scenariosFromLog(matchedLog)
 
         this.setState({
             scenarios,
@@ -207,12 +192,23 @@ class TextBasedScenariosPage extends Component {
         });
     }
 
-    scenariosFromLog = (entry) => {
-        return p1Mappings[entry].flatMap(scenarioId =>
-            Object.values(this.props.textBasedConfigs).filter(config =>
-                config.scenario_id === scenarioId
-            )
+    scenariosFromLog = (participantLog) => {
+        const scenarioIds = [
+            `June2025-AF${participantLog['AF-text-scenario']}-eval`,
+            `June2025-MF${participantLog['MF-text-scenario']}-eval`,
+            `June2025-PS${participantLog['PS-text-scenario']}-eval`,
+            `June2025-SS${participantLog['SS-text-scenario']}-eval`
+        ];
+
+        const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
+            config.scenario_id && scenarioIds.includes(config.scenario_id)
         );
+
+        for (let i = scenarios.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
+        }
+        return scenarios;
     }
 
     loadNextScenario = async () => {
@@ -220,7 +216,7 @@ class TextBasedScenariosPage extends Component {
         if (currentScenarioIndex < scenarios.length) {
             const currentScenario = scenarios[currentScenarioIndex];
             this.loadSurveyConfig([currentScenario], currentScenario.title);
-        
+
             this.props.getServerTimestamp().then(newStartTime => {
                 this.setState({ startTime: newStartTime.data.getServerTimestamp });
             });
@@ -351,15 +347,14 @@ class TextBasedScenariosPage extends Component {
                 const questionValue = survey.data[questionName];
                 scenarioData[pageName].questions[questionName] = {
                     response: questionValue,
-                    probe: question.probe_id || '',
                     question_mapping: question.jsonObj['question_mapping'] || {}
                 };
             });
         });
 
-        scenarioData.scenarioOrder = [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
-        scenarioData.evalNumber = 6
-        scenarioData.evalName = 'Jan 2025 Eval'
+        scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id);
+        scenarioData.evalNumber = 8
+        scenarioData.evalName = 'June 2025 Collaboration'
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -370,7 +365,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('adept')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('June2025')) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -382,7 +377,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept')) {
+        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('June2025')) {
             if (this.state.adeptSessionsCompleted === 0) {
                 await this.beginRunningSession(scenario)
             } else {
@@ -395,7 +390,7 @@ class TextBasedScenariosPage extends Component {
                 adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
                 adeptScenarios: updatedAdeptScenarios
             }), async () => {
-                if (this.state.adeptSessionsCompleted === 3) {
+                if (this.state.adeptSessionsCompleted === 4) {
                     await this.uploadAdeptScenarios(updatedAdeptScenarios)
                 }
             });
@@ -415,7 +410,7 @@ class TextBasedScenariosPage extends Component {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
                 this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
+                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
                 })
             }
         } catch (e) {
@@ -425,7 +420,7 @@ class TextBasedScenariosPage extends Component {
 
     continueRunningSession = async (scenario) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-        await this.submitResponses(scenario, adeptScenarioIdMap[scenario.scenario_id], url, this.state.combinedSessionId)
+        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
@@ -456,8 +451,8 @@ class TextBasedScenariosPage extends Component {
     attachKdmaValue = async (sessionId, url) => {
         const endpoint = '/api/v1/computed_kdma_profile?session_id='
         try {
-        const response = await axios.get(`${url}${endpoint}${sessionId}`)
-        return response.data
+            const response = await axios.get(`${url}${endpoint}${sessionId}`)
+            return response.data
         } catch (e) {
             console.error('Error getting kdmas: ' + e);
             return null;
@@ -474,7 +469,7 @@ class TextBasedScenariosPage extends Component {
                 targets = ['PerceivedQuantityOfLivesSaved']
             }
         } else {
-            targets = ['Moral judgement', 'Ingroup Bias']
+            targets = ['affiliation', 'merit', 'search', 'personal_safety']
         }
 
         let responses = []
@@ -487,7 +482,7 @@ class TextBasedScenariosPage extends Component {
                     }
                 });
 
-                const filteredData = response.data.filter(obj => 
+                const filteredData = response.data.filter(obj =>
                     !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
                 );
 
@@ -606,6 +601,7 @@ class TextBasedScenariosPage extends Component {
             ...scenarioConfigs[0],
             pages: [...scenarioConfigs[0].pages]
         };
+        config.pages = shuffle([...config.pages])
 
         config.title = title;
         config.showTitle = false;
@@ -732,7 +728,7 @@ class TextBasedScenariosPage extends Component {
                         )}
                     </Mutation>
                 )}
-                {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios != this.state.scenarios.length) && (
+                {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
                         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
                             <Spinner animation="border" role="status">
@@ -756,40 +752,6 @@ class TextBasedScenariosPage extends Component {
 }
 
 export default withRouter(TextBasedScenariosPage);
-
-ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
-    return React.createElement(MedicalScenario, props)
-})
-
-const p1Mappings = {
-    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
-    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
-    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
-}
-
-export const simNameMappings = {
-    'AD-1': ['Eval_Adept_Urban'],
-    'AD-2': ['Eval_Adept_Jungle'],
-    'AD-3': ['Eval-Adept_Desert'],
-    'ST-1': ['stq2_ph1', 'stv2_ph1'],
-    'ST-2': ['stq3_ph1', 'stv3_ph1'],
-    'ST-3': ['stq4_ph1', 'stv4_ph1'],
-}
-
-/* 
-    I needed to save these configs separately from the dre configs despite the fact they have the same ids.
-    Using this mapping to get id that matches up with ADEPT ta1 server for server calls
-*/
-const adeptScenarioIdMap = {
-    'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
-    'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
-    'phase1-adept-eval-MJ5': 'DryRunEval-MJ5-eval',
-    'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
-    'phase1-adept-train-IO1': 'DryRunEval.IO1'
-}
 
 const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
@@ -839,3 +801,42 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation })
         </>
     );
 };
+
+ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
+    return React.createElement(MedicalScenario, props)
+})
+
+
+ReactQuestionFactory.Instance.registerQuestion("phase2Text", (props) => {
+    return React.createElement(Phase2Text, props)
+})
+
+const p1Mappings = {
+    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
+    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
+    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
+}
+
+export const simNameMappings = {
+    'AD-1': ['Eval_Adept_Urban'],
+    'AD-2': ['Eval_Adept_Jungle'],
+    'AD-3': ['Eval-Adept_Desert'],
+    'ST-1': ['stq2_ph1', 'stv2_ph1'],
+    'ST-2': ['stq3_ph1', 'stv3_ph1'],
+    'ST-3': ['stq4_ph1', 'stv4_ph1'],
+}
+
+/* 
+    I needed to save these configs separately from the dre configs despite the fact they have the same ids.
+    Using this mapping to get id that matches up with ADEPT ta1 server for server calls
+*/
+const adeptScenarioIdMap = {
+    'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
+    'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
+    'phase1-adept-eval-MJ5': 'DryRunEval-MJ5-eval',
+    'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
+    'phase1-adept-train-IO1': 'DryRunEval.IO1'
+}
