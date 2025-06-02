@@ -7,6 +7,7 @@ import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import { Spinner } from 'react-bootstrap';
+import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -31,8 +32,8 @@ const GET_SIM_DATA = gql`
 const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text'];
-const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text'];
+const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
@@ -53,7 +54,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [searchPid, setSearchPid] = React.useState('');
     const [isRefreshing, setIsRefreshing] = React.useState(false);
     const [selectedPhase, setSelectedPhase] = React.useState('Phase 1');
-    
+
     const getHeaders = () => {
         if (selectedPhase === 'Phase 2') {
             return canViewProlific ? HEADERS_PHASE2_WITH_PROLIFIC : HEADERS_PHASE2_NO_PROLIFIC;
@@ -126,21 +127,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (obj['Text'] < 5) obj['Survey Link'] = null;
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
-                obj['IO1'] = completedScenarios.includes('DryRunEval.IO1') || completedScenarios.includes('phase1-adept-train-IO1') ? 'y' : null;
-                obj['MJ1'] = completedScenarios.includes('DryRunEval.MJ1') || completedScenarios.includes('phase1-adept-train-MJ1') ? 'y' : null;
-                obj['MJ2'] = completedScenarios.includes('DryRunEval-MJ2-eval') || completedScenarios.includes('phase1-adept-eval-MJ2') ? 'y' : null;
-                obj['MJ4'] = completedScenarios.includes('DryRunEval-MJ4-eval') || completedScenarios.includes('phase1-adept-eval-MJ4') ? 'y' : null;
-                obj['MJ5'] = completedScenarios.includes('DryRunEval-MJ5-eval') || completedScenarios.includes('phase1-adept-eval-MJ5') ? 'y' : null;
-                obj['QOL1'] = completedScenarios.includes('qol-dre-1-eval') ? 'y' : null;
-                obj['QOL2'] = completedScenarios.includes('qol-dre-2-eval') || completedScenarios.includes('qol-ph1-eval-2') ? 'y' : null;
-                obj['QOL3'] = completedScenarios.includes('qol-dre-3-eval') || completedScenarios.includes('qol-ph1-eval-3') ? 'y' : null;
-                obj['QOL4'] = completedScenarios.includes('qol-ph1-eval-4') ? 'y' : null;
-                obj['VOL1'] = completedScenarios.includes('vol-dre-1-eval') ? 'y' : null;
-                obj['VOL2'] = completedScenarios.includes('vol-dre-2-eval') || completedScenarios.includes('vol-ph1-eval-2') ? 'y' : null;
-                obj['VOL3'] = completedScenarios.includes('vol-dre-3-eval') || completedScenarios.includes('vol-ph1-eval-3') ? 'y' : null;
-                obj['VOL4'] = completedScenarios.includes('vol-ph1-eval-4') ? 'y' : null;
 
-                if (res['Type']) {  
+                // set scenario completions using utility function
+                setScenarioCompletion(obj, completedScenarios);
+
+                if (res['Type']) {
                     allObjs.push(obj);
                 }
                 obj['Evaluation'] && allEvals.push(obj['Evaluation']);
@@ -156,8 +147,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const formatCell = (header, dataSet) => {
         const val = dataSet[header];
         const getClassName = (header, val) => {
-            const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-            if (lightGreenIfNotNull.includes(header) && isDefined(val)) {
+            if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
             }
             if ((header == 'Delegation' && val == 1) || (header == 'Text' && val == 5) || (header == 'Sim Count' && val == 4)) {
@@ -174,7 +164,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         navigator.clipboard.writeText(linkToCopy);
     };
 
-    // Get evals filtered by phase
     const getEvalsForPhase = () => {
         return evals.filter(evaluation => {
             const isPhase2Eval = evaluation === 'June 2025 Collaboration';
@@ -182,30 +171,27 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         });
     };
 
-    // Get types filtered by phase
     const getTypesForPhase = () => {
-        // Get unique types from participants that belong to the current phase
         const phaseParticipants = formattedData.filter(participant => {
             const isPhase2Eval = participant['Evaluation'] === 'June 2025 Collaboration';
             return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
         });
-        
+
         const phaseTypes = phaseParticipants
             .map(participant => participant['Participant Type'])
-            .filter(type => type); // Remove undefined values
-        
+            .filter(type => type);
+
         return Array.from(new Set(phaseTypes));
     };
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) => {
-                // Phase-based filtering
                 const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
                 const shouldShowInPhase = selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
-                
+
                 if (!shouldShowInPhase) return false;
-                
+
                 const sims = [x['Sim-1'], x['Sim-2'], x['Sim-3'], x['Sim-4']];
                 const didAdept = sims.filter((s) => s?.includes('MJ')).length > 0;
                 const didOW = sims.filter((s) => s?.includes('open_world')).length > 0;
@@ -224,7 +210,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         }
     }, [formattedData, typeFilters, evalFilters, completionFilters, searchPid, selectedPhase]);
 
-    // Clear eval and type filters when phase changes if they're no longer valid
     React.useEffect(() => {
         const validEvals = getEvalsForPhase();
         const validEvalFilters = evalFilters.filter(filter => validEvals.includes(filter));
