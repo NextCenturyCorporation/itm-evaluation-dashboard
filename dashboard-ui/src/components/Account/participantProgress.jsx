@@ -28,9 +28,11 @@ const GET_SIM_DATA = gql`
         getAllSimAlignment
     }`;
 
-const HEADERS_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-const HEADERS_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
+const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text'];
+const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text'];
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
@@ -50,7 +52,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [sortBy, setSortBy] = React.useState('Participant ID ↑');
     const [searchPid, setSearchPid] = React.useState('');
     const [isRefreshing, setIsRefreshing] = React.useState(false);
-    const HEADERS = canViewProlific ? HEADERS_WITH_PROLIFIC : HEADERS_NO_PROLIFIC;
+    const [selectedPhase, setSelectedPhase] = React.useState('Phase 1');
+    
+    const getHeaders = () => {
+        if (selectedPhase === 'Phase 2') {
+            return canViewProlific ? HEADERS_PHASE2_WITH_PROLIFIC : HEADERS_PHASE2_NO_PROLIFIC;
+        }
+        return canViewProlific ? HEADERS_PHASE1_WITH_PROLIFIC : HEADERS_PHASE1_NO_PROLIFIC;
+    };
+    const HEADERS = getHeaders();
 
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
@@ -86,7 +96,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Sim-3'] = sims[2]?.scenario_id;
                 obj['Sim-4'] = sims[3]?.scenario_id;
 
-
                 const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || (x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response ?? x.results?.pid) == pid)
                     && x.results?.['Post-Scenario Measures']);
                 const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response == pid));
@@ -106,7 +115,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
 
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName ?? lastSurvey?.results?.evalName;
-
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
@@ -132,7 +140,9 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['VOL3'] = completedScenarios.includes('vol-dre-3-eval') || completedScenarios.includes('vol-ph1-eval-3') ? 'y' : null;
                 obj['VOL4'] = completedScenarios.includes('vol-ph1-eval-4') ? 'y' : null;
 
-                allObjs.push(obj);
+                if (res['Type']) {  
+                    allObjs.push(obj);
+                }
                 obj['Evaluation'] && allEvals.push(obj['Evaluation']);
             }
             setFormattedData(allObjs);
@@ -164,9 +174,38 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         navigator.clipboard.writeText(linkToCopy);
     };
 
+    // Get evals filtered by phase
+    const getEvalsForPhase = () => {
+        return evals.filter(evaluation => {
+            const isPhase2Eval = evaluation === 'June 2025 Collaboration';
+            return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+        });
+    };
+
+    // Get types filtered by phase
+    const getTypesForPhase = () => {
+        // Get unique types from participants that belong to the current phase
+        const phaseParticipants = formattedData.filter(participant => {
+            const isPhase2Eval = participant['Evaluation'] === 'June 2025 Collaboration';
+            return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+        });
+        
+        const phaseTypes = phaseParticipants
+            .map(participant => participant['Participant Type'])
+            .filter(type => type); // Remove undefined values
+        
+        return Array.from(new Set(phaseTypes));
+    };
+
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) => {
+                // Phase-based filtering
+                const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
+                const shouldShowInPhase = selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+                
+                if (!shouldShowInPhase) return false;
+                
                 const sims = [x['Sim-1'], x['Sim-2'], x['Sim-3'], x['Sim-4']];
                 const didAdept = sims.filter((s) => s?.includes('MJ')).length > 0;
                 const didOW = sims.filter((s) => s?.includes('open_world')).length > 0;
@@ -183,7 +222,22 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     (searchPid.length == 0 || x['Participant ID'].includes(searchPid))
             }));
         }
-    }, [formattedData, typeFilters, evalFilters, completionFilters, searchPid]);
+    }, [formattedData, typeFilters, evalFilters, completionFilters, searchPid, selectedPhase]);
+
+    // Clear eval and type filters when phase changes if they're no longer valid
+    React.useEffect(() => {
+        const validEvals = getEvalsForPhase();
+        const validEvalFilters = evalFilters.filter(filter => validEvals.includes(filter));
+        if (validEvalFilters.length !== evalFilters.length) {
+            setEvalFilters(validEvalFilters);
+        }
+
+        const validTypes = getTypesForPhase();
+        const validTypeFilters = typeFilters.filter(filter => validTypes.includes(filter));
+        if (validTypeFilters.length !== typeFilters.length) {
+            setTypeFilters(validTypeFilters);
+        }
+    }, [selectedPhase, evals, formattedData]);
 
     const getDateFromString = (s) => {
         if (s) {
@@ -239,7 +293,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             sortData();
             setIsRefreshing(false);
         }
-
     };
 
     const hideColumn = (val) => {
@@ -267,14 +320,33 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     return (<>
         <h2 className='progress-header'>Participant Progress</h2>
+        <section className='tableHeader'>
+            <div className="filters">
+                <Autocomplete
+                    options={['Phase 1', 'Phase 2']}
+                    value={selectedPhase}
+                    size="small"
+                    style={{ width: '200px' }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Phase"
+                            placeholder=""
+                        />
+                    )}
+                    onChange={(_, newVal) => setSelectedPhase(newVal || 'Phase 1')}
+                />
+            </div>
+        </section>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
                     multiple
-                    options={types}
+                    options={getTypesForPhase()}
                     filterSelectedOptions
                     size="small"
+                    value={typeFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -286,10 +358,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
                 <Autocomplete
                     multiple
-                    options={evals}
+                    options={getEvalsForPhase()}
                     filterSelectedOptions
                     size="small"
                     style={{ width: '400px' }}
+                    value={evalFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -332,8 +405,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
                 <Autocomplete
                     options={sortOptions}
-                    filterSelectedOptions
-                    className="large-box"
                     size="small"
                     style={{ width: '600px' }}
                     value={sortBy}
@@ -370,7 +441,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                                     <span className='refreshing-label'>Fetching Data...</span>
                                 </div>
                             </td>
-
                         </tr>
                         : filteredData.map((dataSet, index) => {
                             return (<tr key={dataSet['Participant_ID'] + '-' + index}>
