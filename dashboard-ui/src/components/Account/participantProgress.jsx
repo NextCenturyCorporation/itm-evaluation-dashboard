@@ -67,7 +67,9 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const pid = res['ParticipantID']?.toString();
                 obj['Participant ID'] = pid;
                 obj['Participant Type'] = res['Type'];
-                allTypes.push(res['Type']);
+                if (res['Type']) {
+                    allTypes.push(res['Type']);
+                }
 
                 const sims = simResults.filter((x) => x.pid == pid).sort((a, b) => a.timestamp - b.timestamp);
                 obj['Evaluation'] = sims[0]?.evalName;
@@ -286,7 +288,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     multiple
                     options={evals}
                     filterSelectedOptions
-                    size="small" 
+                    size="small"
                     style={{ width: '400px' }}
                     renderInput={(params) => (
                         <TextField
@@ -371,12 +373,12 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                         </tr>
                         : filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Participant_ID'] + '-' + index}>
-                            {HEADERS.map((val) => {
-                                return !columnsToHide.includes(val) && formatCell(val, dataSet);
-                            })}
-                        </tr>);
-                    })}
+                            return (<tr key={dataSet['Participant_ID'] + '-' + index}>
+                                {HEADERS.map((val) => {
+                                    return !columnsToHide.includes(val) && formatCell(val, dataSet);
+                                })}
+                            </tr>);
+                        })}
                 </tbody>
             </table>
         </div>
