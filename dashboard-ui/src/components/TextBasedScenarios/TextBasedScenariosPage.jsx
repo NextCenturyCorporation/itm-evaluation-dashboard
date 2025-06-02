@@ -601,14 +601,10 @@ class TextBasedScenariosPage extends Component {
             ...scenarioConfigs[0],
             pages: [...scenarioConfigs[0].pages]
         };
-        console.log('default probe order')
-        console.log(config.pages)
         config.pages = shuffle([...config.pages])
-        console.log('probe order after randomized')
-        console.log(config.pages)
 
         config.title = title;
-        config.showTitle = true;
+        config.showTitle = false;
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
         this.survey.focusOnFirstError = false;
