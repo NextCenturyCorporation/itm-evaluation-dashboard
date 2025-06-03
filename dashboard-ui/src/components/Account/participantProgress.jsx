@@ -128,6 +128,13 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
 
+                if (!obj['Evaluation']) {
+                    // Fall back if no sim, del, or text based scenarios
+                    if (pid.startsWith('202506')) {
+                        obj['Evaluation'] = 'June 2025 Collaboration';
+                    }
+                }
+
                 // set scenario completions using utility function
                 setScenarioCompletion(obj, completedScenarios);
 
