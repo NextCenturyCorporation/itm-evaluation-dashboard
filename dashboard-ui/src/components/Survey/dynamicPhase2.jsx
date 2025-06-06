@@ -2,7 +2,7 @@ import React from 'react';
 import { Table, Container, Row, Col } from 'react-bootstrap';
 import '../../css/dynamicPhase2.css';
 
-const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
+const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
     const renderSupplies = () => {
         if (!supplies || supplies.length === 0) return null;
 
@@ -45,6 +45,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
                 <thead>
                     <tr>
                         <th className="table-header table-header-number"></th>
+                        <th className='table-header table-header-description'></th>
                         <th className="table-header table-header-patient">Choice A</th>
                         <th className="table-header table-header-patient">Choice B</th>
                     </tr>
@@ -55,6 +56,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
                             <td className="row-number">
                                 {index + 1}
                             </td>
+                            <td className={`patient-cell`}>{row['probe_unstructured']}</td>
                             <td className={`patient-cell ${row['choice'] === 'Patient A' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
                                 <div className="badge-container">
                                     {row['choice'] === 'Patient A' ? (
@@ -66,7 +68,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
                                     )}
                                 </div>
                                 <div className="patient-description">
-                                    {row['Patient A']}
+                                    {options[0]}
                                 </div>
                             </td>
                             <td className={`patient-cell ${row['choice'] === 'Patient B' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
@@ -80,7 +82,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies }) => {
                                     )}
                                 </div>
                                 <div className="patient-description">
-                                    {row['Patient B']}
+                                    {options[1]}
                                 </div>
                             </td>
                         </tr>
