@@ -128,6 +128,13 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
 
+                if (!obj['Evaluation']) {
+                    // Fall back if no sim, del, or text based scenarios
+                    if (pid.startsWith('202506')) {
+                        obj['Evaluation'] = 'June 2025 Collaboration';
+                    }
+                }
+
                 // set scenario completions using utility function
                 setScenarioCompletion(obj, completedScenarios);
 
@@ -145,20 +152,24 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults]);
 
     const formatCell = (header, dataSet) => {
-        const val = dataSet[header];
-        const getClassName = (header, val) => {
-            if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
-                return 'li-green-cell';
-            }
-            if ((header == 'Delegation' && val == 1) || (header == 'Text' && val == 5) || (header == 'Sim Count' && val == 4)) {
-                return 'dk-green-cell';
-            }
-            return 'white-cell';
-        };
-        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '') + ' ' + (header.length > 17 ? 'large-column' : '')}>
-            {header == 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
-        </td>);
+    const val = dataSet[header];
+    const getClassName = (header, val) => {
+        if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
+            return 'li-green-cell';
+        }
+        // phase dependent
+        const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
+        if ((header == 'Delegation' && val == 1) || 
+            (header == 'Text' && val >= textThreshold) || 
+            (header == 'Sim Count' && val == 4)) {
+            return 'dk-green-cell';
+        }
+        return 'white-cell';
     };
+    return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '') + ' ' + (header.length > 17 ? 'large-column' : '')}>
+        {header == 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
+    </td>);
+};
 
     const copyLink = (linkToCopy) => {
         navigator.clipboard.writeText(linkToCopy);
