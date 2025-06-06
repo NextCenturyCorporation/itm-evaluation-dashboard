@@ -78,7 +78,8 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                             rows: element.rows,
                             scenarioDescription: element.scenarioDescription,
                             supplies: element.supplies,
-                            dmName: element.dmName
+                            dmName: element.dmName,
+                            options: element.options
                         };
                     }
                 }
@@ -162,6 +163,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                                 </h3>
                                 <DynamicPhase2 
                                     rows={dmData.rows} 
+                                    options={firstDmData.options}
                                     scenarioDescription={null} 
                                     supplies={null}
                                     showHeaderOnly={false} 
