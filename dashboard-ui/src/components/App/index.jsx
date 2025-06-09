@@ -82,6 +82,13 @@ const GET_CONFIGS_DEL_MEDIA = gql`
         getAllImageUrls
     }`;
 
+const GET_CONFIGS_PHASE_2 = gql`
+    query GetConfigsNoImages {
+        getAllSurveyConfigs
+        getAllTextBasedConfigs
+    }
+`
+
 
 const LOW_PID = 202506100;
 const HIGH_PID = 202506299;
@@ -110,7 +117,9 @@ export function App() {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
             if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {
-                setConfigQuery(GET_CONFIGS_DEL_MEDIA);
+                // temporary for testing, set back
+                setConfigQuery(GET_CONFIGS_PHASE_2)
+                //setConfigQuery(GET_CONFIGS_DEL_MEDIA);
             } else {
                 setConfigQuery(GET_CONFIGS);
             }

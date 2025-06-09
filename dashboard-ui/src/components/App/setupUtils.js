@@ -4,35 +4,46 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import { setParticipantLog } from '../../store/slices/participantSlice';
 
 export function setupConfigWithImages(data) {
+    const hasImageData = data.getAllImageUrls || data.getAllTextBasedImages;
+    
     for (const config of data.getAllSurveyConfigs) {
         let tempConfig = JSON.parse(JSON.stringify(config));
-        for (const page of tempConfig.survey.pages) {
-            for (const el of page.elements) {
-                if (Object.keys(el).includes("patients")) {
-                    for (const patient of el.patients) {
-                        let foundImg = null;
-                        if (config.survey.version == 4 || config.survey.version == 5) {
-                            let pName = patient.name;
-                            if (pName.includes('Casualty')) {
-                                pName = 'casualty_' + pName.substring(pName.length - 1);
-                            }
-                            foundImg = data.getAllTextBasedImages.find((x) => ((x.casualtyId.toLowerCase() === pName.toLowerCase() || (x.casualtyId === 'us_soldier' && pName === 'US Soldier')) && (x.scenarioId === page.scenarioIndex || x.scenarioId.replace('MJ', 'IO') === page.scenarioIndex)));
-                        }
-                        else {
-                            foundImg = data.getAllImageUrls?.find((x) => x._id == patient.imgUrl);
-                        }
-                        if (isDefined(foundImg)) {
+        
+        if (hasImageData) {
+            for (const page of tempConfig.survey.pages) {
+                for (const el of page.elements) {
+                    if (Object.keys(el).includes("patients")) {
+                        for (const patient of el.patients) {
+                            let foundImg = null;
                             if (config.survey.version == 4 || config.survey.version == 5) {
-                                patient.imgUrl = foundImg.imageByteCode;
+                                if (data.getAllTextBasedImages) {
+                                    let pName = patient.name;
+                                    if (pName.includes('Casualty')) {
+                                        pName = 'casualty_' + pName.substring(pName.length - 1);
+                                    }
+                                    foundImg = data.getAllTextBasedImages.find((x) => ((x.casualtyId.toLowerCase() === pName.toLowerCase() || (x.casualtyId === 'us_soldier' && pName === 'US Soldier')) && (x.scenarioId === page.scenarioIndex || x.scenarioId.replace('MJ', 'IO') === page.scenarioIndex)));
+                                }
                             }
                             else {
-                                patient.imgUrl = foundImg.url;
+                                if (data.getAllImageUrls) {
+                                    foundImg = data.getAllImageUrls.find((x) => x._id == patient.imgUrl);
+                                }
+                            }
+                            
+                            if (isDefined(foundImg)) {
+                                if (config.survey.version == 4 || config.survey.version == 5) {
+                                    patient.imgUrl = foundImg.imageByteCode;
+                                }
+                                else {
+                                    patient.imgUrl = foundImg.url;
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        
         store.dispatch(addConfig({ id: tempConfig._id, data: tempConfig }));
     }
 }
@@ -42,9 +53,13 @@ export function setupTextBasedConfig(data) {
         console.warn("No text-based configs found in Mongo");
         return;
     }
+    
+    const hasTextBasedImages = data.getAllTextBasedImages && data.getAllTextBasedImages.length > 0;
+    
     for (const config of data.getAllTextBasedConfigs) {
         let tempConfig = JSON.parse(JSON.stringify(config));
-        if (tempConfig.eval != 'mre-eval') {
+        
+        if (hasTextBasedImages && tempConfig.eval != 'mre-eval') {
             for (const page of tempConfig.pages) {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
@@ -64,6 +79,7 @@ export function setupTextBasedConfig(data) {
                 }
             }
         }
+        
         store.dispatch(addTextBasedConfig({ id: tempConfig._id, data: tempConfig }));
     }
 }
@@ -79,7 +95,6 @@ export function setParticipantLogInStore(participants) {
 export function setCurrentUIStyle(version) {
     store.dispatch(setCurrentStyle(version));
 }
-
 
 export const PH1_SURVEY_SETS = [
     { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
