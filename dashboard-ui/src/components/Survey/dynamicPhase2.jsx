@@ -27,13 +27,17 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
         return (
             <div className="instruction-section">
                 <h4 className="instruction-title">
-                    Consider a decision-maker who chose to treat the highlighted patients first, when given the following choices.
+                    Consider a decision-maker who made the highlighted choices. 
                 </h4>
                 <p className="instruction-subtitle">
                     {scenarioDescription}
                 </p>
             </div>
         );
+    };
+
+    const isChoiceSelected = (rowChoice, optionIndex, options) => {
+        return rowChoice === options[optionIndex];
     };
 
     return (
@@ -51,42 +55,47 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map((row, index) => (
-                        <tr key={index} className="border-bottom">
-                            <td className="row-number">
-                                {index + 1}
-                            </td>
-                            <td className={`patient-cell`}>{row['probe_unstructured']}</td>
-                            <td className={`patient-cell ${row['choice'] === 'Patient A' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
-                                <div className="badge-container">
-                                    {row['choice'] === 'Patient A' ? (
-                                        <div className="selected-badge">
-                                            ✓ SELECTED
-                                        </div>
-                                    ) : (
-                                        <div className="badge-spacer"></div>
-                                    )}
-                                </div>
-                                <div className="patient-description">
-                                    {options[0]}
-                                </div>
-                            </td>
-                            <td className={`patient-cell ${row['choice'] === 'Patient B' ? 'patient-cell-selected' : 'patient-cell-default'}`}>
-                                <div className="badge-container">
-                                    {row['choice'] === 'Patient B' ? (
-                                        <div className="selected-badge">
-                                            ✓ SELECTED
-                                        </div>
-                                    ) : (
-                                        <div className="badge-spacer"></div>
-                                    )}
-                                </div>
-                                <div className="patient-description">
-                                    {options[1]}
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
+                    {rows.map((row, index) => {
+                        const isChoiceASelected = isChoiceSelected(row['choice'], 0, options);
+                        const isChoiceBSelected = isChoiceSelected(row['choice'], 1, options);
+                        
+                        return (
+                            <tr key={index} className="border-bottom">
+                                <td className="row-number">
+                                    {index + 1}
+                                </td>
+                                <td className={`patient-cell`}>{row['probe_unstructured']}</td>
+                                <td className={`patient-cell ${isChoiceASelected ? 'patient-cell-selected' : 'patient-cell-default'}`}>
+                                    <div className="badge-container">
+                                        {isChoiceASelected ? (
+                                            <div className="selected-badge">
+                                                ✓ SELECTED
+                                            </div>
+                                        ) : (
+                                            <div className="badge-spacer"></div>
+                                        )}
+                                    </div>
+                                    <div className="patient-description">
+                                        {options[0]}
+                                    </div>
+                                </td>
+                                <td className={`patient-cell ${isChoiceBSelected ? 'patient-cell-selected' : 'patient-cell-default'}`}>
+                                    <div className="badge-container">
+                                        {isChoiceBSelected ? (
+                                            <div className="selected-badge">
+                                                ✓ SELECTED
+                                            </div>
+                                        ) : (
+                                            <div className="badge-spacer"></div>
+                                        )}
+                                    </div>
+                                    <div className="patient-description">
+                                        {options[1]}
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </Table>
         </Container>
