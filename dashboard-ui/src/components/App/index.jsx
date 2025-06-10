@@ -233,6 +233,8 @@ export function App() {
                 x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
             ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
 
+            const scenarioSet = Math.floor(Math.random() * 3) + 1;
+
             const participantData = {
                 "ParticipantID": newPid,
                 "Type": isTester ? "Test" : "emailParticipant",
@@ -242,10 +244,10 @@ export function App() {
                 "textEntryCount": 0,
                 "hashedEmail": hashedEmail,
                 
-                "AF-text-scenario": Math.floor(Math.random() * 3) + 1,
-                "MF-text-scenario": Math.floor(Math.random() * 3) + 1,
-                "PS-text-scenario": Math.floor(Math.random() * 3) + 1,
-                "SS-text-scenario": Math.floor(Math.random() * 3) + 1
+                "AF-text-scenario": scenarioSet,
+                "MF-text-scenario": scenarioSet,
+                "PS-text-scenario": scenarioSet,
+                "SS-text-scenario": scenarioSet
             };
 
             const addRes = await addParticipant({
