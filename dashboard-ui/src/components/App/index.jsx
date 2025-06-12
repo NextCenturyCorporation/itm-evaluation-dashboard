@@ -117,10 +117,12 @@ export function App() {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
             if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {
-                // temporary for testing, set back
+                setConfigQuery(GET_CONFIGS_DEL_MEDIA);
+            } else if (parseFloat(versionData.getCurrentSurveyVersion) >= 6.0) {
+                console.log("correct configs query")
                 setConfigQuery(GET_CONFIGS_PHASE_2)
-                //setConfigQuery(GET_CONFIGS_DEL_MEDIA);
-            } else {
+            }
+            else {
                 setConfigQuery(GET_CONFIGS);
             }
             setSendConfigQuery(true);
