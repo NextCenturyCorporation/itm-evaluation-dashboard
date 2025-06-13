@@ -15,11 +15,10 @@ import { useQuery, useMutation } from 'react-apollo'
 import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
-import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
 import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBaselineMapping, getTadBaselineMapping } from "./delegationMappings";
 import { useHistory } from 'react-router-dom';
-import testConfig from "./testConfig.json"
+import { isDefined } from "../AggregateResults/DataFunctions";
 import { ComparisonPhase2 } from "./comparisonPhase2";
 
 const COUNT_HUMAN_GROUP_FIRST = gql`
@@ -124,7 +123,7 @@ class SurveyPage extends Component {
         this.surveyConfigClone = structuredClone(this.state.surveyConfig);
         this.initializeSurvey();
 
-        this.survey = new Model(testConfig.survey);
+        this.survey = new Model(this.surveyConfigClone);
         this.survey.applyTheme(surveyTheme);
 
         this.surveyData = {};
@@ -195,13 +194,13 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: false
             });
         }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
-        if ((this.state.surveyVersion != 4.0 && this.state.surveyVersion != 5.0)) {
+        if ((this.state.surveyVersion != 4.0 && this.state.surveyVersion != 5.0 && this.state.surveyVersion != 6.0)) {
             if (this.state.surveyVersion == 1.3) {
                 this.assign_omnibus_1_3(groupedDMs)
             }
@@ -420,6 +419,12 @@ class SurveyPage extends Component {
             delete comparisonPages[`${removed[0]}${removed[1]}`];
 
             return { groupedDMs, removed, comparisonPages };
+        }
+        else if (this.state.surveyVerison == 6.0) {
+            const allPages = this.surveyConfigClone.pages;
+            const pages = [...allPages.slice(0, 4)];
+
+            return {}
         }
     }
 
@@ -707,7 +712,7 @@ class SurveyPage extends Component {
 
         if (this.state.surveyVersion == 6.0){
             this.surveyData['evalName'] = 'June 2025 Collaboration'
-            this.surveyData['evalNumber'] = 9
+            this.surveyData['evalNumber'] = 8
             this.surveyData['pid'] = this.state.pid;
             this.surveyData['orderLog'] = this.state.orderLog;
         }
