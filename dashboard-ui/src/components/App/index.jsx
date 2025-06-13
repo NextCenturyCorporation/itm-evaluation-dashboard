@@ -82,6 +82,13 @@ const GET_CONFIGS_DEL_MEDIA = gql`
         getAllImageUrls
     }`;
 
+const GET_CONFIGS_PHASE_2 = gql`
+    query GetConfigsNoImages {
+        getAllSurveyConfigs
+        getAllTextBasedConfigs
+    }
+`
+
 
 const LOW_PID = 202506100;
 const HIGH_PID = 202506299;
@@ -111,7 +118,10 @@ export function App() {
             setIsVersionDataLoaded(true);
             if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {
                 setConfigQuery(GET_CONFIGS_DEL_MEDIA);
-            } else {
+            } else if (parseFloat(versionData.getCurrentSurveyVersion) >= 6.0) {
+                setConfigQuery(GET_CONFIGS_PHASE_2)
+            }
+            else {
                 setConfigQuery(GET_CONFIGS);
             }
             setSendConfigQuery(true);
@@ -233,6 +243,8 @@ export function App() {
                 x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
             ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
 
+            const scenarioSet = Math.floor(Math.random() * 3) + 1;
+
             const participantData = {
                 "ParticipantID": newPid,
                 "Type": isTester ? "Test" : "emailParticipant",
@@ -242,10 +254,10 @@ export function App() {
                 "textEntryCount": 0,
                 "hashedEmail": hashedEmail,
                 
-                "AF-text-scenario": Math.floor(Math.random() * 3) + 1,
-                "MF-text-scenario": Math.floor(Math.random() * 3) + 1,
-                "PS-text-scenario": Math.floor(Math.random() * 3) + 1,
-                "SS-text-scenario": Math.floor(Math.random() * 3) + 1
+                "AF-text-scenario": scenarioSet,
+                "MF-text-scenario": scenarioSet,
+                "PS-text-scenario": scenarioSet,
+                "SS-text-scenario": scenarioSet
             };
 
             const addRes = await addParticipant({

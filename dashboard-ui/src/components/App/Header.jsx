@@ -16,7 +16,7 @@ export function Header({ currentUser, logout }) {
             </li>
             {(isUserElevated(currentUser) &&
                 <NavDropdown title="Data Collection">
-                    <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
+                    <NavDropdown.Item as={"span"} style={{ cursor: 'not-allowed', opacity: 0.6 }} className="dropdown-item text-muted" /*to="/survey"*/>
                         Take Delegation Survey
                     </NavDropdown.Item>
                     {(currentUser.admin === true || currentUser.evaluator) && (

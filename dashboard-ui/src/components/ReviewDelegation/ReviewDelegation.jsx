@@ -92,7 +92,21 @@ export function ReviewDelegationPage() {
                 const surveyModel = new Model(page);
                 surveyModel.applyTheme(surveyTheme);
                 setSelectedConfig(surveyModel);
-                setReviewingText((page['evalNumber'] == 4 ? page['scenarioIndex'] : PH1_NAME_MAP[page['scenarioIndex']]) + ' - ' + page['admName'] + ' - ' + page['admAlignment']);
+                
+                // Determine the reviewing text based on evaluation version
+                let reviewText = '';
+                if (page['evalNumber'] == 4) {
+                    // DRE scenarios
+                    reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
+                } else if (page['evalNumber'] == 8) {
+                    // Phase 2 scenarios
+                    reviewText = page['scenarioName'] + ' - ' + page['admName'] + ' - ' + page['target'];
+                } else {
+                    // Phase 1 scenarios
+                    reviewText = (page['scenarioIndex'] ? PH1_NAME_MAP[page['scenarioIndex']] : 'Unknown') + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
+                }
+                
+                setReviewingText(reviewText);
             } catch (error) {
                 console.error('Error creating survey model:', error);
             }
@@ -102,30 +116,52 @@ export function ReviewDelegationPage() {
     const renderConfigButtons = () => {
         const dre_scenarios = {};
         const ph1_scenarios = {};
+        const ph2_scenarios = {};
 
         const dre_config = delegationConfigs["delegation_v4.0"];
         const ph1_config = delegationConfigs["delegation_v5.0"];
-        [dre_config, ph1_config].forEach((config, i) => {
+        const ph2_config = delegationConfigs["delegation_v6.0"];
+        
+        [dre_config, ph1_config, ph2_config].forEach((config, i) => {
+            if (!config) return; 
+            
             for (const page of config['pages']) {
-                if (Object.keys(page).includes('scenarioIndex')) {
-                    if ((i == 0 && !Object.keys(dre_scenarios).includes(page['scenarioIndex'])) ||
-                        (i == 1 && !Object.keys(ph1_scenarios).includes(page['scenarioIndex']))) {
-                        if (i == 0) dre_scenarios[page['scenarioIndex']] = {};
-                        else ph1_scenarios[page['scenarioIndex']] = {};
-
+                if (Object.keys(page).includes('scenarioIndex') || Object.keys(page).includes('scenarioName')) {
+                    let scenarioKey = '';
+                    
+                    if (i == 0) { // DRE scenarios
+                        scenarioKey = page['scenarioIndex'];
+                        if (!Object.keys(dre_scenarios).includes(scenarioKey)) {
+                            dre_scenarios[scenarioKey] = {};
+                        }
+                        if (!Object.keys(dre_scenarios[scenarioKey]).includes(page['admName'])) {
+                            dre_scenarios[scenarioKey][page['admName']] = [];
+                        }
+                        dre_scenarios[scenarioKey][page['admName']].push(page);
+                    } else if (i == 1) { // Phase 1 scenarios
+                        scenarioKey = page['scenarioIndex'];
+                        if (!Object.keys(ph1_scenarios).includes(scenarioKey)) {
+                            ph1_scenarios[scenarioKey] = {};
+                        }
+                        if (!Object.keys(ph1_scenarios[scenarioKey]).includes(page['admName'])) {
+                            ph1_scenarios[scenarioKey][page['admName']] = [];
+                        }
+                        ph1_scenarios[scenarioKey][page['admName']].push(page);
+                    } else if (i == 2) { // Phase 2 scenarios
+                        scenarioKey = page['scenarioName'] || page['scenarioIndex'];
+                        if (!Object.keys(ph2_scenarios).includes(scenarioKey)) {
+                            ph2_scenarios[scenarioKey] = {};
+                        }
+                        if (!Object.keys(ph2_scenarios[scenarioKey]).includes(page['admName'])) {
+                            ph2_scenarios[scenarioKey][page['admName']] = [];
+                        }
+                        ph2_scenarios[scenarioKey][page['admName']].push(page);
                     }
-                    if ((i == 0 && !Object.keys(dre_scenarios[page['scenarioIndex']]).includes(page['admName'])) ||
-                        (i == 1 && !Object.keys(ph1_scenarios[page['scenarioIndex']]).includes(page['admName']))) {
-                        if (i == 0) dre_scenarios[page['scenarioIndex']][page['admName']] = [];
-                        else ph1_scenarios[page['scenarioIndex']][page['admName']] = [];
-                    }
-                    if (i == 0) dre_scenarios[page['scenarioIndex']][page['admName']].push(page);
-                    else ph1_scenarios[page['scenarioIndex']][page['admName']].push(page);
                 }
             }
         });
 
-        const renderConfigGroup = (configs, title) => (
+        const renderConfigGroup = (configs, title, isPhase2 = false) => (
             <Accordion className="accordion">
                 <Accordion.Item eventKey="0">
                     <Accordion.Header><strong className="scenarioName">{title}</strong></Accordion.Header>
@@ -137,14 +173,14 @@ export function ReviewDelegationPage() {
                                         <Accordion.Header>{admName}</Accordion.Header>
                                         <Accordion.Body>
                                             <Row xs={1} md={2} lg={2} className="g-4">
-                                                {configs[admName].map(page => (
-                                                    <Col key={title + ' ' + admName + ' ' + page['admAlignment']}>
+                                                {configs[admName].map((page, index) => (
+                                                    <Col key={title + ' ' + admName + ' ' + (isPhase2 ? page['target'] : page['admAlignment']) + ' ' + index}>
                                                         <Button
                                                             variant="outline-primary"
                                                             onClick={() => handleConfigSelect(page)}
                                                             className="text-start text-truncate custom-btn"
                                                         >
-                                                            {page['admAlignment']}
+                                                            {isPhase2 ? page['target'] : page['admAlignment']}
                                                         </Button>
                                                     </Col>
                                                 ))}
@@ -162,6 +198,17 @@ export function ReviewDelegationPage() {
         return (
             <>
                 <Card className="mb-4 border-0 shadow">
+                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 2 Scenarios</Card.Header>
+                    <Card.Body className="bg-light">
+                        {Object.keys(ph2_scenarios).map((scenarioName => (
+                            <div key={scenarioName}>
+                                {renderConfigGroup(ph2_scenarios[scenarioName], scenarioName, true)}
+                            </div>
+                        )))}
+                    </Card.Body>
+                </Card>
+            
+                <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
                     <Card.Body className="bg-light">
                         {Object.keys(ph1_scenarios).map((scenarioName => (
@@ -171,6 +218,7 @@ export function ReviewDelegationPage() {
                         )))}
                     </Card.Body>
                 </Card>
+                
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">

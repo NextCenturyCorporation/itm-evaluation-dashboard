@@ -43,7 +43,9 @@
                         "name": "Test medic 1",
                         "title": "Phase 2 Mockup",
                         "dmName": "Test medic 1",
-                        "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic available at the site of a multi-casualty event and it will be at least 30 minutes before any patient can be evacuated. Which patient do you treat first?",
+                        "probe_question": "Who do you treat first?",
+                        "options": ["Move to treat the casualty now", "Wait in your current location"],
+                        "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic with your unit. It will be at least 30 minutes before any casualty can be evacuated.",
                         "supplies": [
                             {
                                 "type": "Hemostatic gauze",
@@ -98,29 +100,24 @@
                         ],
                         "rows": [
                             {
-                                "Patient A": "Massive bleeding from their right calf. A mass shooter who killed 1 person and seriously injured 5 people at a marketplace.",
-                                "Patient B": "Massive bleeding from their left shoulder. A victim in the shooting.",
-                                "choice": "Patient B"
+                                "choice": "Move to treat the casualty now",
+                                "probe_unstructured": "Your squad is patrolling dismounted when it receives fire from a sniper and sustains one casualty. Your unit does not have a good idea of the suspected sniper location. You have not received any additional fire in the last 5 minutes. The casualty is in an exposed location and you would need to move across 100 ft of exposed area to reach them. They are not visible from your location. You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?"
                             },
                             {
-                                "Patient A": "Massive bleeding from their left calf. Shot and seriously injured 2 people in an armed robbery.",
-                                "Patient B": "A chest wound and is gasping for breath. A victim in the shooting.",
-                                "choice": "Patient B"
+                                "choice": "Move to treat the casualty now",
+                                "probe_unstructured": "Your platoon is patrolling dismounted when your point squad encounters what seems to be an observation post and sustains one casualty. Your squad exchanged fire. Three enemy troops are reported fleeing the location. You have not received any additional fire in the last 2 minutes. The casualty is in a location with cover, but you would need to move across 20 ft of exposed area to reach them. They are not visible from your location. You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?"
                             },
                             {
-                                "Patient A": "Massive bleeding from a partial amputation of their left foot. Shot and seriously injured 2 people in a hold-up.",
-                                "Patient B": "Moderate bleeding from their left thigh. A victim in the shooting.",
-                                "choice": "Patient A"
+                                "choice": "Wait in your current location",
+                                "probe_unstructured": "In the process of attacking a suspected enemy position, your platoon is pinned down by a heavy volume of fire and sustains one casualty. The enemy fire ceases. You have not received any enemy fire in the last 3 minutes. The casualty is in a location with cover, but you would need to move across 20 ft of exposed area to reach them. They are not visible from your location. You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?"
                             },
                             {
-                                "Patient A": "No visible bleeding but is not breathing. Sabotaged a train and seriously injured 2 people.",
-                                "Patient B": "Moderate bleeding from their right thigh. Injured in the incident.",
-                                "choice": "Patient A"
+                                "choice": "Wait in your current location",
+                                "probe_unstructured": "Your platoon is patrolling dismounted when your point squad encounters what seems to be an observation post and sustains one casualty. Your squad exchanged fire. You have not received any additional fire in the last 2 minutes. The casualty is in an exposed location and you would need to move across 100 ft of exposed area to reach them. They are bleeding heavily. You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?"
                             },
                             {
-                                "Patient A": "Massive bleeding from their left arm. Abandoned their military duty station during a high threat condition, so there was no warning for an enemy attack that seriously injured 2 people.",
-                                "Patient B": "Moderate bleeding from their left shoulder. Injured in the attack.",
-                                "choice": "Patient A"
+                                "choice": "Move to treat the casualty now",
+                                "probe_unstructured": "Your platoon is patrolling dismounted when your point squad encounters what seems to be an observation post and sustains one casualty. Your squad exchanged fire. You have not received any additional fire in the last 2 minutes. The casualty is in an exposed location and you would need to move across 100 ft of exposed area to reach them. They may have a broken leg. You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?"
                             }
                         ]
                     },
@@ -188,7 +185,9 @@
                         "name": "Test medic 2",
                         "title": "Phase 2 Mockup",
                         "dmName": "Test medic 2",
-                        "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic available at the site of a multi-casualty event and it will be at least 30 minutes before any patient can be evacuated. Which patient do you treat first?",
+                        "probe_question": "Who do you treat first?",
+                        "options": ["Treat Patient A", "Treat Patient B"],
+                        "scenarioDescription": "Imagine that you are deployed as a military medic in a foreign country. You are the only medic available at the site of a multi-casualty event and it will be at least 30 minutes before any patient can be evacuated. Who do you treat first?",
                         "supplies": [
                             {
                                 "type": "Hemostatic gauze",
@@ -243,29 +242,24 @@
                         ],
                         "rows": [
                             {
-                                "Patient A": "Massive bleeding from their right calf. A mass shooter who killed 1 person and seriously injured 5 people at a marketplace.",
-                                "Patient B": "Massive bleeding from their left shoulder. A victim in the shooting.",
-                                "choice": "Patient A"
+                                "choice": "Patient A",
+                                "probe_unstructured": "Patient A has massive bleeding from a partial amputation of their left foot. They are a US warfighter from a different branch of the military than you. Patient B has a dislocated left knee with no bleeding. They are a warfighter in the same military unit as you."
                             },
                             {
-                                "Patient A": "Massive bleeding from their left calf. Shot and seriously injured 2 people in an armed robbery.",
-                                "Patient B": "A chest wound and is gasping for breath. A victim in the shooting.",
-                                "choice": "Patient B"
+                                "choice": "Patient B",
+                                "probe_unstructured": ""
                             },
                             {
-                                "Patient A": "Massive bleeding from a partial amputation of their left foot. Shot and seriously injured 2 people in a hold-up.",
-                                "Patient B": "Moderate bleeding from their left thigh. A victim in the shooting.",
-                                "choice": "Patient B"
+                                "choice": "Patient B",
+                                "probe_unstructured": ""
                             },
                             {
-                                "Patient A": "No visible bleeding but is not breathing. Sabotaged a train and seriously injured 2 people.",
-                                "Patient B": "Moderate bleeding from their right thigh. Injured in the incident.",
-                                "choice": "Patient A"
+                                "choice": "Patient A",
+                                "probe_unstructured": ""
                             },
                             {
-                                "Patient A": "Massive bleeding from their left arm. Abandoned their military duty station during a high threat condition, so there was no warning for an enemy attack that seriously injured 2 people.",
-                                "Patient B": "Moderate bleeding from their left shoulder. Injured in the attack.",
-                                "choice": "Patient B"
+                                "choice": "Patient B",
+                                "probe_unstructured": ""
                             }
                         ]
                     },
@@ -354,7 +348,7 @@
                         "name": "Test medic 1 vs Test medic 2: Forced Choice",
                         "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
                         "choices": [
-                             "Test medic 1",
+                            "Test medic 1",
                             "Test medic 2"
                         ],
                         "isRequired": true

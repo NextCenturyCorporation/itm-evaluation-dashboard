@@ -10,19 +10,28 @@ export class Phase2TextModel extends Question {
         return CUSTOM_TYPE;
     }
 
-    get unstructured() {
-        return this.getPropertyValue("unstructured");
+    get common_unstructured() {
+        return this.getPropertyValue("common_unstructured");
     }
 
-    set unstructured(unstructured) {
-        this.setPropertyValue("unstructured", unstructured);
+    set common_unstructured(common_unstructured) {
+        this.setPropertyValue("common_unstructured", common_unstructured);
+    }
+
+    get probe_unstructured() {
+        return this.getPropertyValue("probe_unstructured");
+    }
+
+    set probe_unstructured(probe_unstructured) {
+        this.setPropertyValue("probe_unstructured", probe_unstructured);
     }
 }
 
 Serializer.addClass(
     CUSTOM_TYPE,
     [
-        { name: "unstructured", default: '' }
+        { name: "common_unstructured", default: '' },
+        { name: "probe_unstructured", default: ''}
     ],
     function () {
         return new Phase2TextModel("");
@@ -43,14 +52,39 @@ export class Phase2Text extends SurveyQuestionElementBase {
         return this.questionBase;
     }
 
-    get unstructured() {
-        return this.question.unstructured;
+    get common_unstructured() {
+        return this.question.common_unstructured;
+    }
+
+    get probe_unstructured() {
+        return this.question.probe_unstructured;
     }
 
     renderElement() {
+        // If both texts are present, show the differentiated layout
+        if (this.probe_unstructured && this.probe_unstructured.trim()) {
+            return (
+                <div className="phase2-text-container">
+                    <div className="phase2-common-section">
+                        <div className="phase2-section-header">
+                            <span className="phase2-section-label">Background</span>
+                        </div>
+                        <p className="phase2-common-text">{this.common_unstructured}</p>
+                    </div>
+                    <div className="phase2-probe-section">
+                        <div className="phase2-section-header">
+                            <span className="phase2-section-label">Scenario Details</span>
+                        </div>
+                        <p className="phase2-probe-text">{this.probe_unstructured}</p>
+                    </div>
+                </div>
+            );
+        }
+        
+        // Fallback to simple layout if only common text is present
         return (
             <div className="phase2-text-container">
-                <p className="phase2-text-content">{this.unstructured}</p>
+                <p className="phase2-text-content">{this.common_unstructured}</p>
             </div>
         );
     }

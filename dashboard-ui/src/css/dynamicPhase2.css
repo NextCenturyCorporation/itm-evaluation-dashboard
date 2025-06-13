@@ -105,7 +105,12 @@
 }
 
 .table-header-patient {
-    width: 48%;
+    width: 20%;
+    font-size: 16px;
+}
+
+.table-header-description {
+    width: 56%;
     font-size: 16px;
 }
 
