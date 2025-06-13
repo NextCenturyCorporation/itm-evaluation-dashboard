@@ -119,7 +119,6 @@ export function App() {
             if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {
                 setConfigQuery(GET_CONFIGS_DEL_MEDIA);
             } else if (parseFloat(versionData.getCurrentSurveyVersion) >= 6.0) {
-                console.log("correct configs query")
                 setConfigQuery(GET_CONFIGS_PHASE_2)
             }
             else {
