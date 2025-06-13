@@ -38,6 +38,22 @@ export class DynamicTemplatePhase2Model extends Question {
     set supplies(supplies) {
         this.setPropertyValue("supplies", supplies)
     }
+
+    get probe_question() {
+        return this.getPropertyValue("probe_question")
+    }
+
+    set probe_question(probe_question) {
+        this.setPropertyValue("probe_question", probe_question)
+    }
+
+    get options() {
+        return this.getPropertyValue("options")
+    }
+
+    set options(options) {
+        this.setPropertyValue("options", options)
+    }
 }
 
 Serializer.addClass(
@@ -54,6 +70,14 @@ Serializer.addClass(
         },
         {
             name: "supplies",
+            default: []
+        },
+        {
+            name: "probe_question",
+            default: ''
+        },
+        {
+            name: "options",
             default: []
         }
     ],
@@ -106,9 +130,23 @@ export class DynamicTemplatePhase2 extends SurveyQuestionElementBase {
         return this.question.supplies;
     }
 
+    get probe_question() {
+        return this.question.probe_question;
+    }
+
+    get options() {
+        return this.question.options
+    }
+
     renderElement() {
         return (
-            <DynamicPhase2 rows={this.rows} scenarioDescription={this.scenarioDescription} supplies={this.supplies}/>
+            <DynamicPhase2 
+                rows={this.rows} 
+                scenarioDescription={this.scenarioDescription} 
+                supplies={this.supplies}
+                probe_question={this.probe_question}
+                options={this.options}
+            />
         )
     }
 }
