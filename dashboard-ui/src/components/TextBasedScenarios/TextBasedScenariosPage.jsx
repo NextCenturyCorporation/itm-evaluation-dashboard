@@ -180,7 +180,6 @@ class TextBasedScenariosPage extends Component {
         }
 
         scenarios = this.scenariosFromLog(matchedLog)
-        console.log(scenarios)
 
         this.setState({
             scenarios,
