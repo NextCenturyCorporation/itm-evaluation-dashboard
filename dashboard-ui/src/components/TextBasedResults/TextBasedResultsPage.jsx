@@ -107,11 +107,15 @@ function shortenAnswer(answer) {
             return "Info on Embassy";
         case "I mostly considered the fact that the patients were from different groups.":
             return "Patients are from different groups";
+        case 'Treat Patient A':
+            return "Treat Patient A";
+        case 'Treat Patient B':
+            return "Treat Patient B";
         default:
             if (answer.includes("BVM")) {
                 return "Treat both with BVM";
             }
-            if (answer.includes("until you get updated info on the capabilities of the embassy")) {
+            if (answer.includes("until you get updated info on the capabilities of the embassy")) {
                 return 'Hold until info on embassy capabilities';
             }
             if (answer.toLowerCase().includes('because')) {
@@ -332,6 +336,25 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
     </div>);
 }
 
+function getProbeQuestionsFromData(data, scenario) {
+    const probeQuestions = new Set();
+    
+    for (const result of data) {
+        if ((result.scenario_id || result.title) === scenario) {
+            for (const key of Object.keys(result)) {
+                if (typeof result[key] === 'object' && result[key]?.questions) {
+                    for (const q of Object.keys(result[key].questions)) {
+                        if (q.startsWith('probe ') && result[key].questions[q].response) {
+                            probeQuestions.add(key); 
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return Array.from(probeQuestions);
+}
 
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
@@ -382,37 +405,33 @@ export default function TextBasedResultsPage() {
         }
     }, [evalIdOptionsRaw]);
 
-    const normalizeKey = (key) => {
-        return key.replace(/\./g, '');
-    }
-
     React.useEffect(() => {
         const tmpResponses = {};
         const participants = {};
         const uniqueScenarios = new Set();
 
         if (data?.getAllScenarioResultsByEval && participantLog?.getParticipantLog) {
+            // First, initialize structure from configs
             Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
                 filteredTextBasedConfigs[scenario].pages.forEach(page => {
                     page.elements.forEach(element => {
                         if (element.choices) {
-                            const normalizedName = normalizeKey(element.name);
-                            tmpResponses[scenario][normalizedName] = {
+                            tmpResponses[scenario][element.name] = {
                                 question: element.title,
                                 total: 0,
                                 originalKey: element.name
                             };
 
                             element.choices.forEach(choice => {
-                                tmpResponses[scenario][normalizedName][choice.text] = 0;
+                                tmpResponses[scenario][element.name][choice.text] = 0;
                             });
-
                         }
                     });
                 });
             });
 
+            // Process each result
             for (const result of data.getAllScenarioResultsByEval) {
                 const pid = result['participantID'];
                 const logData = participantLog.getParticipantLog.find(
@@ -433,25 +452,42 @@ export default function TextBasedResultsPage() {
                         }
                         participants[scenario].push(result);
 
+                        // Process questions in the result
                         for (const k of Object.keys(result)) {
                             if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
                                 continue;
                             }
+                            
+                            // Check if this is a probe question that's not in the config
+                            const hasProbeQuestion = Object.keys(result[k].questions).some(q => 
+                                q.startsWith('probe ') && result[k].questions[q].response
+                            );
+                            
+                            if (hasProbeQuestion && !tmpResponses[scenario][k]) {
+                                // This is a probe question not in the config, add it
+                                tmpResponses[scenario][k] = {
+                                    question: `${k} - What action would you take?`, // Generic question text
+                                    total: 0,
+                                    originalKey: k
+                                };
+                            }
+                            
                             for (const q of Object.keys(result[k].questions)) {
-                                const normalizedQ = normalizeKey(q);
                                 if (result[k].questions[q].response) {
                                     const answer = typeof result[k].questions[q].response === 'object'
                                         ? JSON.stringify(result[k].questions[q].response)
                                         : result[k].questions[q].response;
 
-                                    if (tmpResponses[scenario][normalizedQ]) {
-                                        if (tmpResponses[scenario][normalizedQ][answer] !== undefined) {
-                                            tmpResponses[scenario][normalizedQ][answer] += 1;
+                                    // For probe questions, use the page name as the key
+                                    const questionKey = q.startsWith('probe ') ? k : q;
+                                    
+                                    if (tmpResponses[scenario][questionKey]) {
+                                        if (tmpResponses[scenario][questionKey][answer] !== undefined) {
+                                            tmpResponses[scenario][questionKey][answer] += 1;
                                         } else {
-
-                                            tmpResponses[scenario][normalizedQ][answer] = 1;
+                                            tmpResponses[scenario][questionKey][answer] = 1;
                                         }
-                                        tmpResponses[scenario][normalizedQ].total += 1;
+                                        tmpResponses[scenario][questionKey].total += 1;
                                     }
                                 }
                             }
@@ -471,14 +507,19 @@ export default function TextBasedResultsPage() {
             setParticipantBased(participants);
             setScenarioOptions(Array.from(sortedScenarios));
         }
-    }, [data, filteredTextBasedConfigs]);
+    }, [data, filteredTextBasedConfigs, participantLog, selectedEval]);
 
     React.useEffect(() => {
         // only display results concerning the chosen scenario
         if (scenarioChosen && responsesByScenario && responsesByScenario[scenarioChosen]) {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
-                if (Object.keys(responsesByScenario[scenarioChosen][k]).length > 0) {
+                // Check if there's actual data (not just the metadata fields)
+                const hasData = Object.keys(responsesByScenario[scenarioChosen][k])
+                    .filter(key => !['question', 'total', 'originalKey'].includes(key))
+                    .length > 0;
+                
+                if (hasData && responsesByScenario[scenarioChosen][k].total > 0) {
                     setResults(responsesByScenario[scenarioChosen]);
                     found = true;
                     break;
@@ -495,40 +536,51 @@ export default function TextBasedResultsPage() {
     const TextResultsSection = () => {
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
-                Object.keys(questionAnswerSets).map((qkey, ind) => {
-                    const displayKey = questionAnswerSets[qkey].originalKey || qkey;
-                    return (<div className='result-section' key={displayKey + '_' + ind}>
-                        <h3 className='question-header'>{cleanTitle(displayKey)} (N={questionAnswerSets[qkey]['total']})</h3>
-                        <p>{questionAnswerSets[qkey]['question']}</p>
-                        <table className="itm-table text-result-table">
-                            <thead>
-                                <tr>
-                                    <th className="answer-column">Answer</th>
-                                    <th className="count-column">Count</th>
-                                    <th className="count-column">Percentage</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {Object.keys(questionAnswerSets[qkey])
-                                    .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined' && answer !== 'originalKey')
-                                    .map((answer) => (
-                                        <tr key={displayKey + '_' + answer}>
-                                            <td className="answer-column">{shortenAnswer(answer)}</td>
-                                            <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
-                                            <td className="count-column">
-                                                <b>
-                                                    {questionAnswerSets[qkey]['total'] > 0
-                                                        ? `${Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%`
-                                                        : '-'}
-                                                </b>
-                                            </td>
-                                        </tr>
-                                    ))
-                                }
-                            </tbody>
-                        </table>
-                    </div>);
-                })
+                Object.keys(questionAnswerSets)
+                    .filter(qkey => questionAnswerSets[qkey].total > 0) // Only show questions with responses
+                    .sort((a, b) => {
+                        // Sort probe questions numerically
+                        const aMatch = a.match(/Probe (\d+)/);
+                        const bMatch = b.match(/Probe (\d+)/);
+                        if (aMatch && bMatch) {
+                            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+                        }
+                        return a.localeCompare(b);
+                    })
+                    .map((qkey, ind) => {
+                        const displayKey = questionAnswerSets[qkey].originalKey || qkey;
+                        return (<div className='result-section' key={displayKey + '_' + ind}>
+                            <h3 className='question-header'>{cleanTitle(displayKey)} (N={questionAnswerSets[qkey]['total']})</h3>
+                            <p>{questionAnswerSets[qkey]['question']}</p>
+                            <table className="itm-table text-result-table">
+                                <thead>
+                                    <tr>
+                                        <th className="answer-column">Answer</th>
+                                        <th className="count-column">Count</th>
+                                        <th className="count-column">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Object.keys(questionAnswerSets[qkey])
+                                        .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined' && answer !== 'originalKey')
+                                        .map((answer) => (
+                                            <tr key={displayKey + '_' + answer}>
+                                                <td className="answer-column">{shortenAnswer(answer)}</td>
+                                                <td className="count-column">{questionAnswerSets[qkey][answer]}</td>
+                                                <td className="count-column">
+                                                    <b>
+                                                        {questionAnswerSets[qkey]['total'] > 0
+                                                            ? `${Math.floor((questionAnswerSets[qkey][answer] / questionAnswerSets[qkey]['total']) * 100)}%`
+                                                            : '-'}
+                                                    </b>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    }
+                                </tbody>
+                            </table>
+                        </div>);
+                    })
                 : loading ? <h2 className="no-data">Loading Data...</h2> : error ? <h2 className="no-data">Error fetching data</h2> : <h2 className="no-data">No Data Found</h2>}
         </div>);
     }
@@ -536,9 +588,20 @@ export default function TextBasedResultsPage() {
     const ChartedResultsSection = () => {
         return (<div className="chart-scenario-results">
             {questionAnswerSets ?
-                Object.keys(questionAnswerSets).map((qkey) => {
-                    return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} />);
-                })
+                Object.keys(questionAnswerSets)
+                    .filter(qkey => questionAnswerSets[qkey].total > 0) // Only show questions with responses
+                    .sort((a, b) => {
+                        // Sort probe questions numerically
+                        const aMatch = a.match(/Probe (\d+)/);
+                        const bMatch = b.match(/Probe (\d+)/);
+                        if (aMatch && bMatch) {
+                            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+                        }
+                        return a.localeCompare(b);
+                    })
+                    .map((qkey) => {
+                        return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} />);
+                    })
                 : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
         </div>);
     }
@@ -558,7 +621,6 @@ export default function TextBasedResultsPage() {
         <div className='sidebar-options'>
             <h3 className='sidebar-title'>Evaluation</h3>
             <Select
-
                 styles={{
                     // Fixes the overlapping problem of the component
                     menu: provided => ({ ...provided, zIndex: 9999 })
