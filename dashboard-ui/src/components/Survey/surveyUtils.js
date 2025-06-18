@@ -1228,7 +1228,7 @@ export function createAFMFBlock(textScenarios, allPages) {
 
     const afMfSelectedPages = [];
     requiredTargets.forEach(target => {
-        const page = afMfPages.find(p => p.target === target);
+        const page = afMfPages.find(p => p.target === target && !p.admName.includes('Baseline'));
         if (page) {
             afMfSelectedPages.push(page);
         } else {
