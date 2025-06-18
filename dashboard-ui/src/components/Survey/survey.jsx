@@ -453,7 +453,9 @@ class SurveyPage extends Component {
                 return null;
             };
 
-            const selectedPages = [];
+            const allBlocks = [];
+
+            // process each scenario type and collect as blocks
             ['AF', 'MF', 'PS', 'SS'].forEach(scenarioType => {
                 const textScenarioNum = textScenarios[`${scenarioType}-text-scenario`];
 
@@ -461,7 +463,6 @@ class SurveyPage extends Component {
                     const adjustedNum = adjustScenarioNumber(textScenarioNum);
                     const targetScenarioIndex = `June2025-${scenarioType}${adjustedNum}-eval`;
 
-                    // Find all pages matching this scenarioIndex
                     const matchingPages = allPages.filter(page =>
                         page.scenarioIndex === targetScenarioIndex
                     );
@@ -477,37 +478,97 @@ class SurveyPage extends Component {
                             !page.admName || !page.admName.includes('Baseline')
                         );
 
-                        // Select one baseline page at random
                         const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
                         const selectedBaseline = baselinePages[randomBaselineIndex];
 
-                        // Select 2 non-baseline pages at random
                         const shuffledNonBaseline = shuffle([...nonBaselinePages]);
                         const selectedNonBaseline = shuffledNonBaseline.slice(0, 2);
 
                         const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
-                        selectedPages.push(...finalSelection);
 
-                        
                         const comparisonPage = generateComparisonPagev6(
                             selectedBaseline,
                             selectedNonBaseline[0],
                             selectedNonBaseline[1]
                         );
-                        selectedPages.push(comparisonPage);
+
+                        allBlocks.push({
+                            type: scenarioType,
+                            pages: [...finalSelection, comparisonPage]
+                        });
                     }
                 }
             });
 
+            if (textScenarios["SS-text-scenario"]) {
+                const ssAdjustedNum = adjustScenarioNumber(textScenarios["SS-text-scenario"]);
+                const afMfScenarioIndex = `June2025-AF-MF${ssAdjustedNum}-eval`;
+
+                const afMfPages = allPages.filter(page =>
+                    page.scenarioIndex === afMfScenarioIndex
+                );
+
+                console.log(`AF-MF block: Found ${afMfPages.length} pages for ${afMfScenarioIndex}`);
+
+                const requiredTargets = [
+                    'ADEPT-June2025-affiliation_merit-1.0_0.0',
+                    'ADEPT-June2025-affiliation_merit-1.0_1.0',
+                    'ADEPT-June2025-affiliation_merit-0.0_0.0',
+                    'ADEPT-June2025-affiliation_merit-0.0_1.0'
+                ];
+
+                const afMfSelectedPages = [];
+                requiredTargets.forEach(target => {
+                    const page = afMfPages.find(p => p.target === target);
+                    if (page) {
+                        afMfSelectedPages.push(page);
+                    } else {
+                        console.warn(`AF-MF block: Could not find page with target ${target}`);
+                    }
+                });
+
+                if (afMfSelectedPages.length === 4) {
+                    const shuffledForComparison = shuffle([...afMfSelectedPages]);
+                    const selectedForComparison = shuffledForComparison.slice(0, 3);
+
+                    const baseline = selectedForComparison[0];
+                    const aligned = selectedForComparison[1];
+                    const misaligned = selectedForComparison[2];
+
+                    const shuffledAfMfPages = shuffle([...afMfSelectedPages]);
+
+                    const comparisonPage = generateComparisonPagev6(baseline, aligned, misaligned);
+
+                    allBlocks.push({
+                        type: 'AF-MF',
+                        pages: [...shuffledAfMfPages, comparisonPage]
+                    });
+
+                    console.log(`AF-MF block: Added ${afMfSelectedPages.length} pages and 1 comparison page`);
+                } else {
+                    console.warn(`AF-MF block: Expected 4 pages, found ${afMfSelectedPages.length}`);
+                }
+            }
+
+            // shuffle order of blocks
+            const shuffledBlocks = shuffle(allBlocks);
+            const selectedPages = [];
+
+            shuffledBlocks.forEach(block => {
+                selectedPages.push(...block.pages);
+                console.log(`Added ${block.type} block with ${block.pages.length} pages`);
+            });
+
             const finalPages = [...introPages, ...selectedPages];
             const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
-            finalPages.push(postScenarioPage);
-
+            if (postScenarioPage) {
+                finalPages.push(postScenarioPage);
+            }
 
             this.surveyConfigClone.pages = finalPages;
             console.log(this.surveyConfigClone.pages)
-            console.log(`Survey v6.0: Selected ${selectedPages.length} pages total (individual + comparison)`);
 
+            // Create order log for tracking
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
 
