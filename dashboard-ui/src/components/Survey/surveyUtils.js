@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const renderSituation = (situation) => {
     if (Array.isArray(situation)) {
         return situation.map((detail, index) => (
@@ -92,104 +90,249 @@ const getAllVolTargets = (sv) => {
     return sv == 4 ? vol4 : vol5;
 }
 
-export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm) {
-    const bname = baseline['name'];
-    const aname = alignedAdm['name'];
-    const mname = misalignedAdm['name'];
-    
-    const elements = [
-        {
-            "type": "comparison-phase-2",
-            "name": aname + " vs " + bname + ": Review",
-            "title": "",
-            "decisionMakers": [
-                aname,
-                bname
-            ]
-        },
-        {
-            "type": "radiogroup",
-            "name": aname + " vs " + bname + ": Forced Choice",
-            "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-            "choices": [
-                aname,
-                bname
-            ],
-            "isRequired": true
-        },
-        {
-            "type": "radiogroup",
-            "name": aname + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
-            "title": "Rate your confidence about the delegation decision indicated in the previous question",
-            "choices": [
-                "Not confident at all",
-                "Not confident",
-                "Somewhat confident",
-                "Confident",
-                "Completely confident"
-            ],
-            "isRequired": true
-        },
-        {
-            "type": "comment",
-            "name": aname + " vs " + bname + ": Explain your response to the delegation preference question",
-            "title": "Explain your response to the delegation preference question:",
-            "isRequired": true
-        },
-        {
-            "type": "comparison-phase-2",
-            "name": aname + " vs " + mname + ": Review",
-            "title": "",
-            "decisionMakers": [
-                aname,
-                mname
-            ]
-        },
-        {
-            "type": "radiogroup",
-            "name": aname + " vs " + mname + ": Forced Choice",
-            "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-            "choices": [
-                aname,
-                mname
-            ],
-            "isRequired": true
-        },
-        {
-            "type": "radiogroup",
-            "name": aname + " vs " + mname + ": Rate your confidence about the delegation decision indicated in the previous question",
-            "title": "Rate your confidence about the delegation decision indicated in the previous question",
-            "choices": [
-                "Not confident at all",
-                "Not confident",
-                "Somewhat confident",
-                "Confident",
-                "Completely confident"
-            ],
-            "isRequired": true
-        },
-        {
-            "type": "comment",
-            "name": aname + " vs " + mname + ": Explain your response to the delegation preference question",
-            "title": "Explain your response to the delegation preference question:",
-            "isRequired": true
-        }
-    ];
+export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, multiGroup = null, isMultiKdma = false) {
+    if (isMultiKdma && multiGroup) {
+        // Multi-KDMA case: one page compared against three others
+        const multiGroupName = baseline['name']; // The page being compared against others
+        const comp1Name = alignedAdm['name'];
+        const comp2Name = misalignedAdm['name'];
+        const comp3Name = multiGroup['name'];
+        
+        const elements = [
+            // First comparison: multiGroup vs comp1
+            {
+                "type": "comparison-phase-2",
+                "name": multiGroupName + " vs " + comp1Name + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    multiGroupName,
+                    comp1Name
+                ]
+            },
+            {
+                "type": "radiogroup",
+                "name": multiGroupName + " vs " + comp1Name + ": Forced Choice",
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [
+                    multiGroupName,
+                    comp1Name
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": multiGroupName + " vs " + comp1Name + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": multiGroupName + " vs " + comp1Name + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            },
+            
+            // Second comparison: multiGroup vs comp2
+            {
+                "type": "comparison-phase-2",
+                "name": multiGroupName + " vs " + comp2Name + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    multiGroupName,
+                    comp2Name
+                ]
+            },
+            {
+                "type": "radiogroup",
+                "name": multiGroupName + " vs " + comp2Name + ": Forced Choice",
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [
+                    multiGroupName,
+                    comp2Name
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": multiGroupName + " vs " + comp2Name + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": multiGroupName + " vs " + comp2Name + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            },
+            
+            // Third comparison: multiGroup vs comp3
+            {
+                "type": "comparison-phase-2",
+                "name": multiGroupName + " vs " + comp3Name + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    multiGroupName,
+                    comp3Name
+                ]
+            },
+            {
+                "type": "radiogroup",
+                "name": multiGroupName + " vs " + comp3Name + ": Forced Choice",
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [
+                    multiGroupName,
+                    comp3Name
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": multiGroupName + " vs " + comp3Name + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": multiGroupName + " vs " + comp3Name + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            }
+        ];
 
-    return {
-        "name": bname + ' vs ' + aname + ' vs ' + mname,
-        "scenarioIndex": baseline['scenarioIndex'],
-        "pageType": "comparison",
-        "admAuthor": baseline?.admAuthor,
-        "baselineName": baseline?.admName,
-        "baselineTarget": baseline?.target,
-        "alignedTarget": alignedAdm?.target,
-        "misalignedTarget": misalignedAdm?.target,
-        "elements": elements,
-        "alignment": "aligned vs baseline and aligned vs misaligned"
-    };
+        return {
+            "name": multiGroupName + ' vs ' + comp1Name + ' vs ' + comp2Name + ' vs ' + comp3Name,
+            "scenarioIndex": baseline['scenarioIndex'],
+            "pageType": "comparison",
+            "admAuthor": baseline?.admAuthor,
+            "multiGroupName": baseline?.admName,
+            "multiGroupTarget": baseline?.target,
+            "comp1Target": alignedAdm?.target,
+            "comp2Target": misalignedAdm?.target,
+            "comp3Target": multiGroup?.target,
+            "elements": elements,
+            "alignment": "multi-KDMA comparison",
+            "isMultiKdma": true
+        };
+    } else {
+        // Standard case: existing logic for two comparisons
+        const bname = baseline['name'];
+        const aname = alignedAdm['name'];
+        const mname = misalignedAdm['name'];
+        
+        const elements = [
+            {
+                "type": "comparison-phase-2",
+                "name": aname + " vs " + bname + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    aname,
+                    bname
+                ]
+            },
+            {
+                "type": "radiogroup",
+                "name": aname + " vs " + bname + ": Forced Choice",
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [
+                    aname,
+                    bname
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": aname + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": aname + " vs " + bname + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            },
+            {
+                "type": "comparison-phase-2",
+                "name": aname + " vs " + mname + ": Review",
+                "title": "",
+                "decisionMakers": [
+                    aname,
+                    mname
+                ]
+            },
+            {
+                "type": "radiogroup",
+                "name": aname + " vs " + mname + ": Forced Choice",
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [
+                    aname,
+                    mname
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": aname + " vs " + mname + ": Rate your confidence about the delegation decision indicated in the previous question",
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": aname + " vs " + mname + ": Explain your response to the delegation preference question",
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            }
+        ];
+
+        return {
+            "name": bname + ' vs ' + aname + ' vs ' + mname,
+            "scenarioIndex": baseline['scenarioIndex'],
+            "pageType": "comparison",
+            "admAuthor": baseline?.admAuthor,
+            "baselineName": baseline?.admName,
+            "baselineTarget": baseline?.target,
+            "alignedTarget": alignedAdm?.target,
+            "misalignedTarget": misalignedAdm?.target,
+            "elements": elements,
+            "alignment": "aligned vs baseline and aligned vs misaligned"
+        };
+    }
 }
-
 
 export function generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm) {
     // IO 4 and 5 in parallax only have 2 adms. Generally, this function will generate a comparison page
@@ -902,4 +1045,216 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
     }
 
     return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
+}
+
+// Add these functions to surveyUtils.js
+
+export function getTextScenariosForParticipant(pid, participantLog) {
+    const defaultScenarios = {
+        "AF-text-scenario": null,
+        "MF-text-scenario": null,
+        "PS-text-scenario": null,
+        "SS-text-scenario": null
+    };
+
+    if (!pid || !participantLog) return defaultScenarios;
+
+    const matchedLog = participantLog.getParticipantLog.find(
+        log => log['ParticipantID'] == pid
+    );
+
+    if (!matchedLog) return defaultScenarios;
+
+    return {
+        "AF-text-scenario": matchedLog["AF-text-scenario"] || null,
+        "MF-text-scenario": matchedLog["MF-text-scenario"] || null,
+        "PS-text-scenario": matchedLog["PS-text-scenario"] || null,
+        "SS-text-scenario": matchedLog["SS-text-scenario"] || null
+    };
+}
+
+export function adjustScenarioNumber(num) {
+    if (num === 1 || num === 2) return num + 1;
+    if (num === 3) return 1;
+    return null;
+}
+
+export function getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults) {
+    if (!textScenarioNum) return null;
+
+    const attributeMap = {
+        'AF': 'affiliation',
+        'MF': 'merit',
+        'SS': 'search',
+        'PS': 'personal_safety'
+    };
+
+    const attribute = attributeMap[scenarioType];
+    if (!attribute) return null;
+
+    const matchingTextResult = participantTextResults.find(result => {
+        const scenarioId = result['scenario_id'];
+        return scenarioId && scenarioId.includes(`${scenarioType}${textScenarioNum}`);
+    });
+
+    if (!matchingTextResult || !matchingTextResult.mostLeastAligned) {
+        console.warn(`No text results found for ${scenarioType}${textScenarioNum}`);
+        return null;
+    }
+
+    const alignmentData = matchingTextResult.mostLeastAligned.find(
+        item => item.target === attribute
+    );
+
+    if (!alignmentData) {
+        console.warn(`No alignment data found for attribute ${attribute} in scenario ${scenarioType}${textScenarioNum}`);
+        return null;
+    }
+
+    return alignmentData;
+}
+
+export function formatTargetWithDecimal(target) {
+    if (target && target.match(/-\d{2}$/)) {
+        return target.replace(/-(\d)(\d)$/, '-$1.$2');
+    }
+    return target;
+}
+
+export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType) {
+    if (!alignmentData || !alignmentData.response || alignmentData.response.length === 0) {
+        console.warn(`${scenarioType}: No alignment data available, using random selection`);
+        const shuffled = shuffle([...nonBaselinePages]);
+        return shuffled.slice(0, 2);
+    }
+
+    alignmentData.response = alignmentData.response.filter(entry => 
+        !Object.keys(entry)[0].includes('affiliation_merit')
+    )
+
+    // Extract and format targets
+    let mostAlignedTarget = Object.keys(alignmentData.response[0])[0];
+    let leastAlignedTarget = Object.keys(alignmentData.response[alignmentData.response.length - 1])[0];
+
+    mostAlignedTarget = formatTargetWithDecimal(mostAlignedTarget);
+    leastAlignedTarget = formatTargetWithDecimal(leastAlignedTarget);
+
+    console.log(`${scenarioType}: Most aligned target = ${mostAlignedTarget}, Least aligned target = ${leastAlignedTarget}`);
+
+    // Find matching pages
+    const mostAlignedPage = nonBaselinePages.find(page => page.target === mostAlignedTarget);
+    const leastAlignedPage = nonBaselinePages.find(page => page.target === leastAlignedTarget);
+
+    if (mostAlignedPage && leastAlignedPage) {
+        return [mostAlignedPage, leastAlignedPage];
+    }
+
+    // Log missing pages
+    if (!mostAlignedPage) {
+        console.warn(`${scenarioType}: Could not find page with target ${mostAlignedTarget}`);
+    }
+    if (!leastAlignedPage) {
+        console.warn(`${scenarioType}: Could not find page with target ${leastAlignedTarget}`);
+    }
+
+    // Fallback to random selection
+    console.warn(`${scenarioType}: Falling back to random selection`);
+    const shuffled = shuffle([...nonBaselinePages]);
+    return shuffled.slice(0, 2);
+}
+
+export function createScenarioBlock(scenarioType, textScenarioNum, allPages, participantTextResults) {
+    if (!textScenarioNum) return null;
+
+    const adjustedNum = adjustScenarioNumber(textScenarioNum);
+    const targetScenarioIndex = `June2025-${scenarioType}${adjustedNum}-eval`;
+
+    // Get alignment data
+    const alignmentData = getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults);
+
+    // Find matching pages
+    const matchingPages = allPages.filter(page => page.scenarioIndex === targetScenarioIndex);
+
+    if (matchingPages.length === 0) return null;
+
+    // Separate baseline and non-baseline pages
+    const baselinePages = matchingPages.filter(page =>
+        page.admName && page.admName.includes('Baseline')
+    );
+    const nonBaselinePages = matchingPages.filter(page =>
+        !page.admName || !page.admName.includes('Baseline')
+    );
+
+    // Select pages
+    const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType);
+    
+    // Select one baseline page at random
+    const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
+    const selectedBaseline = baselinePages[randomBaselineIndex];
+
+    // Combine and shuffle all 3 pages
+    const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
+
+    // Create the comparison page
+    const comparisonPage = generateComparisonPagev6(
+        selectedBaseline,
+        selectedNonBaseline[0],
+        selectedNonBaseline[1]
+    );
+
+    return {
+        type: scenarioType,
+        pages: [...finalSelection, comparisonPage]
+    };
+}
+
+export function createAFMFBlock(textScenarios, allPages) {
+    if (!textScenarios["SS-text-scenario"]) return null;
+
+    const ssAdjustedNum = adjustScenarioNumber(adjustScenarioNumber(textScenarios["SS-text-scenario"]));
+    const afMfScenarioIndex = `June2025-AF-MF${ssAdjustedNum}-eval`;
+
+    // Find all pages matching this scenarioIndex
+    const afMfPages = allPages.filter(page => page.scenarioIndex === afMfScenarioIndex);
+
+
+    // Look for the 4 specific targets
+    const requiredTargets = [
+        'ADEPT-June2025-affiliation_merit-1.0_0.0',
+        'ADEPT-June2025-affiliation_merit-1.0_1.0',
+        'ADEPT-June2025-affiliation_merit-0.0_0.0',
+        'ADEPT-June2025-affiliation_merit-0.0_1.0'
+    ];
+
+    const afMfSelectedPages = [];
+    requiredTargets.forEach(target => {
+        const page = afMfPages.find(p => p.target === target);
+        if (page) {
+            afMfSelectedPages.push(page);
+        } else {
+            console.warn(`AF-MF block: Could not find page with target ${target}`);
+        }
+    });
+
+    // Randomly select one page to be compared against all others
+    const shuffledForSelection = shuffle([...afMfSelectedPages]);
+    const multiGroupPage = shuffledForSelection[0];
+    const otherPages = shuffledForSelection.slice(1);
+
+    // Shuffle all 4 pages for presentation order
+    const shuffledAfMfPages = shuffle([...afMfSelectedPages]);
+
+    // Create comparison page with multi-group logic
+    const comparisonPage = generateComparisonPagev6(
+        multiGroupPage,
+        otherPages[0],
+        otherPages[1],
+        otherPages[2],
+        true // isMultiKdma
+    );
+
+    return {
+        type: 'AF-MF',
+        pages: [...shuffledAfMfPages, comparisonPage]
+    };
 }

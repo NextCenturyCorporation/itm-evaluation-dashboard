@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, generateComparisonPagev6, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13 } from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -423,150 +423,56 @@ class SurveyPage extends Component {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
-            let textScenarios = {
-                "AF-text-scenario": null,
-                "MF-text-scenario": null,
-                "PS-text-scenario": null,
-                "SS-text-scenario": null
-            };
+            // Get text scenarios for this participant
+            const textScenarios = getTextScenariosForParticipant(this.state.pid, this.props.participantLog);
 
-            if (this.state.pid && this.props.participantLog) {
-                const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => log['ParticipantID'] == this.state.pid
-                );
+            // Get all text results for this participant
+            const participantTextResults = this.props.textResults.filter(
+                (res) => res['participantID'] == this.state.pid
+            );
+            console.log("Participant text results:", participantTextResults);
 
-                if (matchedLog) {
-                    textScenarios = {
-                        "AF-text-scenario": matchedLog["AF-text-scenario"] || null,
-                        "MF-text-scenario": matchedLog["MF-text-scenario"] || null,
-                        "PS-text-scenario": matchedLog["PS-text-scenario"] || null,
-                        "SS-text-scenario": matchedLog["SS-text-scenario"] || null
-                    };
-                }
-            }
-
-            console.log("Text Scenarios for participant:", textScenarios);
-
-            const adjustScenarioNumber = (num) => {
-                if (num === 1 || num === 2) return num + 1;
-                if (num === 3) return 1;
-                return null;
-            };
-
+            // Create blocks for each scenario type
             const allBlocks = [];
+            const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
 
-            // process each scenario type and collect as blocks
-            ['AF', 'MF', 'PS', 'SS'].forEach(scenarioType => {
-                const textScenarioNum = textScenarios[`${scenarioType}-text-scenario`];
-
-                if (textScenarioNum) {
-                    const adjustedNum = adjustScenarioNumber(textScenarioNum);
-                    const targetScenarioIndex = `June2025-${scenarioType}${adjustedNum}-eval`;
-
-                    const matchingPages = allPages.filter(page =>
-                        page.scenarioIndex === targetScenarioIndex
-                    );
-
-                    console.log(`${scenarioType}: Found ${matchingPages.length} pages for ${targetScenarioIndex}`);
-
-                    if (matchingPages.length > 0) {
-                        // Separate baseline and non-baseline pages
-                        const baselinePages = matchingPages.filter(page =>
-                            page.admName && page.admName.includes('Baseline')
-                        );
-                        const nonBaselinePages = matchingPages.filter(page =>
-                            !page.admName || !page.admName.includes('Baseline')
-                        );
-
-                        const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
-                        const selectedBaseline = baselinePages[randomBaselineIndex];
-
-                        const shuffledNonBaseline = shuffle([...nonBaselinePages]);
-                        const selectedNonBaseline = shuffledNonBaseline.slice(0, 2);
-
-                        const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
-
-                        const comparisonPage = generateComparisonPagev6(
-                            selectedBaseline,
-                            selectedNonBaseline[0],
-                            selectedNonBaseline[1]
-                        );
-
-                        allBlocks.push({
-                            type: scenarioType,
-                            pages: [...finalSelection, comparisonPage]
-                        });
-                    }
-                }
-            });
-
-            if (textScenarios["SS-text-scenario"]) {
-                const ssAdjustedNum = adjustScenarioNumber(textScenarios["SS-text-scenario"]);
-                const afMfScenarioIndex = `June2025-AF-MF${ssAdjustedNum}-eval`;
-
-                const afMfPages = allPages.filter(page =>
-                    page.scenarioIndex === afMfScenarioIndex
+            for (const scenarioType of scenarioTypes) {
+                const block = createScenarioBlock(
+                    scenarioType,
+                    textScenarios[`${scenarioType}-text-scenario`],
+                    allPages,
+                    participantTextResults
                 );
-
-                console.log(`AF-MF block: Found ${afMfPages.length} pages for ${afMfScenarioIndex}`);
-
-                const requiredTargets = [
-                    'ADEPT-June2025-affiliation_merit-1.0_0.0',
-                    'ADEPT-June2025-affiliation_merit-1.0_1.0',
-                    'ADEPT-June2025-affiliation_merit-0.0_0.0',
-                    'ADEPT-June2025-affiliation_merit-0.0_1.0'
-                ];
-
-                const afMfSelectedPages = [];
-                requiredTargets.forEach(target => {
-                    const page = afMfPages.find(p => p.target === target);
-                    if (page) {
-                        afMfSelectedPages.push(page);
-                    } else {
-                        console.warn(`AF-MF block: Could not find page with target ${target}`);
-                    }
-                });
-
-                if (afMfSelectedPages.length === 4) {
-                    const shuffledForComparison = shuffle([...afMfSelectedPages]);
-                    const selectedForComparison = shuffledForComparison.slice(0, 3);
-
-                    const baseline = selectedForComparison[0];
-                    const aligned = selectedForComparison[1];
-                    const misaligned = selectedForComparison[2];
-
-                    const shuffledAfMfPages = shuffle([...afMfSelectedPages]);
-
-                    const comparisonPage = generateComparisonPagev6(baseline, aligned, misaligned);
-
-                    allBlocks.push({
-                        type: 'AF-MF',
-                        pages: [...shuffledAfMfPages, comparisonPage]
-                    });
-
-                    console.log(`AF-MF block: Added ${afMfSelectedPages.length} pages and 1 comparison page`);
-                } else {
-                    console.warn(`AF-MF block: Expected 4 pages, found ${afMfSelectedPages.length}`);
+                if (block) {
+                    allBlocks.push(block);
                 }
             }
 
-            // shuffle order of blocks
+            // Add the AF-MF block
+            const afMfBlock = createAFMFBlock(textScenarios, allPages);
+            if (afMfBlock) {
+                allBlocks.push(afMfBlock);
+            }
+
+            // Shuffle blocks and create final pages
             const shuffledBlocks = shuffle(allBlocks);
             const selectedPages = [];
 
             shuffledBlocks.forEach(block => {
                 selectedPages.push(...block.pages);
-                console.log(`Added ${block.type} block with ${block.pages.length} pages`);
             });
 
+            // Combine intro pages with selected pages
             const finalPages = [...introPages, ...selectedPages];
+
+            // Add Post-Scenario Measures page if it exists
             const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
             if (postScenarioPage) {
                 finalPages.push(postScenarioPage);
             }
 
             this.surveyConfigClone.pages = finalPages;
-            console.log(this.surveyConfigClone.pages)
+            console.log(this.surveyConfigClone.pages);
 
             // Create order log for tracking
             const pageOrder = finalPages.map(page => page.name);
