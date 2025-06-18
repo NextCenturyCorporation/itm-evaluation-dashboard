@@ -449,7 +449,7 @@ class SurveyPage extends Component {
             }
 
             // Add the AF-MF block
-            const afMfBlock = createAFMFBlock(textScenarios, allPages);
+            const afMfBlock = createAFMFBlock(textScenarios, allPages, participantTextResults);
             if (afMfBlock) {
                 allBlocks.push(afMfBlock);
             }
