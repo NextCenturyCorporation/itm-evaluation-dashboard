@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13 } from './surveyUtils';
+import { generateComparisonPagev4_5, generateComparisonPagev6, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -20,7 +20,6 @@ import { admOrderMapping, getDelEnvMapping, getEnvMappingToText, getKitwareBasel
 import { useHistory } from 'react-router-dom';
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { ComparisonPhase2 } from "./comparisonPhase2";
-
 const COUNT_HUMAN_GROUP_FIRST = gql`
   query CountHumanGroupFirst {
     countHumanGroupFirst
@@ -133,14 +132,14 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.redirectLinkRef = React.createRef();
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid != null) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
             if (this.state.surveyVersion == 4.0) this.setSeenScenarios();
             this.survey.data = {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion == 4 || res.results?.surveyVersion == 5) && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion == 4 || res.results?.surveyVersion == 5 || res.results?.surveyVersion == 6) && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid || this.state.onlineOnly) {
@@ -206,7 +205,7 @@ class SurveyPage extends Component {
             }
             this.applyPageRandomization(groupedDMs, comparisonPages, removed);
             if (this.state.orderLog.length < 1) {
-                this.setState({orderLog: orderLog13(this.surveyConfigClone.pages)})
+                this.setState({ orderLog: orderLog13(this.surveyConfigClone.pages) })
             }
         } else if (this.state.pid != null) {
             this.setState({
@@ -307,7 +306,7 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed }
         }
-        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && this.state.pid == null) {
+        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
 
             return {};
@@ -420,11 +419,99 @@ class SurveyPage extends Component {
 
             return { groupedDMs, removed, comparisonPages };
         }
-        else if (this.state.surveyVerison == 6.0) {
+        else if (this.state.surveyVersion == 6.0) {
             const allPages = this.surveyConfigClone.pages;
-            const pages = [...allPages.slice(0, 4)];
+            const introPages = [...allPages.slice(0, 4)];
 
-            return {}
+            let textScenarios = {
+                "AF-text-scenario": null,
+                "MF-text-scenario": null,
+                "PS-text-scenario": null,
+                "SS-text-scenario": null
+            };
+
+            if (this.state.pid && this.props.participantLog) {
+                const matchedLog = this.props.participantLog.getParticipantLog.find(
+                    log => log['ParticipantID'] == this.state.pid
+                );
+
+                if (matchedLog) {
+                    textScenarios = {
+                        "AF-text-scenario": matchedLog["AF-text-scenario"] || null,
+                        "MF-text-scenario": matchedLog["MF-text-scenario"] || null,
+                        "PS-text-scenario": matchedLog["PS-text-scenario"] || null,
+                        "SS-text-scenario": matchedLog["SS-text-scenario"] || null
+                    };
+                }
+            }
+
+            console.log("Text Scenarios for participant:", textScenarios);
+
+            const adjustScenarioNumber = (num) => {
+                if (num === 1 || num === 2) return num + 1;
+                if (num === 3) return 1;
+                return null;
+            };
+
+            const selectedPages = [];
+            ['AF', 'MF', 'PS', 'SS'].forEach(scenarioType => {
+                const textScenarioNum = textScenarios[`${scenarioType}-text-scenario`];
+
+                if (textScenarioNum) {
+                    const adjustedNum = adjustScenarioNumber(textScenarioNum);
+                    const targetScenarioIndex = `June2025-${scenarioType}${adjustedNum}-eval`;
+
+                    // Find all pages matching this scenarioIndex
+                    const matchingPages = allPages.filter(page =>
+                        page.scenarioIndex === targetScenarioIndex
+                    );
+
+                    console.log(`${scenarioType}: Found ${matchingPages.length} pages for ${targetScenarioIndex}`);
+
+                    if (matchingPages.length > 0) {
+                        // Separate baseline and non-baseline pages
+                        const baselinePages = matchingPages.filter(page =>
+                            page.admName && page.admName.includes('Baseline')
+                        );
+                        const nonBaselinePages = matchingPages.filter(page =>
+                            !page.admName || !page.admName.includes('Baseline')
+                        );
+
+                        // Select one baseline page at random
+                        const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
+                        const selectedBaseline = baselinePages[randomBaselineIndex];
+
+                        // Select 2 non-baseline pages at random
+                        const shuffledNonBaseline = shuffle([...nonBaselinePages]);
+                        const selectedNonBaseline = shuffledNonBaseline.slice(0, 2);
+
+                        const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
+                        selectedPages.push(...finalSelection);
+
+                        
+                        const comparisonPage = generateComparisonPagev6(
+                            selectedBaseline,
+                            selectedNonBaseline[0],
+                            selectedNonBaseline[1]
+                        );
+                        selectedPages.push(comparisonPage);
+                    }
+                }
+            });
+
+            const finalPages = [...introPages, ...selectedPages];
+            const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
+            finalPages.push(postScenarioPage);
+
+
+            this.surveyConfigClone.pages = finalPages;
+            console.log(this.surveyConfigClone.pages)
+            console.log(`Survey v6.0: Selected ${selectedPages.length} pages total (individual + comparison)`);
+
+            const pageOrder = finalPages.map(page => page.name);
+            this.setState({ orderLog: pageOrder });
+
+            return {};
         }
     }
 
@@ -593,7 +680,7 @@ class SurveyPage extends Component {
                         }
                     })
                     const generatedPid = result.data.addNewParticipantToLog.generatedPid
-                    this.setState({pid: generatedPid})
+                    this.setState({ pid: generatedPid })
                 } catch (error) {
                     console.error("Error generating new PID", error)
                 }
@@ -710,11 +797,14 @@ class SurveyPage extends Component {
             }
         }
 
-        if (this.state.surveyVersion == 6.0){
+        if (this.state.surveyVersion == 6.0) {
             this.surveyData['evalName'] = 'June 2025 Collaboration'
             this.surveyData['evalNumber'] = 8
             this.surveyData['pid'] = this.state.pid;
             this.surveyData['orderLog'] = this.state.orderLog;
+            if (this.state.pid) {
+                this.surveyData['Participant ID Page'] = { 'pageName': 'Participant ID Page', 'questions': { 'Participant ID': { 'response': this.state.pid } } };
+            }
         }
 
         if (this.state.surveyVersion == 1.3) {
@@ -722,7 +812,7 @@ class SurveyPage extends Component {
             this.surveyData['evalNumber'] = 8;
             this.surveyData['pid'] = this.state.pid;
             this.surveyData['orderLog'] = this.state.orderLog
-        } 
+        }
 
         if (this.state.surveyVersion == 4.0) {
             this.surveyData['evalNumber'] = 4;
@@ -751,7 +841,7 @@ class SurveyPage extends Component {
         // final upload
         this.uploadSurveyData(survey, true);
         if (this.surveyConfigClone.pages.length < 3) {
-            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
                         log => log['ParticipantID'] == this.state.pid
@@ -785,7 +875,7 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => log['ParticipantID'] == this.state.pid
@@ -807,7 +897,7 @@ class SurveyPage extends Component {
 
     componentDidMount() {
         this.detectUserInfo();
-       
+
     }
 
     detectUserInfo = () => {
@@ -929,7 +1019,7 @@ export const NavigationGuard = ({ surveyComplete }) => {
         if (surveyComplete) return;
 
         const confirmationMessage = 'Please finish the survey before leaving the page. If you leave now, you will need to start the survey over from the beginning.';
-        
+
         const handleNavigation = (location) => {
             if (surveyComplete) {
                 return true;
@@ -941,14 +1031,14 @@ export const NavigationGuard = ({ surveyComplete }) => {
 
             isHandlingNavigation.current = true;
             pendingNavigation.current = location;
-            
+
             try {
                 const shouldNavigate = window.confirm(confirmationMessage);
-                
+
                 if (shouldNavigate) {
                     // Unblock future navigations
                     isHandlingNavigation.current = false;
-                    
+
                     // Execute the navigation
                     setTimeout(() => {
                         if (location.pathname === window.location.pathname) {
@@ -961,7 +1051,7 @@ export const NavigationGuard = ({ surveyComplete }) => {
                 } else {
                     window.history.replaceState(null, '', initialUrl.current);
                 }
-                
+
                 isHandlingNavigation.current = false;
                 return false;
             } finally {
@@ -979,7 +1069,7 @@ export const NavigationGuard = ({ surveyComplete }) => {
 
         // Handle tab/browser close
         window.addEventListener('beforeunload', handleBeforeUnload);
-        
+
         // Block navigation and handle confirmation
         const unblock = history.block(handleNavigation);
 
