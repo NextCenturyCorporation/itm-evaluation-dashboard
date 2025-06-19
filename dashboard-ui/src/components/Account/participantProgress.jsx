@@ -32,8 +32,8 @@ const GET_SIM_DATA = gql`
 const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
-const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
@@ -87,7 +87,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
                     obj['Contact ID'] = res['contactId'];
-                    if (res['prolificId']) obj['Survey Link'] = `${window.location.protocol}//${window.location.host}/remote-text-survey?adeptQualtrix=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
+                    if (res['prolificId']) {
+                        const urlParam = obj['Evaluation'] === 'June 2025 Collaboration' || pid.startsWith('202506') ? 'caciProlific' : 'adeptQualtrix';
+                        obj['Survey Link'] = `${window.location.protocol}//${window.location.host}/remote-text-survey?${urlParam}=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
+                    }
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
                 obj['Sim Date-Time'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
@@ -124,9 +127,14 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Text Start Date-Time'] = text_start_date != 'Invalid Date' ? `${text_start_date?.getMonth() + 1}/${text_start_date?.getDate()}/${text_start_date?.getFullYear()} - ${text_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text End Date-Time'] = text_end_date != 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text'] = scenarios.length;
-                if (obj['Text'] < 5) obj['Survey Link'] = null;
+
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
+
+                const textThreshold = obj['Evaluation'] === 'June 2025 Collaboration' ? 4 : 5;
+                if (obj['Text'] < textThreshold) {
+                    obj['Survey Link'] = null;
+                } 
 
                 if (!obj['Evaluation']) {
                     // Fall back if no sim, del, or text based scenarios
@@ -152,24 +160,24 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults]);
 
     const formatCell = (header, dataSet) => {
-    const val = dataSet[header];
-    const getClassName = (header, val) => {
-        if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
-            return 'li-green-cell';
-        }
-        // phase dependent
-        const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-        if ((header == 'Delegation' && val == 1) || 
-            (header == 'Text' && val >= textThreshold) || 
-            (header == 'Sim Count' && val == 4)) {
-            return 'dk-green-cell';
-        }
-        return 'white-cell';
+        const val = dataSet[header];
+        const getClassName = (header, val) => {
+            if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
+                return 'li-green-cell';
+            }
+            // phase dependent
+            const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
+            if ((header == 'Delegation' && val == 1) ||
+                (header == 'Text' && val >= textThreshold) ||
+                (header == 'Sim Count' && val == 4)) {
+                return 'dk-green-cell';
+            }
+            return 'white-cell';
+        };
+        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '') + ' ' + (header.length > 17 ? 'large-column' : '')}>
+            {header == 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
+        </td>);
     };
-    return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '') + ' ' + (header.length > 17 ? 'large-column' : '')}>
-        {header == 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
-    </td>);
-};
 
     const copyLink = (linkToCopy) => {
         navigator.clipboard.writeText(linkToCopy);
