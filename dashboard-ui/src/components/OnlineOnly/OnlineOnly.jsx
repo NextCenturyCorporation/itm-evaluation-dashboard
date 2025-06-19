@@ -158,7 +158,7 @@ export default function StartOnline() {
                     <h4>Guidelines:</h4>
                     <ul>
                         <li>Choose the option that best matches how you would triage the scenario.</li>
-                        <li>Read all details to clearly understand each question before responding.</li>
+                        <li>Read all details to understand each question before responding.</li>
                     </ul>
                     <p className='center-text'>Press "Start" to begin.</p>
                     <button onClick={startSurvey}>Start</button>
