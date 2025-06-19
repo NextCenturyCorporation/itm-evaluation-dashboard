@@ -879,6 +879,7 @@ export function formatTargetWithDecimal(target) {
 
 // Define baseline overlaps and groups based on the PDF table
 const getScenarioGroups = (scenarioType, scenarioNum) => {
+    console.log(scenarioNum)
     const scenarioKey = `${scenarioType}${scenarioNum}`;
     const groups = {
         'AF1': {
@@ -1003,18 +1004,41 @@ const getScenarioGroups = (scenarioType, scenarioNum) => {
 };
 
 export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum) {
+    // Initialize tracking object for choice process
+    const choiceProcesses = {
+        aligned: 'most aligned',
+        misaligned: 'least aligned'
+    };
+
     if (!alignmentData || !alignmentData.response || alignmentData.response.length === 0) {
         console.warn(`${scenarioType}: No alignment data available, using random selection`);
         const shuffled = shuffle([...nonBaselinePages]);
+        
+        // Update choice processes for invalid case
+        choiceProcesses.aligned = 'random selection - no alignment data available';
+        choiceProcesses.misaligned = 'random selection - no alignment data available';
+        
+        // Add choice process to pages before returning
+        if (shuffled[0]) shuffled[0].admChoiceProcess = choiceProcesses.aligned;
+        if (shuffled[1]) shuffled[1].admChoiceProcess = choiceProcesses.misaligned;
+        
         return shuffled.slice(0, 2);
     }
 
     // Get the scenario groups configuration
-    const scenarioGroups = getScenarioGroups(scenarioType, textScenarioNum);
-    console.log(scenarioGroups)
+    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
     if (!scenarioGroups) {
         console.warn(`${scenarioType}: No group configuration found, using default selection`);
         const shuffled = shuffle([...nonBaselinePages]);
+        
+        // Update choice processes for invalid case
+        choiceProcesses.aligned = 'random selection - no group configuration found';
+        choiceProcesses.misaligned = 'random selection - no group configuration found';
+        
+        // Add choice process to pages before returning
+        if (shuffled[0]) shuffled[0].admChoiceProcess = choiceProcesses.aligned;
+        if (shuffled[1]) shuffled[1].admChoiceProcess = choiceProcesses.misaligned;
+        
         return shuffled.slice(0, 2);
     }
 
@@ -1032,10 +1056,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
 
     // Helper function to find which group a target belongs to
     const findTargetGroup = (targetValue) => {
-        console.log(targetValue)
-        console.log(scenarioGroups)
         for (const group of scenarioGroups.groups) {
-            console.log(group)
             if (group.includes(targetValue)) {
                 return group;
             }
@@ -1047,25 +1068,36 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     let mostAlignedTarget = null;
     let mostAlignedPage = null;
     let alignedGroup = null;
+    let skippedCount = 0;
 
     for (let i = 0; i < filteredResponse.length; i++) {
         const target = Object.keys(filteredResponse[i])[0];
         const targetValue = getTargetValue(target);
         
-        if (!scenarioGroups.baseline.includes(targetValue)) {
-            mostAlignedTarget = formatTargetWithDecimal(target);
-            mostAlignedPage = nonBaselinePages.find(page => page.target === mostAlignedTarget);
-            if (mostAlignedPage) {
-                alignedGroup = findTargetGroup(targetValue);
-                console.log(`${scenarioType}: Selected most aligned target = ${mostAlignedTarget} (skipped ${i} overlapping with baseline)`);
-                break;
+        // Skip if this target overlaps with baseline
+        if (scenarioGroups.baseline.includes(targetValue)) {
+            skippedCount++;
+            continue;
+        }
+        
+        mostAlignedTarget = formatTargetWithDecimal(target);
+        mostAlignedPage = nonBaselinePages.find(page => page.target === mostAlignedTarget);
+        if (mostAlignedPage) {
+            alignedGroup = findTargetGroup(targetValue);
+            if (skippedCount > 0) {
+                choiceProcesses.aligned = `overlapped with baseline. Is ${skippedCount} below most aligned`;
             }
+            console.log(`${scenarioType}: Selected most aligned target = ${mostAlignedTarget} (skipped ${skippedCount} overlapping with baseline)`);
+            break;
         }
     }
 
     // Find least aligned ADM (skip if overlaps with baseline or in same group as aligned)
     let leastAlignedTarget = null;
     let leastAlignedPage = null;
+    let baselineOverlap = false;
+    let alignedOverlap = false;
+    let misalignedSkipped = 0;
 
     for (let i = filteredResponse.length - 1; i >= 0; i--) {
         const target = Object.keys(filteredResponse[i])[0];
@@ -1073,20 +1105,46 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         
         // Check if it overlaps with baseline
         if (scenarioGroups.baseline.includes(targetValue)) {
+            baselineOverlap = true;
+            misalignedSkipped++;
             continue;
         }
         
         // Check if it's in the same group as aligned
         if (alignedGroup && alignedGroup.includes(targetValue)) {
+            alignedOverlap = true;
+            misalignedSkipped++;
             continue;
         }
         
         leastAlignedTarget = formatTargetWithDecimal(target);
         leastAlignedPage = nonBaselinePages.find(page => page.target === leastAlignedTarget);
         if (leastAlignedPage) {
+            // Update misaligned choice process based on what was skipped
+            if (misalignedSkipped > 0) {
+                if (baselineOverlap && !alignedOverlap) {
+                    choiceProcesses.misaligned = `overlapped with baseline. Is ${misalignedSkipped} over least aligned`;
+                } else if (!baselineOverlap && alignedOverlap) {
+                    choiceProcesses.misaligned = `overlapped with aligned. Is ${misalignedSkipped} over least aligned`;
+                } else if (baselineOverlap && alignedOverlap) {
+                    choiceProcesses.misaligned = `overlapped with aligned and baseline. Is ${misalignedSkipped} over least aligned`;
+                }
+            }
             console.log(`${scenarioType}: Selected least aligned target = ${leastAlignedTarget}`);
             break;
         }
+        
+        // Reset overlap flags for next iteration
+        baselineOverlap = false;
+        alignedOverlap = false;
+    }
+
+    // Add choice process to selected pages
+    if (mostAlignedPage) {
+        mostAlignedPage.admChoiceProcess = choiceProcesses.aligned;
+    }
+    if (leastAlignedPage) {
+        leastAlignedPage.admChoiceProcess = choiceProcesses.misaligned;
     }
 
     // Return the selected pages
@@ -1105,6 +1163,15 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     // Fallback to random selection
     console.warn(`${scenarioType}: Falling back to random selection`);
     const shuffled = shuffle([...nonBaselinePages]);
+    
+    // Update choice processes for fallback
+    if (shuffled[0]) {
+        shuffled[0].admChoiceProcess = mostAlignedPage ? 'random selection - could not find valid least aligned' : 'random selection - could not find valid most aligned';
+    }
+    if (shuffled[1]) {
+        shuffled[1].admChoiceProcess = leastAlignedPage ? 'random selection - could not find valid most aligned' : 'random selection - could not find valid least aligned';
+    }
+    
     return shuffled.slice(0, 2);
 }
 
@@ -1226,7 +1293,8 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
         return null;
     }
 
-    multiGroupPage.alignment = 'aligned';
+    // Add admAlignment to multi-group page
+    multiGroupPage.alignment = 'most aligned group';
 
     // Remove the multiGroupPage from the others
     const otherPages = afMfSelectedPages.filter(page => page.target !== group);
@@ -1254,7 +1322,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
         otherPages[0],
         otherPages[1],
         otherPages[2],
-        true 
+        true // isMultiKdma
     );
 
     return {
