@@ -877,40 +877,229 @@ export function formatTargetWithDecimal(target) {
     return target;
 }
 
-export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType) {
+// Define baseline overlaps and groups based on the PDF table
+const getScenarioGroups = (scenarioType, scenarioNum) => {
+    const scenarioKey = `${scenarioType}${scenarioNum}`;
+    const groups = {
+        'AF1': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1', '0.2'],
+                ['0.3', '0.4'],
+                ['0.5'],
+                ['0.6', '0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'AF2': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1'],
+                ['0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'AF3': {
+            baseline: ['0.1'],
+            groups: [
+                ['0.0'],
+                ['0.2'],
+                ['0.3', '0.4'],
+                ['0.5', '0.6'],
+                ['0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'MF1': {
+            baseline: ['0.0', '0.1'],
+            groups: [
+                ['0.2'],
+                ['0.3'],
+                ['0.4'],
+                ['0.5'],
+                ['0.6', '0.7', '0.8' ,'0.9', '1.0']
+            ]
+        },
+        'MF2': {
+            baseline: ['0.0', '0.1'],
+            groups: [
+                ['0.2'],
+                ['0.3'],
+                ['0.4', '0.5', '0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'MF3': {
+            baseline: ['0.0'],
+            groups: [
+                ['0.1'],
+                ['0.2'],
+                ['0.3', '0.4'],
+                ['0.5', '0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'PS1': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5'],
+                ['0.6'],
+                ['0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'PS2': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5'],
+                ['0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'PS3': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3'],
+                ['0.4'],
+                ['0.5'],
+                ['0.6']
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'SS1': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2'],
+                ['0.3'],
+                ['0.4'],
+                ['0.5']
+                ['0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'SS2': {
+            baseline: ['0.0', '0.1', '0.2'],
+            groups: [
+                ['0.3', '0.4'],
+                ['0.5'],
+                ['0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'SS3': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1', '0.2'],
+                ['0.3'],
+                ['0.4'],
+                ['0.5', '0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        }
+    };
+    
+    return groups[scenarioKey] || null;
+};
+
+export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum) {
     if (!alignmentData || !alignmentData.response || alignmentData.response.length === 0) {
         console.warn(`${scenarioType}: No alignment data available, using random selection`);
         const shuffled = shuffle([...nonBaselinePages]);
         return shuffled.slice(0, 2);
     }
 
-    alignmentData.response = alignmentData.response.filter(entry =>
+    // Get the scenario groups configuration
+    const scenarioGroups = getScenarioGroups(scenarioType, textScenarioNum);
+    console.log(scenarioGroups)
+    if (!scenarioGroups) {
+        console.warn(`${scenarioType}: No group configuration found, using default selection`);
+        const shuffled = shuffle([...nonBaselinePages]);
+        return shuffled.slice(0, 2);
+    }
+
+    // Filter out affiliation_merit entries
+    const filteredResponse = alignmentData.response.filter(entry =>
         !Object.keys(entry)[0].includes('affiliation_merit')
-    )
+    );
 
-    // Extract and format targets
-    let mostAlignedTarget = Object.keys(alignmentData.response[0])[0];
-    let leastAlignedTarget = Object.keys(alignmentData.response[alignmentData.response.length - 1])[0];
+    // Helper function to extract just the decimal value from a target
+    const getTargetValue = (target) => {
+        const formatted = formatTargetWithDecimal(target);
+        const match = formatted.match(/(\d+\.\d+)$/);
+        return match ? match[1] : null;
+    };
 
-    mostAlignedTarget = formatTargetWithDecimal(mostAlignedTarget);
-    leastAlignedTarget = formatTargetWithDecimal(leastAlignedTarget);
+    // Helper function to find which group a target belongs to
+    const findTargetGroup = (targetValue) => {
+        console.log(targetValue)
+        console.log(scenarioGroups)
+        for (const group of scenarioGroups.groups) {
+            console.log(group)
+            if (group.includes(targetValue)) {
+                return group;
+            }
+        }
+        return null;
+    };
 
-    console.log(`${scenarioType}: Most aligned target = ${mostAlignedTarget}, Least aligned target = ${leastAlignedTarget}`);
+    // Find most aligned ADM (skip if overlaps with baseline)
+    let mostAlignedTarget = null;
+    let mostAlignedPage = null;
+    let alignedGroup = null;
 
-    // Find matching pages
-    const mostAlignedPage = nonBaselinePages.find(page => page.target === mostAlignedTarget);
-    const leastAlignedPage = nonBaselinePages.find(page => page.target === leastAlignedTarget);
+    for (let i = 0; i < filteredResponse.length; i++) {
+        const target = Object.keys(filteredResponse[i])[0];
+        const targetValue = getTargetValue(target);
+        
+        if (!scenarioGroups.baseline.includes(targetValue)) {
+            mostAlignedTarget = formatTargetWithDecimal(target);
+            mostAlignedPage = nonBaselinePages.find(page => page.target === mostAlignedTarget);
+            if (mostAlignedPage) {
+                alignedGroup = findTargetGroup(targetValue);
+                console.log(`${scenarioType}: Selected most aligned target = ${mostAlignedTarget} (skipped ${i} overlapping with baseline)`);
+                break;
+            }
+        }
+    }
 
+    // Find least aligned ADM (skip if overlaps with baseline or in same group as aligned)
+    let leastAlignedTarget = null;
+    let leastAlignedPage = null;
+
+    for (let i = filteredResponse.length - 1; i >= 0; i--) {
+        const target = Object.keys(filteredResponse[i])[0];
+        const targetValue = getTargetValue(target);
+        
+        // Check if it overlaps with baseline
+        if (scenarioGroups.baseline.includes(targetValue)) {
+            continue;
+        }
+        
+        // Check if it's in the same group as aligned
+        if (alignedGroup && alignedGroup.includes(targetValue)) {
+            continue;
+        }
+        
+        leastAlignedTarget = formatTargetWithDecimal(target);
+        leastAlignedPage = nonBaselinePages.find(page => page.target === leastAlignedTarget);
+        if (leastAlignedPage) {
+            console.log(`${scenarioType}: Selected least aligned target = ${leastAlignedTarget}`);
+            break;
+        }
+    }
+
+    // Return the selected pages
     if (mostAlignedPage && leastAlignedPage) {
         return [mostAlignedPage, leastAlignedPage];
     }
 
-    // Log missing pages
+    // Log what's missing
     if (!mostAlignedPage) {
-        console.warn(`${scenarioType}: Could not find page with target ${mostAlignedTarget}`);
+        console.warn(`${scenarioType}: Could not find valid most aligned page`);
     }
     if (!leastAlignedPage) {
-        console.warn(`${scenarioType}: Could not find page with target ${leastAlignedTarget}`);
+        console.warn(`${scenarioType}: Could not find valid least aligned page`);
     }
 
     // Fallback to random selection
@@ -942,7 +1131,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
     );
 
     // Select pages
-    const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType);
+    const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum);
 
     // Select one baseline page at random
     const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
@@ -1037,9 +1226,24 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
         return null;
     }
 
+    multiGroupPage.alignment = 'aligned';
+
     // Remove the multiGroupPage from the others
     const otherPages = afMfSelectedPages.filter(page => page.target !== group);
 
+    // Add admAlignment to other pages based on their affiliation/merit values
+    otherPages.forEach(page => {
+        const target = page.target;
+        if (target.includes('1.0_0.0')) {
+            page.alignment = 'high-affiliation-low-merit';
+        } else if (target.includes('1.0_1.0')) {
+            page.alignment = 'high-affiliation-high-merit';
+        } else if (target.includes('0.0_0.0')) {
+            page.alignment = 'low-affiliation-low-merit';
+        } else if (target.includes('0.0_1.0')) {
+            page.alignment = 'low-affiliation-high-merit';
+        }
+    });
 
     // Shuffle all 4 pages for presentation order
     const shuffledAfMfPages = shuffle([...afMfSelectedPages]);
@@ -1050,7 +1254,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
         otherPages[0],
         otherPages[1],
         otherPages[2],
-        true // isMultiKdma
+        true 
     );
 
     return {
