@@ -610,6 +610,15 @@ class TextBasedScenariosPage extends Component {
         config.showTitle = false;
         this.survey = new Model(config);
         this.survey.applyTheme(surveyTheme);
+        // override default 'complete' button so participants don't get confused
+        if (this.state.currentScenarioIndex < this.state.scenarios.length - 1) {
+            this.survey.css = {
+                navigation: {
+                    complete: "sv-btn sv-footer__next-btn"
+                }
+            };
+            this.survey.completeText = "Next";
+        }
         this.survey.focusOnFirstError = false;
         this.survey.onAfterRenderPage.add(this.onAfterRenderPage);
         this.survey.onComplete.add(this.onSurveyComplete);
