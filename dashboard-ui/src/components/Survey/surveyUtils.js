@@ -877,7 +877,7 @@ export function formatTargetWithDecimal(target) {
     return target;
 }
 
-// Define baseline overlaps and groups based on the PDF table
+// all overlap info
 const getScenarioGroups = (scenarioType, scenarioNum) => {
     console.log(scenarioNum)
     const scenarioKey = `${scenarioType}${scenarioNum}`;
@@ -1004,57 +1004,39 @@ const getScenarioGroups = (scenarioType, scenarioNum) => {
 };
 
 export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum) {
-    // Initialize tracking object for choice process
     const choiceProcesses = {
         aligned: 'most aligned',
         misaligned: 'least aligned'
     };
 
-    if (!alignmentData || !alignmentData.response || alignmentData.response.length === 0) {
-        console.warn(`${scenarioType}: No alignment data available, using random selection`);
+    const handleRandomSelection = (reason) => {
+        console.warn(`${scenarioType}: ${reason}`);
         const shuffled = shuffle([...nonBaselinePages]);
-        
-        // Update choice processes for invalid case
-        choiceProcesses.aligned = 'random selection - no alignment data available';
-        choiceProcesses.misaligned = 'random selection - no alignment data available';
-        
-        // Add choice process to pages before returning
+        choiceProcesses.aligned = choiceProcesses.misaligned = `random selection - ${reason.toLowerCase()}`;
         if (shuffled[0]) shuffled[0].admChoiceProcess = choiceProcesses.aligned;
         if (shuffled[1]) shuffled[1].admChoiceProcess = choiceProcesses.misaligned;
-        
         return shuffled.slice(0, 2);
+    };
+
+    if (!alignmentData || !alignmentData.response || alignmentData.response.length === 0) {
+        return handleRandomSelection('no alignment data available');
     }
 
-    // Get the scenario groups configuration
     const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
     if (!scenarioGroups) {
-        console.warn(`${scenarioType}: No group configuration found, using default selection`);
-        const shuffled = shuffle([...nonBaselinePages]);
-        
-        // Update choice processes for invalid case
-        choiceProcesses.aligned = 'random selection - no group configuration found';
-        choiceProcesses.misaligned = 'random selection - no group configuration found';
-        
-        // Add choice process to pages before returning
-        if (shuffled[0]) shuffled[0].admChoiceProcess = choiceProcesses.aligned;
-        if (shuffled[1]) shuffled[1].admChoiceProcess = choiceProcesses.misaligned;
-        
-        return shuffled.slice(0, 2);
+        return handleRandomSelection('no group configuration found');
     }
 
-    // Filter out affiliation_merit entries
     const filteredResponse = alignmentData.response.filter(entry =>
         !Object.keys(entry)[0].includes('affiliation_merit')
     );
 
-    // Helper function to extract just the decimal value from a target
     const getTargetValue = (target) => {
         const formatted = formatTargetWithDecimal(target);
         const match = formatted.match(/(\d+\.\d+)$/);
         return match ? match[1] : null;
     };
 
-    // Helper function to find which group a target belongs to
     const findTargetGroup = (targetValue) => {
         for (const group of scenarioGroups.groups) {
             if (group.includes(targetValue)) {
@@ -1064,7 +1046,6 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         return null;
     };
 
-    // Find most aligned ADM (skip if overlaps with baseline)
     let mostAlignedTarget = null;
     let mostAlignedPage = null;
     let alignedGroup = null;
@@ -1074,7 +1055,6 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         const target = Object.keys(filteredResponse[i])[0];
         const targetValue = getTargetValue(target);
         
-        // Skip if this target overlaps with baseline
         if (scenarioGroups.baseline.includes(targetValue)) {
             skippedCount++;
             continue;
@@ -1092,27 +1072,23 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         }
     }
 
-    // Find least aligned ADM (skip if overlaps with baseline or in same group as aligned)
     let leastAlignedTarget = null;
     let leastAlignedPage = null;
-    let baselineOverlap = false;
-    let alignedOverlap = false;
+    let overlapTypes = [];
     let misalignedSkipped = 0;
 
     for (let i = filteredResponse.length - 1; i >= 0; i--) {
         const target = Object.keys(filteredResponse[i])[0];
         const targetValue = getTargetValue(target);
         
-        // Check if it overlaps with baseline
         if (scenarioGroups.baseline.includes(targetValue)) {
-            baselineOverlap = true;
+            if (!overlapTypes.includes('baseline')) overlapTypes.push('baseline');
             misalignedSkipped++;
             continue;
         }
         
-        // Check if it's in the same group as aligned
         if (alignedGroup && alignedGroup.includes(targetValue)) {
-            alignedOverlap = true;
+            if (!overlapTypes.includes('aligned')) overlapTypes.push('aligned');
             misalignedSkipped++;
             continue;
         }
@@ -1120,57 +1096,28 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         leastAlignedTarget = formatTargetWithDecimal(target);
         leastAlignedPage = nonBaselinePages.find(page => page.target === leastAlignedTarget);
         if (leastAlignedPage) {
-            // Update misaligned choice process based on what was skipped
             if (misalignedSkipped > 0) {
-                if (baselineOverlap && !alignedOverlap) {
-                    choiceProcesses.misaligned = `overlapped with baseline. Is ${misalignedSkipped} over least aligned`;
-                } else if (!baselineOverlap && alignedOverlap) {
-                    choiceProcesses.misaligned = `overlapped with aligned. Is ${misalignedSkipped} over least aligned`;
-                } else if (baselineOverlap && alignedOverlap) {
-                    choiceProcesses.misaligned = `overlapped with aligned and baseline. Is ${misalignedSkipped} over least aligned`;
-                }
+                choiceProcesses.misaligned = `overlapped with ${overlapTypes.join(' and ')}. Is ${misalignedSkipped} over least aligned`;
             }
             console.log(`${scenarioType}: Selected least aligned target = ${leastAlignedTarget}`);
             break;
         }
-        
-        // Reset overlap flags for next iteration
-        baselineOverlap = false;
-        alignedOverlap = false;
     }
 
-    // Add choice process to selected pages
-    if (mostAlignedPage) {
-        mostAlignedPage.admChoiceProcess = choiceProcesses.aligned;
-    }
-    if (leastAlignedPage) {
-        leastAlignedPage.admChoiceProcess = choiceProcesses.misaligned;
-    }
+    if (mostAlignedPage) mostAlignedPage.admChoiceProcess = choiceProcesses.aligned;
+    if (leastAlignedPage) leastAlignedPage.admChoiceProcess = choiceProcesses.misaligned;
 
-    // Return the selected pages
     if (mostAlignedPage && leastAlignedPage) {
         return [mostAlignedPage, leastAlignedPage];
     }
 
-    // Log what's missing
-    if (!mostAlignedPage) {
-        console.warn(`${scenarioType}: Could not find valid most aligned page`);
-    }
-    if (!leastAlignedPage) {
-        console.warn(`${scenarioType}: Could not find valid least aligned page`);
-    }
+    if (!mostAlignedPage) console.warn(`${scenarioType}: Could not find valid most aligned page`);
+    if (!leastAlignedPage) console.warn(`${scenarioType}: Could not find valid least aligned page`);
 
-    // Fallback to random selection
-    console.warn(`${scenarioType}: Falling back to random selection`);
     const shuffled = shuffle([...nonBaselinePages]);
-    
-    // Update choice processes for fallback
-    if (shuffled[0]) {
-        shuffled[0].admChoiceProcess = mostAlignedPage ? 'random selection - could not find valid least aligned' : 'random selection - could not find valid most aligned';
-    }
-    if (shuffled[1]) {
-        shuffled[1].admChoiceProcess = leastAlignedPage ? 'random selection - could not find valid most aligned' : 'random selection - could not find valid least aligned';
-    }
+    const fallbackReason = !mostAlignedPage ? 'could not find valid most aligned' : 'could not find valid least aligned';
+    if (shuffled[0]) shuffled[0].admChoiceProcess = `random selection - ${fallbackReason}`;
+    if (shuffled[1]) shuffled[1].admChoiceProcess = `random selection - ${fallbackReason}`;
     
     return shuffled.slice(0, 2);
 }
@@ -1180,16 +1127,11 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
 
     const adjustedNum = adjustScenarioNumber(textScenarioNum);
     const targetScenarioIndex = `June2025-${scenarioType}${adjustedNum}-eval`;
-
-    // Get alignment data
     const alignmentData = getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults);
-
-    // Find matching pages
     const matchingPages = allPages.filter(page => page.scenarioIndex === targetScenarioIndex);
 
     if (matchingPages.length === 0) return null;
 
-    // Separate baseline and non-baseline pages
     const baselinePages = matchingPages.filter(page =>
         page.admName && page.admName.includes('Baseline')
     );
@@ -1197,21 +1139,15 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
         !page.admName || !page.admName.includes('Baseline')
     );
 
-    // Select pages
     const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum);
-
-    // Select one baseline page at random
     const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
     const selectedBaseline = baselinePages[randomBaselineIndex];
 
-    // Add admAlignment field to baseline page
     if (selectedBaseline) {
         selectedBaseline.alignment = 'baseline';
     }
 
-    // Add admAlignment field to non-baseline pages based on alignment data
     if (selectedNonBaseline.length >= 2) {
-        // Determine which is most aligned and which is least aligned
         if (alignmentData && alignmentData.response && alignmentData.response.length > 0) {
             const filteredResponse = alignmentData.response.filter(entry =>
                 !Object.keys(entry)[0].includes('affiliation_merit')
@@ -1226,21 +1162,18 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
                 } else if (page.target === leastAlignedTarget) {
                     page.alignment = 'misaligned';
                 } else {
-                    // Fallback based on position in array
                     page.alignment = selectedNonBaseline.indexOf(page) === 0 ? 'aligned' : 'misaligned';
                 }
             });
         } else {
-            // Fallback if no alignment data
+            // fallback
             selectedNonBaseline[0].alignment = 'aligned';
             selectedNonBaseline[1].alignment = 'misaligned';
         }
     }
 
-    // Combine and shuffle all 3 pages
+    // randomize page orders
     const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
-
-    // Create the comparison page
     const comparisonPage = generateComparisonPagev6(
         selectedBaseline,
         selectedNonBaseline[0],
@@ -1264,10 +1197,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
     const afAlignment = getAlignmentForAttribute('AF', textScenarios["AF-text-scenario"], participantTextResults)
 
     const group = calculateMultiKdmaGroup(mfAlignment, afAlignment)
-    // Find all pages matching this scenarioIndex
     const afMfPages = allPages.filter(page => page.scenarioIndex === afMfScenarioIndex);
-
-    // Look for the 4 specific targets
     const requiredTargets = [
         'ADEPT-June2025-affiliation_merit-1.0_0.0',
         'ADEPT-June2025-affiliation_merit-1.0_1.0',
@@ -1285,21 +1215,16 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
         }
     });
 
-    // Use calculated group to select multiGroupPage
-    const multiGroupPage = afMfSelectedPages.find(page => page.target === group);
 
+    const multiGroupPage = afMfSelectedPages.find(page => page.target === group);
     if (!multiGroupPage) {
         console.warn(`AF-MF block: Could not find page for calculated group target ${group}`);
         return null;
     }
 
-    // Add admAlignment to multi-group page
     multiGroupPage.alignment = 'most aligned group';
 
-    // Remove the multiGroupPage from the others
     const otherPages = afMfSelectedPages.filter(page => page.target !== group);
-
-    // Add admAlignment to other pages based on their affiliation/merit values
     otherPages.forEach(page => {
         const target = page.target;
         if (target.includes('1.0_0.0')) {
@@ -1313,16 +1238,14 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
         }
     });
 
-    // Shuffle all 4 pages for presentation order
+    // randomize page orders
     const shuffledAfMfPages = shuffle([...afMfSelectedPages]);
-
-    // Create comparison page with multi-group logic
     const comparisonPage = generateComparisonPagev6(
         multiGroupPage,
         otherPages[0],
         otherPages[1],
         otherPages[2],
-        true // isMultiKdma
+        true
     );
 
     return {
@@ -1349,8 +1272,6 @@ function calculateMultiKdmaGroup(mfAlignmentData, afAlignmentData) {
 
     const afTopValue = getTopAlignmentValue(afAlignmentData);
     const mfTopValue = getTopAlignmentValue(mfAlignmentData);
-    console.log(afTopValue)
-    console.log(mfTopValue)
 
     const afHigh = afTopValue >= 0.5;
     const mfHigh = mfTopValue >= 0.5;
@@ -1373,7 +1294,6 @@ function calculateMultiKdmaGroup(mfAlignmentData, afAlignmentData) {
 
 
 export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, multiGroup = null, isMultiKdma = false) {
-    // Helper function to create comparison elements for a pair
     const createComparisonElements = (name1, name2) => [
         {
             "type": "comparison-phase-2",
@@ -1410,13 +1330,12 @@ export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, mu
     ];
 
     if (isMultiKdma && multiGroup) {
-        // Multi-KDMA case: one page compared against three others
+        // Multi-KDMA case
         const multiGroupName = baseline['name'];
         const comp1Name = alignedAdm['name'];
         const comp2Name = misalignedAdm['name'];
         const comp3Name = multiGroup['name'];
 
-        // Create elements for all three comparisons
         const elements = [
             ...createComparisonElements(multiGroupName, comp1Name),
             ...createComparisonElements(multiGroupName, comp2Name),
@@ -1438,7 +1357,7 @@ export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, mu
             "isMultiKdma": true
         };
     } else {
-        // Standard case: existing logic for two comparisons
+        // single attribute
         const bname = baseline['name'];
         const aname = alignedAdm['name'];
         const mname = misalignedAdm['name'];

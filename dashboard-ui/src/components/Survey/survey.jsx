@@ -423,16 +423,12 @@ class SurveyPage extends Component {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
-            // Get text scenarios for this participant
             const textScenarios = getTextScenariosForParticipant(this.state.pid, this.props.participantLog);
-
-            // Get all text results for this participant
             const participantTextResults = this.props.textResults.filter(
                 (res) => res['participantID'] == this.state.pid
             );
             console.log("Participant text results:", participantTextResults);
 
-            // Create blocks for each scenario type
             const allBlocks = [];
             const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
 
@@ -448,13 +444,13 @@ class SurveyPage extends Component {
                 }
             }
 
-            // Add the AF-MF block
+            // mutli attribute
             const afMfBlock = createAFMFBlock(textScenarios, allPages, participantTextResults);
             if (afMfBlock) {
                 allBlocks.push(afMfBlock);
             }
 
-            // Shuffle blocks and create final pages
+            // randomize blocks
             const shuffledBlocks = shuffle(allBlocks);
             const selectedPages = [];
 
@@ -462,10 +458,7 @@ class SurveyPage extends Component {
                 selectedPages.push(...block.pages);
             });
 
-            // Combine intro pages with selected pages
             const finalPages = [...introPages, ...selectedPages];
-
-            // Add Post-Scenario Measures page if it exists
             const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
             if (postScenarioPage) {
                 finalPages.push(postScenarioPage);
@@ -474,7 +467,6 @@ class SurveyPage extends Component {
             this.surveyConfigClone.pages = finalPages;
             console.log(this.surveyConfigClone.pages);
 
-            // Create order log for tracking
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
 
