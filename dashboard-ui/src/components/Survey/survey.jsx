@@ -87,7 +87,7 @@ class SurveyPage extends Component {
             secondGroup: [],
             orderLog: [],
             pid: this.queryParams.get('pid') ?? null,
-            onlineOnly: isDefined(this.queryParams.get('adeptQualtrix')),
+            onlineOnly: (isDefined(this.queryParams.get('adeptQualtrix')) || isDefined(this.queryParams.get('caciProlific'))),
             prolificPid: this.queryParams.get('PROLIFIC_PID'),
             contactId: this.queryParams.get('ContactID'),
             validPid: false,
@@ -869,6 +869,13 @@ class SurveyPage extends Component {
         this.setState({ browserInfo });
     }
 
+    getRedirectUrl = () => {
+        if (this.queryParams.get('caciProlific') === 'true') {
+            return 'https://app.prolific.com/submissions/complete?cc=C155IMPM';
+        }
+        return `https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}&ContactID=${this.state.contactId}`;
+    }
+
     render() {
         return (
             <>
@@ -931,7 +938,11 @@ class SurveyPage extends Component {
                                 </div>
                             </div>
                         )}
-                        <a ref={this.redirectLinkRef} hidden href={`https://singuser67d7ec86.sjc1.qualtrics.com/jfe/form/SV_0pUd3RTN39qu9qS/?participant_id=${this.state.pid}&PROLIFIC_PID=${this.state.prolificPid}&ContactID=${this.state.contactId}`} />
+                        <a
+                            ref={this.redirectLinkRef}
+                            hidden
+                            href={this.getRedirectUrl()}
+                        />
                     </>
                 }
             </>

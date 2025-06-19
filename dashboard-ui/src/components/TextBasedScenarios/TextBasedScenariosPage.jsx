@@ -245,6 +245,7 @@ class TextBasedScenariosPage extends Component {
         const pid = queryParams.get('pid');
         const classification = queryParams.get('class');
         const adeptQualtrix = queryParams.get('adeptQualtrix');
+        const caciProlific = queryParams.get('caciProlific')
         const startSurvey = queryParams.get('startSurvey');
         if (isDefined(pid)) {
             this.introSurvey.data = {
@@ -252,7 +253,7 @@ class TextBasedScenariosPage extends Component {
                 "Military or Civilian background": classification == 'Online' ? 'Online' : classification,
                 "vrEnvironmentsCompleted": ['none']
             };
-            if (isDefined(adeptQualtrix)) {
+            if (isDefined(adeptQualtrix) || isDefined(caciProlific)) {
                 if (startSurvey == 'true') {
                     this.setState({ moderated: false, onlineOnly: true, skipText: true });
                 }

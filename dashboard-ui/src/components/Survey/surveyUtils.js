@@ -879,7 +879,6 @@ export function formatTargetWithDecimal(target) {
 
 // all overlap info
 const getScenarioGroups = (scenarioType, scenarioNum) => {
-    console.log(scenarioNum)
     const scenarioKey = `${scenarioType}${scenarioNum}`;
     const groups = {
         'AF1': {
