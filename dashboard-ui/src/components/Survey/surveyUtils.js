@@ -912,9 +912,8 @@ const getScenarioGroups = (scenarioType, scenarioNum) => {
             ]
         },
         'MF1': {
-            baseline: ['0.0', '0.1'],
+            baseline: ['0.0', '0.1', '0.2'],
             groups: [
-                ['0.2'],
                 ['0.3'],
                 ['0.4'],
                 ['0.5'],
