@@ -1068,137 +1068,58 @@ function calculateMultiKdmaGroup(mfAlignmentData, afAlignmentData) {
 
 
 export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, multiGroup = null, isMultiKdma = false) {
+    // Helper function to create comparison elements for a pair
+    const createComparisonElements = (name1, name2) => [
+        {
+            "type": "comparison-phase-2",
+            "name": `${name1} vs ${name2}: Review`,
+            "title": "",
+            "decisionMakers": [name1, name2]
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Forced Choice`,
+            "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+            "choices": [name1, name2],
+            "isRequired": true
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Rate your confidence about the delegation decision indicated in the previous question`,
+            "title": "Rate your confidence about the delegation decision indicated in the previous question",
+            "choices": [
+                "Not confident at all",
+                "Not confident",
+                "Somewhat confident",
+                "Confident",
+                "Completely confident"
+            ],
+            "isRequired": true
+        },
+        {
+            "type": "comment",
+            "name": `${name1} vs ${name2}: Explain your response to the delegation preference question`,
+            "title": "Explain your response to the delegation preference question:",
+            "isRequired": true
+        }
+    ];
+
     if (isMultiKdma && multiGroup) {
         // Multi-KDMA case: one page compared against three others
-        const multiGroupName = baseline['name']; // The page being compared against others
+        const multiGroupName = baseline['name'];
         const comp1Name = alignedAdm['name'];
         const comp2Name = misalignedAdm['name'];
         const comp3Name = multiGroup['name'];
 
+        // Create elements for all three comparisons
         const elements = [
-            // First comparison: multiGroup vs comp1
-            {
-                "type": "comparison-phase-2",
-                "name": multiGroupName + " vs " + comp1Name + ": Review",
-                "title": "",
-                "decisionMakers": [
-                    multiGroupName,
-                    comp1Name
-                ]
-            },
-            {
-                "type": "radiogroup",
-                "name": multiGroupName + " vs " + comp1Name + ": Forced Choice",
-                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-                "choices": [
-                    multiGroupName,
-                    comp1Name
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "radiogroup",
-                "name": multiGroupName + " vs " + comp1Name + ": Rate your confidence about the delegation decision indicated in the previous question",
-                "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                "choices": [
-                    "Not confident at all",
-                    "Not confident",
-                    "Somewhat confident",
-                    "Confident",
-                    "Completely confident"
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "comment",
-                "name": multiGroupName + " vs " + comp1Name + ": Explain your response to the delegation preference question",
-                "title": "Explain your response to the delegation preference question:",
-                "isRequired": true
-            },
-
-            // Second comparison: multiGroup vs comp2
-            {
-                "type": "comparison-phase-2",
-                "name": multiGroupName + " vs " + comp2Name + ": Review",
-                "title": "",
-                "decisionMakers": [
-                    multiGroupName,
-                    comp2Name
-                ]
-            },
-            {
-                "type": "radiogroup",
-                "name": multiGroupName + " vs " + comp2Name + ": Forced Choice",
-                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-                "choices": [
-                    multiGroupName,
-                    comp2Name
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "radiogroup",
-                "name": multiGroupName + " vs " + comp2Name + ": Rate your confidence about the delegation decision indicated in the previous question",
-                "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                "choices": [
-                    "Not confident at all",
-                    "Not confident",
-                    "Somewhat confident",
-                    "Confident",
-                    "Completely confident"
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "comment",
-                "name": multiGroupName + " vs " + comp2Name + ": Explain your response to the delegation preference question",
-                "title": "Explain your response to the delegation preference question:",
-                "isRequired": true
-            },
-
-            // Third comparison: multiGroup vs comp3
-            {
-                "type": "comparison-phase-2",
-                "name": multiGroupName + " vs " + comp3Name + ": Review",
-                "title": "",
-                "decisionMakers": [
-                    multiGroupName,
-                    comp3Name
-                ]
-            },
-            {
-                "type": "radiogroup",
-                "name": multiGroupName + " vs " + comp3Name + ": Forced Choice",
-                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-                "choices": [
-                    multiGroupName,
-                    comp3Name
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "radiogroup",
-                "name": multiGroupName + " vs " + comp3Name + ": Rate your confidence about the delegation decision indicated in the previous question",
-                "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                "choices": [
-                    "Not confident at all",
-                    "Not confident",
-                    "Somewhat confident",
-                    "Confident",
-                    "Completely confident"
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "comment",
-                "name": multiGroupName + " vs " + comp3Name + ": Explain your response to the delegation preference question",
-                "title": "Explain your response to the delegation preference question:",
-                "isRequired": true
-            }
+            ...createComparisonElements(multiGroupName, comp1Name),
+            ...createComparisonElements(multiGroupName, comp2Name),
+            ...createComparisonElements(multiGroupName, comp3Name)
         ];
 
         return {
-            "name": multiGroupName + ' vs ' + comp1Name + ' vs ' + comp2Name + ' vs ' + comp3Name,
+            "name": `${multiGroupName} vs ${comp1Name} vs ${comp2Name} vs ${comp3Name}`,
             "scenarioIndex": baseline['scenarioIndex'],
             "pageType": "comparison",
             "admAuthor": baseline?.admAuthor,
@@ -1218,86 +1139,12 @@ export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, mu
         const mname = misalignedAdm['name'];
 
         const elements = [
-            {
-                "type": "comparison-phase-2",
-                "name": aname + " vs " + bname + ": Review",
-                "title": "",
-                "decisionMakers": [
-                    aname,
-                    bname
-                ]
-            },
-            {
-                "type": "radiogroup",
-                "name": aname + " vs " + bname + ": Forced Choice",
-                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-                "choices": [
-                    aname,
-                    bname
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "radiogroup",
-                "name": aname + " vs " + bname + ": Rate your confidence about the delegation decision indicated in the previous question",
-                "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                "choices": [
-                    "Not confident at all",
-                    "Not confident",
-                    "Somewhat confident",
-                    "Confident",
-                    "Completely confident"
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "comment",
-                "name": aname + " vs " + bname + ": Explain your response to the delegation preference question",
-                "title": "Explain your response to the delegation preference question:",
-                "isRequired": true
-            },
-            {
-                "type": "comparison-phase-2",
-                "name": aname + " vs " + mname + ": Review",
-                "title": "",
-                "decisionMakers": [
-                    aname,
-                    mname
-                ]
-            },
-            {
-                "type": "radiogroup",
-                "name": aname + " vs " + mname + ": Forced Choice",
-                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
-                "choices": [
-                    aname,
-                    mname
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "radiogroup",
-                "name": aname + " vs " + mname + ": Rate your confidence about the delegation decision indicated in the previous question",
-                "title": "Rate your confidence about the delegation decision indicated in the previous question",
-                "choices": [
-                    "Not confident at all",
-                    "Not confident",
-                    "Somewhat confident",
-                    "Confident",
-                    "Completely confident"
-                ],
-                "isRequired": true
-            },
-            {
-                "type": "comment",
-                "name": aname + " vs " + mname + ": Explain your response to the delegation preference question",
-                "title": "Explain your response to the delegation preference question:",
-                "isRequired": true
-            }
+            ...createComparisonElements(aname, bname),
+            ...createComparisonElements(aname, mname)
         ];
 
         return {
-            "name": bname + ' vs ' + aname + ' vs ' + mname,
+            "name": `${bname} vs ${aname} vs ${mname}`,
             "scenarioIndex": baseline['scenarioIndex'],
             "pageType": "comparison",
             "admAuthor": baseline?.admAuthor,
