@@ -948,6 +948,39 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
     const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
     const selectedBaseline = baselinePages[randomBaselineIndex];
 
+    // Add admAlignment field to baseline page
+    if (selectedBaseline) {
+        selectedBaseline.alignment = 'baseline';
+    }
+
+    // Add admAlignment field to non-baseline pages based on alignment data
+    if (selectedNonBaseline.length >= 2) {
+        // Determine which is most aligned and which is least aligned
+        if (alignmentData && alignmentData.response && alignmentData.response.length > 0) {
+            const filteredResponse = alignmentData.response.filter(entry =>
+                !Object.keys(entry)[0].includes('affiliation_merit')
+            );
+            
+            const mostAlignedTarget = formatTargetWithDecimal(Object.keys(filteredResponse[0])[0]);
+            const leastAlignedTarget = formatTargetWithDecimal(Object.keys(filteredResponse[filteredResponse.length - 1])[0]);
+            
+            selectedNonBaseline.forEach(page => {
+                if (page.target === mostAlignedTarget) {
+                    page.alignment = 'aligned';
+                } else if (page.target === leastAlignedTarget) {
+                    page.alignment = 'misaligned';
+                } else {
+                    // Fallback based on position in array
+                    page.alignment = selectedNonBaseline.indexOf(page) === 0 ? 'aligned' : 'misaligned';
+                }
+            });
+        } else {
+            // Fallback if no alignment data
+            selectedNonBaseline[0].alignment = 'aligned';
+            selectedNonBaseline[1].alignment = 'misaligned';
+        }
+    }
+
     // Combine and shuffle all 3 pages
     const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
 
