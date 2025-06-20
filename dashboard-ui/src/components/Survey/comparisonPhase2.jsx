@@ -67,18 +67,17 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
         return this.question.decisionMakers;
     }
 
-    getDecisionMakerData(dmName) {
+    getDecisionMakerData(name) {
         const config = this.question.survey.jsonObj.pages;
-
         for (const page of config) {
             if (page.elements) {
                 for (const element of page.elements) {
-                    if (element.type === "dynamic-template-phase-2" && element.dmName === dmName) {
+                    if (element.type === "dynamic-template-phase-2" && element.name === name) {
                         return {
                             rows: element.rows,
                             scenarioDescription: element.scenarioDescription,
                             supplies: element.supplies,
-                            dmName: element.dmName,
+                            name: element.name,
                             options: element.options
                         };
                     }
@@ -102,7 +101,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                     <div className="shared-scenario-section" style={{ marginBottom: '20px' }}>
                         <div className="instruction-section">
                             <h4 className="instruction-title">
-                                Consider a decision-maker who chose to treat the highlighted patients first, when given the following choices.
+                                Consider a decision-maker who made the highlighted choices in a series of scenarios.
                             </h4>
                             <p className="instruction-subtitle">
                                 {sharedScenarioDescription}
@@ -131,8 +130,8 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                     gap: '20px',
                     justifyContent: 'space-between'
                 }}>
-                    {decisionMakers.map((dmName, index) => {
-                        const dmData = this.getDecisionMakerData(dmName);
+                    {decisionMakers.map((name, index) => {
+                        const dmData = this.getDecisionMakerData(name);
                         
                         if (!dmData) {
                             return (
@@ -142,7 +141,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                                     padding: '15px',
                                     borderRadius: '5px'
                                 }}>
-                                    <p>Decision-maker data not found for: {dmName}</p>
+                                    <p>Decision-maker data not found for: {name}</p>
                                 </div>
                             );
                         }
@@ -159,7 +158,7 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                                     textAlign: 'center',
                                     color: '#333'
                                 }}>
-                                    {dmData.dmName}
+                                    {dmData.name}
                                 </h3>
                                 <DynamicPhase2 
                                     rows={dmData.rows} 

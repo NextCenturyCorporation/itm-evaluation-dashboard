@@ -92,20 +92,17 @@ export function ReviewDelegationPage() {
                 const surveyModel = new Model(page);
                 surveyModel.applyTheme(surveyTheme);
                 setSelectedConfig(surveyModel);
-                
+
                 // Determine the reviewing text based on evaluation version
                 let reviewText = '';
                 if (page['evalNumber'] == 4) {
-                    // DRE scenarios
                     reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
                 } else if (page['evalNumber'] == 8) {
-                    // Phase 2 scenarios
                     reviewText = page['scenarioName'] + ' - ' + page['admName'] + ' - ' + page['target'];
                 } else {
-                    // Phase 1 scenarios
                     reviewText = (page['scenarioIndex'] ? PH1_NAME_MAP[page['scenarioIndex']] : 'Unknown') + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
                 }
-                
+
                 setReviewingText(reviewText);
             } catch (error) {
                 console.error('Error creating survey model:', error);
@@ -121,14 +118,14 @@ export function ReviewDelegationPage() {
         const dre_config = delegationConfigs["delegation_v4.0"];
         const ph1_config = delegationConfigs["delegation_v5.0"];
         const ph2_config = delegationConfigs["delegation_v6.0"];
-        
+
         [dre_config, ph1_config, ph2_config].forEach((config, i) => {
-            if (!config) return; 
-            
+            if (!config) return;
+
             for (const page of config['pages']) {
                 if (Object.keys(page).includes('scenarioIndex') || Object.keys(page).includes('scenarioName')) {
                     let scenarioKey = '';
-                    
+
                     if (i == 0) { // DRE scenarios
                         scenarioKey = page['scenarioIndex'];
                         if (!Object.keys(dre_scenarios).includes(scenarioKey)) {
@@ -173,7 +170,11 @@ export function ReviewDelegationPage() {
                                         <Accordion.Header>{admName}</Accordion.Header>
                                         <Accordion.Body>
                                             <Row xs={1} md={2} lg={2} className="g-4">
-                                                {configs[admName].map((page, index) => (
+                                                {configs[admName].sort((a, b) => {
+                                                    const aValue = isPhase2 ? a['target'] : a['admAlignment'];
+                                                    const bValue = isPhase2 ? b['target'] : b['admAlignment'];
+                                                    return aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+                                                }).map((page, index) => (
                                                     <Col key={title + ' ' + admName + ' ' + (isPhase2 ? page['target'] : page['admAlignment']) + ' ' + index}>
                                                         <Button
                                                             variant="outline-primary"
@@ -207,7 +208,7 @@ export function ReviewDelegationPage() {
                         )))}
                     </Card.Body>
                 </Card>
-            
+
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
                     <Card.Body className="bg-light">
@@ -218,7 +219,7 @@ export function ReviewDelegationPage() {
                         )))}
                     </Card.Body>
                 </Card>
-                
+
                 <Card className="mb-4 border-0 shadow">
                     <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
                     <Card.Body className="bg-light">
