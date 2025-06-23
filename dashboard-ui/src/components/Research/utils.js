@@ -56,8 +56,9 @@ export const exportToExcel = async (filename, formattedData, headers, participan
     if (participantData) {
         // apply conditional formatting to participant data
         const keys = Object.keys(dataCopy[Object.keys(dataCopy)[0]]);
-        const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-
+        const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+        const phase2 = dataCopy[0]['Evaluation'] === 'June 2025 Collaboration'
+        console.log(phase2)
         for (let row = 1; row <= dataCopy.length; row++) {
             for (let col = 0; col < keys.length; col++) {
                 const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
@@ -72,7 +73,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                             }
                         };
                     }
-                    if ((keys[col] == 'Delegation' && val == 1) || (keys[col] == 'Text' && val == 5) || (keys[col] == 'Sim Count' && val == 4)) {
+                    if ((keys[col] == 'Delegation' && val == 1) || (keys[col] == 'Text' && ((val == 5 && !phase2) || (val == 4 && phase2))) || (keys[col] == 'Sim Count' && val == 4)) {
                         cell.s = {
                             fill: {
                                 fgColor: { rgb: '7bbc7b' }  // Dark green color
