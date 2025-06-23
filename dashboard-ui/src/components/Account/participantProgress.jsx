@@ -115,6 +115,9 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     obj['Del-2'] = lastSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
                     obj['Del-3'] = lastSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
                     obj['Del-4'] = lastSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
+                    if (delScenarios.length > 4) {
+                        obj['Del-5'] = lastSurvey?.results?.[delScenarios[4]]?.scenarioIndex;
+                    }
                 }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
 
@@ -122,7 +125,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
-                const text_start_date = new Date(lastScenario?.startTime);
+                const text_start_date = new Date(scenarios[0]?.startTime);
                 const text_end_date = new Date(lastScenario?.timeComplete);
                 obj['Text Start Date-Time'] = text_start_date != 'Invalid Date' ? `${text_start_date?.getMonth() + 1}/${text_start_date?.getDate()}/${text_start_date?.getFullYear()} - ${text_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text End Date-Time'] = text_end_date != 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
@@ -134,7 +137,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const textThreshold = obj['Evaluation'] === 'June 2025 Collaboration' ? 4 : 5;
                 if (obj['Text'] < textThreshold) {
                     obj['Survey Link'] = null;
-                } 
+                }
 
                 if (!obj['Evaluation']) {
                     // Fall back if no sim, del, or text based scenarios
