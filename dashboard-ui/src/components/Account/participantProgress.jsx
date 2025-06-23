@@ -309,9 +309,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
+        const currentHeaders = getHeaders();
         updatedData.map((x) => {
             for (const h of columnsToHide) {
                 delete x[h];
+            }
+            // remove fields that aren't in the current phase's headers
+            const keysToDelete = Object.keys(x).filter(key => !currentHeaders.includes(key));
+            for (const key of keysToDelete) {
+                delete x[key];
             }
             return x;
         });
@@ -426,7 +432,18 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
                 <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
+            <DownloadButtons 
+                formattedData={refineData(formattedData.filter((x) => {
+                    const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
+                    return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+                }))} 
+                filteredData={refineData(filteredData)} 
+                HEADERS={getHeaders().filter((x) => !columnsToHide.includes(x))} 
+                fileName={'Participant_Progress'} 
+                extraAction={refreshData} 
+                extraActionText={'Refresh Data'} 
+                isParticipantData={true} 
+            />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
