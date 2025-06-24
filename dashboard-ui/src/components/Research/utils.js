@@ -40,6 +40,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
     // Create a new workbook and worksheet
     const wb = XLSX.utils.book_new();
     const dataCopy = structuredClone(formattedData);
+    
     for (let pid of Object.keys(dataCopy)) {
         for (let k of Object.keys(dataCopy[pid])) {
             if (dataCopy[pid][k] == '-') {
@@ -47,32 +48,41 @@ export const exportToExcel = async (filename, formattedData, headers, participan
             }
         }
     }
-    const ws = XLSX.utils.json_to_sheet(dataCopy);
+
+    // keys as fallback if headers not provided
+    const columnHeaders = headers || Object.keys(dataCopy[Object.keys(dataCopy)[0]] || {});
+    
+    // maintain column order by using headers if provided
+    const ws = headers ? 
+        XLSX.utils.json_to_sheet(dataCopy, { header: headers }) : 
+        XLSX.utils.json_to_sheet(dataCopy);
 
     // Adjust column widths
-    const colWidths = headers.map(header => ({ wch: Math.max(header.length, 20) }));
+    const colWidths = columnHeaders.map(header => ({ wch: Math.max(header.length, 20) }));
     ws['!cols'] = colWidths;
 
     if (participantData) {
         // apply conditional formatting to participant data
-        const keys = Object.keys(dataCopy[Object.keys(dataCopy)[0]]);
         const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
         const phase2 = dataCopy[0]['Evaluation'] === 'June 2025 Collaboration'
+        
         for (let row = 1; row <= dataCopy.length; row++) {
-            for (let col = 0; col < keys.length; col++) {
+            for (let col = 0; col < columnHeaders.length; col++) {
                 const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
                 const cell = ws[cellRef];
 
                 if (cell) {
                     const val = cell.v;
-                    if (lightGreenIfNotNull.includes(keys[col]) && isDefined(val)) {
+                    const headerName = columnHeaders[col];
+                    
+                    if (lightGreenIfNotNull.includes(headerName) && isDefined(val)) {
                         cell.s = {
                             fill: {
                                 fgColor: { rgb: 'c2ecc2' }  // Light green color
                             }
                         };
                     }
-                    if ((keys[col] == 'Delegation' && val == 1) || (keys[col] == 'Text' && ((val == 5 && !phase2) || (val == 4 && phase2))) || (keys[col] == 'Sim Count' && val == 4)) {
+                    if ((headerName == 'Delegation' && val == 1) || (headerName == 'Text' && ((val == 5 && !phase2) || (val == 4 && phase2))) || (headerName == 'Sim Count' && val == 4)) {
                         cell.s = {
                             fill: {
                                 fgColor: { rgb: '7bbc7b' }  // Dark green color
@@ -99,39 +109,39 @@ export function getAlignments(evalNum, textResults, pid) {
     const distanceAlignments = [];
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
-            // adept
-            if (Object.keys(textRes).includes('combinedAlignmentData') || !Object.keys(textRes).includes("alignmentData")) {
-                if (!addedMJ) {
-                    if (textRes['mostLeastAligned']) {
-                        const atts = [];
-                        for (const attSet of textRes['mostLeastAligned']) {
-                            for (const att of attSet.response) {
-                                for (const k of Object.keys(att)) {
-                                    atts.push({ 'target': k, 'score': att[k] });
-                                }
+        // adept
+        if (Object.keys(textRes).includes('combinedAlignmentData') || !Object.keys(textRes).includes("alignmentData")) {
+            if (!addedMJ) {
+                if (textRes['mostLeastAligned']) {
+                    const atts = [];
+                    for (const attSet of textRes['mostLeastAligned']) {
+                        for (const att of attSet.response) {
+                            for (const k of Object.keys(att)) {
+                                atts.push({ 'target': k, 'score': att[k] });
                             }
                         }
-                        alignments.push(...atts);
                     }
-                    if (textRes['distance_based_most_least_aligned']) {
-                        const distanceAtts = [];
-                        for (const attSet of textRes['distance_based_most_least_aligned']) {
-                            for (const att of attSet.response) {
-                                for (const k of Object.keys(att)) {
-                                    distanceAtts.push({ 'target': k, 'score': att[k] });
-                                }
-                            }
-                        }
-                        distanceAlignments.push(...distanceAtts);
-                    }
-                    addedMJ = true;
+                    alignments.push(...atts);
                 }
-            }
-            else {
-                // st
-                alignments.push(...textRes['alignmentData'])
+                if (textRes['distance_based_most_least_aligned']) {
+                    const distanceAtts = [];
+                    for (const attSet of textRes['distance_based_most_least_aligned']) {
+                        for (const att of attSet.response) {
+                            for (const k of Object.keys(att)) {
+                                distanceAtts.push({ 'target': k, 'score': att[k] });
+                            }
+                        }
+                    }
+                    distanceAlignments.push(...distanceAtts);
+                }
+                addedMJ = true;
             }
         }
+        else {
+            // st
+            alignments.push(...textRes['alignmentData'])
+        }
+    }
     return { textResultsForPID, alignments, distanceAlignments };
 }
 
@@ -307,7 +317,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD')) &&
                     x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] == page['admTarget'])?.score ?? '-';
 
-                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target ==  page['admTarget']?.replace('.', '') || a.target == page['admTarget'])?.score ?? '-';
+                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target == page['admTarget']?.replace('.', '') || a.target == page['admTarget'])?.score ?? '-';
                 const txt_distance = distanceAlignments.find((a) => a.target == page['admTarget'] || ((evalNum == 5 || evalNum == 6) && a.target == page['admTarget']?.replace('.', '')))?.score ?? '-';
                 if (evalNum == 5 || evalNum == 6)
                     entryObj['DRE/Distance Alignment score (Delegator|target)'] = entry['TA1'] == 'Adept' ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
@@ -321,7 +331,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
 
                 entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
-                if (evalNum == 5 || evalNum == 6) 
+                if (evalNum == 5 || evalNum == 6)
                     entryObj['DRE ADM Loading'] = entry['TA1'] == 'Adept' ? page.dreChoiceProcess : entryObj['ADM Loading'];
                 // if DRE data is included in PH1 set, update DRE columns accordingly
                 if (evalNum == 4 && fullSetOnly && includeDreServer) {
@@ -344,7 +354,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['P1E Alignment Score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)']
                     entryObj['P1E Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))']
                     entryObj['P1E Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)']
-                }   
+                }
 
                 // include truncation error status for all, column visibility toggled from rq134.jsx
                 entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;

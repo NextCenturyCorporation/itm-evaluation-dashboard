@@ -432,17 +432,17 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
                 <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
-            <DownloadButtons 
+            <DownloadButtons
                 formattedData={refineData(formattedData.filter((x) => {
                     const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
                     return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
-                }))} 
-                filteredData={refineData(filteredData)} 
-                HEADERS={getHeaders().filter((x) => !columnsToHide.includes(x))} 
-                fileName={'Participant_Progress'} 
-                extraAction={refreshData} 
-                extraActionText={'Refresh Data'} 
-                isParticipantData={true} 
+                }))}
+                filteredData={refineData(filteredData)}
+                HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))}  // ← Use HEADERS instead
+                fileName={'Participant_Progress'}
+                extraAction={refreshData}
+                extraActionText={'Refresh Data'}
+                isParticipantData={true}
             />
         </section>
         <div className='resultTableSection'>
