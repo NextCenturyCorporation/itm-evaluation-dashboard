@@ -64,7 +64,14 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     const getCompletionOptions = () => {
         const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-        return [`All Text (${textThreshold})`, 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'Adept + OW Sim', 'No Sim'];
+        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
+        
+        if (selectedPhase === 'Phase 1') {
+            // phase 1 option
+            baseOptions.splice(-1, 0, 'Adept + OW Sim');
+        }
+        
+        return baseOptions;
     };
 
     React.useEffect(() => {
