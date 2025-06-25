@@ -66,9 +66,7 @@ class ScoreChart extends React.Component {
                 ({ loading, error, data }) => {
                     if (loading) return <div>No stats yet</div> 
                     if (error) return <div>Error</div>
-
                     const chartData = data[GET_HISTORIES_BY_ID]?.filter((x) => x.evalNumber == this.props.evalNumber);
-                    
                     let admNameParameter = "ADM Name";
                     if(this.props.evalNumber > 2) {
                         admNameParameter = "adm_name";
@@ -76,7 +74,12 @@ class ScoreChart extends React.Component {
 
                     let newScores = {};
                     chartData.map((item) => {
-                        const performer = item.history[0].parameters[admNameParameter];
+                        let performer;
+                        if (item.evaluation) {
+                            performer = item.evaluation.adm_name
+                        } else {
+                            performer = item.history[0].parameters[admNameParameter];
+                        }
                         const prevPerformerData = newScores[performer] || { total: 0, count: 0 };
                         newScores[performer] = {
                             total: prevPerformerData.total + item.history[item.history.length - 1].response.score,
