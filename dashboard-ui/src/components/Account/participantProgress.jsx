@@ -43,7 +43,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [formattedData, setFormattedData] = React.useState([]);
     const [types, setTypes] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
-    const [completion] = React.useState(['All Text (5)', 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'Adept + OW Sim', 'No Sim']);
     const [typeFilters, setTypeFilters] = React.useState([]);
     const [evalFilters, setEvalFilters] = React.useState([]);
     const [completionFilters, setCompletionFilters] = React.useState([]);
@@ -62,6 +61,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return canViewProlific ? HEADERS_PHASE1_WITH_PROLIFIC : HEADERS_PHASE1_NO_PROLIFIC;
     };
     const HEADERS = getHeaders();
+
+    const getCompletionOptions = () => {
+        const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
+        return [`All Text (${textThreshold})`, 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'Adept + OW Sim', 'No Sim'];
+    };
 
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
@@ -208,6 +212,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
+            const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
             setFilteredData(formattedData.filter((x) => {
                 const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
                 const shouldShowInPhase = selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
@@ -219,8 +224,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const didOW = sims.filter((s) => s?.includes('open_world')).length > 0;
                 return (typeFilters.length == 0 || typeFilters.includes(x['Participant Type'])) &&
                     (evalFilters.length == 0 || evalFilters.includes(x['Evaluation'])) &&
-                    (!completionFilters.includes('All Text (5)') || x['Text'] >= 5) &&
-                    (!completionFilters.includes('Missing Text') || x['Text'] < 5) &&
+                    (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
+                    (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
                     (!completionFilters.includes('Delegation (1)') || x['Delegation'] >= 1) &&
                     (!completionFilters.includes('No Delegation') || x['Delegation'] == 0) &&
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
@@ -351,7 +356,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
             </div>
         </section>
-        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {(() => {
+            const currentPhaseData = formattedData.filter((x) => {
+                const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
+                return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+            });
+            return filteredData.length < currentPhaseData.length && (
+                <p className='filteredText'>Showing {filteredData.length} of {currentPhaseData.length} rows based on filters</p>
+            );
+        })()}
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -387,10 +400,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
                 <Autocomplete
                     multiple
-                    options={completion}
+                    options={getCompletionOptions()}
                     filterSelectedOptions
                     size="small"
                     style={{ width: '600px' }}
+                    value={completionFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
