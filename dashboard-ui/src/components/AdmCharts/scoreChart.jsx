@@ -74,11 +74,9 @@ class ScoreChart extends React.Component {
 
                     let newScores = {};
                     chartData.map((item) => {
-                        let performer;
-                        if (item.evaluation) {
-                            performer = item.evaluation.adm_name
-                        } else {
-                            performer = item.history[0].parameters[admNameParameter];
+                        let performer = item.evaluation?.adm_name || item.history?.[0]?.parameters?.[admNameParameter];
+                        if (!performer) {
+                            performer = item.history?.[1]?.parameters?.[admNameParameter];
                         }
                         const prevPerformerData = newScores[performer] || { total: 0, count: 0 };
                         newScores[performer] = {
