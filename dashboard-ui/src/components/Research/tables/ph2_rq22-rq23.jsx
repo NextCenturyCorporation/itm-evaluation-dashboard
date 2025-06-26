@@ -84,7 +84,7 @@ export function PH2RQ2223({ evalNum }) {
                 };
             }
 
-            let globalTrial = 1;
+            const trialCounterPerSet = {};
             for (const scenario of Object.keys(organized_adms)) {
                 const scenarioName = organized_adms[scenario].scenarioName;
                 const targets = organized_adms[scenario].targets;
@@ -100,7 +100,12 @@ export function PH2RQ2223({ evalNum }) {
                             scenario.includes('AF') ? 'AF' :
                                 scenario.includes('SS') ? 'SS' : 'PS';
 
-                    entryObj['Trial_ID'] = globalTrial++;
+                    const trialKey = `${attribute}_${scenarioSet}`;
+                    if (!trialCounterPerSet[trialKey]) {
+                        trialCounterPerSet[trialKey] = 1;
+                    }
+                    entryObj['Trial_ID'] = trialCounterPerSet[trialKey]++;
+
                     entryObj['Attribute'] = attribute;
                     allAttributes.push(attribute);
 
@@ -157,10 +162,13 @@ export function PH2RQ2223({ evalNum }) {
             allObjs.sort((a, b) => {
                 if (a.Attribute < b.Attribute) return -1;
                 if (a.Attribute > b.Attribute) return 1;
-                if (a['Target_Type (Group/Individual)'] < b['Target_Type (Group/Individual)']) return 1;
-                if (a['Target_Type (Group/Individual)'] > b['Target_Type (Group/Individual)']) return -1;
+
+                if (a.Set < b.Set) return -1;
+                if (a.Set > b.Set) return 1;
+
                 return a.Trial_ID - b.Trial_ID;
             });
+
 
             if (allObjs.length > 0) {
                 setFormattedData(allObjs);
