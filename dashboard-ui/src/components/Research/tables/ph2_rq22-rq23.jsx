@@ -60,7 +60,6 @@ export function PH2RQ2223({ evalNum }) {
 
             for (const adm of admData) {
                 const admName = adm.evaluation.adm_name;
-                console.log(admName)
                 const scenario = adm.evaluation.scenario_id;
                 const scenarioName = adm.evaluation.scenario_name;
                 const target = adm.evaluation.alignment_target_id;
