@@ -60,10 +60,13 @@ export function PH2RQ2223({ evalNum }) {
 
             for (const adm of admData) {
                 const admName = adm.evaluation.adm_name;
+                console.log(admName)
                 const scenario = adm.evaluation.scenario_id;
                 const scenarioName = adm.evaluation.scenario_name;
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results.alignment_score;
+
+                if (!scenarioName.includes('Random')) continue;
 
                 if (!isDefined(alignment)) continue;
 
@@ -89,8 +92,8 @@ export function PH2RQ2223({ evalNum }) {
                 const scenarioName = organized_adms[scenario].scenarioName;
                 const targets = organized_adms[scenario].targets;
 
-                const setMatch = scenarioName.match(/\d/g);
-                const scenarioSet = setMatch ? `Set ${setMatch[setMatch.length - 1]}` : 'Full';
+                const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
+                const scenarioSet = setMatch ? `Set ${setMatch[1]}` : 'Full';
 
                 for (const target of Object.keys(targets)) {
                     const entryObj = {};
@@ -130,8 +133,7 @@ export function PH2RQ2223({ evalNum }) {
 
                     if (aligned) {
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
-                        entryObj['Aligned Server Session ID'] =
-                            aligned.adm?.history?.find(x => x.command === 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                        entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-'
                     } else {
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = '-';
                         entryObj['Aligned Server Session ID'] = '-';
@@ -148,8 +150,8 @@ export function PH2RQ2223({ evalNum }) {
 
                     if (baseline) {
                         entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline.alignment;
-                        entryObj['Baseline Server Session ID'] =
-                            baseline.adm?.history?.find(x => x.command === 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                        entryObj['Baseline Server Session ID'] = baseline.adm?.results?.ta1_session_id ?? '-';
+
                     } else {
                         entryObj['Baseline ADM Alignment score (ADM|target)'] = '-';
                         entryObj['Baseline Server Session ID'] = '-';
