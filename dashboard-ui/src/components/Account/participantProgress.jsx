@@ -43,7 +43,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [formattedData, setFormattedData] = React.useState([]);
     const [types, setTypes] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
-    const [completion] = React.useState(['All Text (5)', 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'Adept + OW Sim', 'No Sim']);
     const [typeFilters, setTypeFilters] = React.useState([]);
     const [evalFilters, setEvalFilters] = React.useState([]);
     const [completionFilters, setCompletionFilters] = React.useState([]);
@@ -62,6 +61,18 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return canViewProlific ? HEADERS_PHASE1_WITH_PROLIFIC : HEADERS_PHASE1_NO_PROLIFIC;
     };
     const HEADERS = getHeaders();
+
+    const getCompletionOptions = () => {
+        const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
+        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
+        
+        if (selectedPhase === 'Phase 1') {
+            // phase 1 option
+            baseOptions.splice(-1, 0, 'Adept + OW Sim');
+        }
+        
+        return baseOptions;
+    };
 
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
@@ -115,6 +126,9 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     obj['Del-2'] = lastSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
                     obj['Del-3'] = lastSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
                     obj['Del-4'] = lastSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
+                    if (delScenarios.length > 4) {
+                        obj['Del-5'] = lastSurvey?.results?.[delScenarios[4]]?.scenarioIndex;
+                    }
                 }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
 
@@ -122,7 +136,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                 const scenarios = textResults.filter((x) => x.participantID == pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
-                const text_start_date = new Date(lastScenario?.startTime);
+                const text_start_date = new Date(scenarios[0]?.startTime);
                 const text_end_date = new Date(lastScenario?.timeComplete);
                 obj['Text Start Date-Time'] = text_start_date != 'Invalid Date' ? `${text_start_date?.getMonth() + 1}/${text_start_date?.getDate()}/${text_start_date?.getFullYear()} - ${text_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text End Date-Time'] = text_end_date != 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
@@ -134,7 +148,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const textThreshold = obj['Evaluation'] === 'June 2025 Collaboration' ? 4 : 5;
                 if (obj['Text'] < textThreshold) {
                     obj['Survey Link'] = null;
-                } 
+                }
 
                 if (!obj['Evaluation']) {
                     // Fall back if no sim, del, or text based scenarios
@@ -205,6 +219,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
+            const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
             setFilteredData(formattedData.filter((x) => {
                 const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
                 const shouldShowInPhase = selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
@@ -216,8 +231,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const didOW = sims.filter((s) => s?.includes('open_world')).length > 0;
                 return (typeFilters.length == 0 || typeFilters.includes(x['Participant Type'])) &&
                     (evalFilters.length == 0 || evalFilters.includes(x['Evaluation'])) &&
-                    (!completionFilters.includes('All Text (5)') || x['Text'] >= 5) &&
-                    (!completionFilters.includes('Missing Text') || x['Text'] < 5) &&
+                    (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
+                    (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
                     (!completionFilters.includes('Delegation (1)') || x['Delegation'] >= 1) &&
                     (!completionFilters.includes('No Delegation') || x['Delegation'] == 0) &&
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
@@ -306,9 +321,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
+        const currentHeaders = getHeaders();
         updatedData.map((x) => {
             for (const h of columnsToHide) {
                 delete x[h];
+            }
+            // remove fields that aren't in the current phase's headers
+            const keysToDelete = Object.keys(x).filter(key => !currentHeaders.includes(key));
+            for (const key of keysToDelete) {
+                delete x[key];
             }
             return x;
         });
@@ -342,7 +363,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
             </div>
         </section>
-        {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {(() => {
+            const currentPhaseData = formattedData.filter((x) => {
+                const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
+                return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+            });
+            return filteredData.length < currentPhaseData.length && (
+                <p className='filteredText'>Showing {filteredData.length} of {currentPhaseData.length} rows based on filters</p>
+            );
+        })()}
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -378,10 +407,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
                 <Autocomplete
                     multiple
-                    options={completion}
+                    options={getCompletionOptions()}
                     filterSelectedOptions
                     size="small"
                     style={{ width: '600px' }}
+                    value={completionFilters}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -423,7 +453,18 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 />
                 <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={refineData(filteredData)} HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))} fileName={'Participant_Progress'} extraAction={refreshData} extraActionText={'Refresh Data'} isParticipantData={true} />
+            <DownloadButtons
+                formattedData={refineData(formattedData.filter((x) => {
+                    const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
+                    return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+                }))}
+                filteredData={refineData(filteredData)}
+                HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))}  // ← Use HEADERS instead
+                fileName={'Participant_Progress'}
+                extraAction={refreshData}
+                extraActionText={'Refresh Data'}
+                isParticipantData={true}
+            />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
