@@ -20,6 +20,7 @@ import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import { RQ2223 } from '../Research/tables/rq22-rq23';
 import { MultiKDMA_RQ23 } from '../Research/tables/rq23_multiKDMA'
+import { PH2RQ2223 } from '../Research/tables/ph2_rq22-rq23';
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
@@ -70,7 +71,7 @@ class ResultsTable extends React.Component {
         this.state = {
             adm: "",
             scenario: "",
-            evalNumber: 7,
+            evalNumber: 8,
             ADMQueryString: "history.parameters.adm_name",
             showScrollButton: false,
             alignmentTarget: null
@@ -164,6 +165,34 @@ class ResultsTable extends React.Component {
             return ("Parallax: " + peformerADMString);
         } else {
             return peformerADMString;
+        }
+    }
+
+    renderRq2() {
+        const { evalNumber, scenario, adm } = this.state;
+        if (evalNumber >= 4) {
+            if (evalNumber === 7) {
+                return <MultiKDMA_RQ23 />;
+            } else if (evalNumber === 8) {
+                return <PH2RQ2223 evalNum={evalNumber}/>;
+            } else {
+                return <RQ2223 evalNum={evalNumber} />;
+            }
+        } else {
+            let message = "Please select a";
+            if (!scenario) {
+                message += " scenario";
+            } else if (!adm) {
+                message += "n ADM";
+            } else {
+                message += "n alignment target";
+            }
+
+            return (
+                <div className="graph-section">
+                    <h2>{message} to view results</h2>
+                </div>
+            );
         }
     }
 
@@ -362,14 +391,7 @@ class ResultsTable extends React.Component {
                                 }
                             </Query> :
                             <>
-                                {(this.state.evalNumber >= 4) ?
-                                    (this.state.evalNumber === 7) ?
-                                        <MultiKDMA_RQ23/> :
-                                        <RQ2223 evalNum={this.state.evalNumber} />
-                                    :
-                                    <div className="graph-section">
-                                        <h2>Please select a{this.state.scenario == "" ? " scenario" : this.state.adm == "" ? "n ADM" : "n alignment target"} to view results</h2>
-                                    </div>}
+                                {this.renderRq2()}
                             </>
                         }
                     </div>
