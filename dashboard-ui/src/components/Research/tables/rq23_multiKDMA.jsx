@@ -5,7 +5,7 @@ import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
-import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.3_PH2.xlsx';
+import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.3_MultiKDMA.xlsx';
 import { DownloadButtons } from "./download-buttons";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
