@@ -9,12 +9,13 @@ import rq21CodePh1 from './rcode/code_for_dashboard_RQ21_ph1.R';
 import rq2CodePh1 from './rcode/code_for_dashboard_RQ2_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
-import { Phase2_RQ23 } from './tables/rq23_ph2';
+import { MultiKDMA_RQ23 } from './tables/rq23_multiKDMA';
 
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
     { value: 5, label: 'Phase 1 Evaluation' },
-    { value: 7, label: 'Phase II Experiment 1' }
+    { value: 7, label: 'Phase II Experiment 1' },
+    { value: 8, label: 'Phase II June 2025 Collaboration'}
 ];
 
 
@@ -95,7 +96,7 @@ export function RQ2() {
             : <h3>RQ2 Analysis 2.3: T-tests comparing Alignable ADM versus Baseline ADM on individual-aligned targets</h3>}
         <div className="section-container">
             {selectedEval != 7 && <h2>RQ2.2 & 2.3 Data</h2>}
-            {selectedEval == 7 ? <Phase2_RQ23 /> : <RQ2223 evalNum={selectedEval} />}
+            {selectedEval == 7 ? <MultiKDMA_RQ23/> : <RQ2223 evalNum={selectedEval} />}
             {selectedEval != 7 &&
                 <div className="buttons">
                     <button onClick={() => setRQ2CodeShowing(true)}>View R Syntax</button>

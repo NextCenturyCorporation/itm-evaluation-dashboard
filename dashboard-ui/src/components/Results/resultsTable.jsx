@@ -19,7 +19,7 @@ import AlignmentScoreBox from './alignmentScore';
 import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import { RQ2223 } from '../Research/tables/rq22-rq23';
-import { Phase2_RQ23 } from '../Research/tables/rq23_ph2'
+import { MultiKDMA_RQ23 } from '../Research/tables/rq23_multiKDMA'
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
@@ -363,8 +363,8 @@ class ResultsTable extends React.Component {
                             </Query> :
                             <>
                                 {(this.state.evalNumber >= 4) ?
-                                    (this.state.evalNumber >= 7) ?
-                                        <Phase2_RQ23/> :
+                                    (this.state.evalNumber === 7) ?
+                                        <MultiKDMA_RQ23/> :
                                         <RQ2223 evalNum={this.state.evalNumber} />
                                     :
                                     <div className="graph-section">
