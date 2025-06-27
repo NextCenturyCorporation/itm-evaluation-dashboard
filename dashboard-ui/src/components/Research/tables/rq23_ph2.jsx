@@ -199,7 +199,7 @@ export function Phase2_RQ23() {
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
-                    style={{ 'min-width': '300px' }}
+                    style={{ 'minWidth': '300px' }}
                     multiple
                     options={admNames}
                     filterSelectedOptions
