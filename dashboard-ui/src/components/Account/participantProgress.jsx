@@ -105,7 +105,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
                 obj['Sim Date-Time'] = sim_date != 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                obj['Sim Count'] = sims.length;
+                obj['Sim Count'] = res['simEntryCount'] || 0;
                 obj['Sim-1'] = sims[0]?.scenario_id;
                 obj['Sim-2'] = sims[1]?.scenario_id;
                 obj['Sim-3'] = sims[2]?.scenario_id;

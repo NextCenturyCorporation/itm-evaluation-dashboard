@@ -105,6 +105,8 @@ const resolvers = {
     getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
       return await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"] }, {
         projection: {
+          "evaluation": 1,
+          "results": 1,
           "history.parameters.adm_name": 1,
           "history.response.id": 1,
           "history.parameters.target_id": 1,
