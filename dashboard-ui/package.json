@@ -106,7 +106,6 @@
         "jest-puppeteer": "^10.1.4",
         "kill-port": "^2.0.1",
         "mongodb": "^3.7.3",
-        "mongodb-memory-server": "^7.0.0",
         "mongoose": "^5.13.14",
         "puppeteer": "^23.11.1",
         "react-test-renderer": "^19.0.0",

@@ -1,0 +1,1014 @@
+﻿
+> eval-ui@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled with warnings.
+
+Module not found: Error: Can't resolve 'crypto' in 'C:\Users\neil.daniel_cn\Documents\Onboarding\itm-evaluation-dashboard\dashboard-ui\node_modules\bcryptjs\dist'
+BREAKING CHANGE: webpack < 5 used to include polyfills for node.js core modules by default.
+This is no longer the case. Verify if you need this module and configure a polyfill for it.
+
+If you want to include a polyfill, you need to:
+	- add a fallback 'resolve.fallback: { "crypto": require.resolve("crypto-browserify") }'
+	- install 'crypto-browserify'
+If you don't want to include a polyfill, you can use an empty module like this:
+	resolve.fallback: { "crypto": false }
+
+[eslint] 
+src\components\Account\adminPage.jsx
+  Line 270:51:  Expected '===' and instead saw '=='                eqeqeq
+  Line 278:51:  Expected '===' and instead saw '=='                eqeqeq
+  Line 298:51:  Expected '===' and instead saw '=='                eqeqeq
+  Line 388:65:  'uiStyleData' is assigned a value but never used   no-unused-vars
+  Line 431:58:  'configsError' is assigned a value but never used  no-unused-vars
+  Line 431:78:  'configsData' is assigned a value but never used   no-unused-vars
+  Line 453:44:  Expected '!==' and instead saw '!='                eqeqeq
+  Line 564:20:  Expected '===' and instead saw '=='                eqeqeq
+  Line 610:36:  Expected '!==' and instead saw '!='                eqeqeq
+
+src\components\Account\login.jsx
+  Line 1:17:     'useEffect' is defined but never used                                                                                                                                                                                                  no-unused-vars
+  Line 71:98:    Expected '===' and instead saw '=='                                                                                                                                                                                                    eqeqeq
+  Line 248:67:   Expected '!==' and instead saw '!='                                                                                                                                                                                                    eqeqeq
+  Line 248:135:  Expected '!==' and instead saw '!='                                                                                                                                                                                                    eqeqeq
+  Line 286:67:   Expected '!==' and instead saw '!='                                                                                                                                                                                                    eqeqeq
+  Line 286:135:  Expected '!==' and instead saw '!='                                                                                                                                                                                                    eqeqeq
+  Line 432:22:   'error' is assigned a value but never used                                                                                                                                                                                             no-unused-vars
+  Line 442:8:    React Hook React.useEffect has a missing dependency: 'onResult'. Either include it or remove the dependency array. If 'onResult' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+src\components\Account\participantProgress.jsx
+  Line 44:12:    'types' is assigned a value but never used                                                                                                                                         no-unused-vars
+  Line 96:61:    Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 107:49:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
+  Line 114:96:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 114:204:  Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 116:106:  Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 116:194:  Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 120:64:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
+  Line 121:60:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
+  Line 137:77:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 141:63:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
+  Line 142:59:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
+  Line 174:8:    React Hook React.useEffect has missing dependencies: 'canViewProlific' and 'sortData'. Either include them or remove the dependency array                                          react-hooks/exhaustive-deps
+  Line 184:25:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 184:48:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 185:25:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 186:25:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 186:47:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 192:21:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 232:44:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 233:41:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 237:86:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 241:78:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 242:39:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 259:8:    React Hook React.useEffect has missing dependencies: 'evalFilters', 'getEvalsForPhase', 'getTypesForPhase', and 'typeFilters'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 267:25:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 283:61:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 290:26:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
+  Line 303:8:    React Hook React.useEffect has a missing dependency: 'sortData'. Either include it or remove the dependency array                                                                  react-hooks/exhaustive-deps
+
+src\components\Account\pidLookup.jsx
+  Line 31:38:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AdmCharts\admCharts.jsx
+  Line 42:49:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AdmCharts\admProbeResponses.jsx
+  Line 155:22:   'alignmentLoading' is assigned a value but never used  no-unused-vars
+  Line 155:47:   'alignmentError' is assigned a value but never used    no-unused-vars
+  Line 219:130:  Expected '===' and instead saw '=='                    eqeqeq
+  Line 241:25:   Expected '===' and instead saw '=='                    eqeqeq
+  Line 312:29:   Expected '===' and instead saw '=='                    eqeqeq
+
+src\components\AdmCharts\scoreChart.jsx
+  Line 69:93:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AggregateResults\DataFunctions.js
+  Line 485:41:    Expected '===' and instead saw '=='  eqeqeq
+  Line 564:17:    Expected '===' and instead saw '=='  eqeqeq
+  Line 613:48:    Expected '===' and instead saw '=='  eqeqeq
+  Line 614:63:    Expected '===' and instead saw '=='  eqeqeq
+  Line 625:38:    Expected '===' and instead saw '=='  eqeqeq
+  Line 626:37:    Expected '===' and instead saw '=='  eqeqeq
+  Line 627:37:    Expected '===' and instead saw '=='  eqeqeq
+  Line 628:38:    Expected '===' and instead saw '=='  eqeqeq
+  Line 729:45:    Expected '===' and instead saw '=='  eqeqeq
+  Line 731:25:    Expected '===' and instead saw '=='  eqeqeq
+  Line 778:102:   Expected '===' and instead saw '=='  eqeqeq
+  Line 778:122:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 779:37:    Expected '===' and instead saw '=='  eqeqeq
+  Line 845:103:   Expected '===' and instead saw '=='  eqeqeq
+  Line 850:105:   Expected '===' and instead saw '=='  eqeqeq
+  Line 851:77:    Expected '===' and instead saw '=='  eqeqeq
+  Line 852:77:    Expected '===' and instead saw '=='  eqeqeq
+  Line 854:101:   Expected '===' and instead saw '=='  eqeqeq
+  Line 855:102:   Expected '===' and instead saw '=='  eqeqeq
+  Line 855:212:   Expected '===' and instead saw '=='  eqeqeq
+  Line 857:127:   Expected '===' and instead saw '=='  eqeqeq
+  Line 859:101:   Expected '===' and instead saw '=='  eqeqeq
+  Line 860:102:   Expected '===' and instead saw '=='  eqeqeq
+  Line 860:212:   Expected '===' and instead saw '=='  eqeqeq
+  Line 862:140:   Expected '===' and instead saw '=='  eqeqeq
+  Line 866:83:    Expected '===' and instead saw '=='  eqeqeq
+  Line 867:83:    Expected '===' and instead saw '=='  eqeqeq
+  Line 877:150:   Expected '===' and instead saw '=='  eqeqeq
+  Line 879:92:    Expected '===' and instead saw '=='  eqeqeq
+  Line 882:150:   Expected '===' and instead saw '=='  eqeqeq
+  Line 884:92:    Expected '===' and instead saw '=='  eqeqeq
+  Line 1296:54:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1299:43:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1299:79:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1303:55:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1303:91:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1304:98:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1304:113:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1321:99:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1321:130:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1325:51:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1329:57:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1348:99:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1349:30:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1349:59:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1349:84:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1349:98:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1353:51:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1357:57:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1373:57:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1375:51:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1413:56:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1413:112:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1413:131:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1413:194:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1413:227:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1425:28:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1425:55:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1427:39:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1429:43:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1440:43:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1454:28:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1454:55:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1456:39:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1458:43:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1469:43:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1488:20:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1517:113:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1517:177:  Expected '===' and instead saw '=='  eqeqeq
+  Line 1521:47:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 1522:25:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1524:86:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1527:88:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1530:30:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1531:84:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1533:30:   Expected '===' and instead saw '=='  eqeqeq
+  Line 1534:82:   Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AggregateResults\HomePages\DRE_homePage.jsx
+  Line 96:74:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                     eqeqeq
+  Line 97:28:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                     eqeqeq
+  Line 102:94:  Expected '===' and instead saw '=='                                                                                                                                                                                                                                                     eqeqeq
+  Line 114:8:   React Hook React.useEffect has missing dependencies: 'dataSim' and 'evalNumber'. Either include them or remove the dependency array                                                                                                                                                     react-hooks/exhaustive-deps
+  Line 119:28:  Expected '===' and instead saw '=='                                                                                                                                                                                                                                                     eqeqeq
+  Line 133:49:  Expected '===' and instead saw '=='                                                                                                                                                                                                                                                     eqeqeq
+  Line 134:28:  Expected '===' and instead saw '=='                                                                                                                                                                                                                                                     eqeqeq
+  Line 140:8:   React Hook React.useEffect has a missing dependency: 'evalNumber'. Either include it or remove the dependency array. If 'setDelegationPreferences' needs the current value of 'evalNumber', you can also switch to useReducer instead of useState and read 'evalNumber' in the reducer  react-hooks/exhaustive-deps
+
+src\components\AggregateResults\HomePages\Graphs\RQ1_Graphs.jsx
+  Line 184:68:  Expected '===' and instead saw '=='  eqeqeq
+  Line 321:26:  Expected '===' and instead saw '=='  eqeqeq
+  Line 322:26:  Expected '===' and instead saw '=='  eqeqeq
+  Line 447:48:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AggregateResults\HomePages\Graphs\RQ2_Graphs.jsx
+  Line 73:38:   Expected '===' and instead saw '=='  eqeqeq
+  Line 105:41:  Expected '===' and instead saw '=='  eqeqeq
+  Line 192:38:  Expected '===' and instead saw '=='  eqeqeq
+  Line 227:41:  Expected '===' and instead saw '=='  eqeqeq
+  Line 315:49:  Expected '===' and instead saw '=='  eqeqeq
+  Line 316:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 317:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 318:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 324:49:  Expected '===' and instead saw '=='  eqeqeq
+  Line 325:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 326:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 327:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 333:49:  Expected '===' and instead saw '=='  eqeqeq
+  Line 334:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 335:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 336:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 342:49:  Expected '===' and instead saw '=='  eqeqeq
+  Line 343:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 344:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 345:48:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AggregateResults\HomePages\Graphs\RQ3_Graphs.jsx
+  Line 72:63:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 72:98:   Expected '===' and instead saw '=='  eqeqeq
+  Line 153:25:  Expected '===' and instead saw '=='  eqeqeq
+  Line 283:21:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AggregateResults\HomePages\MRE_homePage.jsx
+  Line 137:17:  Expected '!==' and instead saw '!='  eqeqeq
+
+src\components\AggregateResults\HomePages\programQuestions.jsx
+  Line 111:64:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 122:40:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\AggregateResults\aggregateResults.jsx
+  Line 405:38:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 414:46:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 414:75:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 427:50:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 427:79:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 441:81:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 460:69:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 492:24:   The href attribute is required for an anchor to be keyboard accessible. Provide a valid, navigable address as the href value. If you cannot provide an href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 551:33:   <iframe> elements must have a unique title property                                                                                                                                                                                                                                                                                                                       jsx-a11y/iframe-has-title
+  Line 557:90:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 581:58:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 591:62:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 610:128:  Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 633:54:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 633:90:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+  Line 633:162:  Expected '===' and instead saw '=='                                                                                                                                                                                                                                                                                                                                       eqeqeq
+
+src\components\AggregateResults\definitionTable.jsx
+  Line 12:35:  Expected '===' and instead saw '=='                                                                                  eqeqeq
+  Line 12:65:  Expected '===' and instead saw '=='                                                                                  eqeqeq
+  Line 32:8:   React Hook React.useEffect has a missing dependency: 'evalNumber'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 35:35:  Expected '===' and instead saw '=='                                                                                  eqeqeq
+  Line 35:65:  Expected '===' and instead saw '=='                                                                                  eqeqeq
+  Line 36:46:  Expected '===' and instead saw '=='                                                                                  eqeqeq
+  Line 36:73:  Expected '===' and instead saw '=='                                                                                  eqeqeq
+
+src\components\AggregateResults\statistics.jsx
+  Line 98:13:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 110:13:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 138:13:  Expected '!==' and instead saw '!='  eqeqeq
+
+src\components\App\index.jsx
+  Line 7:92:    'PH1_SURVEY_SETS' is defined but never used        no-unused-vars
+  Line 106:39:  'styleLoading' is assigned a value but never used  no-unused-vars
+  Line 106:60:  'styleError' is assigned a value but never used    no-unused-vars
+  Line 234:90:  Expected '===' and instead saw '=='                eqeqeq
+  Line 267:54:  Expected '===' and instead saw '=='                eqeqeq
+
+src\components\App\setupUtils.js
+  Line 18:55:  Expected '===' and instead saw '=='  eqeqeq
+  Line 18:85:  Expected '===' and instead saw '=='  eqeqeq
+  Line 29:87:  Expected '===' and instead saw '=='  eqeqeq
+  Line 34:59:  Expected '===' and instead saw '=='  eqeqeq
+  Line 34:89:  Expected '===' and instead saw '=='  eqeqeq
+  Line 62:51:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 73:52:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\HumanResults\humanResults.jsx
+  Line 68:22:    'loadingEvalNames' is assigned a value but never used                                                                                                                                                                                             no-unused-vars
+  Line 68:47:    'errorEvalNames' is assigned a value but never used                                                                                                                                                                                               no-unused-vars
+  Line 88:8:     React Hook React.useEffect has an unnecessary dependency: 'evalOptions'. Either exclude it or remove the dependency array. Outer scope values like 'evalOptions' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  Line 98:39:    Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 101:116:  Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 101:174:  Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 157:51:   Unexpected mix of '&&' and '||'. Use parentheses to clarify the intended order of operations                                                                                                                                                      no-mixed-operators
+  Line 157:74:   Unexpected mix of '&&' and '||'. Use parentheses to clarify the intended order of operations                                                                                                                                                      no-mixed-operators
+  Line 160:48:   Unexpected mix of '&&' and '||'. Use parentheses to clarify the intended order of operations                                                                                                                                                      no-mixed-operators
+  Line 160:68:   Unexpected mix of '&&' and '||'. Use parentheses to clarify the intended order of operations                                                                                                                                                      no-mixed-operators
+  Line 196:26:   Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 198:33:   Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 198:54:   Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 253:43:   Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 256:79:   Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 257:84:   Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 270:77:   Array.prototype.map() expects a value to be returned at the end of arrow function                                                                                                                                                                 array-callback-return
+  Line 292:31:   Expected '===' and instead saw '=='                                                                                                                                                                                                               eqeqeq
+  Line 341:67:   Expected '!==' and instead saw '!='                                                                                                                                                                                                               eqeqeq
+
+src\components\OnlineOnly\OnlineOnly.jsx
+  Line 21:7:  'LOG_VARIATIONS' is assigned a value but never used                                                               no-unused-vars
+  Line 70:8:  React Hook React.useEffect has a missing dependency: 'history'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\Research\ExploratoryAnalysis.jsx
+  Line 97:27:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Research\RQ1.jsx
+  Line 70:32:   Expected '===' and instead saw '=='  eqeqeq
+  Line 70:53:   Expected '===' and instead saw '=='  eqeqeq
+  Line 85:69:   Expected '===' and instead saw '=='  eqeqeq
+  Line 101:32:  Expected '===' and instead saw '=='  eqeqeq
+  Line 101:53:  Expected '===' and instead saw '=='  eqeqeq
+  Line 108:32:  Expected '===' and instead saw '=='  eqeqeq
+  Line 108:53:  Expected '===' and instead saw '=='  eqeqeq
+  Line 122:69:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Research\RQ2.jsx
+  Line 126:21:  Imported JSX component MultiKDMA_RQ23 must be in PascalCase or SCREAMING_SNAKE_CASE  react/jsx-pascal-case
+
+src\components\Research\RQ3.jsx
+  Line 75:32:   Expected '===' and instead saw '=='  eqeqeq
+  Line 75:53:   Expected '===' and instead saw '=='  eqeqeq
+  Line 83:60:   Expected '===' and instead saw '=='  eqeqeq
+  Line 83:81:   Expected '===' and instead saw '=='  eqeqeq
+  Line 100:69:  Expected '===' and instead saw '=='  eqeqeq
+  Line 115:32:  Expected '===' and instead saw '=='  eqeqeq
+  Line 115:53:  Expected '===' and instead saw '=='  eqeqeq
+  Line 131:69:  Expected '===' and instead saw '=='  eqeqeq
+  Line 146:32:  Expected '===' and instead saw '=='  eqeqeq
+  Line 146:53:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Research\rcode\RcodeModal.jsx
+  Line 14:39:  Array.prototype.map() expects a return value from arrow function                                                    array-callback-return
+  Line 20:8:   React Hook React.useEffect has a missing dependency: 'rcodeFile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 29:36:  Expected '===' and instead saw '=='                                                                                 eqeqeq
+
+src\components\Research\tables\BlockedTable.jsx
+  Line 33:67:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 33:88:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 52:48:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 68:33:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 68:54:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 73:8:   React Hook React.useEffect has a missing dependency: 'updateEvalNums'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 77:8:   React Hook React.useEffect has a missing dependency: 'updateEvalNums'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 82:26:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+
+src\components\Research\tables\CalibrationData.jsx
+  Line 51:45:    Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 137:34:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 180:8:    React Hook React.useEffect has missing dependencies: 'dataSim' and 'expandCalibrationRows'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 261:36:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 262:41:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 263:39:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 264:42:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 265:40:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 266:39:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 267:39:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 268:35:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 282:22:   Expected '===' and instead saw '=='                                                                                                             eqeqeq
+  Line 437:142:  Expected '===' and instead saw '=='                                                                                                             eqeqeq
+
+src\components\Research\tables\ph2_rq22-rq23.jsx
+  Line 40:24:  'setTargetType' is assigned a value but never used  no-unused-vars
+
+src\components\Research\tables\rq134.jsx
+  Line 53:45:    Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 170:8:    React Hook React.useEffect has a missing dependency: 'dataSim'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 221:36:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 222:36:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 223:41:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 224:39:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 225:42:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 226:40:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 227:39:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 228:39:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 229:35:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 243:22:   Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 414:142:  Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 436:108:  Expected '===' and instead saw '=='                                                                               eqeqeq
+  Line 436:124:  Expected '===' and instead saw '=='                                                                               eqeqeq
+
+src\components\Research\tables\rq21.jsx
+  Line 50:98:    Expected '===' and instead saw '=='     eqeqeq
+  Line 115:44:   '_' is assigned a value but never used  no-unused-vars
+  Line 186:36:   Expected '===' and instead saw '=='     eqeqeq
+  Line 187:36:   Expected '===' and instead saw '=='     eqeqeq
+  Line 188:41:   Expected '===' and instead saw '=='     eqeqeq
+  Line 189:42:   Expected '===' and instead saw '=='     eqeqeq
+  Line 190:44:   Expected '===' and instead saw '=='     eqeqeq
+  Line 191:46:   Expected '===' and instead saw '=='     eqeqeq
+  Line 318:107:  Expected '===' and instead saw '=='     eqeqeq
+  Line 318:123:  Expected '===' and instead saw '=='     eqeqeq
+
+src\components\Research\tables\rq22-rq23.jsx
+  Line 24:13:    Destructuring assignment loading unnecessarily renamed                                        no-useless-rename
+  Line 24:31:    Destructuring assignment error unnecessarily renamed                                          no-useless-rename
+  Line 24:45:    Destructuring assignment data unnecessarily renamed                                           no-useless-rename
+  Line 35:24:    'setTargetType' is assigned a value but never used                                            no-unused-vars
+  Line 45:29:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 45:45:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 99:45:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 99:66:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 99:75:    Unexpected mix of '||' and '&&'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  Line 99:93:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 99:101:   Unexpected mix of '||' and '&&'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  Line 99:114:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 116:83:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 118:37:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 118:53:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 120:118:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 121:109:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 122:94:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 122:199:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 126:114:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 128:84:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 130:37:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 130:53:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 132:120:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 133:110:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 134:95:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 134:202:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 138:116:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 190:36:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 191:36:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 192:41:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 193:39:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 194:42:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 195:43:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 323:110:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 323:126:  Expected '===' and instead saw '=='                                                           eqeqeq
+
+src\components\Research\tables\rq23_multiKDMA.jsx
+  Line 36:13:    Destructuring assignment loading unnecessarily renamed                                                                                                                                                                                                                        no-useless-rename
+  Line 36:31:    Destructuring assignment error unnecessarily renamed                                                                                                                                                                                                                          no-useless-rename
+  Line 36:45:    Destructuring assignment data unnecessarily renamed                                                                                                                                                                                                                           no-useless-rename
+  Line 77:94:    Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 77:181:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 77:213:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 80:180:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 86:49:    Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 86:71:    Expected '!==' and instead saw '!='                                                                                                                                                                                                                                           eqeqeq
+  Line 88:77:    Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 124:68:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 124:180:  Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 140:39:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 175:40:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 176:41:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 177:43:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 178:78:   Expected '===' and instead saw '=='                                                                                                                                                                                                                                           eqeqeq
+  Line 181:8:    React Hook React.useEffect has a missing dependency: 'pidsWithCompleteSurveys'. Either include it or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setFilteredData' needs the current value of 'pidsWithCompleteSurveys'  react-hooks/exhaustive-deps
+
+src\components\Research\tables\rq5.jsx
+  Line 80:39:    Expected '!==' and instead saw '!='  eqeqeq
+  Line 83:39:    Expected '!==' and instead saw '!='  eqeqeq
+  Line 88:102:   Expected '===' and instead saw '=='  eqeqeq
+  Line 89:103:   Expected '===' and instead saw '=='  eqeqeq
+  Line 90:98:    Expected '===' and instead saw '=='  eqeqeq
+  Line 106:53:   Expected '===' and instead saw '=='  eqeqeq
+  Line 106:75:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 143:77:   Expected '===' and instead saw '=='  eqeqeq
+  Line 148:73:   Expected '===' and instead saw '=='  eqeqeq
+  Line 148:111:  Expected '===' and instead saw '=='  eqeqeq
+  Line 149:71:   Expected '===' and instead saw '=='  eqeqeq
+  Line 149:114:  Expected '===' and instead saw '=='  eqeqeq
+  Line 164:102:  Expected '===' and instead saw '=='  eqeqeq
+  Line 164:132:  Expected '===' and instead saw '=='  eqeqeq
+  Line 166:103:  Expected '===' and instead saw '=='  eqeqeq
+  Line 166:134:  Expected '===' and instead saw '=='  eqeqeq
+  Line 168:94:   Expected '===' and instead saw '=='  eqeqeq
+  Line 168:124:  Expected '===' and instead saw '=='  eqeqeq
+  Line 168:282:  Expected '===' and instead saw '=='  eqeqeq
+  Line 170:95:   Expected '===' and instead saw '=='  eqeqeq
+  Line 170:126:  Expected '===' and instead saw '=='  eqeqeq
+  Line 170:284:  Expected '===' and instead saw '=='  eqeqeq
+  Line 173:93:   Expected '===' and instead saw '=='  eqeqeq
+  Line 173:123:  Expected '===' and instead saw '=='  eqeqeq
+  Line 173:281:  Expected '===' and instead saw '=='  eqeqeq
+  Line 211:22:   Expected '===' and instead saw '=='  eqeqeq
+  Line 211:60:   Expected '===' and instead saw '=='  eqeqeq
+  Line 211:78:   Expected '===' and instead saw '=='  eqeqeq
+  Line 211:115:  Expected '===' and instead saw '=='  eqeqeq
+  Line 255:36:   Expected '===' and instead saw '=='  eqeqeq
+  Line 256:36:   Expected '===' and instead saw '=='  eqeqeq
+  Line 257:41:   Expected '===' and instead saw '=='  eqeqeq
+  Line 258:42:   Expected '===' and instead saw '=='  eqeqeq
+  Line 259:44:   Expected '===' and instead saw '=='  eqeqeq
+  Line 285:22:   Expected '===' and instead saw '=='  eqeqeq
+  Line 394:106:  Expected '===' and instead saw '=='  eqeqeq
+  Line 394:122:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Research\tables\rq5_ph1.jsx
+  Line 75:98:    Expected '===' and instead saw '=='  eqeqeq
+  Line 76:99:    Expected '===' and instead saw '=='  eqeqeq
+  Line 77:94:    Expected '===' and instead saw '=='  eqeqeq
+  Line 93:49:    Expected '===' and instead saw '=='  eqeqeq
+  Line 93:71:    Expected '!==' and instead saw '!='  eqeqeq
+  Line 120:49:   Expected '===' and instead saw '=='  eqeqeq
+  Line 121:83:   Expected '===' and instead saw '=='  eqeqeq
+  Line 133:77:   Expected '===' and instead saw '=='  eqeqeq
+  Line 140:46:   Expected '===' and instead saw '=='  eqeqeq
+  Line 140:101:  Expected '===' and instead saw '=='  eqeqeq
+  Line 141:51:   Expected '===' and instead saw '=='  eqeqeq
+  Line 141:88:   Expected '===' and instead saw '=='  eqeqeq
+  Line 141:144:  Expected '===' and instead saw '=='  eqeqeq
+  Line 146:46:   Expected '===' and instead saw '=='  eqeqeq
+  Line 146:101:  Expected '===' and instead saw '=='  eqeqeq
+  Line 147:51:   Expected '===' and instead saw '=='  eqeqeq
+  Line 147:88:   Expected '===' and instead saw '=='  eqeqeq
+  Line 147:144:  Expected '===' and instead saw '=='  eqeqeq
+  Line 150:46:   Expected '===' and instead saw '=='  eqeqeq
+  Line 150:106:  Expected '===' and instead saw '=='  eqeqeq
+  Line 151:51:   Expected '===' and instead saw '=='  eqeqeq
+  Line 151:88:   Expected '===' and instead saw '=='  eqeqeq
+  Line 151:144:  Expected '===' and instead saw '=='  eqeqeq
+  Line 156:46:   Expected '===' and instead saw '=='  eqeqeq
+  Line 156:106:  Expected '===' and instead saw '=='  eqeqeq
+  Line 157:51:   Expected '===' and instead saw '=='  eqeqeq
+  Line 157:88:   Expected '===' and instead saw '=='  eqeqeq
+  Line 157:144:  Expected '===' and instead saw '=='  eqeqeq
+  Line 164:72:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 164:117:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 165:68:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 165:112:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 176:81:   Expected '===' and instead saw '=='  eqeqeq
+  Line 183:50:   Expected '===' and instead saw '=='  eqeqeq
+  Line 183:105:  Expected '===' and instead saw '=='  eqeqeq
+  Line 184:55:   Expected '===' and instead saw '=='  eqeqeq
+  Line 184:92:   Expected '===' and instead saw '=='  eqeqeq
+  Line 184:148:  Expected '===' and instead saw '=='  eqeqeq
+  Line 189:50:   Expected '===' and instead saw '=='  eqeqeq
+  Line 189:105:  Expected '===' and instead saw '=='  eqeqeq
+  Line 190:55:   Expected '===' and instead saw '=='  eqeqeq
+  Line 190:92:   Expected '===' and instead saw '=='  eqeqeq
+  Line 190:148:  Expected '===' and instead saw '=='  eqeqeq
+  Line 193:50:   Expected '===' and instead saw '=='  eqeqeq
+  Line 193:110:  Expected '===' and instead saw '=='  eqeqeq
+  Line 194:55:   Expected '===' and instead saw '=='  eqeqeq
+  Line 194:92:   Expected '===' and instead saw '=='  eqeqeq
+  Line 194:148:  Expected '===' and instead saw '=='  eqeqeq
+  Line 199:50:   Expected '===' and instead saw '=='  eqeqeq
+  Line 199:110:  Expected '===' and instead saw '=='  eqeqeq
+  Line 200:55:   Expected '===' and instead saw '=='  eqeqeq
+  Line 200:92:   Expected '===' and instead saw '=='  eqeqeq
+  Line 200:148:  Expected '===' and instead saw '=='  eqeqeq
+  Line 248:36:   Expected '===' and instead saw '=='  eqeqeq
+  Line 249:41:   Expected '===' and instead saw '=='  eqeqeq
+  Line 250:42:   Expected '===' and instead saw '=='  eqeqeq
+  Line 251:39:   Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Research\tables\rq6.jsx
+  Line 67:39:    Expected '!==' and instead saw '!='     eqeqeq
+  Line 70:39:    Expected '!==' and instead saw '!='     eqeqeq
+  Line 75:102:   Expected '===' and instead saw '=='     eqeqeq
+  Line 87:48:    '_' is assigned a value but never used  no-unused-vars
+  Line 91:53:    Expected '===' and instead saw '=='     eqeqeq
+  Line 91:75:    Expected '!==' and instead saw '!='     eqeqeq
+  Line 91:100:   Expected '!==' and instead saw '!='     eqeqeq
+  Line 125:73:   Expected '===' and instead saw '=='     eqeqeq
+  Line 127:72:   Expected '===' and instead saw '=='     eqeqeq
+  Line 128:89:   Expected '===' and instead saw '=='     eqeqeq
+  Line 128:105:  Expected '===' and instead saw '=='     eqeqeq
+  Line 181:36:   Expected '===' and instead saw '=='     eqeqeq
+  Line 182:41:   Expected '===' and instead saw '=='     eqeqeq
+  Line 183:42:   Expected '===' and instead saw '=='     eqeqeq
+  Line 193:22:   Expected '===' and instead saw '=='     eqeqeq
+
+src\components\Research\tables\rq8.jsx
+  Line 78:39:    Expected '!==' and instead saw '!='  eqeqeq
+  Line 81:39:    Expected '!==' and instead saw '!='  eqeqeq
+  Line 86:102:   Expected '===' and instead saw '=='  eqeqeq
+  Line 99:43:    Expected '===' and instead saw '=='  eqeqeq
+  Line 99:70:    Expected '===' and instead saw '=='  eqeqeq
+  Line 106:43:   Expected '===' and instead saw '=='  eqeqeq
+  Line 113:53:   Expected '===' and instead saw '=='  eqeqeq
+  Line 113:75:   Expected '!==' and instead saw '!='  eqeqeq
+  Line 149:73:   Expected '===' and instead saw '=='  eqeqeq
+  Line 158:94:   Expected '===' and instead saw '=='  eqeqeq
+  Line 161:98:   Expected '===' and instead saw '=='  eqeqeq
+  Line 164:121:  Expected '===' and instead saw '=='  eqeqeq
+  Line 165:41:   Expected '===' and instead saw '=='  eqeqeq
+  Line 166:122:  Expected '===' and instead saw '=='  eqeqeq
+  Line 166:130:  Expected '===' and instead saw '=='  eqeqeq
+  Line 166:178:  Expected '===' and instead saw '=='  eqeqeq
+  Line 166:229:  Expected '===' and instead saw '=='  eqeqeq
+  Line 166:270:  Expected '===' and instead saw '=='  eqeqeq
+  Line 167:121:  Expected '===' and instead saw '=='  eqeqeq
+  Line 167:129:  Expected '===' and instead saw '=='  eqeqeq
+  Line 167:177:  Expected '===' and instead saw '=='  eqeqeq
+  Line 167:228:  Expected '===' and instead saw '=='  eqeqeq
+  Line 167:268:  Expected '===' and instead saw '=='  eqeqeq
+  Line 170:122:  Expected '===' and instead saw '=='  eqeqeq
+  Line 170:130:  Expected '===' and instead saw '=='  eqeqeq
+  Line 170:177:  Expected '===' and instead saw '=='  eqeqeq
+  Line 170:227:  Expected '===' and instead saw '=='  eqeqeq
+  Line 170:272:  Expected '===' and instead saw '=='  eqeqeq
+  Line 171:121:  Expected '===' and instead saw '=='  eqeqeq
+  Line 171:129:  Expected '===' and instead saw '=='  eqeqeq
+  Line 171:176:  Expected '===' and instead saw '=='  eqeqeq
+  Line 171:226:  Expected '===' and instead saw '=='  eqeqeq
+  Line 171:270:  Expected '===' and instead saw '=='  eqeqeq
+  Line 239:32:   Expected '===' and instead saw '=='  eqeqeq
+  Line 240:37:   Expected '===' and instead saw '=='  eqeqeq
+  Line 241:38:   Expected '===' and instead saw '=='  eqeqeq
+  Line 250:22:   Expected '===' and instead saw '=='  eqeqeq
+  Line 331:106:  Expected '===' and instead saw '=='  eqeqeq
+  Line 331:122:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Research\utils.js
+  Line 46:34:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 85:37:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 85:60:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 85:81:    Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 85:100:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 85:125:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 85:158:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 85:180:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 107:76:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 107:109:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 150:85:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 150:109:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 150:179:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 158:41:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 158:63:   Expected '!==' and instead saw '!='                                                           eqeqeq
+  Line 189:31:   Expected '!==' and instead saw '!='                                                           eqeqeq
+  Line 213:17:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 218:85:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 218:109:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 218:180:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 218:196:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 219:41:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 222:172:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 229:41:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 229:63:   Expected '!==' and instead saw '!='                                                           eqeqeq
+  Line 231:69:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 240:30:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 242:33:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 243:33:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 251:62:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 251:67:   Unexpected mix of '||' and '&&'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  Line 251:86:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 251:102:  Unexpected mix of '||' and '&&'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  Line 251:107:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 252:57:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 252:74:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 255:38:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 256:55:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 259:55:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 261:66:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 273:50:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 273:73:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 273:94:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 273:150:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 274:61:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 274:101:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 277:91:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 288:53:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 292:42:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 294:40:   Expected '!==' and instead saw '!='                                                           eqeqeq
+  Line 298:91:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 298:174:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 299:78:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 304:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 304:45:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 305:90:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 308:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 310:92:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 313:67:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 313:87:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 314:77:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 314:93:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 317:130:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 317:147:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 318:90:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 320:144:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 320:195:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 321:78:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 321:112:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 321:128:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 321:146:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 322:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 322:45:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 323:96:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 325:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 327:98:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 330:63:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 330:161:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 330:259:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 331:82:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 333:45:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 333:71:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 334:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 334:45:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 335:64:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 337:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 339:60:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 342:57:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 342:73:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 342:95:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 342:132:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 344:137:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 344:154:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 344:276:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 344:309:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 344:336:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 344:368:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 347:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 347:45:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 348:111:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 362:29:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 363:117:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 363:134:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 363:256:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 363:289:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 363:316:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 363:348:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 365:46:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 369:72:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 370:23:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 378:67:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 378:87:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 379:67:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 379:87:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 384:138:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 385:138:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 388:138:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 391:138:  Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 402:78:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 403:76:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 404:74:   Expected '===' and instead saw '=='                                                           eqeqeq
+  Line 409:11:   'pids' is assigned a value but never used                                                     no-unused-vars
+
+src\components\Research\variables\rq-variables.jsx
+  Line 29:8:  React Hook React.useEffect has a missing dependency: 'xlFile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\Results\resultsTable.jsx
+  Line 146:42:   Expected '===' and instead saw '=='                                                  eqeqeq
+  Line 175:24:   Imported JSX component MultiKDMA_RQ23 must be in PascalCase or SCREAMING_SNAKE_CASE  react/jsx-pascal-case
+  Line 442:104:  Expected '===' and instead saw '=='                                                  eqeqeq
+  Line 449:60:   Expected '===' and instead saw '=='                                                  eqeqeq
+  Line 451:45:   Expected '===' and instead saw '=='                                                  eqeqeq
+  Line 453:64:   Expected '===' and instead saw '=='                                                  eqeqeq
+  Line 505:70:   Expected '===' and instead saw '=='                                                  eqeqeq
+
+src\components\ReviewDelegation\ReviewDelegation.jsx
+  Line 86:15:   'results' is assigned a value but never used  no-unused-vars
+  Line 98:40:   Expected '===' and instead saw '=='           eqeqeq
+  Line 100:47:  Expected '===' and instead saw '=='           eqeqeq
+  Line 129:27:  Expected '===' and instead saw '=='           eqeqeq
+  Line 138:34:  Expected '===' and instead saw '=='           eqeqeq
+  Line 147:34:  Expected '===' and instead saw '=='           eqeqeq
+
+src\components\ReviewTextBased\ReviewTextBased.jsx
+  Line 39:15:  'results' is assigned a value but never used  no-unused-vars
+
+src\components\SurveyResults\delResultsUtils.js
+  Line 58:15:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 58:30:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 85:34:  Expected '===' and instead saw '=='  eqeqeq
+  Line 87:46:  Expected '===' and instead saw '=='  eqeqeq
+  Line 88:47:  Expected '===' and instead saw '=='  eqeqeq
+  Line 90:48:  Expected '===' and instead saw '=='  eqeqeq
+  Line 93:46:  Expected '===' and instead saw '=='  eqeqeq
+  Line 94:47:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\SurveyResults\resultsTable.jsx
+  Line 119:8:    React Hook React.useEffect has a missing dependency: 'formatData'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+  Line 124:8:    React Hook React.useEffect has a missing dependency: 'exploratory'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  Line 127:52:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 127:90:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 127:136:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 130:129:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 135:52:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 135:90:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 135:136:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 138:130:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 207:29:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 207:53:   Expected '!==' and instead saw '!='                                                                                      eqeqeq
+  Line 212:45:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 212:67:   Expected '!==' and instead saw '!='                                                                                      eqeqeq
+  Line 214:26:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 214:42:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 225:57:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 247:27:   Expected '!==' and instead saw '!='                                                                                      eqeqeq
+  Line 289:36:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 311:41:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 363:39:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 374:44:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 404:36:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 405:33:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 406:33:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 418:8:    React Hook React.useEffect has a missing dependency: 'getUsedHeaders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 451:42:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 469:73:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 474:110:  Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 483:61:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 483:82:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+
+src\components\SurveyResults\surveyResults.jsx
+  Line 47:12:    'showTable' is assigned a value but never used                                                                                     no-unused-vars
+  Line 47:23:    'setShowTable' is assigned a value but never used                                                                                  no-unused-vars
+  Line 64:8:     React Hook React.useEffect has a missing dependency: 'setupDataBySurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 70:8:     React Hook React.useEffect has a missing dependency: 'filterDataAndSetNames'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  Line 100:45:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 100:67:   Expected '!==' and instead saw '!='                                                                                                eqeqeq
+  Line 102:40:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 102:70:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 145:48:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 145:112:  Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 147:99:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 147:159:  Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 163:46:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 167:35:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 167:65:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 168:84:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 169:84:   Expected '===' and instead saw '=='                                                                                                eqeqeq
+  Line 277:68:   Expected '!==' and instead saw '!='                                                                                                eqeqeq
+
+src\components\Survey\adeptComparison.jsx
+  Line 91:12:  React Hook React.useEffect has a missing dependency: 'currentSurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\Survey\comparison.jsx
+  Line 103:12:  React Hook useEffect has a missing dependency: 'currentSurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\Survey\delegationMappings.js
+  Line 6:20:   Expected '===' and instead saw '=='  eqeqeq
+  Line 7:20:   Expected '===' and instead saw '=='  eqeqeq
+  Line 8:20:   Expected '===' and instead saw '=='  eqeqeq
+  Line 17:20:  Expected '===' and instead saw '=='  eqeqeq
+  Line 18:20:  Expected '===' and instead saw '=='  eqeqeq
+  Line 19:20:  Expected '===' and instead saw '=='  eqeqeq
+  Line 44:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 45:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 46:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 47:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 48:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 49:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 68:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 69:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 70:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 71:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 72:35:  Expected '===' and instead saw '=='  eqeqeq
+  Line 73:35:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Survey\dynamic.jsx
+  Line 210:11:   'getSceneStyle' is assigned a value but never used  no-unused-vars
+  Line 254:130:  Expected '===' and instead saw '=='                 eqeqeq
+
+src\components\Survey\dynamicPhase1.jsx
+  Line 196:130:  Expected '===' and instead saw '=='  eqeqeq
+
+src\components\Survey\dynamicPhase2.jsx
+  Line 2:28:  'Row' is defined but never used  no-unused-vars
+  Line 2:33:  'Col' is defined but never used  no-unused-vars
+
+src\components\Survey\omnibusComparison.jsx
+  Line 96:12:  React Hook useEffect has a missing dependency: 'currentSurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\Survey\omnibusTemplate.jsx
+  Line 106:12:  React Hook useEffect has a missing dependency: 'currentSurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src\components\Survey\survey.jsx
+  Line 135:39:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 135:74:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 135:109:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 137:42:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 142:100:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 142:135:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 142:170:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 142:253:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 144:101:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 151:53:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 196:39:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 196:74:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 196:109:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 202:39:   Expected '!==' and instead saw '!='                                              eqeqeq
+  Line 202:74:   Expected '!==' and instead saw '!='                                              eqeqeq
+  Line 202:109:  Expected '!==' and instead saw '!='                                              eqeqeq
+  Line 203:42:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 232:38:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 232:71:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 256:43:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 265:43:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 309:44:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 309:79:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 309:114:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 314:44:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 314:79:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 316:42:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 318:49:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 331:100:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 338:42:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 342:103:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 342:188:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 345:50:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 346:51:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 346:77:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 346:137:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 348:36:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 365:52:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 366:70:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 366:107:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 366:140:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 366:172:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 372:69:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 372:106:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 372:139:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 372:170:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 374:72:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 374:109:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 374:142:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 374:173:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 410:43:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 410:78:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 422:43:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 428:47:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 576:38:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 600:36:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 603:23:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 605:31:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 629:42:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 650:22:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 747:38:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 747:73:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 759:38:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 769:38:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 776:38:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 781:38:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 803:43:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 803:78:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 803:113:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 806:53:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 809:54:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 829:60:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 837:39:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 837:74:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 837:109:  Expected '===' and instead saw '=='                                              eqeqeq
+  Line 840:49:   Expected '===' and instead saw '=='                                              eqeqeq
+  Line 941:25:   Anchors must have content and the content must be accessible by a screen reader  jsx-a11y/anchor-has-content
+
+src\components\Survey\surveyUtils.js
+  Line 65:15:    Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 70:15:    Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 80:15:    Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 90:15:    Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 115:20:   Expected '!==' and instead saw '!='                                                         eqeqeq
+  Line 246:33:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 246:109:  Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 359:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 378:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 397:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 416:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 433:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 449:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 589:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 607:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 623:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 640:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 656:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 659:57:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 688:31:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 690:57:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 819:37:   Expected '===' and instead saw '=='                                                         eqeqeq
+  Line 1062:49:  Function declared in a loop contains unsafe references to variable(s) 'mostAlignedTarget'   no-loop-func
+  Line 1095:50:  Function declared in a loop contains unsafe references to variable(s) 'leastAlignedTarget'  no-loop-func
+
+src\components\TextBasedResults\TextBasedResultsPage.jsx
+  Line 281:40:  Expected '===' and instead saw '=='                    eqeqeq
+  Line 302:38:  Expected '===' and instead saw '=='                    eqeqeq
+  Line 339:10:  'getProbeQuestionsFromData' is defined but never used  no-unused-vars
+  Line 438:49:  Expected '===' and instead saw '=='                    eqeqeq
+  Line 438:71:  Expected '!==' and instead saw '!='                    eqeqeq
+  Line 440:35:  Expected '===' and instead saw '=='                    eqeqeq
+  Line 440:56:  Expected '===' and instead saw '=='                    eqeqeq
+
+src\components\TextBasedScenarios\TextBasedScenariosPage.jsx
+  Line 131:41:  Expected '===' and instead saw '=='                      eqeqeq
+  Line 253:67:  Expected '===' and instead saw '=='                      eqeqeq
+  Line 257:33:  Expected '===' and instead saw '=='                      eqeqeq
+  Line 501:21:  'fieldName' is assigned a value but never used           no-unused-vars
+  Line 521:35:  'response' is assigned a value but never used            no-unused-vars
+  Line 552:27:  Expected '!==' and instead saw '!='                      eqeqeq
+  Line 826:7:   'p1Mappings' is assigned a value but never used          no-unused-vars
+  Line 848:7:   'adeptScenarioIdMap' is assigned a value but never used  no-unused-vars
+
+src\components\TextBasedScenarios\medicalScenario.jsx
+  Line 193:22:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 193:63:  Expected '!==' and instead saw '!='  eqeqeq
+  Line 198:27:  Expected '===' and instead saw '=='  eqeqeq
+  Line 285:58:  Expected '!==' and instead saw '!='  eqeqeq
+
+src\components\TextBasedScenarios\patientPhase1.jsx
+  Line 152:34:  Expected '!==' and instead saw '!='  eqeqeq
+
+src\components\TextBasedScenarios\phase2Text.jsx
+  Line 47:5:  Useless constructor  no-useless-constructor
+
+src\services\accountsService.js
+  Line 11:63:  Expected '===' and instead saw '=='  eqeqeq
+  Line 43:35:  Expected '===' and instead saw '=='  eqeqeq
+
+src\store\slices\configSlice.js
+  Line 18:21:  'id' is assigned a value but never used  no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+File sizes after gzip:
+
+  3.11 MB   build\static\js\main.fdd9cce9.js
+  79.69 kB  build\static\css\main.3377a3a0.css
+
+The bundle size is significantly larger than recommended.
+Consider reducing it with code splitting: https://goo.gl/9VhYWB
+You can also analyze the project dependencies: https://goo.gl/LeUzfb
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

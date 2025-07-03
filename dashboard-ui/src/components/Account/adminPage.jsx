@@ -267,7 +267,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
     const [updateUserCall] = useMutation(UPDATE_USER_APPROVAL);
 
     const updateUserStatus = (userid, statusType, e) => {
-        const user = unapproved.find((x) => x._id == userid);
+        const user = unapproved.find((x) => String(x._id) === String(userid));
         if (user) {
             user[statusType] = e.target.checked;
         }
@@ -275,7 +275,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
     };
 
     const approveUser = async (userid) => {
-        const user = unapproved.find((x) => x._id == userid);
+        const user = unapproved.find((x) => String(x._id) === String(userid));
         if (user) {
             user.approved = true;
         }
@@ -295,7 +295,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
     };
 
     const denyUser = async (userid) => {
-        const user = unapproved.find((x) => x._id == userid);
+        const user = unapproved.find((x) => String(x._id) === String(userid));
         if (user) {
             user.rejected = true;
         }
@@ -385,7 +385,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const [pendingStyleVersion, setPendingStyleVersion] = useState(null);
 
     // Query and mutation for UI styling
-    const { loading: uiStyleLoading, error: uiStyleError, data: uiStyleData } = useQuery(GET_CURRENT_UI_STYLE, {
+    const { loading: uiStyleLoading, error: uiStyleError } = useQuery(GET_CURRENT_UI_STYLE, {
         fetchPolicy: 'no-cache',
         onCompleted: (data) => {
             if (data && data.getCurrentStyle) {
@@ -428,7 +428,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
         `;
     }, [pendingSurveyVersion]);
 
-    const [getConfigs, { loading: configsLoading, error: configsError, data: configsData }] = useLazyQuery(GET_CONFIGS, {
+    const [getConfigs, { loading: configsLoading }] = useLazyQuery(GET_CONFIGS, {
         fetchPolicy: 'no-cache',
         onCompleted: async (data) => {
             try {
@@ -450,7 +450,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
             const versions = Object.values(surveyConfigs).map(config => config.version);
             const uniqueVersions = [...new Set(versions)]
                 .sort((a, b) => a - b)
-                .filter(version => version != surveyVersion);
+                .filter(version => version !== surveyVersion);
             setSurveyVersions(uniqueVersions);
         }
     }, [surveyConfigs, surveyVersion]);
@@ -561,7 +561,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
         setErrorCount(errors);
         setPassword('');
         setPasswordError("Something went wrong! Please confirm your admin status.");
-        if (errors == 2) {
+        if (errors === 2) {
             await accountsClient.logout();
             updateUserHandler(null);
             history.push('/login');
@@ -607,7 +607,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     <div className="form-group">
                         <input placeholder="Enter Password" type="password" id="password" value={password} onChange={onChangePassword} />
                     </div>
-                    {passwordError != '' && <p className='error-message'>{passwordError}</p>}
+                    {String(passwordError) !== '' && <p className='error-message'>{passwordError}</p>}
                     <Button type='submit'>Submit</Button>
                 </form>
             </Card>}
