@@ -16,48 +16,12 @@ If you don't want to include a polyfill, you can use an empty module like this:
 	resolve.fallback: { "crypto": false }
 
 [eslint] 
-src\components\Account\participantProgress.jsx
-  Line 174:8:    React Hook React.useEffect has missing dependencies: 'canViewProlific' and 'sortData'. Either include them or remove the dependency array                                          react-hooks/exhaustive-deps
+src\components\Account\participantProgress.jsx                                                                                                                                              eqeqeq
+  Line 174:8:    React Hook React.useEffect has missing dependencies: 'canViewProlific' and 'sortData'. Either include them or remove the dependency array                                          react-hooks/exhaustive-deps                                                                                                                                              eqeqeq
   Line 259:8:    React Hook React.useEffect has missing dependencies: 'evalFilters', 'getEvalsForPhase', 'getTypesForPhase', and 'typeFilters'. Either include them or remove the dependency array  react-hooks/exhaustive-deps                                                                                                                                               eqeqeq
   Line 303:8:    React Hook React.useEffect has a missing dependency: 'sortData'. Either include it or remove the dependency array                                                                  react-hooks/exhaustive-deps
 
-src\components\Account\pidLookup.jsx
-  Line 31:38:  Expected '===' and instead saw '=='  eqeqeq
-
-src\components\AdmCharts\admCharts.jsx
-  Line 42:49:  Expected '===' and instead saw '=='  eqeqeq
-
-src\components\AdmCharts\admProbeResponses.jsx
-  Line 155:22:   'alignmentLoading' is assigned a value but never used  no-unused-vars
-  Line 155:47:   'alignmentError' is assigned a value but never used    no-unused-vars
-  Line 219:130:  Expected '===' and instead saw '=='                    eqeqeq
-  Line 241:25:   Expected '===' and instead saw '=='                    eqeqeq
-  Line 312:29:   Expected '===' and instead saw '=='                    eqeqeq
-
-src\components\AdmCharts\scoreChart.jsx
-  Line 69:93:  Expected '===' and instead saw '=='  eqeqeq
-
 src\components\AggregateResults\DataFunctions.js
-  Line 485:41:    Expected '===' and instead saw '=='  eqeqeq
-  Line 564:17:    Expected '===' and instead saw '=='  eqeqeq
-  Line 613:48:    Expected '===' and instead saw '=='  eqeqeq
-  Line 614:63:    Expected '===' and instead saw '=='  eqeqeq
-  Line 625:38:    Expected '===' and instead saw '=='  eqeqeq
-  Line 626:37:    Expected '===' and instead saw '=='  eqeqeq
-  Line 627:37:    Expected '===' and instead saw '=='  eqeqeq
-  Line 628:38:    Expected '===' and instead saw '=='  eqeqeq
-  Line 729:45:    Expected '===' and instead saw '=='  eqeqeq
-  Line 731:25:    Expected '===' and instead saw '=='  eqeqeq
-  Line 778:102:   Expected '===' and instead saw '=='  eqeqeq
-  Line 778:122:   Expected '!==' and instead saw '!='  eqeqeq
-  Line 779:37:    Expected '===' and instead saw '=='  eqeqeq
-  Line 845:103:   Expected '===' and instead saw '=='  eqeqeq
-  Line 850:105:   Expected '===' and instead saw '=='  eqeqeq
-  Line 851:77:    Expected '===' and instead saw '=='  eqeqeq
-  Line 852:77:    Expected '===' and instead saw '=='  eqeqeq
-  Line 854:101:   Expected '===' and instead saw '=='  eqeqeq
-  Line 855:102:   Expected '===' and instead saw '=='  eqeqeq
-  Line 855:212:   Expected '===' and instead saw '=='  eqeqeq
   Line 857:127:   Expected '===' and instead saw '=='  eqeqeq
   Line 859:101:   Expected '===' and instead saw '=='  eqeqeq
   Line 860:102:   Expected '===' and instead saw '=='  eqeqeq

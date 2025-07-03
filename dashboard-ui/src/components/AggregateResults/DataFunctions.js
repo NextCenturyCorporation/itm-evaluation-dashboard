@@ -482,7 +482,7 @@ function getOverallDelRate(res) {
                         tally += 1;
                         const response = res.results[pageName].questions[q].response;
                         const aligned = q.split(' vs ')[0]; // aligned is always listed first in forced choice questions
-                        val += response == aligned ? 1 : 0;
+                        val += String(response) === aligned ? 1 : 0;
                     }
                 }
             }
@@ -561,7 +561,7 @@ function populateHumanDataRow(rowObject, version) {
         soartech = 0;
     }
     let returnObj = {};
-    if (version == 3) {
+    if (Number(version) === 3) {
         returnObj = {
             "Participant": rowObject[0].pid,
             "SimEnv": rowObject[0].env,
@@ -610,8 +610,8 @@ function populateHumanDataRow(rowObject, version) {
         };
         const adept_mapping = { 'MJ2': 1, 'MJ4': 2, 'MJ5': 3 };
         if (rowObject[0].scenario_id.includes('ol')) {
-            returnObj['ST_Scenario'] = version == 4 ? rowObject[0].scenario_id.split('ol-dre-')[1].split('-')[0] : Number(rowObject[0].scenario_id.split('ol-ph1-eval-')[1].split('-')[0]) - 1;
-            returnObj[rowObject[0].scenario_id.split('ol')[0] == 'q' ? 'QOL_Session_Id' : 'VOL_Session_Id'] = rowObject[0]?.data?.alignment?.['sid'] ?? '-';
+            returnObj['ST_Scenario'] = Number(version) === 4 ? rowObject[0].scenario_id.split('ol-dre-')[1].split('-')[0] : Number(rowObject[0].scenario_id.split('ol-ph1-eval-')[1].split('-')[0]) - 1;
+            returnObj[String(rowObject[0].scenario_id.split('ol')[0]) === 'q' ? 'QOL_Session_Id' : 'VOL_Session_Id'] = rowObject[0]?.data?.alignment?.['sid'] ?? '-';
         }
         else {
             returnObj['ADEPT_Scenario'] = adept_mapping[rowObject[0].scenario_id.split('-')[1].split('-')[0]];
@@ -622,10 +622,10 @@ function populateHumanDataRow(rowObject, version) {
         const mj4ProbeIds = ["Probe 1", "Probe 2 kicker", "Probe 2 passerby", "Probe 2-A.1", "Probe 2-D.1", "Probe 2-D.1-B.1", "Probe 3", "Probe 3-A.1", "Probe 3-B.1", "Probe 6", "Probe 7", "Probe 8", "Probe 9", "Probe 10", "Probe 10-A.1", "Probe 10-A.1-B.1", "Probe 10-B.1", "Probe 10-C.1"];
         const mj5ProbeIds = ["Probe 1", "Probe 1-A.1", "Probe 1-B.1", "Probe 2", "Probe 2-A.1", "Probe 2-A.1-A.1", "Probe 2-A.1-B.1", "Probe 2-A.1-B.1-A.1", "Probe 2-B.1", "Probe 2-B.1-A.1", "Probe 2-B.1-B.1", "Probe 2-B.1-B.1-A.1", "Probe 3", "Probe 4", "Probe 4.5", "Probe 7", "Probe 8", "Probe 8-A.1", "Probe 8-A.1-A.1", "Probe 9", "Probe 9-A.1", "Probe 9-B.1", "Probe 9-C.1"];
 
-        const qol1ProbeIds = version == 4 ? ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "qol-dre-train2-Probe-11", "12"] : ['qol-ph1-eval-2-Probe-1', 'qol-ph1-eval-2-Probe-2', 'qol-ph1-eval-2-Probe-3', 'qol-ph1-eval-2-Probe-4', 'qol-ph1-eval-2-Probe-5', 'qol-ph1-eval-2-Probe-6'];
-        const qolProbeIds = version == 4 ? ["qol-dre-?-eval-Probe-1", "qol-dre-?-eval-Probe-2", "qol-dre-?-eval-Probe-3", "qol-dre-?-eval-Probe-4", "qol-dre-?-eval-Probe-5", "qol-dre-?-eval-Probe-6", "qol-dre-?-eval-Probe-7", "qol-dre-?-eval-Probe-8", "qol-dre-?-eval-Probe-9", "qol-dre-?-eval-Probe-10", "qol-dre-?-eval-Probe-11", "qol-dre-?-eval-Probe-12"] : ['qol-ph1-eval-?-Probe-1', 'qol-ph1-eval-?-Probe-2', 'qol-ph1-eval-?-Probe-3', 'qol-ph1-eval-?-Probe-4', 'qol-ph1-eval-?-Probe-5', 'qol-ph1-eval-?-Probe-6'];
-        const volProbeIds = version == 4 ? ["vol-dre-?-eval-Probe-1", "vol-dre-?-eval-Probe-2", "vol-dre-?-eval-Probe-3", "vol-dre-?-eval-Probe-4", "vol-dre-?-eval-Probe-5", "vol-dre-?-eval-Probe-6", "vol-dre-?-eval-Probe-7", "vol-dre-?-eval-Probe-8", "vol-dre-?-eval-Probe-9", "vol-dre-?-eval-Probe-10", "vol-dre-?-eval-Probe-11", "vol-dre-?-eval-Probe-12"] : ['vol-ph1-eval-?-Probe-1', 'vol-ph1-eval-?-Probe-2', 'vol-ph1-eval-?-Probe-3', 'vol-ph1-eval-?-Probe-4', 'vol-ph1-eval-?-Probe-5', 'vol-ph1-eval-?-Probe-6'];
-        const vol1ProbeIds = version == 4 ? ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "vol-dre-train2-Probe-11", "vol-dre-train2-Probe-12"] : ['vol-ph1-eval-2-Probe-1', 'vol-ph1-eval-2-Probe-2', 'vol-ph1-eval-2-Probe-3', 'vol-ph1-eval-2-Probe-4', 'vol-ph1-eval-2-Probe-5', 'vol-ph1-eval-2-Probe-6'];
+        const qol1ProbeIds = Number(version) === 4 ? ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "qol-dre-train2-Probe-11", "12"] : ['qol-ph1-eval-2-Probe-1', 'qol-ph1-eval-2-Probe-2', 'qol-ph1-eval-2-Probe-3', 'qol-ph1-eval-2-Probe-4', 'qol-ph1-eval-2-Probe-5', 'qol-ph1-eval-2-Probe-6'];
+        const qolProbeIds = Number(version) === 4 ? ["qol-dre-?-eval-Probe-1", "qol-dre-?-eval-Probe-2", "qol-dre-?-eval-Probe-3", "qol-dre-?-eval-Probe-4", "qol-dre-?-eval-Probe-5", "qol-dre-?-eval-Probe-6", "qol-dre-?-eval-Probe-7", "qol-dre-?-eval-Probe-8", "qol-dre-?-eval-Probe-9", "qol-dre-?-eval-Probe-10", "qol-dre-?-eval-Probe-11", "qol-dre-?-eval-Probe-12"] : ['qol-ph1-eval-?-Probe-1', 'qol-ph1-eval-?-Probe-2', 'qol-ph1-eval-?-Probe-3', 'qol-ph1-eval-?-Probe-4', 'qol-ph1-eval-?-Probe-5', 'qol-ph1-eval-?-Probe-6'];
+        const volProbeIds = Number(version) === 4 ? ["vol-dre-?-eval-Probe-1", "vol-dre-?-eval-Probe-2", "vol-dre-?-eval-Probe-3", "vol-dre-?-eval-Probe-4", "vol-dre-?-eval-Probe-5", "vol-dre-?-eval-Probe-6", "vol-dre-?-eval-Probe-7", "vol-dre-?-eval-Probe-8", "vol-dre-?-eval-Probe-9", "vol-dre-?-eval-Probe-10", "vol-dre-?-eval-Probe-11", "vol-dre-?-eval-Probe-12"] : ['vol-ph1-eval-?-Probe-1', 'vol-ph1-eval-?-Probe-2', 'vol-ph1-eval-?-Probe-3', 'vol-ph1-eval-?-Probe-4', 'vol-ph1-eval-?-Probe-5', 'vol-ph1-eval-?-Probe-6'];
+        const vol1ProbeIds = Number(version) === 4 ? ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "vol-dre-train2-Probe-11", "vol-dre-train2-Probe-12"] : ['vol-ph1-eval-2-Probe-1', 'vol-ph1-eval-2-Probe-2', 'vol-ph1-eval-2-Probe-3', 'vol-ph1-eval-2-Probe-4', 'vol-ph1-eval-2-Probe-5', 'vol-ph1-eval-2-Probe-6'];
 
         for (let i = 0; i < rowObject[0].data.data.length; i++) {
             if (rowObject[0]['scenario_id'].includes('qol') || rowObject[0]['scenario_id'].includes('vol')) {
@@ -726,9 +726,9 @@ function populateDataSet(data) {
         const version = data.getAllSimAlignmentByEval[0]?.evalNumber;
         const simData = data.getAllSimAlignmentByEval.filter((x) => !x.openWorld);
         simAlign = getSimAlignment(simData);
-        let tempGroupHumanSimData = version == 3 ? Object.groupBy(simData, ({ env }) => env) : Object.groupBy(simData, ({ pid }) => pid);
+        let tempGroupHumanSimData = Number(version) === 3 ? Object.groupBy(simData, ({ env }) => env) : Object.groupBy(simData, ({ pid }) => pid);
         Object.keys(tempGroupHumanSimData).forEach(key => {
-            if (version == 3) {
+            if (Number(version) === 3) {
                 tempGroupHumanSimData[key] = Object.groupBy(tempGroupHumanSimData[key], ({ pid }) => pid);
                 let tempGroupPidArray = [];
                 Object.keys(tempGroupHumanSimData[key]).forEach(keyPid => {
@@ -775,8 +775,8 @@ function populateDataSet(data) {
                 continue;
             }
             if (POST_MRE_EVALS.includes(res.results.evalNumber)) {
-                const valid_id = data?.getParticipantLog?.filter((x) => x?.ParticipantID?.toString() == pid && x['Type'] != 'Test');
-                if (valid_id.length == 0) {
+                const valid_id = data?.getParticipantLog?.filter((x) => x?.ParticipantID?.toString() === pid.toString() && String(x['Type']) != 'Test');
+                if (valid_id.length === 0) {
                     // only include valid ids for survey version 4 & 5
                     continue;
                 }
@@ -842,17 +842,17 @@ function populateDataSet(data) {
                 tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('qol'))] ?? '-';
                 tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('vol'))] ?? '-';
 
-                const text_scenarios = data.getAllScenarioResultsByEval.filter((x) => x.participantID == pid);
+                const text_scenarios = data.getAllScenarioResultsByEval.filter((x) => String(x.participantID) === String(pid));
                 tmpSet['AD_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('DryRunEval-MJ') || x?.scenario_id?.includes('phase1-adept-eval-MJ'))?.scenario_id] ?? '-';
                 tmpSet['QOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
                 tmpSet['VOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
 
-                const adept_sim_kdmas = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('DryRun'))?.data?.alignment?.kdmas;
-                tmpSet['MJ_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
-                tmpSet['IO_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
+                const adept_sim_kdmas = data.getAllSimAlignmentByEval.find((x) => String(x?._id?.split('_')[0]) === String(pid) && x?.scenario_id?.includes('DryRun'))?.data?.alignment?.kdmas;
+                tmpSet['MJ_KDMA_Sim'] = adept_sim_kdmas?.find((x) => String(x.kdma) === 'Moral judgement')?.value;
+                tmpSet['IO_KDMA_Sim'] = adept_sim_kdmas?.find((x) => String(x.kdma) === 'Ingroup Bias')?.value;
 
-                const qol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.sid;
-                const qol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('qol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
+                const qol_sim_sid = data.getAllSimAlignmentByEval.find((x) => String(x?._id?.split('_')[0]) === String(pid) && x?.scenario_id?.includes('qol'))?.data?.alignment?.sid;
+                const qol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => String(x?._id?.split('_')[0]) === String(pid) && x?.scenario_id?.includes('qol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => String(x.kdma) === 'QualityOfLife');
                 tmpSet['QOL_KDMA_Sim'] = qol_sim_kdma?.value;
                 tmpSet['QOL_KDE_Sim'] = ['202409112'].includes(pid) ? '-' : (qol_sim_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-');
 
