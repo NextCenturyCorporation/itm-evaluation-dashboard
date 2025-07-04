@@ -12,7 +12,8 @@ import { Button, Modal } from 'react-bootstrap';
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
     { value: 5, label: 'Phase 1 Evaluation' },
-    { value: 6, label: 'Jan 2025 Evaluation' }
+    { value: 6, label: 'Jan 2025 Evaluation' },
+    { value: 8, label: 'Phase II June 2025 Collaboration'}
 ];
 
 export function RQ3() {
