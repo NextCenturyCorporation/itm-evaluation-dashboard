@@ -209,13 +209,15 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     const allScenarios = [];
     const allTargets = [];
     const allAttributes = [];
+    const TEXT_COUNT_NEEDED = evalNum >= 8 ? 4 : 5;
+    const SIM_ENTRY_COUNT_NEEDED = evalNum >= 8 ? 0 : 3;
     let populationHeader = true;
     if (evalNum == 4 && (!fullSetOnly || !includeDreServer)) {
         populationHeader = false;
     }
 
     // find participants that have completed the delegation survey
-    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && ((evalNum == 4 && isDefined(res.results['Post-Scenario Measures'])) || ((evalNum == 5 || evalNum == 6) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber == evalNum && ((evalNum == 4 && isDefined(res.results['Post-Scenario Measures'])) || ((evalNum == 5 || evalNum == 6 || evalNum == 8) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const wrong_del_materials = evalNum == 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
@@ -229,18 +231,21 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
             log => log['ParticipantID'] == pid && log['Type'] != 'Test'
         );
         const textCount = textResults.filter((x) => x.participantID == pid).length;
-        if (!logData || textCount < 5) {
+        if (!logData || textCount < TEXT_COUNT_NEEDED) {
             continue;
         }
-        if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < 5 || logData.simEntryCount < 3)) {
+        if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < TEXT_COUNT_NEEDED || logData.simEntryCount < SIM_ENTRY_COUNT_NEEDED)) {
             continue;
         }
         const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
+        if(evalNum === 8) {
+            logData['ADMOrder'] = 5;
+        }
         // set up object to store participant data
         const admOrder = pid == '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
         let trial_num = 1;
-        const st_scenario = pid == '202411327' ? 'ST-2' : (wrong_del_materials.includes(pid) ? 'ST-3' : (logData['Del-1'].includes('ST') ? logData['Del-1'] : logData['Del-2']));
-        const ad_scenario = pid == '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1'].includes('AD') ? logData['Del-1'] : logData['Del-2']));
+        const st_scenario = pid == '202411327' ? 'ST-2' : (wrong_del_materials.includes(pid) ? 'ST-3' : (logData['Del-1']?.includes('ST') ? logData['Del-1'] : logData['Del-2']));
+        const ad_scenario = pid == '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1']?.includes('AD') ? logData['Del-1'] : logData['Del-2']));
 
         for (const entry of admOrder) {
             const types = ['baseline', 'aligned', 'misaligned', 'comparison'];
@@ -251,6 +256,37 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     const alignMatches = obj['admAlignment'] == t || obj['pageType'] == 'comparison' && t == 'comparison';
                     const ta2Matches = obj['admAuthor'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
+
+                    if (evalNum >= 8) {
+                        // All text scenarios are same number
+                        const ph1_scenario = "PH1-" + logData["AF-text-scenario"];
+                        let mapping_array_number;
+                        switch(entry['Attribute']){
+                            case "AF":
+                                mapping_array_number = 0;
+                                break;
+                            case "MF":
+                                mapping_array_number = 1;
+                                break;
+                            case "SS":
+                                mapping_array_number = 2;
+                                break;
+                            case "PS":
+                                mapping_array_number = 3;
+                                break;
+                            case "AF-MF":
+                                mapping_array_number = 4;
+                                break;
+                            default:
+                                console.log("Scenario not found");
+                        }
+
+                        scenario = getDelEnvMapping(evalNum)[ph1_scenario][mapping_array_number];
+                        console.log("Scenario:", scenario, obj['scenarioIndex']);
+                        const scenarioMatches = obj['scenarioIndex']?.slice(0, -6) == scenario?.slice(0, -6);
+
+                        return alignMatches && ta2Matches && scenarioMatches;
+                    }
 
                     if (entry['TA1'] == 'Adept') {
                         scenario = entry['Attribute'] == 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
@@ -263,16 +299,18 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     return alignMatches && ta2Matches && scenarioMatches;
                 });
                 if (!page) {
+                    console.log("Missing Pages");
                     // likely from missing misaligned/aligned for those few parallax adms
                     continue;
                 }
                 page = res.results[page];
                 const entryObj = {};
-                entryObj['Delegator_ID'] = pid;
+                entryObj['Delegator ID'] = pid;
                 entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
                 entryObj['Datasource'] = evalNum == 4 ? 'DRE' : evalNum == 5 ? (logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type == 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025');
                 entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : logData['Type'] == 'Mil' ? 'Military' : logData['Type'];
-                const roles = res.results?.['Post-Scenario Measures']?.questions?.['What is your current role (choose all that apply):']?.['response'];
+                const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
+                const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
                 // override 102, who is military
                 entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid == '202409102' ? 'yes' : 'no';
                 entryObj['Delegator_Role'] = roles ?? '-'
@@ -295,8 +333,15 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     allTargets.push(entryObj['Target']);
                 }
 
-                const foundADM = admData.find((adm) => adm.history[0].parameters.adm_name == page['admName'] && (adm.history[0].response?.id ?? adm.history[1].response?.id) == page['scenarioIndex'].replace('IO', 'MJ') &&
-                    adm.history[adm.history.length - 1].parameters.target_id == page['admTarget']);
+                let foundADM;
+                if(evalNum < 8){
+                    foundADM = admData.find((adm) => adm.history?.[0].parameters.adm_name == page['admName'] && (adm.history?.[0].response?.id ?? adm.history?.[1].response?.id) == page['scenarioIndex'].replace('IO', 'MJ') &&
+                        adm.history?.[adm.history.length - 1].parameters.target_id == page['admTarget']);
+                } else {
+                    foundADM = admData.find((adm) => adm.evaluation.adm_name == page['admName'] && adm.evaluation.scenario_id == page['scenarioIndex'] &&
+                        adm.evaluation.alignment_target_id == page['admTarget']);
+                }
+
                 const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
                 const distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
 
@@ -341,8 +386,14 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                 entryObj['Competence Error'] = (evalNum == 5 || evalNum == 6) && entry['TA2'] == 'Kitware' && entryObj['ADM_Type'] == 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
 
-                const comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                let comparison_entry;
+                if (evalNum < 8) {
+                    comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] == t && x['pid'] == pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] == 'Parallax' && x['adm_author'] == 'TAD') || (entry['TA2'] == 'Kitware' && x['adm_author'] == 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                } else {
+                    comparison_entry = comparisons?.find((x) => x['adm_type'] === t && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === entryObj['Target']);
+                }
                 const alignmentComparison = comparison_entry?.score ?? '-'
+
                 entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
                 if (evalNum == 5 || evalNum == 6) {
                     entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] == 'Adept' ? comparison_entry?.distance_based_score : entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
@@ -354,6 +405,52 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['P1E Alignment Score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)']
                     entryObj['P1E Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))']
                     entryObj['P1E Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)']
+                }
+
+                if (evalNum >= 8) {
+                    entryObj['Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)'];
+                    entryObj['Alignment score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)'];
+                    entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+
+                    let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
+                    if(aligned_target_name === undefined) {
+                        aligned_target_name = "";
+                    }
+
+                    switch (true){
+                        case entryObj['Target'].toLowerCase().indexOf("safety") !== -1 || aligned_target_name.indexOf("safety") !== -1: 
+                            entryObj['Attribute'] = "PS";
+                            break;
+                        case entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1: 
+                            entryObj['Attribute'] = "AF";
+                            break;
+                        case entryObj['Target'].toLowerCase().indexOf("search") !== -1 || aligned_target_name.indexOf("search") !== -1: 
+                            entryObj['Attribute'] = "SS";
+                            break;
+                        case entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1: 
+                            entryObj['Attribute'] = "MF";
+                            break;
+                        case page["scenarioIndex"]?.indexOf("-AF-MF") !== -1: 
+                            entryObj['Attribute'] = "AF-MF";
+                            break;
+                        default:
+                            console.log("Target and Attributes don't match for Evaluations greater than 8.")
+                    }
+
+                    if(page['scenarioIndex'].indexOf("PS1") !== -1 || page['scenarioIndex'].indexOf("SS1") !== -1 || page['scenarioIndex'].indexOf("MF1") !== -1 
+                        || page['scenarioIndex'].indexOf("AF1") !== -1 || page['scenarioIndex'].indexOf("AF-MF1") !== -1) {
+                            entryObj['Probe Set'] =  1;
+                        }
+                    if(page['scenarioIndex'].indexOf("PS2") !== -1 || page['scenarioIndex'].indexOf("SS2") !== -1 || page['scenarioIndex'].indexOf("MF2") !== -1 
+                            || page['scenarioIndex'].indexOf("AF2") !== -1 || page['scenarioIndex'].indexOf("AF-MF2") !== -1) {
+                                entryObj['Probe Set'] = 2;
+                            }
+                    if(page['scenarioIndex'].indexOf("PS3") !== -1 || page['scenarioIndex'].indexOf("SS3") !== -1 || page['scenarioIndex'].indexOf("MF3") !== -1 
+                            || page['scenarioIndex'].indexOf("AF3") !== -1 || page['scenarioIndex'].indexOf("AF-MF3") !== -1) {
+                                entryObj['Probe Set'] = 3;
+                            }
+
+                    entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
 
                 // include truncation error status for all, column visibility toggled from rq134.jsx
@@ -399,8 +496,13 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['Delegation preference (A/B)'] = '-';
                     entryObj['Delegation preference (A/M)'] = '-';
                 }
+
                 entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': This medic is trustworthy']?.['response'] ?? '-' : '-'];
                 entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decisions that this medic made?']?.['response'] ?? '-' : '-'];
+                if(evalNum === 8) {
+                    entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': this medic is trustworthy']?.['response'] ?? '-' : '-'];
+                    entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decision that this medic made?']?.['response'] ?? '-' : '-'];
+                }
                 entryObj['SRAlign_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': The way this medic makes medical decisions is how I make decisions']?.['response'] ?? '-' : '-'];
                 allObjs.push(entryObj);
             }
