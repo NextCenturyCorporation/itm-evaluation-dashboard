@@ -20,7 +20,7 @@ export function RQ1() {
     const close1Code = () => {
         setRQ1CodeShowing(false);
     }
-    const [selectedEval, setSelectedEval] = React.useState(5);
+    const [selectedEval, setSelectedEval] = React.useState(8);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }
