@@ -82,8 +82,9 @@ export function ReviewDelegationPage() {
     const [selectedConfig, setSelectedConfig] = useState(null);
     const [reviewingText, setReviewingText] = useState(null);
 
+    /* Function is left in case future changes are reuqired to the survey completion behavior */
     const handleSurveyComplete = (sender) => {
-        const results = sender.data;
+        //const results = sender.data;
     };
 
     const handleConfigSelect = (page) => {
@@ -95,9 +96,9 @@ export function ReviewDelegationPage() {
 
                 // Determine the reviewing text based on evaluation version
                 let reviewText = '';
-                if (page['evalNumber'] == 4) {
+                if (Number(page['evalNumber']) === 4) {
                     reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
-                } else if (page['evalNumber'] == 8) {
+                } else if (Number(page['evalNumber']) === 8) {
                     reviewText = page['scenarioName'] + ' - ' + page['admName'] + ' - ' + page['target'];
                 } else {
                     reviewText = (page['scenarioIndex'] ? PH1_NAME_MAP[page['scenarioIndex']] : 'Unknown') + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
@@ -126,7 +127,7 @@ export function ReviewDelegationPage() {
                 if (Object.keys(page).includes('scenarioIndex') || Object.keys(page).includes('scenarioName')) {
                     let scenarioKey = '';
 
-                    if (i == 0) { // DRE scenarios
+                    if (i === 0) { // DRE scenarios
                         scenarioKey = page['scenarioIndex'];
                         if (!Object.keys(dre_scenarios).includes(scenarioKey)) {
                             dre_scenarios[scenarioKey] = {};
@@ -135,7 +136,7 @@ export function ReviewDelegationPage() {
                             dre_scenarios[scenarioKey][page['admName']] = [];
                         }
                         dre_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i == 1) { // Phase 1 scenarios
+                    } else if (i === 1) { // Phase 1 scenarios
                         scenarioKey = page['scenarioIndex'];
                         if (!Object.keys(ph1_scenarios).includes(scenarioKey)) {
                             ph1_scenarios[scenarioKey] = {};
@@ -144,7 +145,7 @@ export function ReviewDelegationPage() {
                             ph1_scenarios[scenarioKey][page['admName']] = [];
                         }
                         ph1_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i == 2) { // Phase 2 scenarios
+                    } else if (i === 2) { // Phase 2 scenarios
                         scenarioKey = page['scenarioName'] || page['scenarioIndex'];
                         if (!Object.keys(ph2_scenarios).includes(scenarioKey)) {
                             ph2_scenarios[scenarioKey] = {};

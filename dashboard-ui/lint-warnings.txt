@@ -72,164 +72,30 @@ src\components\Research\tables\rq23_multiKDMA.jsx
   Line 36:45:  Destructuring assignment data unnecessarily renamed                                                                                                                                                                                                                           no-useless-rename
   Line 181:8:  React Hook React.useEffect has a missing dependency: 'pidsWithCompleteSurveys'. Either include it or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setFilteredData' needs the current value of 'pidsWithCompleteSurveys'  react-hooks/exhaustive-deps
 
-src\components\Research\utils.js
-  Line 298:174:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 299:78:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 304:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 304:45:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 305:90:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 308:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 310:92:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 313:67:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 313:87:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 314:77:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 314:93:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 317:130:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 317:147:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 318:90:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 320:144:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 320:195:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 321:78:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 321:112:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 321:128:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 321:146:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 322:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 322:45:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 323:96:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 325:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 327:98:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 330:63:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 330:161:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 330:259:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 331:82:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 333:45:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 333:71:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 334:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 334:45:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 335:64:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 337:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 339:60:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 342:57:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 342:73:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 342:95:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 342:132:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 344:137:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 344:154:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 344:276:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 344:309:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 344:336:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 344:368:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 347:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 347:45:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 348:111:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 362:29:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 363:117:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 363:134:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 363:256:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 363:289:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 363:316:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 363:348:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 365:46:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 369:72:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 370:23:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 378:67:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 378:87:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 379:67:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 379:87:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 384:138:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 385:138:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 388:138:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 391:138:  Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 402:78:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 403:76:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 404:74:   Expected '===' and instead saw '=='                                                           eqeqeq
-  Line 409:11:   'pids' is assigned a value but never used                                                     no-unused-vars
+src\components\Research\tables\rq6.jsx
+  Line 75:110:  Expected '===' and instead saw '=='  eqeqeq
 
 src\components\Research\variables\rq-variables.jsx
   Line 29:8:  React Hook React.useEffect has a missing dependency: 'xlFile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
 
 src\components\Results\resultsTable.jsx
-  Line 146:42:   Expected '===' and instead saw '=='                                                  eqeqeq
-  Line 175:24:   Imported JSX component MultiKDMA_RQ23 must be in PascalCase or SCREAMING_SNAKE_CASE  react/jsx-pascal-case
-  Line 442:104:  Expected '===' and instead saw '=='                                                  eqeqeq
-  Line 449:60:   Expected '===' and instead saw '=='                                                  eqeqeq
-  Line 451:45:   Expected '===' and instead saw '=='                                                  eqeqeq
-  Line 453:64:   Expected '===' and instead saw '=='                                                  eqeqeq
-  Line 505:70:   Expected '===' and instead saw '=='                                                  eqeqeq
-
-src\components\ReviewDelegation\ReviewDelegation.jsx
-  Line 86:15:   'results' is assigned a value but never used  no-unused-vars
-  Line 98:40:   Expected '===' and instead saw '=='           eqeqeq
-  Line 100:47:  Expected '===' and instead saw '=='           eqeqeq
-  Line 129:27:  Expected '===' and instead saw '=='           eqeqeq
-  Line 138:34:  Expected '===' and instead saw '=='           eqeqeq
-  Line 147:34:  Expected '===' and instead saw '=='           eqeqeq
+  Line 175:24:  Imported JSX component MultiKDMA_RQ23 must be in PascalCase or SCREAMING_SNAKE_CASE  react/jsx-pascal-case
 
 src\components\ReviewTextBased\ReviewTextBased.jsx
   Line 39:15:  'results' is assigned a value but never used  no-unused-vars
 
 src\components\SurveyResults\delResultsUtils.js
-  Line 58:15:  Expected '!==' and instead saw '!='  eqeqeq
-  Line 58:30:  Expected '!==' and instead saw '!='  eqeqeq
-  Line 85:34:  Expected '===' and instead saw '=='  eqeqeq
-  Line 87:46:  Expected '===' and instead saw '=='  eqeqeq
   Line 88:47:  Expected '===' and instead saw '=='  eqeqeq
-  Line 90:48:  Expected '===' and instead saw '=='  eqeqeq
-  Line 93:46:  Expected '===' and instead saw '=='  eqeqeq
-  Line 94:47:  Expected '===' and instead saw '=='  eqeqeq
 
 src\components\SurveyResults\resultsTable.jsx
-  Line 119:8:    React Hook React.useEffect has a missing dependency: 'formatData'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
-  Line 124:8:    React Hook React.useEffect has a missing dependency: 'exploratory'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
-  Line 127:52:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 127:90:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 127:136:  Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 130:129:  Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 135:52:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 135:90:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 135:136:  Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 138:130:  Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 207:29:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 207:53:   Expected '!==' and instead saw '!='                                                                                      eqeqeq
-  Line 212:45:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 212:67:   Expected '!==' and instead saw '!='                                                                                      eqeqeq
-  Line 214:26:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 214:42:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 225:57:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 247:27:   Expected '!==' and instead saw '!='                                                                                      eqeqeq
-  Line 289:36:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 311:41:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 363:39:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 374:44:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 404:36:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 405:33:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 406:33:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 418:8:    React Hook React.useEffect has a missing dependency: 'getUsedHeaders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  Line 451:42:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 469:73:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 474:110:  Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 483:61:   Expected '===' and instead saw '=='                                                                                      eqeqeq
-  Line 483:82:   Expected '===' and instead saw '=='                                                                                      eqeqeq
+  Line 119:8:  React Hook React.useEffect has a missing dependency: 'formatData'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+  Line 124:8:  React Hook React.useEffect has a missing dependency: 'exploratory'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  Line 418:8:  React Hook React.useEffect has a missing dependency: 'getUsedHeaders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
 
 src\components\SurveyResults\surveyResults.jsx
-  Line 47:12:    'showTable' is assigned a value but never used                                                                                     no-unused-vars
-  Line 47:23:    'setShowTable' is assigned a value but never used                                                                                  no-unused-vars
-  Line 64:8:     React Hook React.useEffect has a missing dependency: 'setupDataBySurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  Line 70:8:     React Hook React.useEffect has a missing dependency: 'filterDataAndSetNames'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
-  Line 100:45:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 100:67:   Expected '!==' and instead saw '!='                                                                                                eqeqeq
-  Line 102:40:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 102:70:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 145:48:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 145:112:  Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 147:99:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 147:159:  Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 163:46:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 167:35:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 167:65:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 168:84:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 169:84:   Expected '===' and instead saw '=='                                                                                                eqeqeq
-  Line 277:68:   Expected '!==' and instead saw '!='                                                                                                eqeqeq
+  Line 63:8:   React Hook React.useEffect has a missing dependency: 'setupDataBySurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 69:8:   React Hook React.useEffect has a missing dependency: 'filterDataAndSetNames'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  Line 99:53:  Expected '===' and instead saw '=='                                                                                                eqeqeq
 
 src\components\Survey\adeptComparison.jsx
   Line 91:12:  React Hook React.useEffect has a missing dependency: 'currentSurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
@@ -422,8 +288,8 @@ To ignore, add // eslint-disable-next-line to the line before.
 
 File sizes after gzip:
 
-  3.11 MB   build\static\js\main.53125888.js
-  79.69 kB  build\static\css\main.3377a3a0.css
+  3.11 MB (+22 B)  build\static\js\main.9bea7dba.js
+  79.69 kB         build\static\css\main.3377a3a0.css
 
 The bundle size is significantly larger than recommended.
 Consider reducing it with code splitting: https://goo.gl/9VhYWB

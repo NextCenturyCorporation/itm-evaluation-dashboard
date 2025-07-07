@@ -143,7 +143,7 @@ class ResultsTable extends React.Component {
             } else {
                 return ("Soartech: " + id);
             }
-        } else if (this.state.evalNumber == 3) {
+        } else if (this.state.evalNumber === 3) {
             if (id.toLowerCase().indexOf("metricseval") > -1) {
                 return ("ADEPT: " + id);
             } else {
@@ -439,18 +439,18 @@ function ActionRow({ item }) {
     }
 
     const renderNestedTable = (tableData, response = null) => {
-        const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] == 'APPLY_TREATMENT';
+        const isTreatment = Object.keys(tableData).includes('action_type') && String(tableData['action_type']) === 'APPLY_TREATMENT';
         const character = tableData['character'];
         const location = tableData['location'];
         return (
             <Table size="small">
                 <TableBody>
                     {Object.entries(tableData).map(([key, value], i) => {
-                        if (isTreatment && response && key == 'treatment') {
+                        if (isTreatment && response && key === 'treatment') {
                             for (const c of (response?.characters ?? [])) {
-                                if (c['id'] == character) {
+                                if (String(c['id']) === String(character)) {
                                     for (const injury of c['injuries']) {
-                                        if (injury['location'] == location) {
+                                        if (String(injury['location']) === String(location)) {
                                             if (injury['treatments_applied'])
                                                 value = value + ` (current count: ${injury['treatments_applied']})`;
                                             break;
@@ -502,7 +502,7 @@ function ActionRow({ item }) {
                 <TableCell className="noBorderCell tableCellCommand">
                     <Typography><strong>Command:</strong> {item.command}</Typography>
                     <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>
-                    {renderNestedItems(item.parameters, item.command == 'Take Action' ? item.response : null)}
+                    {renderNestedItems(item.parameters, String(item.command) === 'Take Action' ? item.response : null)}
                 </TableCell>
             </TableRow>
             <TableRow>
