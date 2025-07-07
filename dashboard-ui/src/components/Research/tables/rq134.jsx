@@ -167,7 +167,7 @@ export function RQ134({ evalNum, tableTitle }) {
             setScenarios(Array.from(new Set(data.allScenarios)));
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim, janSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim, janSim, dataSim]);
 
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);

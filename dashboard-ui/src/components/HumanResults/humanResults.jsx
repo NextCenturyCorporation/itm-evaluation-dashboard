@@ -85,7 +85,7 @@ export default function HumanResults() {
             }
         }
 
-    }, [evalIdOptionsRaw, evalOptions]);
+    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         if (data?.getAllRawSimData && data?.getAllSimAlignment) {

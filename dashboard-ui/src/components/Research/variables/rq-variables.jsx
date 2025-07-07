@@ -26,7 +26,7 @@ export function RQDefinitionTable({ xlFile, pdfFile, downloadName }) {
             setDefs(data);
         };
         oReq.send();
-    }, []);
+    }, [xlFile]);
 
     const exportWordDoc = () => {
         FileSaver.saveAs(pdfFile ?? xlFile, downloadName);

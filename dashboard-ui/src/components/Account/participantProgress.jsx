@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useCallback} from "react";
 import '../SurveyResults/resultsTable.css';
 import { Autocomplete, TextField } from "@mui/material";
 import { useQuery } from 'react-apollo'
@@ -171,7 +171,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             setTypes(Array.from(new Set(allTypes)));
             setEvals(Array.from(new Set(allEvals)));
         }
-    }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults]);
+    // eslint-disable-next-line
+    }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults, canViewProlific]);
 
     const formatCell = (header, dataSet) => {
         const val = dataSet[header];
@@ -197,14 +198,14 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         navigator.clipboard.writeText(linkToCopy);
     };
 
-    const getEvalsForPhase = () => {
+    const getEvalsForPhase = useCallback(() => {
         return evals.filter(evaluation => {
             const isPhase2Eval = evaluation === 'June 2025 Collaboration';
             return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
         });
-    };
+    }, [evals, selectedPhase]);
 
-    const getTypesForPhase = () => {
+    const getTypesForPhase = useCallback(() => {
         const phaseParticipants = formattedData.filter(participant => {
             const isPhase2Eval = participant['Evaluation'] === 'June 2025 Collaboration';
             return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
@@ -215,7 +216,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             .filter(type => type);
 
         return Array.from(new Set(phaseTypes));
-    };
+    }, [formattedData, selectedPhase]);
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
@@ -256,7 +257,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         if (validTypeFilters.length !== typeFilters.length) {
             setTypeFilters(validTypeFilters);
         }
-    }, [selectedPhase, evals, formattedData]);
+    }, [selectedPhase, evals, formattedData, evalFilters, getEvalsForPhase, getTypesForPhase, typeFilters]);
 
     const getDateFromString = (s) => {
         if (s) {
@@ -300,6 +301,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         if (sortBy) {
             sortData();
         }
+    // eslint-disable-next-line
     }, [sortBy]);
 
     const refreshData = async () => {

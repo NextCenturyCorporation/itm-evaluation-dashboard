@@ -60,12 +60,14 @@ export function SurveyResults() {
         if (data && filterBySurveyVersion) {
             setupDataBySurveyVersion(data, filterBySurveyVersion);
         }
+    // eslint-disable-next-line
     }, [filterBySurveyVersion, data]);
 
     React.useEffect(() => {
         if (filteredData) {
             filterDataAndSetNames();
         }
+    // eslint-disable-next-line
     }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
 
     React.useEffect(() => {

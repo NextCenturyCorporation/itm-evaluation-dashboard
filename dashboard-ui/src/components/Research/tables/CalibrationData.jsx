@@ -177,6 +177,7 @@ export function CalibrationData({ evalNum }) {
             setDelMilFilters([]);
             setSearchPid('');
         }
+    // eslint-disable-next-line
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, janSim]);
 
     const attributeMap = {

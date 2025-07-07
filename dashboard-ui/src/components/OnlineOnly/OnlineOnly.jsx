@@ -69,7 +69,7 @@ export default function StartOnline() {
         } else {
             history.push('/login');
         }
-    }, []);
+    }, [history]);
 
     const handleConsentResponse = (agree) => {
         if (!agree) {

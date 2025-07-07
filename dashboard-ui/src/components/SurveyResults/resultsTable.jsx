@@ -116,12 +116,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         if (data) {
             formatData(data);
         }
+    // eslint-disable-next-line
     }, [data, pLog, showLegacy]);
 
     React.useEffect(() => {
         if (exploratory)
             setEvalFilters(evalNumbers);
-    }, [evalNumbers]);
+    }, [evalNumbers, exploratory]);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
         const basicChecks = String(comparisonEntry['pid']) === String(pid) && String(comparisonEntry['adm_type']) === String(admType) && String(comparisonEntry['adm_scenario']) === String(scenario);
@@ -415,6 +416,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const usedHeaders = getUsedHeaders(filtered);
             setHeaders(usedHeaders);
         }
+    // eslint-disable-next-line
     }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters]);
 
 

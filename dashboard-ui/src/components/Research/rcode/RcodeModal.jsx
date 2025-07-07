@@ -17,7 +17,7 @@ export function RCodeModal({ rcodeFile, downloadName }) {
             setTxt(tmpTxt);
         };
         oReq.send();
-    }, []);
+    }, [rcodeFile]);
 
     const exportRCode = () => {
         FileSaver.saveAs(rcodeFile, downloadName);

@@ -111,7 +111,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
             }
             setGroupTargets(tmpGroupTargets);
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, fullData, dreSim, dreAdms]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, fullData, dreSim, dreAdms, dataSim, evalNumber]);
 
     React.useEffect(() => {
         if (data) {
@@ -137,7 +137,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
             setDelVsAlignment(getDelegationVsAlignment(data));
             setRatingBySelection(getRatingsBySelectionStatus(data));
         }
-    }, [data, fullData, dreDataForPh1]);
+    }, [data, fullData, dreDataForPh1, evalNumber]);
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;

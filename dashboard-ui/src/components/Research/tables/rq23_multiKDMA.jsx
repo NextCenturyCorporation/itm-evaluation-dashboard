@@ -178,7 +178,7 @@ export function MultiKDMA_RQ23() {
                 (!onlyShowCompletedSurveys || pidsWithCompleteSurveys.length === 0 || pidsWithCompleteSurveys.includes(x['PID']))
             ));
         }
-    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters, onlyShowCompletedSurveys]);
+    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters, onlyShowCompletedSurveys, pidsWithCompleteSurveys]);
 
     const capitalizeFirstLetter = (str) => {
         if (!isDefined(str) || str.length < 2)

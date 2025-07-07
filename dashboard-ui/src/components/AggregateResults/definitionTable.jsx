@@ -29,7 +29,7 @@ export function DefinitionTable({ evalNumber }) {
             setDefs(data);
         };
         oReq.send();
-    }, []);
+    }, [evalNumber]);
 
     const exportWordDoc = () => {
         const xlFile = Number(evalNumber) === 4 ? dreXlFile : Number(evalNumber) === 5 ? ph1XlFile : mreXlFile;
