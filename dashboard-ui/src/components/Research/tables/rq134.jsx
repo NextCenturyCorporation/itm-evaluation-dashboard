@@ -90,7 +90,7 @@ export function RQ134({ evalNum, tableTitle }) {
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
-    
+
     const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
     const openModal = () => {
@@ -115,7 +115,7 @@ export function RQ134({ evalNum, tableTitle }) {
         if (!(evalNum === 6 || (evalNum === 5 && includeJAN))) {
             currentHeaders = currentHeaders.filter(header => header !== 'Truncation Error');
         }
-        
+
         setHeaders(currentHeaders);
     }, [evalNum, includeJAN]);
 
@@ -124,7 +124,7 @@ export function RQ134({ evalNum, tableTitle }) {
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
             dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
-            
+
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
                     ...obj,
@@ -204,16 +204,16 @@ export function RQ134({ evalNum, tableTitle }) {
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
-        
-        const headersToRemove = [...columnsToHide];
-        if (!shouldShowTruncationError) {
-            headersToRemove.push('Truncation Error');
-        }
-        
+
+        const displayedHeaders = getFilteredHeaders();
+
         updatedData.map((x) => {
-            for (const h of headersToRemove) {
-                delete x[h];
-            }
+            // Remove all headers that are not in the displayed headers list
+            Object.keys(x).forEach(key => {
+                if (!displayedHeaders.includes(key)) {
+                    delete x[key];
+                }
+            });
             return x;
         });
         return updatedData;
@@ -401,12 +401,12 @@ export function RQ134({ evalNum, tableTitle }) {
 
             </div>
 
-            <DownloadButtons 
+            <DownloadButtons
                 formattedData={refineData(formattedData)}
-                filteredData={refineData(filteredData)} 
-                HEADERS={getFilteredHeaders()} 
-                fileName={'RQ-134 data'} 
-                extraAction={openModal} 
+                filteredData={refineData(filteredData)}
+                HEADERS={getFilteredHeaders()}
+                fileName={'RQ-134 data'}
+                extraAction={openModal}
             />
 
         </section>
