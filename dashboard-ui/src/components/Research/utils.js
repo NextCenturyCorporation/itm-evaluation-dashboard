@@ -327,7 +327,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 allScenarios.push(entryObj['Scenario']);
                 entryObj['TA2_Name'] = entry['TA2'];
                 allTA2s.push(entry['TA2']);
-                entryObj['ADM_Type'] = t == 'comparison' ? 'comparison' : ['misaligned', 'aligned'].includes(t) ? 'aligned' : 'baseline';
+                entryObj['ADM_Type'] = t == 'comparison' ? 'comparison' : ['misaligned', 'aligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'].includes(t) ? 'aligned' : 'baseline';
                 entryObj['Target'] = page['admTarget'] ?? '-';
                 if (entryObj['Target'] != '-') {
                     allTargets.push(entryObj['Target']);
