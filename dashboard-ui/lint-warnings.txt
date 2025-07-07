@@ -110,109 +110,21 @@ src\components\Survey\omnibusTemplate.jsx
   Line 106:12:  React Hook useEffect has a missing dependency: 'currentSurveyVersion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
 
 src\components\Survey\survey.jsx
-  Line 325:49:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 338:100:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 349:103:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 349:188:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 352:50:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 353:51:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 353:77:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 353:137:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 355:36:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 372:52:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 373:70:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 373:107:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 373:140:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 373:172:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 379:69:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 379:106:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 379:139:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 379:170:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 381:72:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 381:109:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 381:142:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 381:173:  Expected '===' and instead saw '=='                                              eqeqeq
-  Line 435:47:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 584:33:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 608:36:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 611:23:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 613:31:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 660:22:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 819:53:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 842:60:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 854:49:   Expected '===' and instead saw '=='                                              eqeqeq
-  Line 955:25:   Anchors must have content and the content must be accessible by a screen reader  jsx-a11y/anchor-has-content
+  Line 955:25:  Anchors must have content and the content must be accessible by a screen reader  jsx-a11y/anchor-has-content
 
 src\components\Survey\surveyUtils.js
-  Line 65:15:    Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 70:15:    Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 80:15:    Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 90:15:    Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 115:20:   Expected '!==' and instead saw '!='                                                         eqeqeq
-  Line 246:33:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 246:109:  Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 359:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 378:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 397:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 416:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 433:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 449:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 589:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 607:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 623:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 640:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 656:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 659:57:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 688:31:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 690:57:   Expected '===' and instead saw '=='                                                         eqeqeq
-  Line 819:37:   Expected '===' and instead saw '=='                                                         eqeqeq
   Line 1062:49:  Function declared in a loop contains unsafe references to variable(s) 'mostAlignedTarget'   no-loop-func
   Line 1095:50:  Function declared in a loop contains unsafe references to variable(s) 'leastAlignedTarget'  no-loop-func
 
-src\components\TextBasedResults\TextBasedResultsPage.jsx
-  Line 281:40:  Expected '===' and instead saw '=='                    eqeqeq
-  Line 302:38:  Expected '===' and instead saw '=='                    eqeqeq
-  Line 339:10:  'getProbeQuestionsFromData' is defined but never used  no-unused-vars
-  Line 438:49:  Expected '===' and instead saw '=='                    eqeqeq
-  Line 438:71:  Expected '!==' and instead saw '!='                    eqeqeq
-  Line 440:35:  Expected '===' and instead saw '=='                    eqeqeq
-  Line 440:56:  Expected '===' and instead saw '=='                    eqeqeq
-
-src\components\TextBasedScenarios\TextBasedScenariosPage.jsx
-  Line 131:41:  Expected '===' and instead saw '=='                      eqeqeq
-  Line 253:67:  Expected '===' and instead saw '=='                      eqeqeq
-  Line 257:33:  Expected '===' and instead saw '=='                      eqeqeq
-  Line 501:21:  'fieldName' is assigned a value but never used           no-unused-vars
-  Line 521:35:  'response' is assigned a value but never used            no-unused-vars
-  Line 552:27:  Expected '!==' and instead saw '!='                      eqeqeq
-  Line 826:7:   'p1Mappings' is assigned a value but never used          no-unused-vars
-  Line 848:7:   'adeptScenarioIdMap' is assigned a value but never used  no-unused-vars
-
-src\components\TextBasedScenarios\medicalScenario.jsx
-  Line 193:22:  Expected '!==' and instead saw '!='  eqeqeq
-  Line 193:63:  Expected '!==' and instead saw '!='  eqeqeq
-  Line 198:27:  Expected '===' and instead saw '=='  eqeqeq
-  Line 285:58:  Expected '!==' and instead saw '!='  eqeqeq
-
-src\components\TextBasedScenarios\patientPhase1.jsx
-  Line 152:34:  Expected '!==' and instead saw '!='  eqeqeq
-
 src\components\TextBasedScenarios\phase2Text.jsx
   Line 47:5:  Useless constructor  no-useless-constructor
-
-src\services\accountsService.js
-  Line 11:63:  Expected '===' and instead saw '=='  eqeqeq
-  Line 43:35:  Expected '===' and instead saw '=='  eqeqeq
-
-src\store\slices\configSlice.js
-  Line 18:21:  'id' is assigned a value but never used  no-unused-vars
 
 Search for the keywords to learn more about each warning.
 To ignore, add // eslint-disable-next-line to the line before.
 
 File sizes after gzip:
 
-  3.11 MB (+51 B)  build\static\js\main.966b4940.js
+  3.11 MB (+43 B)  build\static\js\main.b53cb203.js
   79.69 kB         build\static\css\main.3377a3a0.css
 
 The bundle size is significantly larger than recommended.

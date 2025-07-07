@@ -278,7 +278,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                         }
                     }
                 });
-                if (page['evalNumber'] == 3) {
+                if (Number(page['evalNumber']) === 3) {
                     formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
                     let temp = `${page.highAlignmentData?.alignment_target_id}: ${page.highAlignmentData?.score},\n`
                     temp += `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
@@ -299,7 +299,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
         const dataCopy = structuredClone(excelData);
         for (let pid of Object.keys(dataCopy)) {
             for (let k of Object.keys(dataCopy[pid])) {
-                if (dataCopy[pid][k] == '-') {
+                if (String(dataCopy[pid][k]) === '-') {
                     dataCopy[pid][k] = '';
                 }
             }
@@ -336,6 +336,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
     </div>);
 }
 
+/*
 function getProbeQuestionsFromData(data, scenario) {
     const probeQuestions = new Set();
     
@@ -355,6 +356,7 @@ function getProbeQuestionsFromData(data, scenario) {
     
     return Array.from(probeQuestions);
 }
+*/
 
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
@@ -435,9 +437,9 @@ export default function TextBasedResultsPage() {
             for (const result of data.getAllScenarioResultsByEval) {
                 const pid = result['participantID'];
                 const logData = participantLog.getParticipantLog.find(
-                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                    log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test'
                 );
-                if ((selectedEval == 4 || selectedEval == 5) && !logData) {
+                if ((selectedEval === 4 || selectedEval === 5) && !logData) {
                     continue;
                 }
                 try {

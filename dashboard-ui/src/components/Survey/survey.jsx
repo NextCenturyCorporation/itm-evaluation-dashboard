@@ -322,7 +322,7 @@ class SurveyPage extends Component {
             let scenariosToSee = this.state.envsSeen;
             if (surveyVersionNumber === 5.0 && this.state.onlineOnly) {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => log['ParticipantID'] == this.state.pid
+                    log => String(log['ParticipantID']) === this.state.pid
                 );
                 scenariosToSee = isDefined(matchedLog) ? matchedLog : this.state.envsSeen
                 this.setState({ envsSeen: scenariosToSee });
@@ -335,7 +335,7 @@ class SurveyPage extends Component {
             const stScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("ST") ? del1 : scenariosToSee['Del-2']];
             const adScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("AD") ? del1 : scenariosToSee['Del-2']];
             // find most and least aligned adms for every attribute
-            const participantResults = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
+            const participantResults = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             const admLists = {
                 "qol": participantResults.findLast((el) => el['scenario_id'].includes('qol')) ?? undefined,
                 "vol": participantResults.findLast((el) => el['scenario_id'].includes('vol')) ?? undefined,
@@ -346,13 +346,13 @@ class SurveyPage extends Component {
                 adeptMostLeast = getOrderedAdeptTargets(admLists?.adept?.combinedAlignmentData ?? []);
             }
             else {
-                adeptMostLeast = { 'Ingroup': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Ingroup Bias'), 'Moral': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Moral judgement') }
+                adeptMostLeast = { 'Ingroup': admLists?.adept?.mostLeastAligned?.find((x) => String(x.target) === 'Ingroup Bias'), 'Moral': admLists?.adept?.mostLeastAligned?.find((x) => String(x.target) === 'Moral judgement') }
             }
             for (let x of order) {
-                const expectedAuthor = (x['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
-                const expectedScenario = x['TA1'] == 'ST' ? (x['Attribute'] == 'QOL' ? stScenario[0] : stScenario[1]) : (x['Attribute'] == 'MJ' ? adScenario[0] : adScenario[1]);
+                const expectedAuthor = (String(x['TA2']) === 'Kitware' ? 'kitware' : 'TAD');
+                const expectedScenario = String(x['TA1']) === 'ST' ? (String(x['Attribute']) === 'QOL' ? stScenario[0] : stScenario[1]) : (String(x['Attribute']) === 'MJ' ? adScenario[0] : adScenario[1]);
                 let adms = null;
-                if (expectedAuthor == 'kitware') {
+                if (expectedAuthor === 'kitware') {
                     if ((this.state.onlineOnly || this.state.validPid) && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
                         adms = getKitwareAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
@@ -369,16 +369,16 @@ class SurveyPage extends Component {
 
                 let alignedADMTarget = adms['aligned'];
                 let misalignedADMTarget = adms['misaligned'];
-                const baselineADMTarget = x['TA2'] == 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
-                const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline' && x.admAlignment == baselineADMTarget);
+                const baselineADMTarget = String(x['TA2']) === 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
+                const baselineAdm = allPages.find((x) => String(x.admAuthor) === expectedAuthor && String(x.scenarioIndex) === String(expectedScenario) && String(x.admType) === 'baseline' && String(x.admAlignment) === String(baselineADMTarget));
                 // aligned
                 if (expectedScenario.includes('DryRun')) {
                     if (alignedADMTarget && !alignedADMTarget.includes('.')) alignedADMTarget = alignedADMTarget?.slice(0, -1) + '.' + alignedADMTarget?.slice(-1);
                     if (misalignedADMTarget && !misalignedADMTarget.includes('.')) misalignedADMTarget = misalignedADMTarget?.slice(0, -1) + '.' + misalignedADMTarget?.slice(-1);
                 }
-                const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
+                const alignedAdm = allPages.find((x) => String(x.admAuthor) === expectedAuthor && String(x.scenarioIndex) === String(expectedScenario) && String(x.admType) === 'aligned' && String(x.admAlignment) === alignedADMTarget);
                 // misaligned
-                const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == misalignedADMTarget);
+                const misalignedAdm = allPages.find((x) => String(x.admAuthor) === expectedAuthor && String(x.scenarioIndex) === String(expectedScenario) && String(x.admType) === 'aligned' && String(x.admAlignment) === misalignedADMTarget);
                 const pagesToShuffle = [];
                 if (isDefined(baselineAdm)) {
                     baselineAdm['alignment'] = 'baseline';
@@ -432,7 +432,7 @@ class SurveyPage extends Component {
 
             const textScenarios = getTextScenariosForParticipant(this.state.pid, this.props.participantLog);
             const participantTextResults = this.props.textResults.filter(
-                (res) => res['participantID'] == this.state.pid
+                (res) => String(res['participantID']) === this.state.pid
             );
             console.log("Participant text results:", participantTextResults);
 
@@ -581,7 +581,7 @@ class SurveyPage extends Component {
 
         // for data collect 7-11-24 survey version 2.1
         // randomly insert 'treat as ai DM' OR 'treat as human DM'
-        if (surveyVersionNumber == 2.1) {
+        if (surveyVersionNumber === 2.1) {
             const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
             const firstGroup = [shuffledInstructionPages[0]]
             const secondGroup = [shuffledInstructionPages[1]]
@@ -605,12 +605,12 @@ class SurveyPage extends Component {
     }
 
     orderLogHelper = (group, orderLog, offset) => {
-        const groupType = group[0] == 'Treat as Human' ? 'H' : 'AI'
+        const groupType = String(group[0]) === 'Treat as Human' ? 'H' : 'AI'
         let lastPage = {}
         group.forEach((pageName, index) => {
-            if (index == 0) { return } // skip the agent page
+            if (Number(index) === 0) { return } // skip the agent page
             const page = this.surveyConfigClone.pages.find(p => p.name === pageName);
-            if (page.pageType == 'singleMedic') {
+            if (String(page.pageType) === 'singleMedic') {
                 // mark last page so comparison pages can read info from it 
                 lastPage = page
                 orderLog.push(`${index + offset}-${page.admAuthor}-${page.scenarioName.replace(/\s+/g, '-')}-${groupType}-${page.admAlignment}`);
@@ -657,7 +657,7 @@ class SurveyPage extends Component {
         }
 
         const pageName = options.page.name;
-        if (pageName == 'VR Page') {
+        if (String(pageName) === 'VR Page') {
             // made it past warnings and pid page, so log pid as claimed
             if (this.state.validPid) {
                 this.setState({ updatePLog: true }, () => {
@@ -816,7 +816,7 @@ class SurveyPage extends Component {
             if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0 || surveyVersionNumber === 6.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
-                        log => log['ParticipantID'] == this.state.pid
+                        log => String(log['ParticipantID']) === this.state.pid
                     );
                     this.setState({ validPid: isDefined(matchedLog), envsSeen: isDefined(matchedLog) ? matchedLog : this.state.envsSeen }, () => {
                         if (surveyVersionNumber === 4.0) this.setSeenScenarios();
@@ -839,7 +839,7 @@ class SurveyPage extends Component {
     }
 
     finishFirstPage = (survey) => {
-        if (!this.state.onlineOnly && survey.currentPageNo == 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
+        if (!this.state.onlineOnly && Number(survey.currentPageNo) === 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
             this.setState({ lastTimeCalled: new Date() }, () => {
                 this.postConfigSetup();
             });
@@ -851,7 +851,7 @@ class SurveyPage extends Component {
         if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0 || surveyVersionNumber === 6.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => log['ParticipantID'] == this.state.pid
+                    log => String(log['ParticipantID']) === this.state.pid
                 );
                 if (this.survey.getPageByName("PID Warning"))
                     this.survey.getPageByName("PID Warning").visible = !isDefined(matchedLog);
