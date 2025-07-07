@@ -132,23 +132,26 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.redirectLinkRef = React.createRef();
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid != null) {
+
+        const surveyVersionNumber = Number(this.state.surveyVersion);
+
+        if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0 || surveyVersionNumber === 6.0) && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
-            if (this.state.surveyVersion == 4.0) this.setSeenScenarios();
+            if (surveyVersionNumber === 4.0) this.setSeenScenarios();
             this.survey.data = {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion == 4 || res.results?.surveyVersion == 5 || res.results?.surveyVersion == 6) && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            const pidExists = this.props.surveyResults.filter((res) => (Number(res.results?.surveyVersion) === 4 || Number(res.results?.surveyVersion) === 5 || Number(res.results?.surveyVersion) === 6) && String(res.results['Participant ID Page']?.questions['Participant ID']?.response) === String(this.state.pid) && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
-            const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
+            const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid || this.state.onlineOnly) {
                 if (pidExists.length > 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                 }
-                else if (completedTextSurvey.length == 0 && !this.state.onlineOnly) {
+                else if (completedTextSurvey.length === 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
@@ -193,14 +196,16 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid != null) {
+        const surveyVersionNumber = Number(this.state.surveyVersion);
+
+        if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0 || surveyVersionNumber === 6.0) && this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: false
             });
         }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
-        if ((this.state.surveyVersion != 4.0 && this.state.surveyVersion != 5.0 && this.state.surveyVersion != 6.0)) {
-            if (this.state.surveyVersion == 1.3) {
+        if ((surveyVersionNumber !== 4.0 && surveyVersionNumber !== 5.0 && surveyVersionNumber !== 6.0)) {
+            if (surveyVersionNumber === 1.3) {
                 this.assign_omnibus_1_3(groupedDMs)
             }
             this.applyPageRandomization(groupedDMs, comparisonPages, removed);
@@ -229,7 +234,9 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        if (this.state.surveyVersion == 2 || this.state.surveyVersion == 0) {
+        const surveyVersionNumber = Number(this.state.surveyVersion);
+
+        if (surveyVersionNumber === 2 || surveyVersionNumber === 0) {
             // randomize order of soarTech scenarios and adept scenarios
             let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
             let adept = shuffle(this.surveyConfigClone.adeptDMs)
@@ -253,7 +260,7 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed };
         }
-        else if (this.state.surveyVersion == 2.1) {
+        else if (surveyVersionNumber === 2.1) {
             let groupedDMs = shuffle(this.surveyConfigClone.adeptDMs)
             let comparisonPages = []
             groupedDMs.forEach(group => {
@@ -262,7 +269,7 @@ class SurveyPage extends Component {
             let removed = []
             return { groupedDMs, comparisonPages, removed };
         }
-        else if (this.state.surveyVersion == 3.0) {
+        else if (surveyVersionNumber === 3.0) {
             // data collect starting 7-16
             let pages = this.surveyConfigClone.pages
             let removed = []
@@ -306,14 +313,14 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed }
         }
-        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid == null) {
+        else if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0 || surveyVersionNumber === 6.0) && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
 
             return {};
         }
-        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0)) {
+        else if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0)) {
             let scenariosToSee = this.state.envsSeen;
-            if (this.state.surveyVersion == 5.0 && this.state.onlineOnly) {
+            if (surveyVersionNumber === 5.0 && this.state.onlineOnly) {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => log['ParticipantID'] == this.state.pid
                 );
@@ -335,7 +342,7 @@ class SurveyPage extends Component {
                 "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval') || el['scenario_id'].includes('adept')) ?? undefined
             };
             let adeptMostLeast = null;
-            if (this.state.surveyVersion == 4.0) {
+            if (surveyVersionNumber === 4.0) {
                 adeptMostLeast = getOrderedAdeptTargets(admLists?.adept?.combinedAlignmentData ?? []);
             }
             else {
@@ -407,7 +414,7 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else if (this.state.surveyVersion == 1.3 || this.state.surveyVersion == 1.0) {
+        else if (surveyVersionNumber === 1.3 || surveyVersionNumber === 1.0) {
             let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
             // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
             let removed = groupedDMs.pop();
@@ -419,7 +426,7 @@ class SurveyPage extends Component {
 
             return { groupedDMs, removed, comparisonPages };
         }
-        else if (this.state.surveyVersion == 6.0) {
+        else if (surveyVersionNumber === 6.0) {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
@@ -481,7 +488,8 @@ class SurveyPage extends Component {
         */
         const postScenarioPage = this.surveyConfigClone.pages.find(page => page.name === "Post-Scenario Measures");
         let omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
-        if (this.state.surveyVersion === 3.0) {
+        const surveyVersionNumber = Number(this.state.surveyVersion);
+        if (surveyVersionNumber === 3.0) {
             omnibusPages = []
             // grabs introduction pages
             const introPages = this.surveyConfigClone.pages.slice(0, 3)
@@ -573,7 +581,7 @@ class SurveyPage extends Component {
 
         // for data collect 7-11-24 survey version 2.1
         // randomly insert 'treat as ai DM' OR 'treat as human DM'
-        if (this.state.surveyVersion == 2.1) {
+        if (surveyVersionNumber == 2.1) {
             const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
             const firstGroup = [shuffledInstructionPages[0]]
             const secondGroup = [shuffledInstructionPages[1]]
@@ -618,6 +626,8 @@ class SurveyPage extends Component {
             window.scrollTo(0, 0);
         }, 25);
 
+        const surveyVersionNumber = Number(this.state.surveyVersion);
+
         // record start time after first page completed
         if (!sender.isFirstPage && !this.state.firstPageCompleted) {
             const timestamp = await this.props.getServerTimestamp();
@@ -626,7 +636,7 @@ class SurveyPage extends Component {
                 startTime: timestamp.data.getServerTimestamp
             });
 
-            if (this.state.surveyVersion == 1.3 && this.props.addParticipant) {
+            if (surveyVersionNumber === 1.3 && this.props.addParticipant) {
                 try {
                     const participantData = {
                         claimed: true
@@ -693,6 +703,8 @@ class SurveyPage extends Component {
         const timestamp = await this.props.getServerTimestamp();
         const timeComplete = timestamp.data.getServerTimestamp;
 
+        const surveyVersionNumber = Number(this.state.surveyVersion);
+
         // iterate through each page in the survey
         for (const pageName in this.pageStartTimes) {
             if (this.pageStartTimes.hasOwnProperty(pageName)) {
@@ -744,7 +756,7 @@ class SurveyPage extends Component {
         this.surveyData.browserInfo = this.state.browserInfo;
 
         // 7-16 data collect. Log info about order, agent, and DM 
-        if (this.state.surveyVersion == 3.0 || this.state.surveyVersion == 2.1) {
+        if (surveyVersionNumber === 3.0 || surveyVersionNumber === 2.1) {
             this.surveyData['firstGroup'] = this.state.firstGroup;
             this.surveyData['secondGroup'] = this.state.secondGroup;
             this.surveyData['orderLog'] = this.state.orderLog;
@@ -756,7 +768,7 @@ class SurveyPage extends Component {
             }
         }
 
-        if (this.state.surveyVersion == 6.0) {
+        if (surveyVersionNumber === 6.0) {
             this.surveyData['evalName'] = 'June 2025 Collaboration'
             this.surveyData['evalNumber'] = 8
             this.surveyData['pid'] = this.state.pid;
@@ -766,19 +778,19 @@ class SurveyPage extends Component {
             }
         }
 
-        if (this.state.surveyVersion == 1.3) {
+        if (surveyVersionNumber === 1.3) {
             this.surveyData['evalName'] = 'April 2025 Evaluation';
             this.surveyData['evalNumber'] = 8;
             this.surveyData['pid'] = this.state.pid;
             this.surveyData['orderLog'] = this.state.orderLog
         }
 
-        if (this.state.surveyVersion == 4.0) {
+        if (surveyVersionNumber === 4.0) {
             this.surveyData['evalNumber'] = 4;
             this.surveyData['evalName'] = 'Dry Run Evaluation';
             this.surveyData['orderLog'] = this.state.orderLog;
         }
-        if (this.state.surveyVersion == 5.0) {
+        if (surveyVersionNumber === 5.0) {
             this.surveyData['evalNumber'] = 6;
             this.surveyData['evalName'] = 'Jan 2025 Eval';
             this.surveyData['orderLog'] = this.state.orderLog;
@@ -799,14 +811,15 @@ class SurveyPage extends Component {
     onSurveyComplete = (survey) => {
         // final upload
         this.uploadSurveyData(survey, true);
+        const surveyVersionNumber = Number(this.state.surveyVersion);
         if (this.surveyConfigClone.pages.length < 3) {
-            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+            if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0 || surveyVersionNumber === 6.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
                         log => log['ParticipantID'] == this.state.pid
                     );
                     this.setState({ validPid: isDefined(matchedLog), envsSeen: isDefined(matchedLog) ? matchedLog : this.state.envsSeen }, () => {
-                        if (this.state.surveyVersion == 4.0) this.setSeenScenarios();
+                        if (surveyVersionNumber === 4.0) this.setSeenScenarios();
                     });
                 });
             }
@@ -834,7 +847,8 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+        const surveyVersionNumber = Number(this.state.surveyVersion);
+        if ((surveyVersionNumber === 4.0 || surveyVersionNumber === 5.0 || surveyVersionNumber === 6.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => log['ParticipantID'] == this.state.pid
