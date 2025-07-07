@@ -2,7 +2,7 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'xlsx-js-style';
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { admOrderMapping, getDelEnvMapping } from '../Survey/delegationMappings';
-
+import { formatTargetWithDecimal } from '../Survey/surveyUtils';
 
 export const ADM_NAME_MAP = {
     "TAD-aligned": "Parallax",
@@ -40,7 +40,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
     // Create a new workbook and worksheet
     const wb = XLSX.utils.book_new();
     const dataCopy = structuredClone(formattedData);
-    
+
     for (let pid of Object.keys(dataCopy)) {
         for (let k of Object.keys(dataCopy[pid])) {
             if (dataCopy[pid][k] == '-') {
@@ -51,10 +51,10 @@ export const exportToExcel = async (filename, formattedData, headers, participan
 
     // keys as fallback if headers not provided
     const columnHeaders = headers || Object.keys(dataCopy[Object.keys(dataCopy)[0]] || {});
-    
+
     // maintain column order by using headers if provided
-    const ws = headers ? 
-        XLSX.utils.json_to_sheet(dataCopy, { header: headers }) : 
+    const ws = headers ?
+        XLSX.utils.json_to_sheet(dataCopy, { header: headers }) :
         XLSX.utils.json_to_sheet(dataCopy);
 
     // Adjust column widths
@@ -65,7 +65,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
         // apply conditional formatting to participant data
         const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
         const phase2 = dataCopy[0]['Evaluation'] === 'June 2025 Collaboration'
-        
+
         for (let row = 1; row <= dataCopy.length; row++) {
             for (let col = 0; col < columnHeaders.length; col++) {
                 const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
@@ -74,7 +74,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                 if (cell) {
                     const val = cell.v;
                     const headerName = columnHeaders[col];
-                    
+
                     if (lightGreenIfNotNull.includes(headerName) && isDefined(val)) {
                         cell.s = {
                             fill: {
@@ -238,7 +238,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
             continue;
         }
         const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
-        if(evalNum === 8) {
+        if (evalNum === 8) {
             logData['ADMOrder'] = 5;
         }
         // set up object to store participant data
@@ -262,7 +262,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         // All text scenarios are same number
                         const ph1_scenario = "PH1-" + logData["AF-text-scenario"];
                         let mapping_array_number;
-                        switch(entry['Attribute']){
+                        switch (entry['Attribute']) {
                             case "AF":
                                 mapping_array_number = 0;
                                 break;
@@ -334,7 +334,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 }
 
                 let foundADM;
-                if(evalNum < 8){
+                if (evalNum < 8) {
                     foundADM = admData.find((adm) => adm.history?.[0].parameters.adm_name == page['admName'] && (adm.history?.[0].response?.id ?? adm.history?.[1].response?.id) == page['scenarioIndex'].replace('IO', 'MJ') &&
                         adm.history?.[adm.history.length - 1].parameters.target_id == page['admTarget']);
                 } else {
@@ -375,7 +375,13 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] == 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] == 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                 entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t == 'comparison' ? '-' : t;
 
-                entryObj['ADM Loading'] = t == 'comparison' ? '-' : t == 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(page['admChoiceProcess']) ? 'normal' : 'exemption';
+                const choiceProcess = (evalNum === 8 && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
+                    ? determineChoiceProcessJune2025(textResultsForPID, page, t)
+                    : page['admChoiceProcess'];
+
+                entryObj['ADM Loading'] = t === 'comparison' ? '-' :
+                    t === 'baseline' ? 'normal' :
+                        ['least aligned', 'most aligned'].includes(choiceProcess) ? 'normal' : 'exemption';
                 if (evalNum == 5 || evalNum == 6)
                     entryObj['DRE ADM Loading'] = entry['TA1'] == 'Adept' ? page.dreChoiceProcess : entryObj['ADM Loading'];
                 // if DRE data is included in PH1 set, update DRE columns accordingly
@@ -413,12 +419,12 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
 
                     let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
-                    if(aligned_target_name === undefined) {
+                    if (aligned_target_name === undefined) {
                         aligned_target_name = "";
                     }
 
-                    switch (true){
-                        case entryObj['Target'].toLowerCase().indexOf("safety") !== -1 || aligned_target_name.indexOf("safety") !== -1: 
+                    switch (true) {
+                        case entryObj['Target'].toLowerCase().indexOf("safety") !== -1 || aligned_target_name.indexOf("safety") !== -1:
                             entryObj['Attribute'] = "PS";
                             break;
                         case entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1:
@@ -428,17 +434,17 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                                 entryObj['Attribute'] = "AF";
                             }
                             break;
-                        case entryObj['Target'].toLowerCase().indexOf("search") !== -1 || aligned_target_name.indexOf("search") !== -1: 
+                        case entryObj['Target'].toLowerCase().indexOf("search") !== -1 || aligned_target_name.indexOf("search") !== -1:
                             entryObj['Attribute'] = "SS";
                             break;
-                        case entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1: 
+                        case entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1:
                             if (entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1) {
                                 entryObj['Attribute'] = "AF-MF";
                             } else {
                                 entryObj['Attribute'] = "MF";
                             }
                             break;
-                        case page["scenarioIndex"]?.indexOf("-AF-MF") !== -1: 
+                        case page["scenarioIndex"]?.indexOf("-AF-MF") !== -1:
                             entryObj['Attribute'] = "AF-MF";
                             break;
                         default:
@@ -495,7 +501,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                 entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': This medic is trustworthy']?.['response'] ?? '-' : '-'];
                 entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decisions that this medic made?']?.['response'] ?? '-' : '-'];
-                if(evalNum === 8) {
+                if (evalNum === 8) {
                     entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': this medic is trustworthy']?.['response'] ?? '-' : '-'];
                     entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decision that this medic made?']?.['response'] ?? '-' : '-'];
                 }
@@ -506,4 +512,42 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     }
     const pids = allObjs.map((x) => x['Delegator_ID']);
     return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes };
+}
+
+export function determineChoiceProcessJune2025(textResults, page, t) {
+    console.log(textResults)
+    const target = page['admTarget']
+    const mostLeastAligned = textResults[0]['mostLeastAligned']
+
+    // Multi-KDMA check
+    if (target.includes('affiliation') && target.includes('merit')) {
+        return 'most aligned'
+    }
+
+    // Find matching target
+    const matchingTarget = ['affiliation', 'merit', 'personal_safety', 'search']
+        .find(t => target.includes(t))
+
+    if (!matchingTarget) return 'exemption'
+
+    const targetObj = mostLeastAligned.find(obj => obj.target === matchingTarget)
+    if (!targetObj) return 'exemption'
+
+    // Filter out multi-KDMA targets
+    const filteredTargets = targetObj['response'].filter(obj => {
+        const key = Object.keys(obj)[0]
+        return !(key.includes('affiliation') && key.includes('merit'))
+    })
+
+    // Select based on alignment type
+    const selectedTarget = t === 'aligned'
+        ? filteredTargets[0]
+        : filteredTargets[filteredTargets.length - 1]
+
+    const focusTarget = formatTargetWithDecimal(Object.keys(selectedTarget)[0])
+
+    // Return based on match and alignment
+    return focusTarget === target
+        ? (t === 'aligned' ? 'most aligned' : 'least aligned')
+        : 'exemption'
 }
