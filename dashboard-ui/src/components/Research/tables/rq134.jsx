@@ -157,8 +157,8 @@ export function RQ134({ evalNum, tableTitle }) {
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
-                if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
-                if (Number(a['Delegator_ID']) > Number(b['Delegator_ID'])) return 1;
+                if (Number(a['Delegator ID']) < Number(b['Delegator ID'])) return -1;
+                if (Number(a['Delegator ID']) > Number(b['Delegator ID'])) return 1;
 
                 // if PID is equal, compare trial id
                 return a.Trial_ID - b.Trial_ID;

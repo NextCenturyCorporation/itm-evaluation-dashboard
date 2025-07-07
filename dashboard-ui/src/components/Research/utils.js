@@ -307,7 +307,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const entryObj = {};
                 entryObj['Delegator ID'] = pid;
                 entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
-                entryObj['Datasource'] = evalNum == 4 ? 'DRE' : evalNum == 5 ? (logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type == 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025');
+                entryObj['Datasource'] = evalNum > 7 ? "P2E_June_2025" : (evalNum == 4 ? 'DRE' : evalNum == 5 ? (logData.Type == 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type == 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
                 entryObj['Delegator_grp'] = logData['Type'] == 'Civ' ? 'Civilian' : logData['Type'] == 'Mil' ? 'Military' : logData['Type'];
                 const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
                 const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
