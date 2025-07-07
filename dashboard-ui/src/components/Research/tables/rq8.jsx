@@ -75,15 +75,15 @@ export function RQ8({ evalNum }) {
             const participantLog = dataParticipantLog.getParticipantLog;
 
             const evals = [evalNum];
-            if (includeDRE && evalNum != 4) {
+            if (includeDRE && Number(evalNum) !== 4) {
                 evals.push(4);
             }
-            if (includeJAN && evalNum != 6) {
+            if (includeJAN && Number(evalNum) !== 6) {
                 evals.push(6);
             };
 
             for (let evalNum of evals) {
-                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) === Number(evalNum));
 
                 const pids = [];
                 const recorded = {};
@@ -96,21 +96,21 @@ export function RQ8({ evalNum }) {
                     recorded[pid] = [];
                     // see if participant has completed the open world scenario
                     const openWorld = simData.find(
-                        log => log['pid'] == pid && log['openWorld'] == true
+                        log => String(log['pid']) === String(pid) && Boolean(log['openWorld']) === true
                     );
                     if (!openWorld) {
                         continue;
                     }
 
                     const simEntries = simData.filter(
-                        log => log['pid'] == pid
+                        log => String(log['pid']) === String(pid)
                     );
 
                     const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
-                        log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                        log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test'
                     );
                     if (!logData) {
                         continue;
@@ -146,7 +146,7 @@ export function RQ8({ evalNum }) {
                             allTA1s.push(entryObj['TA1_Name']);
                             entryObj['Attribute'] = att;
                             allAttributes.push(att);
-                            entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                            entryObj['Scenario'] = entryObj['TA1_Name'] === 'ADEPT' ? ad_scenario : st_scenario;
                             allScenarios.push(entryObj['Scenario']);
                             const kdmas = Array.isArray(entry['kdmas']) ? entry['kdmas'] : entry['kdmas']?.['computed_kdma_profile'];
                             const att_map = {
@@ -155,20 +155,20 @@ export function RQ8({ evalNum }) {
                                 'QOL': 'QualityOfLife',
                                 'VOL': 'PerceivedQuantityOfLivesSaved'
                             }
-                            entryObj['Participant Text KDMA'] = kdmas?.find((x) => x['kdma'] == att_map[att])?.value ?? '-';
+                            entryObj['Participant Text KDMA'] = kdmas?.find((x) => String(x['kdma']) === att_map[att])?.value ?? '-';
                             const sim_entry = simEntries.find((x) => {
                                 const kdma_data = x?.data?.alignment?.kdmas?.computed_kdma_profile ?? x?.data?.alignment?.kdmas;
-                                return Array.isArray(kdma_data) && kdma_data?.find((y) => y.kdma == att_map[att]);
+                                return Array.isArray(kdma_data) && kdma_data?.find((y) => String(y.kdma) === att_map[att]);
                             });
                             const sim_kdmas = sim_entry?.data?.alignment?.kdmas?.computed_kdma_profile ?? sim_entry?.data?.alignment?.kdmas;
-                            entryObj['Participant Sim KDMA'] = Array.isArray(sim_kdmas) ? sim_kdmas?.find((y) => y.kdma == att_map[att])?.value : '-';
-                            if (evalNum == 4) {
-                                entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att == 'QOL' ? 'qol-synth-HighExtreme' : att == 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
-                                entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att == 'QOL' ? 'qol-synth-LowExtreme' : att == 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
+                            entryObj['Participant Sim KDMA'] = Array.isArray(sim_kdmas) ? sim_kdmas?.find((y) => String(y.kdma) === att_map[att])?.value : '-';
+                            if (Number(evalNum) === 4) {
+                                entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => String(x.target) === (att === 'IO' ? 'ADEPT-DryRun-Ingroup Bias-1.0' : att === 'MJ' ? 'ADEPT-DryRun-Moral judgement-1.0' : att === 'QOL' ? 'qol-synth-HighExtreme' : att === 'VOL' ? 'vol-synth-HighExtreme' : ''))?.score ?? '-';
+                                entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => String(x.target) === (att === 'IO' ? 'ADEPT-DryRun-Ingroup Bias-0.0' : att === 'MJ' ? 'ADEPT-DryRun-Moral judgement-0.0' : att === 'QOL' ? 'qol-synth-LowExtreme' : att === 'VOL' ? 'vol-synth-LowExtreme' : ''))?.score ?? '-';
                             }
                             else {
-                                entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-08' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-08' : att == 'QOL' ? 'qol-synth-HighExtreme-ph1' : att == 'VOL' ? 'vol-synth-HighCluster-ph1' : ''))?.score ?? '-';
-                                entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => x.target == (att == 'IO' ? 'ADEPT-DryRun-Ingroup Bias-02' : att == 'MJ' ? 'ADEPT-DryRun-Moral judgement-02' : att == 'QOL' ? 'qol-synth-LowExtreme-ph1' : att == 'VOL' ? 'vol-synth-LowExtreme-ph1' : ''))?.score ?? '-';
+                                entryObj['Alignment score (Participant|high target)'] = alignments?.find((x) => String(x.target) === (att === 'IO' ? 'ADEPT-DryRun-Ingroup Bias-08' : att === 'MJ' ? 'ADEPT-DryRun-Moral judgement-08' : att === 'QOL' ? 'qol-synth-HighExtreme-ph1' : att === 'VOL' ? 'vol-synth-HighCluster-ph1' : ''))?.score ?? '-';
+                                entryObj['Alignment score (Participant|low target)'] = alignments?.find((x) => String(x.target) === (att === 'IO' ? 'ADEPT-DryRun-Ingroup Bias-02' : att === 'MJ' ? 'ADEPT-DryRun-Moral judgement-02' : att === 'QOL' ? 'qol-synth-LowExtreme-ph1' : att === 'VOL' ? 'vol-synth-LowExtreme-ph1' : ''))?.score ?? '-';
                             }
                             const owData = openWorld['data'];
                             entryObj['Assess_patient'] = owData?.assess_patient;
@@ -236,9 +236,9 @@ export function RQ8({ evalNum }) {
 
     React.useEffect(() => {
         setFilteredData(formattedData.filter((x) =>
-            (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-            (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
+            (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
+            (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+            (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute']))
         ));
     }, [ta1Filters, scenarioFilters, attributeFilters, formattedData]);
 
@@ -247,7 +247,7 @@ export function RQ8({ evalNum }) {
 
     return (<>
         <h2 className='rq134-header'>RQ8 Data
-            {evalNum == 5 &&
+            {Number(evalNum) === 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
@@ -328,7 +328,7 @@ export function RQ8({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ8_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ8_eval${evalNum}.xlsx`} xlFile={(Number(evalNum) === 5 || Number(evalNum) === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

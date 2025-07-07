@@ -152,7 +152,7 @@ export const ADMProbeResponses = (props) => {
         skip: !currentEval
     });
 
-    const { loading: alignmentLoading, error: alignmentError, data: alignmentData } = useQuery(alignment_target_by_scenario, {
+    const { data: alignmentData } = useQuery(alignment_target_by_scenario, {
         variables: { evalNumber: currentEval, scenarioID: currentScenario },
         skip: !currentScenario
     });
@@ -216,7 +216,7 @@ export const ADMProbeResponses = (props) => {
     };
 
     const getKdma = (history, attribute) => {
-        return history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => kdma.kdma == attribute)?.value;
+        return history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => String(kdma.kdma) === String(attribute))?.value;
     }
 
     if (evalNameLoading) return <div>Loading...</div>;
@@ -238,7 +238,7 @@ export const ADMProbeResponses = (props) => {
     };
 
     const formatScenarioString = (id) => {
-        if (currentEval == 3) {
+        if (currentEval === 3) {
             if (id.toLowerCase().indexOf("metricseval") > -1) {
                 return ("ADEPT: " + id);
             } else {
@@ -309,7 +309,7 @@ export const ADMProbeResponses = (props) => {
                     'Alignment Target': alignmentTarget,
                     'TA1 Session ID': getSessionId(data.history)
                 };
-            if (currentEval == 7) {
+            if (currentEval === 7) {
                 const kdmaValues = getKdmaTargets(data);
                 row['MJ KDMA'] = kdmaValues.mj;
                 row['IO KDMA'] = kdmaValues.io;

@@ -149,7 +149,7 @@ const PatientPhase1 = ({ patient, onImageClick, blockedVitals, imageClickDisable
   const renderInjuries = (injuries) => {
     return injuries.map((injury, i) => (
       <div key={i} className="mb-2">
-        <strong>{injury.location != 'internal' ? capitalizeWords(injury.location) : ''} {injury.name}</strong>
+        <strong>{String(injury.location) !== 'internal' ? capitalizeWords(injury.location) : ''} {injury.name}</strong>
         <br />
         Severity: <Badge bg={getInjurySeverityColor(injury.severity)}>{injury.severity.toUpperCase()}</Badge>
       </div>

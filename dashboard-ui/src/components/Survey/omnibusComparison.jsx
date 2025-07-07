@@ -93,7 +93,7 @@ export class OmnibusComparison extends SurveyQuestionElementBase {
                 })
 
             }
-        }, [reducer])
+        }, [reducer, currentSurveyVersion])
         return null;
     }
 

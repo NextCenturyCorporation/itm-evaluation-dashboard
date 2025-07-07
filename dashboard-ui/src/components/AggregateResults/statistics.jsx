@@ -95,7 +95,7 @@ function getStandardError(lst) {
 
 const getMeanAcrossAll = (obj, keys = 'all') => {
     const data = [];
-    if (obj != undefined) {
+    if (obj !== null && obj !== undefined) {
         for (const key of Object.keys(obj)) {
             if (keys === 'all' || keys.includes(key)) {
                 data.push(...obj[key]);
@@ -107,7 +107,7 @@ const getMeanAcrossAll = (obj, keys = 'all') => {
 
 const getMeanAcrossAllWithoutOutliers = (obj, keys = 'all') => {
     const data = [];
-    if (obj != undefined) {
+    if (obj !== null && obj !== undefined) {
         for (const key of Object.keys(obj)) {
             if (keys === 'all' || keys.includes(key)) {
                 data.push(...obj[key]);
@@ -135,7 +135,7 @@ const getMeanAcrossAllWithoutOutliers = (obj, keys = 'all') => {
 
 const getSeAcrossAll = (obj, keys = 'all') => {
     const data = [];
-    if (obj != undefined) {
+    if (obj !== null && obj !== undefined) {
         for (const key of Object.keys(obj)) {
             if (keys === 'all' || keys.includes(key)) {
                 data.push(...obj[key]);

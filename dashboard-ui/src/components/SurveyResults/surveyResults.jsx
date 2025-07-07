@@ -44,7 +44,6 @@ export function SurveyResults() {
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
-    const [showTable, setShowTable] = React.useState(false);
     const [filterBySurveyVersion, setVersionOption] = React.useState(parseInt(useSelector(state => state?.configs?.currentSurveyVersion)));
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
@@ -61,12 +60,14 @@ export function SurveyResults() {
         if (data && filterBySurveyVersion) {
             setupDataBySurveyVersion(data, filterBySurveyVersion);
         }
+    // eslint-disable-next-line
     }, [filterBySurveyVersion, data]);
 
     React.useEffect(() => {
         if (filteredData) {
             filterDataAndSetNames();
         }
+    // eslint-disable-next-line
     }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
 
     React.useEffect(() => {
@@ -97,9 +98,9 @@ export function SurveyResults() {
                 continue;
             }
             const logData = dataParticipantLog?.getParticipantLog.find(
-                log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test'
             );
-            if ((filterBySurveyVersion == 4 || filterBySurveyVersion == 5) && !logData) {
+            if ((filterBySurveyVersion === 4 || filterBySurveyVersion === 5) && !logData) {
                 continue;
             }
             for (const x of Object.keys(obj)) {
@@ -142,9 +143,9 @@ export function SurveyResults() {
                         // set up comparison page/question labels
                         const pageADMs = resCopy.origName.split(' vs ');
                         const qADMs = q.split(':')[0].split(' vs ');
-                        const newQ = (qADMs[0] == pageADMs[1] ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] == pageADMs[0] ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
+                        const newQ = (qADMs[0] === String(pageADMs[1]) ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] === String(pageADMs[0]) ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
                         if (q.includes('Forced')) {
-                            resCopy.questions[newQ] = { 'response': resCopy.questions[q].response == pageADMs[0] ? 'Baseline' : resCopy.questions[q].response == pageADMs[1] ? 'Aligned' : 'Misaligned' };
+                            resCopy.questions[newQ] = { 'response': String(resCopy.questions[q].response) === String(pageADMs[0]) ? 'Baseline' : String(resCopy.questions[q].response) === String(pageADMs[1]) ? 'Aligned' : 'Misaligned' };
                         }
                         else {
                             resCopy.questions[newQ] = resCopy.questions[q];
@@ -160,13 +161,13 @@ export function SurveyResults() {
     }
 
     const toggleGeneralizability = (event) => {
-        setGeneralization(event.target.value == 'Alignment');
+        setGeneralization(String(event.target.value) === 'Alignment');
     }
 
     const indexToScenarioName = (index) => {
-        if (filterBySurveyVersion == 4 || filterBySurveyVersion == 5) { return index }
-        const currentSurvey = Object.values(surveys).find(survey => survey.version == filterBySurveyVersion);
-        const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex == index);
+        if (filterBySurveyVersion === 4 || filterBySurveyVersion === 5) { return index }
+        const currentSurvey = Object.values(surveys).find(survey => Number(survey.version) === filterBySurveyVersion);
+        const matchingPage = currentSurvey?.pages?.find(page => String(page.scenarioIndex) === String(index));
         return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
     }
 
@@ -274,7 +275,7 @@ export function SurveyResults() {
                                 </List>
                             </div>}
                     </div>
-                        {filterBySurveyVersion && selectedScenario != "" ?
+                        {filterBySurveyVersion && selectedScenario !== "" ?
                             <div className="graph-section">
                                 <div className="options">
                                     {[4, 5].includes(filterBySurveyVersion) &&

@@ -67,7 +67,7 @@ export function RQ1() {
             </p>
             <ul>
                 <li>Participant ID</li>
-                {(selectedEval == 5 || selectedEval == 6) && <li>
+                {(selectedEval === 5 || selectedEval === 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -82,7 +82,7 @@ export function RQ1() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ1 Analysis - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval === 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close1Code}>
                             Close
@@ -98,14 +98,14 @@ export function RQ1() {
             </p>
             <ul>
                 <li>Participant ID</li>
-                {(selectedEval == 5 || selectedEval == 6) && <li>
+                {(selectedEval === 5 || selectedEval === 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
                     </ul>
                 </li>}
                 <li>ADM_Aligned_Status (Baseline/Misaligned/Aligned)</li>
-                {(selectedEval == 5 || selectedEval == 6) && <li>
+                {(selectedEval === 5 || selectedEval === 6) && <li>
                     ADM_Loading
                     <ul>
                         <li>Use only "normal"</li>
@@ -119,7 +119,7 @@ export function RQ1() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ1 Analysis - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval === 4 ? rq1CodeDre : rq1CodePh1} downloadName={'RQ1_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close1Code}>
                             Close

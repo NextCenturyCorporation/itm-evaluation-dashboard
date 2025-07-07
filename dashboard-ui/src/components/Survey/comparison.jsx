@@ -100,7 +100,7 @@ export class Comparison extends SurveyQuestionElementBase {
                 })
 
             }
-        }, [reducer])
+        }, [reducer, currentSurveyVersion])
         return null;
     }
 

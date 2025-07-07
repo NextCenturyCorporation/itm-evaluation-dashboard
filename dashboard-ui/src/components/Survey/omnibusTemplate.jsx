@@ -103,7 +103,7 @@ export class Omnibus extends SurveyQuestionElementBase {
                 })
 
             }
-        }, [reducer])
+        }, [reducer, currentSurveyVersion])
         return null;
     }
 

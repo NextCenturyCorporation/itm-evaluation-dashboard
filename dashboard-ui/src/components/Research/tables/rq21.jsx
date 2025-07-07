@@ -47,7 +47,7 @@ export function RQ21({ evalNum }) {
     React.useEffect(() => {
         if (dataAdms?.getGroupAdmAlignmentByEval && dataTextResults?.getAllScenarioResults) {
             const admData = dataAdms.getGroupAdmAlignmentByEval;
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) === Number(evalNum));
             let allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -112,7 +112,7 @@ export function RQ21({ evalNum }) {
                 }
                 recorded[pid] = [];
 
-                const { textResultsForPID, _ } = getAlignments(evalNum, textResults, pid);
+                const { textResultsForPID, } = getAlignments(evalNum, textResults, pid);
                 for (const entry of textResultsForPID) {
                     // ignore training scenarios
                     if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
@@ -183,12 +183,12 @@ export function RQ21({ evalNum }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (ta2Filters.length == 0 || ta2Filters.includes(x['Source'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group_Target'])) &&
-                (decisionMakerFilters.length == 0 || decisionMakerFilters.includes(x['Decision_Maker']) || decisionMakerFilters.includes(x['Source']))
+                (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length === 0 || ta2Filters.includes(x['Source'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
+                (groupTargetFilters.length === 0 || groupTargetFilters.includes(x['Group_Target'])) &&
+                (decisionMakerFilters.length === 0 || decisionMakerFilters.includes(x['Decision_Maker']) || decisionMakerFilters.includes(x['Source']))
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters, decisionMakerFilters]);
@@ -315,7 +315,7 @@ export function RQ21({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ21_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ21_eval${evalNum}.xlsx`} xlFile={(Number(evalNum) === 5 || Number(evalNum) === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
