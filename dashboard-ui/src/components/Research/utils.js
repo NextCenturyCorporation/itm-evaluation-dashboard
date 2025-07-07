@@ -2,7 +2,7 @@ import * as FileSaver from 'file-saver';
 import XLSX from 'xlsx-js-style';
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { admOrderMapping, getDelEnvMapping } from '../Survey/delegationMappings';
-import { formatTargetWithDecimal } from '../Survey/surveyUtils';
+import { formatTargetWithDecimal, adjustScenarioNumber } from '../Survey/surveyUtils';
 
 export const ADM_NAME_MAP = {
     "TAD-aligned": "Parallax",
@@ -451,7 +451,9 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             console.log("Target and Attributes don't match for Evaluations greater than 8.")
                     }
                     // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
-                    entryObj['Probe Set'] = logData["AF-text-scenario"];
+                    entryObj['Probe Set Assessment'] = logData["AF-text-scenario"];
+                    // 2-> 3, 3 -> 1
+                    entryObj['Probe Set Observation'] = adjustScenarioNumber(entryObj['Probe Set Assessment'])
                     entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
 
@@ -519,12 +521,11 @@ export function determineChoiceProcessJune2025(textResults, page, t) {
     const target = page['admTarget']
     const mostLeastAligned = textResults[0]['mostLeastAligned']
 
-    // Multi-KDMA check
+    // no overlap in multi kdma
     if (target.includes('affiliation') && target.includes('merit')) {
         return 'most aligned'
     }
 
-    // Find matching target
     const matchingTarget = ['affiliation', 'merit', 'personal_safety', 'search']
         .find(t => target.includes(t))
 
@@ -533,20 +534,20 @@ export function determineChoiceProcessJune2025(textResults, page, t) {
     const targetObj = mostLeastAligned.find(obj => obj.target === matchingTarget)
     if (!targetObj) return 'exemption'
 
-    // Filter out multi-KDMA targets
+    // remove multi kdma targets
     const filteredTargets = targetObj['response'].filter(obj => {
         const key = Object.keys(obj)[0]
         return !(key.includes('affiliation') && key.includes('merit'))
     })
 
-    // Select based on alignment type
+    // first el if aligned, last el if misaligned
     const selectedTarget = t === 'aligned'
         ? filteredTargets[0]
         : filteredTargets[filteredTargets.length - 1]
 
     const focusTarget = formatTargetWithDecimal(Object.keys(selectedTarget)[0])
 
-    // Return based on match and alignment
+    // exemption if not match
     return focusTarget === target
         ? (t === 'aligned' ? 'most aligned' : 'least aligned')
         : 'exemption'
