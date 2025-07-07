@@ -72,7 +72,7 @@ export function RQ6({ evalNum }) {
             };
 
             for (let evalNum of evals) {
-                const textResults = dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) == Number(evalNum));
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) === Number(evalNum));
 
                 const pids = [];
                 const recorded = {};

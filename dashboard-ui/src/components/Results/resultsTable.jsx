@@ -19,7 +19,7 @@ import AlignmentScoreBox from './alignmentScore';
 import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import { RQ2223 } from '../Research/tables/rq22-rq23';
-import { MultiKDMA_RQ23 } from '../Research/tables/rq23_multiKDMA'
+import { MultiKDMA_RQ23 as MultiKdmaRq23 } from '../Research/tables/rq23_multiKDMA'
 import { PH2RQ2223 } from '../Research/tables/ph2_rq22-rq23';
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
@@ -172,7 +172,7 @@ class ResultsTable extends React.Component {
         const { evalNumber, scenario, adm } = this.state;
         if (evalNumber >= 4) {
             if (evalNumber === 7) {
-                return <MultiKDMA_RQ23 />;
+                return <MultiKdmaRq23 />;
             } else if (evalNumber === 8) {
                 return <PH2RQ2223 evalNum={evalNumber}/>;
             } else {

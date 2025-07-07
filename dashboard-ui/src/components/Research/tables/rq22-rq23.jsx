@@ -21,7 +21,7 @@ const PH1_HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 
 
 
 export function RQ2223({ evalNum }) {
-    const { loading: loading, error: error, data: data } = useQuery(getAdmData, {
+    const { loading, error, data } = useQuery(getAdmData, {
         variables: { "evalNumber": evalNum }
     });
     const [formattedData, setFormattedData] = React.useState([]);
@@ -131,7 +131,7 @@ export function RQ2223({ evalNum }) {
                             entryObj['P1E Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
                             entryObj['P1E Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => String(x.command) === 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                             entryObj['DRE Baseline ADM Alignment score (ADM|target)'] = entryObj['TA1_Name'] === 'SoarTech' ? baseline?.alignment : baseline?.dre_alignment;
-                            entryObj['DRE Baseline Server Session ID'] = entryObj['TA1_Name'] == 'SoarTech' ? entryObj['P1E Baseline Server Session ID'] : baseline?.adm?.history?.find((x) => String(x.command) === 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
+                            entryObj['DRE Baseline Server Session ID'] = entryObj['TA1_Name'] === 'SoarTech' ? entryObj['P1E Baseline Server Session ID'] : baseline?.adm?.history?.find((x) => String(x.command) === 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
                         }
                         else {
                             entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;

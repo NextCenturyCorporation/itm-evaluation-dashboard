@@ -9,7 +9,7 @@ import rq21CodePh1 from './rcode/code_for_dashboard_RQ21_ph1.R';
 import rq2CodePh1 from './rcode/code_for_dashboard_RQ2_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
-import { MultiKDMA_RQ23 } from './tables/rq23_multiKDMA';
+import { MultiKDMA_RQ23 as MultiKdmaRq23 } from './tables/rq23_multiKDMA';
 import { PH2RQ2223 } from './tables/ph2_rq22-rq23';
 
 const ALLOWED_EVAL_OPTIONS = [
@@ -123,7 +123,7 @@ export function RQ2() {
                 
                 {/* Render appropriate component based on selectedEval */}
                 {selectedEval === 7 ? (
-                    <MultiKDMA_RQ23 />
+                    <MultiKdmaRq23 />
                 ) : shouldUsePH2Component() ? (
                     <PH2RQ2223 evalNum={selectedEval} />
                 ) : (

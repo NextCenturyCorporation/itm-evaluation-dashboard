@@ -98,7 +98,7 @@ export default function HumanResults() {
                 const scene = Number(version) === 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
-                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && String(pid) === String(x.pid) && (Number(version) === 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
+                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && String(pid) === String(x.pid) && (Number(version) === 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : String(scene) === String(x.scenario_id)));
                     // go through the scene to find where each scenario starts/ends
                     entry['adept'] = [];
                     entry['soartech'] = [];
@@ -278,6 +278,7 @@ export default function HumanResults() {
                                     </ListItem>)
 
                             }
+                            return null;
                         }
                         )}
                     </List>

@@ -85,7 +85,7 @@ function generateComparisonv45(pageName, genericName) {
         const secondName = mname === '' ? aname : mname;
         surveyJson.elements.push({
             name: genericName ? ((secondName === mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
-            title: genericName ? ((secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
+            title: genericName ? ((secondName === mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
             type: "radiogroup",
             choices: genericName ? [secondName === mname ? "Misaligned" : "Aligned", "Baseline"] : [secondName, bname]
         });

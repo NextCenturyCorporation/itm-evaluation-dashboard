@@ -1007,6 +1007,15 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         misaligned: 'least aligned'
     };
 
+    function findPageByTarget(pages, target) {
+        for (const page of pages) {
+            if (page.target === target) {
+                return page;
+            }
+        }
+        return null;
+    }
+
     const handleRandomSelection = (reason) => {
         console.warn(`${scenarioType}: ${reason}`);
         const shuffled = shuffle([...nonBaselinePages]);
@@ -1059,7 +1068,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         }
         
         mostAlignedTarget = formatTargetWithDecimal(target);
-        mostAlignedPage = nonBaselinePages.find(page => page.target === mostAlignedTarget);
+        mostAlignedPage = mostAlignedTarget ? findPageByTarget(nonBaselinePages, mostAlignedTarget): null;
         if (mostAlignedPage) {
             alignedGroup = findTargetGroup(targetValue);
             if (skippedCount > 0) {
@@ -1069,6 +1078,8 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
             break;
         }
     }
+
+
 
     let leastAlignedTarget = null;
     let leastAlignedPage = null;
@@ -1092,7 +1103,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         }
         
         leastAlignedTarget = formatTargetWithDecimal(target);
-        leastAlignedPage = nonBaselinePages.find(page => page.target === leastAlignedTarget);
+        leastAlignedPage = leastAlignedTarget ? findPageByTarget(nonBaselinePages, leastAlignedTarget) : null;
         if (leastAlignedPage) {
             if (misalignedSkipped > 0) {
                 choiceProcesses.misaligned = `overlapped with ${overlapTypes.join(' and ')}. Is ${misalignedSkipped} over least aligned`;

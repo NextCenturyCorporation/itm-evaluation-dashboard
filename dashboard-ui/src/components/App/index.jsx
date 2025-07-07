@@ -231,7 +231,7 @@ export function App() {
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
 
-        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail == hashedEmail);
+        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => String(x.hashedEmail) === String(hashedEmail));
 
         if (foundParticipant) {
             const pid = foundParticipant['ParticipantID'];

@@ -956,6 +956,7 @@ class SurveyPage extends Component {
                             ref={this.redirectLinkRef}
                             hidden
                             href={this.getRedirectUrl()}
+                            aria-label="Survey completion redirect link"
                         />
                     </>
                 }

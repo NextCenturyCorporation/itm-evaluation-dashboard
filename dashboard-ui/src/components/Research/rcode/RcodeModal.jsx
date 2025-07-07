@@ -11,7 +11,7 @@ export function RCodeModal({ rcodeFile, downloadName }) {
         oReq.onload = function () {
             const resp = oReq.responseText.replaceAll('\n', '\\n');
             const tmpTxt = [];
-            resp.split('\\n').map((x) => {
+            resp.split('\\n').forEach((x) => {
                 tmpTxt.push(x);
             });
             setTxt(tmpTxt);
