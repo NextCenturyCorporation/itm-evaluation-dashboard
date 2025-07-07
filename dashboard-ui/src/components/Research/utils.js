@@ -328,7 +328,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['TA2_Name'] = entry['TA2'];
                 allTA2s.push(entry['TA2']);
                 entryObj['ADM_Type'] = t == 'comparison' ? 'comparison' : ['misaligned', 'aligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'].includes(t) ? 'aligned' : 'baseline';
-                entryObj['Target'] = page['admTarget'] ?? '-';
+                entryObj['Target'] = (evalNum >= 8 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
                 if (entryObj['Target'] != '-') {
                     allTargets.push(entryObj['Target']);
                 }
@@ -414,7 +414,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 }
 
                 if (evalNum >= 8) {
-                    entryObj['Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)'];
+                    entryObj['Alignment score (ADM|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
                     entryObj['Alignment score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)'];
                     entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
 
