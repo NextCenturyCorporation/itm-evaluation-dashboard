@@ -775,7 +775,7 @@ function populateDataSet(data) {
                 continue;
             }
             if (POST_MRE_EVALS.includes(res.results.evalNumber)) {
-                const valid_id = data?.getParticipantLog?.filter((x) => x?.ParticipantID?.toString() === pid.toString() && String(x['Type']) != 'Test');
+                const valid_id = data?.getParticipantLog?.filter((x) => x?.ParticipantID?.toString() === pid.toString() && String(x['Type']) !== 'Test');
                 if (valid_id.length === 0) {
                     // only include valid ids for survey version 4 & 5
                     continue;
@@ -854,17 +854,17 @@ function populateDataSet(data) {
                 const qol_sim_sid = data.getAllSimAlignmentByEval.find((x) => String(x?._id?.split('_')[0]) === String(pid) && x?.scenario_id?.includes('qol'))?.data?.alignment?.sid;
                 const qol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => String(x?._id?.split('_')[0]) === String(pid) && x?.scenario_id?.includes('qol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => String(x.kdma) === 'QualityOfLife');
                 tmpSet['QOL_KDMA_Sim'] = qol_sim_kdma?.value;
-                tmpSet['QOL_KDE_Sim'] = ['202409112'].includes(pid) ? '-' : (qol_sim_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-');
+                tmpSet['QOL_KDE_Sim'] = ['202409112'].includes(pid) ? '-' : (qol_sim_kdma ? 'link:' + (Number(res.results.evalNumber) === 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${qol_sim_sid}&kde_type=rawscores` : '-');
 
-                const vol_sim_sid = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.sid;
-                const vol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] == pid && x?.scenario_id?.includes('vol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved');
+                const vol_sim_sid = data.getAllSimAlignmentByEval.find((x) => String(x?._id?.split('_')[0]) === String(pid) && x?.scenario_id?.includes('vol'))?.data?.alignment?.sid;
+                const vol_sim_kdma = data.getAllSimAlignmentByEval.find((x) => String(x?._id?.split('_')[0]) === String(pid) && x?.scenario_id?.includes('vol'))?.data?.alignment?.kdmas?.computed_kdma_profile?.find((x) => String(x.kdma) === 'PerceivedQuantityOfLivesSaved');
                 tmpSet['VOL_KDMA_Sim'] = vol_sim_kdma?.value;
-                tmpSet['VOL_KDE_Sim'] = ['202409111', '202409112'].includes(pid) ? '-' : (vol_sim_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores` : '-');
+                tmpSet['VOL_KDE_Sim'] = ['202409111', '202409112'].includes(pid) ? '-' : (vol_sim_kdma ? 'link:' + (Number(res.results.evalNumber) === 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${vol_sim_sid}&kde_type=rawscores` : '-');
 
                 const adept_text_kdmas = text_scenarios.find((x) => x?.scenario_id?.includes('DryRun') || x?.scenario_id?.includes('adept'))?.kdmas;
                 if (Array.isArray(adept_text_kdmas)) {
-                    tmpSet['MJ_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Moral judgement')?.value;
-                    tmpSet['IO_KDMA_Text'] = adept_text_kdmas?.find((x) => x.kdma == 'Ingroup Bias')?.value;
+                    tmpSet['MJ_KDMA_Text'] = adept_text_kdmas?.find((x) => String(x.kdma) === 'Moral judgement')?.value;
+                    tmpSet['IO_KDMA_Text'] = adept_text_kdmas?.find((x) => String(x.kdma) === 'Ingroup Bias')?.value;
                 }
 
                 // add new individual kdmas for adept
@@ -874,14 +874,14 @@ function populateDataSet(data) {
                 tmpSet['IO_KDMA_Text_NonNarr'] = getKDMAValue(data, pid, "Ingroup Bias", false);
 
                 const qol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.serverSessionId;
-                const qol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('qol'))?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'QualityOfLife');
+                const qol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('qol'))?.kdmas?.computed_kdma_profile?.find((x) => String(x.kdma) === 'QualityOfLife');
                 tmpSet['QOL_KDMA_Text'] = qol_text_kdma?.value;
-                tmpSet['QOL_KDE_Text'] = qol_text_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores` : '-';
+                tmpSet['QOL_KDE_Text'] = qol_text_kdma ? 'link:' + (Number(res.results.evalNumber) === 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${qol_text_sid}&kde_type=rawscores` : '-';
 
                 const vol_text_sid = text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.serverSessionId;
-                const vol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('vol'))?.kdmas?.computed_kdma_profile?.find((x) => x.kdma == 'PerceivedQuantityOfLivesSaved');
+                const vol_text_kdma = text_scenarios?.find((x) => x?.scenario_id?.includes('vol'))?.kdmas?.computed_kdma_profile?.find((x) => String(x.kdma) === 'PerceivedQuantityOfLivesSaved');
                 tmpSet['VOL_KDMA_Text'] = vol_text_kdma?.value;
-                tmpSet['VOL_KDE_Text'] = vol_text_kdma ? 'link:' + (res.results.evalNumber == 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores` : '-';
+                tmpSet['VOL_KDE_Text'] = vol_text_kdma ? 'link:' + (Number(res.results.evalNumber) === 4 ? process.env.REACT_APP_SOARTECH_DRE_URL : process.env.REACT_APP_SOARTECH_URL) + `/api/v1/kdma_profile_graph?session_id=${vol_text_sid}&kde_type=rawscores` : '-';
             }
 
 
@@ -1293,15 +1293,15 @@ const getAlignmentComparisonVsTrustRatings = (data) => {
     for (const att of attributes) {
         const pairs = [];
         const alignmentPairs = [];
-        for (let x of data.filter((d) => d.Attribute == att)) {
+        for (let x of data.filter((d) => String(d.Attribute) === att)) {
             const align = x['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] ?? x['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] ?? x['Alignment score (Delegator|Observed_ADM (target))'];
             const trust = x['Trust_Rating'];
-            if (isDefined(align) && align != '-' && isDefined(trust) && trust != '-') {
+            if (isDefined(align) && String(align) !== '-' && isDefined(trust) && String(trust) !== '-') {
                 pairs.push({ x: align, y: trust });
             }
             const alignStatus = x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'];
-            if (isDefined(alignStatus) && alignStatus != '-' && isDefined(trust) && trust != '-') {
-                alignmentPairs.push({ x: alignments.indexOf(alignStatus) + (Math.random() * (att == 'IO' || att == 'QOL' ? -1 : 1) / 8), y: trust, label: alignStatus });
+            if (isDefined(alignStatus) && String(alignStatus) !== '-' && isDefined(trust) && String(trust) !== '-') {
+                alignmentPairs.push({ x: alignments.indexOf(alignStatus) + (Math.random() * (att === 'IO' || att === 'QOL' ? -1 : 1) / 8), y: trust, label: alignStatus });
             }
         }
         byAttribute[att] = pairs;
@@ -1318,15 +1318,15 @@ const getAlignmentsByAdmType = (data) => {
         const targets = [];
         const admPoints = [];
         const targetPoints = [];
-        const lessData = data.filter((d) => d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == admType && d['ADM Loading'] == 'normal');
+        const lessData = data.filter((d) => String(d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) === admType && String(d['ADM Loading']) === 'normal');
         for (let x of lessData) {
             const align_adm = x['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] ?? x['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] ?? x['Alignment score (Delegator|Observed_ADM (target))'];
             const align_target = x['P1E/Population Alignment score (Delegator|target)'] ?? x['Alignment score (Delegator|target)'];
-            if (isDefined(align_adm) && align_adm != '-') {
+            if (isDefined(align_adm) && String(align_adm) !== '-') {
                 adms.push(align_adm);
                 admPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: admType });
             }
-            if (isDefined(align_target) && align_target != '-') {
+            if (isDefined(align_target) && String(align_target) !== '-') {
                 targets.push(align_target);
                 targetPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_target, label: admType });
             }
@@ -1345,16 +1345,16 @@ const getAlignmentsByAdmTypeForTA12 = (data, ta1, ta2) => {
         const targets = [];
         const admPoints = [];
         const targetPoints = [];
-        const lessData = data.filter((d) => d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == admType &&
-            d['ADM Loading'] == 'normal' && d['TA1_Name'] == ta1 && (d['TA2_Name'] == ta2 || ta2 == 'Overall'));
+        const lessData = data.filter((d) => String(d['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) === admType &&
+           String(d['ADM Loading']) === 'normal' && String(d['TA1_Name']) === String(ta1) && (String(d['TA2_Name']) === String(ta2) || String(ta2) === 'Overall'));
         for (let x of lessData) {
             const align_adm = x['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] ?? x['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] ?? x['Alignment score (Delegator|Observed_ADM (target))'];
             const align_target = x['P1E/Population Alignment score (Delegator|target)'] ?? x['Alignment score (Delegator|target)'];
-            if (isDefined(align_adm) && align_adm != '-') {
+            if (isDefined(align_adm) && String(align_adm) !== '-') {
                 adms.push(align_adm);
                 admPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: admType });
             }
-            if (isDefined(align_target) && align_target != '-') {
+            if (isDefined(align_target) && String(align_target) !== '-') {
                 targets.push(align_target);
                 targetPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_target, label: admType });
             }
@@ -1370,9 +1370,9 @@ const getAlignmentsByAttribute = (data) => {
     for (const attribute of attributes) {
         const adms = [];
         const admPoints = [];
-        for (let x of data.filter((d) => d['Attribute'] == attribute)) {
+        for (let x of data.filter((d) => String(d['Attribute']) === attribute)) {
             const align_adm = x['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] ?? x['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] ?? x['Alignment score (Delegator|Observed_ADM (target))'];
-            if (isDefined(align_adm) && align_adm != '-') {
+            if (isDefined(align_adm) && String(align_adm) !== '-') {
                 adms.push(align_adm);
                 admPoints.push({ x: attributes.indexOf(attribute) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: attribute });
             }
@@ -1410,7 +1410,7 @@ function getDelegationPreferences(data, evalNumber = 4) {
         'QOL': { 'baseline': [], 'misaligned': [] },
         'VOL': { 'baseline': [], 'misaligned': [] }
     }
-    for (const entry of data.filter((x) => (evalNumber == 4 && x['ADM_Type'] === 'comparison') || ((evalNumber == 5 || evalNumber == 6) && x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned' && x['ADM Loading'] == 'normal'))) {
+    for (const entry of data.filter((x) => (Number(evalNumber) === 4 && x['ADM_Type'] === 'comparison') || ((evalNumber === 5 || evalNumber === 6) && String(x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) === 'aligned' && String(x['ADM Loading']) === 'normal'))) {
         const pid = entry['Delegator_ID'];
 
         const baseline = entry['Delegation preference (A/B)'];
@@ -1422,11 +1422,11 @@ function getDelegationPreferences(data, evalNumber = 4) {
         if (['A', 'B', 'y', 'n'].includes(baseline)) {
             const baseVal = ['B', 'n'].includes(baseline) ? 0 : 1;
             dataByAttribute[entry['Attribute']]['baseline'].push(baseVal);
-            if (evalNumber == 4 || entry['Attribute'] != 'QOL') {
+            if (evalNumber === 4 || String(entry['Attribute']) !== 'QOL') {
                 dataByPid[pid]['baseline'].push(baseVal);
-                if (entry['TA1_Name'] == 'Adept') {
+                if (String(entry['TA1_Name']) === 'Adept') {
                     dataByTeams['AD']['baseline'].push(baseVal);
-                    if (entry['TA2_Name'] == 'Kitware') {
+                    if (String(entry['TA2_Name']) === 'Kitware') {
                         dataByTeams['AD/Kitware']['baseline'].push(baseVal);
                         dataByTeams['Kitware']['baseline'].push(baseVal);
                     }
@@ -1437,7 +1437,7 @@ function getDelegationPreferences(data, evalNumber = 4) {
                 }
                 else {
                     dataByTeams['ST (No QOL)']['baseline'].push(baseVal);
-                    if (entry['TA2_Name'] == 'Kitware') {
+                    if (String(entry['TA2_Name']) === 'Kitware') {
                         dataByTeams['ST/Kitware']['baseline'].push(baseVal);
                         dataByTeams['Kitware']['baseline'].push(baseVal);
                     }
@@ -1451,11 +1451,11 @@ function getDelegationPreferences(data, evalNumber = 4) {
         if (['A', 'M', 'y', 'n'].includes(misaligned)) {
             const misVal = ['M', 'n'].includes(misaligned) ? 0 : 1;
             dataByAttribute[entry['Attribute']]['misaligned'].push(misVal);
-            if (evalNumber == 4 || entry['Attribute'] != 'QOL') {
+            if (evalNumber === 4 || String(entry['Attribute']) !== 'QOL') {
                 dataByPid[pid]['misaligned'].push(misVal);
-                if (entry['TA1_Name'] == 'Adept') {
+                if (String(entry['TA1_Name']) === 'Adept') {
                     dataByTeams['AD']['misaligned'].push(misVal);
-                    if (entry['TA2_Name'] == 'Kitware') {
+                    if (String(entry['TA2_Name']) === 'Kitware') {
                         dataByTeams['AD/Kitware']['misaligned'].push(misVal);
                         dataByTeams['Kitware']['misaligned'].push(misVal);
                     }
@@ -1466,7 +1466,7 @@ function getDelegationPreferences(data, evalNumber = 4) {
                 }
                 else {
                     dataByTeams['ST (No QOL)']['misaligned'].push(misVal);
-                    if (entry['TA2_Name'] == 'Kitware') {
+                    if (String(entry['TA2_Name']) === 'Kitware') {
                         dataByTeams['ST/Kitware']['misaligned'].push(misVal);
                         dataByTeams['Kitware']['misaligned'].push(misVal);
                     }
@@ -1485,7 +1485,7 @@ function getDelegationPreferences(data, evalNumber = 4) {
         if (dataByPid[pid]['misaligned'].length > 0)
             preferencePercents['misaligned'].push(dataByPid[pid]['misaligned'].reduce((s, a) => s + a, 0) / dataByPid[pid]['misaligned'].length);
     }
-    if (evalNumber == 4)
+    if (Number(evalNumber) === 4)
         return preferencePercents;
 
     const allPercents = { 'combined': preferencePercents };
@@ -1514,24 +1514,24 @@ function getDelegationVsAlignment(data) {
         const delAM = entry['Delegation preference (A/M)'];
         const alignment = entry['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] ?? entry['Alignment score (Delegator|Observed_ADM (target))'];
         const att = entry['Attribute'];
-        const aligned = noComparisons.find((x) => x['Delegator_ID'] === entry['Delegator_ID'] && x['Attribute'] == att && x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] == 'aligned');
+        const aligned = noComparisons.find((x) => x['Delegator_ID'] === entry['Delegator_ID'] && String(x['Attribute']) === att && String(x['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) === 'aligned');
         if (entry['ADM Loading'] !== 'normal' || (isDefined(aligned) && aligned['ADM Loading'] !== 'normal')) {
             continue;
         }
-        if (isDefined(alignment) && alignment != '-') {
-            if (admType == 'aligned') {
+        if (isDefined(alignment) && String(alignment) !== '-') {
+            if (String(admType) === 'aligned') {
                 if (['y', 'n'].includes(delAB)) {
-                    delegationVsAlignmentBaseline[att].push({ x: alignment, y: delAB == 'y' ? 0 : 1 });
+                    delegationVsAlignmentBaseline[att].push({ x: alignment, y: String(delAB) === 'y' ? 0 : 1 });
                 }
                 if (['y', 'n'].includes(delAM)) {
-                    delegationVsAlignmentMisaligned[att].push({ x: alignment, y: delAM == 'y' ? 0 : 1 });
+                    delegationVsAlignmentMisaligned[att].push({ x: alignment, y: String(delAM) === 'y' ? 0 : 1 });
                 }
             }
-            else if (admType == 'misaligned' && ['y', 'n'].includes(delAM)) {
-                delegationVsAlignmentMisaligned[att].push({ x: alignment, y: delAM == 'y' ? 1 : 0 });
+            else if (String(admType) === 'misaligned' && ['y', 'n'].includes(delAM)) {
+                delegationVsAlignmentMisaligned[att].push({ x: alignment, y: String(delAM) === 'y' ? 1 : 0 });
             }
-            else if (admType == 'baseline' && ['y', 'n'].includes(delAB)) {
-                delegationVsAlignmentBaseline[att].push({ x: alignment, y: delAB == 'y' ? 1 : 0 });
+            else if (String(admType) === 'baseline' && ['y', 'n'].includes(delAB)) {
+                delegationVsAlignmentBaseline[att].push({ x: alignment, y: String(delAB) === 'y' ? 1 : 0 });
             }
         }
 

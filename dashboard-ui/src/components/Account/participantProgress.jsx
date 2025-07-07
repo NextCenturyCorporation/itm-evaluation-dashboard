@@ -264,7 +264,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             const mdy = s.split(' - ')[0].split('/');
             const ydm = mdy[2] + '-' + mdy[0].toString().padStart(2, '0') + '-' + mdy[1].toString().padStart(2, '0');
             let date = new Date(ydm + t);
-            return date == 'Invalid Date' ? -1 : date.getTime();
+            return (isNaN(date.getTime()) || String(date) === 'Invalid Date') ? -1 : date.getTime();
         }
         return -1;
     }
@@ -280,14 +280,14 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         }
         dataCopy.sort((a, b) => {
             const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
-            const incOrDec = sortBy.split(' ').slice(-1)[0] == '↑' ? 'i' : 'd';
+            const incOrDec = String(sortBy.split(' ').slice(-1)[0]) === '↑' ? 'i' : 'd';
             let aVal = a[simpleK];
             let bVal = b[simpleK];
             if (simpleK.includes('Date-Time')) {
                 aVal = getDateFromString(aVal);
                 bVal = getDateFromString(bVal);
             }
-            if (incOrDec == 'i') {
+            if (incOrDec === 'i') {
                 return (aVal > bVal) ? 1 : -1;
             } else {
                 return (aVal < bVal) ? 1 : -1;

@@ -5,6 +5,7 @@ import { getMean, getMeanAcrossAll, getSeAcrossAll, getStandardError } from "../
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
+    const evalEqualsFour = Number(evalNumber) === 4;
     const generateAlignedBaselineChart = (alignedAdmName, baselineAdmName, targets, alignColor = '#5B89C1', baselineColor = '#C15B5B') => {
         return (
             <CanvasJSChart options={{
@@ -70,7 +71,7 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                 'aligned': 'ALIGN-ADM-ComparativeRegression-ICL-Template'
             }
         };
-        const targetMap = evalNumber == 4 ? {
+        const targetMap = evalEqualsFour ? {
             'MJ': { 'high': 'ADEPT-DryRun-Moral judgement-Group-High', 'low': 'ADEPT-DryRun-Moral judgement-Group-Low' },
             'IO': { 'high': 'ADEPT-DryRun-Ingroup Bias-Group-High', 'low': 'ADEPT-DryRun-Ingroup Bias-Group-Low' },
             'QOL': { 'high': 'qol-group-target-dre-1', 'low': 'qol-group-target-dre-2' },
@@ -102,7 +103,7 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                 },
                 axisY: {
                     maximum: 1,
-                    minimum: evalNumber == 4 ? 0.5 : 0,
+                    minimum: evalEqualsFour ? 0.5 : 0,
                     title: "Alignment score"
                 },
                 legend: {
@@ -189,7 +190,7 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                 'aligned': 'ALIGN-ADM-ComparativeRegression-ICL-Template'
             }
         };
-        const targetMap = evalNumber == 4 ? {
+        const targetMap = evalEqualsFour ? {
             'MJ': ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3',
                 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5', 'ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7',
                 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'],
@@ -224,7 +225,7 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                     shared: true
                 },
                 axisX: {
-                    minimum: evalNumber == 5 ? (['MJ', 'IO'].includes(att) ? 0.17 : -1) : (['MJ', 'IO'].includes(att) ? -0.03 : -1),
+                    minimum: Number(evalNumber) === 5 ? (['MJ', 'IO'].includes(att) ? 0.17 : -1) : (['MJ', 'IO'].includes(att) ? -0.03 : -1),
                     title: att + ' Targets',
                     interval: ['MJ', 'IO'].includes(att) ? 0.1 : 1
                 },
@@ -312,37 +313,37 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                 <div>
                     <h3>Parallax Aligned and Baseline ADM Alignment Scores on Group Targets across ADEPT group-aligned targets</h3>
                     {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
-                        [{ 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-High' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-High', 'label': 'IO Group High' },
-                        { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-High' : 'ADEPT-Phase1Eval-Moral judgement-Group-High', 'label': 'MJ Group High' },
-                        { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-Low' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
-                        { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-Low' : 'ADEPT-Phase1Eval-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
+                        [{ 'target': evalEqualsFour ? 'ADEPT-DryRun-Ingroup Bias-Group-High' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-High', 'label': 'IO Group High' },
+                        { 'target': evalEqualsFour ? 'ADEPT-DryRun-Moral judgement-Group-High' : 'ADEPT-Phase1Eval-Moral judgement-Group-High', 'label': 'MJ Group High' },
+                        { 'target': evalEqualsFour ? 'ADEPT-DryRun-Ingroup Bias-Group-Low' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
+                        { 'target': evalEqualsFour ? 'ADEPT-DryRun-Moral judgement-Group-Low' : 'ADEPT-Phase1Eval-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
                 </div>
 
                 <div>
                     <h3>Parallax Aligned and Baseline ADM Alignment Scores on Group Targets across SoarTech group-aligned targets</h3>
                     {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
-                        [{ 'target': evalNumber == 4 ? 'qol-group-target-dre-1' : 'qol-group-target-1-final-eval', 'label': 'QOL Group 1' },
-                        { 'target': evalNumber == 4 ? 'qol-group-target-dre-2' : 'qol-group-target-2-final-eval', 'label': 'QOL Group 2' },
-                        { 'target': evalNumber == 4 ? 'vol-group-target-dre-1' : 'vol-group-target-1-final-eval', 'label': 'VOL Group 1' },
-                        { 'target': evalNumber == 4 ? 'vol-group-target-dre-2' : 'vol-group-target-2-final-eval', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
+                        [{ 'target': evalEqualsFour ? 'qol-group-target-dre-1' : 'qol-group-target-1-final-eval', 'label': 'QOL Group 1' },
+                        { 'target': evalEqualsFour ? 'qol-group-target-dre-2' : 'qol-group-target-2-final-eval', 'label': 'QOL Group 2' },
+                        { 'target': evalEqualsFour ? 'vol-group-target-dre-1' : 'vol-group-target-1-final-eval', 'label': 'VOL Group 1' },
+                        { 'target': evalEqualsFour ? 'vol-group-target-dre-2' : 'vol-group-target-2-final-eval', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
                 </div>
 
                 <div>
                     <h3>Kitware Aligned and Baseline ADM Alignment Scores on Group Targets across ADEPT group-aligned targets</h3>
                     {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
-                        [{ 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-High' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-High', 'label': 'IO Group High' },
-                        { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-High' : 'ADEPT-Phase1Eval-Moral judgement-Group-High', 'label': 'MJ Group High' },
-                        { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Ingroup Bias-Group-Low' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
-                        { 'target': evalNumber == 4 ? 'ADEPT-DryRun-Moral judgement-Group-Low' : 'ADEPT-Phase1Eval-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
+                        [{ 'target': evalEqualsFour ? 'ADEPT-DryRun-Ingroup Bias-Group-High' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-High', 'label': 'IO Group High' },
+                        { 'target': evalEqualsFour ? 'ADEPT-DryRun-Moral judgement-Group-High' : 'ADEPT-Phase1Eval-Moral judgement-Group-High', 'label': 'MJ Group High' },
+                        { 'target': evalEqualsFour ? 'ADEPT-DryRun-Ingroup Bias-Group-Low' : 'ADEPT-Phase1Eval-Ingroup Bias-Group-Low', 'label': 'IO Group Low' },
+                        { 'target': evalEqualsFour ? 'ADEPT-DryRun-Moral judgement-Group-Low' : 'ADEPT-Phase1Eval-Moral judgement-Group-Low', 'label': 'MJ Group Low' }])}
                 </div>
 
                 <div>
                     <h3>Kitware Aligned and Baseline ADM Alignment Scores on Group Targets across SoarTech group-aligned targets</h3>
                     {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
-                        [{ 'target': evalNumber == 4 ? 'qol-group-target-dre-1' : 'qol-group-target-1-final-eval', 'label': 'QOL Group 1' },
-                        { 'target': evalNumber == 4 ? 'qol-group-target-dre-2' : 'qol-group-target-2-final-eval', 'label': 'QOL Group 2' },
-                        { 'target': evalNumber == 4 ? 'vol-group-target-dre-1' : 'vol-group-target-1-final-eval', 'label': 'VOL Group 1' },
-                        { 'target': evalNumber == 4 ? 'vol-group-target-dre-2' : 'vol-group-target-2-final-eval', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
+                        [{ 'target': evalEqualsFour ? 'qol-group-target-dre-1' : 'qol-group-target-1-final-eval', 'label': 'QOL Group 1' },
+                        { 'target': evalEqualsFour ? 'qol-group-target-dre-2' : 'qol-group-target-2-final-eval', 'label': 'QOL Group 2' },
+                        { 'target': evalEqualsFour ? 'vol-group-target-dre-1' : 'vol-group-target-1-final-eval', 'label': 'VOL Group 1' },
+                        { 'target': evalEqualsFour ? 'vol-group-target-dre-2' : 'vol-group-target-2-final-eval', 'label': 'VOL Group 2' }], '#5B89C1', '#edc24c')}
                 </div>
 
                 <div>

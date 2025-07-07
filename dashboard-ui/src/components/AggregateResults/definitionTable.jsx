@@ -9,7 +9,7 @@ export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const xlFile = evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
+        const xlFile = Number(evalNumber) === 4 ? dreXlFile : Number(evalNumber) === 5 ? ph1XlFile : mreXlFile;
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
@@ -32,8 +32,8 @@ export function DefinitionTable({ evalNumber }) {
     }, []);
 
     const exportWordDoc = () => {
-        const xlFile = evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
-        FileSaver.saveAs(xlFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : 'ph1_') + 'Definitions.xlsx');
+        const xlFile = Number(evalNumber) === 4 ? dreXlFile : Number(evalNumber) === 5 ? ph1XlFile : mreXlFile;
+        FileSaver.saveAs(xlFile, (Number(evalNumber) === 3 ? 'mre_' : Number(evalNumber) === 4 ? 'dre_' : 'ph1_') + 'Definitions.xlsx');
     };
 
     return (<>

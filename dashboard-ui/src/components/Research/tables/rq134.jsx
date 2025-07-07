@@ -50,7 +50,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": (evalNum == 6 ? 5 : evalNum) }
+        variables: { "evalNumber": (Number(evalNum) === 6 ? 5 : evalNum) }
     });
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
@@ -218,15 +218,15 @@ export function RQ134({ evalNum, tableTitle }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
-                (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
-                (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil'])) &&
-                (searchPid.length == 0 || x['Delegator_ID'].includes(searchPid))
+                (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length === 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
+                (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
+                (admTypeFilters.length === 0 || admTypeFilters.includes(x['ADM_Type'])) &&
+                (delGrpFilters.length === 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
+                (delMilFilters.length === 0 || delMilFilters.includes(x['Delegator_mil'])) &&
+                (searchPid.length === 0 || x['Delegator_ID'].includes(searchPid))
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
@@ -240,7 +240,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
     return (<>
         <h2 className='rq134-header'>{tableTitle}
-            {evalNum == 5 &&
+            {Number(evalNum) === 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
@@ -411,7 +411,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 <thead>
                     <tr>
                         {headers.map((val, index) => {
-                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val == headers.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
+                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val === headers.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
                                 {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
                             </th>);
                         })}
@@ -433,7 +433,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={(Number(evalNum) === 5 || Number(evalNum) === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

@@ -65,7 +65,7 @@ const PH1_MAP = {
 };
 
 export default function HumanResults() {
-    const { loading: loadingEvalNames, error: errorEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+    const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const [selectedEval, setSelectedEval] = React.useState(5);
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
@@ -95,10 +95,10 @@ export default function HumanResults() {
                     continue;
                 }
                 const version = entry.evalNumber;
-                const scene = version == 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
+                const scene = Number(version) === 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
-                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && pid === x.pid && (version == 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
+                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && String(pid) === String(x.pid) && (Number(version) === 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene == x.scenario_id));
                     // go through the scene to find where each scenario starts/ends
                     entry['adept'] = [];
                     entry['soartech'] = [];
@@ -154,10 +154,10 @@ export default function HumanResults() {
                                 break;
                             }
                         }
-                        if (soartech_start !== -1 && soartech_end === -1 || (POST_MRE_EVALS.includes(version) && (scene.includes('qol') || scene.includes('vol')))) {
+                        if ((soartech_start !== -1 && soartech_end === -1) || (POST_MRE_EVALS.includes(version) && (scene.includes('qol') || scene.includes('vol')))) {
                             entry['soartech'].push(action);
                         }
-                        if (adept_start !== -1 && adept_end === -1 || (POST_MRE_EVALS.includes(version) && scene.includes('DryRunEval'))) {
+                        if ((adept_start !== -1 && adept_end === -1) || (POST_MRE_EVALS.includes(version) && scene.includes('DryRunEval'))) {
                             entry['adept'].push(action);
                         }
                         if (freeform_start !== -1) {
@@ -193,9 +193,9 @@ export default function HumanResults() {
     };
 
     const getScenarioName = () => {
-        if (selectedEval == 4) {
+        if (selectedEval === 4) {
             return selectedScene
-        } else if (selectedEval == 5 || selectedEval == 6) {
+        } else if (selectedEval === 5 || selectedEval === 6) {
             return PH1_MAP[selectedScene]
         } else {
             return MRE_ENV_MAP[selectedScene] || selectedScene
@@ -250,11 +250,11 @@ export default function HumanResults() {
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {
-                            (selectedEval == 4 ? DRE_SCENARIOS : Object.keys(PH1_SCENARIOS)).map((item) =>
+                            (selectedEval === 4 ? DRE_SCENARIOS : Object.keys(PH1_SCENARIOS)).map((item) =>
                                 <ListItem id={"scene_" + item} key={"scene_" + item}
                                     button
-                                    selected={selectedScene === (selectedEval == 4 ? item : PH1_SCENARIOS[item])}
-                                    onClick={() => { setSelectedScene(selectedEval == 4 ? item : PH1_SCENARIOS[item]); setSelectedPID(null); }}>
+                                    selected={selectedScene === (selectedEval === 4 ? item : PH1_SCENARIOS[item])}
+                                    onClick={() => { setSelectedScene(selectedEval === 4 ? item : PH1_SCENARIOS[item]); setSelectedPID(null); }}>
                                     <ListItemText primary={item} />
                                 </ListItem>
                             )
@@ -289,7 +289,7 @@ export default function HumanResults() {
                 <h2 className="participant-title">
                     {`${getScenarioName()} - Participant ${selectedPID}`}
                 </h2>
-                {selectedEval == 3 && <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
+                {selectedEval === 3 && <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
                     <ToggleButton variant="secondary" id='choose-adept' value={"adept"}>ADEPT</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
                     <ToggleButton variant="secondary" id='choose-freeform' value={"freeform"}>Freeform</ToggleButton>
@@ -338,7 +338,7 @@ export default function HumanResults() {
                                                     {isStringDefined(action.probe.action_type) && <tr><td>Action Type:</td><td>{action.probe.action_type}</td></tr>}
                                                     {isStringDefined(action.probe.character_id) && <tr><td>Character ID:</td><td>{action.probe.character_id}</td></tr>}
                                                     {isStringDefined(action.probe.choice) && <tr><td>Choice:</td><td>{action.probe.choice}</td></tr>}
-                                                    {selectedEval != 4 && isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
+                                                    {selectedEval !== 4 && isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
                                                 </tbody>
                                             </table>}
                                         </td>}

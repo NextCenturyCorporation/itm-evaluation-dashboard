@@ -181,7 +181,7 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
     };
 
     const generateDesignImpacts = (ta1, ta2) => {
-        const alignments = getAlignmentsByAdmTypeForTA12(data, ta1 == 'ADEPT' ? 'Adept' : 'ST', ta2);
+        const alignments = getAlignmentsByAdmTypeForTA12(data, String(ta1) === 'ADEPT' ? 'Adept' : 'ST', ta2);
         return (
             <div className='side-by-side-plots'>
                 <div className="outlinedPlot">
@@ -318,8 +318,8 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
     };
 
     const generateTrustVsAlignedStatusChart = (ta1) => {
-        const att1 = ta1 == 'ADEPT' ? 'IO' : 'QOL';
-        const att2 = ta1 == 'ADEPT' ? 'MJ' : 'VOL';
+        const att1 = String(ta1) === 'ADEPT' ? 'IO' : 'QOL';
+        const att2 = String(ta1) === 'ADEPT' ? 'MJ' : 'VOL';
         return (
             <div className="boxWhisker outlinedPlot">
                 <h4>Trust Ratings predicted by ADM alignment classification ({ta1})</h4>
@@ -444,7 +444,7 @@ export function RQ1Graphs({ data, evalNumber, alignmentsByAdmType, alignVsTrust,
                 </div>
             }
 
-            {alignmentsByAdmType && evalNumber == 5 &&
+            {alignmentsByAdmType && Number(evalNumber) === 5 &&
                 <div className='q2-adms'>
                     {generateAlignmentDistributions()}
                     {generateDesignImpacts('ADEPT', 'Kitware')}
