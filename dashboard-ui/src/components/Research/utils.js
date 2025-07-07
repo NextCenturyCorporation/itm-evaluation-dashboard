@@ -248,11 +248,12 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         const ad_scenario = pid == '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1']?.includes('AD') ? logData['Del-1'] : logData['Del-2']));
 
         for (const entry of admOrder) {
-            const types = ['baseline', 'aligned', 'misaligned', 'comparison'];
+            const types = ['baseline', 'aligned', 'misaligned', 'comparison', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'];
             for (const t of types) {
 
                 let page = Object.keys(res.results).find((k) => {
                     const obj = res.results[k];
+                    console.log(obj['admAlignment']);
                     const alignMatches = obj['admAlignment'] == t || obj['pageType'] == 'comparison' && t == 'comparison';
                     const ta2Matches = obj['admAuthor'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
@@ -282,7 +283,6 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         }
 
                         scenario = getDelEnvMapping(evalNum)[ph1_scenario][mapping_array_number];
-                        console.log("Scenario:", scenario, obj['scenarioIndex']);
                         const scenarioMatches = obj['scenarioIndex']?.slice(0, -6) == scenario?.slice(0, -6);
 
                         return alignMatches && ta2Matches && scenarioMatches;
@@ -421,14 +421,22 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         case entryObj['Target'].toLowerCase().indexOf("safety") !== -1 || aligned_target_name.indexOf("safety") !== -1: 
                             entryObj['Attribute'] = "PS";
                             break;
-                        case entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1: 
-                            entryObj['Attribute'] = "AF";
+                        case entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1:
+                            if (entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
+                                entryObj['Attribute'] = "AF-MF";
+                            } else {
+                                entryObj['Attribute'] = "AF";
+                            }
                             break;
                         case entryObj['Target'].toLowerCase().indexOf("search") !== -1 || aligned_target_name.indexOf("search") !== -1: 
                             entryObj['Attribute'] = "SS";
                             break;
                         case entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1: 
-                            entryObj['Attribute'] = "MF";
+                            if (entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1) {
+                                entryObj['Attribute'] = "AF-MF";
+                            } else {
+                                entryObj['Attribute'] = "MF";
+                            }
                             break;
                         case page["scenarioIndex"]?.indexOf("-AF-MF") !== -1: 
                             entryObj['Attribute'] = "AF-MF";
@@ -436,20 +444,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         default:
                             console.log("Target and Attributes don't match for Evaluations greater than 8.")
                     }
-
-                    if(page['scenarioIndex'].indexOf("PS1") !== -1 || page['scenarioIndex'].indexOf("SS1") !== -1 || page['scenarioIndex'].indexOf("MF1") !== -1 
-                        || page['scenarioIndex'].indexOf("AF1") !== -1 || page['scenarioIndex'].indexOf("AF-MF1") !== -1) {
-                            entryObj['Probe Set'] =  1;
-                        }
-                    if(page['scenarioIndex'].indexOf("PS2") !== -1 || page['scenarioIndex'].indexOf("SS2") !== -1 || page['scenarioIndex'].indexOf("MF2") !== -1 
-                            || page['scenarioIndex'].indexOf("AF2") !== -1 || page['scenarioIndex'].indexOf("AF-MF2") !== -1) {
-                                entryObj['Probe Set'] = 2;
-                            }
-                    if(page['scenarioIndex'].indexOf("PS3") !== -1 || page['scenarioIndex'].indexOf("SS3") !== -1 || page['scenarioIndex'].indexOf("MF3") !== -1 
-                            || page['scenarioIndex'].indexOf("AF3") !== -1 || page['scenarioIndex'].indexOf("AF-MF3") !== -1) {
-                                entryObj['Probe Set'] = 3;
-                            }
-
+                    // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
+                    entryObj['Probe Set'] = logData["AF-text-scenario"];
                     entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
 
