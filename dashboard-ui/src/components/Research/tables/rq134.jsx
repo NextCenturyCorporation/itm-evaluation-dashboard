@@ -221,6 +221,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
+            console.log(formattedData)
             setFilteredData(formattedData.filter((x) =>
                 (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
                 (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
@@ -259,36 +260,40 @@ export function RQ134({ evalNum, tableTitle }) {
         <section className='tableHeader'>
             <div className='complexHeader'>
                 <div className="too-many-filters">
-                    <Autocomplete
-                        multiple
-                        options={ta1s}
-                        value={ta1Filters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="TA1"
-                                placeholder=""
+                    {evalNum < 8 && (
+                        <>
+                            <Autocomplete
+                                multiple
+                                options={ta1s}
+                                value={ta1Filters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="TA1"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setTA1Filters(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setTA1Filters(newVal)}
-                    />
-                    <Autocomplete
-                        multiple
-                        options={ta2s}
-                        value={ta2Filters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="TA2"
-                                placeholder=""
+                            <Autocomplete
+                                multiple
+                                options={ta2s}
+                                value={ta2Filters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="TA2"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setTA2Filters(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setTA2Filters(newVal)}
-                    />
+                        </>
+                    )}
                     <Autocomplete
                         multiple
                         options={scenarios}
@@ -423,9 +428,9 @@ export function RQ134({ evalNum, tableTitle }) {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
+                        return (<tr key={dataSet['Delegator ID'] + '-' + index}>
                             {headers.map((val) => {
-                                return (!columnsToHide.includes(val) && <td key={dataSet['Delegator_ID'] + '-' + val}>
+                                return (!columnsToHide.includes(val) && <td key={dataSet['Delegator ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
                                 </td>);
                             })}
