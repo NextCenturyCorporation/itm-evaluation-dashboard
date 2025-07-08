@@ -69,6 +69,8 @@ export function RQ134({ evalNum, tableTitle }) {
     const [scenarios, setScenarios] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
+    const [probeSetAssessments, setProbeSetAssessments] = React.useState([]);
+    const [probeSetObservations, setProbeSetObservations] = React.useState([]);
     const [admTypes] = React.useState(['baseline', 'aligned', 'comparison']);
     const [delGrps] = React.useState(['Civilian', 'Military']);
     const [delMils] = React.useState(['yes', 'no']);
@@ -78,6 +80,8 @@ export function RQ134({ evalNum, tableTitle }) {
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
+    const [probeSetAssessmentFilters, setProbeSetAssessmentFilters] = React.useState([]);
+    const [probeSetObservationFilters, setProbeSetObservationFilters] = React.useState([]);
     const [admTypeFilters, setAdmTypeFilters] = React.useState([]);
     const [delGrpFilters, setDelGrpFilters] = React.useState([]);
     const [delMilFilters, setDelMilFilters] = React.useState([]);
@@ -169,6 +173,8 @@ export function RQ134({ evalNum, tableTitle }) {
             setTA2s(Array.from(new Set(data.allTA2s)));
             setAttributes(Array.from(new Set(data.allAttributes)));
             setScenarios(Array.from(new Set(data.allScenarios)));
+            setProbeSetAssessments(Array.from(new Set(data.allProbeSetAssessment)))
+            setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim, janSim]);
@@ -199,6 +205,8 @@ export function RQ134({ evalNum, tableTitle }) {
         setDelGrpFilters([]);
         setDelMilFilters([]);
         setSearchPid('');
+        setProbeSetAssessmentFilters([]);
+        setProbeSetObservationFilters([]);
     };
 
     const refineData = (origData) => {
@@ -221,11 +229,12 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
-            console.log(formattedData)
             setFilteredData(formattedData.filter((x) =>
                 (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
                 (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
                 (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (evalNum < 8 || probeSetAssessmentFilters.length == 0 || probeSetAssessmentFilters.includes(x['Probe Set Assessment'])) &&
+                (evalNum < 8 || probeSetObservationFilters.length == 0 || probeSetObservationFilters.includes(x['Probe Set Observation'])) &&
                 (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
                 (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
                 (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
@@ -234,7 +243,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 (searchPid.length == 0 || x['Delegator ID'].includes(searchPid))
             ));
         }
-    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid, probeSetAssessmentFilters, probeSetObservationFilters]);
 
     const getFilteredHeaders = () => {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
@@ -292,23 +301,57 @@ export function RQ134({ evalNum, tableTitle }) {
                                 )}
                                 onChange={(_, newVal) => setTA2Filters(newVal)}
                             />
+                            <Autocomplete
+                                multiple
+                                options={scenarios}
+                                value={scenarioFilters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Scenarios"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setScenarioFilters(newVal)}
+                            />
                         </>
                     )}
-                    <Autocomplete
-                        multiple
-                        options={scenarios}
-                        value={scenarioFilters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Scenarios"
-                                placeholder=""
+                    {evalNum >= 8 && (
+                        <>
+                            <Autocomplete
+                                multiple
+                                options={probeSetAssessments.sort()}
+                                value={probeSetAssessmentFilters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Probe Set Assessment"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setProbeSetAssessmentFilters(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setScenarioFilters(newVal)}
-                    />
+                            <Autocomplete
+                                multiple
+                                options={probeSetObservations.sort()}
+                                value={probeSetObservationFilters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Probe Set Observation"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setProbeSetObservationFilters(newVal)}
+                            />
+                        </>
+                    )}
                     <Autocomplete
                         multiple
                         options={targets}

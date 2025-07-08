@@ -207,6 +207,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     const allTA1s = [];
     const allTA2s = [];
     const allScenarios = [];
+    const allProbeSetAssessment = [];
+    const allProbeSetObservation = [];
     const allTargets = [];
     const allAttributes = [];
     const TEXT_COUNT_NEEDED = evalNum >= 8 ? 4 : 5;
@@ -450,11 +452,13 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     }
                     // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
                     entryObj['Probe Set Assessment'] = logData["AF-text-scenario"];
+                    allProbeSetAssessment.push(entryObj['Probe Set Assessment'])
                     // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
                     const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
                     entryObj['Probe Set Observation'] = adjustScenarioNumber(
                         isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment']) : entryObj['Probe Set Assessment']
                     );
+                    allProbeSetObservation.push(entryObj['Probe Set Observation'])
                     entryObj['Server Session ID (Delegator)'] = t == 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
 
@@ -519,8 +523,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
             }
         }
     }
-    const pids = allObjs.map((x) => x['Delegator_ID']);
-    return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes };
+    const pids = allObjs.map((x) => x['Delegator ID']);
+    return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation};
 }
 
 function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
