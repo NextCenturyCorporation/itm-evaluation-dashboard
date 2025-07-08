@@ -230,7 +230,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
                 (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
                 (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil'])) &&
-                (searchPid.length == 0 || x['Delegator_ID'].includes(searchPid))
+                (searchPid.length == 0 || x['Delegator ID'].includes(searchPid))
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
