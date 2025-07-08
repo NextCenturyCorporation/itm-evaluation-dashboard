@@ -248,12 +248,11 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         const ad_scenario = pid == '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1']?.includes('AD') ? logData['Del-1'] : logData['Del-2']));
 
         for (const entry of admOrder) {
-            const types = ['baseline', 'aligned', 'misaligned', 'comparison', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'];
+            const types = ['baseline', 'aligned', 'misaligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group', 'comparison'];
             for (const t of types) {
 
                 let page = Object.keys(res.results).find((k) => {
                     const obj = res.results[k];
-                    console.log(obj['admAlignment']);
                     const alignMatches = obj['admAlignment'] == t || obj['pageType'] == 'comparison' && t == 'comparison';
                     const ta2Matches = obj['admAuthor'] == (entry['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
@@ -299,7 +298,6 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     return alignMatches && ta2Matches && scenarioMatches;
                 });
                 if (!page) {
-                    console.log("Missing Pages");
                     // likely from missing misaligned/aligned for those few parallax adms
                     continue;
                 }
@@ -473,31 +471,37 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] == 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
                 if (t == 'comparison') {
                     const adms = page['pageName'].split(' vs ');
-                    const alignedAdm = adms[1];
-                    const baselineAdm = adms[0];
-                    const misalignedAdm = adms[2];
-                    const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
-                    const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
 
-                    entryObj['Delegation preference (A/B)'] = qAB == '-' ? '-' : (qAB == alignedAdm ? 'A' : 'B');
-                    entryObj['Delegation preference (A/M)'] = qAM == '-' ? '-' : (qAM == alignedAdm ? 'A' : 'M');
-                    // need to back-populate previous rows with which was chosen
-                    for (let i = 0; i < 3; i++) {
-                        switch (allObjs[allObjs.length - 1 - i]['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
-                            case 'aligned':
-                                allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] == 'A' ? 'y' : 'n';
-                                allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] == 'A' ? 'y' : 'n';
-                                break
-                            case 'baseline':
-                                allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] == 'B' ? 'y' : 'n';
-                                break
-                            case 'misaligned':
-                                allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] == 'M' ? 'y' : 'n';
-                                break
-                            default:
-                                break
+                    if (evalNum >= 8 && adms.length === 4) {
+                        handleMultiKdmaComparison(res.results, page, entryObj, allObjs)
+                    } else {
+                        const alignedAdm = adms[1];
+                        const baselineAdm = adms[0];
+                        const misalignedAdm = adms[2];
+                        const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
+                        const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
+
+                        entryObj['Delegation preference (A/B)'] = qAB == '-' ? '-' : (qAB == alignedAdm ? 'A' : 'B');
+                        entryObj['Delegation preference (A/M)'] = qAM == '-' ? '-' : (qAM == alignedAdm ? 'A' : 'M');
+                        // need to back-populate previous rows with which was chosen
+                        for (let i = 0; i < 3; i++) {
+                            switch (allObjs[allObjs.length - 1 - i]['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                                case 'aligned':
+                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] == 'A' ? 'y' : 'n';
+                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] == 'A' ? 'y' : 'n';
+                                    break
+                                case 'baseline':
+                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] == 'B' ? 'y' : 'n';
+                                    break
+                                case 'misaligned':
+                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] == 'M' ? 'y' : 'n';
+                                    break
+                                default:
+                                    break
+                            }
                         }
                     }
+
                 }
                 else {
                     entryObj['Delegation preference (A/B)'] = '-';
@@ -518,6 +522,67 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     const pids = allObjs.map((x) => x['Delegator_ID']);
     return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes };
 }
+
+function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
+    const adms = page['pageName'].split(' vs ');
+    const admAlignmentMap = {};
+    let mostAlignedAdm;
+
+    for (const adm of adms) {
+        const admPage = survey[adm];
+        if (admPage) {
+            admAlignmentMap[adm] = admPage.admAlignment;
+            if (admPage.admAlignment === 'most aligned group') {
+                mostAlignedAdm = adm
+            }
+        }
+    }
+
+    const alignmentColumnMap = {
+        'high-affiliation-high-merit': 'Delegation (A/HH)',
+        'high-affiliation-low-merit': 'Delegation (A/HL)',
+        'low-affiliation-high-merit': 'Delegation (A/LH)',
+        'low-affiliation-low-merit': 'Delegation (A/LL)'
+    };
+
+    const alignmentCodeMap = {
+        'high-affiliation-high-merit': 'HH',
+        'high-affiliation-low-merit': 'HL',
+        'low-affiliation-high-merit': 'LH',
+        'low-affiliation-low-merit': 'LL'
+    };
+
+    const pid = entryObj['Delegator ID'];
+
+    for (const adm of adms) {
+        if (admAlignmentMap[adm] == 'most aligned group') {
+            continue
+        }
+        const columnName = alignmentColumnMap[admAlignmentMap[adm]]
+        const alignmentCode = alignmentCodeMap[admAlignmentMap[adm]]
+        const qKey = `${mostAlignedAdm} vs ${adm}: Forced Choice`
+        const response = page.questions[qKey]?.response;
+
+        if (!response) {
+            console.warn(`Response not found for forced choice between ${mostAlignedAdm} and ${adm}. PID: ${pid}`)
+            continue
+        }
+
+        const choseMostAligned = response === mostAlignedAdm
+        entryObj[columnName] = choseMostAligned ? 'A' : alignmentCode
+
+        const mostAlignedRow = allObjs.find(obj => obj['Delegator ID'] === pid && obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] === 'most aligned group')
+        if (mostAlignedRow) {
+            mostAlignedRow[columnName] = choseMostAligned ? 'y' : 'n'
+        }
+        const otherAdmRow = allObjs.find(obj => obj['Delegator ID'] === pid && obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] === admAlignmentMap[adm])
+        if (otherAdmRow) {
+            otherAdmRow[columnName] = choseMostAligned ? 'n' : 'y'
+        }
+    }
+}
+
+
 
 export function determineChoiceProcessJune2025(textResults, page, t) {
     const target = page['admTarget']
