@@ -144,7 +144,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6];
+export const POST_MRE_EVALS = [4, 5, 6, 8];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -1225,11 +1225,11 @@ function populateDataSet(data) {
 // grabs the INDIVIDUAL kdma for an adept scenario
 function getKDMAValue(data, pid, kdmaType, isNarrative) {
     const text_scenarios = data.getAllScenarioResultsByEval;
-    
+
     if (isNarrative) {
         const narr = ['MJ2', 'MJ4', 'MJ5'];
-        const matching = text_scenarios.find(doc => 
-            narr.some(n => doc.scenario_id?.includes(n)) && 
+        const matching = text_scenarios.find(doc =>
+            narr.some(n => doc.scenario_id?.includes(n)) &&
             doc.participantID === pid
         );
 
@@ -1239,8 +1239,8 @@ function getKDMAValue(data, pid, kdmaType, isNarrative) {
         }
     } else {
         const prefix = kdmaType === "Moral judgement" ? "MJ" : "IO";
-        const matching = text_scenarios.find(doc => 
-            doc.scenario_id?.includes(`${prefix}1`) && 
+        const matching = text_scenarios.find(doc =>
+            doc.scenario_id?.includes(`${prefix}1`) &&
             doc.participantID === pid
         );
 
@@ -1248,7 +1248,7 @@ function getKDMAValue(data, pid, kdmaType, isNarrative) {
             return matching.individual_kdma[0].value;
         }
     }
-    
+
     return null;
 }
 
@@ -1625,8 +1625,25 @@ function populateDataSetP2(data) {
         row['PS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'personal_safety')?.value;
         row['SS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'search')?.value;
 
+        const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
+        if (survey) {
+            //demographics
+            row['MedRole'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role', 'response'], '');
+            row['MedExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '')
+            row['MilitaryExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Served in Military', 'response'], '')
+            row['YrsMilExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'How many years of experience do you have serving in a medical role in the military', 'response'], '')
+
+            // propensity to trust
+            const trust1 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I feel that people are generally reliable', 'response'])] ?? 0;
+            const trust2 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I usually trust people until they give me a reason not to trust them', 'response'])] ?? 0;
+            const trust3 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Trusting another person is not difficult for me', 'response'])] ?? 0;
+            row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
+
+            //overall trust rating
+            row['Trust'] = getOverallTrust(survey);
+        }
         results.push(row);
-        
+
     }
     return results;
 }
