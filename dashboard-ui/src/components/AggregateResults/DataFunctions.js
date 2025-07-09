@@ -1611,7 +1611,9 @@ function populateDataSetP2(data) {
     for (const res of data.getAllScenarioResultsByEval) {
         const pid = res['participantID'];
         const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
-        if (!pid || seen.has(pid) || !survey?.results?.['Post-Scenario Measures']) continue;
+        // skip if the pid isn't valid, we processed it already, or the survey is incomplete
+        // but if there is no survey at all, it means initial june 2025 batch and we want to include them
+        if (!pid || seen.has(pid) || (survey &&!survey?.results?.['Post-Scenario Measures'])) continue;
 
         const participant = pLog.find((p) => p.ParticipantID === Number(pid));
 
