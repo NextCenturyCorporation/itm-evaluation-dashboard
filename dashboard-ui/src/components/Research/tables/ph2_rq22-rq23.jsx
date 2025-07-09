@@ -1,5 +1,6 @@
 import React from "react";
 import '../../SurveyResults/resultsTable.css';
+import '../../../css/probeModal.css';
 import { useQuery, useLazyQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
@@ -28,7 +29,7 @@ const PH2_HEADERS = [
     'Aligned Server Session ID',
     'Aligned ADM Alignment score (ADM|target)',
     'Baseline ADM Alignment score (ADM|target)',
-    'Baseline Server Session ID'
+    'Baseline Server Session ID',
 ];
 
 export function PH2RQ2223({ evalNum }) {
@@ -40,6 +41,9 @@ export function PH2RQ2223({ evalNum }) {
 
     const [showProbeModal, setShowProbeModal] = React.useState(false);
     const [currentProbes, setCurrentProbes] = React.useState([]);
+    const [currentAttribute, setCurrentAttribute] = React.useState('');
+    const [currentTarget, setCurrentTarget] = React.useState('');
+    const [currentSet, setCurrentSet] = React.useState('');
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -155,7 +159,6 @@ export function PH2RQ2223({ evalNum }) {
 
                     const mapKey = scenario + "_" + target + "_" + aligned.alignment;
                     entryObj['Synthetic'] = syntheticMap[mapKey] || false;
-                    console.log(syntheticMap[mapKey]);
 
                     let baseline = null;
                     for (const admName of Object.keys(targets[target])) {
@@ -188,6 +191,24 @@ export function PH2RQ2223({ evalNum }) {
                 return a.Trial_ID - b.Trial_ID;
             });
 
+            const extractSetNum = s => {
+               const m = /^Set (\d+)$/.exec(s);
+               return m ? parseInt(m[1]) : Number.POSITIVE_INFINITY;
+            };
+            
+            allObjs.sort((a, b) => {
+               if (a.Attribute < b.Attribute) return -1;
+               if (a.Attribute > b.Attribute) return 1;
+        
+               const aNum = extractSetNum(a.Set);
+               const bNum = extractSetNum(b.Set);
+               if (aNum !== bNum) return aNum - bNum;
+
+               if (a.Set < b.Set) return -1;
+               if (a.Set > b.Set) return 1;
+
+               return a.Trial_ID - b.Trial_ID;
+            });
 
             if (allObjs.length > 0) {
                 setFormattedData(allObjs);
@@ -205,7 +226,9 @@ export function PH2RQ2223({ evalNum }) {
 
     React.useEffect(() => {
         if (probeData?.getProbeIdsByKey) {
-        setCurrentProbes(probeData.getProbeIdsByKey);
+            const sorted = [...probeData.getProbeIdsByKey].sort((a, b) =>
+            a.localeCompare(b, undefined, { numeric: true }));
+        setCurrentProbes(sorted);
         }
     }, [probeData]);
 
@@ -223,9 +246,12 @@ export function PH2RQ2223({ evalNum }) {
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
-    const handleShowProbes = (scenario, alignmentTarget) => {
+    const handleShowProbes = (scenario, alignmentTarget, attribute, target, set) => {
+        setCurrentAttribute(attribute);
+        setCurrentTarget(target);
+        setCurrentSet(set);
         loadProbes({
-        variables: { evalNumber: evalNum, scenario, alignmentTarget }
+            variables: { evalNumber: evalNum, scenario, alignmentTarget }
         });
         setShowProbeModal(true);
     };
@@ -313,7 +339,7 @@ export function PH2RQ2223({ evalNum }) {
                                     {dataSet.Synthetic ? (
                                         <button
                                         onClick={() =>
-                                            handleShowProbes(dataSet.Scenario, dataSet.alignmentTarget)
+                                            handleShowProbes(dataSet.Scenario, dataSet.alignmentTarget, dataSet.Attribute, dataSet.Target, dataSet.Set)
                                         }
                                         >
                                         {dataSet.Set}
@@ -336,20 +362,43 @@ export function PH2RQ2223({ evalNum }) {
                 </table>
             </div>
 
-            <Modal open={showProbeModal} onClose={() => setShowProbeModal(false)}>
-                <div className="modal-body">
-                    <h4>Probe IDs for this set</h4>
+            <Modal
+                open={showProbeModal}
+                onClose={() => setShowProbeModal(false)}
+                className="probeModalBackdrop"
+                >
+                <div className="probeModalContent">
+                    <button
+                    onClick={() => setShowProbeModal(false)}
+                    className="probeModalClose"
+                    >
+                    Close
+                    </button>
+
+                    <div className="probeModalHeader">
+                    Probe IDs For This Set
+                    </div>
+
+                    <div className="probeModalInfoSection">
+                        <div className="probeModalInfo">
+                            <strong>Attribute:</strong> {currentAttribute}
+                        </div>
+                        <div className="probeModalInfo">
+                            <strong>Target:</strong> {currentTarget}
+                        </div>
+                        <div className="probeModalInfo">
+                            <strong>Set:</strong> {currentSet}
+                        </div>
+                    </div>
 
                     {probesLoading && <p>Loading…</p>}
-                    {probesError && <p>Error: {probesError.message}</p>}
+                    {probesError && <p style={{ color: 'red' }}>{probesError.message}</p>}
 
-                    <ul>
-                    {currentProbes.map((id) => (
+                    <ul className="probeModalList">
+                    {currentProbes.map(id => (
                         <li key={id}>{id}</li>
                     ))}
                     </ul>
-
-                    <button onClick={() => setShowProbeModal(false)}>Close</button>
                 </div>
             </Modal>
 
