@@ -1610,7 +1610,8 @@ function populateDataSetP2(data) {
     const seen = new Set();
     for (const res of data.getAllScenarioResultsByEval) {
         const pid = res['participantID'];
-        if (!pid || seen.has(pid)) continue;
+        const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
+        if (!pid || seen.has(pid) || !survey?.results?.['Post-Scenario Measures']) continue;
 
         const participant = pLog.find((p) => p.ParticipantID === Number(pid));
 
@@ -1625,7 +1626,6 @@ function populateDataSetP2(data) {
         row['PS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'personal_safety')?.value;
         row['SS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'search')?.value;
 
-        const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
         if (survey) {
             //demographics
             row['MedRole'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role', 'response'], '');
