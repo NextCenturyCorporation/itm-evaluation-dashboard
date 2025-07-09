@@ -107,6 +107,7 @@ const resolvers = {
       return await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"] }, {
         projection: {
           "synthetic": 1,
+          "probe_ids": 1,
           "scenario": 1,
           "alignment_target": 1,
           "evaluation": 1,

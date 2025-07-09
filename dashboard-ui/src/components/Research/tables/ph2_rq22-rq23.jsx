@@ -25,6 +25,7 @@ const PH2_HEADERS = [
     'Attribute',
     'Target',
     'Set',
+    'Probe IDs', 
     'Target_Type (Group/Individual)',
     'Aligned Server Session ID',
     'Aligned ADM Alignment score (ADM|target)',
@@ -72,6 +73,7 @@ export function PH2RQ2223({ evalNum }) {
             const allTargets = [];
             const allSets = [];
             const syntheticMap = {};
+            const probeMap = {};
 
             for (const adm of admData) {
                 const admName = adm.evaluation.adm_name;
@@ -80,7 +82,10 @@ export function PH2RQ2223({ evalNum }) {
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results.alignment_score;
 
-                syntheticMap[scenario + "_" + target + "_" + alignment] = adm.synthetic;
+                const mapKey = scenario + "_" + target + "_" + alignment;
+
+                syntheticMap[mapKey] = adm.synthetic;
+                probeMap[mapKey] = adm.probe_ids || [];
 
                 if (!scenarioName.includes('Random')) continue;
 
@@ -159,6 +164,8 @@ export function PH2RQ2223({ evalNum }) {
 
                     const mapKey = scenario + "_" + target + "_" + aligned.alignment;
                     entryObj['Synthetic'] = syntheticMap[mapKey] || false;
+                    entryObj['Probe IDs'] = (probeMap[mapKey] || []).map(id => id.replace(/^Probe\s*/, '')).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ');
+
 
                     let baseline = null;
                     for (const admName of Object.keys(targets[target])) {
@@ -347,6 +354,13 @@ export function PH2RQ2223({ evalNum }) {
                                     ) : (
                                         dataSet.Set
                                     )}
+                                    </td>
+                                );
+                                }
+                                if (val === 'Probe IDs') {
+                                return (
+                                    <td key={`cell-${index}-probe`}>
+                                        {dataSet['Probe IDs'] ?? '-'}
                                     </td>
                                 );
                                 }
