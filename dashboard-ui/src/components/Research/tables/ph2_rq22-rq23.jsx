@@ -1,6 +1,6 @@
 import React from "react";
 import '../../SurveyResults/resultsTable.css';
-import { useQuery } from 'react-apollo'
+import { useQuery, useLazyQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
@@ -13,6 +13,11 @@ const getAdmData = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
+
+ const getProbeIDs = gql`
+   query getProbeIdsByKey($evalNumber: Float!, $scenario: String!, $alignmentTarget: String!){
+     getProbeIdsByKey(evalNumber: $evalNumber, scenario: $scenario, alignmentTarget: $alignmentTarget)
+   }`;
 
 const PH2_HEADERS = [
     'Trial_ID',
@@ -30,6 +35,11 @@ export function PH2RQ2223({ evalNum }) {
     const { loading, error, data } = useQuery(getAdmData, {
         variables: { "evalNumber": evalNum }
     });
+
+    const [loadProbes, { data: probeData, loading: probesLoading, error: probesError }] = useLazyQuery(getProbeIDs);
+
+    const [showProbeModal, setShowProbeModal] = React.useState(false);
+    const [currentProbes, setCurrentProbes] = React.useState([]);
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -57,6 +67,7 @@ export function PH2RQ2223({ evalNum }) {
             const allAttributes = [];
             const allTargets = [];
             const allSets = [];
+            const syntheticMap = {};
 
             for (const adm of admData) {
                 const admName = adm.evaluation.adm_name;
@@ -64,6 +75,8 @@ export function PH2RQ2223({ evalNum }) {
                 const scenarioName = adm.evaluation.scenario_name;
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results.alignment_score;
+
+                syntheticMap[scenario + "_" + target + "_" + alignment] = adm.synthetic;
 
                 if (!scenarioName.includes('Random')) continue;
 
@@ -96,6 +109,8 @@ export function PH2RQ2223({ evalNum }) {
 
                 for (const target of Object.keys(targets)) {
                     const entryObj = {};
+                    entryObj['Scenario'] = scenario;
+                    entryObj['alignmentTarget'] = target;
 
                     const attribute = scenario.includes('MF') && scenario.includes('AF') ? 'AF-MF' :
                         scenario.includes('MF') ? 'MF' :
@@ -138,6 +153,10 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Aligned Server Session ID'] = '-';
                     }
 
+                    const mapKey = scenario + "_" + target + "_" + aligned.alignment;
+                    entryObj['Synthetic'] = syntheticMap[mapKey] || false;
+                    console.log(syntheticMap[mapKey]);
+
                     let baseline = null;
                     for (const admName of Object.keys(targets[target])) {
                         if (admName.includes('OutlinesBaseline')) {
@@ -145,7 +164,6 @@ export function PH2RQ2223({ evalNum }) {
                             break;
                         }
                     }
-
 
                     if (baseline) {
                         entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline.alignment;
@@ -186,6 +204,12 @@ export function PH2RQ2223({ evalNum }) {
     }, [data, evalNum]);
 
     React.useEffect(() => {
+        if (probeData?.getProbeIdsByKey) {
+        setCurrentProbes(probeData.getProbeIdsByKey);
+        }
+    }, [probeData]);
+
+    React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter(x =>
                 (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
@@ -198,6 +222,13 @@ export function PH2RQ2223({ evalNum }) {
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
+
+    const handleShowProbes = (scenario, alignmentTarget) => {
+        loadProbes({
+        variables: { evalNumber: evalNum, scenario, alignmentTarget }
+        });
+        setShowProbeModal(true);
+    };
 
     return (
         <>
@@ -275,16 +306,52 @@ export function PH2RQ2223({ evalNum }) {
                     <tbody>
                         {filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
-                                {PH2_HEADERS.map((val) => (
+                            {PH2_HEADERS.map((val) => {
+                                if (val === 'Set') {
+                                return (
                                     <td key={`cell-${index}-${val}`}>
-                                        {dataSet[val] ?? '-'}
+                                    {dataSet.Synthetic ? (
+                                        <button
+                                        onClick={() =>
+                                            handleShowProbes(dataSet.Scenario, dataSet.alignmentTarget)
+                                        }
+                                        >
+                                        {dataSet.Set}
+                                        </button>
+                                    ) : (
+                                        dataSet.Set
+                                    )}
                                     </td>
-                                ))}
+                                );
+                                }
+                                return (
+                                <td key={`cell-${index}-${val}`}>
+                                    {dataSet[val] ?? '-'}
+                                </td>
+                                );
+                            })}
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            <Modal open={showProbeModal} onClose={() => setShowProbeModal(false)}>
+                <div className="modal-body">
+                    <h4>Probe IDs for this set</h4>
+
+                    {probesLoading && <p>Loading…</p>}
+                    {probesError && <p>Error: {probesError.message}</p>}
+
+                    <ul>
+                    {currentProbes.map((id) => (
+                        <li key={id}>{id}</li>
+                    ))}
+                    </ul>
+
+                    <button onClick={() => setShowProbeModal(false)}>Close</button>
+                </div>
+            </Modal>
 
             <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
                 <div className='modal-body'>
