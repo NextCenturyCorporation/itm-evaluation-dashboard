@@ -1,7 +1,7 @@
 /*
  * functions that help with data aggregation
  */
-
+import { HEADER } from './aggregateHeaders';
 const SIM_MAP = {
     "submarine": 1,
     "jungle": 2,
@@ -1603,9 +1603,38 @@ function getRatingsBySelectionStatus(data) {
     return results;
 }
 
+
+function populateDataSetP2(data) {
+    const pLog = data.getParticipantLog;
+    const results = [];
+    const seen = new Set();
+    for (const res of data.getAllScenarioResultsByEval) {
+        const pid = res['participantID'];
+        if (!pid || seen.has(pid)) continue;
+
+        const participant = pLog.find((p) => p.ParticipantID === Number(pid));
+
+        const row = {};
+        row['Participant ID'] = pid;
+        seen.add(pid);
+        row['Date'] = new Date(safeGet(res, ['startTime'], ['timeComplete'])).toLocaleDateString();
+        // all the same so using first one
+        row['Probe Set'] = participant['AF-text-scenario'];
+        row['AF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'affiliation')?.value;
+        row['MF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'merit')?.value;
+        row['PS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'personal_safety')?.value;
+        row['SS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'search')?.value;
+
+        results.push(row);
+        
+    }
+    return results;
+}
+
 export {
     populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey,
     formatCellData, sortedObjectKeys, getAlignmentComparisonVsTrustRatings,
     getAlignmentsByAdmType, getDelegationPreferences, getAlignmentsByAttribute, getDelegationVsAlignment,
-    getRatingsBySelectionStatus, getAlignmentsByAdmTypeForTA12
+    getRatingsBySelectionStatus, getAlignmentsByAdmTypeForTA12,
+    populateDataSetP2
 };
