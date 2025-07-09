@@ -478,7 +478,7 @@ function getOverallDelRate(res) {
             if (pageName.includes(' vs ')) {
                 for (const q of Object.keys(res.results[pageName].questions)) {
                     // ignore parallax runs where it's only misaligned vs baseline
-                    if (q.includes("Forced Choice") && res.results[pageName]['admAlignment'].includes(' aligned')) {
+                    if (q.includes("Forced Choice") && (res.results[pageName]['admAlignment'].includes(' aligned') || res.results[pageName]['admAlignment'].includes('multi-KDMA comparison')) ) {
                         tally += 1;
                         const response = res.results[pageName].questions[q].response;
                         const aligned = q.split(' vs ')[0]; // aligned is always listed first in forced choice questions
@@ -1641,6 +1641,9 @@ function populateDataSetP2(data) {
 
             //overall trust rating
             row['Trust'] = getOverallTrust(survey);
+
+            //overall del rating
+            row['Delegation'] = getOverallDelRate(survey);
         }
         results.push(row);
 
