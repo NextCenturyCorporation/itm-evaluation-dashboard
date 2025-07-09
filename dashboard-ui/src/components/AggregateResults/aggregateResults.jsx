@@ -14,9 +14,11 @@ import { HEADER, HEADER_SIM_DATA, ADEPT_HEADERS_DRE } from './aggregateHeaders';
 
 
 const get_eval_name_numbers = gql`
-    query getEvalIdsForSimAlignment{
-        getEvalIdsForSimAlignment
+    query getEvalIdsForAllScenarioResults{
+        getEvalIdsForAllScenarioResults
   }`;
+
+
 let evalOptions = [];
 
 const GET_SURVEY_RESULTS = gql`
@@ -49,8 +51,8 @@ export default function AggregateResults({ type }) {
 
     React.useEffect(() => {
         evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForSimAlignment) {
-            for (const result of evalIdOptionsRaw.getEvalIdsForSimAlignment) {
+        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
+            for (const result of evalIdOptionsRaw.getEvalIdsForAllScenarioResults) {
                 evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
 
             }
