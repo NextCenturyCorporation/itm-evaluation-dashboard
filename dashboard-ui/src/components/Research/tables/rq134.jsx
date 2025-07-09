@@ -73,7 +73,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const [probeSetAssessments, setProbeSetAssessments] = React.useState([]);
     const [probeSetObservations, setProbeSetObservations] = React.useState([]);
     const [admTypes] = React.useState(['baseline', 'aligned', 'comparison']);
-    const [delGrps] = React.useState(['Civilian', 'Military']);
+    const [delGrps] = React.useState(['Online', 'emailParticipant', 'Civilian', 'Military']);
     const [delMils] = React.useState(['yes', 'no']);
     // filter options that have been chosen
     const [ta1Filters, setTA1Filters] = React.useState([]);
