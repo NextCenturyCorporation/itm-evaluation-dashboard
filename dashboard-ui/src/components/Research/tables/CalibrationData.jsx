@@ -48,7 +48,7 @@ export function CalibrationData({ evalNum }) {
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": (Number(evalNum) === 6 ? 5 : evalNum) }
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum) }
     });
 
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
@@ -134,7 +134,7 @@ export function CalibrationData({ evalNum }) {
 
             // git rid of comparison rows, only VOL
             data.allObjs = data.allObjs.filter(obj => 
-                String(obj['Attribute']) === 'VOL' && 
+                obj['Attribute'] === 'VOL' && 
                 obj['ADM_Type'] !== 'comparison'
             );
 
@@ -280,7 +280,7 @@ export function CalibrationData({ evalNum }) {
 
     return (<>
         <h2 className='rq134-header'>Calibration Scores
-            {Number(evalNum) === 5 &&
+            {evalNum === 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
                 </div>}

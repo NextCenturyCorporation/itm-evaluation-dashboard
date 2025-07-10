@@ -231,7 +231,7 @@ export function App() {
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
 
-        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => String(x.hashedEmail) === String(hashedEmail));
+        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail);
 
         if (foundParticipant) {
             const pid = foundParticipant['ParticipantID'];
@@ -263,8 +263,7 @@ export function App() {
             const addRes = await addParticipant({
                 variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }
             });
-
-            if (Number(addRes?.data?.addNewParticipantToLog) === -1) {
+            if (addRes?.data?.addNewParticipantToLog === -1) {
                 alert("This email address is taken. Please enter a different email.");
                 return;
             }

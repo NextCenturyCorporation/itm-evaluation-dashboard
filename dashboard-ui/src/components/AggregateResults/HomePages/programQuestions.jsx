@@ -108,7 +108,7 @@ export default function ProgramQuestions() {
             <div className="selection-section">
                 <Select
                     onChange={selectEvaluation}
-                    options={evalOptions.filter((o) => Number(o.value) !== 6)}
+                    options={evalOptions.filter((o) => o.value !== 6)}
                     defaultValue={evalOptions[0]}
                     placeholder="Select Evaluation"
                     value={evalOptions.find(option => option.value === selectedEval)}

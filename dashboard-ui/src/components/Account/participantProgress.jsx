@@ -93,7 +93,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     allTypes.push(res['Type']);
                 }
 
-                const sims = simResults.filter((x) => String(x.pid) === pid).sort((a, b) => a.timestamp - b.timestamp);
+                const sims = simResults.filter((x) => x.pid === pid).sort((a, b) => a.timestamp - b.timestamp);
                 obj['Evaluation'] = sims[0]?.evalName;
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
@@ -111,9 +111,9 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Sim-3'] = sims[2]?.scenario_id;
                 obj['Sim-4'] = sims[3]?.scenario_id;
 
-                const surveys = surveyResults.filter((x) => ((x.results?.pid && (String(x.results.pid) === pid)) || String((x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response ?? x.results?.pid)) === pid)
+                const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || (x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response ?? x.results?.pid) === pid)
                     && x.results?.['Post-Scenario Measures']);
-                const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (String(x.results.pid) === pid)) || String(x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response) === pid));
+                const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response === pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const survey_start_date = lastSurvey ? new Date(lastSurvey?.results?.startTime) : new Date(incompleteSurveys?.slice(-1)?.[0]?.results?.startTime);
                 const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
@@ -134,7 +134,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName ?? lastSurvey?.results?.evalName;
 
-                const scenarios = textResults.filter((x) => String(x.participantID) === pid);
+                const scenarios = textResults.filter((x) => x.participantID === pid);
                 const lastScenario = scenarios?.slice(-1)?.[0];
                 const text_start_date = new Date(scenarios[0]?.startTime);
                 const text_end_date = new Date(lastScenario?.timeComplete);
@@ -182,15 +182,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             }
             // phase dependent
             const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-            if ((String(header) === 'Delegation' && Number(val) === 1) ||
-                (String(header) === 'Text' && Number(val) >= textThreshold) ||
-                (String(header) === 'Sim Count' && Number(val) === 4)) {
+            if ((header === 'Delegation' && val === 1) ||
+                (header === 'Text' && val >= textThreshold) ||
+                (header === 'Sim Count' && val === 4)) {
                 return 'dk-green-cell';
             }
             return 'white-cell';
         };
         return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '') + ' ' + (header.length > 17 ? 'large-column' : '')}>
-            {String(header) === 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
+            {header === 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
         </td>);
     };
 
@@ -235,11 +235,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
                     (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
                     (!completionFilters.includes('Delegation (1)') || x['Delegation'] >= 1) &&
-                    (!completionFilters.includes('No Delegation') || Number(x['Delegation']) === 0) &&
+                    (!completionFilters.includes('No Delegation') || x['Delegation'] === 0) &&
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
                     (!completionFilters.includes('Any Sim') || x['Sim Count'] >= 1) &&
                     (!completionFilters.includes('Adept + OW Sim') || (didAdept && didOW)) &&
-                    (!completionFilters.includes('No Sim') || Number(x['Sim Count']) === 0) &&
+                    (!completionFilters.includes('No Sim') || x['Sim Count'] === 0) &&
                     (searchPid.length === 0 || x['Participant ID'].includes(searchPid))
             }));
         }
@@ -281,7 +281,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         }
         dataCopy.sort((a, b) => {
             const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
-            const incOrDec = String(sortBy.split(' ').slice(-1)[0]) === '↑' ? 'i' : 'd';
+            const incOrDec = sortBy.split(' ').slice(-1)[0] === '↑' ? 'i' : 'd';
             let aVal = a[simpleK];
             let bVal = b[simpleK];
             if (simpleK.includes('Date-Time')) {

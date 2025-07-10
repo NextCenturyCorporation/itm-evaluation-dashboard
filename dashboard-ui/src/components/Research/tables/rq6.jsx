@@ -64,15 +64,15 @@ export function RQ6({ evalNum }) {
             const allAttributes = [];
 
             const evals = [evalNum];
-            if (includeDRE && Number(evalNum) !== 4) {
+            if (includeDRE && evalNum !== 4) {
                 evals.push(4);
             }
-            if (includeJAN && Number(evalNum) !== 6) {
+            if (includeJAN && evalNum !== 6) {
                 evals.push(6);
             };
 
             for (let evalNum of evals) {
-                const textResults = dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) === Number(evalNum));
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
 
                 const pids = [];
                 const recorded = {};
@@ -88,7 +88,7 @@ export function RQ6({ evalNum }) {
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
-                        log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test' && String(log['Type']) !== 'Online'
+                        log => log['ParticipantID'] === pid && log['Type'] !== 'Test' && log['Type'] !== 'Online'
                     );
                     if (!logData) {
                         continue;
@@ -124,8 +124,8 @@ export function RQ6({ evalNum }) {
                             allAttributes.push(att);
                             entryObj['Scenario'] = entryObj['TA1_Name'] === 'ADEPT' ? ad_scenario : st_scenario;
                             allScenarios.push(entryObj['Scenario']);
-                            const vrVsText = simData.find((x) => String(x.pid) === String(pid) &&
-                                (['QOL', 'VOL'].includes(entryObj['Attribute']) ? String(x.ta1) === 'st' : String(x.ta1) === 'ad') &&
+                            const vrVsText = simData.find((x) => x.pid === pid &&
+                                (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 === 'st' : x.ta1 === 'ad') &&
                                 x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')))?.data?.alignment?.vr_vs_text;
                             entryObj['Alignment score (Participant_Text|Participant_Sim)'] = ['QOL', 'VOL'].includes(att) ? vrVsText : vrVsText?.[att];
                             allObjs.push(entryObj);
@@ -190,7 +190,7 @@ export function RQ6({ evalNum }) {
 
     return (<>
         <h2 className='rq134-header'>RQ6 Data
-            {Number(evalNum) === 5 &&
+            {evalNum === 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />

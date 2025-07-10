@@ -74,18 +74,18 @@ export function MultiKDMA_RQ23() {
             const surveyResults = dataSurveyResults?.getAllSurveyResults;
             const participantLog = dataParticipantLog?.getParticipantLog;
             const textResults = dataTextResults?.getAllScenarioResults;
-            const completed_surveys = surveyResults.filter((res) => (Number(res.results?.evalNumber) === 4 && isDefined(res.results['Post-Scenario Measures'])) || ((Number(res.results?.evalNumber) === 5 || Number(res.results?.evalNumber) === 6) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0));
+            const completed_surveys = surveyResults.filter((res) => (res.results?.evalNumber === 4 && isDefined(res.results['Post-Scenario Measures'])) || ((res.results?.evalNumber === 5 || res.results?.evalNumber === 6) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0));
             for (const res of completed_surveys) {
                 const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
-                if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => String(res.results?.['Participant ID Page']?.questions['Participant ID']?.response) === String(pid) && isDefined(res.results['Post-Scenario Measures']))) {
+                if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => res.results?.['Participant ID Page']?.questions['Participant ID']?.response === pid && isDefined(res.results['Post-Scenario Measures']))) {
                     // filter incomplete surveys from participants who have a complete survey
                     continue;
                 }
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
-                    log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test'
+                    log => log['ParticipantID'] === pid && log['Type'] !== 'Test'
                 );
-                const textCount = textResults.filter((x) => String(x.participantID) === String(pid)).length;
+                const textCount = textResults.filter((x) => x.participantID === pid).length;
                 if (!logData || textCount < 5) {
                     continue;
                 }
@@ -121,7 +121,7 @@ export function MultiKDMA_RQ23() {
                 entryObj['Alignment (Target|ADM_MJ5)_Aligned'] = admGroup['AD3_align'];
                 entryObj['Alignment Average (Target|ADM)_Aligned'] = admGroup['ave_align'];
 
-                const baseline = analysisData.find((x) => String(x['pid']) === String(admGroup['pid']) && x['admName'].toLowerCase().includes('baseline') && String(capitalizeFirstLetter(x['targetType'])) === String(entryObj['Target Type']));
+                const baseline = analysisData.find((x) => x['pid'] === admGroup['pid'] && x['admName'].toLowerCase().includes('baseline') && String(capitalizeFirstLetter(x['targetType'])) === String(entryObj['Target Type']));
                 if (baseline) {
                     entryObj['MJ KDMA_Baseline - MJ2'] = baseline['mjAD1_kdma'];
                     entryObj['MJ KDMA_Baseline - MJ4'] = baseline['mjAD2_kdma'];
@@ -137,7 +137,7 @@ export function MultiKDMA_RQ23() {
                     entryObj['Alignment Average (Target|ADM)_Baseline'] = baseline['ave_align'];
                 }
                 for (const key of Array.from(Object.keys(entryObj))) {
-                    if (Number(entryObj[key]) === -1) {
+                    if (entryObj[key] === -1) {
                         entryObj[key] = '-';
                     }
                 }

@@ -28,7 +28,7 @@ export function PidLookup() {
             const trimmedEmail = email.trim().toLowerCase();
             const hashedEmail = bcrypt.hashSync(trimmedEmail, "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
             const matchingParticipant = dataParticipantLog.getParticipantLog.find(
-                (x) => String(x.hashedEmail) === String(hashedEmail)
+                (x) => x.hashedEmail === hashedEmail
             );
 
             if (matchingParticipant) {

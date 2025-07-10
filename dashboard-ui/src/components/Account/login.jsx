@@ -68,7 +68,7 @@ class LoginApp extends React.Component {
 
         $("#text-entry-feedback").removeClass("feedback-display");
         try {
-            this.props.participantLoginHandler(hashedEmail, String(this.props.history.location.pathname) === '/participantTextTester');
+            this.props.participantLoginHandler(hashedEmail, this.props.history.location.pathname === '/participantTextTester');
         } catch (err) {
             $("#text-entry-feedback").addClass("feedback-display");
             this.setState({ error: err.message, pidCreationFailed: true });
@@ -245,7 +245,7 @@ class LoginApp extends React.Component {
                 <div className="row justify-content-center align-items-center h-100 center-container">
                     <div className="login-container">
                         <Tabs className='p-1' defaultActiveKey={this.props.isParticipant ? 2 : 1}>
-                            {String(this.props.history.location.pathname) !== '/participantTextTester' && String(this.props.history.location.pathname) !== '/participantText' &&
+                            {this.props.history.location.pathname !== '/participantTextTester' && this.props.history.location.pathname !== '/participantText' &&
                                 <Tab eventKey={0} title="Create Account">
                                     <div>
                                         <div className="sign-in-instructions">
@@ -283,7 +283,7 @@ class LoginApp extends React.Component {
                                     </div>
                                 </Tab>
                             }
-                            {String(this.props.history.location.pathname) !== '/participantTextTester' && String(this.props.history.location.pathname) !== '/participantText' &&
+                            {this.props.history.location.pathname !== '/participantTextTester' && this.props.history.location.pathname !== '/participantText' &&
                                 <Tab eventKey={1} title="Sign In">
                                     <div >
                                         <div id="sign-in-pane">

@@ -47,7 +47,7 @@ export function RQ21({ evalNum }) {
     React.useEffect(() => {
         if (dataAdms?.getGroupAdmAlignmentByEval && dataTextResults?.getAllScenarioResults) {
             const admData = dataAdms.getGroupAdmAlignmentByEval;
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) === Number(evalNum));
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
             let allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -315,7 +315,7 @@ export function RQ21({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ21_eval${evalNum}.xlsx`} xlFile={(Number(evalNum) === 5 || Number(evalNum) === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ21_eval${evalNum}.xlsx`} xlFile={(evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

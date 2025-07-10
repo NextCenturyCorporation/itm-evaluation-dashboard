@@ -267,7 +267,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
     const [updateUserCall] = useMutation(UPDATE_USER_APPROVAL);
 
     const updateUserStatus = (userid, statusType, e) => {
-        const user = unapproved.find((x) => String(x._id) === String(userid));
+        const user = unapproved.find((x) => x._id === userid);
         if (user) {
             user[statusType] = e.target.checked;
         }
@@ -275,7 +275,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
     };
 
     const approveUser = async (userid) => {
-        const user = unapproved.find((x) => String(x._id) === String(userid));
+        const user = unapproved.find((x) => x._id === userid);
         if (user) {
             user.approved = true;
         }
@@ -295,7 +295,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
     };
 
     const denyUser = async (userid) => {
-        const user = unapproved.find((x) => String(x._id) === String(userid));
+        const user = unapproved.find((x) => x._id === userid);
         if (user) {
             user.rejected = true;
         }
@@ -607,7 +607,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     <div className="form-group">
                         <input placeholder="Enter Password" type="password" id="password" value={password} onChange={onChangePassword} />
                     </div>
-                    {String(passwordError) !== '' && <p className='error-message'>{passwordError}</p>}
+                    {passwordError !== '' && <p className='error-message'>{passwordError}</p>}
                     <Button type='submit'>Submit</Button>
                 </form>
             </Card>}

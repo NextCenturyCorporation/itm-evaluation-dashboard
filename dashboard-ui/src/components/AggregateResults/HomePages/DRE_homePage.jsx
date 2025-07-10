@@ -93,13 +93,13 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
         if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison
             && dataSim?.getAllSimAlignmentByEval && dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval) {
             const origData = getRQ134Data(evalNumber, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
-            setData(origData.allObjs.filter((x) => Number(x['Competence Error']) === 0));
-            if (Number(evalNumber) === 5) {
+            setData(origData.allObjs.filter((x) => x['Competence Error'] === 0));
+            if (evalNumber === 5) {
                 const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true, false);
                 setDreDataForPh1(dreData.allObjs);
             }
             const tmpGroupTargets = {};
-            for (const x of dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) === Number(evalNumber))) {
+            for (const x of dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNumber)) {
                 if (Object.keys(x).includes('group_targets')) {
                     for (const k of Object.keys(x['group_targets'])) {
                         if (!Object.keys(tmpGroupTargets).includes(k)) {
@@ -116,7 +116,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
     React.useEffect(() => {
         if (data) {
             const trustData = getAlignmentComparisonVsTrustRatings(data);
-            if (Number(evalNumber) === 5) {
+            if (evalNumber === 5) {
                 const tmpData = structuredClone(data);
                 tmpData.push(...dreDataForPh1);
                 const trustWithDre = getAlignmentComparisonVsTrustRatings(tmpData);
@@ -130,8 +130,8 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
             setAlignmentsByAdmType(getAlignmentsByAdmType(data));
             setAlignmentsByAttribute(getAlignmentsByAttribute(data));
             const delPrefs = getDelegationPreferences(data, evalNumber);
-            setDelegationPreferences(Number(evalNumber) === 4 ? delPrefs : delPrefs['combined']);
-            if (Number(evalNumber) === 5) {
+            setDelegationPreferences(evalNumber === 4 ? delPrefs : delPrefs['combined']);
+            if (evalNumber === 5) {
                 setTeamDelegation(delPrefs);
             }
             setDelVsAlignment(getDelegationVsAlignment(data));

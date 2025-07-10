@@ -72,16 +72,15 @@ export function RQ5_PH1({ evalNum }) {
             const allTargets = [];
             const participantLog = dataParticipantLog.getParticipantLog;
 
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => Number(x.evalNumber) === Number(evalNum));
-            const comparisons = comparisonData.getHumanToADMComparison.filter((x) => Number(x.evalNumber) === Number(evalNum));
-            const matches = comparisonData.getADMTextProbeMatches.filter((x) => Number(x.evalNumber) === Number(evalNum));
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
+            const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber === evalNum);
+            const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber ===evalNum);
 
             const pids = [];
             const recorded = {};
 
             for (const res of textResults) {
                 const pid = res['participantID'];
-                const pidString = String(pid);
                 if (pids.includes(pid)) {
                     continue;
                 }
@@ -91,7 +90,7 @@ export function RQ5_PH1({ evalNum }) {
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
-                    log => String(log['ParticipantID']) === pidString && String(log['Type']) !== 'Test'
+                    log => log['ParticipantID'] === pid && log['Type'] !== 'Test'
                 );
                 if (!logData) {
                     continue;
@@ -119,12 +118,11 @@ export function RQ5_PH1({ evalNum }) {
                     }
                     for (const att of attributes) {
                         const adeptSubstr = att === 'MJ' ? 'Moral' : 'Ingroup';
-                        const mostLeastAligned = Number(entry['mostLeastAligned'].length) === 1 ? entry['mostLeastAligned'][0] :
+                        const mostLeastAligned = entry['mostLeastAligned'].length === 1 ? entry['mostLeastAligned'][0] :
                             (entry['mostLeastAligned'][0]['target'].includes(adeptSubstr) ? entry['mostLeastAligned'][0] : entry['mostLeastAligned'][1]);
                         for (let targetSet of mostLeastAligned['response']) {
                             for (const adm of ADMs) {
                                 const target = targetSet['target'] ?? Object.keys(targetSet)[0];
-                                const targetString = String(target);
                                 const align = targetSet['score'] ?? targetSet[Object.keys(targetSet)[0]];
                                 const entryObj = {};
                                 entryObj['Participant_ID'] = pid;
@@ -139,31 +137,30 @@ export function RQ5_PH1({ evalNum }) {
                                 entryObj['Alignment score (Participant|target)'] = align;
                                 entryObj['ADM Name'] = adm;
                                 if (comparisons.filter((x) =>
-                                    String(x['pid']) === pidString && x['probe_subset'] === false && String(x['scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                    String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                    String(x['pid']) === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    String(x['adm_name']) === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 ).length > 1) {
                                     console.warn('too many comparison entries found!!');
                                 }
                                 entryObj['Alignment score (Participant|ADM(target))'] = comparisons.find((x) =>
-                                    String(x['pid']) === pidString && x['probe_subset'] === false && String(x['scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                    String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                    x['pid'] === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 )?.['score'];
                                 if (matches.filter((x) =>
-                                    String(x['pid']) === pidString && x['probe_subset'] === false && String(x['text_scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                    String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                    x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 ).length > 1) {
                                     console.warn('too many match entries found!!');
                                 }
                                 entryObj['Match'] = matches.find((x) =>
-                                    String(x['pid']) === pidString && x['probe_subset'] === false && String(x['text_scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                    String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                    x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 )?.['score']
                                 allObjs.push(entryObj);
                             }
                         }
                         if (entry['group_targets']) {
                             for (let target of Object.keys(entry['group_targets'])) {
-                                const targetString = String(target);
                                 if ((target.includes('Ingroup') && att !== 'IO') || (target.includes('Moral') && att !== 'MJ') ||
                                     (target.includes('vol') && att !== 'VOL') || (target.includes('qol') && att !== 'QOL')) {
                                     continue;
@@ -183,24 +180,24 @@ export function RQ5_PH1({ evalNum }) {
                                     entryObj['Alignment score (Participant|target)'] = align;
                                     entryObj['ADM Name'] = adm;
                                     if (comparisons.filter((x) =>
-                                        String(x['pid']) === pidString && x['probe_subset'] === false && String(x['scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                        String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     ).length > 1) {
                                         console.warn('too many comparison entries found!!');
                                     }
                                     entryObj['Alignment score (Participant|ADM(target))'] = comparisons.find((x) =>
-                                        String(x['pid']) === pidString && x['probe_subset'] === false && String(x['scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                        String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     )?.['score'];
                                     if (matches.filter((x) =>
-                                        String(x['pid']) === pidString && x['probe_subset'] === false && String(x['text_scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                        String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     ).length > 1) {
                                         console.warn('too many match entries found!!');
                                     }
                                     entryObj['Match'] = matches.find((x) =>
-                                        String(x['pid']) === pidString && x['probe_subset'] === false && String(x['text_scenario']) === SCENARIO_MAP[entry['scenario_id']] &&
-                                        String(x['adm_name']) === adm && (String(x['adm_alignment_target']) === targetString || x['adm_alignment_target'].replace('.', '') === targetString)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     )?.['score']
                                     allObjs.push(entryObj);
                                 }

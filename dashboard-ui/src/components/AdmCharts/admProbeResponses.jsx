@@ -216,7 +216,7 @@ export const ADMProbeResponses = (props) => {
     };
 
     const getKdma = (history, attribute) => {
-        return history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => String(kdma.kdma) === String(attribute))?.value;
+        return history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => kdma.kdma === attribute)?.value;
     }
 
     if (evalNameLoading) return <div>Loading...</div>;

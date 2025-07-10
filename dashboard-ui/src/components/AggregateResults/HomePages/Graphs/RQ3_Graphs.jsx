@@ -69,7 +69,7 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
                 horizontalAlign: "center",
                 cursor: "pointer"
             },
-            data: Object.keys(teamDelegation).filter((t) => t !== 'combined' && ((String(teamOrAttribute) === 'team' ? !attributes.includes(t) : attributes.includes(t)))).map((t) => {
+            data: Object.keys(teamDelegation).filter((t) => t !== 'combined' && ((teamOrAttribute === 'team' ? !attributes.includes(t) : attributes.includes(t)))).map((t) => {
                 return {
                     type: "column",
                     name: t,
@@ -150,7 +150,7 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
                     }
                 }} />
             </div>
-            {Number(evalNumber) === 4 && <div className="outlinedPlot">
+            {evalNumber === 4 && <div className="outlinedPlot">
                 <h4>Rescaled alignment scores between delegator and observed ADMs by Attribute</h4>
                 <CanvasJSChart options={{
                     axisX: {
@@ -280,7 +280,7 @@ export default function RQ3Graphs({ delegationPreferences, evalNumber, teamDeleg
             <div className='q2-adms'>
                 {generateForcedChoiceChart()}
             </div>}
-        {Number(evalNumber) === 5 && teamDelegation &&
+        {evalNumber === 5 && teamDelegation &&
             <div className='q2-adms'>
                 <div className='outlinedPlot'>
                     <h4>Proportion of Delegation Preference By Attribute</h4>

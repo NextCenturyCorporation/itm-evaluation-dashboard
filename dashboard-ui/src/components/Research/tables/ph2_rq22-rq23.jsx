@@ -146,7 +146,6 @@ export function PH2RQ2223({ evalNum }) {
                         }
                     }
 
-
                     if (baseline) {
                         entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline.alignment;
                         entryObj['Baseline Server Session ID'] = baseline.adm?.results?.ta1_session_id ?? '-';
