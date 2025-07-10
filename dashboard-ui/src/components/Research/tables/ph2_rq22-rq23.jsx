@@ -1,7 +1,6 @@
 import React from "react";
 import '../../SurveyResults/resultsTable.css';
-import '../../../css/probeModal.css';
-import { useQuery, useLazyQuery } from 'react-apollo'
+import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
@@ -14,11 +13,6 @@ const getAdmData = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
-
- const getProbeIDs = gql`
-   query getProbeIdsByKey($evalNumber: Float!, $scenario: String!, $alignmentTarget: String!){
-     getProbeIdsByKey(evalNumber: $evalNumber, scenario: $scenario, alignmentTarget: $alignmentTarget)
-   }`;
 
 const PH2_HEADERS = [
     'Trial_ID',
@@ -37,14 +31,6 @@ export function PH2RQ2223({ evalNum }) {
     const { loading, error, data } = useQuery(getAdmData, {
         variables: { "evalNumber": evalNum }
     });
-
-    const [loadProbes, { data: probeData, loading: probesLoading, error: probesError }] = useLazyQuery(getProbeIDs);
-
-    const [showProbeModal, setShowProbeModal] = React.useState(false);
-    const [currentProbes, setCurrentProbes] = React.useState([]);
-    const [currentAttribute, setCurrentAttribute] = React.useState('');
-    const [currentTarget, setCurrentTarget] = React.useState('');
-    const [currentSet, setCurrentSet] = React.useState('');
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -164,8 +150,37 @@ export function PH2RQ2223({ evalNum }) {
 
                     const mapKey = scenario + "_" + target + "_" + aligned.alignment;
                     entryObj['Synthetic'] = syntheticMap[mapKey] || false;
-                    entryObj['Probe IDs'] = (probeMap[mapKey] || []).map(id => id.replace(/^Probe\s*/, '')).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ');
 
+                    const rawProbes = probeMap[mapKey] || [];
+
+                    const formatted = rawProbes.map(raw => {
+                        let attr = entryObj['Attribute'];
+                        let number;
+
+                        if (raw.includes('.Probe')) {
+                            const [prefix, probePart] = raw.split('.Probe');
+                            number = parseInt(probePart.trim());
+
+                            const parts = prefix.split('-');
+                            if (parts.length >= 2) attr = parts[1];
+                            }
+                            else {
+                                const m = raw.match(/Probe\s*(\d+)/);
+                                number = m ? parseInt(m[1]) : NaN;
+                            }
+
+                        return { attr, number };
+                    })
+                    .filter(x => !isNaN(x.number))
+                    .sort((a, b) => {
+                        const cmp = a.attr.localeCompare(b.attr);
+                        if (cmp !== 0) return cmp;
+                        return a.number - b.number;
+                    })
+                    .map(x => `Probe-${x.attr}-${x.number}`)
+                    .join(', ');
+
+                    entryObj['Probe IDs'] = formatted;
 
                     let baseline = null;
                     for (const admName of Object.keys(targets[target])) {
@@ -232,14 +247,6 @@ export function PH2RQ2223({ evalNum }) {
     }, [data, evalNum]);
 
     React.useEffect(() => {
-        if (probeData?.getProbeIdsByKey) {
-            const sorted = [...probeData.getProbeIdsByKey].sort((a, b) =>
-            a.localeCompare(b, undefined, { numeric: true }));
-        setCurrentProbes(sorted);
-        }
-    }, [probeData]);
-
-    React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter(x =>
                 (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
@@ -252,16 +259,6 @@ export function PH2RQ2223({ evalNum }) {
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
-
-    const handleShowProbes = (scenario, alignmentTarget, attribute, target, set) => {
-        setCurrentAttribute(attribute);
-        setCurrentTarget(target);
-        setCurrentSet(set);
-        loadProbes({
-            variables: { evalNumber: evalNum, scenario, alignmentTarget }
-        });
-        setShowProbeModal(true);
-    };
 
     return (
         <>
@@ -340,23 +337,6 @@ export function PH2RQ2223({ evalNum }) {
                         {filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
                             {PH2_HEADERS.map((val) => {
-                                if (val === 'Set') {
-                                return (
-                                    <td key={`cell-${index}-${val}`}>
-                                    {dataSet.Synthetic ? (
-                                        <button
-                                        onClick={() =>
-                                            handleShowProbes(dataSet.Scenario, dataSet.alignmentTarget, dataSet.Attribute, dataSet.Target, dataSet.Set)
-                                        }
-                                        >
-                                        {dataSet.Set}
-                                        </button>
-                                    ) : (
-                                        dataSet.Set
-                                    )}
-                                    </td>
-                                );
-                                }
                                 if (val === 'Probe IDs') {
                                 return (
                                     <td key={`cell-${index}-probe`}>
@@ -375,46 +355,6 @@ export function PH2RQ2223({ evalNum }) {
                     </tbody>
                 </table>
             </div>
-
-            <Modal
-                open={showProbeModal}
-                onClose={() => setShowProbeModal(false)}
-                className="probeModalBackdrop"
-                >
-                <div className="probeModalContent">
-                    <button
-                    onClick={() => setShowProbeModal(false)}
-                    className="probeModalClose"
-                    >
-                    Close
-                    </button>
-
-                    <div className="probeModalHeader">
-                    Probe IDs For This Set
-                    </div>
-
-                    <div className="probeModalInfoSection">
-                        <div className="probeModalInfo">
-                            <strong>Attribute:</strong> {currentAttribute}
-                        </div>
-                        <div className="probeModalInfo">
-                            <strong>Target:</strong> {currentTarget}
-                        </div>
-                        <div className="probeModalInfo">
-                            <strong>Set:</strong> {currentSet}
-                        </div>
-                    </div>
-
-                    {probesLoading && <p>Loading…</p>}
-                    {probesError && <p style={{ color: 'red' }}>{probesError.message}</p>}
-
-                    <ul className="probeModalList">
-                    {currentProbes.map(id => (
-                        <li key={id}>{id}</li>
-                    ))}
-                    </ul>
-                </div>
-            </Modal>
 
             <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
                 <div className='modal-body'>
