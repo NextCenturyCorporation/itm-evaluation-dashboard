@@ -34,9 +34,7 @@ export function PH2RQ8({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [formattedData, setFormattedData] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
-    const [scenarios, setScenarios] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [variableFields, setVariableFields] = React.useState([]);
     const [HEADERS, setHeaders] = React.useState([]);
@@ -65,7 +63,6 @@ export function PH2RQ8({ evalNum }) {
                 return;
             }
             const variableFields = variablesRow.slice(startColIdx).filter(Boolean);
-            console.log('Variables read from Excel file:', variableFields);
             setVariableFields(variableFields);
         }
         fetchVariableFields();
@@ -75,7 +72,6 @@ export function PH2RQ8({ evalNum }) {
         if (variableFields.length === 0) return;
         if (dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment && dataParticipantLog?.getParticipantLog) {
             const allObjs = [];
-            const allScenarios = [];
             const allAttributes = [];
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
@@ -173,7 +169,6 @@ export function PH2RQ8({ evalNum }) {
             setFormattedData(allObjs);
             setFilteredData(allObjs);
             setAttributes(Array.from(new Set(allAttributes)));
-            setScenarios(Array.from(new Set(allScenarios)));
         }
     }, [dataSim, dataTextResults, dataParticipantLog, evalNum, variableFields]);
 
@@ -187,10 +182,8 @@ export function PH2RQ8({ evalNum }) {
     };
 
     React.useEffect(() => {
-        setFilteredData(formattedData.filter((x) =>
-            (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario']))
-        ));
-    }, [scenarioFilters, formattedData]);
+        setFilteredData(formattedData)
+    }, [ formattedData]);
 
     if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
@@ -200,22 +193,7 @@ export function PH2RQ8({ evalNum }) {
         </h2>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
-            <div className="filters">
-                <Autocomplete
-                    multiple
-                    options={scenarios}
-                    filterSelectedOptions
-                    size="small"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Scenarios"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setScenarioFilters(newVal)}
-                />
-            </div>
+            <div className='filters'></div>
             <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={'Ph2 RQ-8 data'} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
