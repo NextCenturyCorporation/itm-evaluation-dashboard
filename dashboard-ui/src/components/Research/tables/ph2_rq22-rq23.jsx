@@ -220,7 +220,7 @@ export function PH2RQ2223({ evalNum }) {
             });
 
             const extractSetNum = s => {
-               const m = /^Set (\d+)$/.exec(s);
+               const m = /Set\s+(\d+)$/.exec(s);
                return m ? parseInt(m[1]) : Number.POSITIVE_INFINITY;
             };
             
