@@ -3,10 +3,10 @@ import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
-import ph1DefinitionXLFile from '../variables/Variable Definitions RQ8_PH1.xlsx';
+import ph2DefinitionXLFile from '../variables/Variable Definitions RQ8_PH2.xlsx';
+import * as XLSX from 'xlsx-js-style';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 
 
@@ -25,8 +25,6 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const HEADERS = [ 'Participant_ID', 'Participant Text MF KDMA', 'Participant Text AF KDMA', 'Participant Text PS KDMA', 'Participant Text SS KDMA']
-
 
 export function PH2RQ8({ evalNum }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_HUMAN_RESULTS);
@@ -40,9 +38,44 @@ export function PH2RQ8({ evalNum }) {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const [variableFields, setVariableFields] = React.useState([]);
+    const [HEADERS, setHeaders] = React.useState([]);
 
+
+    // Read variable names from Excel on mount
+    React.useEffect(() => {
+        async function fetchVariableFields() {
+            const response = await fetch(ph2DefinitionXLFile);
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            // Find the row index where the header is 'Variables'
+            const variablesRowIdx = data.findIndex(row => row[0] === 'Variables');
+            if (variablesRowIdx === -1) {
+                console.error('Could not find Variables row in Excel sheet');
+                setVariableFields([]);
+                return;
+            }
+            const variablesRow = data[variablesRowIdx];
+            // Find the column index for 'Desert Triage Performance'
+            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Triage Performance');
+            if (startColIdx === -1) {
+                console.error('Could not find Desert Triage Performance in Variables row');
+                setVariableFields([]);
+                return;
+            }
+            // Extract all non-empty variable names from that column onward
+            const variableFields = variablesRow.slice(startColIdx).filter(Boolean);
+            console.log('Extracted variable fields:', variableFields);
+            setVariableFields(variableFields);
+        }
+        fetchVariableFields();
+    }, []);
 
     React.useEffect(() => {
+        if (variableFields.length === 0) return; // Wait for variable fields to load
         if (dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment && dataParticipantLog?.getParticipantLog) {
             const allObjs = [];
             const allScenarios = [];
@@ -55,26 +88,19 @@ export function PH2RQ8({ evalNum }) {
                 const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
 
                 const pids = [];
-                const recorded = {};
                 for (const res of textResults) {
                     const pid = res['participantID'];
                     if (pids.includes(pid)) {
                         continue;
                     }
-                    recorded[pid] = [];
                     // see if participant has completed the open world scenario
-                    const openWorld = simData.find(
-                        log => log['pid'] == pid && log['openWorld'] == true
-                    );
+                    const sim_entries = simData.filter((x) => x['pid'] == pid);
+                    const openWorld = sim_entries.find((x) => x['openWorld'] === true);
                     if (!openWorld) {
                         continue;
                     }
 
-                    const simEntries = simData.filter(
-                        log => log['pid'] == pid
-                    );
-
-                    const { textResultsForPID, alignments } = getAlignments(evalNum, textResults, pid);
+                    console.log(sim_entries);
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
@@ -84,59 +110,50 @@ export function PH2RQ8({ evalNum }) {
                         continue;
                     }
 
-                    for (const entry of textResultsForPID) {
-                        // don't include duplicate entries
-                        if (recorded[pid]?.includes(entry['serverSessionId'])) {
-                            continue;
-                        }
-                        else {
-                            recorded[pid].push(entry['serverSessionId']);
-                        }
-                        
-                        // Create one row per participant with all KDMA values
-                        const entryObj = {};
-                        entryObj['Participant_ID'] = pid;
-                        
-                        let attributes = ['AF', 'MF', 'PS', 'SS'];
-                        const att_map = {
-                            'MF': 'merit',
-                            'AF': 'affiliation',
-                            'PS': 'personal_safety',
-                            'SS': 'search'
-                        }
-                        
-                        // kdma values from text results
-                        const kdmas = entry['kdmas'];
+                    // Create one row per participant with all KDMA values
+                    const entryObj = {};
+                    entryObj['Participant_ID'] = pid;
 
-                        const sim_entry = simEntries.find((x) => {
-                            const kdma_data = x?.data?.alignment?.kdmas?.computed_kdma_profile ?? x?.data?.alignment?.kdmas;
-                            return Array.isArray(kdma_data) && kdma_data?.find((y) => y.kdma == att_map['MF']);
-                        });
-                        console.log(sim_entry);
-
-                        for (const att of attributes) {
-                            allAttributes.push(att);
-                            entryObj[`Participant Text ${att} KDMA`] = kdmas?.find((x) => x['kdma'] == att_map[att])?.value;
-                            // need to grab the sim attributes for mf and af
-                            if (!['MF', 'AF'].includes(att)) { continue; }
-                        }
-                        
-                        const sim_kdmas = sim_entry?.data?.alignment?.kdmas?.computed_kdma_profile ?? sim_entry?.data?.alignment?.kdmas;
-
-                        const owData = openWorld['data'];
-
-                        for (let i = 1; i < 9; i++) {
-                            entryObj[`Patient${i}_time`] = owData?.[`Patient ${i}_time`];
-                            entryObj[`Patient${i}_order`] = owData?.[`Patient ${i}_order`];
-                            entryObj[`Patient${i}_evac`] = owData?.[`Patient ${i}_evac`];
-                            entryObj[`Patient${i}_assess`] = owData?.[`Patient ${i}_assess`];
-                            entryObj[`Patient${i}_treat`] = owData?.[`Patient ${i}_treat`];
-                            entryObj[`Patient${i}_tag`] = owData?.[`Patient ${i}_tag`];
-                        }
-
-                        allObjs.push(entryObj);
-                        pids.push(pid);
+                    let attributes = ['AF', 'MF', 'PS', 'SS'];
+                    const att_map = {
+                        'MF': 'merit',
+                        'AF': 'affiliation',
+                        'PS': 'personal_safety',
+                        'SS': 'search'
                     }
+
+                    // kdma values from text results
+                    const kdmas = res['kdmas'];
+                    for (const att of attributes) {
+                        allAttributes.push(att);
+                        entryObj[`Participant Text ${att} KDMA`] = kdmas?.find((x) => x['kdma'] == att_map[att])?.value;
+                    }
+
+                    const desert_entry = sim_entries.find((x) => x['scenario_id']?.toLowerCase().includes('desert'));
+                    const urban_entry = sim_entries.find((x) => x['scenario_id']?.toLowerCase().includes('urban'));
+
+                    const desert_kdmas = desert_entry?.data?.alignment?.kdmas;
+                    if (desert_kdmas) {
+                        entryObj['Desert MF KDMA'] = desert_kdmas?.find((x) => x['kdma'] == 'merit')?.value;
+                        entryObj['Desert AF KDMA'] = desert_kdmas?.find((x) => x['kdma'] == 'affiliation')?.value;
+                    }
+                    const urban_kdmas = urban_entry?.data?.alignment?.kdmas;
+                    if (urban_kdmas) {
+                        entryObj['Urban MF KDMA'] = urban_kdmas?.find((x) => x['kdma'] == 'merit')?.value;
+                        entryObj['Urban AF KDMA'] = urban_kdmas?.find((x) => x['kdma'] == 'affiliation')?.value;
+                    }
+
+                    // Add variable fields from Excel (Desert_data and Urban_data)
+                    for (const field of variableFields) {
+                        let value = openWorld.Desert_data?.[field];
+                        if (value === undefined) {
+                            value = openWorld.Urban_data?.[field];
+                        }
+                        entryObj[field] = value ?? '';
+                    }
+
+                    allObjs.push(entryObj);
+                    pids.push(pid);
                 }
             }
             // sort
@@ -146,12 +163,15 @@ export function PH2RQ8({ evalNum }) {
                 if (Number(a['Participant_ID']) > Number(b['Participant_ID'])) return 1;
                 return 0;
             });
+
+            // headers for the table
+            setHeaders(Object.keys(allObjs[0]));
             setFormattedData(allObjs);
             setFilteredData(allObjs);
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
         }
-    }, [dataSim, dataTextResults, dataParticipantLog, evalNum,]);
+    }, [dataSim, dataTextResults, dataParticipantLog, evalNum, variableFields]);
 
 
     const openModal = () => {
@@ -166,7 +186,7 @@ export function PH2RQ8({ evalNum }) {
         setFilteredData(formattedData.filter((x) =>
             (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario']))
         ));
-    }, [ scenarioFilters, formattedData]);
+    }, [scenarioFilters, formattedData]);
 
     if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
@@ -221,7 +241,7 @@ export function PH2RQ8({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ8_eval${evalNum}.xlsx`} xlFile={ph1DefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ8_eval${evalNum}.xlsx`} xlFile={ph2DefinitionXLFile} />
             </div>
         </Modal>
     </>);
