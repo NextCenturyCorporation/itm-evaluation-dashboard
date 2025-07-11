@@ -24,7 +24,7 @@ const PH2_HEADERS = [
     'Aligned Server Session ID',
     'Aligned ADM Alignment score (ADM|target)',
     'Baseline ADM Alignment score (ADM|target)',
-    'Baseline Server Session ID',
+    'Baseline Server Session ID'
 ];
 
 export function PH2RQ2223({ evalNum }) {
