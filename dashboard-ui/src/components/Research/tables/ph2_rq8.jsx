@@ -59,12 +59,13 @@ export function PH2RQ8({ evalNum }) {
             }
             const variablesRow = data[variablesRowIdx];
             // first column we need to grab, go from there
-            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Triage Performance');
+            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Personal_safety');
             if (startColIdx === -1) {
                 setVariableFields([]);
                 return;
             }
             const variableFields = variablesRow.slice(startColIdx).filter(Boolean);
+            console.log('Variables read from Excel file:', variableFields);
             setVariableFields(variableFields);
         }
         fetchVariableFields();
@@ -109,7 +110,7 @@ export function PH2RQ8({ evalNum }) {
                     entryObj['Participant_ID'] = pid;
                     // this batch of sim data was before all sets were of the same group, V for various
                     if (openWorld.evalName.includes('June')) {
-                        entryObj['Probe Set Assessment'] = 'V';
+                        entryObj['Probe Set Assessment'] = 'Various';
                     } 
 
                     let attributes = ['AF', 'MF', 'PS', 'SS'];
