@@ -96,7 +96,6 @@ export function PH2RQ8({ evalNum }) {
                         continue;
                     }
 
-
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
                         log => log['ParticipantID'] === Number(pid) && log['Type'] != 'Test'
@@ -133,6 +132,7 @@ export function PH2RQ8({ evalNum }) {
 
                     const desert_kdmas = desert_entry?.data?.alignment?.kdmas;
                     if (desert_kdmas) {
+
                         entryObj['Desert MF KDMA'] = desert_kdmas?.find((x) => x['kdma'] == 'merit')?.value;
                         entryObj['Desert AF KDMA'] = desert_kdmas?.find((x) => x['kdma'] == 'affiliation')?.value;
                     }
@@ -142,7 +142,6 @@ export function PH2RQ8({ evalNum }) {
                         entryObj['Urban AF KDMA'] = urban_kdmas?.find((x) => x['kdma'] == 'affiliation')?.value;
                     }
 
-                    // Add variable fields from Excel (Desert_data and Urban_data)
                     for (const field of variableFields) {
                         let value = openWorld.Desert_data?.[field];
                         if (value === undefined) {
@@ -163,8 +162,13 @@ export function PH2RQ8({ evalNum }) {
                 return 0;
             });
 
-            // headers for the table
-            setHeaders(Object.keys(allObjs[0]));
+            // if none of the rows have a value for a key, don't include it in the headers
+            const allKeys = Object.keys(allObjs[0] || {});
+            const filteredHeaders = allKeys.filter(key =>
+                allObjs.some(row => row[key] !== undefined && row[key] !== null && row[key] !== '')
+            );
+
+            setHeaders(filteredHeaders);
             setFormattedData(allObjs);
             setFilteredData(allObjs);
             setAttributes(Array.from(new Set(allAttributes)));
