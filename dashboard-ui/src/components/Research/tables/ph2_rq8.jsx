@@ -71,7 +71,7 @@ export function PH2RQ8({ evalNum }) {
     }, []);
 
     React.useEffect(() => {
-        if (variableFields.length === 0) return; // Wait for variable fields to load
+        if (variableFields.length === 0) return;
         if (dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment && dataParticipantLog?.getParticipantLog) {
             const allObjs = [];
             const allScenarios = [];
@@ -96,7 +96,6 @@ export function PH2RQ8({ evalNum }) {
                         continue;
                     }
 
-                    console.log(sim_entries);
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
@@ -109,6 +108,10 @@ export function PH2RQ8({ evalNum }) {
                     // Create one row per participant with all KDMA values
                     const entryObj = {};
                     entryObj['Participant_ID'] = pid;
+                    // this batch of sim data was before all sets were of the same group, V for various
+                    if (openWorld.evalName.includes('June')) {
+                        entryObj['Probe Set Assessment'] = 'V';
+                    } 
 
                     let attributes = ['AF', 'MF', 'PS', 'SS'];
                     const att_map = {
