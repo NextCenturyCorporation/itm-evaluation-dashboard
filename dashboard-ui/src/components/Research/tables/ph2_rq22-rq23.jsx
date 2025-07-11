@@ -108,8 +108,6 @@ export function PH2RQ2223({ evalNum }) {
 
                 for (const target of Object.keys(targets)) {
                     const entryObj = {};
-                    entryObj['Scenario'] = scenario;
-                    entryObj['alignmentTarget'] = target;
 
                     const attribute = scenario.includes('MF') && scenario.includes('AF') ? 'AF-MF' :
                         scenario.includes('MF') ? 'MF' :
@@ -153,7 +151,6 @@ export function PH2RQ2223({ evalNum }) {
                     }
 
                     const mapKey = scenario + "_" + target + "_" + aligned.alignment;
-                    entryObj['Synthetic'] = syntheticMap[mapKey] || false;
 
                     const rawProbes = probeMap[mapKey] || [];
 
