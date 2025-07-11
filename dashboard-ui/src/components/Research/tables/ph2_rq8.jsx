@@ -42,7 +42,6 @@ export function PH2RQ8({ evalNum }) {
     const [HEADERS, setHeaders] = React.useState([]);
 
 
-    // Read variable names from Excel on mount
     React.useEffect(() => {
         async function fetchVariableFields() {
             const response = await fetch(ph2DefinitionXLFile);
@@ -51,7 +50,7 @@ export function PH2RQ8({ evalNum }) {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            // Find the row index where the header is 'Variables'
+            // row index of variables
             const variablesRowIdx = data.findIndex(row => row[0] === 'Variables');
             if (variablesRowIdx === -1) {
                 console.error('Could not find Variables row in Excel sheet');
@@ -59,16 +58,13 @@ export function PH2RQ8({ evalNum }) {
                 return;
             }
             const variablesRow = data[variablesRowIdx];
-            // Find the column index for 'Desert Triage Performance'
+            // first column we need to grab, go from there
             const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Triage Performance');
             if (startColIdx === -1) {
-                console.error('Could not find Desert Triage Performance in Variables row');
                 setVariableFields([]);
                 return;
             }
-            // Extract all non-empty variable names from that column onward
             const variableFields = variablesRow.slice(startColIdx).filter(Boolean);
-            console.log('Extracted variable fields:', variableFields);
             setVariableFields(variableFields);
         }
         fetchVariableFields();
