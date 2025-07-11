@@ -99,8 +99,14 @@ export function PH2RQ2223({ evalNum }) {
                 const scenarioName = organized_adms[scenario].scenarioName;
                 const targets = organized_adms[scenario].targets;
 
+                const isRandom = scenarioName.includes('Random');
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
-                const scenarioSet = setMatch ? `Set ${setMatch[1]}` : 'Full';
+                // exclude full runs (not sets)
+                if (!setMatch) { continue; }
+                const scenarioSet = isRandom
+                        ? `P2June Dynamic Set ${setMatch[1]}`
+                        : `P2June Observation Set ${setMatch[1]}`;
+
 
                 for (const target of Object.keys(targets)) {
                     const entryObj = {};
