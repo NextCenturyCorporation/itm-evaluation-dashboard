@@ -73,8 +73,6 @@ export function PH2RQ2223({ evalNum }) {
                 syntheticMap[mapKey] = adm.synthetic;
                 probeMap[mapKey] = adm.probe_ids || [];
 
-                if (!scenarioName.includes('Random')) continue;
-
                 if (!isDefined(alignment)) continue;
 
                 if (!organized_adms[scenario]) {

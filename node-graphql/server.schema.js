@@ -103,7 +103,7 @@ const resolvers = {
       return await context.db.collection('admTargetRuns').find().toArray().then(result => { return result; });
     },
     getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
-      return await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"] }, {
+      const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"] }, {
         projection: {
           "synthetic": 1,
           "probe_ids": 1,
@@ -121,9 +121,18 @@ const resolvers = {
           "history.response.dre_alignment.score": 1,
           "history.parameters.session_id": 1,
           "history.parameters.dreSessionId": 1,
-          "history.command": 1
+          "history.command": 1,
+          "history.parameters.probe_id": 1
         }
-      }).toArray().then(result => { return result; });
+      }).toArray();
+       return docs.map(doc => {
+        if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
+          doc.probe_ids = (doc.history || [])
+            .filter(h => h.command === 'Respond to TA1 Probe')
+            .map(h => h.parameters?.probe_id);
+        }
+        return doc;
+      });
     },
     getGroupAdmAlignmentByEval: async (obj, args, context, inflow) => {
       return await context.db.collection('admTargetRuns').find({
