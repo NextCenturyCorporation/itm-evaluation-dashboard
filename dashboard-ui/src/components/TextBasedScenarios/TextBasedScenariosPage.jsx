@@ -128,7 +128,7 @@ class TextBasedScenariosPage extends Component {
 
         // match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
-            log => String(log['ParticipantID']) === String(enteredParticipantID)
+            log => String(log['ParticipantID']) === enteredParticipantID
         );
 
         let scenarios = [];
@@ -549,7 +549,7 @@ class TextBasedScenariosPage extends Component {
 
     calcScore = async (scenario, alignmentType) => {
         // function should now only be called on soartech scenarios because of change to ADEPT server
-        if (String(alignmentType) !== 'soartech') {
+        if (alignmentType !== 'soartech') {
             console.error('function should only be called on alignment type soartech but was called on ' + alignmentType)
             return
         }

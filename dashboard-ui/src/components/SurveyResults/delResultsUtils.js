@@ -52,9 +52,9 @@ export function getQuestionAnswerSets(pageName, config, genericName = null) {
 
 function generateComparisonv45(pageName, genericName) {
     const surveyJson = { elements: [] };
-    const bname = String(pageName.split(' vs ')[0]?.trim());
-    const aname = String(pageName.split(' vs ')[1]?.trim());
-    const mname = String(pageName.split(' vs ')[2]?.trim());
+    const bname = pageName.split(' vs ')[0]?.trim();
+    const aname = pageName.split(' vs ')[1]?.trim();
+    const mname = pageName.split(' vs ')[2]?.trim();
     if (aname !== '' && mname !== '') {
         surveyJson.elements.push({
             name: genericName ? "Aligned vs Baseline: Forced Choice" : aname + " vs " + bname + ": Forced Choice",

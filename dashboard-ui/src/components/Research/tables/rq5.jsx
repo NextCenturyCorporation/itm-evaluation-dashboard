@@ -104,7 +104,7 @@ export function RQ5({ evalNum }) {
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
-                        log => log['ParticipantID'] === pid && log['Type'] !== 'Test'
+                        log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                     );
                     if (!logData) {
                         continue;

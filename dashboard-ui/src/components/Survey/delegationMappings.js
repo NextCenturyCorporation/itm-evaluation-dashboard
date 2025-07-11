@@ -1,24 +1,22 @@
 export const getEnvMappingToText = (sv) => {
-    const svIsFour = Number(sv) === 4;
     return {
         "AD-1": "Shooter/Victim (Urban)",
         "AD-2": "IED (Jungle)",
         "AD-3": "Fistfight (Desert)",
-        "ST-1": svIsFour ? "QOL-1 and VOL-1" : "QOL-2 and VOL-2",
-        "ST-2": svIsFour ? "QOL-2 and VOL-2" : "QOL-3 and VOL-3",
-        "ST-3": svIsFour ? "QOL-3 and VOL-3" : "QOL-4 and VOL-4",
+        "ST-1": sv === 4 ? "QOL-1 and VOL-1" : "QOL-2 and VOL-2",
+        "ST-2": sv === 4 ? "QOL-2 and VOL-2" : "QOL-3 and VOL-3",
+        "ST-3": sv === 4 ? "QOL-3 and VOL-3" : "QOL-4 and VOL-4",
     }
 }
 
 export const getDelEnvMapping = (sv) => {
-    const svIsFour = Number(sv) === 4;
     return {
         "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
         "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
         "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-        "ST-1": svIsFour ? ["qol-dre-1-eval", "vol-dre-1-eval"] : ["qol-ph1-eval-2", "vol-ph1-eval-2"],
-        "ST-2": svIsFour ? ["qol-dre-2-eval", "vol-dre-2-eval"] : ["qol-ph1-eval-3", "vol-ph1-eval-3"],
-        "ST-3": svIsFour ? ["qol-dre-3-eval", "vol-dre-3-eval"] : ["qol-ph1-eval-4", "vol-ph1-eval-4"],
+        "ST-1": sv === 4 ? ["qol-dre-1-eval", "vol-dre-1-eval"] : ["qol-ph1-eval-2", "vol-ph1-eval-2"],
+        "ST-2": sv === 4 ? ["qol-dre-2-eval", "vol-dre-2-eval"] : ["qol-ph1-eval-3", "vol-ph1-eval-3"],
+        "ST-3": sv === 4 ? ["qol-dre-3-eval", "vol-dre-3-eval"] : ["qol-ph1-eval-4", "vol-ph1-eval-4"],
     }
 }
 
@@ -42,14 +40,13 @@ export const admOrderMapping = {
 }
 
 export const getKitwareBaselineMapping = (sv) => {
-    const svIsFour = Number(sv) === 4;
     return {
-        "DryRunEval-IO2-eval": svIsFour ? "ADEPT-DryRun-Ingroup Bias-0.5" : "ADEPT-DryRun-Ingroup Bias-0.6",
-        "DryRunEval-IO4-eval": svIsFour ? "ADEPT-DryRun-Ingroup Bias-0.6" : "ADEPT-DryRun-Ingroup Bias-0.7",
-        "DryRunEval-IO5-eval": svIsFour ? "ADEPT-DryRun-Ingroup Bias-0.6" : "ADEPT-DryRun-Ingroup Bias-0.8",
-        "DryRunEval-MJ2-eval": svIsFour ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.8",
-        "DryRunEval-MJ4-eval": svIsFour ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.5",
-        "DryRunEval-MJ5-eval": svIsFour ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.3",
+        "DryRunEval-IO2-eval": sv === 4 ? "ADEPT-DryRun-Ingroup Bias-0.5" : "ADEPT-DryRun-Ingroup Bias-0.6",
+        "DryRunEval-IO4-eval": sv === 4 ? "ADEPT-DryRun-Ingroup Bias-0.6" : "ADEPT-DryRun-Ingroup Bias-0.7",
+        "DryRunEval-IO5-eval": sv === 4 ? "ADEPT-DryRun-Ingroup Bias-0.6" : "ADEPT-DryRun-Ingroup Bias-0.8",
+        "DryRunEval-MJ2-eval": sv === 4 ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.8",
+        "DryRunEval-MJ4-eval": sv === 4 ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.5",
+        "DryRunEval-MJ5-eval": sv === 4 ? "ADEPT-DryRun-Moral judgement-0.5" : "ADEPT-DryRun-Moral judgement-0.3",
         "qol-dre-1-eval": "qol-human-1774519-SplitEvenBinary",
         "qol-dre-2-eval": "qol-human-1774519-SplitEvenBinary",
         "qol-dre-3-eval": "qol-human-6403274-SplitHighBinary",
@@ -67,14 +64,13 @@ export const getKitwareBaselineMapping = (sv) => {
 };
 
 export const getTadBaselineMapping = (sv) => {
-    const svIsFour = Number(sv) === 4;
     return {
-        "DryRunEval-IO2-eval": svIsFour ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
-        "DryRunEval-IO4-eval": svIsFour ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
-        "DryRunEval-IO5-eval": svIsFour ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
-        "DryRunEval-MJ2-eval": svIsFour ? "ADEPT-DryRun-Moral judgement-0.2" : "ADEPT-DryRun-Moral judgement-0.2",
-        "DryRunEval-MJ4-eval": svIsFour ? "ADEPT-DryRun-Moral judgement-0.3" : "ADEPT-DryRun-Moral judgement-0.2",
-        "DryRunEval-MJ5-eval": svIsFour ? "ADEPT-DryRun-Moral judgement-0.3" : "ADEPT-DryRun-Moral judgement-0.2",
+        "DryRunEval-IO2-eval": sv === 4 ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
+        "DryRunEval-IO4-eval": sv === 4 ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
+        "DryRunEval-IO5-eval": sv === 4 ? "ADEPT-DryRun-Ingroup Bias-0.4" : "ADEPT-DryRun-Ingroup Bias-0.3",
+        "DryRunEval-MJ2-eval": sv === 4 ? "ADEPT-DryRun-Moral judgement-0.2" : "ADEPT-DryRun-Moral judgement-0.2",
+        "DryRunEval-MJ4-eval": sv === 4 ? "ADEPT-DryRun-Moral judgement-0.3" : "ADEPT-DryRun-Moral judgement-0.2",
+        "DryRunEval-MJ5-eval": sv === 4 ? "ADEPT-DryRun-Moral judgement-0.3" : "ADEPT-DryRun-Moral judgement-0.2",
         "qol-dre-1-eval": "qol-human-3447902-SplitHighMulti",
         "qol-dre-2-eval": "qol-human-8022671-SplitLowMulti",
         "qol-dre-3-eval": "qol-human-6349649-SplitHighMulti",

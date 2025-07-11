@@ -253,7 +253,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         ) : (
                             <Card className="patient-card" style={{ display: 'inline-block' }}>
                                 <Card.Header>
-                                    <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {String(patient.sex) === 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
+                                    <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex === 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
                                 </Card.Header>
                                 <Row className="g-0">
                                     <Col md={8} className="mr-4">

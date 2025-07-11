@@ -125,18 +125,18 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     }, [evalNumbers, exploratory]);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
-        const basicChecks = String(comparisonEntry['pid']) === String(pid) && String(comparisonEntry['adm_type']) === String(admType) && String(comparisonEntry['adm_scenario']) === String(scenario);
+        const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
         // we don't care about servers when it comes to ST. check for DRE server for 5&6, and NOT ph1 server for 4
         const dreCheck = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
-            ([5, 6].includes(comparisonEntry['evalNumber']) && comparisonEntry['dre_server']) || (Number(comparisonEntry['evalNumber']) === 4 && !comparisonEntry['ph1_server']);
+            ([5, 6].includes(comparisonEntry['evalNumber']) && comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] === 4 && !comparisonEntry['ph1_server']);
         return basicChecks && dreCheck;
     };
 
     const searchForPh1Comparison = (comparisonEntry, pid, admType, scenario) => {
-        const basicChecks = String(comparisonEntry['pid']) === String(pid) && String(comparisonEntry['adm_type']) === String(admType) && String(comparisonEntry['adm_scenario']) === String(scenario);
+        const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
         // we don't care about servers when it comes to ST. check for PH1 server for 4, and NOT dre server for 5&6
         const ph1Check = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
-            ([5, 6].includes(comparisonEntry['evalNumber']) && !comparisonEntry['dre_server']) || (Number(comparisonEntry['evalNumber']) === 4 && comparisonEntry['ph1_server']);
+            ([5, 6].includes(comparisonEntry['evalNumber']) && !comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] === 4 && comparisonEntry['ph1_server']);
         return basicChecks && ph1Check;
     };
 
@@ -205,14 +205,14 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 continue;
             }
 
-            if (Number(obj['eval']) === 3 && pid.slice(0, 4) !== '2024') {
+            if (obj['eval'] === 3 && pid.slice(0, 4) !== '2024') {
                 continue;
             }
 
             const logData = pLog.find(
-                log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test'
+                log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((Number(version) === 4 || Number(version) === 5) && !logData) {
+            if ((version === 4 || version === 5) && !logData) {
                 continue;
             }
 
@@ -223,7 +223,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
 
             if (entry['surveyVersion'] === 1.3) {
-                obj['April 2025'] = Number(entry['evalNumber']) === 8 ? 1 : 0;
+                obj['April 2025'] = entry['evalNumber'] === 8 ? 1 : 0;
                 obj['Condition'] = entry['Participant ID']?.questions['Condition']?.response ?? '-'
             }
 
@@ -287,7 +287,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     continue;
                 }
 
-                if ((String(page.pageType) === 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
+                if ((page.pageType === 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
                     if (!showLegacy) {
                         obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
@@ -309,7 +309,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                     dm += 1;
                 }
-                else if ((String(page.pageType) === 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
+                else if ((page.pageType === 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
                     if (!showLegacy) {
                         const alignment = page.admAlignment?.split(' vs ');
                         const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
@@ -361,7 +361,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 }
                 if (showLegacy && pageName.includes('Omnibus')) {
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
-                    if (String(page.pageType) === 'singleMedic') {
+                    if (page.pageType === 'singleMedic') {
                         obj[`B${block}_Omni${dm}_Name`] = cleanPageName;
                         obj[`B${block}_Omni${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
                         obj[`B${block}_Omni${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
@@ -372,7 +372,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_Omni${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
                         dm += 1;
                     }
-                    else if (String(page.pageType) === 'comparison') {
+                    else if (page.pageType === 'comparison') {
                         const order = cleanPageName.split(' vs ');
                         obj[`B${block}_Compare_Omni1`] = order[0];
                         obj[`B${block}_Compare_Omni2`] = order[1];
@@ -450,7 +450,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     };
 
     const toggleDataType = (event) => {
-        setShowLegacy(String(event.target.value) === 'Legacy');
+        setShowLegacy(event.target.value === 'Legacy');
         setFilteredData(formattedData);
         setEvalFilters([]);
         setMilFilters(null);

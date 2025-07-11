@@ -190,12 +190,12 @@ export class MedicalScenario extends SurveyQuestionElementBase {
       return
     }
 
-    if (String(survey.title) !== "DryRunEval-MJ2-eval" && String(survey.title) !== "phase1-adept-eval-MJ2") {
+    if (survey.title !== "DryRunEval-MJ2-eval" && survey.title !== "phase1-adept-eval-MJ2") {
       return true
     }
 
     const probe = survey.getValue('probe Probe 4-B.1-B.1')
-    return probe && String(probe) === 'Do some treatment on US military member.'
+    return probe && probe === 'Do some treatment on US military member.'
   }
 
   overideBlockedVitals = () => {
@@ -282,7 +282,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
           <Col>
             <Card className="border-0 shadow-sm">
               <Card.Body className="p-4 position-relative">
-                {(this.mission?.roe && String(this.mission?.roe) !== "") &&
+                {(this.mission?.roe && this.mission?.roe !== "") &&
                   <div
                     className="position-absolute d-flex align-items-center scenario-info-icon"
                     style={{

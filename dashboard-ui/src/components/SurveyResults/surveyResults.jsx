@@ -98,7 +98,7 @@ export function SurveyResults() {
                 continue;
             }
             const logData = dataParticipantLog?.getParticipantLog.find(
-                log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test'
+                log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
             if ((filterBySurveyVersion === 4 || filterBySurveyVersion === 5) && !logData) {
                 continue;
@@ -143,9 +143,9 @@ export function SurveyResults() {
                         // set up comparison page/question labels
                         const pageADMs = resCopy.origName.split(' vs ');
                         const qADMs = q.split(':')[0].split(' vs ');
-                        const newQ = (qADMs[0] === String(pageADMs[1]) ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] === String(pageADMs[0]) ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
+                        const newQ = (qADMs[0] === pageADMs[1] ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] === pageADMs[0] ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
                         if (q.includes('Forced')) {
-                            resCopy.questions[newQ] = { 'response': String(resCopy.questions[q].response) === String(pageADMs[0]) ? 'Baseline' : String(resCopy.questions[q].response) === String(pageADMs[1]) ? 'Aligned' : 'Misaligned' };
+                            resCopy.questions[newQ] = { 'response': resCopy.questions[q].response === pageADMs[0] ? 'Baseline' : resCopy.questions[q].response === pageADMs[1] ? 'Aligned' : 'Misaligned' };
                         }
                         else {
                             resCopy.questions[newQ] = resCopy.questions[q];
@@ -161,13 +161,13 @@ export function SurveyResults() {
     }
 
     const toggleGeneralizability = (event) => {
-        setGeneralization(String(event.target.value) === 'Alignment');
+        setGeneralization(event.target.value === 'Alignment');
     }
 
     const indexToScenarioName = (index) => {
         if (filterBySurveyVersion === 4 || filterBySurveyVersion === 5) { return index }
-        const currentSurvey = Object.values(surveys).find(survey => Number(survey.version) === filterBySurveyVersion);
-        const matchingPage = currentSurvey?.pages?.find(page => String(page.scenarioIndex) === String(index));
+        const currentSurvey = Object.values(surveys).find(survey => survey.version === filterBySurveyVersion);
+        const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex === index);
         return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
     }
 

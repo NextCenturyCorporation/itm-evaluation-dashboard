@@ -278,7 +278,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
                         }
                     }
                 });
-                if (Number(page['evalNumber']) === 3) {
+                if (page['evalNumber'] === 3) {
                     formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
                     let temp = `${page.highAlignmentData?.alignment_target_id}: ${page.highAlignmentData?.score},\n`
                     temp += `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
@@ -299,7 +299,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
         const dataCopy = structuredClone(excelData);
         for (let pid of Object.keys(dataCopy)) {
             for (let k of Object.keys(dataCopy[pid])) {
-                if (String(dataCopy[pid][k]) === '-') {
+                if (dataCopy[pid][k] === '-') {
                     dataCopy[pid][k] = '';
                 }
             }
@@ -437,7 +437,7 @@ export default function TextBasedResultsPage() {
             for (const result of data.getAllScenarioResultsByEval) {
                 const pid = result['participantID'];
                 const logData = participantLog.getParticipantLog.find(
-                    log => String(log['ParticipantID']) === String(pid) && String(log['Type']) !== 'Test'
+                    log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                 );
                 if ((selectedEval === 4 || selectedEval === 5) && !logData) {
                     continue;

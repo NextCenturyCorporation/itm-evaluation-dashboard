@@ -1354,7 +1354,7 @@ const getAlignmentsByAdmTypeForTA12 = (data, ta1, ta2) => {
                 adms.push(align_adm);
                 admPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_adm, label: admType });
             }
-            if (isDefined(align_target) && align_target != '-') {
+            if (isDefined(align_target) && align_target !== '-') {
                 targets.push(align_target);
                 targetPoints.push({ x: admTypes.indexOf(admType) + (Math.random() * (Math.random() > 0.5 ? -1 : 1) / 10), y: align_target, label: admType });
             }
