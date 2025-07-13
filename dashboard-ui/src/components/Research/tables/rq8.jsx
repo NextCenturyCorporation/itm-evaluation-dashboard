@@ -96,7 +96,7 @@ export function RQ8({ evalNum }) {
                     recorded[pid] = [];
                     // see if participant has completed the open world scenario
                     const openWorld = simData.find(
-                        log => log['pid'] === pid && Boolean(log['openWorld']) === true
+                        log => log['pid'] === pid && log['openWorld'] === true
                     );
                     if (!openWorld) {
                         continue;

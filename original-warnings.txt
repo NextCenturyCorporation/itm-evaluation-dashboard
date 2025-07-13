@@ -15,17 +15,6 @@ If you want to include a polyfill, you need to:
 If you don't want to include a polyfill, you can use an empty module like this:
 	resolve.fallback: { "crypto": false }
 
-src\components\Account\participantProgress.jsx
-  Line 107:49:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
-  Line 120:64:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
-  Line 121:60:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
-  Line 141:63:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
-  Line 142:59:   Expected '!==' and instead saw '!='                                                                                                                                                eqeqeq
-  Line 267:25:   Expected '===' and instead saw '=='                                                                                                                                                eqeqeq
-
-src\components\Research\tables\rq8.jsx
-  Line 99:70:    Expected '===' and instead saw '=='  eqeqeq
-
 Search for the keywords to learn more about each warning.
 To ignore, add // eslint-disable-next-line to the line before.
 
