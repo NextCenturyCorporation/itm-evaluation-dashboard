@@ -84,6 +84,12 @@ export function CalibrationData({ evalNum }) {
 
     const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
+    const attributeMap = React.useMemo(() => ({
+        "MissionSuccess": "Mission",
+        "PerceivedQuantityOfLivesSaved": "VOL",
+        "QualityOfLife": "QOL"
+    }), []);
+
     const openModal = () => {
         setShowDefinitions(true);
     }
@@ -91,6 +97,34 @@ export function CalibrationData({ evalNum }) {
     const closeModal = () => {
         setShowDefinitions(false);
     }
+
+    const expandCalibrationRows = React.useCallback((objs) => {
+        const expandedRows = []
+        objs.forEach(obj => {
+            if (obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']) {
+                try {
+                    const calibrationScores = JSON.parse(obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']);
+
+                    // Create a row for each calibration score
+                    Object.entries(calibrationScores).forEach(([scoreName, scoreValue]) => {
+                        const newRow = { ...obj };
+                        newRow['Attribute'] = attributeMap[scoreName] || scoreName;
+                        newRow['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = scoreValue;
+                        expandedRows.push(newRow);
+                    });
+                }
+                catch (error) {
+                    console.log("error parsing scores")
+                    expandedRows.push(obj);
+                }
+            } else {
+                console.log("No calibration scores found")
+                expandedRows.push(obj)
+            }
+
+        })
+        return expandedRows;
+    }, [attributeMap]);
 
     React.useEffect(() => {
         // reset toggles on render
@@ -177,42 +211,7 @@ export function CalibrationData({ evalNum }) {
             setDelMilFilters([]);
             setSearchPid('');
         }
-    // eslint-disable-next-line
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, janSim]);
-
-    const attributeMap = {
-        "MissionSuccess": "Mission",
-        "PerceivedQuantityOfLivesSaved": "VOL",
-        "QualityOfLife": "QOL"
-    }
-
-    const expandCalibrationRows = (objs) => {
-        const expandedRows = []
-        objs.forEach(obj => {
-            if (obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']) {
-                try {
-                    const calibrationScores = JSON.parse(obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']);
-
-                    // Create a row for each calibration score
-                    Object.entries(calibrationScores).forEach(([scoreName, scoreValue]) => {
-                        const newRow = { ...obj };
-                        newRow['Attribute'] = attributeMap[scoreName] || scoreName;
-                        newRow['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = scoreValue;
-                        expandedRows.push(newRow);
-                    });
-                }
-                catch (error) {
-                    console.log("error parsing scores")
-                    expandedRows.push(obj);
-                }
-            } else {
-                console.log("No calibration scores found")
-                expandedRows.push(obj)
-            }
-
-        })
-        return expandedRows;
-    }
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, janSim, dataSim, expandCalibrationRows]);
 
     const updateJANStatus = (event) => {
         setIncludeJAN(event.target.checked);

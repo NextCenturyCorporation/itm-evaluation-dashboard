@@ -112,18 +112,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [showLegacy, setShowLegacy] = React.useState(false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
-    React.useEffect(() => {
-        if (data) {
-            formatData(data);
-        }
-    // eslint-disable-next-line
-    }, [data, pLog, showLegacy]);
-
-    React.useEffect(() => {
-        if (exploratory)
-            setEvalFilters(evalNumbers);
-    }, [evalNumbers, exploratory]);
-
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
         const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
         // we don't care about servers when it comes to ST. check for DRE server for 5&6, and NOT ph1 server for 4
@@ -140,7 +128,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return basicChecks && ph1Check;
     };
 
-    const formatData = (data) => {
+    const formatData = React.useCallback((data) => {
         const allObjs = [];
         const allEvals = [];
         const allVersions = [];
@@ -398,7 +386,31 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         setHeaders(updatedHeaders);
         setRoles(Array.from(new Set(allRoles)));
         setOrigHeaderSet(updatedHeaders);
-    };
+    }, [pLog, showLegacy, exploratory, comparisonData]);
+
+    const getUsedHeaders = React.useCallback((data) => {
+        const usedHeaders = [];
+        for (let x of origHeaderSet) {
+            for (let datapoint of data) {
+                if (isDefined(datapoint[x])) {
+                    usedHeaders.push(x);
+                    break;
+                }
+            }
+        }
+        return usedHeaders;
+    }, [origHeaderSet]);
+
+    React.useEffect(() => {
+        if (data) {
+            formatData(data);
+        }
+    }, [data, pLog, showLegacy, formatData]);
+
+    React.useEffect(() => {
+        if (exploratory)
+            setEvalFilters(evalNumbers);
+    }, [evalNumbers, exploratory]);
 
     React.useEffect(() => {
         const filtered = formattedData.filter((x) =>
@@ -416,23 +428,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const usedHeaders = getUsedHeaders(filtered);
             setHeaders(usedHeaders);
         }
-    // eslint-disable-next-line
-    }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters]);
 
-
-    const getUsedHeaders = (data) => {
-        const usedHeaders = [];
-        for (let x of origHeaderSet) {
-            for (let datapoint of data) {
-                if (isDefined(datapoint[x])) {
-                    usedHeaders.push(x);
-                    break;
-                }
-            }
-        }
-        return usedHeaders;
-    };
-
+    }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters, getUsedHeaders]);
 
     const refineData = (origData) => {
         // remove unwanted headers from download

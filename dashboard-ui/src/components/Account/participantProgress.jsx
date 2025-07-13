@@ -74,6 +74,34 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return baseOptions;
     };
 
+    const sortData = React.useCallback(() => {
+        if (typeof sortBy !== 'string' || !sortBy) return;
+        const dataCopy = structuredClone(filteredData);
+        const sortKeyMap = {
+            "Participant ID": "Participant ID",
+            "Text Start Time": "Text Start Date-Time",
+            "Sim Count": "Sim Count",
+            "Del Count": "Delegation",
+            "Text Count": "Text"
+        }
+        dataCopy.sort((a, b) => {
+            const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
+            const incOrDec = sortBy.split(' ').slice(-1)[0] === '↑' ? 'i' : 'd';
+            let aVal = a[simpleK];
+            let bVal = b[simpleK];
+            if (simpleK.includes('Date-Time')) {
+                aVal = getDateFromString(aVal);
+                bVal = getDateFromString(bVal);
+            }
+            if (incOrDec === 'i') {
+                return (aVal > bVal) ? 1 : -1;
+            } else {
+                return (aVal < bVal) ? 1 : -1;
+            }
+        });
+        setFilteredData(dataCopy);
+    }, [filteredData, sortBy]);
+
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
             const participantLog = dataParticipantLog.getParticipantLog;
@@ -171,8 +199,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             setTypes(Array.from(new Set(allTypes)));
             setEvals(Array.from(new Set(allEvals)));
         }
-    // eslint-disable-next-line
-    }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults, canViewProlific]);
+    }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults, canViewProlific, sortData]);
 
     const formatCell = (header, dataSet) => {
         const val = dataSet[header];
@@ -270,39 +297,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return -1;
     }
 
-    const sortData = () => {
-        const dataCopy = structuredClone(filteredData);
-        const sortKeyMap = {
-            "Participant ID": "Participant ID",
-            "Text Start Time": "Text Start Date-Time",
-            "Sim Count": "Sim Count",
-            "Del Count": "Delegation",
-            "Text Count": "Text"
-        }
-        dataCopy.sort((a, b) => {
-            const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
-            const incOrDec = sortBy.split(' ').slice(-1)[0] === '↑' ? 'i' : 'd';
-            let aVal = a[simpleK];
-            let bVal = b[simpleK];
-            if (simpleK.includes('Date-Time')) {
-                aVal = getDateFromString(aVal);
-                bVal = getDateFromString(bVal);
-            }
-            if (incOrDec === 'i') {
-                return (aVal > bVal) ? 1 : -1;
-            } else {
-                return (aVal < bVal) ? 1 : -1;
-            }
-        });
-        setFilteredData(dataCopy);
-    };
-
     React.useEffect(() => {
-        if (sortBy) {
+        if (sortBy && filteredData.length > 0) {
             sortData();
         }
-    // eslint-disable-next-line
-    }, [sortBy]);
+    }, [sortBy, sortData, filteredData.length]);
 
     const refreshData = async () => {
         setIsRefreshing(true);

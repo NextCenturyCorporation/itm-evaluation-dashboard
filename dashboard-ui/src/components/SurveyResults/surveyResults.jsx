@@ -51,34 +51,6 @@ export function SurveyResults() {
     const [generalizePages, setGeneralization] = React.useState(true);
     const surveys = useSelector((state) => state.configs.surveyConfigs);
 
-    React.useEffect(() => {
-        if (!data) { return; }
-        getSurveyVersions(data);
-    }, [data]);
-
-    React.useEffect(() => {
-        if (data && filterBySurveyVersion) {
-            setupDataBySurveyVersion(data, filterBySurveyVersion);
-        }
-    // eslint-disable-next-line
-    }, [filterBySurveyVersion, data]);
-
-    React.useEffect(() => {
-        if (filteredData) {
-            filterDataAndSetNames();
-        }
-    // eslint-disable-next-line
-    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
-
-    React.useEffect(() => {
-        // component did mount
-        window.addEventListener('scroll', toggleVisibility);
-        return () => {
-            // component will unmount
-            window.removeEventListener('scroll', toggleVisibility);
-        }
-    }, []);
-
     const toggleVisibility = () => {
         if (window.scrollY > 300) {
             setShowScrollButton(true);
@@ -87,43 +59,7 @@ export function SurveyResults() {
         }
     };
 
-    const filterDataAndSetNames = () => {
-        // removes data that is not in the selected scenario and creates generalized names, if necessary
-        const separatedData = {};
-        for (const result of filteredData) {
-            let obj = result.results ?? result;
-            // filter out bad data 
-            let pid = obj['Participant ID']?.questions['Participant ID']?.response ?? obj['Participant ID Page']?.questions['Participant ID']?.response ?? obj['pid'];
-            if (!pid) {
-                continue;
-            }
-            const logData = dataParticipantLog?.getParticipantLog.find(
-                log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
-            );
-            if ((filterBySurveyVersion === 4 || filterBySurveyVersion === 5) && !logData) {
-                continue;
-            }
-            for (const x of Object.keys(obj)) {
-                const res = obj[x];
-                if (String(res?.scenarioIndex) === String(selectedScenario)) {
-                    let resCopy = structuredClone(res);
-                    const pageNameIndex = resCopy.pageType + '_' + resCopy.pageName;
-                    const generalizedIndex = resCopy.pageType + '_' + resCopy.admAuthor + '_' + resCopy.admAlignment;
-                    const indexBy = (![4, 5].includes(filterBySurveyVersion) || !generalizePages) ? pageNameIndex : generalizedIndex;
-                    resCopy = generalizeNames(resCopy);
-                    if (Object.keys(separatedData).includes(indexBy)) {
-                        separatedData[indexBy].push(resCopy);
-                    } else {
-                        separatedData[indexBy] = [resCopy];
-                    }
-                }
-
-            }
-        }
-        setResultData(separatedData);
-    }
-
-    const generalizeNames = (resCopy) => {
+    const generalizeNames = React.useCallback((resCopy) => {
         if ([4, 5].includes(filterBySurveyVersion) && generalizePages) {
             const admAuthor = resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware');
             const formattedAlignment = resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1);
@@ -158,18 +94,54 @@ export function SurveyResults() {
             resCopy.v4Name = undefined;
         }
         return resCopy;
-    }
+    }, [filterBySurveyVersion, generalizePages]);
+
+    const filterDataAndSetNames = React.useCallback(() => {
+        // removes data that is not in the selected scenario and creates generalized names, if necessary
+        const separatedData = {};
+        for (const result of filteredData) {
+            let obj = result.results ?? result;
+            // filter out bad data 
+            let pid = obj['Participant ID']?.questions['Participant ID']?.response ?? obj['Participant ID Page']?.questions['Participant ID']?.response ?? obj['pid'];
+            if (!pid) {
+                continue;
+            }
+            const logData = dataParticipantLog?.getParticipantLog.find(
+                log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
+            );
+            if ((filterBySurveyVersion === 4 || filterBySurveyVersion === 5) && !logData) {
+                continue;
+            }
+            for (const x of Object.keys(obj)) {
+                const res = obj[x];
+                if (String(res?.scenarioIndex) === String(selectedScenario)) {
+                    let resCopy = structuredClone(res);
+                    const pageNameIndex = resCopy.pageType + '_' + resCopy.pageName;
+                    const generalizedIndex = resCopy.pageType + '_' + resCopy.admAuthor + '_' + resCopy.admAlignment;
+                    const indexBy = (![4, 5].includes(filterBySurveyVersion) || !generalizePages) ? pageNameIndex : generalizedIndex;
+                    resCopy = generalizeNames(resCopy);
+                    if (Object.keys(separatedData).includes(indexBy)) {
+                        separatedData[indexBy].push(resCopy);
+                    } else {
+                        separatedData[indexBy] = [resCopy];
+                    }
+                }
+
+            }
+        }
+        setResultData(separatedData);
+    }, [filteredData, selectedScenario, filterBySurveyVersion, generalizePages, dataParticipantLog, generalizeNames]);
 
     const toggleGeneralizability = (event) => {
         setGeneralization(event.target.value === 'Alignment');
     }
 
-    const indexToScenarioName = (index) => {
+    const indexToScenarioName = React.useCallback((index) => {
         if (filterBySurveyVersion === 4 || filterBySurveyVersion === 5) { return index }
         const currentSurvey = Object.values(surveys).find(survey => survey.version === filterBySurveyVersion);
         const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex === index);
         return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
-    }
+    }, [surveys, filterBySurveyVersion]);
 
     const getSurveyVersions = (data) => {
         let detectedVersions = [];
@@ -187,7 +159,7 @@ export function SurveyResults() {
         setVersions(detectedVersions);
     };
 
-    const setupDataBySurveyVersion = (data, versionFilter) => {
+    const setupDataBySurveyVersion = React.useCallback((data, versionFilter) => {
         // only get data from selected survey version
         const filteredData = data.getAllSurveyResults.filter(result => {
             if (!result.results) { return false; }
@@ -218,7 +190,8 @@ export function SurveyResults() {
         if (Object.keys(scenarios).length > 0) {
             setSelectedScenario("");
         }
-    }
+
+    }, [indexToScenarioName]);
 
     const scrollToTop = () => {
         window.scrollTo({
@@ -227,6 +200,31 @@ export function SurveyResults() {
         });
     };
 
+    React.useEffect(() => {
+        if (!data) { return; }
+        getSurveyVersions(data);
+    }, [data]);
+
+    React.useEffect(() => {
+        if (data && filterBySurveyVersion) {
+            setupDataBySurveyVersion(data, filterBySurveyVersion);
+        }
+    }, [filterBySurveyVersion, data, setupDataBySurveyVersion]);
+
+    React.useEffect(() => {
+        if (filteredData) {
+            filterDataAndSetNames();
+        }
+    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog, filterDataAndSetNames]);
+
+    React.useEffect(() => {
+        // component did mount
+        window.addEventListener('scroll', toggleVisibility);
+        return () => {
+            // component will unmount
+            window.removeEventListener('scroll', toggleVisibility);
+        }
+    }, []);
 
     return <>
         <div className='survey-results-content'>

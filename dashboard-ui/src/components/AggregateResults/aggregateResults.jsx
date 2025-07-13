@@ -489,8 +489,7 @@ export default function AggregateResults({ type }) {
         if (isDefined(v)) {
             if (typeof v === 'string' && v.includes('link:')) {
                 // show View Graph link that opens up iframe
-                // eslint-disable-next-line
-                return <a href="#" onClick={() => showGraph(v.split('link:')[1], dataSet['ParticipantID'] + ' ' + key)}>View Graph</a>
+                return <button onClick={() => showGraph(v.split('link:')[1], dataSet['ParticipantID'] + ' ' + key)}>View Graph</button>
             }
             else if (typeof v === 'number') {
                 // round to 4 decimals when displaying (full value will still show in download)
