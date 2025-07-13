@@ -4,12 +4,14 @@ import XLSX from 'sheetjs-style';
 import mreXlFile from './Variable Definitions/MRE_Variables.xlsx';
 import dreXlFile from './Variable Definitions/DRE_Variables.xlsx';
 import ph1XlFile from './Variable Definitions/PH1_Variables.xlsx'
+import ph2XlFile from './Variable Definitions/PH2_Variables.xlsx'
 
 export function DefinitionTable({ evalNumber }) {
+    console.log(evalNumber)
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const xlFile = evalNumber === 4 ? dreXlFile : evalNumber === 5 ? ph1XlFile : mreXlFile;
+        const xlFile = evalNumber >= 8 ? ph2XlFile : evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
@@ -32,8 +34,8 @@ export function DefinitionTable({ evalNumber }) {
     }, [evalNumber]);
 
     const exportWordDoc = () => {
-        const xlFile = evalNumber === 4 ? dreXlFile : evalNumber === 5 ? ph1XlFile : mreXlFile;
-        FileSaver.saveAs(xlFile, (evalNumber === 3 ? 'mre_' : evalNumber === 4 ? 'dre_' : 'ph1_') + 'Definitions.xlsx');
+        const xlFile = evalNumber >= 8 ? ph2XlFile : evalNumber == 4 ? dreXlFile : evalNumber == 5 ? ph1XlFile : mreXlFile;
+        FileSaver.saveAs(xlFile, (evalNumber == 3 ? 'mre_' : evalNumber == 4 ? 'dre_' : evalNumber == 5 ? 'ph1_' : 'ph2_') + 'Definitions.xlsx');
     };
 
     return (<>

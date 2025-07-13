@@ -7,6 +7,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, Modal, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ134_DRE.xlsx';
 import ph1DefinitionXLFile from '../variables/Variable Definitions RQ134_PH1.xlsx';
+import ph2DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -42,8 +43,9 @@ const GET_SIM_DATA = gql`
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
 
-const HEADERS_DRE = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
-const HEADERS_PH1 = ['Delegator_ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'DRE/Distance Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'DRE/Distance Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'DRE/Distance Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_DRE = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_PH1 = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'DRE/Distance Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'DRE/Distance Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'DRE/Distance Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Delegation (A/HH)', 'Delegation (A/HL)', 'Delegation (A/LH)', 'Delegation (A/LL)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -68,8 +70,10 @@ export function RQ134({ evalNum, tableTitle }) {
     const [scenarios, setScenarios] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [attributes, setAttributes] = React.useState([]);
+    const [probeSetAssessments, setProbeSetAssessments] = React.useState([]);
+    const [probeSetObservations, setProbeSetObservations] = React.useState([]);
     const [admTypes] = React.useState(['baseline', 'aligned', 'comparison']);
-    const [delGrps] = React.useState(['Civilian', 'Military']);
+    const [delGrps] = React.useState(['Online', 'emailParticipant', 'Civilian', 'Military']);
     const [delMils] = React.useState(['yes', 'no']);
     // filter options that have been chosen
     const [ta1Filters, setTA1Filters] = React.useState([]);
@@ -77,6 +81,8 @@ export function RQ134({ evalNum, tableTitle }) {
     const [scenarioFilters, setScenarioFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [attributeFilters, setAttributeFilters] = React.useState([]);
+    const [probeSetAssessmentFilters, setProbeSetAssessmentFilters] = React.useState([]);
+    const [probeSetObservationFilters, setProbeSetObservationFilters] = React.useState([]);
     const [admTypeFilters, setAdmTypeFilters] = React.useState([]);
     const [delGrpFilters, setDelGrpFilters] = React.useState([]);
     const [delMilFilters, setDelMilFilters] = React.useState([]);
@@ -89,7 +95,7 @@ export function RQ134({ evalNum, tableTitle }) {
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
-    
+
     const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
     const openModal = () => {
@@ -108,10 +114,13 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
+        if (evalNum >= 8) {
+            currentHeaders = [...HEADERS_PH2_JUNE_2025];
+        }
         if (!(evalNum === 6 || (evalNum === 5 && includeJAN))) {
             currentHeaders = currentHeaders.filter(header => header !== 'Truncation Error');
         }
-        
+
         setHeaders(currentHeaders);
     }, [evalNum, includeJAN]);
 
@@ -120,7 +129,7 @@ export function RQ134({ evalNum, tableTitle }) {
             dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
             dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
-            
+
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
                     ...obj,
@@ -153,8 +162,8 @@ export function RQ134({ evalNum, tableTitle }) {
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
-                if (Number(a['Delegator_ID']) < Number(b['Delegator_ID'])) return -1;
-                if (Number(a['Delegator_ID']) > Number(b['Delegator_ID'])) return 1;
+                if (Number(a['Delegator ID']) < Number(b['Delegator ID'])) return -1;
+                if (Number(a['Delegator ID']) > Number(b['Delegator ID'])) return 1;
 
                 // if PID is equal, compare trial id
                 return a.Trial_ID - b.Trial_ID;
@@ -165,6 +174,8 @@ export function RQ134({ evalNum, tableTitle }) {
             setTA2s(Array.from(new Set(data.allTA2s)));
             setAttributes(Array.from(new Set(data.allAttributes)));
             setScenarios(Array.from(new Set(data.allScenarios)));
+            setProbeSetAssessments(Array.from(new Set(data.allProbeSetAssessment)))
+            setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
     }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim, janSim, dataSim]);
@@ -195,21 +206,23 @@ export function RQ134({ evalNum, tableTitle }) {
         setDelGrpFilters([]);
         setDelMilFilters([]);
         setSearchPid('');
+        setProbeSetAssessmentFilters([]);
+        setProbeSetObservationFilters([]);
     };
 
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
-        
-        const headersToRemove = [...columnsToHide];
-        if (!shouldShowTruncationError) {
-            headersToRemove.push('Truncation Error');
-        }
-        
+
+        const displayedHeaders = getFilteredHeaders();
+
         updatedData.map((x) => {
-            for (const h of headersToRemove) {
-                delete x[h];
-            }
+            // Remove all headers that are not in the displayed headers list
+            Object.keys(x).forEach(key => {
+                if (!displayedHeaders.includes(key)) {
+                    delete x[key];
+                }
+            });
             return x;
         });
         return updatedData;
@@ -221,15 +234,17 @@ export function RQ134({ evalNum, tableTitle }) {
                 (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
                 (ta2Filters.length === 0 || ta2Filters.includes(x['TA2_Name'])) &&
                 (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (evalNum < 8 || probeSetAssessmentFilters.length === 0 || probeSetAssessmentFilters.includes(x['Probe Set Assessment'])) &&
+                (evalNum < 8 || probeSetObservationFilters.length === 0 || probeSetObservationFilters.includes(x['Probe Set Observation'])) &&
                 (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
                 (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
                 (admTypeFilters.length === 0 || admTypeFilters.includes(x['ADM_Type'])) &&
                 (delGrpFilters.length === 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
                 (delMilFilters.length === 0 || delMilFilters.includes(x['Delegator_mil'])) &&
-                (searchPid.length === 0 || x['Delegator_ID'].includes(searchPid))
+                (searchPid.length === 0 || x['Delegator ID'].includes(searchPid))
             ));
         }
-    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid, probeSetAssessmentFilters, probeSetObservationFilters]);
 
     const getFilteredHeaders = () => {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
@@ -255,51 +270,89 @@ export function RQ134({ evalNum, tableTitle }) {
         <section className='tableHeader'>
             <div className='complexHeader'>
                 <div className="too-many-filters">
-                    <Autocomplete
-                        multiple
-                        options={ta1s}
-                        value={ta1Filters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="TA1"
-                                placeholder=""
+                    {evalNum < 8 && (
+                        <>
+                            <Autocomplete
+                                multiple
+                                options={ta1s}
+                                value={ta1Filters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="TA1"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setTA1Filters(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setTA1Filters(newVal)}
-                    />
-                    <Autocomplete
-                        multiple
-                        options={ta2s}
-                        value={ta2Filters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="TA2"
-                                placeholder=""
+                            <Autocomplete
+                                multiple
+                                options={ta2s}
+                                value={ta2Filters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="TA2"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setTA2Filters(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setTA2Filters(newVal)}
-                    />
-                    <Autocomplete
-                        multiple
-                        options={scenarios}
-                        value={scenarioFilters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Scenarios"
-                                placeholder=""
+                            <Autocomplete
+                                multiple
+                                options={scenarios}
+                                value={scenarioFilters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Scenarios"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setScenarioFilters(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setScenarioFilters(newVal)}
-                    />
+                        </>
+                    )}
+                    {evalNum >= 8 && (
+                        <>
+                            <Autocomplete
+                                multiple
+                                options={probeSetAssessments.sort()}
+                                value={probeSetAssessmentFilters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Probe Set Assessment"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setProbeSetAssessmentFilters(newVal)}
+                            />
+                            <Autocomplete
+                                multiple
+                                options={probeSetObservations.sort()}
+                                value={probeSetObservationFilters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Probe Set Observation"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setProbeSetObservationFilters(newVal)}
+                            />
+                        </>
+                    )}
                     <Autocomplete
                         multiple
                         options={targets}
@@ -397,12 +450,12 @@ export function RQ134({ evalNum, tableTitle }) {
 
             </div>
 
-            <DownloadButtons 
+            <DownloadButtons
                 formattedData={refineData(formattedData)}
-                filteredData={refineData(filteredData)} 
-                HEADERS={getFilteredHeaders()} 
-                fileName={'RQ-134 data'} 
-                extraAction={openModal} 
+                filteredData={refineData(filteredData)}
+                HEADERS={getFilteredHeaders()}
+                fileName={'RQ-134 data'}
+                extraAction={openModal}
             />
 
         </section>
@@ -419,9 +472,9 @@ export function RQ134({ evalNum, tableTitle }) {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Delegator_ID'] + '-' + index}>
+                        return (<tr key={dataSet['Delegator ID'] + '-' + index}>
                             {headers.map((val) => {
-                                return (!columnsToHide.includes(val) && <td key={dataSet['Delegator_ID'] + '-' + val}>
+                                return (!columnsToHide.includes(val) && <td key={dataSet['Delegator ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
                                 </td>);
                             })}
@@ -433,7 +486,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={(evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum >= 8 ? ph2DefinitionXLFile : (evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

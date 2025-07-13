@@ -51,7 +51,13 @@ export function RQDefinitionTable({ xlFile, pdfFile, downloadName }) {
                     {defs.slice(1).map((row, rind) => {
                         return <tr key={'row_' + rind}>{
                             row.map((cell, cind) => {
-                                return <td key={rind + '_' + cind}>{cell.split('\\n').map((p) => <p key={p}>{p}</p>)}</td>;
+                                const cellValue = cell ?? '-';
+                                return <td key={rind + '_' + cind}>
+                                    {typeof cellValue === 'string'
+                                        ? cellValue.split('\\n').map((p) => <p key={p}>{p}</p>)
+                                        : cellValue
+                                    }
+                                </td>;
                             })
                         }
                         </tr>;

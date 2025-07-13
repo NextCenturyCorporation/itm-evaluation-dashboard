@@ -65,8 +65,6 @@ export function PH2RQ2223({ evalNum }) {
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results.alignment_score;
 
-                if (!scenarioName.includes('Random')) continue;
-
                 if (!isDefined(alignment)) continue;
 
                 if (!organized_adms[scenario]) {
@@ -91,12 +89,17 @@ export function PH2RQ2223({ evalNum }) {
                 const scenarioName = organized_adms[scenario].scenarioName;
                 const targets = organized_adms[scenario].targets;
 
+                const isRandom = scenarioName.includes('Random');
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
-                const scenarioSet = setMatch ? `Set ${setMatch[1]}` : 'Full';
+                // exclude full runs (not sets)
+                if (!setMatch) { continue; }
+                const scenarioSet = isRandom
+                        ? `P2June Dynamic Set ${setMatch[1]}`
+                        : `P2June Observation Set ${setMatch[1]}`;
+
 
                 for (const target of Object.keys(targets)) {
                     const entryObj = {};
-
                     const attribute = scenario.includes('MF') && scenario.includes('AF') ? 'AF-MF' :
                         scenario.includes('MF') ? 'MF' :
                             scenario.includes('AF') ? 'AF' :

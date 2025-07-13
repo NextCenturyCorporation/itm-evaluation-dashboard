@@ -14,9 +14,12 @@ export const getDelEnvMapping = (sv) => {
         "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
         "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
         "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-        "ST-1": sv === 4 ? ["qol-dre-1-eval", "vol-dre-1-eval"] : ["qol-ph1-eval-2", "vol-ph1-eval-2"],
-        "ST-2": sv === 4 ? ["qol-dre-2-eval", "vol-dre-2-eval"] : ["qol-ph1-eval-3", "vol-ph1-eval-3"],
-        "ST-3": sv === 4 ? ["qol-dre-3-eval", "vol-dre-3-eval"] : ["qol-ph1-eval-4", "vol-ph1-eval-4"],
+        "ST-1": sv == 4 ? ["qol-dre-1-eval", "vol-dre-1-eval"] : ["qol-ph1-eval-2", "vol-ph1-eval-2"],
+        "ST-2": sv == 4 ? ["qol-dre-2-eval", "vol-dre-2-eval"] : ["qol-ph1-eval-3", "vol-ph1-eval-3"],
+        "ST-3": sv == 4 ? ["qol-dre-3-eval", "vol-dre-3-eval"] : ["qol-ph1-eval-4", "vol-ph1-eval-4"],
+        "PH1-1": ["June2025-AF1-eval", "June2025-MF1-eval", "June2025-SS1-eval","June2025-PS1-eval", "June2025-AF-MF1-eval"],
+        "PH1-2": ["June2025-AF2-eval", "June2025-MF2-eval", "June2025-SS2-eval","June2025-PS2-eval", "June2025-AF-MF2-eval"],
+        "PH1-3": ["June2025-AF3-eval", "June2025-MF3-eval", "June2025-SS3-eval","June2025-PS3-eval", "June2025-AF-MF3-eval"]
     }
 }
 
@@ -36,7 +39,12 @@ export const admOrderMapping = {
     4: [{ "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" },
     { "TA2": "Kitware", "TA1": "ST", "Attribute": "QOL" },
     { "TA2": "Parallax", "TA1": "Adept", "Attribute": "IO" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }]
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" }],
+    5: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "SS" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-MF" }]
 }
 
 export const getKitwareBaselineMapping = (sv) => {

@@ -721,7 +721,7 @@ class SurveyPage extends Component {
                     admName: page?.admName,
                     admAuthor: page?.admAuthor,
                     admAlignment: page?.alignment,
-                    admChoiceProcess: page?.admStatus,
+                    admChoiceProcess: page?.admStatus ?? page?.admChoiceProcess,
                     questions: {}
                 };
 
