@@ -149,10 +149,11 @@ export function ExploratoryAnalysis() {
                 <div className="section-container">
                     <BlockedTable evalNum={selectedEval} />
                 </div>
-
+            {selectedEval > 4 &&
                 <div className="section-container">
                     <CalibrationData evalNum={selectedEval} />
                 </div>
+            }
             </>
         }
     </div>);
