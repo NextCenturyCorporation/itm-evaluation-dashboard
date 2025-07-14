@@ -19,6 +19,7 @@ const PH2_HEADERS = [
     'Attribute',
     'Target',
     'Set',
+    'Probe IDs', 
     'Target_Type (Group/Individual)',
     'Aligned Server Session ID',
     'Aligned ADM Alignment score (ADM|target)',
@@ -57,6 +58,8 @@ export function PH2RQ2223({ evalNum }) {
             const allAttributes = [];
             const allTargets = [];
             const allSets = [];
+            const syntheticMap = {};
+            const probeMap = {};
 
             for (const adm of admData) {
                 const admName = adm.evaluation.adm_name;
@@ -64,6 +67,11 @@ export function PH2RQ2223({ evalNum }) {
                 const scenarioName = adm.evaluation.scenario_name;
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results.alignment_score;
+
+                const mapKey = scenario + "_" + target + "_" + alignment;
+
+                syntheticMap[mapKey] = adm.synthetic;
+                probeMap[mapKey] = adm.probe_ids || [];
 
                 if (!isDefined(alignment)) continue;
 
@@ -100,6 +108,7 @@ export function PH2RQ2223({ evalNum }) {
 
                 for (const target of Object.keys(targets)) {
                     const entryObj = {};
+
                     const attribute = scenario.includes('MF') && scenario.includes('AF') ? 'AF-MF' :
                         scenario.includes('MF') ? 'MF' :
                             scenario.includes('AF') ? 'AF' :
@@ -141,6 +150,39 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Aligned Server Session ID'] = '-';
                     }
 
+                    const mapKey = scenario + "_" + target + "_" + aligned.alignment;
+
+                    const rawProbes = probeMap[mapKey] || [];
+
+                    const formatted = rawProbes.map(raw => {
+                        let attr = entryObj['Attribute'];
+                        let number;
+
+                        if (raw.includes('.Probe')) {
+                            const [prefix, probePart] = raw.split('.Probe');
+                            number = parseInt(probePart.trim());
+
+                            const parts = prefix.split('-');
+                            if (parts.length >= 2) attr = parts[1];
+                            }
+                            else {
+                                const m = raw.match(/Probe\s*(\d+)/);
+                                number = m ? parseInt(m[1]) : NaN;
+                            }
+
+                        return { attr, number };
+                    })
+                    .filter(x => !isNaN(x.number))
+                    .sort((a, b) => {
+                        const cmp = a.attr.localeCompare(b.attr);
+                        if (cmp !== 0) return cmp;
+                        return a.number - b.number;
+                    })
+                    .map(x => `Probe-${x.attr}-${x.number}`)
+                    .join(', ');
+
+                    entryObj['Probe IDs'] = formatted;
+
                     let baseline = null;
                     for (const admName of Object.keys(targets[target])) {
                         if (admName.includes('OutlinesBaseline')) {
@@ -172,6 +214,24 @@ export function PH2RQ2223({ evalNum }) {
                 return a.Trial_ID - b.Trial_ID;
             });
 
+            const extractSetNum = s => {
+               const m = /Set\s+(\d+)$/.exec(s);
+               return m ? parseInt(m[1]) : Number.POSITIVE_INFINITY;
+            };
+            
+            allObjs.sort((a, b) => {
+               if (a.Attribute < b.Attribute) return -1;
+               if (a.Attribute > b.Attribute) return 1;
+        
+               const aNum = extractSetNum(a.Set);
+               const bNum = extractSetNum(b.Set);
+               if (aNum !== bNum) return aNum - bNum;
+
+               if (a.Set < b.Set) return -1;
+               if (a.Set > b.Set) return 1;
+
+               return a.Trial_ID - b.Trial_ID;
+            });
 
             if (allObjs.length > 0) {
                 setFormattedData(allObjs);
@@ -277,11 +337,20 @@ export function PH2RQ2223({ evalNum }) {
                     <tbody>
                         {filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
-                                {PH2_HEADERS.map((val) => (
-                                    <td key={`cell-${index}-${val}`}>
-                                        {dataSet[val] ?? '-'}
+                            {PH2_HEADERS.map((val) => {
+                                if (val === 'Probe IDs') {
+                                return (
+                                    <td key={`cell-${index}-probe`}>
+                                        {dataSet['Probe IDs'] ?? '-'}
                                     </td>
-                                ))}
+                                );
+                                }
+                                return (
+                                <td key={`cell-${index}-${val}`}>
+                                    {dataSet[val] ?? '-'}
+                                </td>
+                                );
+                            })}
                             </tr>
                         ))}
                     </tbody>
