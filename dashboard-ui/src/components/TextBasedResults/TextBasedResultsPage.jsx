@@ -36,7 +36,7 @@ const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAl
 const cleanTitle = (title, scenario) => {
     const foundAttr = p2Attributes.find(attr => scenario && scenario.includes(attr));
     const attrOrScenario = foundAttr || '';
-    const match = title.match(/(\d+)\s*$/);
+    const match = title.match(/(\d+)/);
     const number = match ? match[1] : title;
     return `Probe_${attrOrScenario}_${number}`;
 };
@@ -122,10 +122,10 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
 }
 
 function getQuestionText(qkey, scenario, textBasedConfigs) {
-    console.log(qkey);
-    console.log(scenario);
-    console.log(textBasedConfigs);
-    return qkey;
+    if (qkey === 'Participant ID') { return qkey; }
+    const isTime = qkey.toLowerCase().includes('time (s)');
+    const base = cleanTitle(qkey, scenario);
+    return `${base}${isTime ? '_Time' : '_Resp'}`;
 }
 
 function getQuestionTextLegacy(qkey, scenario, textBasedConfigs) {
@@ -239,7 +239,10 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
-                            return <th key={scenarioName + "_" + key}>{(selectedEval >= 8 ? getQuestionText(key, scenarioName, textBasedConfigs) : getQuestionTextLegacy(key, scenarioName, textBasedConfigs))}</th>
+                            const header = selectedEval >= 8
+                                ? getQuestionText(key, scenarioName, textBasedConfigs)
+                                : getQuestionTextLegacy(key, scenarioName, textBasedConfigs);
+                            return <th key={scenarioName + "_" + key}>{header}</th>;
                         })}
                     </tr>
                 </thead>
