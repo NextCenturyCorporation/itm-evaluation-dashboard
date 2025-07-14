@@ -1,7 +1,6 @@
 /*
  * functions that help with data aggregation
  */
-import { HEADER } from './aggregateHeaders';
 const SIM_MAP = {
     "submarine": 1,
     "jungle": 2,
@@ -1623,10 +1622,10 @@ function populateDataSetP2(data) {
         row['Date'] = new Date(safeGet(res, ['startTime'], ['timeComplete'])).toLocaleDateString();
         // all the same so using first one
         row['Probe Set'] = participant['AF-text-scenario'];
-        row['AF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'affiliation')?.value;
-        row['MF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'merit')?.value;
-        row['PS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'personal_safety')?.value;
-        row['SS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma == 'search')?.value;
+        row['AF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'affiliation')?.value;
+        row['MF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'merit')?.value;
+        row['PS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'personal_safety')?.value;
+        row['SS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'search')?.value;
 
         if (survey) {
             //demographics

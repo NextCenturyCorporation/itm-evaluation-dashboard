@@ -244,7 +244,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 (searchPid.length === 0 || x['Delegator ID'].includes(searchPid))
             ));
         }
-    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid, probeSetAssessmentFilters, probeSetObservationFilters]);
+    }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid, probeSetAssessmentFilters, probeSetObservationFilters, evalNum]);
 
     const getFilteredHeaders = () => {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
@@ -486,7 +486,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum >= 8 ? ph2DefinitionXLFile : (evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum >= 8 ? ph2DefinitionXLFile : (evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
