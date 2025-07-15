@@ -190,7 +190,8 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
                                             headers.push(q);
                                         }
                                         formatted[entry['_id']][q] = entry[key].questions[q].response;
-                                        obj[getQuestionText(q, scenarioName)] = entry[key].questions[q].response;
+                                        const objKey = entry['evalNumber'] >= 8 ? getQuestionText(q, scenarioName) : getQuestionTextLegacy(q, scenarioName, textBasedConfigs)
+                                        obj[objKey] = entry[key].questions[q].response;
                                     }
                                 });
                             }
@@ -215,15 +216,16 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
         const dataCopy = structuredClone(excelData);
-        
+        console.log(dataCopy);
         // Remove '-' from download and match headers to UI
         const transformedData = dataCopy.map(row => {
             const transformedRow = {};
             
             Object.keys(row).forEach(key => {
+                console.log(key);
                 const transformedKey = selectedEval >= 8
                     ? getQuestionText(key, scenarioName)
-                    : getQuestionTextLegacy(key, scenarioName, textBasedConfigs);
+                    : key;
                 
                 const value = row[key] === '-' ? '' : row[key];
                 
