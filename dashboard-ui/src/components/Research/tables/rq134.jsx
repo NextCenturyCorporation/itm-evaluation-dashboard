@@ -327,6 +327,7 @@ export function RQ134({ evalNum, tableTitle }) {
                                 value={probeSetAssessmentFilters}
                                 size="small"
                                 limitTags={2}
+                                getOptionLabel={(option) => String(option)}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
@@ -342,6 +343,7 @@ export function RQ134({ evalNum, tableTitle }) {
                                 value={probeSetObservationFilters}
                                 size="small"
                                 limitTags={2}
+                                getOptionLabel={(option) => String(option)}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
