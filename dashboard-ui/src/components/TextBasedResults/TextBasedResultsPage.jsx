@@ -121,7 +121,7 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
     );
 }
 
-function getQuestionText(qkey, scenario, textBasedConfigs) {
+function getQuestionText(qkey, scenario) {
     if (qkey === 'Participant ID') { return qkey; }
     const isTime = qkey.toLowerCase().includes('time (s)');
     const base = cleanTitle(qkey, scenario);
@@ -152,60 +152,57 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
         const headers = ['Participant ID'];
         const excel = [];
 
-        for (const page of data) {
+        for (const entry of data) {
             const obj = {
-                'Participant ID': page['participantID']
+                'Participant ID': entry['participantID']
             };
-            formatted[page['_id']] = { ...obj };
+            formatted[entry['_id']] = { ...obj };
 
-            // Check if page is defined before using Object.keys
-            if (page) {
-                Object.keys(page).forEach(key => {
+                Object.keys(entry).forEach(key => {
                     if (key === 'alignmentData') {
                         if (!headers.includes('Alignment Data')) {
                             headers.push('Alignment Data')
                         }
-                        if (page[key]) {
+                        if (entry[key]) {
                             let temp = ''
-                            for (const alignment of page[key]) {
+                            for (const alignment of entry[key]) {
                                 temp += `${alignment.target}: ${alignment.score},`
                                 temp += '\n'
                             }
-                            formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                            formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
                             obj['Alignment Data'] = temp;
                         }
                     } else if (!KEYS_WITHOUT_TIME.includes(key)) {
                         // top level pages with timing
                         const time_key = key + ' time (s)';
-                        if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
+                        if (typeof (entry[key]) === 'object' && !Array.isArray(entry[key])) {
                             if (!headers.includes(time_key)) {
                                 headers.push(time_key);
                             }
 
-                            formatted[page['_id']][time_key] = Math.round(page[key]?.['timeSpentOnPage'] * 100) / 100;
-                            obj[time_key] = Math.round(page[key]?.['timeSpentOnPage'] * 100) / 100;
+                            formatted[entry['_id']][time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
+                            obj[time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
 
-                            if (page[key] && page[key].questions) {
-                                Object.keys(page[key].questions).forEach(q => {
-                                    if (page[key].questions[q] && page[key].questions[q].response !== undefined) {
+                            if (entry[key] && entry[key].questions) {
+                                Object.keys(entry[key].questions).forEach(q => {
+                                    if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
                                         if (!headers.includes(q)) {
                                             headers.push(q);
                                         }
-                                        formatted[page['_id']][q] = page[key].questions[q].response;
-                                        obj[getQuestionText(q, scenarioName, textBasedConfigs)] = page[key].questions[q].response;
+                                        formatted[entry['_id']][q] = entry[key].questions[q].response;
+                                        obj[getQuestionText(q, scenarioName)] = entry[key].questions[q].response;
                                     }
                                 });
                             }
                         }
                     }
                 });
-                if (page['evalNumber'] == 3) {
-                    formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
-                    let temp = `${page.highAlignmentData?.alignment_target_id}: ${page.highAlignmentData?.score},\n`
-                    temp += `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
+                if (entry['evalNumber'] === 3) {
+                    formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                    let temp = `${entry.highAlignmentData?.alignment_target_id}: ${entry.highAlignmentData?.score},\n`
+                    temp += `${entry.lowAlignmentData?.alignment_target_id}: ${entry.lowAlignmentData?.score}`
                     obj['Alignment Data'] = temp;
                 }
-            }
             excel.push(obj);
         }
 
@@ -218,14 +215,25 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
         const dataCopy = structuredClone(excelData);
-        for (let pid of Object.keys(dataCopy)) {
-            for (let k of Object.keys(dataCopy[pid])) {
-                if (dataCopy[pid][k] == '-') {
-                    dataCopy[pid][k] = '';
-                }
-            }
-        }
-        const ws = XLSX.utils.json_to_sheet(dataCopy);
+        
+        // Remove '-' from download and match headers to UI
+        const transformedData = dataCopy.map(row => {
+            const transformedRow = {};
+            
+            Object.keys(row).forEach(key => {
+                const transformedKey = selectedEval >= 8
+                    ? getQuestionText(key, scenarioName)
+                    : getQuestionTextLegacy(key, scenarioName, textBasedConfigs);
+                
+                const value = row[key] === '-' ? '' : row[key];
+                
+                transformedRow[transformedKey] = value;
+            });
+            
+            return transformedRow;
+        });
+        
+        const ws = XLSX.utils.json_to_sheet(transformedData);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
@@ -240,7 +248,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
                     <tr>
                         {orderedHeaders.map((key) => {
                             const header = selectedEval >= 8
-                                ? getQuestionText(key, scenarioName, textBasedConfigs)
+                                ? getQuestionText(key, scenarioName)
                                 : getQuestionTextLegacy(key, scenarioName, textBasedConfigs);
                             return <th key={scenarioName + "_" + key}>{header}</th>;
                         })}
@@ -376,7 +384,6 @@ export default function TextBasedResultsPage() {
                         }
                         participants[scenario].push(result);
 
-                        // Process questions in the result
                         for (const k of Object.keys(result)) {
                             if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
                                 continue;
@@ -390,7 +397,7 @@ export default function TextBasedResultsPage() {
                             if (hasProbeQuestion && !tmpResponses[scenario][k]) {
                                 // This is a probe question not in the config, add it
                                 tmpResponses[scenario][k] = {
-                                    question: `${k} - What action would you take?`, // Generic question text
+                                    question: `${k} - What action would you take?`,
                                     total: 0,
                                     originalKey: k
                                 };
@@ -434,11 +441,9 @@ export default function TextBasedResultsPage() {
     }, [data, filteredTextBasedConfigs, participantLog, selectedEval]);
 
     React.useEffect(() => {
-        // only display results concerning the chosen scenario
         if (scenarioChosen && responsesByScenario && responsesByScenario[scenarioChosen]) {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
-                // Check if there's actual data (not just the metadata fields)
                 const hasData = Object.keys(responsesByScenario[scenarioChosen][k])
                     .filter(key => !['question', 'total', 'originalKey'].includes(key))
                     .length > 0;
