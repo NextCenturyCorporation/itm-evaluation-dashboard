@@ -1,6 +1,6 @@
 import React from "react";
 import '../SurveyResults/resultsTable.css';
-import { Autocomplete, TextField } from "@mui/material";
+import { Autocomplete, TextField, Modal } from "@mui/material";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
@@ -74,11 +74,25 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return baseOptions;
     };
 
+    const [popupInfo, setPopupInfo] = React.useState({
+        open: false,
+        pid: null,
+        scenarioId: null
+    });
+
+    const openPopup = (pid, scenarioId) => {
+        setPopupInfo({ open: true, pid, scenarioId});
+    };
+
+    const closePopup = () => {
+        setPopupInfo({ open: false, pid: null, scenarioId: null });
+    };
+
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
             const participantLog = dataParticipantLog.getParticipantLog;
             const surveyResults = dataSurveyResults.getAllSurveyResults;
-            const textResults = dataTextResults.getAllScenarioResults;
+            const textResults = dataTextResults?.getAllScenarioResults || [];
             const simResults = dataSim.getAllSimAlignment;
             const allObjs = [];
             const allTypes = [];
@@ -175,6 +189,25 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     const formatCell = (header, dataSet) => {
         const val = dataSet[header];
+        const scenarioResults = dataTextResults?.getAllScenarioResults || [];
+
+        if (selectedPhase === 'Phase 2' && /^Del-\d+$/.test(header) && val) {
+          const exists = scenarioResults.some(r => r.participantID === dataSet['Participant ID']);
+          if (exists && val.split('-').slice(1, -1).length === 1) { //Ensure we only render buttons for single kdma scenarios
+            console.log(dataSet['Participant ID'] + " " + val);
+            return (
+              <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell'>
+                <button
+                  className="view-adm-btn"
+                  onClick={() => openPopup(dataSet['Participant ID'], val)}
+                >
+                  {val}
+                </button>
+              </td>
+            );
+          }
+        }
+
         const getClassName = (header, val) => {
             if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
@@ -497,5 +530,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 </tbody>
             </table>
         </div>
+        <Modal open={popupInfo.open && selectedPhase === 'Phase 2'} onClose={closePopup}>
+            <div className="adm-popup-body">
+                <button className="close-popup" onClick={closePopup}>x</button>
+            </div>
+        </Modal>
     </>);
 }

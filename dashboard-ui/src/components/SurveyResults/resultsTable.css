@@ -300,3 +300,24 @@
 .lowered-table {
     margin-top: 40px;
 }
+
+.view-adm-btn {
+  display: inline-block;
+  padding: 4px 8px !important;
+  border: 1px solid black !important;
+  border-radius: 4px;
+  background-color: rgb(212, 212, 212);
+  color: black;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: background-color 0.15s ease;
+}
+
+.view-adm-btn:hover {
+  background-color: rgb(204, 204, 204);
+}
+
+.view-adm-btn:active {
+  background-color: darkgrey !important;
+  color: white;
+}
