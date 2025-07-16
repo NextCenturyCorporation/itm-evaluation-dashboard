@@ -38,7 +38,7 @@ const cleanTitle = (title, scenario) => {
     const attrOrScenario = foundAttr || '';
     const match = title.match(/(\d+)/);
     const number = match ? match[1] : title;
-    return `Probe_${attrOrScenario}_${number}`;
+    return `Probe-${attrOrScenario}-${number}`;
 };
 
 const cleanTitleLegacy = (title) => {
@@ -125,7 +125,7 @@ function getQuestionText(qkey, scenario) {
     if (qkey === 'Participant ID') { return qkey; }
     const isTime = qkey.toLowerCase().includes('time (s)');
     const base = cleanTitle(qkey, scenario);
-    return `${base}${isTime ? '_Time' : '_Resp'}`;
+    return `${base}${isTime ? '-Time' : '-Resp'}`;
 }
 
 function getQuestionTextLegacy(qkey, scenario, textBasedConfigs) {
