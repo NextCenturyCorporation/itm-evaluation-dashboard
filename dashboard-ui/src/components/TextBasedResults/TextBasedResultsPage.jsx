@@ -142,7 +142,7 @@ function getQuestionTextLegacy(qkey, scenario, textBasedConfigs) {
 }
 
 
-function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval }) {
+function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, participantBased, scenarioOptions, participantLog }) {
     const [organizedData, setOrganizedData] = React.useState(null);
     const [excelData, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
@@ -158,52 +158,52 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
             };
             formatted[entry['_id']] = { ...obj };
 
-                Object.keys(entry).forEach(key => {
-                    if (key === 'alignmentData') {
-                        if (!headers.includes('Alignment Data')) {
-                            headers.push('Alignment Data')
+            Object.keys(entry).forEach(key => {
+                if (key === 'alignmentData') {
+                    if (!headers.includes('Alignment Data')) {
+                        headers.push('Alignment Data')
+                    }
+                    if (entry[key]) {
+                        let temp = ''
+                        for (const alignment of entry[key]) {
+                            temp += `${alignment.target}: ${alignment.score},`
+                            temp += '\n'
                         }
-                        if (entry[key]) {
-                            let temp = ''
-                            for (const alignment of entry[key]) {
-                                temp += `${alignment.target}: ${alignment.score},`
-                                temp += '\n'
-                            }
-                            formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
-                            obj['Alignment Data'] = temp;
+                        formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                        obj['Alignment Data'] = temp;
+                    }
+                } else if (!KEYS_WITHOUT_TIME.includes(key)) {
+                    // top level pages with timing
+                    const time_key = key + ' time (s)';
+                    if (typeof (entry[key]) === 'object' && !Array.isArray(entry[key])) {
+                        if (!headers.includes(time_key)) {
+                            headers.push(time_key);
                         }
-                    } else if (!KEYS_WITHOUT_TIME.includes(key)) {
-                        // top level pages with timing
-                        const time_key = key + ' time (s)';
-                        if (typeof (entry[key]) === 'object' && !Array.isArray(entry[key])) {
-                            if (!headers.includes(time_key)) {
-                                headers.push(time_key);
-                            }
 
-                            formatted[entry['_id']][time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
-                            obj[time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
+                        formatted[entry['_id']][time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
+                        obj[time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
 
-                            if (entry[key] && entry[key].questions) {
-                                Object.keys(entry[key].questions).forEach(q => {
-                                    if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
-                                        if (!headers.includes(q)) {
-                                            headers.push(q);
-                                        }
-                                        formatted[entry['_id']][q] = entry[key].questions[q].response;
-                                        const objKey = entry['evalNumber'] >= 8 ? getQuestionText(q, scenarioName) : getQuestionTextLegacy(q, scenarioName, textBasedConfigs)
-                                        obj[objKey] = entry[key].questions[q].response;
+                        if (entry[key] && entry[key].questions) {
+                            Object.keys(entry[key].questions).forEach(q => {
+                                if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
+                                    if (!headers.includes(q)) {
+                                        headers.push(q);
                                     }
-                                });
-                            }
+                                    formatted[entry['_id']][q] = entry[key].questions[q].response;
+                                    const objKey = entry['evalNumber'] >= 8 ? getQuestionText(q, scenarioName) : getQuestionTextLegacy(q, scenarioName, textBasedConfigs)
+                                    obj[objKey] = entry[key].questions[q].response;
+                                }
+                            });
                         }
                     }
-                });
-                if (entry['evalNumber'] === 3) {
-                    formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
-                    let temp = `${entry.highAlignmentData?.alignment_target_id}: ${entry.highAlignmentData?.score},\n`
-                    temp += `${entry.lowAlignmentData?.alignment_target_id}: ${entry.lowAlignmentData?.score}`
-                    obj['Alignment Data'] = temp;
                 }
+            });
+            if (entry['evalNumber'] === 3) {
+                formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                let temp = `${entry.highAlignmentData?.alignment_target_id}: ${entry.highAlignmentData?.score},\n`
+                temp += `${entry.lowAlignmentData?.alignment_target_id}: ${entry.lowAlignmentData?.score}`
+                obj['Alignment Data'] = temp;
+            }
             excel.push(obj);
         }
 
@@ -220,21 +220,21 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
         // Remove '-' from download and match headers to UI
         const transformedData = dataCopy.map(row => {
             const transformedRow = {};
-            
+
             Object.keys(row).forEach(key => {
                 console.log(key);
                 const transformedKey = selectedEval >= 8
                     ? getQuestionText(key, scenarioName)
                     : key;
-                
+
                 const value = row[key] === '-' ? '' : row[key];
-                
+
                 transformedRow[transformedKey] = value;
             });
-            
+
             return transformedRow;
         });
-        
+
         const ws = XLSX.utils.json_to_sheet(transformedData);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -242,8 +242,129 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
         FileSaver.saveAs(data, 'text_result_data_' + scenarioName + fileExtension);
     };
 
+    const exportAllToExcel = async (attribute) => {
+        const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+        const fileExtension = '.xlsx';
+
+        const allHeaders = new Set(['Participant ID', 'Eval Number', 'Set']);
+        const participantDataMap = new Map();
+
+        // combine all scenarios
+        for (const scenario of scenarioOptions) {
+            // if attr specific download
+            if (attribute) {
+                const regex = new RegExp(`\\b${attribute}\\d*\\b`, 'i');
+                if (!regex.test(scenario)) continue;
+            }
+            if (participantBased && participantBased[scenario]) {
+                for (const entry of participantBased[scenario]) {
+                    const participantId = entry['participantID'];
+
+                    // make row for pid first time we see it
+                    if (!participantDataMap.has(participantId)) {
+                        participantDataMap.set(participantId, {
+                            'Participant ID': participantId,
+                            'Eval Number': entry['evalNumber']
+                        });
+                    }
+
+                    const participantRow = participantDataMap.get(participantId);
+
+                    Object.keys(entry).forEach(key => {
+                        if (!KEYS_WITHOUT_TIME.includes(key) && key !== '_id' && key !== 'participantID' && key !== 'evalNumber' && key !== 'scenario_id' && key !== 'title') {
+                            const time_key = key + ' time (s)';
+                            if (typeof (entry[key]) === 'object' && !Array.isArray(entry[key])) {
+                                const timeHeader = getQuestionText(time_key, scenario)
+
+                                allHeaders.add(timeHeader);
+                                participantRow[timeHeader] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
+
+                                if (entry[key] && entry[key].questions) {
+                                    Object.keys(entry[key].questions).forEach(q => {
+                                        if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
+                                            const questionHeader = getQuestionText(q, scenario)
+                                            allHeaders.add(questionHeader);
+                                            participantRow[questionHeader] = entry[key].questions[q].response;
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+
+                    // populate set
+                    const logEntry = participantLog?.getParticipantLog?.find(
+                        log => log['ParticipantID'] == participantId
+                    );
+
+                    const setValues = [
+                        logEntry['AF-text-scenario'],
+                        logEntry['MF-text-scenario'],
+                        logEntry['PS-text-scenario'],
+                        logEntry['SS-text-scenario']
+                    ];
+                    const uniqueSetValues = Array.from(new Set(setValues));
+                    participantRow['Set'] = uniqueSetValues.length === 1 ? uniqueSetValues[0] : 'Various';
+
+                }
+            }
+        }
+
+        // all rows have all headers
+        const allData = Array.from(participantDataMap.values()).map(row => {
+            const completeRow = {};
+            for (const header of allHeaders) {
+                completeRow[header] = row[header] || '';
+            }
+            return completeRow;
+        });
+
+        allData.sort((a, b) => {
+            return a['Participant ID'].localeCompare(b['Participant ID'], undefined, { numeric: true, sensitivity: 'base' });
+        });
+
+        const sortedHeaders = [
+            'Participant ID',
+            'Eval Number',
+            'Set',
+            ...Array.from(allHeaders).filter(h => h !== 'Participant ID' && h !== 'Eval Number' && h !== 'Set').sort()
+        ];
+        const ws = XLSX.utils.json_to_sheet(allData, { header: sortedHeaders });
+        const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const data = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(data, `text_result_data_${attribute ? attribute + '_' : ''}all_scenarios_eval${selectedEval}${fileExtension}`);
+    };
+
+    const getScenarioAttribute = scenarioName => (scenarioName.match(/-(AF|MF|PS|SS)\d*-eval/i) || [])[1] || null;
+
     return (<div className="participant-text-results">
-        <button onClick={exportToExcel}>Download Results</button>
+        {selectedEval >= 8 && (
+            <div className="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    {(() => {
+                        const attr = getScenarioAttribute(scenarioName);
+                        if (attr) {
+                            return (
+                                <button onClick={() => exportAllToExcel(attr)} className="me-2 mb-2">
+                                    {`Download All ${attr} Results`}
+                                </button>
+                            );
+                        }
+                        return null;
+                    })()}
+                    <button onClick={exportToExcel} className="mb-2">Download Scenario Results</button>
+                </div>
+                <div>
+                    <button onClick={() => exportAllToExcel()} className=" mb-2">Download All Results</button>
+                </div>
+            </div>
+        )}
+        {selectedEval < 8 && (
+            <div className="mb-2">
+                <button onClick={exportToExcel}>Download Scenario Results</button>
+            </div>
+        )}
         <div className="table-container">
             {organizedData && <table className="itm-table by-participant">
                 <thead>
@@ -268,26 +389,6 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval })
             </table>}
         </div>
     </div>);
-}
-
-function getProbeQuestionsFromData(data, scenario) {
-    const probeQuestions = new Set();
-    
-    for (const result of data) {
-        if ((result.scenario_id || result.title) === scenario) {
-            for (const key of Object.keys(result)) {
-                if (typeof result[key] === 'object' && result[key]?.questions) {
-                    for (const q of Object.keys(result[key].questions)) {
-                        if (q.startsWith('probe ') && result[key].questions[q].response) {
-                            probeQuestions.add(key); 
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    return Array.from(probeQuestions);
 }
 
 export default function TextBasedResultsPage() {
@@ -365,7 +466,7 @@ export default function TextBasedResultsPage() {
                 });
             });
 
-            // Process each result
+
             for (const result of data.getAllScenarioResultsByEval) {
                 const pid = result['participantID'];
                 const logData = participantLog.getParticipantLog.find(
@@ -390,12 +491,12 @@ export default function TextBasedResultsPage() {
                             if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
                                 continue;
                             }
-                            
+
                             // Check if this is a probe question that's not in the config
-                            const hasProbeQuestion = Object.keys(result[k].questions).some(q => 
+                            const hasProbeQuestion = Object.keys(result[k].questions).some(q =>
                                 q.startsWith('probe ') && result[k].questions[q].response
                             );
-                            
+
                             if (hasProbeQuestion && !tmpResponses[scenario][k]) {
                                 // This is a probe question not in the config, add it
                                 tmpResponses[scenario][k] = {
@@ -404,7 +505,7 @@ export default function TextBasedResultsPage() {
                                     originalKey: k
                                 };
                             }
-                            
+
                             for (const q of Object.keys(result[k].questions)) {
                                 if (result[k].questions[q].response) {
                                     const answer = typeof result[k].questions[q].response === 'object'
@@ -413,7 +514,7 @@ export default function TextBasedResultsPage() {
 
                                     // For probe questions, use the page name as the key
                                     const questionKey = q.startsWith('probe ') ? k : q;
-                                    
+
                                     if (tmpResponses[scenario][questionKey]) {
                                         if (tmpResponses[scenario][questionKey][answer] !== undefined) {
                                             tmpResponses[scenario][questionKey][answer] += 1;
@@ -449,7 +550,7 @@ export default function TextBasedResultsPage() {
                 const hasData = Object.keys(responsesByScenario[scenarioChosen][k])
                     .filter(key => !['question', 'total', 'originalKey'].includes(key))
                     .length > 0;
-                
+
                 if (hasData && responsesByScenario[scenarioChosen][k].total > 0) {
                     setResults(responsesByScenario[scenarioChosen]);
                     found = true;
@@ -468,9 +569,8 @@ export default function TextBasedResultsPage() {
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets)
-                    .filter(qkey => questionAnswerSets[qkey].total > 0) // Only show questions with responses
+                    .filter(qkey => questionAnswerSets[qkey].total > 0)
                     .sort((a, b) => {
-                        // Sort probe questions numerically
                         const aMatch = a.match(/Probe (\d+)/);
                         const bMatch = b.match(/Probe (\d+)/);
                         if (aMatch && bMatch) {
@@ -520,9 +620,8 @@ export default function TextBasedResultsPage() {
         return (<div className="chart-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets)
-                    .filter(qkey => questionAnswerSets[qkey].total > 0) // Only show questions with responses
+                    .filter(qkey => questionAnswerSets[qkey].total > 0)
                     .sort((a, b) => {
-                        // Sort probe questions numerically
                         const aMatch = a.match(/Probe (\d+)/);
                         const bMatch = b.match(/Probe (\d+)/);
                         if (aMatch && bMatch) {
@@ -593,7 +692,7 @@ export default function TextBasedResultsPage() {
                         <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
                     </ToggleButtonGroup>
                 </div>
-                {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} selectedEval={selectedEval} /> : <ChartedResultsSection />}
+                {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} selectedEval={selectedEval} participantBased={participantBased} scenarioOptions={scenarioOptions} participantLog={participantLog} /> : <ChartedResultsSection />}
             </div>) : (
             <NoSelection />
         )}
