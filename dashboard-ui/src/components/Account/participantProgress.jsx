@@ -196,7 +196,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         if (selectedPhase === 'Phase 2' && /^Del-\d+$/.test(header) && val) {
           const exists = scenarioResults.some(r => r.participantID === dataSet['Participant ID']);
           if (exists && val.split('-').slice(1, -1).length === 1) { //Ensure we only render buttons for single kdma scenarios
-            console.log(dataSet['Participant ID'] + " " + val);
             return (
               <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell'>
                 <button
@@ -552,6 +551,19 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                     const match = popupInfo.scenarioId.match(/^[^-]+-([A-Z]+)\d+-eval$/);
                     const code = match?.[1] || '';
+                    
+                    const allSurveys = dataSurveyResults.getAllSurveyResults;
+                    const cmpPage = allSurveys.flatMap(s => {
+                        const r = s.results;
+                        if (!r) return [];
+                        const pidMatches = r.pid === popupInfo.pid || r['Participant ID Page']?.questions?.['Participant ID']?.response === popupInfo.pid;
+                        if (!pidMatches) return [];
+                        return Object.values(r).filter(page => page.pageType === 'comparison' && page.scenarioIndex === popupInfo.scenarioId);
+                    })[0];
+
+                    if (!cmpPage) return <p>No comparison page for {popupInfo.scenarioId}</p>;
+                    const { baselineName, baselineTarget, alignedTarget, misalignedTarget } = cmpPage;
+
                     const target = KDMA_MAP[code] || code.toLowerCase();
 
                     const entry = doc.mostLeastAligned.find(o => o.target === target);
@@ -581,7 +593,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                             <div className="adm-info-block-value">{target.replace('_', ' ')}</div>
                         </div>
                         <div className="adm-divider" />
-
                         <div className="aligned-section">
                             <p>
                                 <strong>Most aligned:</strong> {mostKey} <em>({mostScore.toFixed(3)})</em>
@@ -589,6 +600,22 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                             <p>
                                <strong>Least aligned:</strong> {leastKey} <em>({leastScore.toFixed(3)})</em>
                             </p>
+                        </div>
+                        <div className="adm-info-block">
+                            <div className="adm-info-block-label">Baseline Name</div>
+                            <div className="adm-info-block-value">{baselineName}</div>
+                        </div>
+                        <div className="adm-info-block">
+                            <div className="adm-info-block-label">Baseline Target</div>
+                            <div className="adm-info-block-value">{baselineTarget}</div>
+                        </div>
+                        <div className="adm-info-block">
+                            <div className="adm-info-block-label">Aligned Target</div>
+                            <div className="adm-info-block-value">{alignedTarget}</div>
+                        </div>
+                        <div className="adm-info-block">
+                            <div className="adm-info-block-label">Misaligned Target</div>
+                            <div className="adm-info-block-value">{misalignedTarget}</div>
                         </div>
                         </>
                     );
