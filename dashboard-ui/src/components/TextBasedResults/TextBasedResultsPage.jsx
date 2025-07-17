@@ -245,90 +245,78 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
     const exportAllToExcel = async (attribute) => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
-
+    
         const fixedHeaders = ['Participant ID', 'Eval Number', 'Set'];
         const dynamicHeaders = [];
-        const headerSet = new Set(fixedHeaders);
+        const headerMap = new Map();
         const participantDataMap = new Map();
-
-        // combine all scenarios
-        for (const scenario of scenarioOptions) {
-            // if attr specific download
-            if (attribute) {
-                const regex = new RegExp(`\\b${attribute}\\d*\\b`, 'i');
-                if (!regex.test(scenario)) continue;
+    
+        const processProbeData = (entry, pageName, scenario, participantRow) => {
+            const probeData = entry[pageName];
+            if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
+    
+            const time_key = getQuestionText(pageName + ' time (s)', scenario);
+            
+            if (!headerMap.has(time_key)) {
+                headerMap.set(time_key, dynamicHeaders.length);
+                dynamicHeaders.push(time_key);
             }
-            if (participantBased && participantBased[scenario]) {
-                for (const entry of participantBased[scenario]) {
-                    const participantId = entry['participantID'];
-
-                    // make row for pid first time we see it
-                    if (!participantDataMap.has(participantId)) {
-                        participantDataMap.set(participantId, {
-                            'Participant ID': participantId,
-                            'Eval Number': entry['evalNumber']
-                        });
-                    }
-
-                    const participantRow = participantDataMap.get(participantId);
-
-                    Object.keys(entry).forEach(key => {
-                        if (!KEYS_WITHOUT_TIME.includes(key) && key !== '_id' && key !== 'participantID' && key !== 'evalNumber' && key !== 'scenario_id' && key !== 'title') {
-                            const time_key = key + ' time (s)';
-                            if (typeof (entry[key]) === 'object' && !Array.isArray(entry[key])) {
-                                if (!headerSet.has(time_key)) {
-                                    dynamicHeaders.push(time_key);
-                                    headerSet.add(time_key);
-                                }
-                                participantRow[time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
-
-                                if (entry[key] && entry[key].questions) {
-                                    Object.keys(entry[key].questions).forEach(q => {
-                                        if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
-                                            const questionHeader = getQuestionText(q, scenario)
-                                            if (!headerSet.has(questionHeader)) {
-                                                dynamicHeaders.push(questionHeader);
-                                                headerSet.add(questionHeader);
-                                            }
-                                            participantRow[questionHeader] = entry[key].questions[q].response;
-                                        }
-                                    });
-                                }
-                            }
+            participantRow[time_key] = Math.round(probeData.timeSpentOnPage * 100) / 100;
+    
+            if (probeData.questions) {
+                Object.entries(probeData.questions).forEach(([q, qData]) => {
+                    if (qData?.response !== undefined) {
+                        const questionHeader = getQuestionText(q, scenario);
+                        
+                        if (!headerMap.has(questionHeader)) {
+                            headerMap.set(questionHeader, dynamicHeaders.length);
+                            dynamicHeaders.push(questionHeader);
                         }
-                    });
+                        participantRow[questionHeader] = qData.response;
+                    }
+                });
+            }
+        };
+    
+        for (const scenario of scenarioOptions) {
+            if (attribute && !new RegExp(`\\b${attribute}\\d*\\b`, 'i').test(scenario)) continue;
+            
+            const scenarioData = participantBased?.[scenario];
+            if (!scenarioData) continue;
+    
+            const pageOrder = textBasedConfigs[scenario]?.pages?.map(page => page.name) || [];
+            
+            for (const entry of scenarioData) {
+                const participantId = entry.participantID;
+                const participantRow = participantDataMap.get(participantId) || 
+                    participantDataMap.set(participantId, {
+                        'Participant ID': participantId,
+                        'Eval Number': entry.evalNumber
+                    }).get(participantId);
+                
 
-                    // populate set
-                    const logEntry = participantLog?.getParticipantLog?.find(
-                        log => log['ParticipantID'] == participantId
-                    );
-
-                    const setValues = [
-                        logEntry?.['AF-text-scenario'],
-                        logEntry?.['MF-text-scenario'],
-                        logEntry?.['PS-text-scenario'],
-                        logEntry?.['SS-text-scenario']
-                    ];
-                    const uniqueSetValues = Array.from(new Set(setValues));
-                    participantRow['Set'] = uniqueSetValues.length === 1 ? uniqueSetValues[0] : 'Various';
-                }
+                pageOrder.forEach(pageName => processProbeData(entry, pageName, scenario, participantRow));
+                
+                Object.keys(entry)
+                    .filter(key => !KEYS_WITHOUT_TIME.includes(key) && !pageOrder.includes(key))
+                    .forEach(key => processProbeData(entry, key, scenario, participantRow));
+    
+                const logEntry = participantLog?.getParticipantLog?.find(
+                    log => log['ParticipantID'] == participantId
+                );
+    
+                const setValues = ['AF', 'MF', 'PS', 'SS']
+                    .map(attr => logEntry?.[`${attr}-text-scenario`])
+                    .filter(Boolean);
+                
+                participantRow['Set'] = new Set(setValues).size === 1 ? setValues[0] : 'Various';
             }
         }
-
-        // all rows have all headers
         const allHeaders = [...fixedHeaders, ...dynamicHeaders];
-        const allData = Array.from(participantDataMap.values()).map(row => {
-            const completeRow = {};
-            for (const header of allHeaders) {
-                completeRow[header] = row[header] || '';
-            }
-            return completeRow;
-        });
-
-        allData.sort((a, b) => {
-            return a['Participant ID'].localeCompare(b['Participant ID'], undefined, { numeric: true, sensitivity: 'base' });
-        });
-
+        const allData = Array.from(participantDataMap.values())
+            .map(row => allHeaders.reduce((acc, header) => ({ ...acc, [header]: row[header] || '' }), {}))
+            .sort((a, b) => a['Participant ID'].localeCompare(b['Participant ID'], undefined, { numeric: true, sensitivity: 'base' }));
+    
         const ws = XLSX.utils.json_to_sheet(allData, { header: allHeaders });
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
