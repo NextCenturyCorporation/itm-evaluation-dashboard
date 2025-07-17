@@ -246,7 +246,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
 
-        const allHeaders = new Set(['Participant ID', 'Eval Number', 'Set']);
+        const fixedHeaders = ['Participant ID', 'Eval Number', 'Set'];
+        const dynamicHeaders = [];
+        const headerSet = new Set(fixedHeaders);
         const participantDataMap = new Map();
 
         // combine all scenarios
@@ -274,16 +276,20 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                         if (!KEYS_WITHOUT_TIME.includes(key) && key !== '_id' && key !== 'participantID' && key !== 'evalNumber' && key !== 'scenario_id' && key !== 'title') {
                             const time_key = key + ' time (s)';
                             if (typeof (entry[key]) === 'object' && !Array.isArray(entry[key])) {
-                                const timeHeader = getQuestionText(time_key, scenario)
-
-                                allHeaders.add(timeHeader);
-                                participantRow[timeHeader] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
+                                if (!headerSet.has(time_key)) {
+                                    dynamicHeaders.push(time_key);
+                                    headerSet.add(time_key);
+                                }
+                                participantRow[time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
 
                                 if (entry[key] && entry[key].questions) {
                                     Object.keys(entry[key].questions).forEach(q => {
                                         if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
                                             const questionHeader = getQuestionText(q, scenario)
-                                            allHeaders.add(questionHeader);
+                                            if (!headerSet.has(questionHeader)) {
+                                                dynamicHeaders.push(questionHeader);
+                                                headerSet.add(questionHeader);
+                                            }
                                             participantRow[questionHeader] = entry[key].questions[q].response;
                                         }
                                     });
@@ -298,19 +304,19 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                     );
 
                     const setValues = [
-                        logEntry['AF-text-scenario'],
-                        logEntry['MF-text-scenario'],
-                        logEntry['PS-text-scenario'],
-                        logEntry['SS-text-scenario']
+                        logEntry?.['AF-text-scenario'],
+                        logEntry?.['MF-text-scenario'],
+                        logEntry?.['PS-text-scenario'],
+                        logEntry?.['SS-text-scenario']
                     ];
                     const uniqueSetValues = Array.from(new Set(setValues));
                     participantRow['Set'] = uniqueSetValues.length === 1 ? uniqueSetValues[0] : 'Various';
-
                 }
             }
         }
 
         // all rows have all headers
+        const allHeaders = [...fixedHeaders, ...dynamicHeaders];
         const allData = Array.from(participantDataMap.values()).map(row => {
             const completeRow = {};
             for (const header of allHeaders) {
@@ -323,13 +329,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             return a['Participant ID'].localeCompare(b['Participant ID'], undefined, { numeric: true, sensitivity: 'base' });
         });
 
-        const sortedHeaders = [
-            'Participant ID',
-            'Eval Number',
-            'Set',
-            ...Array.from(allHeaders).filter(h => h !== 'Participant ID' && h !== 'Eval Number' && h !== 'Set').sort()
-        ];
-        const ws = XLSX.utils.json_to_sheet(allData, { header: sortedHeaders });
+        const ws = XLSX.utils.json_to_sheet(allData, { header: allHeaders });
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
