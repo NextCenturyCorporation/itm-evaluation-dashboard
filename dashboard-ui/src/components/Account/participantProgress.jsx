@@ -1,5 +1,6 @@
 import React from "react";
 import '../SurveyResults/resultsTable.css';
+import '../../css/admInfo.css';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
@@ -36,6 +37,7 @@ const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evalu
 const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
 export function ParticipantProgressTable({ canViewProlific = false }) {
+    const KDMA_MAP = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search' };
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults, refetch: refetchTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
@@ -532,8 +534,66 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         </div>
         <Modal open={popupInfo.open && selectedPhase === 'Phase 2'} onClose={closePopup}>
             <div className="adm-popup-body">
-                <button className="close-popup" onClick={closePopup}>x</button>
+                <button className="close-popup" onClick={closePopup}>Close</button>
+                <h2>ADM Loading Information</h2>
+                <div className="adm-info-block">
+                    <div className="adm-info-block-label">Participant ID</div>
+                    <div className="adm-info-block-value">{popupInfo.pid}</div>
+                </div>
+                <div className="adm-info-block">
+                    <div className="adm-info-block-label">Scenario ID</div>
+                    <div className="adm-info-block-value">{popupInfo.scenarioId}</div>
+                </div>
+
+                {(() => {
+                    const allScenarios = dataTextResults.getAllScenarioResults;
+                    const doc = allScenarios.find(r => r.participantID === popupInfo.pid);
+                    if (!doc) return <p>No data available.</p>;
+
+                    const match = popupInfo.scenarioId.match(/^[^-]+-([A-Z]+)\d+-eval$/);
+                    const code = match?.[1] || '';
+                    const target = KDMA_MAP[code] || code.toLowerCase();
+
+                    const entry = doc.mostLeastAligned.find(o => o.target === target);
+                    const arr = entry?.response || [];
+                    if (arr.length === 0) return <p>No alignments.</p>;
+
+                    const singleArr = arr.filter(o => {
+                      const key = Object.keys(o)[0];
+                      const lastSeg = key.split('-').pop();
+                      return !lastSeg.includes('_');
+                    });
+
+                    const useArr = singleArr.length ? singleArr : arr; //Fallback that will prevent a runtime warning if the filtered array is empty
+
+                    const mostObj  = useArr[0];
+                    const mostKey  = Object.keys(mostObj)[0];
+                    const mostScore = mostObj[mostKey];
+
+                    const leastObj  = useArr[useArr.length - 1];
+                    const leastKey  = Object.keys(leastObj)[0];
+                    const leastScore = leastObj[leastKey];
+
+                    return (
+                        <>
+                        <div className="adm-info-block">
+                            <div className="adm-info-block-label">Attribute</div>
+                            <div className="adm-info-block-value">{target.replace('_', ' ')}</div>
+                        </div>
+                        <div className="adm-divider" />
+
+                        <div className="aligned-section">
+                            <p>
+                                <strong>Most aligned:</strong> {mostKey} <em>({mostScore.toFixed(3)})</em>
+                            </p>
+                            <p>
+                               <strong>Least aligned:</strong> {leastKey} <em>({leastScore.toFixed(3)})</em>
+                            </p>
+                        </div>
+                        </>
+                    );
+                })()}
             </div>
-        </Modal>
+         </Modal>
     </>);
 }

@@ -1,0 +1,107 @@
+.view-adm-btn {
+  display: inline-block;
+  padding: 4px 8px !important;
+  border: 1px solid black !important;
+  border-radius: 4px;
+  background-color: rgb(212, 212, 212);
+  color: black;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: background-color 0.15s ease;
+}
+
+.view-adm-btn:hover {
+  background-color: rgb(204, 204, 204);
+}
+
+.view-adm-btn:active {
+  background-color: darkgrey !important;
+  color: white;
+}
+
+.adm-popup-body {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 24px 32px;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  max-width: 400px;
+  width: 90%;
+  outline: none;
+  font-family: Arial, sans-serif;
+}
+
+.adm-popup-body h2, 
+.adm-popup-body h4 {
+  margin: 0 0 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.adm-popup-body p {
+  margin: 8px 0;
+  color: #444;
+  line-height: 1.4;
+}
+
+.adm-popup-body p strong {
+  color: #222;
+}
+
+.adm-popup-body em {
+  font-style: normal;
+  color: #666;
+  margin-left: 4px;
+}
+
+.adm-popup-body .close-popup {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #666;
+}
+
+.adm-popup-body .close-popup:hover {
+  color: #000;
+}
+
+.adm-popup-body .adm-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 16px 0;
+}
+
+.adm-popup-body .adm-info-block {
+  margin-bottom: 16px;
+}
+
+.adm-popup-body .adm-info-block-label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.adm-popup-body .adm-info-block-value {
+  font-size: 16px;
+  color: #222;
+}
+
+.adm-popup-body .aligned-section {
+  margin-top: 16px;
+}
+
+.adm-popup-body .aligned-section p {
+  margin: 6px 0;
+}
+
+.adm-popup-body .aligned-section p strong {
+  display: inline-block;
+  width: 100px;
+}
