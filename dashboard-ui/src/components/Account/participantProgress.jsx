@@ -533,17 +533,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         </div>
         <Modal open={popupInfo.open && selectedPhase === 'Phase 2'} onClose={closePopup}>
             <div className="adm-popup-body">
-                <button className="close-popup" onClick={closePopup}>Close</button>
-                <h2>ADM Loading Information</h2>
-                <div className="adm-info-block">
-                    <div className="adm-info-block-label">Participant ID</div>
-                    <div className="adm-info-block-value">{popupInfo.pid}</div>
-                </div>
-                <div className="adm-info-block">
-                    <div className="adm-info-block-label">Scenario ID</div>
-                    <div className="adm-info-block-value">{popupInfo.scenarioId}</div>
-                </div>
-
                 {(() => {
                     const allScenarios = dataTextResults.getAllScenarioResults;
                     const doc = allScenarios.find(r => r.participantID === popupInfo.pid);
@@ -551,76 +540,131 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
                     const match = popupInfo.scenarioId.match(/^[^-]+-([A-Z]+)\d+-eval$/);
                     const code = match?.[1] || '';
-                    
+
                     const allSurveys = dataSurveyResults.getAllSurveyResults;
                     const cmpPage = allSurveys.flatMap(s => {
-                        const r = s.results;
-                        if (!r) return [];
-                        const pidMatches = r.pid === popupInfo.pid || r['Participant ID Page']?.questions?.['Participant ID']?.response === popupInfo.pid;
-                        if (!pidMatches) return [];
-                        return Object.values(r).filter(page => page.pageType === 'comparison' && page.scenarioIndex === popupInfo.scenarioId);
+                    const r = s.results;
+                    if (!r) return [];
+                    const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
+                    if (!pidMatches) return [];
+                    return Object.values(r).filter(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
                     })[0];
-
+                
                     if (!cmpPage) return <p>No comparison page for {popupInfo.scenarioId}</p>;
+
                     const { baselineName, baselineTarget, alignedTarget, misalignedTarget } = cmpPage;
-
                     const target = KDMA_MAP[code] || code.toLowerCase();
-
-                    const entry = doc.mostLeastAligned.find(o => o.target === target);
-                    const arr = entry?.response || [];
+                    const entry = doc.mostLeastAligned.find(o => o.target === target) || {};
+                    const arr = entry.response || [];
+                    
                     if (arr.length === 0) return <p>No alignments.</p>;
 
                     const singleArr = arr.filter(o => {
-                      const key = Object.keys(o)[0];
-                      const lastSeg = key.split('-').pop();
-                      return !lastSeg.includes('_');
+                        const key = Object.keys(o)[0];
+                        return !key.split("-").pop().includes("_");
                     });
 
-                    const useArr = singleArr.length ? singleArr : arr; //Fallback that will prevent a runtime warning if the filtered array is empty
-
-                    const mostObj  = useArr[0];
-                    const mostKey  = Object.keys(mostObj)[0];
+                    const useArr = singleArr.length ? singleArr : arr;
+                    const mostObj = useArr[0];
+                    const leastObj = useArr[useArr.length - 1];
+                    const mostKey = Object.keys(mostObj)[0];
                     const mostScore = mostObj[mostKey];
-
-                    const leastObj  = useArr[useArr.length - 1];
-                    const leastKey  = Object.keys(leastObj)[0];
+                    const leastKey = Object.keys(leastObj)[0];
                     const leastScore = leastObj[leastKey];
+                
+                    const surveyDoc = allSurveys.find(s => {
+                        const r = s.results;
+                        if (!r) return false;
+                        const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
+                        if (!pidMatches) return false;
+                        return Object.values(r).some(p => p?.pageType === "comparison" && p?.scenarioIndex === popupInfo.scenarioId);
+                    });
+
+                    const medicIds = cmpPage.pageName.split(" vs ");
+                    let alignedName = "-";
+                    let misalignedName = "-";
+                    medicIds.forEach(id => {
+                        const singlePage = surveyDoc?.results?.[id];
+                        if (singlePage?.pageType === "singleMedic") {
+                            if (singlePage.admAlignment === "aligned") alignedName = singlePage.admName;
+                            if (singlePage.admAlignment === "misaligned") misalignedName = singlePage.admName;
+                        }
+                    });
 
                     return (
                         <>
-                        <div className="adm-info-block">
-                            <div className="adm-info-block-label">Attribute</div>
-                            <div className="adm-info-block-value">{target.replace('_', ' ')}</div>
+                        <div className="adm-header">
+                            <h2>ADM Information</h2>
+                            <button className="close-popup" onClick={closePopup}>Close</button>
                         </div>
-                        <div className="adm-divider" />
-                        <div className="aligned-section">
-                            <p>
-                                <strong>Most aligned:</strong> {mostKey} <em>({mostScore.toFixed(3)})</em>
-                            </p>
-                            <p>
-                               <strong>Least aligned:</strong> {leastKey} <em>({leastScore.toFixed(3)})</em>
-                            </p>
+
+                        <div className="adm-popup-content">
+                            <div className="adm-left">
+                                <div className="adm-info-block">
+                                    <div className="adm-info-block-label">Participant ID</div>
+                                    <div className="adm-info-block-value">{popupInfo.pid}</div>
+                                </div>
+                                <div className="adm-info-block">
+                                    <div className="adm-info-block-label">Scenario ID</div>
+                                    <div className="adm-info-block-value">{popupInfo.scenarioId}</div>
+                                </div>
+                                <div className="adm-info-block">
+                                    <div className="adm-info-block-label">Attribute</div>
+                                    <div className="adm-info-block-value">
+                                        {target.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
+                                    </div>
+                                </div>
+                                <div className="adm-info-block">
+                                    <div className="adm-info-block-label">Most Aligned</div>
+                                    <div className="adm-info-block-value">
+                                        {mostKey} ({mostScore.toFixed(3)})
+                                    </div>
+                                </div>
+                                <div className="adm-info-block">
+                                    <div className="adm-info-block-label">Least Aligned</div>
+                                    <div className="adm-info-block-value">
+                                        {leastKey} ({leastScore.toFixed(3)})
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="adm-right">
+                                <table>
+                                    <colgroup>
+                                        <col style={{ width:'14%' }}/>
+                                        <col style={{ width:'50%' }}/>
+                                        <col style={{ width:'36%' }}/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>ADM Name</th>
+                                            <th>Target</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Baseline</td>
+                                            <td>{baselineName || "-"}</td>
+                                            <td>{baselineTarget || "-"}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Aligned</td>
+                                            <td>{alignedName || "-"}</td>
+                                            <td>{alignedTarget || "-"}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Misaligned</td>
+                                            <td>{misalignedName || "-"}</td>
+                                            <td>{misalignedTarget || "-"}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div className="adm-info-block">
-                            <div className="adm-info-block-label">Baseline Name</div>
-                            <div className="adm-info-block-value">{baselineName}</div>
-                        </div>
-                        <div className="adm-info-block">
-                            <div className="adm-info-block-label">Baseline Target</div>
-                            <div className="adm-info-block-value">{baselineTarget}</div>
-                        </div>
-                        <div className="adm-info-block">
-                            <div className="adm-info-block-label">Aligned Target</div>
-                            <div className="adm-info-block-value">{alignedTarget}</div>
-                        </div>
-                        <div className="adm-info-block">
-                            <div className="adm-info-block-label">Misaligned Target</div>
-                            <div className="adm-info-block-value">{misalignedTarget}</div>
-                        </div>
-                        </>
-                    );
-                })()}
+                    </>
+                );})()}
             </div>
-         </Modal>
+        </Modal>
     </>);
 }
