@@ -212,41 +212,13 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         setExcelData(excel);
     }, [data, scenarioName, textBasedConfigs]);
 
-    const exportToExcel = async () => {
+    const exportToExcel = async (allScenarios = false, attribute = null, singleScenario = null) => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
-        const dataCopy = structuredClone(excelData);
-        console.log(dataCopy);
-        // Remove '-' from download and match headers to UI
-        const transformedData = dataCopy.map(row => {
-            const transformedRow = {};
-
-            Object.keys(row).forEach(key => {
-                console.log(key);
-                const transformedKey = selectedEval >= 8
-                    ? getQuestionText(key, scenarioName)
-                    : key;
-
-                const value = row[key] === '-' ? '' : row[key];
-
-                transformedRow[transformedKey] = value;
-            });
-
-            return transformedRow;
-        });
-
-        const ws = XLSX.utils.json_to_sheet(transformedData);
-        const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'text_result_data_' + scenarioName + fileExtension);
-    };
-
-    const exportAllToExcel = async (attribute) => {
-        const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-        const fileExtension = '.xlsx';
-    
-        const fixedHeaders = ['Participant ID', 'Eval Number', 'Set'];
+        
+        const fixedHeaders = allScenarios 
+            ? ['Participant ID', 'Eval Number', 'Set']
+            : ['Participant ID'];
         const dynamicHeaders = [];
         const headerMap = new Map();
         const participantDataMap = new Map();
@@ -256,7 +228,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
     
             const time_key = getQuestionText(pageName + ' time (s)', scenario);
-            
+    
             if (!headerMap.has(time_key)) {
                 headerMap.set(time_key, dynamicHeaders.length);
                 dynamicHeaders.push(time_key);
@@ -267,7 +239,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 Object.entries(probeData.questions).forEach(([q, qData]) => {
                     if (qData?.response !== undefined) {
                         const questionHeader = getQuestionText(q, scenario);
-                        
+    
                         if (!headerMap.has(questionHeader)) {
                             headerMap.set(questionHeader, dynamicHeaders.length);
                             dynamicHeaders.push(questionHeader);
@@ -278,29 +250,25 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             }
         };
     
-        for (const scenario of scenarioOptions) {
-            if (attribute && !new RegExp(`\\b${attribute}\\d*\\b`, 'i').test(scenario)) continue;
-            
-            const scenarioData = participantBased?.[scenario];
-            if (!scenarioData) continue;
+        const processEntry = (entry, scenario) => {
+            const participantId = entry.participantID;
+            const participantRow = participantDataMap.get(participantId) || 
+                participantDataMap.set(participantId, {
+                    'Participant ID': participantId,
+                    ...(allScenarios && { 'Eval Number': entry.evalNumber })
+                }).get(participantId);
     
             const pageOrder = textBasedConfigs[scenario]?.pages?.map(page => page.name) || [];
             
-            for (const entry of scenarioData) {
-                const participantId = entry.participantID;
-                const participantRow = participantDataMap.get(participantId) || 
-                    participantDataMap.set(participantId, {
-                        'Participant ID': participantId,
-                        'Eval Number': entry.evalNumber
-                    }).get(participantId);
-                
-
-                pageOrder.forEach(pageName => processProbeData(entry, pageName, scenario, participantRow));
-                
-                Object.keys(entry)
-                    .filter(key => !KEYS_WITHOUT_TIME.includes(key) && !pageOrder.includes(key))
-                    .forEach(key => processProbeData(entry, key, scenario, participantRow));
+            // use order from config to determine headers
+            pageOrder.forEach(pageName => processProbeData(entry, pageName, scenario, participantRow));
+            
+            // if not in config
+            Object.keys(entry)
+                .filter(key => !KEYS_WITHOUT_TIME.includes(key) && !pageOrder.includes(key))
+                .forEach(key => processProbeData(entry, key, scenario, participantRow));
     
+            if (allScenarios) {
                 const logEntry = participantLog?.getParticipantLog?.find(
                     log => log['ParticipantID'] == participantId
                 );
@@ -308,10 +276,26 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 const setValues = ['AF', 'MF', 'PS', 'SS']
                     .map(attr => logEntry?.[`${attr}-text-scenario`])
                     .filter(Boolean);
-                
+    
                 participantRow['Set'] = new Set(setValues).size === 1 ? setValues[0] : 'Various';
             }
+        };
+    
+        const scenariosToProcess = allScenarios 
+            ? scenarioOptions.filter(scenario => 
+                !attribute || new RegExp(`\\b${attribute}\\d*\\b`, 'i').test(scenario)
+              )
+            : [singleScenario];
+    
+        for (const scenario of scenariosToProcess) {
+            const scenarioData = participantBased?.[scenario];
+            if (!scenarioData) continue;
+    
+            for (const entry of scenarioData) {
+                processEntry(entry, scenario);
+            }
         }
+    
         const allHeaders = [...fixedHeaders, ...dynamicHeaders];
         const allData = Array.from(participantDataMap.values())
             .map(row => allHeaders.reduce((acc, header) => ({ ...acc, [header]: row[header] || '' }), {}))
@@ -321,7 +305,12 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, `text_result_data_${attribute ? attribute + '_' : ''}all_scenarios_eval${selectedEval}${fileExtension}`);
+        
+        const filename = allScenarios
+            ? `text_result_data_${attribute ? attribute + '_' : ''}all_scenarios_eval${selectedEval}${fileExtension}`
+            : `text_result_data_${singleScenario}${fileExtension}`;
+        
+        FileSaver.saveAs(data, filename);
     };
 
     const getScenarioAttribute = scenarioName => (scenarioName.match(/-(AF|MF|PS|SS)\d*-eval/i) || [])[1] || null;
@@ -334,17 +323,17 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                         const attr = getScenarioAttribute(scenarioName);
                         if (attr) {
                             return (
-                                <button onClick={() => exportAllToExcel(attr)} className="me-2 mb-2">
+                                <button onClick={() => exportToExcel(true, attr)} className="me-2 mb-2">
                                     {`Download All ${attr} Results`}
                                 </button>
                             );
                         }
                         return null;
                     })()}
-                    <button onClick={exportToExcel} className="mb-2">Download Scenario Results</button>
+                    <button onClick={() => exportToExcel(false, null, scenarioName)} className="mb-2">Download Scenario Results</button>
                 </div>
                 <div>
-                    <button onClick={() => exportAllToExcel()} className=" mb-2">Download All Results</button>
+                    <button onClick={() => exportToExcel(true)} className=" mb-2">Download All Results</button>
                 </div>
             </div>
         )}
