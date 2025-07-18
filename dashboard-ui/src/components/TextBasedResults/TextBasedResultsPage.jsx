@@ -215,31 +215,49 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
     const exportToExcel = async () => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
-        const dataCopy = structuredClone(excelData);
-        console.log(dataCopy);
-        // Remove '-' from download and match headers to UI
-        const transformedData = dataCopy.map(row => {
-            const transformedRow = {};
-
-            Object.keys(row).forEach(key => {
-                console.log(key);
-                const transformedKey = selectedEval >= 8
-                    ? getQuestionText(key, scenarioName)
-                    : key;
-
-                const value = row[key] === '-' ? '' : row[key];
-
-                transformedRow[transformedKey] = value;
+        
+        const pageOrder = textBasedConfigs[scenarioName]?.pages?.map(page => page.name) || [];
+        const headers = ['Participant ID'];
+        const headerSet = new Set(headers);
+        
+        pageOrder.forEach(pageName => {
+            const timeKey = pageName + ' time (s)';
+            if (excelData.some(row => row[timeKey] !== undefined)) {
+                headers.push(timeKey);
+                headerSet.add(timeKey);
+            }
+            
+            data.forEach(entry => {
+                if (entry[pageName]?.questions) {
+                    Object.keys(entry[pageName].questions).forEach(q => {
+                        if (!headerSet.has(q) && excelData.some(row => row[q] !== undefined)) {
+                            headers.push(q);
+                            headerSet.add(q);
+                        }
+                    });
+                }
             });
-
-            return transformedRow;
         });
-
+        
+        Object.keys(excelData[0] || {}).forEach(key => {
+            if (!headerSet.has(key)) {
+                headers.push(key);
+            }
+        });
+        
+        const transformedData = excelData.map(row => 
+            headers.reduce((acc, h) => {
+                const key = h === 'Participant ID' ? h : (selectedEval >= 8 ? getQuestionText(h, scenarioName) : h);
+                acc[key] = row[h] === '-' ? '' : (row[h] ?? '');
+                return acc;
+            }, {})
+        );
+        
         const ws = XLSX.utils.json_to_sheet(transformedData);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'text_result_data_' + scenarioName + fileExtension);
+        const blob = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(blob, 'text_result_data_' + scenarioName + fileExtension);
     };
 
     const exportAllToExcel = async (attribute) => {
