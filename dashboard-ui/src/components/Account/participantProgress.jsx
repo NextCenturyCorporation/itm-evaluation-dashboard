@@ -138,22 +138,25 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     && x.results?.['Post-Scenario Measures']);
                 const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid == pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response == pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
-                const survey_start_date = lastSurvey ? new Date(lastSurvey?.results?.startTime) : new Date(incompleteSurveys?.slice(-1)?.[0]?.results?.startTime);
+                const lastIncompleteSurvey = incompleteSurveys?.slice(-1)?.[0];
+                const survey_start_date = lastSurvey ? new Date(lastSurvey?.results?.startTime) : new Date(lastIncompleteSurvey?.results?.startTime);
                 const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
                 obj['Del Start Date-Time'] = survey_start_date != 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Del End Date-Time'] = survey_end_date != 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                obj['Delegation'] = surveys.length;
-                const delScenarios = lastSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
+                const delScenarios = lastIncompleteSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
                 if (delScenarios) {
-                    obj['Del-1'] = lastSurvey?.results?.[delScenarios[0]]?.scenarioIndex;
-                    obj['Del-2'] = lastSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
-                    obj['Del-3'] = lastSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
-                    obj['Del-4'] = lastSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
+                    obj['Del-1'] = lastIncompleteSurvey?.results?.[delScenarios[0]]?.scenarioIndex;
+                    obj['Del-2'] = lastIncompleteSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
+                    obj['Del-3'] = lastIncompleteSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
+                    obj['Del-4'] = lastIncompleteSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
                     if (delScenarios.length > 4) {
-                        obj['Del-5'] = lastSurvey?.results?.[delScenarios[4]]?.scenarioIndex;
+                        obj['Del-5'] = lastIncompleteSurvey?.results?.[delScenarios[4]]?.scenarioIndex;
                     }
                 }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
+
+                const delKeys = ['Del-1','Del-2','Del-3','Del-4','Del-5'];
+                obj['Delegation'] = delKeys.filter(key => !!obj[key]).length;
 
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName ?? lastSurvey?.results?.evalName;
 
@@ -222,7 +225,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             }
             // phase dependent
             const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-            if ((header == 'Delegation' && val == 1) ||
+            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+            if ((header == 'Delegation' && val >= delThreshold) ||
                 (header == 'Text' && val >= textThreshold) ||
                 (header == 'Sim Count' && val == 4)) {
                 return 'dk-green-cell';
