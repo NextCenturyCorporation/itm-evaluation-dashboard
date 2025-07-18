@@ -9,6 +9,7 @@ import { isDefined } from "../AggregateResults/DataFunctions";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
+import { determineChoiceProcessJune2025 } from '../Research/utils';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -36,6 +37,12 @@ const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Eva
 const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
+function formatLoading(val) {
+  if (val === 'exemption')  return 'Exemption';
+  if (val === 'most aligned' || val === 'least aligned') return 'Normal';
+  return val;
+}
+
 export function ParticipantProgressTable({ canViewProlific = false }) {
     const KDMA_MAP = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search' };
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
@@ -43,7 +50,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults, refetch: refetchTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingSim, error: errorSim, data: dataSim, refetch: refetchSimData } = useQuery(GET_SIM_DATA);
     const [formattedData, setFormattedData] = React.useState([]);
-    const [types, setTypes] = React.useState([]);
+    const [, setTypes] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
     const [typeFilters, setTypeFilters] = React.useState([]);
     const [evalFilters, setEvalFilters] = React.useState([]);
@@ -542,13 +549,17 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     const code = match?.[1] || '';
 
                     const allSurveys = dataSurveyResults.getAllSurveyResults;
-                    const cmpPage = allSurveys.flatMap(s => {
-                    const r = s.results;
-                    if (!r) return [];
-                    const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
-                    if (!pidMatches) return [];
-                    return Object.values(r).filter(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
-                    })[0];
+
+                    const surveyEntry = allSurveys.find(s => {
+                        const r = s.results;
+                        if (!r) return false;
+                        const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
+                        return pidMatches && Object.values(r).some(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
+                    });
+
+                    if (!surveyEntry) return <p>No data available.</p>;
+
+                    const cmpPage = Object.values(surveyEntry.results).find(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
                 
                     if (!cmpPage) return <p>No comparison page for {popupInfo.scenarioId}</p>;
 
@@ -564,24 +575,22 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                         return !key.split("-").pop().includes("_");
                     });
                 
-                    const surveyDoc = allSurveys.find(s => {
-                        const r = s.results;
-                        if (!r) return false;
-                        const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
-                        if (!pidMatches) return false;
-                        return Object.values(r).some(p => p?.pageType === "comparison" && p?.scenarioIndex === popupInfo.scenarioId);
-                    });
-
                     const medicIds = cmpPage.pageName.split(" vs ");
                     let alignedName = "-";
                     let misalignedName = "-";
                     medicIds.forEach(id => {
-                        const singlePage = surveyDoc?.results?.[id];
+                        const singlePage = surveyEntry?.results?.[id];
                         if (singlePage?.pageType === "singleMedic") {
                             if (singlePage.admAlignment === "aligned") alignedName = singlePage.admName;
                             if (singlePage.admAlignment === "misaligned") misalignedName = singlePage.admName;
                         }
                     });
+
+                    const alignedPage = surveyEntry.results[medicIds.find(id => surveyEntry.results[id]?.admAlignment === "aligned")];
+                    const misalignedPage = surveyEntry.results[medicIds.find(id => surveyEntry.results[id]?.admAlignment === "misaligned")];
+
+                    const alignedLoading = alignedPage ? determineChoiceProcessJune2025([doc], alignedPage, "aligned") : "N/A";
+                    const misalignedLoading = misalignedPage ? determineChoiceProcessJune2025([doc], misalignedPage, "misaligned") : "N/A";
 
                     return (
                         <>
@@ -613,7 +622,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                                             const score = o[key];
                                             return (
                                                 <div key={key}> {idx === 0 && (
-                                                    <><span className="adm-info-block-label" style={{ marginBottom: '0.75rem' }}>All Alignments</span>
+                                                    <><span className="adm-info-block-label" style={{ marginBottom: '0.75rem' }}>All Alignments (Highest to Lowest)</span>
                                                         <br/>
                                                     </>
                                                     )}
@@ -627,32 +636,37 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                             <div className="adm-right">
                                 <table>
                                     <colgroup>
-                                        <col style={{ width:'14%' }}/>
-                                        <col style={{ width:'50%' }}/>
-                                        <col style={{ width:'36%' }}/>
+                                        <col style={{ width: '14%' }}/>
+                                        <col style={{ width: '48%' }}/>
+                                        <col style={{ width: '22%' }}/>
+                                        <col style={{ width: '15%' }}/>
                                     </colgroup>
                                     <thead>
                                         <tr>
                                             <th>Type</th>
                                             <th>ADM Name</th>
                                             <th>Target</th>
+                                            <th>ADM Loading</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td>Baseline</td>
                                             <td>{baselineName || "-"}</td>
-                                            <td>{"N/A"}</td>
+                                            <td>N/A</td>
+                                            <td>N/A</td>
                                         </tr>
                                         <tr>
                                             <td>Aligned</td>
                                             <td>{alignedName || "-"}</td>
                                             <td>{alignedTarget || "-"}</td>
+                                            <td>{formatLoading(alignedLoading)}</td>
                                         </tr>
                                         <tr>
                                             <td>Misaligned</td>
                                             <td>{misalignedName || "-"}</td>
                                             <td>{misalignedTarget || "-"}</td>
+                                            <td>{formatLoading(misalignedLoading)}</td>
                                         </tr>
                                     </tbody>
                                 </table>

@@ -104,8 +104,9 @@
 }
 
 .adm-right col:nth-child(1) { width: 14%; }
-.adm-right col:nth-child(2) { width: 50%; }
-.adm-right col:nth-child(3) { width: 36%; }
+.adm-right col:nth-child(2) { width: 48%; }
+.adm-right col:nth-child(3) { width: 22%; }
+.adm-right col:nth-child(4) { width: 16%; }
 
 .adm-right th,
 .adm-right td {
