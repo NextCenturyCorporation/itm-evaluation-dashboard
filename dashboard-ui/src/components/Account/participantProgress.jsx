@@ -193,7 +193,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         const val = dataSet[header];
         const scenarioResults = dataTextResults?.getAllScenarioResults || [];
 
-        if (selectedPhase === 'Phase 2' && /^Del-\d+$/.test(header) && val) {
+        if (selectedPhase === 'Phase 2' && /^Del-\d+$/.test(header) && val && dataSet['Delegation'] > 0) {
           const exists = scenarioResults.some(r => r.participantID === dataSet['Participant ID']);
           if (exists && val.split('-').slice(1, -1).length === 1) { //Ensure we only render buttons for single kdma scenarios
             return (
@@ -552,25 +552,17 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 
                     if (!cmpPage) return <p>No comparison page for {popupInfo.scenarioId}</p>;
 
-                    const { baselineName, baselineTarget, alignedTarget, misalignedTarget } = cmpPage;
+                    const { baselineName, alignedTarget, misalignedTarget } = cmpPage;
                     const target = KDMA_MAP[code] || code.toLowerCase();
                     const entry = doc.mostLeastAligned.find(o => o.target === target) || {};
                     const arr = entry.response || [];
                     
                     if (arr.length === 0) return <p>No alignments.</p>;
 
-                    const singleArr = arr.filter(o => {
+                    const filteredArr = arr.filter(o => {
                         const key = Object.keys(o)[0];
                         return !key.split("-").pop().includes("_");
                     });
-
-                    const useArr = singleArr.length ? singleArr : arr;
-                    const mostObj = useArr[0];
-                    const leastObj = useArr[useArr.length - 1];
-                    const mostKey = Object.keys(mostObj)[0];
-                    const mostScore = mostObj[mostKey];
-                    const leastKey = Object.keys(leastObj)[0];
-                    const leastScore = leastObj[leastKey];
                 
                     const surveyDoc = allSurveys.find(s => {
                         const r = s.results;
@@ -615,19 +607,23 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                                     </div>
                                 </div>
                                 <div className="adm-info-block">
-                                    <div className="adm-info-block-label">Most Aligned</div>
-                                    <div className="adm-info-block-value">
-                                        {mostKey} ({mostScore.toFixed(3)})
-                                    </div>
-                                </div>
-                                <div className="adm-info-block">
-                                    <div className="adm-info-block-label">Least Aligned</div>
-                                    <div className="adm-info-block-value">
-                                        {leastKey} ({leastScore.toFixed(3)})
+                                    <div className="adm-info-block-value adm-align-list">
+                                        {filteredArr.map((o, idx) => {
+                                            const key = Object.keys(o)[0];
+                                            const score = o[key];
+                                            return (
+                                                <div key={key}> {idx === 0 && (
+                                                    <><span className="adm-info-block-label" style={{ marginBottom: '0.75rem' }}>All Alignments</span>
+                                                        <br/>
+                                                    </>
+                                                    )}
+                                                    {key} ({score.toFixed(3)})
+                                                </div>
+                                        );
+                                        })}
                                     </div>
                                 </div>
                             </div>
-
                             <div className="adm-right">
                                 <table>
                                     <colgroup>
@@ -646,7 +642,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                                         <tr>
                                             <td>Baseline</td>
                                             <td>{baselineName || "-"}</td>
-                                            <td>{baselineTarget || "-"}</td>
+                                            <td>{"N/A"}</td>
                                         </tr>
                                         <tr>
                                             <td>Aligned</td>

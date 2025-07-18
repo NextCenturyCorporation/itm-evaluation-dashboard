@@ -9,6 +9,7 @@
   line-height: 1.2;
   transition: background-color 0.15s ease;
 }
+
 .view-adm-btn:hover {
   background-color: rgb(204, 204, 204);
 }
@@ -25,8 +26,7 @@
   background: #fff;
   width: 80vw;
   max-width: 1200px;
-  height: auto;
-  max-height: 50vh;
+  height: 62vh;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   border-radius: 8px;
   display: flex;
@@ -41,10 +41,12 @@
   padding: 16px;
   border-bottom: 1px solid #eee;
 }
+
 .adm-header h2 {
   margin: 0;
   font-size: 1.5rem;
 }
+
 .close-popup {
   background: none;
   border: none;
@@ -57,25 +59,32 @@
   flex: 1;
   gap: 2rem;
   overflow: auto;
+  align-items: stretch;
 }
 
 .adm-left {
-  flex: 0.7;
+  flex: 0.6;
   padding: 16px;
-  border-right: 1px solid #f0f0f0;
+  border-right: 1px solid #eee;
+  padding-right: 24px;
+  box-sizing: border-box;
 }
+
 .adm-left .adm-info-block {
   margin-bottom: 0.75rem;
 }
+
 .adm-left .adm-info-block-label {
   display: inline-block;
   font-weight: 600;
   font-size: 0.9rem;
 }
+
 .adm-left .adm-info-block-label::after {
   content: ":";
   margin-right: 0.5rem;
 }
+
 .adm-left .adm-info-block-value {
   display: inline-block;
   font-size: 0.9rem;
@@ -83,10 +92,11 @@
 }
 
 .adm-right {
-  flex: 1.3;
+  flex: 1.4;
   padding: 16px;
   overflow: auto;
 }
+
 .adm-right table {
   width: 100%;
   table-layout: fixed;
@@ -105,6 +115,7 @@
   vertical-align: top;
   text-align: left;
 }
+
 .adm-right th {
   background-color: #f9f9f9;
   font-weight: bold;
@@ -113,4 +124,16 @@
 .adm-right th:nth-child(2),
 .adm-right td:nth-child(2) {
   font-size: 0.85rem;
+}
+
+.adm-align-list {
+  padding: 0 0 0.75rem;
+}
+
+.adm-align-list > div {
+  margin: 0.5rem 0;
+}
+
+.adm-align-list > div:first-child {
+  margin-top: 0;
 }
