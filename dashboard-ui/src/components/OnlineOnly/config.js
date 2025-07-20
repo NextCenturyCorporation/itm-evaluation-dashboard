@@ -1,4 +1,4 @@
-export const usePhaseOneVariations = true;
+export const usePhaseOneVariations = false;
 
 export const LOG_VARIATIONS_PHASE1 = [
     { "Text-1": "AD-1", "Text-2": "ST-1", "Sim-1": "AD-2", "Sim-2": "ST-2", "Del-1": "AD-3", "Del-2": "ST-3", "ADMOrder": 1 },
