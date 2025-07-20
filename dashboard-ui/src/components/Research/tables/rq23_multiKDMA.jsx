@@ -121,7 +121,7 @@ export function MultiKDMA_RQ23() {
                 entryObj['Alignment (Target|ADM_MJ5)_Aligned'] = admGroup['AD3_align'];
                 entryObj['Alignment Average (Target|ADM)_Aligned'] = admGroup['ave_align'];
 
-                const baseline = analysisData.find((x) => x['pid'] === admGroup['pid'] && x['admName'].toLowerCase().includes('baseline') && String(capitalizeFirstLetter(x['targetType'])) === String(entryObj['Target Type']));
+                const baseline = analysisData.find((x) => x['pid'] === admGroup['pid'] && x['admName'].toLowerCase().includes('baseline') && capitalizeFirstLetter(x['targetType']) === entryObj['Target Type']);
                 if (baseline) {
                     entryObj['MJ KDMA_Baseline - MJ2'] = baseline['mjAD1_kdma'];
                     entryObj['MJ KDMA_Baseline - MJ4'] = baseline['mjAD2_kdma'];

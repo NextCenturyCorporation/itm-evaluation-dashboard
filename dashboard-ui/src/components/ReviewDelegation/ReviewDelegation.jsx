@@ -82,11 +82,6 @@ export function ReviewDelegationPage() {
     const [selectedConfig, setSelectedConfig] = useState(null);
     const [reviewingText, setReviewingText] = useState(null);
 
-    /* Function is left in case future changes are reuqired to the survey completion behavior */
-    const handleSurveyComplete = (sender) => {
-        //const results = sender.data;
-    };
-
     const handleConfigSelect = (page) => {
         if (page) {
             try {
@@ -265,7 +260,7 @@ export function ReviewDelegationPage() {
                     </Container>
                     <h5 className='subtitle'>Reviewing {reviewingText}</h5>
                     <div className="flex-grow-1 overflow-auto">
-                        <Survey model={selectedConfig} onComplete={handleSurveyComplete} />
+                        <Survey model={selectedConfig}/>
                     </div>
                 </>
             )}

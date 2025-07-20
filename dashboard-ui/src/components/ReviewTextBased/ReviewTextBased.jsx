@@ -35,11 +35,6 @@ export function ReviewTextBasedPage() {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const [selectedConfig, setSelectedConfig] = useState(null);
 
-    //Function is left in case future modifications are required to enable behavior on survey completion
-    const handleSurveyComplete = (sender) => {
-        //const results = sender.data;
-    };
-
     const ensureStringProperties = (obj) => {
         const stringProps = ['name', 'title', 'description'];
         Object.keys(obj).forEach(key => {
@@ -206,7 +201,7 @@ export function ReviewTextBasedPage() {
                         </Button>
                     </Container>
                     <div className="flex-grow-1 overflow-auto">
-                        <Survey model={selectedConfig} onComplete={handleSurveyComplete} />
+                        <Survey model={selectedConfig}/>
                     </div>
                 </>
             )}
