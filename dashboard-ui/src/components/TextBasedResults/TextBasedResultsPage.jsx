@@ -14,6 +14,7 @@ import XLSX from 'sheetjs-style';
 import Select from 'react-select';
 import { useSelector } from 'react-redux';
 import NoSelection from './NoSelection';
+import { shortenAnswer, p2Attributes } from './util';
 
 const get_eval_name_numbers = gql`
     query getEvalIdsForAllScenarioResults{
@@ -32,105 +33,19 @@ const GET_PARTICIPANT_LOG = gql`
 
 const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAlignmentData'];
 
-function shortenAnswer(answer) {
-    // shortens an answer so the whole thing is visible and understandable without taking up too much screen real estate
-    switch (answer) {
-        case 'I mostly considered the potential to save the most lives.':
-            return "Save the Most Lives";
-        case 'I considered the intent to cause harm and the degree of responsibility for the situation.':
-            return "Intent to Cause Harm/Responsibility";
-        case 'I primarily considered the likely medical impact and tried to save the most lives.':
-            return "Medical Impact/Save the Most Lives";
-        case 'I considered the intent to cause harm, the degree of responsibility for the situation, and the potential to save the most lives.':
-            return 'Intent to Cause Harm/Responsibility/Save the Most Lives';
-        case 'The patient further from the IED':
-            return "Patient further from IED"
-        case 'The patient closer to the IED':
-            return "Patient closer to IED";
-        case 'Perform vitals assessment on Casualty W':
-            return "Vitals: Casualty W";
-        case 'Perform vitals assessment on Casualty X':
-            return "Vitals: Casualty X";
-        case 'Perform vitals assessment on Casualty V':
-            return "Vitals: Casualty V";
-        case 'Assess Casualty W for internal bleeding':
-            return "Assess Casualty W";
-        case 'Assess Casualty X for pelvic fracture':
-            return "Assess Casualty X";
-        case 'Provide burn dressing with pain control':
-            return "Burn dressing and pain control";
-        case 'Plan to treat both by alternating bag valve mask (BVM) ':
-            return "Treat both with BVM";
-        case 'Do not treat and search for help':
-            return 'Search for help';
-        case 'Apply Pain Med/Aid Bag to Casualty U':
-            return 'Treat Casualty U: Pain Meds/Aid Bag';
-        case 'Call to find out if additional support is possible':
-            return 'Call for support';
-        case 'Move forward with evacuating without confirming care capabilities':
-            return 'Evacuate';
-        case 'Hold casualties to determine if they can be transported':
-            return 'Hold for transport';
-        case 'Transport Casualty V to local hospital':
-            return 'Casualty V: transport to local hospital';
-        case 'Apply Decompression Needle to Casualty W':
-            return 'Casualty W: Needle Treatment';
-        case 'Check respiration on Casualty W':
-            return 'Casualty W: Respiration';
-        case 'Not assessing local capabilities and move forward with evacuating':
-            return 'Evacuate';
-        case 'Carefully divide the burn kit to cover the worst burns on each casualty':
-            return 'Divide Burn Kit';
-        case "Hold casualties until you get updated info on local hospital's capabilities to manage the casualties":
-            return 'Hold until info on local hospital capabilities';
-        case "Hold casualties until you get updated info on the capabilities of the embassy":
-            return 'Hold until info on embassy capabilities';
-        case "I considered the likely medical impact and also the intent to cause harm.":
-            return "Medical Impact/Intent to Cause Harm";
-        case "I considered the likely medical impact and also the degree of responsibility for the situation.":
-            return "Medical Impact/Degree of Responsibility";
-        case "Transport both casualties to the local hospital despite hospital availability":
-            return "Transport both to hospital";
-        case "Hold casualties to determine if they can be transported to safehouse":
-            return "Hold for transport to safehouse";
-        case "I considered the intent to cause harm, the degree of responsibility for the situation, and helpful things each patient had done.":
-            return "Intent to Harm/Responsibility/Helpfulness of Patient";
-        case "I considered the intent to cause harm, the degree of responsibility for the situation, the helpful things each patient had done, and the fact that the patients were from different groups":
-            return "Intent/Responsibility/Helpfulness/Different Groups";
-        case "Provide burn dressing with pain control (Burn kit)":
-            return "Burn Kit";
-        case "Perform an escharotomy (minor surgical kit)":
-            return "Escharotomy";
-        case "Get info on local hospital's capabilities to manage the casualties":
-            return "Info on Local Hospital";
-        case "Get info on the capabilities of the embassy to hold casualties until evacuation":
-            return "Info on Embassy";
-        case "I mostly considered the fact that the patients were from different groups.":
-            return "Patients are from different groups";
-        case 'Treat Patient A':
-            return "Treat Patient A";
-        case 'Treat Patient B':
-            return "Treat Patient B";
-        default:
-            if (answer.includes("BVM")) {
-                return "Treat both with BVM";
-            }
-            if (answer.includes("until you get updated info on the capabilities of the embassy")) {
-                return 'Hold until info on embassy capabilities';
-            }
-            if (answer.toLowerCase().includes('because')) {
-                let substring = answer.substring(answer.toLowerCase().indexOf('because'));
-                return substring.charAt(0).toUpperCase() + substring.slice(1);
-            }
-            return answer;
-    }
-}
+const cleanTitle = (title, scenario) => {
+    const foundAttr = p2Attributes.find(attr => scenario && scenario.includes(attr));
+    const attrOrScenario = foundAttr || '';
+    const match = title.match(/(\d+)/);
+    const number = match ? match[1] : title;
+    return `Probe-${attrOrScenario}-${number}`;
+};
 
-const cleanTitle = (title) => {
+const cleanTitleLegacy = (title) => {
     return title.replace(/probe\s*/, '').trim();
 };
 
-function SingleGraph({ data, pageName }) {
+function SingleGraph({ data, pageName, scenario, selectedEval }) {
     const [survey, setSurvey] = React.useState(null);
     const [vizPanel, setVizPanel] = React.useState(null);
     const [surveyResults, setSurveyResults] = React.useState([]);
@@ -200,30 +115,36 @@ function SingleGraph({ data, pageName }) {
 
     return (
         <div className='graph-section'>
-            <h3 className='question-header'>{cleanTitle(pageName)} (N={data['total']})</h3>
+            <h3 className='question-header'>{(selectedEval >= 8 ? cleanTitle(pageName, scenario) : cleanTitleLegacy(pageName))} (N={data['total']})</h3>
             <div id={"viz_" + pageName} className='full-width-graph' />
         </div>
     );
 }
 
+function getQuestionText(qkey, scenario) {
+    if (qkey === 'Participant ID') { return qkey; }
+    const isTime = qkey.toLowerCase().includes('time (s)');
+    const base = cleanTitle(qkey, scenario);
+    return `${base}${isTime ? '-Time' : '-Resp'}`;
+}
 
-function getQuestionText(qkey, scenario, textBasedConfigs) {
+function getQuestionTextLegacy(qkey, scenario, textBasedConfigs) {
     const pagesForScenario = textBasedConfigs[scenario]['pages'];
     for (const page of pagesForScenario) {
         for (const res of page['elements']) {
             if (res['name'] === qkey && res['choices']) {
                 // set title name
-                return cleanTitle(res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey));
+                return cleanTitleLegacy(res['title'] + ' - ' + (scenario.includes("Adept") && qkey.includes("3") ? (qkey + 'a') : qkey.includes("Follow Up") ? (qkey.split("Follow Up")[0] + "3b") : qkey));
             }
         }
     }
-    return cleanTitle(qkey);
+    return cleanTitleLegacy(qkey);
 }
 
 
-function ParticipantView({ data, scenarioName, textBasedConfigs }) {
+function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, participantBased, scenarioOptions, participantLog }) {
     const [organizedData, setOrganizedData] = React.useState(null);
-    const [excelData, setExcelData] = React.useState(null);
+    const [, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
 
     React.useEffect(() => {
@@ -231,59 +152,57 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
         const headers = ['Participant ID'];
         const excel = [];
 
-        for (const page of data) {
+        for (const entry of data) {
             const obj = {
-                'Participant ID': page['participantID']
+                'Participant ID': entry['participantID']
             };
-            formatted[page['_id']] = { ...obj };
+            formatted[entry['_id']] = { ...obj };
 
-            // Check if page is defined before using Object.keys
-            if (page) {
-                Object.keys(page).forEach(key => {
-                    if (key === 'alignmentData') {
-                        if (!headers.includes('Alignment Data')) {
-                            headers.push('Alignment Data')
+            Object.keys(entry).forEach(key => {
+                if (key === 'alignmentData') {
+                    if (!headers.includes('Alignment Data')) {
+                        headers.push('Alignment Data')
+                    }
+                    if (entry[key]) {
+                        let temp = ''
+                        for (const alignment of entry[key]) {
+                            temp += `${alignment.target}: ${alignment.score},`
+                            temp += '\n'
                         }
-                        if (page[key]) {
-                            let temp = ''
-                            for (const alignment of page[key]) {
-                                temp += `${alignment.target}: ${alignment.score},`
-                                temp += '\n'
-                            }
-                            formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
-                            obj['Alignment Data'] = temp;
+                        formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                        obj['Alignment Data'] = temp;
+                    }
+                } else if (!KEYS_WITHOUT_TIME.includes(key)) {
+                    // top level pages with timing
+                    const time_key = key + ' time (s)';
+                    if (typeof (entry[key]) === 'object' && !Array.isArray(entry[key])) {
+                        if (!headers.includes(time_key)) {
+                            headers.push(time_key);
                         }
-                    } else if (!KEYS_WITHOUT_TIME.includes(key)) {
-                        // top level pages with timing
-                        const time_key = key + ' time (s)';
-                        if (typeof (page[key]) === 'object' && !Array.isArray(page[key])) {
-                            if (!headers.includes(time_key)) {
-                                headers.push(time_key);
-                            }
 
-                            formatted[page['_id']][time_key] = Math.round(page[key]?.['timeSpentOnPage'] * 100) / 100;
-                            obj[time_key] = Math.round(page[key]?.['timeSpentOnPage'] * 100) / 100;
+                        formatted[entry['_id']][time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
+                        obj[time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
 
-                            if (page[key] && page[key].questions) {
-                                Object.keys(page[key].questions).forEach(q => {
-                                    if (page[key].questions[q] && page[key].questions[q].response !== undefined) {
-                                        if (!headers.includes(q)) {
-                                            headers.push(q);
-                                        }
-                                        formatted[page['_id']][q] = page[key].questions[q].response;
-                                        obj[getQuestionText(q, scenarioName, textBasedConfigs)] = page[key].questions[q].response;
+                        if (entry[key] && entry[key].questions) {
+                            Object.keys(entry[key].questions).forEach(q => {
+                                if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
+                                    if (!headers.includes(q)) {
+                                        headers.push(q);
                                     }
-                                });
-                            }
+                                    formatted[entry['_id']][q] = entry[key].questions[q].response;
+                                    const objKey = entry['evalNumber'] >= 8 ? getQuestionText(q, scenarioName) : getQuestionTextLegacy(q, scenarioName, textBasedConfigs)
+                                    obj[objKey] = entry[key].questions[q].response;
+                                }
+                            });
                         }
                     }
-                });
-                if (page['evalNumber'] === 3) {
-                    formatted[page['_id']]['Alignment Data'] = 'Download file to view alignment data';
-                    let temp = `${page.highAlignmentData?.alignment_target_id}: ${page.highAlignmentData?.score},\n`
-                    temp += `${page.lowAlignmentData?.alignment_target_id}: ${page.lowAlignmentData?.score}`
-                    obj['Alignment Data'] = temp;
                 }
+            });
+            if (entry['evalNumber'] === 3) {
+                formatted[entry['_id']]['Alignment Data'] = 'Download file to view alignment data';
+                let temp = `${entry.highAlignmentData?.alignment_target_id}: ${entry.highAlignmentData?.score},\n`
+                temp += `${entry.lowAlignmentData?.alignment_target_id}: ${entry.lowAlignmentData?.score}`
+                obj['Alignment Data'] = temp;
             }
             excel.push(obj);
         }
@@ -293,32 +212,146 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
         setExcelData(excel);
     }, [data, scenarioName, textBasedConfigs]);
 
-    const exportToExcel = async () => {
+    const exportToExcel = async (allScenarios = false, attribute = null, singleScenario = null) => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
-        const dataCopy = structuredClone(excelData);
-        for (let pid of Object.keys(dataCopy)) {
-            for (let k of Object.keys(dataCopy[pid])) {
-                if (dataCopy[pid][k] === '-') {
-                    dataCopy[pid][k] = '';
-                }
+        
+        const fixedHeaders = allScenarios 
+            ? ['Participant ID', 'Eval Number', 'Set']
+            : ['Participant ID'];
+        const dynamicHeaders = [];
+        const headerMap = new Map();
+        const participantDataMap = new Map();
+    
+        const processProbeData = (entry, pageName, scenario, participantRow) => {
+            const probeData = entry[pageName];
+            if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
+    
+            const time_key = getQuestionText(pageName + ' time (s)', scenario);
+    
+            if (!headerMap.has(time_key)) {
+                headerMap.set(time_key, dynamicHeaders.length);
+                dynamicHeaders.push(time_key);
+            }
+            participantRow[time_key] = Math.round(probeData.timeSpentOnPage * 100) / 100;
+    
+            if (probeData.questions) {
+                Object.entries(probeData.questions).forEach(([q, qData]) => {
+                    if (qData?.response !== undefined) {
+                        const questionHeader = getQuestionText(q, scenario);
+    
+                        if (!headerMap.has(questionHeader)) {
+                            headerMap.set(questionHeader, dynamicHeaders.length);
+                            dynamicHeaders.push(questionHeader);
+                        }
+                        participantRow[questionHeader] = qData.response;
+                    }
+                });
+            }
+        };
+    
+        const processEntry = (entry, scenario) => {
+            const participantId = entry.participantID;
+            const participantRow = participantDataMap.get(participantId) || 
+                participantDataMap.set(participantId, {
+                    'Participant ID': participantId,
+                    ...(allScenarios && { 'Eval Number': entry.evalNumber })
+                }).get(participantId);
+    
+            const pageOrder = textBasedConfigs[scenario]?.pages?.map(page => page.name) || [];
+            
+            // use order from config to determine headers
+            pageOrder.forEach(pageName => processProbeData(entry, pageName, scenario, participantRow));
+            
+            // if not in config
+            Object.keys(entry)
+                .filter(key => !KEYS_WITHOUT_TIME.includes(key) && !pageOrder.includes(key))
+                .forEach(key => processProbeData(entry, key, scenario, participantRow));
+    
+            if (allScenarios) {
+
+                const logEntry = participantLog?.getParticipantLog?.find(
+                    log => String(log['ParticipantID']) === participantId
+                );
+    
+                const setValues = ['AF', 'MF', 'PS', 'SS']
+                    .map(attr => logEntry?.[`${attr}-text-scenario`])
+                    .filter(Boolean);
+    
+                participantRow['Set'] = new Set(setValues).size === 1 ? setValues[0] : 'Various';
+            }
+        };
+    
+        const scenariosToProcess = allScenarios 
+            ? scenarioOptions.filter(scenario => 
+                !attribute || new RegExp(`\\b${attribute}\\d*\\b`, 'i').test(scenario)
+              )
+            : [singleScenario];
+    
+        for (const scenario of scenariosToProcess) {
+            const scenarioData = participantBased?.[scenario];
+            if (!scenarioData) continue;
+    
+            for (const entry of scenarioData) {
+                processEntry(entry, scenario);
             }
         }
-        const ws = XLSX.utils.json_to_sheet(dataCopy);
+    
+        const allHeaders = [...fixedHeaders, ...dynamicHeaders];
+        const allData = Array.from(participantDataMap.values())
+            .map(row => allHeaders.reduce((acc, header) => ({ ...acc, [header]: row[header] || '' }), {}))
+            .sort((a, b) => a['Participant ID'].localeCompare(b['Participant ID'], undefined, { numeric: true, sensitivity: 'base' }));
+    
+        const ws = XLSX.utils.json_to_sheet(allData, { header: allHeaders });
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, 'text_result_data_' + scenarioName + fileExtension);
+        
+        const filename = allScenarios
+            ? `text_result_data_${attribute ? attribute + '_' : ''}all_scenarios_eval${selectedEval}${fileExtension}`
+            : `text_result_data_${singleScenario}${fileExtension}`;
+        
+        FileSaver.saveAs(data, filename);
     };
 
+    const getScenarioAttribute = scenarioName => (scenarioName.match(/-(AF|MF|PS|SS)\d*-eval/i) || [])[1] || null;
+
     return (<div className="participant-text-results">
-        <button onClick={exportToExcel}>Download Results</button>
+        {selectedEval >= 8 && (
+            <div className="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    {(() => {
+                        const attr = getScenarioAttribute(scenarioName);
+                        if (attr) {
+                            return (
+                                <button onClick={() => exportToExcel(true, attr)} className="me-2 mb-2">
+                                    {`Download All ${attr} Results`}
+                                </button>
+                            );
+                        }
+                        return null;
+                    })()}
+                    <button onClick={() => exportToExcel(false, null, scenarioName)} className="mb-2">Download Scenario Results</button>
+                </div>
+                <div>
+                    <button onClick={() => exportToExcel(true)} className=" mb-2">Download All Results</button>
+                </div>
+            </div>
+        )}
+        {selectedEval < 8 && (
+            <div className="mb-2">
+                <button onClick={exportToExcel}>Download Scenario Results</button>
+            </div>
+        )}
         <div className="table-container">
             {organizedData && <table className="itm-table by-participant">
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
-                            return <th key={scenarioName + "_" + key}>{getQuestionText(key, scenarioName, textBasedConfigs)}</th>
+                            const header = selectedEval >= 8
+                                ? getQuestionText(key, scenarioName)
+                                : getQuestionTextLegacy(key, scenarioName, textBasedConfigs);
+                            return <th key={scenarioName + "_" + key}>{header}</th>;
                         })}
                     </tr>
                 </thead>
@@ -336,28 +369,6 @@ function ParticipantView({ data, scenarioName, textBasedConfigs }) {
     </div>);
 }
 
-/*
-function getProbeQuestionsFromData(data, scenario) {
-    const probeQuestions = new Set();
-    
-    for (const result of data) {
-        if ((result.scenario_id || result.title) === scenario) {
-            for (const key of Object.keys(result)) {
-                if (typeof result[key] === 'object' && result[key]?.questions) {
-                    for (const q of Object.keys(result[key].questions)) {
-                        if (q.startsWith('probe ') && result[key].questions[q].response) {
-                            probeQuestions.add(key); 
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    return Array.from(probeQuestions);
-}
-*/
-
 export default function TextBasedResultsPage() {
     const { loading: loadingEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const { data: participantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -366,7 +377,7 @@ export default function TextBasedResultsPage() {
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(5);
+    const [selectedEval, setSelectedEval] = React.useState(8);
     const [evalOptions, setEvalOptions] = React.useState([]);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
@@ -433,7 +444,7 @@ export default function TextBasedResultsPage() {
                 });
             });
 
-            // Process each result
+
             for (const result of data.getAllScenarioResultsByEval) {
                 const pid = result['participantID'];
                 const logData = participantLog.getParticipantLog.find(
@@ -454,26 +465,25 @@ export default function TextBasedResultsPage() {
                         }
                         participants[scenario].push(result);
 
-                        // Process questions in the result
                         for (const k of Object.keys(result)) {
                             if (typeof (result[k]) !== 'object' || !result[k]?.questions) {
                                 continue;
                             }
-                            
+
                             // Check if this is a probe question that's not in the config
-                            const hasProbeQuestion = Object.keys(result[k].questions).some(q => 
+                            const hasProbeQuestion = Object.keys(result[k].questions).some(q =>
                                 q.startsWith('probe ') && result[k].questions[q].response
                             );
-                            
+
                             if (hasProbeQuestion && !tmpResponses[scenario][k]) {
                                 // This is a probe question not in the config, add it
                                 tmpResponses[scenario][k] = {
-                                    question: `${k} - What action would you take?`, // Generic question text
+                                    question: `${k} - What action would you take?`,
                                     total: 0,
                                     originalKey: k
                                 };
                             }
-                            
+
                             for (const q of Object.keys(result[k].questions)) {
                                 if (result[k].questions[q].response) {
                                     const answer = typeof result[k].questions[q].response === 'object'
@@ -482,7 +492,7 @@ export default function TextBasedResultsPage() {
 
                                     // For probe questions, use the page name as the key
                                     const questionKey = q.startsWith('probe ') ? k : q;
-                                    
+
                                     if (tmpResponses[scenario][questionKey]) {
                                         if (tmpResponses[scenario][questionKey][answer] !== undefined) {
                                             tmpResponses[scenario][questionKey][answer] += 1;
@@ -512,15 +522,13 @@ export default function TextBasedResultsPage() {
     }, [data, filteredTextBasedConfigs, participantLog, selectedEval]);
 
     React.useEffect(() => {
-        // only display results concerning the chosen scenario
         if (scenarioChosen && responsesByScenario && responsesByScenario[scenarioChosen]) {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
-                // Check if there's actual data (not just the metadata fields)
                 const hasData = Object.keys(responsesByScenario[scenarioChosen][k])
                     .filter(key => !['question', 'total', 'originalKey'].includes(key))
                     .length > 0;
-                
+
                 if (hasData && responsesByScenario[scenarioChosen][k].total > 0) {
                     setResults(responsesByScenario[scenarioChosen]);
                     found = true;
@@ -539,9 +547,8 @@ export default function TextBasedResultsPage() {
         return (<div className="text-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets)
-                    .filter(qkey => questionAnswerSets[qkey].total > 0) // Only show questions with responses
+                    .filter(qkey => questionAnswerSets[qkey].total > 0)
                     .sort((a, b) => {
-                        // Sort probe questions numerically
                         const aMatch = a.match(/Probe (\d+)/);
                         const bMatch = b.match(/Probe (\d+)/);
                         if (aMatch && bMatch) {
@@ -552,7 +559,7 @@ export default function TextBasedResultsPage() {
                     .map((qkey, ind) => {
                         const displayKey = questionAnswerSets[qkey].originalKey || qkey;
                         return (<div className='result-section' key={displayKey + '_' + ind}>
-                            <h3 className='question-header'>{cleanTitle(displayKey)} (N={questionAnswerSets[qkey]['total']})</h3>
+                            <h3 className='question-header'>{(selectedEval >= 8 ? cleanTitle(displayKey, scenarioChosen) : cleanTitleLegacy(displayKey))} (N={questionAnswerSets[qkey]['total']})</h3>
                             <p>{questionAnswerSets[qkey]['question']}</p>
                             <table className="itm-table text-result-table">
                                 <thead>
@@ -591,9 +598,8 @@ export default function TextBasedResultsPage() {
         return (<div className="chart-scenario-results">
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets)
-                    .filter(qkey => questionAnswerSets[qkey].total > 0) // Only show questions with responses
+                    .filter(qkey => questionAnswerSets[qkey].total > 0)
                     .sort((a, b) => {
-                        // Sort probe questions numerically
                         const aMatch = a.match(/Probe (\d+)/);
                         const bMatch = b.match(/Probe (\d+)/);
                         if (aMatch && bMatch) {
@@ -602,7 +608,7 @@ export default function TextBasedResultsPage() {
                         return a.localeCompare(b);
                     })
                     .map((qkey) => {
-                        return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} />);
+                        return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} scenario={scenarioChosen} selectedEval={selectedEval} />);
                     })
                 : loading ? <h2 className="no-data">Loading Data...</h2> : <h2 className="no-data">No Data Found</h2>}
         </div>);
@@ -664,7 +670,7 @@ export default function TextBasedResultsPage() {
                         <ToggleButton variant="secondary" id='choose-participant' value={"participants"}>Participants</ToggleButton>
                     </ToggleButtonGroup>
                 </div>
-                {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} /> : <ChartedResultsSection />}
+                {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} selectedEval={selectedEval} participantBased={participantBased} scenarioOptions={scenarioOptions} participantLog={participantLog} /> : <ChartedResultsSection />}
             </div>) : (
             <NoSelection />
         )}
