@@ -35,10 +35,6 @@ export function ReviewTextBasedPage() {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const [selectedConfig, setSelectedConfig] = useState(null);
 
-    const handleSurveyComplete = (sender) => {
-        const results = sender.data;
-    };
-
     const ensureStringProperties = (obj) => {
         const stringProps = ['name', 'title', 'description'];
         Object.keys(obj).forEach(key => {
@@ -69,110 +65,104 @@ export function ReviewTextBasedPage() {
         }
     };
 
-    const renderConfigButtons = () => {
+    const getConfigLabel = (configName, config) => {
+        if (configName.includes('Submarine')) return 'Submarine';
+        if (configName.includes('Desert')) return 'Desert';
+        if (configName.includes('Jungle')) return 'Jungle';
+        if (configName.includes('Urban')) return 'Urban';
+        
+        if (config.scenario_id) return config.scenario_id;
+        
+        return configName.replace('-1', '').charAt(0).toUpperCase() + 
+               configName.replace('-1', '').slice(1);
+    };
 
-        const phase1AdeptConfigs = [];
-        const phase1SoarTechConfigs = [];
-        const phase2AdeptConfigs = [];
-        const dreAdeptConfigs = [];
-        const dreSoarTechConfigs = [];
-        const mreAdeptConfigs = [];
-        const mreSoarTechConfigs = [];
+    const formatEvalGroupTitle = (evalValue) => {
+        if (!evalValue) return 'Unspecified';
+        
+        return evalValue.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
 
+    const organizeConfigsByEval = () => {
+        const organized = {};
+        const evalGroupOrder = []; 
+        
         Object.entries(textBasedConfigs).forEach(([configName, config]) => {
-            if (config.eval === 'phase1') {
-                if (config.author === 'adept') {
-                    phase1AdeptConfigs.push(configName);
-                } else {
-                    phase1SoarTechConfigs.push(configName);
-                }
-            } else if (config.eval && config.eval.includes('June 2025')) {
-                // All Phase 2 scenarios are ADEPT scenarios
-                phase2AdeptConfigs.push(configName);
-            } else if (config.eval === 'dre') {
-                if (configName.includes('DryRunEval')) {
-                    dreAdeptConfigs.push(configName);
-                } else {
-                    dreSoarTechConfigs.push(configName);
-                }
-            } else if (config.eval === 'mre') {
-                if (configName.includes('MetricsEval')) {
-                    mreAdeptConfigs.push(configName);
-                } else {
-                    mreSoarTechConfigs.push(configName);
-                }
+            if (config.eval === 'mre-eval') return;
+            
+            const evalGroup = config.eval || 'unspecified';
+            const author = config.author || 'adept';
+            
+            if (!organized[evalGroup]) {
+                organized[evalGroup] = {};
+                evalGroupOrder.push(evalGroup); 
             }
+            
+            if (!organized[evalGroup][author]) {
+                organized[evalGroup][author] = [];
+            }
+            
+            organized[evalGroup][author].push({ name: configName, config });
         });
-
-        phase2AdeptConfigs.sort((a, b) => {
-            const scenarioA = textBasedConfigs[a].scenario_id || a;
-            const scenarioB = textBasedConfigs[b].scenario_id || b;
-            return scenarioA.localeCompare(scenarioB);
+        
+        Object.keys(organized).forEach(evalGroup => {
+            Object.keys(organized[evalGroup]).forEach(author => {
+                organized[evalGroup][author].sort((a, b) => {
+                    const idA = a.config.scenario_id || a.name;
+                    const idB = b.config.scenario_id || b.name;
+                    return idA.localeCompare(idB);
+                });
+            });
         });
+        
+        return { organized, evalGroupOrder };
+    };
 
-        const getAdeptLabel = (configName) => {
-            if (configName.includes('Submarine')) return 'Submarine';
-            if (configName.includes('Desert')) return 'Desert';
-            if (configName.includes('Jungle')) return 'Jungle';
-            if (configName.includes('Urban')) return 'Urban';
-            return configName;
-        };
-
-        const getSoarTechLabel = (configName) => {
-            return configName.replace('-1', '').charAt(0).toUpperCase() + configName.replace('-1', '').slice(1);
-        };
-
-        const renderConfigGroup = (configs, title, labelFunction = null) => (
-            <div>
-                <h5 className="subheader">{title}</h5>
-                <Row xs={1} md={2} lg={3} className="g-4">
-                    {configs.map(configName => (
-                        <Col key={configName}>
-                            <Button
-                                variant="outline-primary"
-                                onClick={() => handleConfigSelect(configName)}
-                                className="w-100 text-start text-truncate custom-btn"
-                            >
-                                {labelFunction ? labelFunction(configName) : configName}
-                            </Button>
-                        </Col>
-                    ))}
-                </Row>
-            </div>
-        );
-
+    const renderConfigButtons = () => {
+        const { organized: organizedConfigs, evalGroupOrder } = organizeConfigsByEval();
+        
+        const reversedEvalGroups = [...evalGroupOrder].reverse();
+        
         return (
             <>
-                <Card className="mb-4 border-0 shadow">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 2 Scenarios (June 2025)</Card.Header>
-                    <Card.Body className="bg-light">
-                        {renderConfigGroup(phase2AdeptConfigs, "ADEPT")}
-                    </Card.Body>
-                </Card>
-
-                <Card className="mb-4 border-0 shadow">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
-                    <Card.Body className="bg-light">
-                        {renderConfigGroup(phase1AdeptConfigs, "ADEPT", getAdeptLabel)}
-                        {renderConfigGroup(phase1SoarTechConfigs, "SoarTech", getSoarTechLabel)}
-                    </Card.Body>
-                </Card>
-
-                <Card className="mb-4 border-0 shadow">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
-                    <Card.Body className="bg-light">
-                        {renderConfigGroup(dreAdeptConfigs, "ADEPT")}
-                        {renderConfigGroup(dreSoarTechConfigs, "SoarTech")}
-                    </Card.Body>
-                </Card>
-
-                <Card className="mb-4 border-0 shadow">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>MRE Scenarios</Card.Header>
-                    <Card.Body className="bg-light">
-                        {renderConfigGroup(mreAdeptConfigs, "ADEPT", getAdeptLabel)}
-                        {renderConfigGroup(mreSoarTechConfigs, "SoarTech", getSoarTechLabel)}
-                    </Card.Body>
-                </Card>
+                {reversedEvalGroups.map(evalGroup => {
+                    const evalGroupData = organizedConfigs[evalGroup];
+                    const evalGroupTitle = formatEvalGroupTitle(evalGroup);
+                    
+                    return (
+                        <Card key={evalGroup} className="mb-4 border-0 shadow">
+                            <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                                {evalGroupTitle}
+                            </Card.Header>
+                            <Card.Body className="bg-light">
+                                {Object.entries(evalGroupData).map(([author, configs]) => {
+                                    const authorTitle = author.charAt(0).toUpperCase() + author.slice(1);
+                                    
+                                    return (
+                                        <div key={`${evalGroup}-${author}`}>
+                                            <h5 className="subheader">{authorTitle}</h5>
+                                            <Row xs={1} md={2} lg={3} className="g-4">
+                                                {configs.map(({ name, config }) => (
+                                                    <Col key={name}>
+                                                        <Button
+                                                            variant="outline-primary"
+                                                            onClick={() => handleConfigSelect(name)}
+                                                            className="w-100 text-start text-truncate custom-btn"
+                                                        >
+                                                            {getConfigLabel(name, config)}
+                                                        </Button>
+                                                    </Col>
+                                                ))}
+                                            </Row>
+                                        </div>
+                                    );
+                                })}
+                            </Card.Body>
+                        </Card>
+                    );
+                })}
             </>
         );
     };
@@ -205,7 +195,7 @@ export function ReviewTextBasedPage() {
                         </Button>
                     </Container>
                     <div className="flex-grow-1 overflow-auto">
-                        <Survey model={selectedConfig} onComplete={handleSurveyComplete} />
+                        <Survey model={selectedConfig} />
                     </div>
                 </>
             )}
