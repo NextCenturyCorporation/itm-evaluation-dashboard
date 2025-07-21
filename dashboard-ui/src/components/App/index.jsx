@@ -4,7 +4,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, PH1_SURVEY_SETS } from './setupUtils';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 
 // Components
@@ -103,7 +103,7 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
-    const { data: styleData, loading: styleLoading, error: styleError } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
+    const { data: styleData } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
     const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [isSetup, setIsSetup] = React.useState(false);
@@ -231,7 +231,7 @@ export function App() {
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
 
-        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail == hashedEmail);
+        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail);
 
         if (foundParticipant) {
             const pid = foundParticipant['ParticipantID'];
@@ -263,8 +263,7 @@ export function App() {
             const addRes = await addParticipant({
                 variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }
             });
-
-            if (addRes?.data?.addNewParticipantToLog == -1) {
+            if (addRes?.data?.addNewParticipantToLog === -1) {
                 alert("This email address is taken. Please enter a different email.");
                 return;
             }

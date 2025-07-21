@@ -38,7 +38,7 @@ export function PH2RQ2223({ evalNum }) {
     const [attributes, setAttributes] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [sets, setSets] = React.useState([]);
-    const [targetType, setTargetType] = React.useState(['Group', 'Individual']);
+    const [targetType, ] = React.useState(['Group', 'Individual']);
 
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);

@@ -44,39 +44,12 @@ export function SurveyResults() {
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
-    const [showTable, setShowTable] = React.useState(false);
     const [filterBySurveyVersion, setVersionOption] = React.useState(parseInt(useSelector(state => state?.configs?.currentSurveyVersion)));
     const [versions, setVersions] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState(null)
     const [showScrollButton, setShowScrollButton] = React.useState(false);
     const [generalizePages, setGeneralization] = React.useState(true);
     const surveys = useSelector((state) => state.configs.surveyConfigs);
-
-    React.useEffect(() => {
-        if (!data) { return; }
-        getSurveyVersions(data);
-    }, [data]);
-
-    React.useEffect(() => {
-        if (data && filterBySurveyVersion) {
-            setupDataBySurveyVersion(data, filterBySurveyVersion);
-        }
-    }, [filterBySurveyVersion, data]);
-
-    React.useEffect(() => {
-        if (filteredData) {
-            filterDataAndSetNames();
-        }
-    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog]);
-
-    React.useEffect(() => {
-        // component did mount
-        window.addEventListener('scroll', toggleVisibility);
-        return () => {
-            // component will unmount
-            window.removeEventListener('scroll', toggleVisibility);
-        }
-    }, []);
 
     const toggleVisibility = () => {
         if (window.scrollY > 300) {
@@ -86,7 +59,44 @@ export function SurveyResults() {
         }
     };
 
-    const filterDataAndSetNames = () => {
+    const generalizeNames = React.useCallback((resCopy) => {
+        if ([4, 5].includes(filterBySurveyVersion) && generalizePages) {
+            const admAuthor = resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware');
+            const formattedAlignment = resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1);
+            resCopy.v4Name = admAuthor + ' ' + formattedAlignment;
+            // swap name for clean, generalized name
+            resCopy.origName = resCopy.pageName;
+            resCopy.pageName = resCopy.v4Name;
+            // update question names for generalizing data
+            if (resCopy.questions) {
+                for (const q of Object.keys(resCopy.questions)) {
+                    if (resCopy.pageType.includes('single')) {
+                        // set up single medic page/question labels
+                        const newQ = (admAuthor + ' ' + formattedAlignment + ':' + q.slice(9)).replace('::', ':');
+                        resCopy.questions[newQ] = resCopy.questions[q];
+                    }
+                    else {
+                        // set up comparison page/question labels
+                        const pageADMs = resCopy.origName.split(' vs ');
+                        const qADMs = q.split(':')[0].split(' vs ');
+                        const newQ = (qADMs[0] === pageADMs[1] ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] === pageADMs[0] ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
+                        if (q.includes('Forced')) {
+                            resCopy.questions[newQ] = { 'response': resCopy.questions[q].response === pageADMs[0] ? 'Baseline' : resCopy.questions[q].response === pageADMs[1] ? 'Aligned' : 'Misaligned' };
+                        }
+                        else {
+                            resCopy.questions[newQ] = resCopy.questions[q];
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            resCopy.v4Name = undefined;
+        }
+        return resCopy;
+    }, [filterBySurveyVersion, generalizePages]);
+
+    const filterDataAndSetNames = React.useCallback(() => {
         // removes data that is not in the selected scenario and creates generalized names, if necessary
         const separatedData = {};
         for (const result of filteredData) {
@@ -97,9 +107,9 @@ export function SurveyResults() {
                 continue;
             }
             const logData = dataParticipantLog?.getParticipantLog.find(
-                log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((filterBySurveyVersion == 4 || filterBySurveyVersion == 5) && !logData) {
+            if ((filterBySurveyVersion === 4 || filterBySurveyVersion === 5) && !logData) {
                 continue;
             }
             for (const x of Object.keys(obj)) {
@@ -120,55 +130,18 @@ export function SurveyResults() {
             }
         }
         setResultData(separatedData);
-    }
-
-    const generalizeNames = (resCopy) => {
-        if ([4, 5].includes(filterBySurveyVersion) && generalizePages) {
-            const admAuthor = resCopy.admAuthor.replace('TAD', 'Parallax').replace('kitware', 'Kitware');
-            const formattedAlignment = resCopy.admAlignment[0].toUpperCase() + resCopy.admAlignment.slice(1);
-            resCopy.v4Name = admAuthor + ' ' + formattedAlignment;
-            // swap name for clean, generalized name
-            resCopy.origName = resCopy.pageName;
-            resCopy.pageName = resCopy.v4Name;
-            // update question names for generalizing data
-            if (resCopy.questions) {
-                for (const q of Object.keys(resCopy.questions)) {
-                    if (resCopy.pageType.includes('single')) {
-                        // set up single medic page/question labels
-                        const newQ = (admAuthor + ' ' + formattedAlignment + ':' + q.slice(9)).replace('::', ':');
-                        resCopy.questions[newQ] = resCopy.questions[q];
-                    }
-                    else {
-                        // set up comparison page/question labels
-                        const pageADMs = resCopy.origName.split(' vs ');
-                        const qADMs = q.split(':')[0].split(' vs ');
-                        const newQ = (qADMs[0] == pageADMs[1] ? 'Aligned' : 'Misaligned') + ' vs ' + (qADMs[1] == pageADMs[0] ? 'Baseline' : 'Misaligned') + ':' + q.split(':')[1];
-                        if (q.includes('Forced')) {
-                            resCopy.questions[newQ] = { 'response': resCopy.questions[q].response == pageADMs[0] ? 'Baseline' : resCopy.questions[q].response == pageADMs[1] ? 'Aligned' : 'Misaligned' };
-                        }
-                        else {
-                            resCopy.questions[newQ] = resCopy.questions[q];
-                        }
-                    }
-                }
-            }
-        }
-        else {
-            resCopy.v4Name = undefined;
-        }
-        return resCopy;
-    }
+    }, [filteredData, selectedScenario, filterBySurveyVersion, generalizePages, dataParticipantLog, generalizeNames]);
 
     const toggleGeneralizability = (event) => {
-        setGeneralization(event.target.value == 'Alignment');
+        setGeneralization(event.target.value === 'Alignment');
     }
 
-    const indexToScenarioName = (index) => {
-        if (filterBySurveyVersion == 4 || filterBySurveyVersion == 5) { return index }
-        const currentSurvey = Object.values(surveys).find(survey => survey.version == filterBySurveyVersion);
-        const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex == index);
+    const indexToScenarioName = React.useCallback((index) => {
+        if (filterBySurveyVersion === 4 || filterBySurveyVersion === 5) { return index }
+        const currentSurvey = Object.values(surveys).find(survey => survey.version === filterBySurveyVersion);
+        const matchingPage = currentSurvey?.pages?.find(page => page.scenarioIndex === index);
         return matchingPage?.scenarioName ? matchingPage.scenarioName : `Scenario ${index}`
-    }
+    }, [surveys, filterBySurveyVersion]);
 
     const getSurveyVersions = (data) => {
         let detectedVersions = [];
@@ -186,7 +159,7 @@ export function SurveyResults() {
         setVersions(detectedVersions);
     };
 
-    const setupDataBySurveyVersion = (data, versionFilter) => {
+    const setupDataBySurveyVersion = React.useCallback((data, versionFilter) => {
         // only get data from selected survey version
         const filteredData = data.getAllSurveyResults.filter(result => {
             if (!result.results) { return false; }
@@ -217,7 +190,8 @@ export function SurveyResults() {
         if (Object.keys(scenarios).length > 0) {
             setSelectedScenario("");
         }
-    }
+
+    }, [indexToScenarioName]);
 
     const scrollToTop = () => {
         window.scrollTo({
@@ -226,6 +200,31 @@ export function SurveyResults() {
         });
     };
 
+    React.useEffect(() => {
+        if (!data) { return; }
+        getSurveyVersions(data);
+    }, [data]);
+
+    React.useEffect(() => {
+        if (data && filterBySurveyVersion) {
+            setupDataBySurveyVersion(data, filterBySurveyVersion);
+        }
+    }, [filterBySurveyVersion, data, setupDataBySurveyVersion]);
+
+    React.useEffect(() => {
+        if (filteredData) {
+            filterDataAndSetNames();
+        }
+    }, [selectedScenario, filterBySurveyVersion, filteredData, generalizePages, dataParticipantLog, filterDataAndSetNames]);
+
+    React.useEffect(() => {
+        // component did mount
+        window.addEventListener('scroll', toggleVisibility);
+        return () => {
+            // component will unmount
+            window.removeEventListener('scroll', toggleVisibility);
+        }
+    }, []);
 
     return <>
         <div className='survey-results-content'>
@@ -274,7 +273,7 @@ export function SurveyResults() {
                                 </List>
                             </div>}
                     </div>
-                        {filterBySurveyVersion && selectedScenario != "" ?
+                        {filterBySurveyVersion && selectedScenario !== "" ?
                             <div className="graph-section">
                                 <div className="options">
                                     {[4, 5].includes(filterBySurveyVersion) &&

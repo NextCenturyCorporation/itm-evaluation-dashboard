@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Container, Row, Col } from 'react-bootstrap';
+import { Table, Container } from 'react-bootstrap';
 import '../../css/dynamicPhase2.css';
 
 const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {

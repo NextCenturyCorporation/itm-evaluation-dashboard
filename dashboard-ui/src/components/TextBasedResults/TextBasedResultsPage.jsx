@@ -144,7 +144,7 @@ function getQuestionTextLegacy(qkey, scenario, textBasedConfigs) {
 
 function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, participantBased, scenarioOptions, participantLog }) {
     const [organizedData, setOrganizedData] = React.useState(null);
-    const [excelData, setExcelData] = React.useState(null);
+    const [, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
 
     React.useEffect(() => {
@@ -269,8 +269,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 .forEach(key => processProbeData(entry, key, scenario, participantRow));
     
             if (allScenarios) {
+
                 const logEntry = participantLog?.getParticipantLog?.find(
-                    log => log['ParticipantID'] == participantId
+                    log => String(log['ParticipantID']) === participantId
                 );
     
                 const setValues = ['AF', 'MF', 'PS', 'SS']
@@ -447,9 +448,9 @@ export default function TextBasedResultsPage() {
             for (const result of data.getAllScenarioResultsByEval) {
                 const pid = result['participantID'];
                 const logData = participantLog.getParticipantLog.find(
-                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                    log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                 );
-                if ((selectedEval == 4 || selectedEval == 5) && !logData) {
+                if ((selectedEval === 4 || selectedEval === 5) && !logData) {
                     continue;
                 }
                 try {

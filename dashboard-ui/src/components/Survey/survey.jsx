@@ -132,23 +132,24 @@ class SurveyPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.redirectLinkRef = React.createRef();
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid != null) {
+
+        if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
-            if (this.state.surveyVersion == 4.0) this.setSeenScenarios();
+            if (this.state.surveyVersion === "4.0") this.setSeenScenarios();
             this.survey.data = {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion == 4 || res.results?.surveyVersion == 5 || res.results?.surveyVersion == 6) && res.results['Participant ID Page']?.questions['Participant ID']?.response == this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion === 4 || res.results?.surveyVersion === 5 || res.results?.surveyVersion === 6) && res.results['Participant ID Page']?.questions['Participant ID']?.response === this.state.pid && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
-            const completedTextSurvey = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
+            const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid || this.state.onlineOnly) {
                 if (pidExists.length > 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered has already been used. Please go back and ensure you have typed in the PID correctly before continuing.";
                 }
-                else if (completedTextSurvey.length == 0 && !this.state.onlineOnly) {
+                else if (completedTextSurvey.length === 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
                     this.survey.pages[1].elements[0].name = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
                     this.survey.pages[1].elements[0].title = "Warning: The Participant ID you entered does not have an entry for the text scenarios. Please go back and ensure you have typed in the PID correctly before continuing, or ensure this participant takes the text portion before completing the delegation survey.";
@@ -193,14 +194,14 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid != null) {
+        if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: false
             });
         }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
-        if ((this.state.surveyVersion != 4.0 && this.state.surveyVersion != 5.0 && this.state.surveyVersion != 6.0)) {
-            if (this.state.surveyVersion == 1.3) {
+        if ((this.state.surveyVersion !== "4.0" && this.state.surveyVersion !== "5.0" && this.state.surveyVersion !== "6.0")) {
+            if (this.state.surveyVersion === "1.3") {
                 this.assign_omnibus_1_3(groupedDMs)
             }
             this.applyPageRandomization(groupedDMs, comparisonPages, removed);
@@ -229,7 +230,8 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-        if (this.state.surveyVersion == 2 || this.state.surveyVersion == 0) {
+
+        if (this.state.surveyVersion === "2" || this.state.surveyVersion === "0") {
             // randomize order of soarTech scenarios and adept scenarios
             let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
             let adept = shuffle(this.surveyConfigClone.adeptDMs)
@@ -253,7 +255,7 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed };
         }
-        else if (this.state.surveyVersion == 2.1) {
+        else if (this.state.surveyVersion === "2.1") {
             let groupedDMs = shuffle(this.surveyConfigClone.adeptDMs)
             let comparisonPages = []
             groupedDMs.forEach(group => {
@@ -262,7 +264,7 @@ class SurveyPage extends Component {
             let removed = []
             return { groupedDMs, comparisonPages, removed };
         }
-        else if (this.state.surveyVersion == 3.0) {
+        else if (this.state.surveyVersion === "3.0") {
             // data collect starting 7-16
             let pages = this.surveyConfigClone.pages
             let removed = []
@@ -306,16 +308,16 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed }
         }
-        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && this.state.pid == null) {
+        else if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
 
             return {};
         }
-        else if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0)) {
+        else if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0")) {
             let scenariosToSee = this.state.envsSeen;
-            if (this.state.surveyVersion == 5.0 && this.state.onlineOnly) {
+            if (this.state.surveyVersion === "5.0" && this.state.onlineOnly) {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => log['ParticipantID'] == this.state.pid
+                    log => String(log['ParticipantID']) === this.state.pid
                 );
                 scenariosToSee = isDefined(matchedLog) ? matchedLog : this.state.envsSeen
                 this.setState({ envsSeen: scenariosToSee });
@@ -328,24 +330,24 @@ class SurveyPage extends Component {
             const stScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("ST") ? del1 : scenariosToSee['Del-2']];
             const adScenario = getDelEnvMapping(this.state.surveyVersion)[del1.includes("AD") ? del1 : scenariosToSee['Del-2']];
             // find most and least aligned adms for every attribute
-            const participantResults = this.props.textResults.filter((res) => res['participantID'] == this.state.pid && Object.keys(res).includes('mostLeastAligned'));
+            const participantResults = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             const admLists = {
                 "qol": participantResults.findLast((el) => el['scenario_id'].includes('qol')) ?? undefined,
                 "vol": participantResults.findLast((el) => el['scenario_id'].includes('vol')) ?? undefined,
                 "adept": participantResults.findLast((el) => el['scenario_id'].includes('DryRunEval') || el['scenario_id'].includes('adept')) ?? undefined
             };
             let adeptMostLeast = null;
-            if (this.state.surveyVersion == 4.0) {
+            if (this.state.surveyVersion === "4.0") {
                 adeptMostLeast = getOrderedAdeptTargets(admLists?.adept?.combinedAlignmentData ?? []);
             }
             else {
-                adeptMostLeast = { 'Ingroup': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Ingroup Bias'), 'Moral': admLists?.adept?.mostLeastAligned?.find((x) => x.target == 'Moral judgement') }
+                adeptMostLeast = { 'Ingroup': admLists?.adept?.mostLeastAligned?.find((x) => x.target === 'Ingroup Bias'), 'Moral': admLists?.adept?.mostLeastAligned?.find((x) => x.target === 'Moral judgement') }
             }
             for (let x of order) {
-                const expectedAuthor = (x['TA2'] == 'Kitware' ? 'kitware' : 'TAD');
-                const expectedScenario = x['TA1'] == 'ST' ? (x['Attribute'] == 'QOL' ? stScenario[0] : stScenario[1]) : (x['Attribute'] == 'MJ' ? adScenario[0] : adScenario[1]);
+                const expectedAuthor = (x['TA2'] === 'Kitware' ? 'kitware' : 'TAD');
+                const expectedScenario = x['TA1'] === 'ST' ? (x['Attribute'] === 'QOL' ? stScenario[0] : stScenario[1]) : (x['Attribute'] === 'MJ' ? adScenario[0] : adScenario[1]);
                 let adms = null;
-                if (expectedAuthor == 'kitware') {
+                if (expectedAuthor === 'kitware') {
                     if ((this.state.onlineOnly || this.state.validPid) && isDefined(adeptMostLeast['Ingroup']) && isDefined(adeptMostLeast['Moral']) && isDefined(admLists['qol']) && isDefined(admLists['vol'])) {
                         adms = getKitwareAdms(this.state.surveyVersion, expectedScenario, adeptMostLeast['Ingroup'], adeptMostLeast['Moral'], admLists['qol']['mostLeastAligned'][0]['response'], admLists['vol']['mostLeastAligned'][0]['response']);
                     } else {
@@ -362,16 +364,16 @@ class SurveyPage extends Component {
 
                 let alignedADMTarget = adms['aligned'];
                 let misalignedADMTarget = adms['misaligned'];
-                const baselineADMTarget = x['TA2'] == 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
-                const baselineAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'baseline' && x.admAlignment == baselineADMTarget);
+                const baselineADMTarget = x['TA2'] === 'Kitware' ? getKitwareBaselineMapping(this.state.surveyVersion)[expectedScenario] : getTadBaselineMapping(this.state.surveyVersion)[expectedScenario];
+                const baselineAdm = allPages.find((x) => x.admAuthor === expectedAuthor && x.scenarioIndex === expectedScenario && x.admType === 'baseline' && x.admAlignment === baselineADMTarget);
                 // aligned
                 if (expectedScenario.includes('DryRun')) {
                     if (alignedADMTarget && !alignedADMTarget.includes('.')) alignedADMTarget = alignedADMTarget?.slice(0, -1) + '.' + alignedADMTarget?.slice(-1);
                     if (misalignedADMTarget && !misalignedADMTarget.includes('.')) misalignedADMTarget = misalignedADMTarget?.slice(0, -1) + '.' + misalignedADMTarget?.slice(-1);
                 }
-                const alignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == alignedADMTarget);
+                const alignedAdm = allPages.find((x) => x.admAuthor === expectedAuthor && x.scenarioIndex === expectedScenario && x.admType === 'aligned' && x.admAlignment === alignedADMTarget);
                 // misaligned
-                const misalignedAdm = allPages.find((x) => x.admAuthor == expectedAuthor && x.scenarioIndex == expectedScenario && x.admType == 'aligned' && x.admAlignment == misalignedADMTarget);
+                const misalignedAdm = allPages.find((x) => x.admAuthor === expectedAuthor && x.scenarioIndex === expectedScenario && x.admType === 'aligned' && x.admAlignment === misalignedADMTarget);
                 const pagesToShuffle = [];
                 if (isDefined(baselineAdm)) {
                     baselineAdm['alignment'] = 'baseline';
@@ -407,7 +409,7 @@ class SurveyPage extends Component {
 
             return {};
         }
-        else if (this.state.surveyVersion == 1.3 || this.state.surveyVersion == 1.0) {
+        else if (this.state.surveyVersion === "1.3" || this.state.surveyVersion === "1.0") {
             let groupedDMs = shuffle([...this.surveyConfigClone.groupedDMs]);
             // remove one scenario at random (we only want three randomly selected scenarios out of the bucket of four)
             let removed = groupedDMs.pop();
@@ -419,13 +421,13 @@ class SurveyPage extends Component {
 
             return { groupedDMs, removed, comparisonPages };
         }
-        else if (this.state.surveyVersion == 6.0) {
+        else if (this.state.surveyVersion === "6.0") {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
             const textScenarios = getTextScenariosForParticipant(this.state.pid, this.props.participantLog);
             const participantTextResults = this.props.textResults.filter(
-                (res) => res['participantID'] == this.state.pid
+                (res) => String(res['participantID']) === this.state.pid
             );
             console.log("Participant text results:", participantTextResults);
 
@@ -481,7 +483,7 @@ class SurveyPage extends Component {
         */
         const postScenarioPage = this.surveyConfigClone.pages.find(page => page.name === "Post-Scenario Measures");
         let omnibusPages = this.surveyConfigClone.pages.filter(page => page.name.includes("Omnibus"));
-        if (this.state.surveyVersion === 3.0) {
+        if (this.state.surveyVersion === "3.0") {
             omnibusPages = []
             // grabs introduction pages
             const introPages = this.surveyConfigClone.pages.slice(0, 3)
@@ -573,7 +575,7 @@ class SurveyPage extends Component {
 
         // for data collect 7-11-24 survey version 2.1
         // randomly insert 'treat as ai DM' OR 'treat as human DM'
-        if (this.state.surveyVersion == 2.1) {
+        if (this.state.surveyVersion === "2.1") {
             const shuffledInstructionPages = shuffle(this.surveyConfigClone.instructionPages)
             const firstGroup = [shuffledInstructionPages[0]]
             const secondGroup = [shuffledInstructionPages[1]]
@@ -597,12 +599,12 @@ class SurveyPage extends Component {
     }
 
     orderLogHelper = (group, orderLog, offset) => {
-        const groupType = group[0] == 'Treat as Human' ? 'H' : 'AI'
+        const groupType = group[0] === 'Treat as Human' ? 'H' : 'AI'
         let lastPage = {}
         group.forEach((pageName, index) => {
-            if (index == 0) { return } // skip the agent page
+            if (index === 0) { return } // skip the agent page
             const page = this.surveyConfigClone.pages.find(p => p.name === pageName);
-            if (page.pageType == 'singleMedic') {
+            if (page.pageType === 'singleMedic') {
                 // mark last page so comparison pages can read info from it 
                 lastPage = page
                 orderLog.push(`${index + offset}-${page.admAuthor}-${page.scenarioName.replace(/\s+/g, '-')}-${groupType}-${page.admAlignment}`);
@@ -626,7 +628,7 @@ class SurveyPage extends Component {
                 startTime: timestamp.data.getServerTimestamp
             });
 
-            if (this.state.surveyVersion == 1.3 && this.props.addParticipant) {
+            if (this.state.surveyVersion === "1.3" && this.props.addParticipant) {
                 try {
                     const participantData = {
                         claimed: true
@@ -647,7 +649,7 @@ class SurveyPage extends Component {
         }
 
         const pageName = options.page.name;
-        if (pageName == 'VR Page') {
+        if (pageName === 'VR Page') {
             // made it past warnings and pid page, so log pid as claimed
             if (this.state.validPid) {
                 this.setState({ updatePLog: true }, () => {
@@ -744,7 +746,7 @@ class SurveyPage extends Component {
         this.surveyData.browserInfo = this.state.browserInfo;
 
         // 7-16 data collect. Log info about order, agent, and DM 
-        if (this.state.surveyVersion == 3.0 || this.state.surveyVersion == 2.1) {
+        if (this.state.surveyVersion === "3.0" || this.state.surveyVersion === "2.1") {
             this.surveyData['firstGroup'] = this.state.firstGroup;
             this.surveyData['secondGroup'] = this.state.secondGroup;
             this.surveyData['orderLog'] = this.state.orderLog;
@@ -756,7 +758,7 @@ class SurveyPage extends Component {
             }
         }
 
-        if (this.state.surveyVersion == 6.0) {
+        if (this.state.surveyVersion === "6.0") {
             this.surveyData['evalName'] = 'June 2025 Collaboration'
             this.surveyData['evalNumber'] = 8
             this.surveyData['pid'] = this.state.pid;
@@ -766,19 +768,19 @@ class SurveyPage extends Component {
             }
         }
 
-        if (this.state.surveyVersion == 1.3) {
+        if (this.state.surveyVersion === "1.3") {
             this.surveyData['evalName'] = 'April 2025 Evaluation';
             this.surveyData['evalNumber'] = 8;
             this.surveyData['pid'] = this.state.pid;
             this.surveyData['orderLog'] = this.state.orderLog
         }
 
-        if (this.state.surveyVersion == 4.0) {
+        if (this.state.surveyVersion === "4.0") {
             this.surveyData['evalNumber'] = 4;
             this.surveyData['evalName'] = 'Dry Run Evaluation';
             this.surveyData['orderLog'] = this.state.orderLog;
         }
-        if (this.state.surveyVersion == 5.0) {
+        if (this.state.surveyVersion === "5.0") {
             this.surveyData['evalNumber'] = 6;
             this.surveyData['evalName'] = 'Jan 2025 Eval';
             this.surveyData['orderLog'] = this.state.orderLog;
@@ -800,13 +802,13 @@ class SurveyPage extends Component {
         // final upload
         this.uploadSurveyData(survey, true);
         if (this.surveyConfigClone.pages.length < 3) {
-            if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+            if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
-                        log => log['ParticipantID'] == this.state.pid
+                        log => String(log['ParticipantID']) === this.state.pid
                     );
                     this.setState({ validPid: isDefined(matchedLog), envsSeen: isDefined(matchedLog) ? matchedLog : this.state.envsSeen }, () => {
-                        if (this.state.surveyVersion == 4.0) this.setSeenScenarios();
+                        if (this.state.surveyVersion === "4.0") this.setSeenScenarios();
                     });
                 });
             }
@@ -826,7 +828,7 @@ class SurveyPage extends Component {
     }
 
     finishFirstPage = (survey) => {
-        if (!this.state.onlineOnly && survey.currentPageNo == 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
+        if (!this.state.onlineOnly && survey.currentPageNo === 0 && ((new Date() - this.state.lastTimeCalled) / 1000) > 2) {
             this.setState({ lastTimeCalled: new Date() }, () => {
                 this.postConfigSetup();
             });
@@ -834,10 +836,10 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if ((this.state.surveyVersion == 4.0 || this.state.surveyVersion == 5.0 || this.state.surveyVersion == 6.0) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+        if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => log['ParticipantID'] == this.state.pid
+                    log => String(log['ParticipantID']) === this.state.pid
                 );
                 if (this.survey.getPageByName("PID Warning"))
                     this.survey.getPageByName("PID Warning").visible = !isDefined(matchedLog);
@@ -942,6 +944,7 @@ class SurveyPage extends Component {
                             ref={this.redirectLinkRef}
                             hidden
                             href={this.getRedirectUrl()}
+                            aria-label="Survey completion redirect link"
                         />
                     </>
                 }

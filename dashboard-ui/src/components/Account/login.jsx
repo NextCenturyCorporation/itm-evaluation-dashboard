@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { accountsPassword } from '../../services/accountsService';
 import { withRouter } from 'react-router-dom';
 import $ from 'jquery';
@@ -68,7 +68,7 @@ class LoginApp extends React.Component {
 
         $("#text-entry-feedback").removeClass("feedback-display");
         try {
-            this.props.participantLoginHandler(hashedEmail, this.props.history.location.pathname == '/participantTextTester');
+            this.props.participantLoginHandler(hashedEmail, this.props.history.location.pathname === '/participantTextTester');
         } catch (err) {
             $("#text-entry-feedback").addClass("feedback-display");
             this.setState({ error: err.message, pidCreationFailed: true });
@@ -245,7 +245,7 @@ class LoginApp extends React.Component {
                 <div className="row justify-content-center align-items-center h-100 center-container">
                     <div className="login-container">
                         <Tabs className='p-1' defaultActiveKey={this.props.isParticipant ? 2 : 1}>
-                            {this.props.history.location.pathname != '/participantTextTester' && this.props.history.location.pathname != '/participantText' &&
+                            {this.props.history.location.pathname !== '/participantTextTester' && this.props.history.location.pathname !== '/participantText' &&
                                 <Tab eventKey={0} title="Create Account">
                                     <div>
                                         <div className="sign-in-instructions">
@@ -283,7 +283,7 @@ class LoginApp extends React.Component {
                                     </div>
                                 </Tab>
                             }
-                            {this.props.history.location.pathname != '/participantTextTester' && this.props.history.location.pathname != '/participantText' &&
+                            {this.props.history.location.pathname !== '/participantTextTester' && this.props.history.location.pathname !== '/participantText' &&
                                 <Tab eventKey={1} title="Sign In">
                                     <div >
                                         <div id="sign-in-pane">
@@ -429,7 +429,7 @@ class LoginApp extends React.Component {
 export default withRouter(LoginApp);
 
 const LoginHelper = ({ email, username, onResult }) => {
-    const { loading, error, data } = useQuery(CHECK_USER_EXISTS, {
+    const { loading, data } = useQuery(CHECK_USER_EXISTS, {
         variables: {
             email: email.trim().toLowerCase(),
             username: username.trim().toLowerCase()
@@ -439,7 +439,7 @@ const LoginHelper = ({ email, username, onResult }) => {
         if (!loading && data) {
             onResult(data.checkUserExists);
         }
-    }, [data, loading]);
+    }, [data, loading, onResult]);
 
     return null;
 };

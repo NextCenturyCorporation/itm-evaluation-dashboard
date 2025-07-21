@@ -64,15 +64,15 @@ export function RQ6({ evalNum }) {
             const allAttributes = [];
 
             const evals = [evalNum];
-            if (includeDRE && evalNum != 4) {
+            if (includeDRE && evalNum !== 4) {
                 evals.push(4);
             }
-            if (includeJAN && evalNum != 6) {
+            if (includeJAN && evalNum !== 6) {
                 evals.push(6);
             };
 
             for (let evalNum of evals) {
-                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
 
                 const pids = [];
                 const recorded = {};
@@ -84,11 +84,11 @@ export function RQ6({ evalNum }) {
                     }
                     recorded[pid] = [];
 
-                    const { textResultsForPID, _ } = getAlignments(evalNum, textResults, pid);
+                    const { textResultsForPID, } = getAlignments(evalNum, textResults, pid);
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
-                        log => log['ParticipantID'] == pid && log['Type'] != 'Test' && log['Type'] != 'Online'
+                        log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test' && log['Type'] !== 'Online'
                     );
                     if (!logData) {
                         continue;
@@ -122,10 +122,10 @@ export function RQ6({ evalNum }) {
                             allTA1s.push(entryObj['TA1_Name']);
                             entryObj['Attribute'] = att;
                             allAttributes.push(att);
-                            entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                            entryObj['Scenario'] = entryObj['TA1_Name'] === 'ADEPT' ? ad_scenario : st_scenario;
                             allScenarios.push(entryObj['Scenario']);
-                            const vrVsText = simData.find((x) => x.pid == pid &&
-                                (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 == 'st' : x.ta1 == 'ad') &&
+                            const vrVsText = simData.find((x) => x.pid === pid &&
+                                (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 === 'st' : x.ta1 === 'ad') &&
                                 x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')))?.data?.alignment?.vr_vs_text;
                             entryObj['Alignment score (Participant_Text|Participant_Sim)'] = ['QOL', 'VOL'].includes(att) ? vrVsText : vrVsText?.[att];
                             allObjs.push(entryObj);
@@ -178,9 +178,9 @@ export function RQ6({ evalNum }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute']))
+                (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute']))
             ));
         }
     }, [formattedData, ta1Filters, scenarioFilters, attributeFilters]);
@@ -190,7 +190,7 @@ export function RQ6({ evalNum }) {
 
     return (<>
         <h2 className='rq134-header'>RQ6 Data
-            {evalNum == 5 &&
+            {evalNum === 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
