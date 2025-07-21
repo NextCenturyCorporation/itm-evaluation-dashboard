@@ -39,7 +39,7 @@ class AdmCharts extends React.Component {
             } else {
                 return ("Soartech: " + id + " " + name);
             }
-        } else if (this.state.currentEval.value == 3) {
+        } else if (this.state.currentEval.value === 3) {
             if (id.toLowerCase().indexOf("metricseval") > -1) {
                 return ("ADEPT: " + id + " " + name);
             } else {

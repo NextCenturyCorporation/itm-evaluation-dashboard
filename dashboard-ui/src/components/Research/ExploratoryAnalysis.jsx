@@ -97,7 +97,7 @@ export function ExploratoryAnalysis() {
                     </p>
                 </div>
                 <div className="section-container">
-                    {selectedEval == 5 ?
+                    {selectedEval === 5 ?
                         <RQ5_PH1 evalNum={selectedEval} /> :
                         <RQ5 evalNum={selectedEval} />}
 

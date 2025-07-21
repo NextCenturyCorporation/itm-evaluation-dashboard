@@ -21,7 +21,7 @@ const PH1_HEADERS = ['Trial_ID', 'TA2_Name', 'TA1_Name', 'Attribute', 'Target', 
 
 
 export function RQ2223({ evalNum }) {
-    const { loading: loading, error: error, data: data } = useQuery(getAdmData, {
+    const { loading, error, data } = useQuery(getAdmData, {
         variables: { "evalNumber": evalNum }
     });
     const [formattedData, setFormattedData] = React.useState([]);
@@ -32,7 +32,7 @@ export function RQ2223({ evalNum }) {
     const [attributes, setAttributes] = React.useState([]);
     const [scenarios, setScenarios] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
-    const [targetType, setTargetType] = React.useState(['Group', 'Individual']);
+    const [targetType, ] = React.useState(['Group', 'Individual']);
     // filter options that have been chosen
     const [ta1Filters, setTA1Filters] = React.useState([]);
     const [ta2Filters, setTA2Filters] = React.useState([]);
@@ -42,7 +42,7 @@ export function RQ2223({ evalNum }) {
     const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
-    const HEADERS = evalNum == 5 || evalNum == 6 ? PH1_HEADERS : DRE_HEADERS;
+    const HEADERS = evalNum === 5 || evalNum === 6 ? PH1_HEADERS : DRE_HEADERS;
 
 
     const openModal = () => {
@@ -96,7 +96,7 @@ export function RQ2223({ evalNum }) {
                     for (const target of Object.keys(organized_adms[ta2][scenario])) {
                         const entryObj = {};
                         const attribute = scenario.includes('qol') ? 'QOL' : scenario.includes('vol') ? 'VOL' : target.includes('Moral') ? 'MJ' : 'IO';
-                        if ((last_attribute == 'MJ' && attribute == 'IO') || last_attribute == 'IO' && attribute == 'MJ') {
+                        if ((last_attribute === 'MJ' && attribute === 'IO') || (last_attribute === 'IO' && attribute === 'MJ')) {
                             trial = 1;
                         }
                         last_attribute = attribute;
@@ -113,29 +113,29 @@ export function RQ2223({ evalNum }) {
                         entryObj['Scenario'] = scenario;
                         allScenarios.push(scenario);
                         entryObj['Target_Type (Group/Individual)'] = target.toLowerCase().includes('-group') ? 'Group' : 'Individual';
-                        const aligned = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
+                        const aligned = organized_adms[ta2][scenario][target][ta2 === 'Parallax' ? 'TAD-aligned' : "ALIGN-ADM-ComparativeRegression-ICL-Template"];
 
-                        if (evalNum == 5 || evalNum == 6) {
+                        if (evalNum === 5 || evalNum === 6) {
                             entryObj['P1E Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
-                            entryObj['P1E Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
-                            entryObj['DRE Aligned ADM Alignment score (ADM|target)'] = entryObj['TA1_Name'] == 'SoarTech' ? aligned?.alignment : aligned?.dre_alignment;
-                            entryObj['DRE Aligned Server Session ID'] = entryObj['TA1_Name'] == 'SoarTech' ? entryObj['P1E Aligned Server Session ID'] : aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
+                            entryObj['P1E Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command === 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                            entryObj['DRE Aligned ADM Alignment score (ADM|target)'] = entryObj['TA1_Name'] === 'SoarTech' ? aligned?.alignment : aligned?.dre_alignment;
+                            entryObj['DRE Aligned Server Session ID'] = entryObj['TA1_Name'] === 'SoarTech' ? entryObj['P1E Aligned Server Session ID'] : aligned?.adm?.history?.find((x) => x.command === 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
                         }
                         else {
                             entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned?.alignment;
-                            entryObj['Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                            entryObj['Aligned Server Session ID'] = aligned?.adm?.history?.find((x) => x.command === 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                         }
-                        const baseline = organized_adms[ta2][scenario][target][ta2 == 'Parallax' ? 'TAD-severity-baseline' : "ALIGN-ADM-OutlinesBaseline"];
+                        const baseline = organized_adms[ta2][scenario][target][ta2 === 'Parallax' ? 'TAD-severity-baseline' : "ALIGN-ADM-OutlinesBaseline"];
 
-                        if (evalNum == 5 || evalNum == 6) {
+                        if (evalNum === 5 || evalNum === 6) {
                             entryObj['P1E Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
-                            entryObj['P1E Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
-                            entryObj['DRE Baseline ADM Alignment score (ADM|target)'] = entryObj['TA1_Name'] == 'SoarTech' ? baseline?.alignment : baseline?.dre_alignment;
-                            entryObj['DRE Baseline Server Session ID'] = entryObj['TA1_Name'] == 'SoarTech' ? entryObj['P1E Baseline Server Session ID'] : baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
+                            entryObj['P1E Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command === 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                            entryObj['DRE Baseline ADM Alignment score (ADM|target)'] = entryObj['TA1_Name'] === 'SoarTech' ? baseline?.alignment : baseline?.dre_alignment;
+                            entryObj['DRE Baseline Server Session ID'] = entryObj['TA1_Name'] === 'SoarTech' ? entryObj['P1E Baseline Server Session ID'] : baseline?.adm?.history?.find((x) => x.command === 'TA1 Session Alignment')?.parameters?.dreSessionId ?? '-';
                         }
                         else {
                             entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline?.alignment;
-                            entryObj['Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command == 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
+                            entryObj['Baseline Server Session ID'] = baseline?.adm?.history?.find((x) => x.command === 'TA1 Session Alignment')?.parameters?.session_id ?? '-';
                         }
                         allObjs.push(entryObj);
                     }
@@ -187,12 +187,12 @@ export function RQ2223({ evalNum }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target_Type (Group/Individual)']))
+                (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length === 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
+                (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
+                (targetTypeFilters.length === 0 || targetTypeFilters.includes(x['Target_Type (Group/Individual)']))
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, targetTypeFilters]);
@@ -320,7 +320,7 @@ export function RQ2223({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ22_23_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ22_23_eval${evalNum}.xlsx`} xlFile={(evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

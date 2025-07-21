@@ -112,34 +112,23 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [showLegacy, setShowLegacy] = React.useState(false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
-    React.useEffect(() => {
-        if (data) {
-            formatData(data);
-        }
-    }, [data, pLog, showLegacy]);
-
-    React.useEffect(() => {
-        if (exploratory)
-            setEvalFilters(evalNumbers);
-    }, [evalNumbers]);
-
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
-        const basicChecks = comparisonEntry['pid'] == pid && comparisonEntry['adm_type'] == admType && comparisonEntry['adm_scenario'] == scenario;
+        const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
         // we don't care about servers when it comes to ST. check for DRE server for 5&6, and NOT ph1 server for 4
         const dreCheck = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
-            ([5, 6].includes(comparisonEntry['evalNumber']) && comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] == 4 && !comparisonEntry['ph1_server']);
+            ([5, 6].includes(comparisonEntry['evalNumber']) && comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] === 4 && !comparisonEntry['ph1_server']);
         return basicChecks && dreCheck;
     };
 
     const searchForPh1Comparison = (comparisonEntry, pid, admType, scenario) => {
-        const basicChecks = comparisonEntry['pid'] == pid && comparisonEntry['adm_type'] == admType && comparisonEntry['adm_scenario'] == scenario;
+        const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
         // we don't care about servers when it comes to ST. check for PH1 server for 4, and NOT dre server for 5&6
         const ph1Check = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
-            ([5, 6].includes(comparisonEntry['evalNumber']) && !comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] == 4 && comparisonEntry['ph1_server']);
+            ([5, 6].includes(comparisonEntry['evalNumber']) && !comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] === 4 && comparisonEntry['ph1_server']);
         return basicChecks && ph1Check;
     };
 
-    const formatData = (data) => {
+    const formatData = React.useCallback((data) => {
         const allObjs = [];
         const allEvals = [];
         const allVersions = [];
@@ -204,14 +193,14 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 continue;
             }
 
-            if (obj['eval'] == 3 && pid.slice(0, 4) != '2024') {
+            if (obj['eval'] === 3 && pid.slice(0, 4) !== '2024') {
                 continue;
             }
 
             const logData = pLog.find(
-                log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((version == 4 || version == 5) && !logData) {
+            if ((version === 4 || version === 5) && !logData) {
                 continue;
             }
 
@@ -222,7 +211,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
 
             if (entry['surveyVersion'] === 1.3) {
-                obj['April 2025'] = entry['evalNumber'] == 8 ? 1 : 0;
+                obj['April 2025'] = entry['evalNumber'] === 8 ? 1 : 0;
                 obj['Condition'] = entry['Participant ID']?.questions['Condition']?.response ?? '-'
             }
 
@@ -244,7 +233,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
                 for (const q of Object.keys(lastPage.questions)) {
-                    if (q != 'What is your current role (choose all that apply):') {
+                    if (q !== 'What is your current role (choose all that apply):') {
                         obj[q] = lastPage.questions[q].response?.toString();
                     }
                     else {
@@ -286,7 +275,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     continue;
                 }
 
-                if ((page.pageType == 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
+                if ((page.pageType === 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
                     if (!showLegacy) {
                         obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
@@ -308,7 +297,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                     dm += 1;
                 }
-                else if ((page.pageType == 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
+                else if ((page.pageType === 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
                     if (!showLegacy) {
                         const alignment = page.admAlignment?.split(' vs ');
                         const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
@@ -360,7 +349,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 }
                 if (showLegacy && pageName.includes('Omnibus')) {
                     const cleanPageName = pageName.split(': ').slice(-1).toString();
-                    if (page.pageType == 'singleMedic') {
+                    if (page.pageType === 'singleMedic') {
                         obj[`B${block}_Omni${dm}_Name`] = cleanPageName;
                         obj[`B${block}_Omni${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
                         obj[`B${block}_Omni${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
@@ -371,7 +360,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_Omni${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
                         dm += 1;
                     }
-                    else if (page.pageType == 'comparison') {
+                    else if (page.pageType === 'comparison') {
                         const order = cleanPageName.split(' vs ');
                         obj[`B${block}_Compare_Omni1`] = order[0];
                         obj[`B${block}_Compare_Omni2`] = order[1];
@@ -397,13 +386,37 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         setHeaders(updatedHeaders);
         setRoles(Array.from(new Set(allRoles)));
         setOrigHeaderSet(updatedHeaders);
-    };
+    }, [pLog, showLegacy, exploratory, comparisonData]);
+
+    const getUsedHeaders = React.useCallback((data) => {
+        const usedHeaders = [];
+        for (let x of origHeaderSet) {
+            for (let datapoint of data) {
+                if (isDefined(datapoint[x])) {
+                    usedHeaders.push(x);
+                    break;
+                }
+            }
+        }
+        return usedHeaders;
+    }, [origHeaderSet]);
+
+    React.useEffect(() => {
+        if (data) {
+            formatData(data);
+        }
+    }, [data, pLog, showLegacy, formatData]);
+
+    React.useEffect(() => {
+        if (exploratory)
+            setEvalFilters(evalNumbers);
+    }, [evalNumbers, exploratory]);
 
     React.useEffect(() => {
         const filtered = formattedData.filter((x) =>
-            (versionFilters.length == 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
-            (evalFilters.length == 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
-            (roleFilters.length == 0 || roleFilters.some((filter) => x['What is your current role (choose all that apply):']?.split('; ').includes(filter))) &&
+            (versionFilters.length === 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
+            (evalFilters.length === 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
+            (roleFilters.length === 0 || roleFilters.some((filter) => x['What is your current role (choose all that apply):']?.split('; ').includes(filter))) &&
             (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
@@ -415,22 +428,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const usedHeaders = getUsedHeaders(filtered);
             setHeaders(usedHeaders);
         }
-    }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters]);
 
-
-    const getUsedHeaders = (data) => {
-        const usedHeaders = [];
-        for (let x of origHeaderSet) {
-            for (let datapoint of data) {
-                if (isDefined(datapoint[x])) {
-                    usedHeaders.push(x);
-                    break;
-                }
-            }
-        }
-        return usedHeaders;
-    };
-
+    }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters, getUsedHeaders]);
 
     const refineData = (origData) => {
         // remove unwanted headers from download
@@ -448,7 +447,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     };
 
     const toggleDataType = (event) => {
-        setShowLegacy(event.target.value == 'Legacy');
+        setShowLegacy(event.target.value === 'Legacy');
         setFilteredData(formattedData);
         setEvalFilters([]);
         setMilFilters(null);
@@ -466,12 +465,12 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     };
 
     const isFiltered = () => {
-        return filteredData.length < (exploratory ? (evalFilters.length == 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length);
+        return filteredData.length < (exploratory ? (evalFilters.length === 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length);
     }
 
     return (<div className={!isFiltered() && exploratory ? 'lowered-table' : ''}>
         {isFiltered() &&
-            <p className='filteredText'>Showing {filteredData.length} of {(exploratory ? (evalFilters.length == 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length)} rows based on filters</p>}
+            <p className='filteredText'>Showing {filteredData.length} of {(exploratory ? (evalFilters.length === 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length)} rows based on filters</p>}
         <section className='tableHeader results-download-btns'>
             <div className="filters">
                 {!showLegacy && !exploratory && evals.length > 0 && <Autocomplete
@@ -480,7 +479,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     filterSelectedOptions
                     size="small"
                     value={evalFilters}
-                    isOptionEqualToValue={(x, y) => x.value == y.value & x.label == y.label}
+                    isOptionEqualToValue={(x, y) => x.value === y.value & x.label === y.label}
                     renderInput={(params) => (
                         <TextField
                             {...params}

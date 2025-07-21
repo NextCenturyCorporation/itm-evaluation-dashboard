@@ -19,7 +19,7 @@ import AlignmentScoreBox from './alignmentScore';
 import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import { RQ2223 } from '../Research/tables/rq22-rq23';
-import { MultiKDMA_RQ23 } from '../Research/tables/rq23_multiKDMA'
+import { MultiKDMA_RQ23 as MultiKdmaRq23 } from '../Research/tables/rq23_multiKDMA'
 import { PH2RQ2223 } from '../Research/tables/ph2_rq22-rq23';
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
@@ -143,7 +143,7 @@ class ResultsTable extends React.Component {
             } else {
                 return ("Soartech: " + id);
             }
-        } else if (this.state.evalNumber == 3) {
+        } else if (this.state.evalNumber === 3) {
             if (id.toLowerCase().indexOf("metricseval") > -1) {
                 return ("ADEPT: " + id);
             } else {
@@ -172,7 +172,7 @@ class ResultsTable extends React.Component {
         const { evalNumber, scenario, adm } = this.state;
         if (evalNumber >= 4) {
             if (evalNumber === 7) {
-                return <MultiKDMA_RQ23 />;
+                return <MultiKdmaRq23 />;
             } else if (evalNumber === 8) {
                 return <PH2RQ2223 evalNum={evalNumber}/>;
             } else {
@@ -439,18 +439,18 @@ function ActionRow({ item }) {
     }
 
     const renderNestedTable = (tableData, response = null) => {
-        const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] == 'APPLY_TREATMENT';
+        const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] === 'APPLY_TREATMENT';
         const character = tableData['character'];
         const location = tableData['location'];
         return (
             <Table size="small">
                 <TableBody>
                     {Object.entries(tableData).map(([key, value], i) => {
-                        if (isTreatment && response && key == 'treatment') {
+                        if (isTreatment && response && key === 'treatment') {
                             for (const c of (response?.characters ?? [])) {
-                                if (c['id'] == character) {
+                                if (c['id'] === character) {
                                     for (const injury of c['injuries']) {
-                                        if (injury['location'] == location) {
+                                        if (injury['location'] === location) {
                                             if (injury['treatments_applied'])
                                                 value = value + ` (current count: ${injury['treatments_applied']})`;
                                             break;
@@ -502,7 +502,7 @@ function ActionRow({ item }) {
                 <TableCell className="noBorderCell tableCellCommand">
                     <Typography><strong>Command:</strong> {item.command}</Typography>
                     <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>
-                    {renderNestedItems(item.parameters, item.command == 'Take Action' ? item.response : null)}
+                    {renderNestedItems(item.parameters, item.command === 'Take Action' ? item.response : null)}
                 </TableCell>
             </TableRow>
             <TableRow>

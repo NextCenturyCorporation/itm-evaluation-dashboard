@@ -95,7 +95,7 @@ export default function AggregateResults({ type }) {
                 if (typeof dataCopy[pid][k] === 'string' && dataCopy[pid][k].includes('link:')) {
                     dataCopy[pid][k] = dataCopy[pid][k].split('link:')[1];
                 }
-                if (dataCopy[pid][k] == '-') {
+                if (String(dataCopy[pid][k]) === '-') {
                     dataCopy[pid][k] = '';
                 }
             }
@@ -104,7 +104,7 @@ export default function AggregateResults({ type }) {
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(data, (selectedEval >= 8 ? 'ph2_' : selectedEval == 3 ? 'mre_' : selectedEval == 4 ? 'dre_' : 'ph1_') + 'participant_data' + fileExtension);
+        FileSaver.saveAs(data, (selectedEval >= 8 ? 'ph2_' : selectedEval === 3 ? 'mre_' : selectedEval === 4 ? 'dre_' : 'ph1_') + 'participant_data' + fileExtension);
     };
 
     const exportHumanSimToExcel = async () => {
@@ -117,7 +117,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, (selectedEval == 3 ? 'mre_' : selectedEval == 4 ? 'dre_' : 'ph1_') + 'human_sim_data' + fileExtension);
+            FileSaver.saveAs(data, (selectedEval === 3 ? 'mre_' : selectedEval === 4 ? 'dre_' : 'ph1_') + 'human_sim_data' + fileExtension);
         }
         else {
             const sheets = {};
@@ -131,7 +131,7 @@ export default function AggregateResults({ type }) {
                 ].filter(Boolean).join('_');
 
                 const rawData = aggregateData['groupedSim'][objKey];
-                const allHeaders = getHeadersEval4(HEADER_SIM_DATA[selectedEval == 6 ? 5 : selectedEval], objKey.split('_')[0]);
+                const allHeaders = getHeadersEval4(HEADER_SIM_DATA[selectedEval === 6 ? 5 : selectedEval], objKey.split('_')[0]);
                 // columns that have data in at least one row
                 const filteredHeaders = allHeaders.filter(header => hasDataInColumn(rawData, header));
 
@@ -150,7 +150,7 @@ export default function AggregateResults({ type }) {
             const wb = { Sheets: sheets, SheetNames: names };
             const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const data = new Blob([excelBuffer], { type: fileType });
-            FileSaver.saveAs(data, 'human_sim_data' + (selectedEval == 4 ? '_dre' : '_ph1') + fileExtension);
+            FileSaver.saveAs(data, 'human_sim_data' + (selectedEval === 4 ? '_dre' : '_ph1') + fileExtension);
         }
     };
 
@@ -182,7 +182,7 @@ export default function AggregateResults({ type }) {
         if (isDefined(v)) {
             if (typeof v === 'string' && v.includes('link:')) {
                 // show View Graph link that opens up iframe
-                return <a onClick={() => showGraph(v.split('link:')[1], dataSet['ParticipantID'] + ' ' + key)}>View Graph</a>
+                return <button onClick={() => showGraph(v.split('link:')[1], dataSet['ParticipantID'] + ' ' + key)}>View Graph</button>
             }
             else if (typeof v === 'number') {
                 // round to 4 decimals when displaying (full value will still show in download)
@@ -241,13 +241,16 @@ export default function AggregateResults({ type }) {
                             <span className='close-icon' onClick={closeIframe}><CloseIcon /></span>
                             <div className='graph-popup'>
                                 <h3>{iframeTitle ?? 'KDMA Graph'}</h3>
-                                <iframe src={iframeLink} />
+                                <iframe 
+                                src={iframeLink}
+                                title={iframeTitle ?? 'KDMA Graph'}
+                                />
                             </div>
                         </div>
                     </Modal>
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
-                            <div className="evaluation-selector-label"><h2>{selectedEval == 3 ? "Human Participant Data: Within-Subjects Analysis" : "Participant-Level Data"}</h2></div>
+                            <div className="evaluation-selector-label"><h2>{selectedEval === 3 ? "Human Participant Data: Within-Subjects Analysis" : "Participant-Level Data"}</h2></div>
                         </div>
                         <div className="aggregate-button-holder">
                             <button className='aggregateDownloadBtn' onClick={() => setShowDefinitions(true)}>View Definitions</button>
@@ -271,7 +274,7 @@ export default function AggregateResults({ type }) {
                         <table className='itm-table'>
                             <thead>
                                 <tr>
-                                    {HEADER[selectedEval == 6 ? 5 : selectedEval]?.map((val, index) => {
+                                    {HEADER[selectedEval === 6 ? 5 : selectedEval]?.map((val, index) => {
                                         return (<th key={'header-' + index}>
                                             {val}
                                         </th>);
@@ -281,7 +284,7 @@ export default function AggregateResults({ type }) {
                             <tbody>
                                 {fullData.map((dataSet, index) => {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
-                                        {HEADER[selectedEval == 6 ? 5 : selectedEval]?.map((val) => {
+                                        {HEADER[selectedEval === 6 ? 5 : selectedEval]?.map((val) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
                                                 {formatData(dataSet, val)}
                                             </td>);
@@ -300,7 +303,7 @@ export default function AggregateResults({ type }) {
                 <div className="home-container">
                     <div className="home-navigation-container">
                         <div className="evaluation-selector-container">
-                            <div className="evaluation-selector-label sim-probe-title"><h2>Human Simulator Probe {selectedEval == 3 ? "by Environment" : "Data"}</h2></div>
+                            <div className="evaluation-selector-label sim-probe-title"><h2>Human Simulator Probe {selectedEval === 3 ? "by Environment" : "Data"}</h2></div>
                         </div>
                         <div className="aggregate-button-holder">
                             <button onClick={exportHumanSimToExcel} className='aggregateDownloadBtn'>Download Human Sim Data</button>
@@ -323,7 +326,7 @@ export default function AggregateResults({ type }) {
                     </div>
 
                     {aggregateData["groupedSim"] !== undefined && sortedObjectKeys(Object.keys(aggregateData["groupedSim"]), selectedEval).map((objectKey, key) => {
-                        const headers = selectedEval == 3 ? HEADER_SIM_DATA[selectedEval == 6 ? 5 : selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval == 6 ? 5 : selectedEval], objectKey.split('_')[0]);
+                        const headers = selectedEval === 3 ? HEADER_SIM_DATA[selectedEval === 6 ? 5 : selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval === 6 ? 5 : selectedEval], objectKey.split('_')[0]);
                         const filteredHeaders = headers?.filter(header => hasDataInColumn(aggregateData["groupedSim"][objectKey], header));
 
                         return (
