@@ -55,7 +55,7 @@ function generateComparisonv45(pageName, genericName) {
     const bname = pageName.split(' vs ')[0]?.trim();
     const aname = pageName.split(' vs ')[1]?.trim();
     const mname = pageName.split(' vs ')[2]?.trim();
-    if (aname != '' && mname != '') {
+    if (aname !== '' && mname !== '') {
         surveyJson.elements.push({
             name: genericName ? "Aligned vs Baseline: Forced Choice" : aname + " vs " + bname + ": Forced Choice",
             title: genericName ? "Aligned vs Baseline: Forced Choice" : aname + " vs " + bname + ": Forced Choice",
@@ -82,16 +82,16 @@ function generateComparisonv45(pageName, genericName) {
         });
     }
     else {
-        const secondName = mname == '' ? aname : mname;
+        const secondName = mname === '' ? aname : mname;
         surveyJson.elements.push({
-            name: genericName ? ((secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
-            title: genericName ? ((secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
+            name: genericName ? ((secondName === mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
+            title: genericName ? ((secondName === mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Forced Choice") : (secondName + " vs " + bname + ": Forced Choice"),
             type: "radiogroup",
-            choices: genericName ? [secondName == mname ? "Misaligned" : "Aligned", "Baseline"] : [secondName, bname]
+            choices: genericName ? [secondName === mname ? "Misaligned" : "Aligned", "Baseline"] : [secondName, bname]
         });
         surveyJson.elements.push({
-            name: (genericName ? (secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") : (secondName + " vs " + bname)) + ": Rate your confidence about the delegation decision indicated in the previous question",
-            title: genericName ? ((secondName == mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Delegation Confidence") : (secondName + " vs " + bname + ": Delegation Confidence"),
+            name: (genericName ? (secondName === mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") : (secondName + " vs " + bname)) + ": Rate your confidence about the delegation decision indicated in the previous question",
+            title: genericName ? ((secondName === mname ? "Misaligned vs Baseline: " : "Aligned vs Baseline: ") + "Delegation Confidence") : (secondName + " vs " + bname + ": Delegation Confidence"),
             type: "radiogroup",
             choices: ["Not confident at all", "Not confident", "Somewhat confident", "Confident", "Completely confident"]
         });

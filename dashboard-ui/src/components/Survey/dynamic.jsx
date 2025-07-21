@@ -207,16 +207,6 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
         return processedText;
     };
 
-    const getSceneStyle = (action) => {
-        const text = getActionText(action);
-        const isMedicAction = !(text.includes('Update:') || text.includes('Note:') || text.includes('Question:'));
-        return {
-            "fontWeight": !isMedicAction ? "700" : "500",
-            "backgroundColor": text.includes("<HIGHLIGHT>") ? "rgb(251 252 152)" : !isMedicAction ? "#eee" : "#fff",
-            "fontSize": text.includes('Question:') ? '20px' : '16px'
-        }
-    }
-
     function Scene({ sceneId, sceneSupplies, sceneActions, sceneCharacters, scenesLength }) {
         const isSceneOpen = openScenes[sceneId] === undefined ? true : openScenes[sceneId];
         const isMedicAccordionOpen = openMedicAccordions[sceneId] === undefined ? true : openMedicAccordions[sceneId];
@@ -251,7 +241,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         ) : (
                             <Card className="patient-card" style={{ display: 'inline-block' }}>
                                 <Card.Header>
-                                    <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
+                                    <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex === 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
                                 </Card.Header>
                                 <Row className="g-0">
                                     <Col md={8} className="mr-4">

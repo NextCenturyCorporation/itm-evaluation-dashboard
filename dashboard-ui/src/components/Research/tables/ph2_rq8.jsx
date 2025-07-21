@@ -2,7 +2,7 @@ import React from "react";
 import '../../SurveyResults/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
-import { Modal, Autocomplete, TextField } from "@mui/material";
+import { Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ8_PH2.xlsx';
 import * as XLSX from 'xlsx-js-style';
 import { useQuery } from 'react-apollo'
@@ -33,7 +33,7 @@ export function PH2RQ8({ evalNum }) {
     });
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [formattedData, setFormattedData] = React.useState([]);
-    const [attributes, setAttributes] = React.useState([]);
+    const [, setAttributes] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [filteredData, setFilteredData] = React.useState([]);
     const [variableFields, setVariableFields] = React.useState([]);
@@ -78,7 +78,7 @@ export function PH2RQ8({ evalNum }) {
             const evals = [evalNum];
 
             for (let evalNum of evals) {
-                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
 
                 const pids = [];
                 for (const res of textResults) {
@@ -87,7 +87,7 @@ export function PH2RQ8({ evalNum }) {
                         continue;
                     }
                     // see if participant has completed the open world scenario
-                    const sim_entries = simData.filter((x) => x['pid'] == pid);
+                    const sim_entries = simData.filter((x) => x['pid'] === pid);
                     const openWorld = sim_entries.find((x) => x['openWorld'] === true);
                     if (!openWorld) {
                         continue;
@@ -95,7 +95,7 @@ export function PH2RQ8({ evalNum }) {
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
-                        log => log['ParticipantID'] === Number(pid) && log['Type'] != 'Test'
+                        log => log['ParticipantID'] === Number(pid) && log['Type'] !== 'Test'
                     );
                     if (!logData) {
                         continue;
@@ -121,7 +121,7 @@ export function PH2RQ8({ evalNum }) {
                     const kdmas = res['kdmas'];
                     for (const att of attributes) {
                         allAttributes.push(att);
-                        entryObj[`Participant Text ${att} KDMA`] = kdmas?.find((x) => x['kdma'] == att_map[att])?.value;
+                        entryObj[`Participant Text ${att} KDMA`] = kdmas?.find((x) => x['kdma'] === att_map[att])?.value;
                     }
 
                     const desert_entry = sim_entries.find((x) => x['scenario_id']?.toLowerCase().includes('desert'));
@@ -130,13 +130,13 @@ export function PH2RQ8({ evalNum }) {
                     const desert_kdmas = desert_entry?.data?.alignment?.kdmas;
                     if (desert_kdmas) {
 
-                        entryObj['Desert MF KDMA'] = desert_kdmas?.find((x) => x['kdma'] == 'merit')?.value;
-                        entryObj['Desert AF KDMA'] = desert_kdmas?.find((x) => x['kdma'] == 'affiliation')?.value;
+                        entryObj['Desert MF KDMA'] = desert_kdmas?.find((x) => x['kdma'] === 'merit')?.value;
+                        entryObj['Desert AF KDMA'] = desert_kdmas?.find((x) => x['kdma'] === 'affiliation')?.value;
                     }
                     const urban_kdmas = urban_entry?.data?.alignment?.kdmas;
                     if (urban_kdmas) {
-                        entryObj['Urban MF KDMA'] = urban_kdmas?.find((x) => x['kdma'] == 'merit')?.value;
-                        entryObj['Urban AF KDMA'] = urban_kdmas?.find((x) => x['kdma'] == 'affiliation')?.value;
+                        entryObj['Urban MF KDMA'] = urban_kdmas?.find((x) => x['kdma'] === 'merit')?.value;
+                        entryObj['Urban AF KDMA'] = urban_kdmas?.find((x) => x['kdma'] === 'affiliation')?.value;
                     }
 
                     for (const field of variableFields) {

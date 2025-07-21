@@ -48,7 +48,7 @@ export function CalibrationData({ evalNum }) {
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": (evalNum == 6 ? 5 : evalNum) }
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum) }
     });
 
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
@@ -84,6 +84,12 @@ export function CalibrationData({ evalNum }) {
 
     const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
+    const attributeMap = React.useMemo(() => ({
+        "MissionSuccess": "Mission",
+        "PerceivedQuantityOfLivesSaved": "VOL",
+        "QualityOfLife": "QOL"
+    }), []);
+
     const openModal = () => {
         setShowDefinitions(true);
     }
@@ -91,6 +97,34 @@ export function CalibrationData({ evalNum }) {
     const closeModal = () => {
         setShowDefinitions(false);
     }
+
+    const expandCalibrationRows = React.useCallback((objs) => {
+        const expandedRows = []
+        objs.forEach(obj => {
+            if (obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']) {
+                try {
+                    const calibrationScores = JSON.parse(obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']);
+
+                    // Create a row for each calibration score
+                    Object.entries(calibrationScores).forEach(([scoreName, scoreValue]) => {
+                        const newRow = { ...obj };
+                        newRow['Attribute'] = attributeMap[scoreName] || scoreName;
+                        newRow['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = scoreValue;
+                        expandedRows.push(newRow);
+                    });
+                }
+                catch (error) {
+                    console.log("error parsing scores")
+                    expandedRows.push(obj);
+                }
+            } else {
+                console.log("No calibration scores found")
+                expandedRows.push(obj)
+            }
+
+        })
+        return expandedRows;
+    }, [attributeMap]);
 
     React.useEffect(() => {
         // reset toggles on render
@@ -134,7 +168,7 @@ export function CalibrationData({ evalNum }) {
 
             // git rid of comparison rows, only VOL
             data.allObjs = data.allObjs.filter(obj => 
-                obj['Attribute'] == 'VOL' && 
+                obj['Attribute'] === 'VOL' && 
                 obj['ADM_Type'] !== 'comparison'
             );
 
@@ -177,41 +211,7 @@ export function CalibrationData({ evalNum }) {
             setDelMilFilters([]);
             setSearchPid('');
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, janSim]);
-
-    const attributeMap = {
-        "MissionSuccess": "Mission",
-        "PerceivedQuantityOfLivesSaved": "VOL",
-        "QualityOfLife": "QOL"
-    }
-
-    const expandCalibrationRows = (objs) => {
-        const expandedRows = []
-        objs.forEach(obj => {
-            if (obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']) {
-                try {
-                    const calibrationScores = JSON.parse(obj['Calibration Alignment Score (Delegator|Observed_ADM (target))']);
-
-                    // Create a row for each calibration score
-                    Object.entries(calibrationScores).forEach(([scoreName, scoreValue]) => {
-                        const newRow = { ...obj };
-                        newRow['Attribute'] = attributeMap[scoreName] || scoreName;
-                        newRow['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = scoreValue;
-                        expandedRows.push(newRow);
-                    });
-                }
-                catch (error) {
-                    console.log("error parsing scores")
-                    expandedRows.push(obj);
-                }
-            } else {
-                console.log("No calibration scores found")
-                expandedRows.push(obj)
-            }
-
-        })
-        return expandedRows;
-    }
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeJAN, janSim, dataSim, expandCalibrationRows]);
 
     const updateJANStatus = (event) => {
         setIncludeJAN(event.target.checked);
@@ -258,14 +258,14 @@ export function CalibrationData({ evalNum }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (targetFilters.length == 0 || targetFilters.includes(x['Target'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (admTypeFilters.length == 0 || admTypeFilters.includes(x['ADM_Type'])) &&
-                (delGrpFilters.length == 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
-                (delMilFilters.length == 0 || delMilFilters.includes(x['Delegator_mil'])) &&
-                (searchPid.length == 0 || x['Delegator_ID'].includes(searchPid))
+                (ta2Filters.length === 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
+                (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
+                (admTypeFilters.length === 0 || admTypeFilters.includes(x['ADM_Type'])) &&
+                (delGrpFilters.length === 0 || delGrpFilters.includes(x['Delegator_grp'])) &&
+                (delMilFilters.length === 0 || delMilFilters.includes(x['Delegator_mil'])) &&
+                (searchPid.length === 0 || x['Delegator_ID'].includes(searchPid))
             ));
         }
     }, [formattedData, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid]);
@@ -279,7 +279,7 @@ export function CalibrationData({ evalNum }) {
 
     return (<>
         <h2 className='rq134-header'>Calibration Scores
-            {evalNum == 5 &&
+            {evalNum === 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
                 </div>}
@@ -434,7 +434,7 @@ export function CalibrationData({ evalNum }) {
                 <thead>
                     <tr>
                         {headers.map((val, index) => {
-                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val == headers.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
+                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val === headers.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
                                 {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
                             </th>);
                         })}

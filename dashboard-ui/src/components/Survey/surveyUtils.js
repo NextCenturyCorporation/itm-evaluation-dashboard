@@ -62,12 +62,12 @@ export function surveyVersion_x_0(surveyVersion) {
 const getAllMjTargets = (sv) => {
     const mj4 = ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5', 'ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
     const mj5 = ['ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5', 'ADEPT-DryRun-Moral judgement-0.6', 'ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8'];
-    return sv == 4 ? mj4 : mj5;
+    return sv === 4 ? mj4 : mj5;
 }
 const getAllIoTargets = (sv) => {
     const io4 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5', 'ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
     const io5 = ['ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5', 'ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8'];
-    return sv == 4 ? io4 : io5;
+    return sv === 4 ? io4 : io5;
 }
 const getAllQolTargets = (sv) => {
     const qol4 = ['qol-human-2932740-HighExtreme', 'qol-human-6349649-SplitHighMulti', 'qol-human-3447902-SplitHighMulti', 'qol-human-7040555-SplitHighMulti', 'qol-human-3043871-SplitHighBinary',
@@ -77,7 +77,7 @@ const getAllQolTargets = (sv) => {
         "qol-human-8022671-SplitLowMulti-ph1", "qol-human-6403274-SplitHighBinary-ph1", "qol-human-3043871-SplitHighBinary-ph1", "qol-human-5032922-SplitLowMulti-ph1",
         "qol-human-0000001-SplitEvenMulti-ph1", "qol-human-7040555-SplitHighMulti-ph1", "qol-synth-LowExtreme-ph1", "qol-synth-HighExtreme-ph1", "qol-synth-HighCluster-ph1", "qol-synth-LowCluster-ph1"
     ]
-    return sv == 4 ? qol4 : qol5;
+    return sv === 4 ? qol4 : qol5;
 }
 const getAllVolTargets = (sv) => {
     const vol4 = ['vol-human-8022671-SplitHighMulti', 'vol-human-1774519-SplitHighMulti', 'vol-human-6403274-SplitEvenBinary', 'vol-human-7040555-SplitEvenBinary',
@@ -87,7 +87,7 @@ const getAllVolTargets = (sv) => {
         "vol-human-8022671-SplitHighMulti-ph1", "vol-human-1774519-SplitHighMulti-ph1", "vol-human-6403274-SplitEvenBinary-ph1", "vol-human-8478698-SplitLowMulti-ph1",
         "vol-human-5032922-SplitLowMulti-ph1", "vol-synth-LowExtreme-ph1", "vol-synth-HighCluster-ph1", "vol-synth-LowCluster-ph1"
     ]
-    return sv == 4 ? vol4 : vol5;
+    return sv === 4 ? vol4 : vol5;
 }
 
 export function generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAdm) {
@@ -112,7 +112,7 @@ export function generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAd
         }
     }
     let elements = [];
-    if (secondName != '') {
+    if (secondName !== '') {
         const compare2 = {
             "type": type,
             "name": bname + " vs " + secondName + ": Review",
@@ -243,7 +243,7 @@ export function generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAd
         'alignedTarget': alignedAdm?.target,
         'misalignedTarget': misalignedAdm?.target,
         "elements": elements,
-        "alignment": secondName == '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName == aname ? "aligned" : "misaligned"))
+        "alignment": secondName === '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName === aname ? "aligned" : "misaligned"))
     };
 }
 
@@ -356,7 +356,7 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
     let misalignedStatus = 'least aligned';
     switch (scenario) {
         case 'DryRunEval-MJ2-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Moral judgement-0.5'];
                 set1 = ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4']
                 set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
@@ -375,7 +375,7 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-MJ4-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Moral judgement-0.5'];
                 set1 = ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4']
                 set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
@@ -394,7 +394,7 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-MJ5-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Moral judgement-0.5'];
                 set1 = ['ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4']
                 set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
@@ -413,7 +413,7 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-IO2-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
                 set1 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4']
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
@@ -430,7 +430,7 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-IO4-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.5', 'ADEPT-DryRun-Ingroup Bias-0.7'];
                 set1 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4']
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
@@ -446,7 +446,7 @@ export function getKitwareAdms(surveyVersion, scenario, ioTargets, mjTargets, qo
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-IO5-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.6'];
                 set1 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4', 'ADEPT-DryRun-Ingroup Bias-0.5']
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.7'];
@@ -586,7 +586,7 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
     let validAdms = {};
     switch (scenario) {
         case 'DryRunEval-MJ2-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.4'];
                 set1 = ['ADEPT-DryRun-Moral judgement-0.5'];
                 set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
@@ -604,7 +604,7 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-MJ4-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.4', 'ADEPT-DryRun-Moral judgement-0.5'];
                 set1 = ['ADEPT-DryRun-Moral judgement-0.6']
                 set2 = ['ADEPT-DryRun-Moral judgement-0.7', 'ADEPT-DryRun-Moral judgement-0.8', 'ADEPT-DryRun-Moral judgement-0.9', 'ADEPT-DryRun-Moral judgement-1.0'];
@@ -620,7 +620,7 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-MJ5-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Moral judgement-0.3', 'ADEPT-DryRun-Moral judgement-0.0', 'ADEPT-DryRun-Moral judgement-0.1', 'ADEPT-DryRun-Moral judgement-0.2', 'ADEPT-DryRun-Moral judgement-0.4'];
                 set1 = ['ADEPT-DryRun-Moral judgement-0.5']
                 set2 = ['ADEPT-DryRun-Moral judgement-0.6'];
@@ -637,7 +637,7 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-IO2-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 cols1to3 = ['ADEPT-DryRun-Ingroup Bias-0.0', 'ADEPT-DryRun-Ingroup Bias-0.1', 'ADEPT-DryRun-Ingroup Bias-0.2', 'ADEPT-DryRun-Ingroup Bias-0.3', 'ADEPT-DryRun-Ingroup Bias-0.4'];
                 set1 = ['ADEPT-DryRun-Ingroup Bias-0.5'];
                 set2 = ['ADEPT-DryRun-Ingroup Bias-0.6', 'ADEPT-DryRun-Ingroup Bias-0.7', 'ADEPT-DryRun-Ingroup Bias-0.8', 'ADEPT-DryRun-Ingroup Bias-0.9', 'ADEPT-DryRun-Ingroup Bias-1.0'];
@@ -653,10 +653,10 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'DryRunEval-IO4-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 // NOTE: Only 1 adm to be found here!! Special case!!
                 // load 1.0 as the second ADM. label it as "aligned" if most aligned is 0.5 to 1.0; otherwise label "misaligned"
-                target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
+                target = ioTargets.find((t) => t.target === 'ADEPT-DryRun-Ingroup Bias-1.0').target;
                 if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
                     alignedTarget = target;
                     misalignedTarget = null;
@@ -685,9 +685,9 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             }
             break;
         case 'DryRunEval-IO5-eval':
-            if (surveyVersion == 4) {
+            if (surveyVersion === 4) {
                 // NOTE: Only 1 adm to be found here!! Special case!!
-                target = ioTargets.find((t) => t.target == 'ADEPT-DryRun-Ingroup Bias-1.0').target;
+                target = ioTargets.find((t) => t.target === 'ADEPT-DryRun-Ingroup Bias-1.0').target;
                 if (parseFloat(ioTargets[0].target.split('Bias-')[1]) > 0.4) {
                     alignedTarget = target;
                     misalignedTarget = null;
@@ -816,7 +816,7 @@ export function getTextScenariosForParticipant(pid, participantLog) {
     if (!pid || !participantLog) return defaultScenarios;
 
     const matchedLog = participantLog.getParticipantLog.find(
-        log => log['ParticipantID'] == pid
+        log => String(log['ParticipantID']) === pid
     );
 
     if (!matchedLog) return defaultScenarios;
@@ -1007,6 +1007,15 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         misaligned: 'least aligned'
     };
 
+    function findPageByTarget(pages, target) {
+        for (const page of pages) {
+            if (page.target === target) {
+                return page;
+            }
+        }
+        return null;
+    }
+
     const handleRandomSelection = (reason) => {
         console.warn(`${scenarioType}: ${reason}`);
         const shuffled = shuffle([...nonBaselinePages]);
@@ -1059,7 +1068,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         }
         
         mostAlignedTarget = formatTargetWithDecimal(target);
-        mostAlignedPage = nonBaselinePages.find(page => page.target === mostAlignedTarget);
+        mostAlignedPage = mostAlignedTarget ? findPageByTarget(nonBaselinePages, mostAlignedTarget): null;
         if (mostAlignedPage) {
             alignedGroup = findTargetGroup(targetValue);
             if (skippedCount > 0) {
@@ -1069,6 +1078,8 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
             break;
         }
     }
+
+
 
     let leastAlignedTarget = null;
     let leastAlignedPage = null;
@@ -1092,7 +1103,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         }
         
         leastAlignedTarget = formatTargetWithDecimal(target);
-        leastAlignedPage = nonBaselinePages.find(page => page.target === leastAlignedTarget);
+        leastAlignedPage = leastAlignedTarget ? findPageByTarget(nonBaselinePages, leastAlignedTarget) : null;
         if (leastAlignedPage) {
             if (misalignedSkipped > 0) {
                 choiceProcesses.misaligned = `overlapped with ${overlapTypes.join(' and ')}. Is ${misalignedSkipped} over least aligned`;

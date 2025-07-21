@@ -33,7 +33,7 @@ const GET_TEXT_RESULTS = gql`
 const HEADERS = ['ADM Name', 'PID', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA_Aligned - MJ2', 'MJ KDMA_Aligned - MJ4', 'MJ KDMA_Aligned - MJ5', 'MJ KDMA_Aligned - AVE', 'IO KDMA_Aligned - MJ2', 'IO KDMA_Aligned - MJ4', 'IO KDMA_Aligned - MJ5', 'IO KDMA_Aligned - AVE', 'Alignment (Target|ADM_MJ2)_Aligned', 'Alignment (Target|ADM_MJ4)_Aligned', 'Alignment (Target|ADM_MJ5)_Aligned', 'Alignment Average (Target|ADM)_Aligned', 'MJ KDMA_Baseline - MJ2', 'MJ KDMA_Baseline - MJ4', 'MJ KDMA_Baseline - MJ5', 'MJ KDMA_Baseline - AVE', 'IO KDMA_Baseline - MJ2', 'IO KDMA_Baseline - MJ4', 'IO KDMA_Baseline - MJ5', 'IO KDMA_Baseline - AVE', 'Alignment (Target|ADM_MJ2)_Baseline', 'Alignment (Target|ADM_MJ4)_Baseline', 'Alignment (Target|ADM_MJ5)_Baseline', 'Alignment Average (Target|ADM)_Baseline'];
 
 export function MultiKDMA_RQ23() {
-    const { loading: loading, error: error, data: data } = useQuery(getAnalysisData);
+    const { loading, error, data } = useQuery(getAnalysisData);
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -74,18 +74,18 @@ export function MultiKDMA_RQ23() {
             const surveyResults = dataSurveyResults?.getAllSurveyResults;
             const participantLog = dataParticipantLog?.getParticipantLog;
             const textResults = dataTextResults?.getAllScenarioResults;
-            const completed_surveys = surveyResults.filter((res) => (res.results?.evalNumber == 4 && isDefined(res.results['Post-Scenario Measures'])) || ((res.results?.evalNumber == 5 || res.results?.evalNumber == 6) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0));
+            const completed_surveys = surveyResults.filter((res) => (res.results?.evalNumber === 4 && isDefined(res.results['Post-Scenario Measures'])) || ((res.results?.evalNumber === 5 || res.results?.evalNumber === 6) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0));
             for (const res of completed_surveys) {
                 const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
-                if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => res.results?.['Participant ID Page']?.questions['Participant ID']?.response == pid && isDefined(res.results['Post-Scenario Measures']))) {
+                if (!isDefined(res.results['Post-Scenario Measures']) && surveyResults.filter((res) => res.results?.['Participant ID Page']?.questions['Participant ID']?.response === pid && isDefined(res.results['Post-Scenario Measures']))) {
                     // filter incomplete surveys from participants who have a complete survey
                     continue;
                 }
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
-                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                    log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                 );
-                const textCount = textResults.filter((x) => x.participantID == pid).length;
+                const textCount = textResults.filter((x) => x.participantID === pid).length;
                 if (!logData || textCount < 5) {
                     continue;
                 }
@@ -121,7 +121,7 @@ export function MultiKDMA_RQ23() {
                 entryObj['Alignment (Target|ADM_MJ5)_Aligned'] = admGroup['AD3_align'];
                 entryObj['Alignment Average (Target|ADM)_Aligned'] = admGroup['ave_align'];
 
-                const baseline = analysisData.find((x) => x['pid'] == admGroup['pid'] && x['admName'].toLowerCase().includes('baseline') && capitalizeFirstLetter(x['targetType']) == entryObj['Target Type']);
+                const baseline = analysisData.find((x) => x['pid'] === admGroup['pid'] && x['admName'].toLowerCase().includes('baseline') && capitalizeFirstLetter(x['targetType']) === entryObj['Target Type']);
                 if (baseline) {
                     entryObj['MJ KDMA_Baseline - MJ2'] = baseline['mjAD1_kdma'];
                     entryObj['MJ KDMA_Baseline - MJ4'] = baseline['mjAD2_kdma'];
@@ -137,7 +137,7 @@ export function MultiKDMA_RQ23() {
                     entryObj['Alignment Average (Target|ADM)_Baseline'] = baseline['ave_align'];
                 }
                 for (const key of Array.from(Object.keys(entryObj))) {
-                    if (entryObj[key] == -1) {
+                    if (entryObj[key] === -1) {
                         entryObj[key] = '-';
                     }
                 }
@@ -172,13 +172,13 @@ export function MultiKDMA_RQ23() {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (admNameFilters.length == 0 || admNameFilters.includes(x['ADM Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.filter((sf) => x['Human Scenario'].includes(sf)).length > 0) &&
-                (targetTypeFilters.length == 0 || targetTypeFilters.includes(x['Target Type'])) &&
-                (!onlyShowCompletedSurveys || pidsWithCompleteSurveys.length == 0 || pidsWithCompleteSurveys.includes(x['PID']))
+                (admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.filter((sf) => x['Human Scenario'].includes(sf)).length > 0) &&
+                (targetTypeFilters.length === 0 || targetTypeFilters.includes(x['Target Type'])) &&
+                (!onlyShowCompletedSurveys || pidsWithCompleteSurveys.length === 0 || pidsWithCompleteSurveys.includes(x['PID']))
             ));
         }
-    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters, onlyShowCompletedSurveys]);
+    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters, onlyShowCompletedSurveys, pidsWithCompleteSurveys]);
 
     const capitalizeFirstLetter = (str) => {
         if (!isDefined(str) || str.length < 2)

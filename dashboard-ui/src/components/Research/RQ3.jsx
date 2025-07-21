@@ -73,7 +73,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {(selectedEval == 5 || selectedEval == 6) && <li>
+                {(selectedEval === 5 || selectedEval === 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -81,7 +81,7 @@ export function RQ3() {
                 </li>}
                 <li>ADM_Aligned_Status
                     <ul>
-                        <li>Filter for only {(selectedEval == 5 || selectedEval == 6) ? '"aligned"' : '"comparison"'} trials</li>
+                        <li>Filter for only {(selectedEval === 5 || selectedEval === 6) ? '"aligned"' : '"comparison"'} trials</li>
                     </ul>
                 </li>
                 <li>ADM Loading
@@ -98,7 +98,7 @@ export function RQ3() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ3 Analysis 3.1 and 3.3 - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq31CodeDre : rq31CodePh1} downloadName={'RQ31_33_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval === 4 ? rq31CodeDre : rq31CodePh1} downloadName={'RQ31_33_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close31Code}>
                             Close
@@ -113,7 +113,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {(selectedEval == 5 || selectedEval == 6) && <li>
+                {(selectedEval === 5 || selectedEval === 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>
@@ -129,7 +129,7 @@ export function RQ3() {
                     <Modal.Header closeButton>
                         <Modal.Title>RQ3 Analysis 3.2 - Code</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body><RCodeModal rcodeFile={selectedEval == 4 ? rq32CodeDre : rq32CodePh1} downloadName={'RQ32_code.R'} /></Modal.Body>
+                    <Modal.Body><RCodeModal rcodeFile={selectedEval === 4 ? rq32CodeDre : rq32CodePh1} downloadName={'RQ32_code.R'} /></Modal.Body>
                     <Modal.Footer>
                         <Button className='downloadBtn' onClick={close32Code}>
                             Close
@@ -144,7 +144,7 @@ export function RQ3() {
                 Variables used from dataset:
             </p>
             <ul>
-                {(selectedEval == 5 || selectedEval == 6) && <li>
+                {(selectedEval === 5 || selectedEval === 6) && <li>
                     Competence Error
                     <ul>
                         <li>Use only "0"</li>

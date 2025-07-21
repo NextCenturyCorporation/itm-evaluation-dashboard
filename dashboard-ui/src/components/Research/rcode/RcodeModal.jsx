@@ -11,13 +11,13 @@ export function RCodeModal({ rcodeFile, downloadName }) {
         oReq.onload = function () {
             const resp = oReq.responseText.replaceAll('\n', '\\n');
             const tmpTxt = [];
-            resp.split('\\n').map((x) => {
+            resp.split('\\n').forEach((x) => {
                 tmpTxt.push(x);
             });
             setTxt(tmpTxt);
         };
         oReq.send();
-    }, []);
+    }, [rcodeFile]);
 
     const exportRCode = () => {
         FileSaver.saveAs(rcodeFile, downloadName);
@@ -26,7 +26,7 @@ export function RCodeModal({ rcodeFile, downloadName }) {
     return (<>
         <button className='downloadBtn codeDownload' onClick={exportRCode}>Download Code</button>
         {txt && <div className='rCode'>
-            {txt.map((x, ind) => x == '' ? <br key={'br' + ind} /> : <p key={x + ind} className='code-line'>{x}</p>)}
+            {txt.map((x, ind) => x === '' ? <br key={'br' + ind} /> : <p key={x + ind} className='code-line'>{x}</p>)}
         </div>
         }
     </>);

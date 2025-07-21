@@ -77,17 +77,18 @@ export function RQ5({ evalNum }) {
             const participantLog = dataParticipantLog.getParticipantLog;
 
             const evals = [evalNum];
-            if (includeDRE && evalNum != 4) {
+            if (includeDRE && evalNum !== 4) {
                 evals.push(4);
             }
-            if (includeJAN && evalNum != 6) {
+            if (includeJAN && evalNum !== 6) {
                 evals.push(6);
             };
 
             for (let evalNum of evals) {
-                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
-                const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber == evalNum);
-                const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber == evalNum);
+                const evalNumInteger = evalNum;
+                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNumInteger);
+                const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber === evalNumInteger);
+                const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber === evalNumInteger);
 
                 const pids = [];
                 const recorded = {};
@@ -103,7 +104,7 @@ export function RQ5({ evalNum }) {
 
                     // see if participant is in the participantLog
                     const logData = participantLog.find(
-                        log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                        log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                     );
                     if (!logData) {
                         continue;
@@ -140,13 +141,13 @@ export function RQ5({ evalNum }) {
                                 allTA2s.push(ta2);
                                 entryObj['Attribute'] = att;
                                 allAttributes.push(att);
-                                entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                                entryObj['Scenario'] = entryObj['TA1_Name'] === 'ADEPT' ? ad_scenario : st_scenario;
                                 allScenarios.push(entryObj['Scenario']);
                                 const group_targets = entry['group_targets'];
                                 if (isDefined(group_targets)) {
                                     for (const t of Object.keys(group_targets)) {
-                                        if ((t.includes('Moral') && att == 'MJ') || (t.includes('qol') && att == 'QOL') ||
-                                            (t.includes('vol') && att == 'VOL') || (t.includes('Ingroup') && att == 'IO')) {
+                                        if ((t.includes('Moral') && att === 'MJ') || (t.includes('qol') && att === 'QOL') ||
+                                            (t.includes('vol') && att === 'VOL') || (t.includes('Ingroup') && att === 'IO')) {
                                             entryObj['Group target'] = t;
                                             allGroupTargets.push(t);
                                             entryObj['Alignment score (Participant|group target)'] = group_targets[t];
@@ -161,16 +162,16 @@ export function RQ5({ evalNum }) {
                                 entryObj['Least aligned target'] = least.target;
                                 entryObj['Alignment score (Participant|Most aligned target)'] = most.score;
                                 entryObj['Alignment score (Participant|Least aligned target)'] = least.score;
-                                const comparison_entry_most = comparisons?.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                                const comparison_entry_most = comparisons?.find((x) => x['adm_type'] === 'most aligned' && x['pid'] === pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
                                 entryObj['Alignment score (Participant|ADM(most))'] = comparison_entry_most?.score ?? '-';
-                                const comparison_entry_least = comparisons?.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                                const comparison_entry_least = comparisons?.find((x) => x['adm_type'] === 'least aligned' && x['pid'] === pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
                                 entryObj['Alignment score (Participant|ADM(least))'] = comparison_entry_least?.score ?? '-';
-                                const probe_matches_most = matches.find((x) => x['adm_type'] == 'most aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                const probe_matches_most = matches.find((x) => x['adm_type'] === 'most aligned' && x['pid'] === pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] === entryObj['Attribute']);
                                 entryObj['Match_MostAligned'] = probe_matches_most?.score ?? '-';
-                                const probe_matches_least = matches.find((x) => x['adm_type'] == 'least aligned' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                const probe_matches_least = matches.find((x) => x['adm_type'] === 'least aligned' && x['pid'] === pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] === entryObj['Attribute']);
                                 entryObj['Match_LeastAligned'] = probe_matches_least?.score ?? '-';
                                 if (isDefined(entryObj['Group target'])) {
-                                    const group_matches = matches.find((x) => x['adm_type'] == 'group target' && x['pid'] == pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] == entryObj['Attribute']);
+                                    const group_matches = matches.find((x) => x['adm_type'] === 'group target' && x['pid'] === pid && admAuthorMatch(ta2, x) && x['text_scenario'].toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')) && ATTRIBUTE_MAPPING[x['attribute']] === entryObj['Attribute']);
                                     entryObj['Match_GrpMembers'] = group_matches?.score ?? '-';
                                 }
                                 allObjs.push(entryObj);
@@ -208,7 +209,7 @@ export function RQ5({ evalNum }) {
     }, [dataParticipantLog, dataTextResults, comparisonData, evalNum, includeDRE, includeJAN]);
 
     const admAuthorMatch = (ta2, entry2) => {
-        return ((ta2 == 'Parallax' && entry2['adm_author'] == 'TAD') || (ta2 == 'Kitware' && entry2['adm_author'] == 'kitware'));
+        return ((ta2 === 'Parallax' && entry2['adm_author'] === 'TAD') || (ta2 === 'Kitware' && entry2['adm_author'] === 'kitware'));
     };
 
 
@@ -252,11 +253,11 @@ export function RQ5({ evalNum }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (ta2Filters.length == 0 || ta2Filters.includes(x['TA2_Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (groupTargetFilters.length == 0 || groupTargetFilters.includes(x['Group target']))
+                (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (ta2Filters.length === 0 || ta2Filters.includes(x['TA2_Name'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
+                (groupTargetFilters.length === 0 || groupTargetFilters.includes(x['Group target']))
             ));
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters]);
@@ -282,7 +283,7 @@ export function RQ5({ evalNum }) {
 
     return (<>
         <h2 className='rq134-header'>RQ5 Data
-            {evalNum == 5 &&
+            {evalNum === 5 &&
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
@@ -391,7 +392,7 @@ export function RQ5({ evalNum }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ5_eval${evalNum}.xlsx`} xlFile={(evalNum == 5 || evalNum == 6) ? janDefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ5_eval${evalNum}.xlsx`} xlFile={(evalNum === 5 || evalNum === 6) ? janDefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

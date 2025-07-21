@@ -44,9 +44,12 @@ ElementFactory.Instance.registerElement(CUSTOM_TYPE, (name) => {
 });
 
 export class Phase2Text extends SurveyQuestionElementBase {
+
+    /* Default constructor is left in case any future modifications are required
     constructor(props) {
         super(props);
     }
+    */
 
     get question() {
         return this.questionBase;

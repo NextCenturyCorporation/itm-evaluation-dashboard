@@ -15,7 +15,7 @@ export function setupConfigWithImages(data) {
                     if (Object.keys(el).includes("patients")) {
                         for (const patient of el.patients) {
                             let foundImg = null;
-                            if (config.survey.version == 4 || config.survey.version == 5) {
+                            if (config.survey.version === 4 || config.survey.version === 5) {
                                 if (data.getAllTextBasedImages) {
                                     let pName = patient.name;
                                     if (pName.includes('Casualty')) {
@@ -26,12 +26,12 @@ export function setupConfigWithImages(data) {
                             }
                             else {
                                 if (data.getAllImageUrls) {
-                                    foundImg = data.getAllImageUrls.find((x) => x._id == patient.imgUrl);
+                                    foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
                                 }
                             }
                             
                             if (isDefined(foundImg)) {
-                                if (config.survey.version == 4 || config.survey.version == 5) {
+                                if (config.survey.version === 4 || config.survey.version === 5) {
                                     patient.imgUrl = foundImg.imageByteCode;
                                 }
                                 else {
@@ -59,7 +59,7 @@ export function setupTextBasedConfig(data) {
     for (const config of data.getAllTextBasedConfigs) {
         let tempConfig = JSON.parse(JSON.stringify(config));
         
-        if (hasTextBasedImages && tempConfig.eval != 'mre-eval') {
+        if (hasTextBasedImages && tempConfig.eval !== 'mre-eval') {
             for (const page of tempConfig.pages) {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {
@@ -70,7 +70,7 @@ export function setupTextBasedConfig(data) {
                             funky ternary operator here
                             */
                             const foundImg = data.getAllTextBasedImages.find((x) => (x.casualtyId?.toLowerCase() === patient.id?.toLowerCase() &&
-                                (tempConfig.author == 'adept' ? true : x.scenarioId === page.scenario_id)));
+                                (tempConfig.author === 'adept' ? true : x.scenarioId === page.scenario_id)));
                             if (foundImg) {
                                 patient.imgUrl = foundImg.imageByteCode;
                             }

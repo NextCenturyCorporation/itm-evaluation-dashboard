@@ -134,7 +134,7 @@ export default function MreHomePage({ fullData, admKdmas, admAlignment }) {
 
     const getN = (obj, keys = 'all') => {
         const data = [];
-        if (obj != undefined) {
+        if (obj !== null && obj !== undefined) {
             for (const key of Object.keys(obj)) {
                 if (keys === 'all' || keys.includes(key)) {
                     data.push(...obj[key]);
