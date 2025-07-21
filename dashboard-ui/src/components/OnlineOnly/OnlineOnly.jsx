@@ -81,12 +81,10 @@ export default function StartOnline() {
 
 
     const startSurvey = async () => {
-        // get pid
-        // get current plog
         const result = await refetch();
         // calculate new pid
-        const lowPid = 202506100;
-        const highPid = 202506299;
+        const lowPid = 202507100;
+        const highPid = 202507299;
         let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
             !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
             x.ParticipantID >= lowPid && x.ParticipantID <= highPid
