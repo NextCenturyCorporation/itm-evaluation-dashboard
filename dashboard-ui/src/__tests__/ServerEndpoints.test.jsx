@@ -58,10 +58,10 @@ describe('TA1 Server Tests', () => {
       // dummy probe response for adept
       const responsePayload = {
         response: {
-          choice: 'Response 2B',
+          choice: 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'DryRunEval-MJ2-eval',
+          scenario_id: 'July2025-MF-eval'
         },
         session_id: sessionId
       };
@@ -104,10 +104,10 @@ describe('TA1 Server Tests', () => {
 
       const responsePayload = {
         response: {
-          choice: 'Response 2B',
+          choice: 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'DryRunEval-MJ2-eval',
+          scenario_id: 'July2025-MF-eval'
         },
         session_id: sessionId
       };
@@ -150,10 +150,10 @@ describe('TA1 Server Tests', () => {
 
       const responsePayload = {
         response: {
-          choice: 'Response 2B',
+          choice: 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'DryRunEval-MJ2-eval',
+          scenario_id: 'July2025-MF-eval'
         },
         session_id: sessionId
       };
@@ -169,7 +169,7 @@ describe('TA1 Server Tests', () => {
         {
           params: {
             session_id: sessionId,
-            kdma_id: 'Moral judgement'
+            kdma_id: 'merit'
           }
         }
       );
@@ -242,10 +242,10 @@ describe('TA1 Server Tests', () => {
 
       const responsePayload = {
         response: {
-          choice: 'Response 2B',
+          choice: 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'DryRunEval-MJ2-eval',
+          scenario_id: 'July2025-MF-eval'
         },
         session_id: sessionId
       };
@@ -268,7 +268,7 @@ describe('TA1 Server Tests', () => {
         {
           params: {
             session_id: sessionId,
-            kdma_id: 'Moral judgement'
+            kdma_id: 'merit'
           }
         }
       );
@@ -359,10 +359,10 @@ describe('TA1 Server Tests', () => {
       // dummy probe responses
       const responsePayload = {
         response: {
-          choice: 'Response 2B',
+          choice: 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'DryRunEval-MJ2-eval',
+          scenario_id: 'July2025-MF-eval'
         }
       };
 
@@ -383,7 +383,7 @@ describe('TA1 Server Tests', () => {
           params: {
             session_id_1: sessionId1,
             session_id_2: sessionId2,
-            //kdma_filter: 'Moral judgement' // we can specify but dont need to
+            //kdma_filter: 'merit' // we can specify but dont need to
           }
         }
       );
