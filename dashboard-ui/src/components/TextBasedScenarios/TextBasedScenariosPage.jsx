@@ -196,10 +196,10 @@ class TextBasedScenariosPage extends Component {
 
     scenariosFromLog = (participantLog) => {
         const scenarioIds = [
-            `June2025-AF${participantLog['AF-text-scenario']}-eval`,
-            `June2025-MF${participantLog['MF-text-scenario']}-eval`,
-            `June2025-PS${participantLog['PS-text-scenario']}-eval`,
-            `June2025-SS${participantLog['SS-text-scenario']}-eval`
+            `July2025-AF${participantLog['AF-text-scenario']}-eval`,
+            `July2025-MF${participantLog['MF-text-scenario']}-eval`,
+            `July2025-PS${participantLog['PS-text-scenario']}-eval`,
+            `July2025-SS${participantLog['SS-text-scenario']}-eval`
         ];
 
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
@@ -356,8 +356,8 @@ class TextBasedScenariosPage extends Component {
         });
 
         scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id);
-        scenarioData.evalNumber = 8
-        scenarioData.evalName = 'June 2025 Collaboration'
+        scenarioData.evalNumber = 9
+        scenarioData.evalName = 'July 2025 Collaboration'
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -368,7 +368,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('June2025')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025')) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -380,7 +380,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('June2025')) {
+        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025')) {
             if (this.state.adeptSessionsCompleted === 0) {
                 await this.beginRunningSession(scenario)
             } else {
