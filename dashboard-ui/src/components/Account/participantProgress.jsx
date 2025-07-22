@@ -10,7 +10,7 @@ import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
 import { determineChoiceProcessJune2025 } from '../Research/utils';
-
+import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -663,7 +663,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                                                                     <br />
                                                                 </>
                                                             )}
-                                                                {key} ({score.toFixed(3)})
+                                                                {formatTargetWithDecimal(key)} ({score.toFixed(3)})
                                                             </div>
                                                         );
                                                     })}
