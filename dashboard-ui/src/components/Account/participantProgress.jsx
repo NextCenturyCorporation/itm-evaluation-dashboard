@@ -83,6 +83,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return baseOptions;
     };
 
+    const getParticipantPhase = (participant) => {
+        return participant['_phase'] || 1;
+    };
+
     const [popupInfo, setPopupInfo] = React.useState({
         open: false,
         pid: null,
@@ -144,12 +148,20 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 }
 
                 const sims = simResults.filter((x) => x.pid === pid).sort((a, b) => a.timestamp - b.timestamp);
+                
+                let evalNumber = null;
+                
+                if (sims[0]?.evalNumber) {
+                    evalNumber = sims[0].evalNumber;
+                }
+                
                 obj['Evaluation'] = sims[0]?.evalName;
+                
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
                     obj['Contact ID'] = res['contactId'];
                     if (res['prolificId']) {
-                        const urlParam = obj['Evaluation'] === 'June 2025 Collaboration' || pid.startsWith('202506') ? 'caciProlific' : 'adeptQualtrix';
+                        const urlParam = evalNumber >= 8 || pid.startsWith('202506') ? 'caciProlific' : 'adeptQualtrix';
                         obj['Survey Link'] = `${window.location.protocol}//${window.location.host}/remote-text-survey?${urlParam}=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
                     }
                 }
@@ -185,6 +197,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const delKeys = ['Del-1','Del-2','Del-3','Del-4','Del-5'];
                 obj['Delegation'] = delKeys.filter(key => !!obj[key]).length;
 
+                if (!evalNumber && lastSurvey) {
+                    evalNumber = lastSurvey.evalNumber ?? lastSurvey.results?.evalNumber;
+                }
+                
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName ?? lastSurvey?.results?.evalName;
 
                 const scenarios = textResults.filter((x) => x.participantID === pid);
@@ -195,18 +211,30 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Text End Date-Time'] = String(text_end_date) !== 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text'] = scenarios.length;
 
+                if (!evalNumber && lastScenario?.evalNumber) {
+                    evalNumber = lastScenario.evalNumber;
+                }
+                
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
 
-                const textThreshold = obj['Evaluation'] === 'June 2025 Collaboration' ? 4 : 5;
+                const isPhase2 = evalNumber >= 8;
+                
+                obj['_phase'] = isPhase2 ? 2 : 1;
+                obj['_evalNumber'] = evalNumber;
+                
+                const textThreshold = isPhase2 ? 4 : 5;
                 if (obj['Text'] < textThreshold) {
                     obj['Survey Link'] = null;
                 }
 
-                if (!obj['Evaluation']) {
-                    // Fall back if no sim, del, or text based scenarios
-                    if (pid.startsWith('202506')) {
-                        obj['Evaluation'] = 'June 2025 Collaboration';
+                if (!evalNumber) {
+                    if (pid > 202506100) {
+                        obj['_phase'] = 2;
+                        obj['_evalNumber'] = 8;
+                    } else {
+                        obj['_phase'] = 1;
+                        obj['_evalNumber'] = 1;
                     }
                 }
 
@@ -271,15 +299,18 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     const getEvalsForPhase = useCallback(() => {
         return evals.filter(evaluation => {
-            const isPhase2Eval = evaluation === 'June 2025 Collaboration';
-            return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+            const participant = formattedData.find(p => p['Evaluation'] === evaluation);
+            if (!participant) return false;
+            
+            const participantPhase = getParticipantPhase(participant);
+            return selectedPhase === `Phase ${participantPhase}`;
         });
-    }, [evals, selectedPhase]);
+    }, [evals, selectedPhase, formattedData]);
 
     const getTypesForPhase = useCallback(() => {
         const phaseParticipants = formattedData.filter(participant => {
-            const isPhase2Eval = participant['Evaluation'] === 'June 2025 Collaboration';
-            return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+            const participantPhase = getParticipantPhase(participant);
+            return selectedPhase === `Phase ${participantPhase}`;
         });
 
         const phaseTypes = phaseParticipants
@@ -293,8 +324,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         if (formattedData.length > 0) {
             const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
             setFilteredData(formattedData.filter((x) => {
-                const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
-                const shouldShowInPhase = selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+                const participantPhase = getParticipantPhase(x);
+                const shouldShowInPhase = selectedPhase === `Phase ${participantPhase}`;
 
                 if (!shouldShowInPhase) return false;
 
@@ -371,6 +402,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             for (const h of columnsToHide) {
                 delete x[h];
             }
+            delete x['_phase'];
+            delete x['_evalNumber'];
             // remove fields that aren't in the current phase's headers
             const keysToDelete = Object.keys(x).filter(key => !currentHeaders.includes(key));
             for (const key of keysToDelete) {
@@ -410,8 +443,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         </section>
         {(() => {
             const currentPhaseData = formattedData.filter((x) => {
-                const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
-                return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+                const participantPhase = getParticipantPhase(x);
+                return selectedPhase === `Phase ${participantPhase}`;
             });
             return filteredData.length < currentPhaseData.length && (
                 <p className='filteredText'>Showing {filteredData.length} of {currentPhaseData.length} rows based on filters</p>
@@ -500,11 +533,11 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             </div>
             <DownloadButtons
                 formattedData={refineData(formattedData.filter((x) => {
-                    const isPhase2Eval = x['Evaluation'] === 'June 2025 Collaboration';
-                    return selectedPhase === 'Phase 2' ? isPhase2Eval : !isPhase2Eval;
+                    const participantPhase = getParticipantPhase(x);
+                    return selectedPhase === `Phase ${participantPhase}`;
                 }))}
                 filteredData={refineData(filteredData)}
-                HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))}  // ← Use HEADERS instead
+                HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))}
                 fileName={'Participant_Progress'}
                 extraAction={refreshData}
                 extraActionText={'Refresh Data'}
