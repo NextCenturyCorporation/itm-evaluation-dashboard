@@ -206,8 +206,6 @@ class TextBasedScenariosPage extends Component {
             config.scenario_id && scenarioIds.includes(config.scenario_id)
         );
 
-        console.log(scenarios)
-
         for (let i = scenarios.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
