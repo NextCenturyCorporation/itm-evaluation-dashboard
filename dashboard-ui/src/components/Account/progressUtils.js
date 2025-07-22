@@ -14,20 +14,25 @@ const PHASE1_SCENARIOS = {
     VOL4: ['vol-ph1-eval-4']
 };
 
-const PHASE2_SCENARIOS = ['AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3']
-    .reduce((acc, key) => ({ ...acc, [key]: [`June2025-${key}-eval`] }), {});
+const PHASE2_SCENARIO_KEYS = ['AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
 export const SCENARIO_HEADERS = [
     'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4',
     ...Object.keys(PHASE1_SCENARIOS),
-    ...Object.keys(PHASE2_SCENARIOS)
+    ...PHASE2_SCENARIO_KEYS
 ];
 
+const isPhase2Scenario = (scenarioId, targetKey) => {
+    return scenarioId.includes(`${targetKey}-eval`);
+};
+
 export const setScenarioCompletion = (obj, completedScenarios) => {
-    const allScenarios = { ...PHASE1_SCENARIOS, ...PHASE2_SCENARIOS };
-    
-    Object.keys(allScenarios).forEach(key => {
-        const scenarios = allScenarios[key];
+    Object.keys(PHASE1_SCENARIOS).forEach(key => {
+        const scenarios = PHASE1_SCENARIOS[key];
         obj[key] = scenarios.some(s => completedScenarios.includes(s)) ? 'y' : null;
+    });
+    
+    PHASE2_SCENARIO_KEYS.forEach(key => {
+        obj[key] = completedScenarios.some(s => isPhase2Scenario(s, key)) ? 'y' : null;
     });
 };
