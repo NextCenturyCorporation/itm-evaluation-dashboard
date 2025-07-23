@@ -72,9 +72,9 @@ export function RQ5_PH1({ evalNum }) {
             const allTargets = [];
             const participantLog = dataParticipantLog.getParticipantLog;
 
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber == evalNum);
-            const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber == evalNum);
-            const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber == evalNum);
+            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
+            const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber === evalNum);
+            const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber ===evalNum);
 
             const pids = [];
             const recorded = {};
@@ -90,7 +90,7 @@ export function RQ5_PH1({ evalNum }) {
 
                 // see if participant is in the participantLog
                 const logData = participantLog.find(
-                    log => log['ParticipantID'] == pid && log['Type'] != 'Test'
+                    log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                 );
                 if (!logData) {
                     continue;
@@ -117,8 +117,8 @@ export function RQ5_PH1({ evalNum }) {
                         attributes = ['VOL'];
                     }
                     for (const att of attributes) {
-                        const adeptSubstr = att == 'MJ' ? 'Moral' : 'Ingroup';
-                        const mostLeastAligned = entry['mostLeastAligned'].length == 1 ? entry['mostLeastAligned'][0] :
+                        const adeptSubstr = att === 'MJ' ? 'Moral' : 'Ingroup';
+                        const mostLeastAligned = entry['mostLeastAligned'].length === 1 ? entry['mostLeastAligned'][0] :
                             (entry['mostLeastAligned'][0]['target'].includes(adeptSubstr) ? entry['mostLeastAligned'][0] : entry['mostLeastAligned'][1]);
                         for (let targetSet of mostLeastAligned['response']) {
                             for (const adm of ADMs) {
@@ -130,39 +130,39 @@ export function RQ5_PH1({ evalNum }) {
                                 allTA1s.push(entryObj['TA1_Name']);
                                 entryObj['Attribute'] = att;
                                 allAttributes.push(att);
-                                entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                                entryObj['Scenario'] = entryObj['TA1_Name'] === 'ADEPT' ? ad_scenario : st_scenario;
                                 allScenarios.push(entryObj['Scenario']);
                                 entryObj['Target'] = target;
                                 allTargets.push(target);
                                 entryObj['Alignment score (Participant|target)'] = align;
                                 entryObj['ADM Name'] = adm;
                                 if (comparisons.filter((x) =>
-                                    x['pid'] == pid && x['probe_subset'] === false && x['scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                    x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                    String(x['pid']) === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    String(x['adm_name']) === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 ).length > 1) {
                                     console.warn('too many comparison entries found!!');
                                 }
                                 entryObj['Alignment score (Participant|ADM(target))'] = comparisons.find((x) =>
-                                    x['pid'] == pid && x['probe_subset'] === false && x['scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                    x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                    x['pid'] === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 )?.['score'];
                                 if (matches.filter((x) =>
-                                    x['pid'] == pid && x['probe_subset'] === false && x['text_scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                    x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                    x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 ).length > 1) {
                                     console.warn('too many match entries found!!');
                                 }
                                 entryObj['Match'] = matches.find((x) =>
-                                    x['pid'] == pid && x['probe_subset'] === false && x['text_scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                    x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                    x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                    x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                 )?.['score']
                                 allObjs.push(entryObj);
                             }
                         }
                         if (entry['group_targets']) {
                             for (let target of Object.keys(entry['group_targets'])) {
-                                if ((target.includes('Ingroup') && att != 'IO') || (target.includes('Moral') && att != 'MJ') ||
-                                    (target.includes('vol') && att != 'VOL') || (target.includes('qol') && att != 'QOL')) {
+                                if ((target.includes('Ingroup') && att !== 'IO') || (target.includes('Moral') && att !== 'MJ') ||
+                                    (target.includes('vol') && att !== 'VOL') || (target.includes('qol') && att !== 'QOL')) {
                                     continue;
                                 }
                                 for (const adm of ADMs) {
@@ -173,31 +173,31 @@ export function RQ5_PH1({ evalNum }) {
                                     allTA1s.push(entryObj['TA1_Name']);
                                     entryObj['Attribute'] = att;
                                     allAttributes.push(att);
-                                    entryObj['Scenario'] = entryObj['TA1_Name'] == 'ADEPT' ? ad_scenario : st_scenario;
+                                    entryObj['Scenario'] = entryObj['TA1_Name'] === 'ADEPT' ? ad_scenario : st_scenario;
                                     allScenarios.push(entryObj['Scenario']);
                                     entryObj['Target'] = target;
                                     allTargets.push(target);
                                     entryObj['Alignment score (Participant|target)'] = align;
                                     entryObj['ADM Name'] = adm;
                                     if (comparisons.filter((x) =>
-                                        x['pid'] == pid && x['probe_subset'] === false && x['scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                        x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     ).length > 1) {
                                         console.warn('too many comparison entries found!!');
                                     }
                                     entryObj['Alignment score (Participant|ADM(target))'] = comparisons.find((x) =>
-                                        x['pid'] == pid && x['probe_subset'] === false && x['scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                        x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     )?.['score'];
                                     if (matches.filter((x) =>
-                                        x['pid'] == pid && x['probe_subset'] === false && x['text_scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                        x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     ).length > 1) {
                                         console.warn('too many match entries found!!');
                                     }
                                     entryObj['Match'] = matches.find((x) =>
-                                        x['pid'] == pid && x['probe_subset'] === false && x['text_scenario'] == SCENARIO_MAP[entry['scenario_id']] &&
-                                        x['adm_name'] == adm && (x['adm_alignment_target'] == target || x['adm_alignment_target'].replace('.', '') == target)
+                                        x['pid'] === pid && x['probe_subset'] === false && x['text_scenario'] === SCENARIO_MAP[entry['scenario_id']] &&
+                                        x['adm_name'] === adm && (x['adm_alignment_target'] === target || x['adm_alignment_target'].replace('.', '') === target)
                                     )?.['score']
                                     allObjs.push(entryObj);
                                 }
@@ -245,10 +245,10 @@ export function RQ5_PH1({ evalNum }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) =>
-                (ta1Filters.length == 0 || ta1Filters.includes(x['TA1_Name'])) &&
-                (scenarioFilters.length == 0 || scenarioFilters.includes(x['Scenario'])) &&
-                (attributeFilters.length == 0 || attributeFilters.includes(x['Attribute'])) &&
-                (targetFilters.length == 0 || targetFilters.includes(x['Target']))
+                (ta1Filters.length === 0 || ta1Filters.includes(x['TA1_Name'])) &&
+                (scenarioFilters.length === 0 || scenarioFilters.includes(x['Scenario'])) &&
+                (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
+                (targetFilters.length === 0 || targetFilters.includes(x['Target']))
             ));
         }
     }, [formattedData, ta1Filters, scenarioFilters, attributeFilters, targetFilters]);

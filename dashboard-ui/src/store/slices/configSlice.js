@@ -15,7 +15,7 @@ const configSlice = createSlice({
         },
 
         addTextBasedConfig: (state, action) => {
-            const { id, data } = action.payload
+            const { data } = action.payload
             state.textBasedConfigs[data.scenario_id] = data
         },
 

@@ -88,7 +88,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
                     this.postConfigSetup();
                 })
             }
-        }, [reducer])
+        }, [reducer, currentSurveyVersion])
         return null;
     }
 

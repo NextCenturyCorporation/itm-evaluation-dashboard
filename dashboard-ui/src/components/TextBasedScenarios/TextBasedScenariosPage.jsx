@@ -128,7 +128,7 @@ class TextBasedScenariosPage extends Component {
 
         // match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
-            log => log['ParticipantID'] == enteredParticipantID
+            log => String(log['ParticipantID']) === enteredParticipantID
         );
 
         let scenarios = [];
@@ -196,10 +196,10 @@ class TextBasedScenariosPage extends Component {
 
     scenariosFromLog = (participantLog) => {
         const scenarioIds = [
-            `June2025-AF${participantLog['AF-text-scenario']}-eval`,
-            `June2025-MF${participantLog['MF-text-scenario']}-eval`,
-            `June2025-PS${participantLog['PS-text-scenario']}-eval`,
-            `June2025-SS${participantLog['SS-text-scenario']}-eval`
+            `July2025-AF${participantLog['AF-text-scenario']}-eval`,
+            `July2025-MF${participantLog['MF-text-scenario']}-eval`,
+            `July2025-PS${participantLog['PS-text-scenario']}-eval`,
+            `July2025-SS${participantLog['SS-text-scenario']}-eval`
         ];
 
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
@@ -250,11 +250,11 @@ class TextBasedScenariosPage extends Component {
         if (isDefined(pid)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
-                "Military or Civilian background": classification == 'Online' ? 'Online' : classification,
+                "Military or Civilian background": classification === 'Online' ? 'Online' : classification,
                 "vrEnvironmentsCompleted": ['none']
             };
             if (isDefined(adeptQualtrix) || isDefined(caciProlific)) {
-                if (startSurvey == 'true') {
+                if (startSurvey === 'true') {
                     this.setState({ moderated: false, onlineOnly: true, skipText: true });
                 }
                 else {
@@ -356,8 +356,8 @@ class TextBasedScenariosPage extends Component {
         });
 
         scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id);
-        scenarioData.evalNumber = 8
-        scenarioData.evalName = 'June 2025 Collaboration'
+        scenarioData.evalNumber = 9
+        scenarioData.evalName = 'July 2025 Collaboration'
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -368,7 +368,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('June2025')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025')) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -380,7 +380,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('June2025')) {
+        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025')) {
             if (this.state.adeptSessionsCompleted === 0) {
                 await this.beginRunningSession(scenario)
             } else {
@@ -498,7 +498,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
-        for (const [fieldName, fieldValue] of Object.entries(scenario)) {
+        for (const [, fieldValue] of Object.entries(scenario)) {
             if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
             for (const [questionName, question] of Object.entries(fieldValue.questions)) {
                 if (typeof question !== 'object') { continue }
@@ -518,7 +518,7 @@ class TextBasedScenariosPage extends Component {
                             "session_id": sessionID
                         }
                         try {
-                            const response = await axios.post(responseUrl, responsePayload)
+                            await axios.post(responseUrl, responsePayload)
                         } catch (err) {
                             console.log(err)
                             continue
@@ -549,7 +549,7 @@ class TextBasedScenariosPage extends Component {
 
     calcScore = async (scenario, alignmentType) => {
         // function should now only be called on soartech scenarios because of change to ADEPT server
-        if (alignmentType != 'soartech') {
+        if (alignmentType !== 'soartech') {
             console.error('function should only be called on alignment type soartech but was called on ' + alignmentType)
             return
         }
@@ -823,6 +823,7 @@ ReactQuestionFactory.Instance.registerQuestion("phase2Text", (props) => {
     return React.createElement(Phase2Text, props)
 })
 
+/*
 const p1Mappings = {
     'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
     'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
@@ -831,6 +832,7 @@ const p1Mappings = {
     'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
     'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
 }
+*/
 
 export const simNameMappings = {
     'AD-1': ['Eval_Adept_Urban'],
@@ -844,7 +846,7 @@ export const simNameMappings = {
 /* 
     I needed to save these configs separately from the dre configs despite the fact they have the same ids.
     Using this mapping to get id that matches up with ADEPT ta1 server for server calls
-*/
+
 const adeptScenarioIdMap = {
     'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
     'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
@@ -852,3 +854,4 @@ const adeptScenarioIdMap = {
     'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
     'phase1-adept-train-IO1': 'DryRunEval.IO1'
 }
+*/

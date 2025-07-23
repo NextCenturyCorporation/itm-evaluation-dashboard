@@ -193,7 +193,7 @@ const DynamicPhase1 = ({ patients, situation, supplies, decision, dmName, action
                         ) : (
                             <Card className="patient-card" style={{ display: 'inline-block' }}>
                                 <Card.Header>
-                                    <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex == 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
+                                    <div>{patient.name} <Card.Text>{patient.age && <><span>{patient.age} years old, {patient.sex === 'F' ? 'Female' : 'Male'}</span><br /></>}<span>{patient.description}</span></Card.Text></div>
                                 </Card.Header>
                                 <Row className="g-0 patient-card-content">
                                     <Col md={8}>

@@ -3,6 +3,7 @@ import { RQ134 } from "./tables/rq134";
 import './dre-rq.css';
 import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
+import { PH2RQ8 } from "./tables/ph2_rq8";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
@@ -12,11 +13,12 @@ import { CalibrationData } from './tables/CalibrationData';
 const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
     { value: 5, label: 'Phase 1 Evaluation' },
-    { value: 6, label: 'Jan 2025 Evaluation' }
+    { value: 6, label: 'Jan 2025 Evaluation' },
+    { value: 8, label: 'Phase II June 2025 Collaboration' }
 ];
 
 export function ExploratoryAnalysis() {
-    const [selectedEval, setSelectedEval] = React.useState(5);
+    const [selectedEval, setSelectedEval] = React.useState(8);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }
@@ -64,60 +66,64 @@ export function ExploratoryAnalysis() {
                 <li>SRAlign_Rating</li>
             </ul>
         </div>
+        {selectedEval < 8 &&
+            <>
+                <div className="section-container">
+                    <h2>RQ5: To what extent does alignment score predict identical behavior at the probe level in patterns of real human behavior?</h2>
+                    <p className='indented'>
+                        <b>H<sub>1</sub></b> = Alignment scores as calculated by the TA1s will be positively related to the % of exact matches in probe responses
+                    </p>
+                    <p className='indented'>
+                        <b>H<sub>0</sub></b> = Alignment scores as calculated by the TA1s will not be positively related to the % of exact matches in probe responses
+                    </p>
+                    <p>For each pair of DMs (human and ADM) that completed the same scenario, we will calculate the percentage of probes answered exactly the same and
+                        look at the correlation between the alignment score and the percentage of probes answered the same as an indicator of how the relationship
+                        between alignment score, as calculated at a scenario level by the characterization teams, and the behavioral responses of the human and ADM.
+                    </p>
+                    <p className='indented'>
+                        <b>H<sub>1</sub></b> = Alignment scores to group targets, as calculated by the TA1s, will be positively related to the % of exact matches
+                        in probe responses among group members
+                    </p>
+                    <p className='indented'>
+                        <b>H<sub>0</sub></b> = Alignment scores to group targets, as calculated by the TA1s, will not be positively related to the % of exact matches
+                        in probe responses among group members
+                    </p>
+                    <p>Similarly, we can also examine the correlation between alignment score to a group target and the % of probes answered the same as group members
+                        as an indicator of the relationship between alignment score and behavioral response. We can calculate, for each probe, the probe agreement
+                        between an individual and a group as the percentage of group individuals who answered the question in the same way
+                    </p>
+                    <p>
+                        <b>Dependent variables:</b> Alignment score and % matching probe responses
+                    </p>
+                </div>
+                <div className="section-container">
+                    {selectedEval === 5 ?
+                        <RQ5_PH1 evalNum={selectedEval} /> :
+                        <RQ5 evalNum={selectedEval} />}
 
-        <div className="section-container">
-            <h2>RQ5: To what extent does alignment score predict identical behavior at the probe level in patterns of real human behavior?</h2>
-            <p className='indented'>
-                <b>H<sub>1</sub></b> = Alignment scores as calculated by the TA1s will be positively related to the % of exact matches in probe responses
-            </p>
-            <p className='indented'>
-                <b>H<sub>0</sub></b> = Alignment scores as calculated by the TA1s will not be positively related to the % of exact matches in probe responses
-            </p>
-            <p>For each pair of DMs (human and ADM) that completed the same scenario, we will calculate the percentage of probes answered exactly the same and
-                look at the correlation between the alignment score and the percentage of probes answered the same as an indicator of how the relationship
-                between alignment score, as calculated at a scenario level by the characterization teams, and the behavioral responses of the human and ADM.
-            </p>
-            <p className='indented'>
-                <b>H<sub>1</sub></b> = Alignment scores to group targets, as calculated by the TA1s, will be positively related to the % of exact matches
-                in probe responses among group members
-            </p>
-            <p className='indented'>
-                <b>H<sub>0</sub></b> = Alignment scores to group targets, as calculated by the TA1s, will not be positively related to the % of exact matches
-                in probe responses among group members
-            </p>
-            <p>Similarly, we can also examine the correlation between alignment score to a group target and the % of probes answered the same as group members
-                as an indicator of the relationship between alignment score and behavioral response. We can calculate, for each probe, the probe agreement
-                between an individual and a group as the percentage of group individuals who answered the question in the same way
-            </p>
-            <p>
-                <b>Dependent variables:</b> Alignment score and % matching probe responses
-            </p>
-        </div>
-        <div className="section-container">
-            {selectedEval == 5 ?
-                <RQ5_PH1 evalNum={selectedEval} /> :
-                <RQ5 evalNum={selectedEval} />}
+
+                </div>
 
 
-        </div>
+                <div className="section-container">
+                    <h2>RQ6: Does attribute assessment in different formats produce the same results?</h2>
+                    <p className='indented'>
+                        <b>H<sub>1</sub></b> = The human delegator probe responses in the text scenarios should be highly aligned to the same delegator’s probe responses in the simulated scenario.
+                    </p>
+                    <p className='indented'>
+                        <b>H<sub>0</sub></b> = The human delegator probe responses in the text scenarios should not be aligned to the same delegator’s probe responses in the simulated scenario.
+                    </p>
+                </div>
+                <div className="section-container">
+                    <RQ6 evalNum={selectedEval} />
+                </div>
 
-        <div className="section-container">
-            <h2>RQ6: Does attribute assessment in different formats produce the same results?</h2>
-            <p className='indented'>
-                <b>H<sub>1</sub></b> = The human delegator probe responses in the text scenarios should be highly aligned to the same delegator’s probe responses in the simulated scenario.
-            </p>
-            <p className='indented'>
-                <b>H<sub>0</sub></b> = The human delegator probe responses in the text scenarios should not be aligned to the same delegator’s probe responses in the simulated scenario.
-            </p>
-        </div>
-        <div className="section-container">
-            <RQ6 evalNum={selectedEval} />
-        </div>
-
-        <div className="section-container">
-            <h2>RQ7: Exploratory: How do the attributes interact?</h2>
-            <p>TBD</p>
-        </div>
+                <div className="section-container">
+                    <h2>RQ7: Exploratory: How do the attributes interact?</h2>
+                    <p>TBD</p>
+                </div>
+            </>
+        }
 
         <div className="section-container">
             <h2>RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?</h2>
@@ -133,14 +139,22 @@ export function ExploratoryAnalysis() {
                 tagging accuracy; use of expectant tag (yes/no); time per patient; number of visits per patient; triage time total; evacuation patients
             </p>
         </div>
+        
         <div className="section-container">
-            <RQ8 evalNum={selectedEval} />
+            {selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
         </div>
-        <div className="section-container">
-            <BlockedTable evalNum={selectedEval} />
-        </div>
-        <div className="section-container">
-            <CalibrationData evalNum={selectedEval}/>
-        </div>
+        
+        {selectedEval < 8 &&
+            <>
+                <div className="section-container">
+                    <BlockedTable evalNum={selectedEval} />
+                </div>
+            {selectedEval > 4 &&
+                <div className="section-container">
+                    <CalibrationData evalNum={selectedEval} />
+                </div>
+            }
+            </>
+        }
     </div>);
 }
