@@ -1,6 +1,7 @@
 import React, {useCallback} from "react";
 import '../SurveyResults/resultsTable.css';
-import { Autocomplete, TextField } from "@mui/material";
+import '../../css/admInfo.css';
+import { Autocomplete, TextField, Modal } from "@mui/material";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
@@ -8,7 +9,8 @@ import { isDefined } from "../AggregateResults/DataFunctions";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
-
+import { determineChoiceProcessJune2025 } from '../Research/utils';
+import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -35,7 +37,14 @@ const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Eva
 const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
+function formatLoading(val) {
+    if (val === 'exemption') return 'Exemption';
+    if (val === 'most aligned' || val === 'least aligned') return 'Normal';
+    return val;
+}
+
 export function ParticipantProgressTable({ canViewProlific = false }) {
+    const KDMA_MAP = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search' };
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults, refetch: refetchTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
@@ -52,7 +61,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [sortBy, setSortBy] = React.useState('Participant ID ↑');
     const [searchPid, setSearchPid] = React.useState('');
     const [isRefreshing, setIsRefreshing] = React.useState(false);
-    const [selectedPhase, setSelectedPhase] = React.useState('Phase 1');
+    const [selectedPhase, setSelectedPhase] = React.useState('Phase 2');
 
     const getHeaders = () => {
         if (selectedPhase === 'Phase 2') {
@@ -64,13 +73,14 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     const getCompletionOptions = () => {
         const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
-        
+        const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', `Delegation (${delThreshold})`, 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
+
         if (selectedPhase === 'Phase 1') {
             // phase 1 option
             baseOptions.splice(-1, 0, 'Adept + OW Sim');
         }
-        
+
         return baseOptions;
     };
 
@@ -78,6 +88,19 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return participant['_phase'] || 1;
     };
 
+    const [popupInfo, setPopupInfo] = React.useState({
+        open: false,
+        pid: null,
+        scenarioId: null
+    });
+
+    const openPopup = (pid, scenarioId) => {
+        setPopupInfo({ open: true, pid, scenarioId });
+    };
+
+    const closePopup = () => {
+        setPopupInfo({ open: false, pid: null, scenarioId: null });
+    };
     const sortData = React.useCallback(() => {
         if (typeof sortBy !== 'string' || !sortBy) return;
         const dataCopy = structuredClone(filteredData);
@@ -110,7 +133,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
             const participantLog = dataParticipantLog.getParticipantLog;
             const surveyResults = dataSurveyResults.getAllSurveyResults;
-            const textResults = dataTextResults.getAllScenarioResults;
+            const textResults = dataTextResults?.getAllScenarioResults || [];
             const simResults = dataSim.getAllSimAlignment;
             const allObjs = [];
             const allTypes = [];
@@ -155,22 +178,25 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     && x.results?.['Post-Scenario Measures']);
                 const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response === pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
-                const survey_start_date = lastSurvey ? new Date(lastSurvey?.results?.startTime) : new Date(incompleteSurveys?.slice(-1)?.[0]?.results?.startTime);
+                const lastIncompleteSurvey = incompleteSurveys?.slice(-1)?.[0];
+                const survey_start_date = lastSurvey ? new Date(lastSurvey?.results?.startTime) : new Date(lastIncompleteSurvey?.results?.startTime);
                 const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
                 obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Del End Date-Time'] = String(survey_end_date) !== 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                obj['Delegation'] = surveys.length;
-                const delScenarios = lastSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
+                const delScenarios = lastIncompleteSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
                 if (delScenarios) {
-                    obj['Del-1'] = lastSurvey?.results?.[delScenarios[0]]?.scenarioIndex;
-                    obj['Del-2'] = lastSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
-                    obj['Del-3'] = lastSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
-                    obj['Del-4'] = lastSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
+                    obj['Del-1'] = lastIncompleteSurvey?.results?.[delScenarios[0]]?.scenarioIndex;
+                    obj['Del-2'] = lastIncompleteSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
+                    obj['Del-3'] = lastIncompleteSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
+                    obj['Del-4'] = lastIncompleteSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
                     if (delScenarios.length > 4) {
-                        obj['Del-5'] = lastSurvey?.results?.[delScenarios[4]]?.scenarioIndex;
+                        obj['Del-5'] = lastIncompleteSurvey?.results?.[delScenarios[4]]?.scenarioIndex;
                     }
                 }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
+
+                const delKeys = ['Del-1','Del-2','Del-3','Del-4','Del-5'];
+                obj['Delegation'] = delKeys.filter(key => !!obj[key]).length;
 
                 if (!evalNumber && lastSurvey) {
                     evalNumber = lastSurvey.evalNumber ?? lastSurvey.results?.evalNumber;
@@ -231,13 +257,32 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     const formatCell = (header, dataSet) => {
         const val = dataSet[header];
+        const scenarioResults = dataTextResults?.getAllScenarioResults || [];
+
+        if (selectedPhase === 'Phase 2' && /^Del-\d+$/.test(header) && val && dataSet['Delegation'] > 0) {
+            const exists = scenarioResults.some(r => r.participantID === dataSet['Participant ID']);
+            if (exists) {
+                return (
+                    <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell'>
+                        <button
+                            className="view-adm-btn"
+                            onClick={() => openPopup(dataSet['Participant ID'], val)}
+                        >
+                            {val}
+                        </button>
+                    </td>
+                );
+            }
+        }
+
         const getClassName = (header, val) => {
             if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
             }
             // phase dependent
             const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-            if ((header === 'Delegation' && val === 1) ||
+            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+            if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val >= textThreshold) ||
                 (header === 'Sim Count' && val === 4)) {
                 return 'dk-green-cell';
@@ -279,6 +324,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
+            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+
             setFilteredData(formattedData.filter((x) => {
                 const participantPhase = getParticipantPhase(x);
                 const shouldShowInPhase = selectedPhase === `Phase ${participantPhase}`;
@@ -292,7 +339,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     (evalFilters.length === 0 || evalFilters.includes(x['Evaluation'])) &&
                     (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
                     (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
-                    (!completionFilters.includes('Delegation (1)') || x['Delegation'] >= 1) &&
+                    (!completionFilters.includes(`Delegation (${delThreshold})`) || x['Delegation'] >= delThreshold) &&
                     (!completionFilters.includes('No Delegation') || x['Delegation'] === 0) &&
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
                     (!completionFilters.includes('Any Sim') || x['Sim Count'] >= 1) &&
@@ -531,5 +578,199 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 </tbody>
             </table>
         </div>
+        <Modal open={popupInfo.open && selectedPhase === 'Phase 2'} onClose={closePopup}>
+            <div className="adm-popup-body">
+                {(() => {
+                    const allScenarios = dataTextResults.getAllScenarioResults;
+                    const doc = allScenarios.find(r => r.participantID === popupInfo.pid);
+                    if (!doc) return <p>No data available.</p>;
+
+                    const match = popupInfo.scenarioId.match(/^[^-]+-([A-Z]+)\d+-eval$/);
+                    const code = match?.[1] || '';
+
+                    const allSurveys = dataSurveyResults.getAllSurveyResults;
+
+                    const surveyEntry = allSurveys.find(s => {
+                        const r = s.results;
+                        if (!r) return false;
+                        const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
+                        return pidMatches && Object.values(r).some(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
+                    });
+
+                    if (!surveyEntry) return <p>No data available.</p>;
+
+                    const cmpPage = Object.values(surveyEntry.results).find(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
+
+                    if (!cmpPage) return <p>No comparison page for {popupInfo.scenarioId}</p>;
+
+                    // need to handle multi kdma differently
+                    const isMultiKDMA = popupInfo.scenarioId.includes('AF') && popupInfo.scenarioId.includes('MF');
+
+                    let medicData = [];
+
+                    let target = '';
+                    let filteredArr = [];
+
+                    if (isMultiKDMA) {
+                        const medicIds = cmpPage.pageName.split(" vs ");
+
+                        medicIds.forEach(medicId => {
+                            const singlePage = surveyEntry?.results?.[medicId];
+                            if (singlePage?.pageType === "singleMedic") {
+                                medicData.push({
+                                    type: singlePage.admAlignment.charAt(0).toUpperCase() + singlePage.admAlignment.slice(1),
+                                    admName: singlePage.admName || "-",
+                                    target: singlePage.admTarget || "-",
+                                    // there is no exemption loading for multi kdma
+                                    loading: 'Normal'
+                                });
+                            }
+                        });
+                    } else {
+                        const { baselineName, alignedTarget, misalignedTarget } = cmpPage;
+                        target = KDMA_MAP[code] || code.toLowerCase();
+                        const entry = doc.mostLeastAligned.find(o => o.target === target) || {};
+                        const arr = entry.response || [];
+
+                        if (arr.length === 0) return <p>No alignments.</p>;
+
+                        filteredArr = arr.filter(o => {
+                            const key = Object.keys(o)[0];
+                            return !key.split("-").pop().includes("_");
+                        });
+
+                        const medicIds = cmpPage.pageName.split(" vs ");
+                        let alignedName = "-";
+                        let misalignedName = "-";
+                        medicIds.forEach(id => {
+                            const singlePage = surveyEntry?.results?.[id];
+                            if (singlePage?.pageType === "singleMedic") {
+                                if (singlePage.admAlignment === "aligned") alignedName = singlePage.admName;
+                                if (singlePage.admAlignment === "misaligned") misalignedName = singlePage.admName;
+                            }
+                        });
+
+                        const alignedPage = surveyEntry.results[medicIds.find(id => surveyEntry.results[id]?.admAlignment === "aligned")];
+                        const misalignedPage = surveyEntry.results[medicIds.find(id => surveyEntry.results[id]?.admAlignment === "misaligned")];
+
+                        const alignedLoading = alignedPage ? determineChoiceProcessJune2025([doc], alignedPage, "aligned") : "N/A";
+                        const misalignedLoading = misalignedPage ? determineChoiceProcessJune2025([doc], misalignedPage, "misaligned") : "N/A";
+
+                        medicData = [
+                            { type: "Baseline", admName: baselineName || "-", target: "N/A", loading: "N/A" },
+                            { type: "Aligned", admName: alignedName || "-", target: alignedTarget || "-", loading: formatLoading(alignedLoading) },
+                            { type: "Misaligned", admName: misalignedName || "-", target: misalignedTarget || "-", loading: formatLoading(misalignedLoading) }
+                        ];
+                    }
+
+                    return (
+                        <>
+                            <div className="adm-header">
+                                <h2>ADM Information</h2>
+                                <button className="close-popup" onClick={closePopup}>Close</button>
+                            </div>
+
+                            <div className="adm-popup-content">
+                                <div className="adm-left">
+                                    <div className="adm-info-block">
+                                        <div className="adm-info-block-label">Participant ID</div>
+                                        <div className="adm-info-block-value">{popupInfo.pid}</div>
+                                    </div>
+                                    <div className="adm-info-block">
+                                        <div className="adm-info-block-label">Scenario ID</div>
+                                        <div className="adm-info-block-value">{popupInfo.scenarioId}</div>
+                                    </div>
+                                    {!isMultiKDMA ? (
+                                        <>
+                                            <div className="adm-info-block">
+                                                <div className="adm-info-block-label">Attribute</div>
+                                                <div className="adm-info-block-value">
+                                                    {target.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
+                                                </div>
+                                            </div>
+                                            <div className="adm-info-block">
+                                                <div className="adm-info-block-value adm-align-list">
+                                                    {filteredArr.map((o, idx) => {
+                                                        const key = Object.keys(o)[0];
+                                                        const score = o[key];
+                                                        return (
+                                                            <div key={key}> {idx === 0 && (
+                                                                <><span className="adm-info-block-label" style={{ marginBottom: '0.75rem' }}>All Alignments (Highest to Lowest)</span>
+                                                                    <br />
+                                                                </>
+                                                            )}
+                                                                {formatTargetWithDecimal(key)} ({score.toFixed(3)})
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="adm-info-block">
+                                                <div className="adm-info-block-label">Type</div>
+                                                <div className="adm-info-block-value">Multi-KDMA Comparison</div>
+                                            </div>
+                                            <div className="adm-info-block">
+                                                <div className="adm-info-block-label">KDMA Scores</div>
+                                                
+                                                    {(() => {
+                                                        const meritScore = doc.kdmas?.find(k => k.kdma === 'merit')?.value;
+                                                        const affiliationScore = doc.kdmas?.find(k => k.kdma === 'affiliation')?.value;
+
+                                                        return (
+                                                            <>
+                                                                {meritScore !== undefined && (
+                                                                    <div>Merit: {meritScore.toFixed(3)}</div>
+                                                                )}
+                                                                {affiliationScore !== undefined && (
+                                                                    <div>Affiliation: {affiliationScore.toFixed(3)}</div>
+                                                                )}
+                                                                {meritScore === undefined && affiliationScore === undefined && (
+                                                                    <div>No KDMA scores available</div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
+                                                
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="adm-right">
+                                    <table>
+                                        <colgroup>
+                                            <col style={{ width: '14%' }} />
+                                            <col style={{ width: '48%' }} />
+                                            <col style={{ width: '22%' }} />
+                                            <col style={{ width: '15%' }} />
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>ADM Name</th>
+                                                <th>Target</th>
+                                                <th>ADM Loading</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {medicData.map((medic, index) => (
+                                                <tr key={index}>
+                                                    <td>{medic.type}</td>
+                                                    <td>{medic.admName}</td>
+                                                    <td>{medic.target}</td>
+                                                    <td>{medic.loading}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    );
+                })()}
+            </div>
+        </Modal>
     </>);
 }
