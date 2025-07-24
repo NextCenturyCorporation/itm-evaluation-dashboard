@@ -73,7 +73,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     const getCompletionOptions = () => {
         const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', 'Delegation (1)', 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
+        const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', `Delegation (${delThreshold})`, 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
 
         if (selectedPhase === 'Phase 1') {
             // phase 1 option
@@ -323,6 +324,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     React.useEffect(() => {
         if (formattedData.length > 0) {
             const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
+            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+
             setFilteredData(formattedData.filter((x) => {
                 const participantPhase = getParticipantPhase(x);
                 const shouldShowInPhase = selectedPhase === `Phase ${participantPhase}`;
@@ -336,7 +339,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                     (evalFilters.length === 0 || evalFilters.includes(x['Evaluation'])) &&
                     (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
                     (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
-                    (!completionFilters.includes('Delegation (1)') || x['Delegation'] >= 1) &&
+                    (!completionFilters.includes(`Delegation (${delThreshold})`) || x['Delegation'] >= delThreshold) &&
                     (!completionFilters.includes('No Delegation') || x['Delegation'] === 0) &&
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
                     (!completionFilters.includes('Any Sim') || x['Sim Count'] >= 1) &&
