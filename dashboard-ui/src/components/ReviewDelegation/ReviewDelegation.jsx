@@ -93,7 +93,7 @@ export function ReviewDelegationPage() {
                 let reviewText = '';
                 if (page['evalNumber'] === 4) {
                     reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
-                } else if (page['evalNumber'] >= 8) {
+                } else if (page['evalNumber'] === 8) {
                     reviewText = page['scenarioName'] + ' - ' + page['admName'] + ' - ' + page['target'];
                 } else {
                     reviewText = (page['scenarioIndex'] ? PH1_NAME_MAP[page['scenarioIndex']] : 'Unknown') + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
@@ -124,7 +124,7 @@ export function ReviewDelegationPage() {
                 if (Object.keys(page).includes('scenarioIndex') || Object.keys(page).includes('scenarioName')) {
                     let scenarioKey = '';
 
-                    if (i === 0) { // DRE scenarios
+                    if (i === 0) {
                         scenarioKey = page['scenarioIndex'];
                         if (!Object.keys(dre_scenarios).includes(scenarioKey)) {
                             dre_scenarios[scenarioKey] = {};
@@ -151,7 +151,7 @@ export function ReviewDelegationPage() {
                             ph2_june_scenarios[scenarioKey][page['admName']] = [];
                         }
                         ph2_june_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 3) { 
+                    } else if (i === 3) {
                         scenarioKey = page['scenarioName'] || page['scenarioIndex'];
                         if (!Object.keys(ph2_july_scenarios).includes(scenarioKey)) {
                             ph2_july_scenarios[scenarioKey] = {};
@@ -211,7 +211,7 @@ export function ReviewDelegationPage() {
                             Phase 2 July 2025 Collaboration
                         </Card.Header>
                         <Card.Body className="bg-light">
-                            {Object.keys(ph2_july_scenarios).map((scenarioName => (
+                            {Object.keys(ph2_july_scenarios).sort().map((scenarioName => (
                                 <div key={scenarioName}>
                                     {renderConfigGroup(ph2_july_scenarios[scenarioName], scenarioName, true)}
                                 </div>
@@ -219,14 +219,13 @@ export function ReviewDelegationPage() {
                         </Card.Body>
                     </Card>
                 )}
-
                 {Object.keys(ph2_june_scenarios).length > 0 && (
                     <Card className="mb-4 border-0 shadow">
                         <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
                             Phase 2 June 2025 Collaboration
                         </Card.Header>
                         <Card.Body className="bg-light">
-                            {Object.keys(ph2_june_scenarios).map((scenarioName => (
+                            {Object.keys(ph2_june_scenarios).sort().map((scenarioName => (
                                 <div key={scenarioName}>
                                     {renderConfigGroup(ph2_june_scenarios[scenarioName], scenarioName, true)}
                                 </div>
@@ -234,14 +233,13 @@ export function ReviewDelegationPage() {
                         </Card.Body>
                     </Card>
                 )}
-
                 {Object.keys(ph1_scenarios).length > 0 && (
                     <Card className="mb-4 border-0 shadow">
                         <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
                             Phase 1 Scenarios
                         </Card.Header>
                         <Card.Body className="bg-light">
-                            {Object.keys(ph1_scenarios).map((scenarioName => (
+                            {Object.keys(ph1_scenarios).sort().map((scenarioName => (
                                 <div key={PH1_NAME_MAP[scenarioName]}>
                                     {renderConfigGroup(ph1_scenarios[scenarioName], PH1_NAME_MAP[scenarioName])}
                                 </div>
@@ -249,14 +247,13 @@ export function ReviewDelegationPage() {
                         </Card.Body>
                     </Card>
                 )}
-
                 {Object.keys(dre_scenarios).length > 0 && (
                     <Card className="mb-4 border-0 shadow">
                         <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
                             DRE Scenarios
                         </Card.Header>
                         <Card.Body className="bg-light">
-                            {Object.keys(dre_scenarios).map((scenarioName => (
+                            {Object.keys(dre_scenarios).sort().map((scenarioName => (
                                 <div key={scenarioName}>
                                     {renderConfigGroup(dre_scenarios[scenarioName], scenarioName)}
                                 </div>
