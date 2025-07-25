@@ -71,7 +71,7 @@ class ResultsTable extends React.Component {
         this.state = {
             adm: "",
             scenario: "",
-            evalNumber: 8,
+            evalNumber: 9,
             ADMQueryString: "history.parameters.adm_name",
             showScrollButton: false,
             alignmentTarget: null
@@ -173,7 +173,7 @@ class ResultsTable extends React.Component {
         if (evalNumber >= 4) {
             if (evalNumber === 7) {
                 return <MultiKdmaRq23 />;
-            } else if (evalNumber === 8) {
+            } else if (evalNumber >= 8) {
                 return <PH2RQ2223 evalNum={evalNumber}/>;
             } else {
                 return <RQ2223 evalNum={evalNumber} />;

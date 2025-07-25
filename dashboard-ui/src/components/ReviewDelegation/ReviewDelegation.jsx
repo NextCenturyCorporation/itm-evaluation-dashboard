@@ -93,7 +93,7 @@ export function ReviewDelegationPage() {
                 let reviewText = '';
                 if (page['evalNumber'] === 4) {
                     reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
-                } else if (page['evalNumber'] === 8) {
+                } else if (page['evalNumber'] >= 8) {
                     reviewText = page['scenarioName'] + ' - ' + page['admName'] + ' - ' + page['target'];
                 } else {
                     reviewText = (page['scenarioIndex'] ? PH1_NAME_MAP[page['scenarioIndex']] : 'Unknown') + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
@@ -109,20 +109,22 @@ export function ReviewDelegationPage() {
     const renderConfigButtons = () => {
         const dre_scenarios = {};
         const ph1_scenarios = {};
-        const ph2_scenarios = {};
+        const ph2_june_scenarios = {};
+        const ph2_july_scenarios = {};
 
         const dre_config = delegationConfigs["delegation_v4.0"];
         const ph1_config = delegationConfigs["delegation_v5.0"];
-        const ph2_config = delegationConfigs["delegation_v6.0"];
+        const ph2_june_config = delegationConfigs["delegation_v6.0"];
+        const ph2_july_config = delegationConfigs["delegation_v7.0"];
 
-        [dre_config, ph1_config, ph2_config].forEach((config, i) => {
+        [dre_config, ph1_config, ph2_june_config, ph2_july_config].forEach((config, i) => {
             if (!config) return;
 
             for (const page of config['pages']) {
                 if (Object.keys(page).includes('scenarioIndex') || Object.keys(page).includes('scenarioName')) {
                     let scenarioKey = '';
 
-                    if (i === 0) { // DRE scenarios
+                    if (i === 0) {
                         scenarioKey = page['scenarioIndex'];
                         if (!Object.keys(dre_scenarios).includes(scenarioKey)) {
                             dre_scenarios[scenarioKey] = {};
@@ -131,7 +133,7 @@ export function ReviewDelegationPage() {
                             dre_scenarios[scenarioKey][page['admName']] = [];
                         }
                         dre_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 1) { // Phase 1 scenarios
+                    } else if (i === 1) {
                         scenarioKey = page['scenarioIndex'];
                         if (!Object.keys(ph1_scenarios).includes(scenarioKey)) {
                             ph1_scenarios[scenarioKey] = {};
@@ -140,15 +142,24 @@ export function ReviewDelegationPage() {
                             ph1_scenarios[scenarioKey][page['admName']] = [];
                         }
                         ph1_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 2) { // Phase 2 scenarios
+                    } else if (i === 2) { 
                         scenarioKey = page['scenarioName'] || page['scenarioIndex'];
-                        if (!Object.keys(ph2_scenarios).includes(scenarioKey)) {
-                            ph2_scenarios[scenarioKey] = {};
+                        if (!Object.keys(ph2_june_scenarios).includes(scenarioKey)) {
+                            ph2_june_scenarios[scenarioKey] = {};
                         }
-                        if (!Object.keys(ph2_scenarios[scenarioKey]).includes(page['admName'])) {
-                            ph2_scenarios[scenarioKey][page['admName']] = [];
+                        if (!Object.keys(ph2_june_scenarios[scenarioKey]).includes(page['admName'])) {
+                            ph2_june_scenarios[scenarioKey][page['admName']] = [];
                         }
-                        ph2_scenarios[scenarioKey][page['admName']].push(page);
+                        ph2_june_scenarios[scenarioKey][page['admName']].push(page);
+                    } else if (i === 3) {
+                        scenarioKey = page['scenarioName'] || page['scenarioIndex'];
+                        if (!Object.keys(ph2_july_scenarios).includes(scenarioKey)) {
+                            ph2_july_scenarios[scenarioKey] = {};
+                        }
+                        if (!Object.keys(ph2_july_scenarios[scenarioKey]).includes(page['admName'])) {
+                            ph2_july_scenarios[scenarioKey][page['admName']] = [];
+                        }
+                        ph2_july_scenarios[scenarioKey][page['admName']].push(page);
                     }
                 }
             }
@@ -194,38 +205,62 @@ export function ReviewDelegationPage() {
 
         return (
             <>
-                <Card className="mb-4 border-0 shadow">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 2 Scenarios</Card.Header>
-                    <Card.Body className="bg-light">
-                        {Object.keys(ph2_scenarios).map((scenarioName => (
-                            <div key={scenarioName}>
-                                {renderConfigGroup(ph2_scenarios[scenarioName], scenarioName, true)}
-                            </div>
-                        )))}
-                    </Card.Body>
-                </Card>
-
-                <Card className="mb-4 border-0 shadow">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>Phase 1 Scenarios</Card.Header>
-                    <Card.Body className="bg-light">
-                        {Object.keys(ph1_scenarios).map((scenarioName => (
-                            <div key={PH1_NAME_MAP[scenarioName]}>
-                                {renderConfigGroup(ph1_scenarios[scenarioName], PH1_NAME_MAP[scenarioName])}
-                            </div>
-                        )))}
-                    </Card.Body>
-                </Card>
-
-                <Card className="mb-4 border-0 shadow">
-                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>DRE Scenarios</Card.Header>
-                    <Card.Body className="bg-light">
-                        {Object.keys(dre_scenarios).map((scenarioName => (
-                            <div key={scenarioName}>
-                                {renderConfigGroup(dre_scenarios[scenarioName], scenarioName)}
-                            </div>
-                        )))}
-                    </Card.Body>
-                </Card>
+                {Object.keys(ph2_july_scenarios).length > 0 && (
+                    <Card className="mb-4 border-0 shadow">
+                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                            Phase 2 July 2025 Collaboration
+                        </Card.Header>
+                        <Card.Body className="bg-light">
+                            {Object.keys(ph2_july_scenarios).sort().map((scenarioName => (
+                                <div key={scenarioName}>
+                                    {renderConfigGroup(ph2_july_scenarios[scenarioName], scenarioName, true)}
+                                </div>
+                            )))}
+                        </Card.Body>
+                    </Card>
+                )}
+                {Object.keys(ph2_june_scenarios).length > 0 && (
+                    <Card className="mb-4 border-0 shadow">
+                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                            Phase 2 June 2025 Collaboration
+                        </Card.Header>
+                        <Card.Body className="bg-light">
+                            {Object.keys(ph2_june_scenarios).sort().map((scenarioName => (
+                                <div key={scenarioName}>
+                                    {renderConfigGroup(ph2_june_scenarios[scenarioName], scenarioName, true)}
+                                </div>
+                            )))}
+                        </Card.Body>
+                    </Card>
+                )}
+                {Object.keys(ph1_scenarios).length > 0 && (
+                    <Card className="mb-4 border-0 shadow">
+                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                            Phase 1 Scenarios
+                        </Card.Header>
+                        <Card.Body className="bg-light">
+                            {Object.keys(ph1_scenarios).sort().map((scenarioName => (
+                                <div key={PH1_NAME_MAP[scenarioName]}>
+                                    {renderConfigGroup(ph1_scenarios[scenarioName], PH1_NAME_MAP[scenarioName])}
+                                </div>
+                            )))}
+                        </Card.Body>
+                    </Card>
+                )}
+                {Object.keys(dre_scenarios).length > 0 && (
+                    <Card className="mb-4 border-0 shadow">
+                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                            DRE Scenarios
+                        </Card.Header>
+                        <Card.Body className="bg-light">
+                            {Object.keys(dre_scenarios).sort().map((scenarioName => (
+                                <div key={scenarioName}>
+                                    {renderConfigGroup(dre_scenarios[scenarioName], scenarioName)}
+                                </div>
+                            )))}
+                        </Card.Body>
+                    </Card>
+                )}
             </>
         );
 
