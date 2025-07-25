@@ -82,7 +82,8 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                             }
                         };
                     }
-                    if ((headerName === 'Delegation' && val === 1) || (headerName === 'Text' && ((val === 5 && !phase2) || (val === 4 && phase2))) || (headerName === 'Sim Count' && val === 4)) {
+                    const delThreshold = phase2 ? 5 : 4;
+                    if ((headerName === 'Delegation' && val >= delThreshold) || (headerName === 'Text' && ((val === 5 && !phase2) || (val === 4 && phase2))) || (headerName === 'Sim Count' && val === 4)) {
                         cell.s = {
                             fill: {
                                 fgColor: { rgb: '7bbc7b' }  // Dark green color
