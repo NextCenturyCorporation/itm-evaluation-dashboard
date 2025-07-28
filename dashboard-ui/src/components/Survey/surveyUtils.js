@@ -951,7 +951,6 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
             if (skippedCount > 0) {
                 choiceProcesses.aligned = `overlapped with baseline. Is ${skippedCount} below most aligned`;
             }
-            console.log(`${scenarioType}: Selected most aligned target = ${mostAlignedTarget} (skipped ${skippedCount} overlapping with baseline)`);
             break;
         }
     }
@@ -983,7 +982,6 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
             if (misalignedSkipped > 0) {
                 choiceProcesses.misaligned = `overlapped with ${overlapTypes.join(' and ')}. Is ${misalignedSkipped} over least aligned`;
             }
-            console.log(`${scenarioType}: Selected least aligned target = ${leastAlignedTarget}`);
             break;
         }
     }
@@ -1012,7 +1010,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
     const adjustedNum = adjustScenarioNumber(textScenarioNum);
     const targetScenarioIndex = `${scenarioType}${adjustedNum}-eval`;
     const alignmentData = getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults);
-    const matchingPages = allPages.filter(page => page.scenarioIndex.includes(targetScenarioIndex));
+    const matchingPages = allPages.filter(page => page.scenarioIndex?.includes(targetScenarioIndex));
 
     if (matchingPages.length === 0) return null;
 
@@ -1081,7 +1079,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
     const afAlignment = getAlignmentForAttribute('AF', textScenarios["AF-text-scenario"], participantTextResults)
 
     const group = calculateMultiKdmaGroup(mfAlignment, afAlignment)
-    const afMfPages = allPages.filter(page => page.scenarioIndex.includes(afMfScenarioIndex));
+    const afMfPages = allPages.filter(page => page.scenarioIndex?.includes(afMfScenarioIndex));
     const requiredTargets = [
         'affiliation_merit-1.0_0.0',
         'affiliation_merit-1.0_1.0',
@@ -1171,8 +1169,6 @@ function calculateMultiKdmaGroup(mfAlignmentData, afAlignmentData) {
     } else if (!afHigh && mfHigh) {
         group = 'affiliation_merit-0.0_1.0';
     }
-
-    console.log(`Multi-KDMA group assigned: ${group} (AF: ${afTopValue}, MF: ${mfTopValue})`);
     return group;
 }
 
