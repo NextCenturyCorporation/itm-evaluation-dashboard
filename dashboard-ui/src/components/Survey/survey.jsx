@@ -832,7 +832,8 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+        const versions = ["4.0", "5.0", "6.0", "7.0"]
+        if (versions.includes(this.state.surveyVersion) && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => String(log['ParticipantID']) === this.state.pid

@@ -905,7 +905,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         return handleRandomSelection('no alignment data available');
     }
 
-    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
+    const scenarioGroups = getEval8ScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
     if (!scenarioGroups) {
         return handleRandomSelection('no group configuration found');
     }
