@@ -1008,7 +1008,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
     if (!textScenarioNum) return null;
 
     const adjustedNum = adjustScenarioNumber(textScenarioNum);
-    const targetScenarioIndex = `${scenarioType}${adjustedNum}-eval`;
+    const targetScenarioIndex = `2025-${scenarioType}${adjustedNum}-eval`;
     const alignmentData = getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults);
     const matchingPages = allPages.filter(page => page.scenarioIndex?.includes(targetScenarioIndex));
 
