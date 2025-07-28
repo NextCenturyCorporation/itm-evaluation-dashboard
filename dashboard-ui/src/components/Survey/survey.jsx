@@ -758,35 +758,31 @@ class SurveyPage extends Component {
             }
         }
 
-        if (this.state.surveyVersion === "6.0") {
-            this.surveyData['evalName'] = 'June 2025 Collaboration'
-            this.surveyData['evalNumber'] = 8
-            this.surveyData['pid'] = this.state.pid;
-            this.surveyData['orderLog'] = this.state.orderLog;
-            if (this.state.pid) {
-                this.surveyData['Participant ID Page'] = { 'pageName': 'Participant ID Page', 'questions': { 'Participant ID': { 'response': this.state.pid } } };
-            }
-        }
+        // instead of repeating near duplicate code blocks
+        const SURVEY_CONFIGS = {
+            "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
+            "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
+            "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
+            "4.0": { evalName: 'Dry Run Evaluation', evalNumber: 4 }
+        };
 
-        if (this.state.surveyVersion === "1.3") {
-            this.surveyData['evalName'] = 'April 2025 Evaluation';
-            this.surveyData['evalNumber'] = 8;
-            this.surveyData['pid'] = this.state.pid;
-            this.surveyData['orderLog'] = this.state.orderLog
-        }
+        const versionData = SURVEY_CONFIGS[this.state.surveyVersion];
 
-        if (this.state.surveyVersion === "4.0") {
-            this.surveyData['evalNumber'] = 4;
-            this.surveyData['evalName'] = 'Dry Run Evaluation';
-            this.surveyData['orderLog'] = this.state.orderLog;
-        }
-        if (this.state.surveyVersion === "5.0") {
-            this.surveyData['evalNumber'] = 6;
-            this.surveyData['evalName'] = 'Jan 2025 Eval';
-            this.surveyData['orderLog'] = this.state.orderLog;
-            this.surveyData['pid'] = this.state.pid;
+        if (versionData) {
+            Object.assign(this.surveyData, {
+                evalName: versionData.evalName,
+                evalNumber: versionData.evalNumber,
+                orderLog: this.state.orderLog
+            });
+
             if (this.state.pid) {
-                this.surveyData['Participant ID Page'] = { 'pageName': 'Participant ID Page', 'questions': { 'Participant ID': { 'response': this.state.pid } } };
+                this.surveyData.pid = this.state.pid;
+                this.surveyData['Participant ID Page'] = {
+                    pageName: 'Participant ID Page',
+                    questions: {
+                        'Participant ID': { response: this.state.pid }
+                    }
+                };
             }
         }
 
