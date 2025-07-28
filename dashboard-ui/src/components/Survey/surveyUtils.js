@@ -877,7 +877,7 @@ export function formatTargetWithDecimal(target) {
     return target;
 }
 
-export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum) {
+export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum, evalNum) {
     const choiceProcesses = {
         aligned: 'most aligned',
         misaligned: 'least aligned'
@@ -905,7 +905,8 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         return handleRandomSelection('no alignment data available');
     }
 
-    const scenarioGroups = getEval8ScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
+    const getScenarioGroups = evalNum === 8 ? getEval8ScenarioGroups : getEval9ScenarioGroups;
+    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
     if (!scenarioGroups) {
         return handleRandomSelection('no group configuration found');
     }
@@ -1022,7 +1023,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
         !page.admName || !page.admName.includes('Baseline')
     );
 
-    const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum);
+    const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum, evalNum);
     const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
     const selectedBaseline = baselinePages[randomBaselineIndex];
 
@@ -1057,7 +1058,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
 
     // randomize page orders
     const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
-    const comparisonPage = generateComparisonPagev6(
+    const comparisonPage = generateComparisonPagev6_7(
         selectedBaseline,
         selectedNonBaseline[0],
         selectedNonBaseline[1]
@@ -1123,7 +1124,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
 
     // randomize page orders
     const shuffledAfMfPages = shuffle([...afMfSelectedPages]);
-    const comparisonPage = generateComparisonPagev6(
+    const comparisonPage = generateComparisonPagev6_7(
         multiGroupPage,
         otherPages[0],
         otherPages[1],
@@ -1176,7 +1177,7 @@ function calculateMultiKdmaGroup(mfAlignmentData, afAlignmentData) {
 }
 
 
-export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, multiGroup = null, isMultiKdma = false) {
+export function generateComparisonPagev6_7(baseline, alignedAdm, misalignedAdm, multiGroup = null, isMultiKdma = false) {
     const createComparisonElements = (name1, name2) => [
         {
             "type": "comparison-phase-2",
