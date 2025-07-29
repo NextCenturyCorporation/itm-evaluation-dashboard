@@ -594,12 +594,12 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                         const r = s.results;
                         if (!r) return false;
                         const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
-                        return pidMatches && Object.values(r).some(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
+                        return pidMatches && Object.values(r).some(page => page?.pageType === "comparison" && page?.scenarioIndex === popupInfo.scenarioId);
                     });
 
                     if (!surveyEntry) return <p>No data available.</p>;
 
-                    const cmpPage = Object.values(surveyEntry.results).find(page => page.pageType === "comparison" && page.scenarioIndex === popupInfo.scenarioId);
+                    const cmpPage = Object.values(surveyEntry.results).find(page => page?.pageType === "comparison" && page?.scenarioIndex === popupInfo.scenarioId);
 
                     if (!cmpPage) return <p>No comparison page for {popupInfo.scenarioId}</p>;
 
