@@ -1,4 +1,4 @@
-import React, {useCallback} from "react";
+import React, { useCallback } from "react";
 import '../SurveyResults/resultsTable.css';
 import '../../css/admInfo.css';
 import { Autocomplete, TextField, Modal } from "@mui/material";
@@ -101,9 +101,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const closePopup = () => {
         setPopupInfo({ open: false, pid: null, scenarioId: null });
     };
-    const sortData = React.useCallback(() => {
+    const sortData = React.useCallback((data) => {
+        console.log('hit sortData')
         if (typeof sortBy !== 'string' || !sortBy) return;
-        const dataCopy = structuredClone(filteredData);
+        const dataCopy = structuredClone(data);
         const sortKeyMap = {
             "Participant ID": "Participant ID",
             "Text Start Time": "Text Start Date-Time",
@@ -127,7 +128,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             }
         });
         setFilteredData(dataCopy);
-    }, [filteredData, sortBy]);
+    }, [sortBy]);
 
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
@@ -149,15 +150,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 }
 
                 const sims = simResults.filter((x) => x.pid === pid).sort((a, b) => a.timestamp - b.timestamp);
-                
+
                 let evalNumber = null;
-                
+
                 if (sims[0]?.evalNumber) {
                     evalNumber = sims[0].evalNumber;
                 }
-                
+
                 obj['Evaluation'] = sims[0]?.evalName;
-                
+
                 if (canViewProlific) {
                     obj['Prolific ID'] = res['prolificId'];
                     obj['Contact ID'] = res['contactId'];
@@ -195,13 +196,13 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
 
-                const delKeys = ['Del-1','Del-2','Del-3','Del-4','Del-5'];
+                const delKeys = ['Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5'];
                 obj['Delegation'] = delKeys.filter(key => !!obj[key]).length;
 
                 if (!evalNumber && lastSurvey) {
                     evalNumber = lastSurvey.evalNumber ?? lastSurvey.results?.evalNumber;
                 }
-                
+
                 obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName ?? lastSurvey?.results?.evalName;
 
                 const scenarios = textResults.filter((x) => x.participantID === pid);
@@ -215,15 +216,15 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 if (!evalNumber && lastScenario?.evalNumber) {
                     evalNumber = lastScenario.evalNumber;
                 }
-                
+
                 obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
 
                 const isPhase2 = evalNumber >= 8;
-                
+
                 obj['_phase'] = isPhase2 ? 2 : 1;
                 obj['_evalNumber'] = evalNumber;
-                
+
                 const textThreshold = isPhase2 ? 4 : 5;
                 if (obj['Text'] < textThreshold) {
                     obj['Survey Link'] = null;
@@ -248,8 +249,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 obj['Evaluation'] && allEvals.push(obj['Evaluation']);
             }
             setFormattedData(allObjs);
-            setFilteredData(allObjs);
-            sortData();
             setTypes(Array.from(new Set(allTypes)));
             setEvals(Array.from(new Set(allEvals)));
         }
@@ -302,7 +301,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         return evals.filter(evaluation => {
             const participant = formattedData.find(p => p['Evaluation'] === evaluation);
             if (!participant) return false;
-            
+
             const participantPhase = getParticipantPhase(participant);
             return selectedPhase === `Phase ${participantPhase}`;
         });
@@ -377,7 +376,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     React.useEffect(() => {
         if (sortBy && filteredData.length > 0) {
-            sortData();
+            sortData(filteredData);
         }
     }, [sortBy, sortData, filteredData.length]);
 
@@ -388,7 +387,6 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         const resSurvey = await refetchSurveyResults();
         const resText = await refetchTextResults();
         if (resPLog && resSim && resSurvey && resText) {
-            sortData();
             setIsRefreshing(false);
         }
     };
@@ -714,26 +712,26 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                                             </div>
                                             <div className="adm-info-block">
                                                 <div className="adm-info-block-label">KDMA Scores</div>
-                                                
-                                                    {(() => {
-                                                        const meritScore = doc.kdmas?.find(k => k.kdma === 'merit')?.value;
-                                                        const affiliationScore = doc.kdmas?.find(k => k.kdma === 'affiliation')?.value;
 
-                                                        return (
-                                                            <>
-                                                                {meritScore !== undefined && (
-                                                                    <div>Merit: {meritScore.toFixed(3)}</div>
-                                                                )}
-                                                                {affiliationScore !== undefined && (
-                                                                    <div>Affiliation: {affiliationScore.toFixed(3)}</div>
-                                                                )}
-                                                                {meritScore === undefined && affiliationScore === undefined && (
-                                                                    <div>No KDMA scores available</div>
-                                                                )}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                
+                                                {(() => {
+                                                    const meritScore = doc.kdmas?.find(k => k.kdma === 'merit')?.value;
+                                                    const affiliationScore = doc.kdmas?.find(k => k.kdma === 'affiliation')?.value;
+
+                                                    return (
+                                                        <>
+                                                            {meritScore !== undefined && (
+                                                                <div>Merit: {meritScore.toFixed(3)}</div>
+                                                            )}
+                                                            {affiliationScore !== undefined && (
+                                                                <div>Affiliation: {affiliationScore.toFixed(3)}</div>
+                                                            )}
+                                                            {meritScore === undefined && affiliationScore === undefined && (
+                                                                <div>No KDMA scores available</div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
+
                                             </div>
                                         </>
                                     )}
