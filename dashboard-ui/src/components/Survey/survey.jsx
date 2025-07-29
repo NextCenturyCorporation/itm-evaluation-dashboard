@@ -106,6 +106,13 @@ class SurveyPage extends Component {
         }
     }
 
+    SURVEY_VERSION_DATA = {
+            "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
+            "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
+            "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
+            "4.0": { evalName: 'Dry Run Evaluation', evalNumber: 4 }
+    };
+
     setSeenScenarios = () => {
         if (this.survey.getQuestionByName("Text Scenarios Completed")) {
             const text_scenarios = this.state.validPid ? '\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Text-1']] + '\n\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Text-2']] : '\tInvalid Participant ID; no text scenario log. \n\tPlease double check the participant ID before continuing, or select "No" and enter an explanation.';
@@ -115,6 +122,10 @@ class SurveyPage extends Component {
             const text_scenarios = this.state.validPid ? '\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Sim-1']] + '\n\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Sim-2']] : '\tInvalid Participant ID; no VR scenario log. \n\tPlease double check the participant ID before continuing, or select "No" and enter an explanation.';
             this.survey.getQuestionByName("VR Scenarios Completed").title = "Please verify that the following VR Scenarios have been completed:\n" + text_scenarios;
         }
+    }
+
+    inSurveyVersionData = () => {
+        return Object.keys(this.SURVEY_VERSION_DATA).includes(this.state.surveyVersion);
     }
 
     postConfigSetup = () => {
@@ -133,14 +144,15 @@ class SurveyPage extends Component {
         this.uploadButtonRefPLog = React.createRef();
         this.redirectLinkRef = React.createRef();
 
-        if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && this.state.pid != null) {
+        if (this.inSurveyVersionData() && this.state.pid != null) {
             this.survey.onCurrentPageChanging.add(this.finishFirstPage);
             if (this.state.surveyVersion === "4.0") this.setSeenScenarios();
             this.survey.data = {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const pidExists = this.props.surveyResults.filter((res) => (res.results?.surveyVersion === 4 || res.results?.surveyVersion === 5 || res.results?.surveyVersion === 6) && res.results['Participant ID Page']?.questions['Participant ID']?.response === this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            const relevantVersions = [4, 5, 6, 7]
+            const pidExists = this.props.surveyResults.filter((res) => relevantVersions.includes(res.results?.surveyVersion) && res.results['Participant ID Page']?.questions['Participant ID']?.response === this.state.pid && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid || this.state.onlineOnly) {
@@ -194,13 +206,13 @@ class SurveyPage extends Component {
     }
 
     initializeSurvey = () => {
-        if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && this.state.pid != null) {
+        if (this.inSurveyVersionData() && this.state.pid != null) {
             this.setState({
                 isSurveyLoaded: false
             });
         }
         const { groupedDMs, comparisonPages, removed } = this.prepareSurveyInitialization();
-        if ((this.state.surveyVersion !== "4.0" && this.state.surveyVersion !== "5.0" && this.state.surveyVersion !== "6.0")) {
+        if (!this.inSurveyVersionData()) {
             if (this.state.surveyVersion === "1.3") {
                 this.assign_omnibus_1_3(groupedDMs)
             }
@@ -230,7 +242,6 @@ class SurveyPage extends Component {
     }
 
     prepareSurveyInitialization = () => {
-
         if (this.state.surveyVersion === "2" || this.state.surveyVersion === "0") {
             // randomize order of soarTech scenarios and adept scenarios
             let soarTech = shuffle(this.surveyConfigClone.soarTechDMs);
@@ -308,7 +319,7 @@ class SurveyPage extends Component {
 
             return { groupedDMs, comparisonPages, removed }
         }
-        else if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && this.state.pid == null) {
+        else if (this.inSurveyVersionData() && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
 
             return {};
@@ -421,7 +432,7 @@ class SurveyPage extends Component {
 
             return { groupedDMs, removed, comparisonPages };
         }
-        else if (this.state.surveyVersion === "6.0") {
+        else if (this.state.surveyVersion === "6.0" || this.state.surveyVersion == "7.0") {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
@@ -439,7 +450,8 @@ class SurveyPage extends Component {
                     scenarioType,
                     textScenarios[`${scenarioType}-text-scenario`],
                     allPages,
-                    participantTextResults
+                    participantTextResults,
+                    this.SURVEY_VERSION_DATA[this.state.surveyVersion].evalNumber
                 );
                 if (block) {
                     allBlocks.push(block);
@@ -758,35 +770,26 @@ class SurveyPage extends Component {
             }
         }
 
-        if (this.state.surveyVersion === "6.0") {
-            this.surveyData['evalName'] = 'June 2025 Collaboration'
-            this.surveyData['evalNumber'] = 8
-            this.surveyData['pid'] = this.state.pid;
-            this.surveyData['orderLog'] = this.state.orderLog;
-            if (this.state.pid) {
-                this.surveyData['Participant ID Page'] = { 'pageName': 'Participant ID Page', 'questions': { 'Participant ID': { 'response': this.state.pid } } };
-            }
-        }
+        // instead of repeating near duplicate code blocks
+        
 
-        if (this.state.surveyVersion === "1.3") {
-            this.surveyData['evalName'] = 'April 2025 Evaluation';
-            this.surveyData['evalNumber'] = 8;
-            this.surveyData['pid'] = this.state.pid;
-            this.surveyData['orderLog'] = this.state.orderLog
-        }
+        const versionData = this.SURVEY_VERSION_DATA[this.state.surveyVersion];
 
-        if (this.state.surveyVersion === "4.0") {
-            this.surveyData['evalNumber'] = 4;
-            this.surveyData['evalName'] = 'Dry Run Evaluation';
-            this.surveyData['orderLog'] = this.state.orderLog;
-        }
-        if (this.state.surveyVersion === "5.0") {
-            this.surveyData['evalNumber'] = 6;
-            this.surveyData['evalName'] = 'Jan 2025 Eval';
-            this.surveyData['orderLog'] = this.state.orderLog;
-            this.surveyData['pid'] = this.state.pid;
+        if (versionData) {
+            Object.assign(this.surveyData, {
+                evalName: versionData.evalName,
+                evalNumber: versionData.evalNumber,
+                orderLog: this.state.orderLog
+            });
+
             if (this.state.pid) {
-                this.surveyData['Participant ID Page'] = { 'pageName': 'Participant ID Page', 'questions': { 'Participant ID': { 'response': this.state.pid } } };
+                this.surveyData.pid = this.state.pid;
+                this.surveyData['Participant ID Page'] = {
+                    pageName: 'Participant ID Page',
+                    questions: {
+                        'Participant ID': { response: this.state.pid }
+                    }
+                };
             }
         }
 
@@ -802,7 +805,7 @@ class SurveyPage extends Component {
         // final upload
         this.uploadSurveyData(survey, true);
         if (this.surveyConfigClone.pages.length < 3) {
-            if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+            if (this.inSurveyVersionData() && survey.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
                 this.setState({ pid: survey.valuesHash['Participant ID'] }, () => {
                     const matchedLog = this.props.participantLog.getParticipantLog.find(
                         log => String(log['ParticipantID']) === this.state.pid
@@ -836,7 +839,7 @@ class SurveyPage extends Component {
     };
 
     onValueChanged = (sender, options) => {
-        if ((this.state.surveyVersion === "4.0" || this.state.surveyVersion === "5.0" || this.state.surveyVersion === "6.0") && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
+        if (this.inSurveyVersionData() && sender.valuesHash['Participant ID'] !== this.state.pid && !this.state.onlineOnly) {
             this.setState({ pid: sender.valuesHash['Participant ID'] }, () => {
                 const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => String(log['ParticipantID']) === this.state.pid

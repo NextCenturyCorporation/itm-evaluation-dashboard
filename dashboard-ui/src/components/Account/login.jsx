@@ -234,7 +234,8 @@ class LoginApp extends React.Component {
                     username={createUserName}
                     onResult={(exists) => {
                         this.setState({ userExists: exists });
-                    }}
+                    }
+                }
                 />
                 <div className="login-header-logo">
                     <div className="d-flex justify-content-center">
@@ -433,13 +434,14 @@ const LoginHelper = ({ email, username, onResult }) => {
         variables: {
             email: email.trim().toLowerCase(),
             username: username.trim().toLowerCase()
-        }
+        },
+        skip: !email || !username
     });
     React.useEffect(() => {
         if (!loading && data) {
             onResult(data.checkUserExists);
         }
-    }, [data, loading, onResult]);
+    }, [data, loading]);
 
     return null;
 };

@@ -63,7 +63,7 @@ export default function ProgramQuestions() {
         const admAlign = {};
         if (data?.getAllHistoryByEvalNumber) {
             for (const x of data.getAllHistoryByEvalNumber) {
-                if (x.history.length > 0) {
+                if (x.history?.length > 0) {
                     const admName = x.history[0].parameters.adm_name;
                     let scenario;
                     if (!x.history[0].hasOwnProperty('response'))
@@ -119,8 +119,14 @@ export default function ProgramQuestions() {
                 />
 
             </div>
-            {fullData && (selectedEval === 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> :
-                <DreHomePage fullData={fullData} admAlignment={admAlignment} evalNumber={selectedEval} />)}
+           {selectedEval >= 8 ? (
+                <div style={{ textAlign: 'center', padding: '50px', fontSize: '24px', color: '#666' }}>
+                    Analysis In Progress
+                </div>
+            ) : (
+                fullData && (selectedEval === 3 ? <MreHomePage fullData={fullData} admKdmas={admKdmas} admAlignment={admAlignment} /> :
+                    <DreHomePage fullData={fullData} admAlignment={admAlignment} evalNumber={selectedEval} />)
+            )}
         </div>
     );
 }
