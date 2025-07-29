@@ -144,7 +144,7 @@ export function PH2RQ8({ evalNum }) {
                         if (value === undefined) {
                             value = openWorld.Urban_data?.[field];
                         }
-                        entryObj[field] = value ?? '';
+                        entryObj[field] = value;
                     }
 
                     allObjs.push(entryObj);
