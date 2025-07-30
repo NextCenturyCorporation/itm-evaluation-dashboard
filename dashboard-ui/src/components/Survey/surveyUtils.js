@@ -877,131 +877,7 @@ export function formatTargetWithDecimal(target) {
     return target;
 }
 
-// all overlap info
-const getScenarioGroups = (scenarioType, scenarioNum) => {
-    const scenarioKey = `${scenarioType}${scenarioNum}`;
-    const groups = {
-        'AF1': {
-            baseline: [],
-            groups: [
-                ['0.0'],
-                ['0.1', '0.2'],
-                ['0.3', '0.4'],
-                ['0.5'],
-                ['0.6', '0.7', '0.8', '0.9', '1.0']
-            ]
-        },
-        'AF2': {
-            baseline: [],
-            groups: [
-                ['0.0'],
-                ['0.1'],
-                ['0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
-            ]
-        },
-        'AF3': {
-            baseline: ['0.1'],
-            groups: [
-                ['0.0'],
-                ['0.2'],
-                ['0.3', '0.4'],
-                ['0.5', '0.6'],
-                ['0.7'],
-                ['0.8', '0.9', '1.0']
-            ]
-        },
-        'MF1': {
-            baseline: ['0.0', '0.1', '0.2'],
-            groups: [
-                ['0.3'],
-                ['0.4'],
-                ['0.5'],
-                ['0.6', '0.7', '0.8' ,'0.9', '1.0']
-            ]
-        },
-        'MF2': {
-            baseline: ['0.0', '0.1'],
-            groups: [
-                ['0.2'],
-                ['0.3'],
-                ['0.4', '0.5', '0.6'],
-                ['0.7', '0.8', '0.9', '1.0']
-            ]
-        },
-        'MF3': {
-            baseline: ['0.0'],
-            groups: [
-                ['0.1'],
-                ['0.2'],
-                ['0.3', '0.4'],
-                ['0.5', '0.6'],
-                ['0.7', '0.8', '0.9', '1.0']
-            ]
-        },
-        'PS1': {
-            baseline: [],
-            groups: [
-                ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5'],
-                ['0.6'],
-                ['0.7'],
-                ['0.8', '0.9', '1.0']
-            ]
-        },
-        'PS2': {
-            baseline: [],
-            groups: [
-                ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5'],
-                ['0.6'],
-                ['0.7', '0.8', '0.9', '1.0']
-            ]
-        },
-        'PS3': {
-            baseline: [],
-            groups: [
-                ['0.0', '0.1', '0.2', '0.3'],
-                ['0.4'],
-                ['0.5'],
-                ['0.6'],
-                ['0.7', '0.8', '0.9', '1.0']
-            ]
-        },
-        'SS1': {
-            baseline: [],
-            groups: [
-                ['0.0', '0.1', '0.2'],
-                ['0.3'],
-                ['0.4'],
-                ['0.5'],
-                ['0.6', '0.7'],
-                ['0.8', '0.9', '1.0']
-            ]
-        },
-        'SS2': {
-            baseline: ['0.0', '0.1', '0.2'],
-            groups: [
-                ['0.3', '0.4'],
-                ['0.5'],
-                ['0.6', '0.7'],
-                ['0.8', '0.9', '1.0']
-            ]
-        },
-        'SS3': {
-            baseline: [],
-            groups: [
-                ['0.0'],
-                ['0.1', '0.2'],
-                ['0.3'],
-                ['0.4'],
-                ['0.5', '0.6', '0.7'],
-                ['0.8', '0.9', '1.0']
-            ]
-        }
-    };
-    
-    return groups[scenarioKey] || null;
-};
-
-export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum) {
+export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum, evalNum) {
     const choiceProcesses = {
         aligned: 'most aligned',
         misaligned: 'least aligned'
@@ -1029,6 +905,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
         return handleRandomSelection('no alignment data available');
     }
 
+    const getScenarioGroups = evalNum === 8 ? getEval8ScenarioGroups : getEval9ScenarioGroups;
     const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
     if (!scenarioGroups) {
         return handleRandomSelection('no group configuration found');
@@ -1061,25 +938,22 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     for (let i = 0; i < filteredResponse.length; i++) {
         const target = Object.keys(filteredResponse[i])[0];
         const targetValue = getTargetValue(target);
-        
+
         if (scenarioGroups.baseline.includes(targetValue)) {
             skippedCount++;
             continue;
         }
-        
+
         mostAlignedTarget = formatTargetWithDecimal(target);
-        mostAlignedPage = mostAlignedTarget ? findPageByTarget(nonBaselinePages, mostAlignedTarget): null;
+        mostAlignedPage = mostAlignedTarget ? findPageByTarget(nonBaselinePages, mostAlignedTarget) : null;
         if (mostAlignedPage) {
             alignedGroup = findTargetGroup(targetValue);
             if (skippedCount > 0) {
                 choiceProcesses.aligned = `overlapped with baseline. Is ${skippedCount} below most aligned`;
             }
-            console.log(`${scenarioType}: Selected most aligned target = ${mostAlignedTarget} (skipped ${skippedCount} overlapping with baseline)`);
             break;
         }
     }
-
-
 
     let leastAlignedTarget = null;
     let leastAlignedPage = null;
@@ -1089,26 +963,25 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     for (let i = filteredResponse.length - 1; i >= 0; i--) {
         const target = Object.keys(filteredResponse[i])[0];
         const targetValue = getTargetValue(target);
-        
+
         if (scenarioGroups.baseline.includes(targetValue)) {
             if (!overlapTypes.includes('baseline')) overlapTypes.push('baseline');
             misalignedSkipped++;
             continue;
         }
-        
+
         if (alignedGroup && alignedGroup.includes(targetValue)) {
             if (!overlapTypes.includes('aligned')) overlapTypes.push('aligned');
             misalignedSkipped++;
             continue;
         }
-        
+
         leastAlignedTarget = formatTargetWithDecimal(target);
         leastAlignedPage = leastAlignedTarget ? findPageByTarget(nonBaselinePages, leastAlignedTarget) : null;
         if (leastAlignedPage) {
             if (misalignedSkipped > 0) {
                 choiceProcesses.misaligned = `overlapped with ${overlapTypes.join(' and ')}. Is ${misalignedSkipped} over least aligned`;
             }
-            console.log(`${scenarioType}: Selected least aligned target = ${leastAlignedTarget}`);
             break;
         }
     }
@@ -1127,17 +1000,17 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     const fallbackReason = !mostAlignedPage ? 'could not find valid most aligned' : 'could not find valid least aligned';
     if (shuffled[0]) shuffled[0].admChoiceProcess = `random selection - ${fallbackReason}`;
     if (shuffled[1]) shuffled[1].admChoiceProcess = `random selection - ${fallbackReason}`;
-    
+
     return shuffled.slice(0, 2);
 }
 
-export function createScenarioBlock(scenarioType, textScenarioNum, allPages, participantTextResults) {
+export function createScenarioBlock(scenarioType, textScenarioNum, allPages, participantTextResults, evalNum) {
     if (!textScenarioNum) return null;
 
     const adjustedNum = adjustScenarioNumber(textScenarioNum);
-    const targetScenarioIndex = `June2025-${scenarioType}${adjustedNum}-eval`;
+    const targetScenarioIndex = `2025-${scenarioType}${adjustedNum}-eval`;
     const alignmentData = getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults);
-    const matchingPages = allPages.filter(page => page.scenarioIndex === targetScenarioIndex);
+    const matchingPages = allPages.filter(page => page.scenarioIndex?.includes(targetScenarioIndex));
 
     if (matchingPages.length === 0) return null;
 
@@ -1148,7 +1021,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
         !page.admName || !page.admName.includes('Baseline')
     );
 
-    const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum);
+    const selectedNonBaseline = selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, scenarioType, textScenarioNum, evalNum);
     const randomBaselineIndex = Math.floor(Math.random() * baselinePages.length);
     const selectedBaseline = baselinePages[randomBaselineIndex];
 
@@ -1161,10 +1034,10 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
             const filteredResponse = alignmentData.response.filter(entry =>
                 !Object.keys(entry)[0].includes('affiliation_merit')
             );
-            
+
             const mostAlignedTarget = formatTargetWithDecimal(Object.keys(filteredResponse[0])[0]);
             const leastAlignedTarget = formatTargetWithDecimal(Object.keys(filteredResponse[filteredResponse.length - 1])[0]);
-            
+
             selectedNonBaseline.forEach(page => {
                 if (page.target === mostAlignedTarget) {
                     page.alignment = 'aligned';
@@ -1183,7 +1056,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
 
     // randomize page orders
     const finalSelection = shuffle([selectedBaseline, ...selectedNonBaseline]);
-    const comparisonPage = generateComparisonPagev6(
+    const comparisonPage = generateComparisonPagev6_7(
         selectedBaseline,
         selectedNonBaseline[0],
         selectedNonBaseline[1]
@@ -1199,24 +1072,24 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
     if (!textScenarios["SS-text-scenario"]) return null;
 
     const ssAdjustedNum = adjustScenarioNumber(adjustScenarioNumber(textScenarios["SS-text-scenario"]));
-    const afMfScenarioIndex = `June2025-AF-MF${ssAdjustedNum}-eval`;
+    const afMfScenarioIndex = `AF-MF${ssAdjustedNum}-eval`;
 
     // grab alignment on mf and af scenarios
     const mfAlignment = getAlignmentForAttribute('MF', textScenarios["MF-text-scenario"], participantTextResults)
     const afAlignment = getAlignmentForAttribute('AF', textScenarios["AF-text-scenario"], participantTextResults)
 
     const group = calculateMultiKdmaGroup(mfAlignment, afAlignment)
-    const afMfPages = allPages.filter(page => page.scenarioIndex === afMfScenarioIndex);
+    const afMfPages = allPages.filter(page => page.scenarioIndex?.includes(afMfScenarioIndex));
     const requiredTargets = [
-        'ADEPT-June2025-affiliation_merit-1.0_0.0',
-        'ADEPT-June2025-affiliation_merit-1.0_1.0',
-        'ADEPT-June2025-affiliation_merit-0.0_0.0',
-        'ADEPT-June2025-affiliation_merit-0.0_1.0'
+        'affiliation_merit-1.0_0.0',
+        'affiliation_merit-1.0_1.0',
+        'affiliation_merit-0.0_0.0',
+        'affiliation_merit-0.0_1.0'
     ];
 
     const afMfSelectedPages = [];
     requiredTargets.forEach(target => {
-        const page = afMfPages.find(p => p.target === target && !p.admName.includes('Baseline'));
+        const page = afMfPages.find(p => p.target.includes(target) && !p.admName.includes('Baseline'));
         if (page) {
             afMfSelectedPages.push(page);
         } else {
@@ -1225,7 +1098,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
     });
 
 
-    const multiGroupPage = afMfSelectedPages.find(page => page.target === group);
+    const multiGroupPage = afMfSelectedPages.find(page => page.target.includes(group));
     if (!multiGroupPage) {
         console.warn(`AF-MF block: Could not find page for calculated group target ${group}`);
         return null;
@@ -1233,7 +1106,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
 
     multiGroupPage.alignment = 'most aligned group';
 
-    const otherPages = afMfSelectedPages.filter(page => page.target !== group);
+    const otherPages = afMfSelectedPages.filter(page => !page.target.includes(group));
     otherPages.forEach(page => {
         const target = page.target;
         if (target.includes('1.0_0.0')) {
@@ -1249,7 +1122,7 @@ export function createAFMFBlock(textScenarios, allPages, participantTextResults)
 
     // randomize page orders
     const shuffledAfMfPages = shuffle([...afMfSelectedPages]);
-    const comparisonPage = generateComparisonPagev6(
+    const comparisonPage = generateComparisonPagev6_7(
         multiGroupPage,
         otherPages[0],
         otherPages[1],
@@ -1288,21 +1161,19 @@ function calculateMultiKdmaGroup(mfAlignmentData, afAlignmentData) {
     let group = null;
 
     if (afHigh && !mfHigh) {
-        group = 'ADEPT-June2025-affiliation_merit-1.0_0.0';
+        group = 'affiliation_merit-1.0_0.0';
     } else if (afHigh && mfHigh) {
-        group = 'ADEPT-June2025-affiliation_merit-1.0_1.0';
+        group = 'affiliation_merit-1.0_1.0';
     } else if (!afHigh && !mfHigh) {
-        group = 'ADEPT-June2025-affiliation_merit-0.0_0.0';
+        group = 'affiliation_merit-0.0_0.0';
     } else if (!afHigh && mfHigh) {
-        group = 'ADEPT-June2025-affiliation_merit-0.0_1.0';
+        group = 'affiliation_merit-0.0_1.0';
     }
-
-    console.log(`Multi-KDMA group assigned: ${group} (AF: ${afTopValue}, MF: ${mfTopValue})`);
     return group;
 }
 
 
-export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, multiGroup = null, isMultiKdma = false) {
+export function generateComparisonPagev6_7(baseline, alignedAdm, misalignedAdm, multiGroup = null, isMultiKdma = false) {
     const createComparisonElements = (name1, name2) => [
         {
             "type": "comparison-phase-2",
@@ -1390,3 +1261,248 @@ export function generateComparisonPagev6(baseline, alignedAdm, misalignedAdm, mu
         };
     }
 }
+
+// all overlap info
+const getEval9ScenarioGroups = (scenarioType, scenarioNum) => {
+    const scenarioKey = `${scenarioType}${scenarioNum}`;
+    const groups = {
+        'AF1': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3'],
+                ['0.4', '0.5'],
+                ['0.6'],
+                ['0.7', '0.8', '0.9'],
+                ['1.0']
+            ]
+        },
+        'AF2': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1'],
+                ['0.2'],
+                ['0.3', '0.4'],
+                ['0.5', '0.6'],
+                ['0.7', '0.8', '0.9'],
+                ['1.0']
+            ]
+        },
+        'AF3': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3'],
+                ['0.4', '0.5', '0.6'],
+                ['0.7', '0.8', '0.9'],
+                ['1.0']
+            ]
+        },
+        'MF1': {
+            baseline: ['0.0', '0.1', '0.2', '0.3', '0.4'],
+            groups: [
+                ['0.5'],
+                ['0.6'],
+                ['0.7', '0.8', '0.9'],
+                ['1.0']
+            ]
+        },
+        'MF2': {
+            baseline: ['0.0', '0.1'],
+            groups: [
+                ['0.2', '0.3', '0.4'],
+                ['0.5'],
+                ['0.6', '0.7', '0.8', '0.9'],
+                ['1.0']
+            ]
+        },
+        'MF3': {
+            baseline: ['0.0', '0.1', '0.2', '0.3'],
+            groups: [
+                ['0.4', '0.5'],
+                ['0.6'],
+                ['0.7', '0.8', '0.9'],
+                ['1.0']
+            ]
+        },
+        'PS1': {
+            baseline: ['0.5'],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3', '0.4'],
+                ['0.6'],
+                ['0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'PS2': {
+            baseline: ['0.5'],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3', '0.4'],
+                ['0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'PS3': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3'],
+                ['0.4'],
+                ['0.5', '0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'SS1': {
+            baseline: ['0.4'],
+            groups: [
+                ['0.0', '0.1', '0.2'],
+                ['0.3'],
+                ['0.5'],
+                ['0.6', '0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'SS2': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1', '0.2'],
+                ['0.3', '0.4'],
+                ['0.5', '0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'SS3': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1'],
+                ['0.2', '0.3'],
+                ['0.4', '0.5'],
+                ['0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        }
+    };
+
+    return groups[scenarioKey] || null;
+};
+
+const getEval8ScenarioGroups = (scenarioType, scenarioNum) => {
+    const scenarioKey = `${scenarioType}${scenarioNum}`;
+    const groups = {
+        'AF1': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1', '0.2'],
+                ['0.3', '0.4'],
+                ['0.5'],
+                ['0.6', '0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'AF2': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1'],
+                ['0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'AF3': {
+            baseline: ['0.1'],
+            groups: [
+                ['0.0'],
+                ['0.2'],
+                ['0.3', '0.4'],
+                ['0.5', '0.6'],
+                ['0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'MF1': {
+            baseline: ['0.0', '0.1', '0.2'],
+            groups: [
+                ['0.3'],
+                ['0.4'],
+                ['0.5'],
+                ['0.6', '0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'MF2': {
+            baseline: ['0.0', '0.1'],
+            groups: [
+                ['0.2'],
+                ['0.3'],
+                ['0.4', '0.5', '0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'MF3': {
+            baseline: ['0.0'],
+            groups: [
+                ['0.1'],
+                ['0.2'],
+                ['0.3', '0.4'],
+                ['0.5', '0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'PS1': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5'],
+                ['0.6'],
+                ['0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'PS2': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5'],
+                ['0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'PS3': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2', '0.3'],
+                ['0.4'],
+                ['0.5'],
+                ['0.6'],
+                ['0.7', '0.8', '0.9', '1.0']
+            ]
+        },
+        'SS1': {
+            baseline: [],
+            groups: [
+                ['0.0', '0.1', '0.2'],
+                ['0.3'],
+                ['0.4'],
+                ['0.5'],
+                ['0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'SS2': {
+            baseline: ['0.0', '0.1', '0.2'],
+            groups: [
+                ['0.3', '0.4'],
+                ['0.5'],
+                ['0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        },
+        'SS3': {
+            baseline: [],
+            groups: [
+                ['0.0'],
+                ['0.1', '0.2'],
+                ['0.3'],
+                ['0.4'],
+                ['0.5', '0.6', '0.7'],
+                ['0.8', '0.9', '1.0']
+            ]
+        }
+    };
+
+    return groups[scenarioKey] || null;
+};
