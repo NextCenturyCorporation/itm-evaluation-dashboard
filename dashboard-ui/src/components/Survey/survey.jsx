@@ -68,6 +68,13 @@ const ADD_PARTICIPANT = gql`
     mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
         addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
     }`;
+
+export const SURVEY_VERSION_DATA = {
+    "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
+    "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
+    "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
+    "4.0": { evalName: 'Dry Run Evaluation', evalNumber: 4 }
+};
 class SurveyPage extends Component {
 
     constructor(props) {
@@ -105,13 +112,6 @@ class SurveyPage extends Component {
             this.postConfigSetup();
         }
     }
-
-    SURVEY_VERSION_DATA = {
-            "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
-            "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
-            "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
-            "4.0": { evalName: 'Dry Run Evaluation', evalNumber: 4 }
-    };
 
     setSeenScenarios = () => {
         if (this.survey.getQuestionByName("Text Scenarios Completed")) {
