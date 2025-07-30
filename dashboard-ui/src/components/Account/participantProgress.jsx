@@ -179,18 +179,19 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response === pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const lastIncompleteSurvey = incompleteSurveys?.slice(-1)?.[0];
-                const survey_start_date = lastSurvey ? new Date(lastSurvey?.results?.startTime) : new Date(lastIncompleteSurvey?.results?.startTime);
+                const surveyToUse = lastSurvey || lastIncompleteSurvey;
+                const survey_start_date =new Date(surveyToUse?.results?.startTime);
                 const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
                 obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Del End Date-Time'] = String(survey_end_date) !== 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                const delScenarios = lastIncompleteSurvey?.results?.orderLog?.filter((x) => x.includes(' vs '));
+                const delScenarios = surveyToUse?.results?.orderLog?.filter((x) => x.includes(' vs '));
                 if (delScenarios) {
-                    obj['Del-1'] = lastIncompleteSurvey?.results?.[delScenarios[0]]?.scenarioIndex;
-                    obj['Del-2'] = lastIncompleteSurvey?.results?.[delScenarios[1]]?.scenarioIndex;
-                    obj['Del-3'] = lastIncompleteSurvey?.results?.[delScenarios[2]]?.scenarioIndex;
-                    obj['Del-4'] = lastIncompleteSurvey?.results?.[delScenarios[3]]?.scenarioIndex;
+                    obj['Del-1'] = surveyToUse?.results?.[delScenarios[0]]?.scenarioIndex;
+                    obj['Del-2'] = surveyToUse?.results?.[delScenarios[1]]?.scenarioIndex;
+                    obj['Del-3'] = surveyToUse?.results?.[delScenarios[2]]?.scenarioIndex;
+                    obj['Del-4'] = surveyToUse?.results?.[delScenarios[3]]?.scenarioIndex;
                     if (delScenarios.length > 4) {
-                        obj['Del-5'] = lastIncompleteSurvey?.results?.[delScenarios[4]]?.scenarioIndex;
+                        obj['Del-5'] = surveyToUse?.results?.[delScenarios[4]]?.scenarioIndex;
                     }
                 }
                 if (obj['Delegation'] > 0) obj['Survey Link'] = null;
