@@ -101,8 +101,8 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const closePopup = () => {
         setPopupInfo({ open: false, pid: null, scenarioId: null });
     };
+
     const sortData = React.useCallback((data) => {
-        console.log('hit sortData')
         if (typeof sortBy !== 'string' || !sortBy) return;
         const dataCopy = structuredClone(data);
         const sortKeyMap = {
