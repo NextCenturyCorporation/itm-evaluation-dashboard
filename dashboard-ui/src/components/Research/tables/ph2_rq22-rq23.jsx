@@ -27,6 +27,11 @@ const PH2_HEADERS = [
     'Baseline Server Session ID'
 ];
 
+const evalToName = {
+    8: 'June',
+    9: 'July'
+}
+
 export function PH2RQ2223({ evalNum }) {
     const { loading, error, data } = useQuery(getAdmData, {
         variables: { "evalNumber": evalNum }
@@ -49,6 +54,14 @@ export function PH2RQ2223({ evalNum }) {
 
     const openModal = () => setShowDefinitions(true);
     const closeModal = () => setShowDefinitions(false);
+
+    // reset all filters when eval num changes
+    React.useEffect(() => {
+        setAttributeFilters([])
+        setTargetFilters([])
+        setSetFilters([])
+        setTargetTypeFilters([])
+    }, [evalNum])
 
     React.useEffect(() => {
         if (data?.getAllHistoryByEvalNumber) {
@@ -102,8 +115,8 @@ export function PH2RQ2223({ evalNum }) {
                 // exclude full runs (not sets)
                 if (!setMatch) { continue; }
                 const scenarioSet = isRandom
-                        ? `P2June Dynamic Set ${setMatch[1]}`
-                        : `P2June Observation Set ${setMatch[1]}`;
+                        ? `P2${evalToName[evalNum]} Dynamic Set ${setMatch[1]}`
+                        : `P2${evalToName[evalNum]} Observation Set ${setMatch[1]}`;
 
 
                 for (const target of Object.keys(targets)) {
@@ -274,6 +287,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={attributes}
+                        value={attributeFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
@@ -285,6 +299,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={targets}
+                        value={targetFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
@@ -296,6 +311,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={sets}
+                        value={setFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
@@ -307,6 +323,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={targetType}
+                        value={targetTypeFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
