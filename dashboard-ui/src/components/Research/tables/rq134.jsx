@@ -122,6 +122,7 @@ export function RQ134({ evalNum, tableTitle }) {
         setIncludeJAN(false);
         setIncludeJune(false);
         setIncludeJuly(false);
+        clearFilters();
     }, [evalNum]);
 
     React.useEffect(() => {
