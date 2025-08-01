@@ -13,13 +13,14 @@ const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
     { value: 5, label: 'Phase 1 Evaluation' },
     { value: 6, label: 'Jan 2025 Evaluation' },
-    { value: 8, label: 'Phase II June 2025 Collaboration'}
+    { value: 8, label: 'Phase II June 2025 Collaboration' },
+    { value: 9, label: 'Phase II July 2025 Collaboration' }
 ];
 
 export function RQ3() {
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
     const [rq31CodeShowing, setRQ31CodeShowing] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(8);
+    const [selectedEval, setSelectedEval] = React.useState(ALLOWED_EVAL_OPTIONS[ALLOWED_EVAL_OPTIONS.length - 1].value);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }
