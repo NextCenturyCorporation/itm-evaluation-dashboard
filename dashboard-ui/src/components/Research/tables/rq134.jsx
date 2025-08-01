@@ -57,6 +57,12 @@ export function RQ134({ evalNum, tableTitle }) {
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
     });
+    const { data: juneAdms } = useQuery(GET_ADM_DATA, {
+        variables: { "evalNumber": 8 }
+    });
+    const { data: julyAdms } = useQuery(GET_ADM_DATA, {
+        variables: { "evalNumber": 9 }
+    });
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
     const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
@@ -145,16 +151,16 @@ export function RQ134({ evalNum, tableTitle }) {
 
             if (includeDRE) {
                 // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
-                includeExtraData(data, 4, dreSim);
+                includeExtraData(data, 4, dreSim, dreAdms);
             }
             if (includeJAN) {
-                includeExtraData(data, 6, janSim);
+                includeExtraData(data, 6, janSim, dataADMs);
             }
             if (includeJune) {
-                includeExtraData(data, 8, juneSim);
+                includeExtraData(data, 8, juneSim, juneAdms);
             }
             if (includeJuly) {
-                includeExtraData(data, 9, julySim);
+                includeExtraData(data, 9, julySim, julyAdms);
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -174,10 +180,10 @@ export function RQ134({ evalNum, tableTitle }) {
             setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, dreAdms, dreSim, janSim, juneSim, julySim, dataSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
 
-    const includeExtraData = (data, evalToAdd, simData) => {
-        const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, simData, evalToAdd == 4);
+    const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
+        const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
         if (evalToAdd == 6) {
             addedData.allObjs = addedData.allObjs.map(obj => ({
                 ...obj,
