@@ -21,6 +21,8 @@ const get_eval_name_numbers = gql`
 
 let evalOptions = [];
 
+const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9];
+
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults($evalNumber: Float!){
         getAllSurveyResultsByEval(evalNumber: $evalNumber),
@@ -38,7 +40,7 @@ export default function AggregateResults({ type }) {
     const [fullData, setFullData] = React.useState([]);
     const [aggregateData, setAggregateData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(5);
+    const [selectedEval, setSelectedEval] = React.useState(type == 'HumanProbeData' ? 5 : 9);
     const [iframeLink, setIframeLink] = React.useState(null);
     const [showIframe, setShowIframe] = React.useState(false);
     const [iframeTitle, setIframeTitle] = React.useState(null);
@@ -53,12 +55,21 @@ export default function AggregateResults({ type }) {
         evalOptions = [];
         if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
             for (const result of evalIdOptionsRaw.getEvalIdsForAllScenarioResults) {
-                evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
-
+                if (type != 'HumanProbeData' || !EXCLUDED_EVALS_HUMAN_PROBES.includes(result._id.evalNumber)) {
+                    evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
+                }
             }
         }
+    }, [evalIdOptionsRaw, type]);
 
-    }, [evalIdOptionsRaw]);
+    React.useEffect(() => {
+        if (type == 'HumanProbeData') {
+            setSelectedEval(5);
+        }
+        else {
+            setSelectedEval(9);
+        }
+    }, [type]);
 
     React.useEffect(() => {
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
@@ -163,6 +174,9 @@ export default function AggregateResults({ type }) {
     }
 
     const getHeadersEval4 = (headers, adeptScenario) => {
+        if (type == 'HumanProbeData' && EXCLUDED_EVALS_HUMAN_PROBES.includes(selectedEval)) {
+            return [];
+        }
         const splitPoint = headers.indexOf('ADEPT_Session_Id');
         return [...headers.slice(0, splitPoint), ...ADEPT_HEADERS_DRE[adeptScenario] ?? [], ...headers.slice(splitPoint)];
     }
@@ -274,7 +288,7 @@ export default function AggregateResults({ type }) {
                         <table className='itm-table'>
                             <thead>
                                 <tr>
-                                    {HEADER[selectedEval === 6 ? 5 : selectedEval]?.map((val, index) => {
+                                    {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
                                         return (<th key={'header-' + index}>
                                             {val}
                                         </th>);
@@ -284,7 +298,7 @@ export default function AggregateResults({ type }) {
                             <tbody>
                                 {fullData.map((dataSet, index) => {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
-                                        {HEADER[selectedEval === 6 ? 5 : selectedEval]?.map((val) => {
+                                        {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
                                                 {formatData(dataSet, val)}
                                             </td>);
