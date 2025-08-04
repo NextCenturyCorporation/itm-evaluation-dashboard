@@ -16,7 +16,9 @@ const EVAL_MAP = {
     3: 'MRE',
     4: 'DRE',
     5: 'PH1',
-    6: 'JAN25'
+    6: 'JAN25',
+    8: 'PH2 June',
+    9: 'PH2 July'
 }
 
 const TRUST_MAP = {
@@ -94,7 +96,7 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '5', 'label': '5 - PH1' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -110,6 +112,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
     const [showLegacy, setShowLegacy] = React.useState(false);
+    const [showPh2, setShowPh2] = React.useState(true);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
@@ -135,7 +138,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
         // set up block headers
-        let subheaders = (showLegacy ? [] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', 'Scenario', 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
+        let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', (showPh2 ? 'Set' : 'Scenario'), 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
         if (exploratory) {
             subheaders = subheaders.concat(['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
         }
@@ -183,7 +186,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             // ignore invalid versions
             const version = entry.surveyVersion;
-            if (!version || ((showLegacy && version >= 4) || (!showLegacy && version < 4))) {
+            if (!version || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
                 continue;
             }
 
@@ -200,7 +203,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const logData = pLog.find(
                 log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((version === 4 || version === 5) && !logData) {
+            if ((version >= 6) && !logData) {
                 continue;
             }
 
@@ -244,9 +247,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 }
             }
 
-            if (!entry['Note page']) {
+            if (!entry['Note page'] && version < 6) {
                 continue;
             }
+
             if (entry['VR Page']) {
                 obj["VR Experience Level"] = entry['VR Page']?.questions?.['VR Experience Level']?.response?.slice(0, 1);
                 obj["VR Comfort Level"] = entry['VR Page']?.questions?.['VR Comfort Level']?.response;
@@ -259,8 +263,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 const vrScenarios = entry['Participant ID Page']?.questions?.['VR Scenarios Completed']?.response?.join(',');
                 obj["VR Scenarios Completed"] = vrScenarios ? vrScenarios.split('I have completed the VR').join('').replaceAll(' ,', ',').replaceAll('sub', 'Sub').replaceAll('urb', 'Urb').replaceAll('jung', 'Jung').replaceAll('desert', 'Desert') : null;
             }
-            obj["Note Page - Time Taken (Minutes)"] = formatTimeMinutes(entry['Note page'].timeSpentOnPage);
-            obj["Note Page - Time Taken (mm:ss)"] = formatTimeMMSS(entry['Note page'].timeSpentOnPage);
+            if (version < 6) {
+                obj["Note Page - Time Taken (Minutes)"] = formatTimeMinutes(entry['Note page'].timeSpentOnPage);
+                obj["Note Page - Time Taken (mm:ss)"] = formatTimeMMSS(entry['Note page'].timeSpentOnPage);
+            }
 
             // get blocks of dms
             let block = 1;
@@ -386,7 +392,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         setHeaders(updatedHeaders);
         setRoles(Array.from(new Set(allRoles)));
         setOrigHeaderSet(updatedHeaders);
-    }, [pLog, showLegacy, exploratory, comparisonData]);
+    }, [pLog, showLegacy, showPh2, exploratory, comparisonData]);
 
     const getUsedHeaders = React.useCallback((data) => {
         const usedHeaders = [];
@@ -405,7 +411,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         if (data) {
             formatData(data);
         }
-    }, [data, pLog, showLegacy, formatData]);
+    }, [data, pLog, showLegacy, showPh2, formatData]);
 
     React.useEffect(() => {
         if (exploratory)
@@ -547,9 +553,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     )}
                     onChange={(_, newVal) => setStatusFilters(newVal)}
                 />
-                {!exploratory && <RadioGroup className='simple-radios' row defaultValue="DRE/PH1" onChange={toggleDataType}>
+                {!exploratory && <RadioGroup className='simple-radios' row defaultValue="PH2" onChange={toggleDataType}>
                     <FormControlLabel value="Legacy" control={<Radio />} label=" Legacy" />
                     <FormControlLabel value="DRE/PH1" control={<Radio />} label=" DRE/PH1" />
+                    <FormControlLabel value="PH2" control={<Radio />} label=" PH2" />
                 </RadioGroup>}
             </div>
 
