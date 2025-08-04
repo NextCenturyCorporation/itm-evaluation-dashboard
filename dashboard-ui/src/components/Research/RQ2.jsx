@@ -16,7 +16,8 @@ const ALLOWED_EVAL_OPTIONS = [
     { value: 4, label: 'Dry Run Evaluation' },
     { value: 5, label: 'Phase 1 Evaluation' },
     { value: 7, label: 'Phase II Experiment 1' },
-    { value: 8, label: 'Phase II June 2025 Collaboration' }
+    { value: 8, label: 'Phase II June 2025 Collaboration'},
+    { value: 9, label: 'Phase II July 2025 Collaboration'}
 ];
 
 export function RQ2() {

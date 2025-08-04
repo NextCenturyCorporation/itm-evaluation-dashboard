@@ -125,7 +125,7 @@ class SurveyPage extends Component {
     }
 
     inSurveyVersionData = () => {
-        return Object.keys(this.SURVEY_VERSION_DATA).includes(this.state.surveyVersion);
+        return Object.keys(SURVEY_VERSION_DATA).includes(this.state.surveyVersion);
     }
 
     postConfigSetup = () => {
@@ -451,7 +451,7 @@ class SurveyPage extends Component {
                     textScenarios[`${scenarioType}-text-scenario`],
                     allPages,
                     participantTextResults,
-                    this.SURVEY_VERSION_DATA[this.state.surveyVersion].evalNumber
+                    SURVEY_VERSION_DATA[this.state.surveyVersion].evalNumber
                 );
                 if (block) {
                     allBlocks.push(block);
@@ -773,7 +773,7 @@ class SurveyPage extends Component {
         // instead of repeating near duplicate code blocks
         
 
-        const versionData = this.SURVEY_VERSION_DATA[this.state.surveyVersion];
+        const versionData = SURVEY_VERSION_DATA[this.state.surveyVersion];
 
         if (versionData) {
             Object.assign(this.surveyData, {

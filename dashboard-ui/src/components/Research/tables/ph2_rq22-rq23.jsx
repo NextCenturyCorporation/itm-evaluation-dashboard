@@ -27,6 +27,11 @@ const PH2_HEADERS = [
     'Baseline Server Session ID'
 ];
 
+const evalToName = {
+    8: 'June',
+    9: 'July'
+}
+
 export function PH2RQ2223({ evalNum }) {
     const { loading, error, data } = useQuery(getAdmData, {
         variables: { "evalNumber": evalNum }
@@ -49,6 +54,14 @@ export function PH2RQ2223({ evalNum }) {
 
     const openModal = () => setShowDefinitions(true);
     const closeModal = () => setShowDefinitions(false);
+
+    // reset all filters when eval num changes
+    React.useEffect(() => {
+        setAttributeFilters([])
+        setTargetFilters([])
+        setSetFilters([])
+        setTargetTypeFilters([])
+    }, [evalNum])
 
     React.useEffect(() => {
         if (data?.getAllHistoryByEvalNumber) {
@@ -92,7 +105,9 @@ export function PH2RQ2223({ evalNum }) {
                 };
             }
 
-            const trialCounterPerSet = {};
+            // First, collect all entries grouped by attribute and set
+            const groupedEntries = {};
+            
             for (const scenario of Object.keys(organized_adms)) {
                 const scenarioName = organized_adms[scenario].scenarioName;
                 const targets = organized_adms[scenario].targets;
@@ -102,8 +117,8 @@ export function PH2RQ2223({ evalNum }) {
                 // exclude full runs (not sets)
                 if (!setMatch) { continue; }
                 const scenarioSet = isRandom
-                        ? `P2June Dynamic Set ${setMatch[1]}`
-                        : `P2June Observation Set ${setMatch[1]}`;
+                        ? `P2${evalToName[evalNum]} Dynamic Set ${setMatch[1]}`
+                        : `P2${evalToName[evalNum]} Observation Set ${setMatch[1]}`;
 
 
                 for (const target of Object.keys(targets)) {
@@ -113,12 +128,6 @@ export function PH2RQ2223({ evalNum }) {
                         scenario.includes('MF') ? 'MF' :
                             scenario.includes('AF') ? 'AF' :
                                 scenario.includes('SS') ? 'SS' : 'PS';
-
-                    const trialKey = `${attribute}_${scenarioSet}`;
-                    if (!trialCounterPerSet[trialKey]) {
-                        trialCounterPerSet[trialKey] = 1;
-                    }
-                    entryObj['Trial_ID'] = trialCounterPerSet[trialKey]++;
 
                     entryObj['Attribute'] = attribute;
                     allAttributes.push(attribute);
@@ -200,19 +209,38 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Baseline Server Session ID'] = '-';
                     }
 
-                    allObjs.push(entryObj);
+                    const groupKey = `${attribute}_${scenarioSet}`;
+                    if (!groupedEntries[groupKey]) {
+                        groupedEntries[groupKey] = [];
+                    }
+                    groupedEntries[groupKey].push(entryObj);
                 }
             }
 
-            allObjs.sort((a, b) => {
-                if (a.Attribute < b.Attribute) return -1;
-                if (a.Attribute > b.Attribute) return 1;
+            for (const groupKey of Object.keys(groupedEntries)) {
+                const entries = groupedEntries[groupKey];
+                
+                entries.sort((a, b) => {
+                    const getNumericTarget = (target) => {
+                        const match = target.match(/(\d+)/);
+                        return match ? parseInt(match[1]) : 0;
+                    };
+                    
+                    const aNum = getNumericTarget(a.Target);
+                    const bNum = getNumericTarget(b.Target);
+                    
+                    if (aNum !== bNum) {
+                        return aNum - bNum;
+                    }
 
-                if (a.Set < b.Set) return -1;
-                if (a.Set > b.Set) return 1;
-
-                return a.Trial_ID - b.Trial_ID;
-            });
+                    return a.Target.localeCompare(b.Target);
+                });
+                
+                entries.forEach((entry, index) => {
+                    entry['Trial_ID'] = index + 1;
+                    allObjs.push(entry);
+                });
+            }
 
             const extractSetNum = s => {
                const m = /Set\s+(\d+)$/.exec(s);
@@ -274,6 +302,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={attributes}
+                        value={attributeFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
@@ -285,6 +314,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={targets}
+                        value={targetFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
@@ -296,6 +326,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={sets}
+                        value={setFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
@@ -307,6 +338,7 @@ export function PH2RQ2223({ evalNum }) {
                     <Autocomplete
                         multiple
                         options={targetType}
+                        value={targetTypeFilters}
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
