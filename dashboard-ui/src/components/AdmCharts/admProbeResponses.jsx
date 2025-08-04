@@ -218,10 +218,24 @@ export const ADMProbeResponses = (props) => {
         return probeResponses[0].parameters?.choice || '-';
     };
 
-    const getKdma = (history, attribute) => {
-        console.log(attribute)
-        console.log(history)
-        return history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => kdma.kdma === attribute)?.value;
+    const getKdma = (data, alignmentTarget) => {
+        if (currentEval >= 8) {
+            const kdmas = data?.results?.kdmas;
+            if (!kdmas || kdmas.length === 0) return '-';
+
+            if (kdmas.length === 1) {
+                return kdmas[0].value || '-';
+            }
+
+            // label multi kdma
+            return kdmas.map(kdma => {
+                const capitalizedKdma = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
+                return `${capitalizedKdma}: ${kdma.value || '-'}`;
+            }).join(', ');
+        }
+
+        const attribute = alignmentTarget.includes('Moral') ? 'Moral judgement' : 'Ingroup Bias';
+        return data.history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => kdma.kdma === attribute)?.value;
     }
 
     if (evalNameLoading) return <div>Loading...</div>;
@@ -319,7 +333,7 @@ export const ADMProbeResponses = (props) => {
                 row['MJ KDMA'] = kdmaValues.mj;
                 row['IO KDMA'] = kdmaValues.io;
             } else if (getCurrentScenarioName().includes('Adept')) {
-                row['KDMA'] = getKdma(data.history, alignmentTarget.includes('Moral') ? 'Moral judgement' : 'Ingroup Bias');
+                row['KDMA'] = getKdma(data, alignmentTarget);
             }
 
             const probeColumns = new Set();
@@ -346,12 +360,12 @@ export const ADMProbeResponses = (props) => {
         });
     };
 
+    // helper to avoid infinite loop by updating unnecessarily inside query 
     const handleDataUpdate = (data, adm) => {
         if (!data?.getAllTestDataForADM) return;
-        
+
         const dataKey = `${currentScenario}_${adm}_${currentEval}`;
         const dataString = JSON.stringify(data.getAllTestDataForADM);
-        
         if (processedDataRef.current[dataKey] !== dataString) {
             processedDataRef.current[dataKey] = dataString;
             const formattedData = formatTableData(data.getAllTestDataForADM, adm);
@@ -448,7 +462,6 @@ export const ADMProbeResponses = (props) => {
                                         >
                                             {({ loading, error, data }) => {
                                                 if (loading || error || !data?.getAllTestDataForADM) return null;
-                                                console.log(data)
                                                 return (
                                                     <button
                                                         className="aggregateDownloadBtn"
@@ -477,7 +490,7 @@ export const ADMProbeResponses = (props) => {
                                             if (error) return <div>Error loading test data</div>;
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
-                                            
+
                                             if (testDataArray.length === 0) return <div>No data available</div>;
 
                                             const probeColumns = new Set();
@@ -533,7 +546,7 @@ export const ADMProbeResponses = (props) => {
                                                                                 </>
                                                                             ) : (
                                                                                 getCurrentScenarioName().includes('Adept') &&
-                                                                                <td>{getKdma(data.history, alignmentTarget.includes('Moral') ? 'Moral judgement' : 'Ingroup Bias')}</td>
+                                                                                <td>{getKdma(data, alignmentTarget)}</td>
                                                                             )}
                                                                             <td>{getSessionId(data.history)}</td>
                                                                         </>
