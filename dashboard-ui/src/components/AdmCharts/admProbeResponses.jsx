@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@apollo/react-hooks';
 import { Query } from 'react-apollo';
 import gql from "graphql-tag";
@@ -139,12 +139,13 @@ const getKdmaTargets = (doc) => {
 }
 
 export const ADMProbeResponses = (props) => {
-    const [currentEval, setCurrentEval] = useState(5);
+    const [currentEval, setCurrentEval] = useState(8);
     const [currentScenario, setCurrentScenario] = useState("");
-    const [queryString, setQueryString] = useState("history.parameters.adm_name");
+    const [queryString, setQueryString] = useState("adm_name");
     const [queryData, setQueryData] = useState({});
     const [alignmentTargets, setAlignmentTargets] = useState([]);
     const [allTableData, setAllTableData] = useState({});
+    const processedDataRef = useRef({});
 
     const { loading: evalNameLoading, error: evalNameError, data: evalNameData } = useQuery(get_eval_name_numbers);
     const { loading: scenarioLoading, error: scenarioError, data: scenarioData } = useQuery(scenario_names_aggregation, {
@@ -183,39 +184,43 @@ export const ADMProbeResponses = (props) => {
 
             setQueryData(newQueryData);
             setAllTableData({});
+            processedDataRef.current = {};
         }
     }, [admData, currentScenario, currentEval, alignmentTargets]);
 
     useEffect(() => {
         setCurrentScenario("");
-        setQueryString("history.parameters.adm_name");
+        setQueryString("adm_name");
         setQueryData({});
         setAlignmentTargets([]);
         setAllTableData({});
+        processedDataRef.current = {};
     }, [currentEval]);
 
     const getChoiceForProbe = (history, probeId) => {
         const probeResponses = history
             .filter(entry => entry.command === 'Respond to TA1 Probe')
             .filter(entry => entry.parameters?.probe_id === probeId);
-        
+
         // no response found
         if (probeResponses.length === 0) {
             return '-';
         }
-        
+
         // more than response, include all of them
         if (probeResponses.length > 1) {
             return probeResponses
                 .map(response => response.parameters?.choice || '-')
                 .join(', ');
         }
-        
+
         // normal case, one response
         return probeResponses[0].parameters?.choice || '-';
     };
 
     const getKdma = (history, attribute) => {
+        console.log(attribute)
+        console.log(history)
         return history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => kdma.kdma === attribute)?.value;
     }
 
@@ -234,7 +239,7 @@ export const ADMProbeResponses = (props) => {
     const setEval = (target) => {
         setCurrentEval(target);
         setCurrentScenario("");
-        setQueryString("history.parameters.adm_name");
+        setQueryString("adm_name");
     };
 
     const formatScenarioString = (id) => {
@@ -341,6 +346,22 @@ export const ADMProbeResponses = (props) => {
         });
     };
 
+    const handleDataUpdate = (data, adm) => {
+        if (!data?.getAllTestDataForADM) return;
+        
+        const dataKey = `${currentScenario}_${adm}_${currentEval}`;
+        const dataString = JSON.stringify(data.getAllTestDataForADM);
+        
+        if (processedDataRef.current[dataKey] !== dataString) {
+            processedDataRef.current[dataKey] = dataString;
+            const formattedData = formatTableData(data.getAllTestDataForADM, adm);
+            setAllTableData(prev => ({
+                ...prev,
+                [adm]: formattedData
+            }));
+        }
+    };
+
     return (
         <div className="layout">
             <div className="layout-board">
@@ -423,16 +444,11 @@ export const ADMProbeResponses = (props) => {
                                                 alignmentTargets: queryData[adm]?.alignmentTargets || [],
                                                 evalNumber: currentEval
                                             }}
+                                            onCompleted={(data) => handleDataUpdate(data, adm)}
                                         >
                                             {({ loading, error, data }) => {
                                                 if (loading || error || !data?.getAllTestDataForADM) return null;
-                                                const formattedData = formatTableData(data.getAllTestDataForADM, adm);
-                                                if (!allTableData[adm] || allTableData[adm] !== formattedData) {
-                                                    setAllTableData(prev => ({
-                                                        ...prev,
-                                                        [adm]: formattedData
-                                                    }));
-                                                }
+                                                console.log(data)
                                                 return (
                                                     <button
                                                         className="aggregateDownloadBtn"
@@ -461,6 +477,7 @@ export const ADMProbeResponses = (props) => {
                                             if (error) return <div>Error loading test data</div>;
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
+                                            
                                             if (testDataArray.length === 0) return <div>No data available</div>;
 
                                             const probeColumns = new Set();
