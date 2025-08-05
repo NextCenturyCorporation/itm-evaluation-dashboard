@@ -125,7 +125,7 @@ const resolvers = {
           "history.parameters.probe_id": 1
         }
       }).toArray();
-       return docs.map(doc => {
+      return docs.map(doc => {
         if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
           doc.probe_ids = (doc.history || [])
             .filter(h => h.command === 'Respond to TA1 Probe')
@@ -192,40 +192,63 @@ const resolvers = {
         .toArray().then(result => { return result });
     },
     getScenarioNamesByEval: async (obj, args, context, inflow) => {
-      return await context.db.collection('scenarios').aggregate([{ $match: { "evalNumber": args["evalNumber"] } }, { $group: { _id: { "id": '$id', "name": '$name' } } }])
-        .toArray().then(result => { return result });
+      // all from scenarios collection
+      const scenarios = await context.db.collection('scenarios')
+        .find({ "evalNumber": args["evalNumber"] })
+        .toArray();
+
+      const scenariosWithData = [];
+      // only return scenarios with at least one adm run
+      for (const scenario of scenarios) {
+        const hasData = await context.db.collection('admTargetRuns')
+          .findOne({
+            "scenario": scenario.id,
+            "evalNumber": args["evalNumber"]
+          });
+
+        if (hasData) {
+          scenariosWithData.push({
+            _id: {
+              id: scenario.id,
+              name: scenario.name
+            }
+          });
+        }
+      }
+
+      return scenariosWithData;
     },
     getPerformerADMsForScenario: async (obj, args, context, inflow) => {
       const query = { "scenario": args["scenarioID"] };
-      
+
       if (args["evalNumber"] !== undefined && args["evalNumber"] !== null) {
         query["evalNumber"] = args["evalNumber"];
       }
-      
+
       return await context.db.collection('admTargetRuns')
         .distinct("adm_name", query)
         .then(result => { return result });
     },
     getAlignmentTargetsPerScenario: async (obj, args, context, inflow) => {
-      const query = { 
-        "scenario": args["scenarioID"], 
-        "evalNumber": args["evalNumber"] 
+      const query = {
+        "scenario": args["scenarioID"],
+        "evalNumber": args["evalNumber"]
       };
-      
+
       if (args["admName"] !== undefined && args["admName"] !== null) {
         query["adm_name"] = args["admName"];
       }
-      
+
       let alignmentTargets = await context.db.collection('admTargetRuns')
         .distinct("alignment_target", query)
         .then(result => { return result });
-      
+
       // The scenarioID still comes back in this distinct because of the way the JSON is configured, remove it before sending the array
       const indexOfScenario = alignmentTargets.indexOf(args["scenarioID"]);
       if (indexOfScenario >= 0) {
         alignmentTargets.splice(indexOfScenario, 1);
       }
-      
+
       return alignmentTargets;
     },
     getTestByADMandScenario: async (obj, args, context, inflow) => {
@@ -308,14 +331,14 @@ const resolvers = {
     },
     getAllSurveyResults: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
-      
+
       const excludeTestID = {
         "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
         "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
         "Participant ID.questions.Participant ID.response": { $not: /test/i },
         "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       };
-      
+
       // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
       const surveyVersionFilter = {
         $or: [
@@ -328,7 +351,7 @@ const resolvers = {
           }
         ]
       };
-    
+
       return await context.db.collection('surveyResults').find({
         $and: [excludeTestID, surveyVersionFilter]
       }).project({
@@ -339,14 +362,14 @@ const resolvers = {
     },
     getAllSurveyResultsByEval: async (obj, args, context, inflow) => {
       // return all survey results except for those containing "test" in participant ID
-      
+
       const excludeTestID = {
         "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
         "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
         "Participant ID.questions.Participant ID.response": { $not: /test/i },
         "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
       };
-      
+
       // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
       const surveyVersionFilter = {
         $or: [
@@ -359,7 +382,7 @@ const resolvers = {
           }
         ]
       };
-      
+
       return await context.db.collection('surveyResults').find({
         $and: [excludeTestID, surveyVersionFilter, {
           $or: [{ "evalNumber": args["evalNumber"] }, { "results.evalNumber": args["evalNumber"] }]
@@ -420,13 +443,13 @@ const resolvers = {
         ?.project({ "userId": 1, "valid": 1 })
         .toArray()
         .then(result => { return result[0] });
-      
+
       const user = await context.db.collection('users')
         .find({ "username": args['caller']?.['username'] })
         ?.project({ "_id": 1, "username": 1, "admin": 1 })
         .toArray()
         .then(result => { return result[0] });
-      
+
       if (session?.valid && (session?.userId == user?._id) && user?.admin) {
         return await context.db.collection('users')
           .find()
@@ -464,7 +487,7 @@ const resolvers = {
       return await context.db.collection('surveyVersion').findOne().then(result => { return result.version });
     },
     getCurrentStyle: async (obj, args, context, info) => {
-      return await context.db.collection('uiStyle').findOne().then(result => {return result.version})
+      return await context.db.collection('uiStyle').findOne().then(result => { return result.version })
     },
     getADMTextProbeMatches: async (obj, args, context, info) => {
       return await context.db.collection('admVsTextProbeMatches').find().toArray().then(result => { return result });
@@ -598,7 +621,7 @@ const resolvers = {
         try {
           const result = await context.db.collection('participantLog').insertOne(args.participantData);
           console.log(`[${timestamp}] Insert SUCCESS for PID: ${args.participantData.ParticipantID}`);
-          return {...result, generatedPid};
+          return { ...result, generatedPid };
         } catch (error) {
           if (error.code === 11000) { // ff we hit a duplicate
             console.log(`[${timestamp}] DUPLICATE KEY ERROR for PID: ${args.participantData.ParticipantID}`);
@@ -662,8 +685,8 @@ const resolvers = {
     updateUIStyle: async (obj, args, context, inflow) => {
       const result = await context.db.collection('uiStyle').findOneAndUpdate(
         {},
-        {$set : {version: args['version']}},
-        {upsert: true}
+        { $set: { version: args['version'] } },
+        { upsert: true }
       )
       return result.value.version
     },
@@ -676,11 +699,11 @@ const resolvers = {
     getServerTimestamp: async () => {
       process.env.TZ = 'America/New_York';
       const date = new Date();
-      
+
       const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
       const currentOffset = date.getTimezoneOffset();
       const isDST = currentOffset < januaryOffset;
-      
+
       return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
     }
 
