@@ -429,6 +429,14 @@ export const ADMProbeResponses = (props) => {
                         </>
                     )}
                 </div>
+                {!currentScenario && currentEval && (
+                    <div className="test-overview-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ textAlign: 'center', color: '#666' }}>
+                            <h3>Please select a scenario to view probe responses</h3>
+                            <p>Choose from the available scenarios in the left panel</p>
+                        </div>
+                    </div>
+                )}
                 {currentScenario && (
                     <div className="test-overview-area">
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
