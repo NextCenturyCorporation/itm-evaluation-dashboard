@@ -75,7 +75,7 @@ export function PH2RQ8({ evalNum }) {
             const allAttributes = [];
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
-            const evals = [evalNum];
+            const evals = evalNum >= 8 ? [8, 9] : [evalNum];
 
             for (let evalNum of evals) {
                 const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);

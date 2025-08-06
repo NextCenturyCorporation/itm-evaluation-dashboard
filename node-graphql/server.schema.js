@@ -111,6 +111,7 @@ const resolvers = {
           "alignment_target": 1,
           "evaluation": 1,
           "results": 1,
+          "adm_name": 1,
           "history.parameters.adm_name": 1,
           "history.response.id": 1,
           "history.parameters.target_id": 1,

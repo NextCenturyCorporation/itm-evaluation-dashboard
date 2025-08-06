@@ -57,10 +57,18 @@ export function RQ134({ evalNum, tableTitle }) {
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
     });
+    const { data: juneAdms } = useQuery(GET_ADM_DATA, {
+        variables: { "evalNumber": 8 }
+    });
+    const { data: julyAdms } = useQuery(GET_ADM_DATA, {
+        variables: { "evalNumber": 9 }
+    });
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
     const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
     const { data: janSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 6 } });
+    const { data: juneSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 8 } });
+    const { data: julySim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 9 } });
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -88,6 +96,8 @@ export function RQ134({ evalNum, tableTitle }) {
     const [delMilFilters, setDelMilFilters] = React.useState([]);
     const [includeDRE, setIncludeDRE] = React.useState(false);
     const [includeJAN, setIncludeJAN] = React.useState(false);
+    const [includeJune, setIncludeJune] = React.useState(false);
+    const [includeJuly, setIncludeJuly] = React.useState(false);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
     // hiding columns
@@ -110,6 +120,9 @@ export function RQ134({ evalNum, tableTitle }) {
         // reset toggles on render
         setIncludeDRE(false);
         setIncludeJAN(false);
+        setIncludeJune(false);
+        setIncludeJuly(false);
+        clearFilters();
     }, [evalNum]);
 
     React.useEffect(() => {
@@ -139,26 +152,16 @@ export function RQ134({ evalNum, tableTitle }) {
 
             if (includeDRE) {
                 // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
-                const dreData = getRQ134Data(4, dataSurveyResults, dataParticipantLog, dataTextResults, dreAdms, comparisonData, dreSim, true);
-                data.allObjs.push(...dreData.allObjs);
-                data.allTA1s.push(...dreData.allTA1s);
-                data.allTA2s.push(...dreData.allTA2s);
-                data.allAttributes.push(...dreData.allAttributes);
-                data.allScenarios.push(...dreData.allScenarios);
-                data.allTargets.push(...dreData.allTargets);
+                includeExtraData(data, 4, dreSim, dreAdms);
             }
             if (includeJAN) {
-                const janData = getRQ134Data(6, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, janSim);
-                janData.allObjs = janData.allObjs.map(obj => ({
-                    ...obj,
-                    Delegator_mil: 'yes'
-                }));
-                data.allObjs.push(...janData.allObjs);
-                data.allTA1s.push(...janData.allTA1s);
-                data.allTA2s.push(...janData.allTA2s);
-                data.allAttributes.push(...janData.allAttributes);
-                data.allScenarios.push(...janData.allScenarios);
-                data.allTargets.push(...janData.allTargets);
+                includeExtraData(data, 6, janSim, dataADMs);
+            }
+            if (includeJune) {
+                includeExtraData(data, 8, juneSim, juneAdms);
+            }
+            if (includeJuly) {
+                includeExtraData(data, 9, julySim, julyAdms);
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -178,7 +181,23 @@ export function RQ134({ evalNum, tableTitle }) {
             setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, dreAdms, dreSim, janSim, dataSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
+
+    const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
+        const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
+        if (evalToAdd == 6) {
+            addedData.allObjs = addedData.allObjs.map(obj => ({
+                ...obj,
+                Delegator_mil: 'yes'
+            }));
+        }
+        data.allObjs.push(...addedData.allObjs);
+        data.allTA1s.push(...addedData.allTA1s);
+        data.allTA2s.push(...addedData.allTA2s);
+        data.allAttributes.push(...addedData.allAttributes);
+        data.allScenarios.push(...addedData.allScenarios);
+        data.allTargets.push(...addedData.allTargets);
+    };
 
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);
@@ -186,6 +205,14 @@ export function RQ134({ evalNum, tableTitle }) {
 
     const updateJANStatus = (event) => {
         setIncludeJAN(event.target.checked);
+    };
+
+    const updateJuneStatus = (event) => {
+        setIncludeJune(event.target.checked);
+    };
+
+    const updateJulyStatus = (event) => {
+        setIncludeJuly(event.target.checked);
     };
 
     const hideColumn = (val) => {
@@ -259,6 +286,14 @@ export function RQ134({ evalNum, tableTitle }) {
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
                     <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                </div>}
+            {evalNum === 8 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJuly} onChange={updateJulyStatus} />} label="Include July 2025 Eval Data" />
+                </div>}
+            {evalNum === 9 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
                 </div>}
         </h2>
 
