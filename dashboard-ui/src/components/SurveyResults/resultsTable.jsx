@@ -11,6 +11,10 @@ import definitionPDFFile from './Survey Delegation Variables.pdf';
 import definitionXLFileExploratory from './Exploratory Delegation Variables.xlsx';
 import definitionXLFileLegacy from './Survey Delegation Variables - Legacy.xlsx';
 import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf';
+import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
+import definitionPDFFilePH2 from './Survey Delegation Variables - PH2.pdf';
+import { adjustScenarioNumber } from "../Survey/surveyUtils";
+import { getEval89Attributes } from "../Research/utils";
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -53,9 +57,11 @@ const STARTING_HEADERS = [
     "As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation",
     "I was easily able to imagine myself as the medic in these scenarios",
     "I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios",
+
+    // ph1 demographics
     "The VR training experience was helpful in making the delegation decisions in these scenarios",
     "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
-    "I am a computer gaming enthusiast",
+    "I am a computer gaming enthusiast", 
     "I consider myself a seasoned first responder",
     "I have completed the SALT Triage Certificate Training Course",
     "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
@@ -65,6 +71,24 @@ const STARTING_HEADERS = [
     "Branch and Status",
     "Military Medical Training",
     "Years experience in military medical role",
+
+    // ph2 demographics
+    "How would you describe your experience with virtual reality technology",
+    "What is your current role",
+    "Specify specialty, level, year or other specific information about your role",
+    "Years of experience in role",
+    "Primary practice environment",
+    "Have you participated in mass casualty events",
+    "Served in Military",
+    "Military Branch",
+    "Did you serve in a military medical role",
+    "What was/is your medical-related MOS or rate",
+    "How many years of experience do you have serving in a medical role in the military",
+    "In which environments have you provided medical care during military service",
+    "When did you last complete TCCC training or recertification",
+    "How would you rate your expertise with TCCC procedures",
+    "How many real-world casualties have you assessed using TCCC protocols",
+
     "I feel that people are generally reliable",
     "I usually trust people until they give me a reason not to trust them",
     "Trusting another person is not difficult for me",
@@ -77,6 +101,13 @@ const STARTING_HEADERS = [
     "Note Page - Time Taken (Minutes)",
     "Note Page - Time Taken (mm:ss)"
 ];
+
+const MULTI_KDMA_MAP = {
+    "0.0_0.0": "low/low",
+    "0.0_1.0": "low/high",
+    "1.0_0.0": "high/low",
+    "1.0_1.0": "high/high"
+}
 
 function formatTimeMMSS(seconds, includeHours = false) {
     seconds = Math.round(seconds);
@@ -138,12 +169,12 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
         // set up block headers
-        let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', (showPh2 ? 'Set' : 'Scenario'), 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
+        let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Attribute', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', (showPh2 ? 'Probe_Set_Observation' : 'Scenario'), 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
         if (exploratory) {
             subheaders = subheaders.concat(['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
         }
 
-        const dmCount = showLegacy ? 2 : 3;
+        const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
         for (let block = 1; block < 5; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
@@ -152,7 +183,19 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
             const legacyCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
             const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
+            if (showPh2) {
+                nonExploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
+                nonExploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
+                nonExploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
+                nonExploratoryCompHeaders.push([...'Compare_FC3_Alignment', 'Compare_FC3_Conf', 'Compare_FC3_Explain']);
+            }
             const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', 'FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'];
+            if (showPh2) {
+                exploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
+                exploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
+                exploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
+                exploratoryCompHeaders.push([...'Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain']);
+            }
             const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
             for (let subhead of comparisons) {
                 updatedHeaders.push(`B${block}_${subhead}`);
@@ -236,7 +279,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
                 for (const q of Object.keys(lastPage.questions)) {
-                    if (q !== 'What is your current role (choose all that apply):') {
+                    if (q == 'question7') {
+                        obj['Specify specialty, level, year or other specific information about your role'] = lastPage.questions[q].response?.toString();
+                    }
+                    else if (!q.includes('What is your current role')) {
                         obj[q] = lastPage.questions[q].response?.toString();
                     }
                     else {
@@ -287,12 +333,37 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
-                        obj[`B${block}_DM${dm}_Target`] = page.admTarget;
+                        if (showPh2) {
+                            const att = getEval89Attributes(page.admTarget);
+                            obj[`B${block}_DM${dm}_Attribute`] = att;
+                            let target = "";
+                            if (att != "AF-MF") {
+                                target = page.admTarget.split("-").slice(-1);
+                            }
+                            else {
+                                target = MULTI_KDMA_MAP[page.admTarget.split("-").slice(-1)];
+                            }
+                            obj[`B${block}_DM${dm}_Target`] = target;
+                        }
+                        else {
+                            obj[`B${block}_DM${dm}_Target`] = page.admTarget;
+                        }
                     }
                     obj[`B${block}_DM${dm}_Name`] = cleanPageName;
                     obj[`B${block}_DM${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
                     obj[`B${block}_DM${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                    obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
+                    if (!showPh2) {
+                        obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
+                    }
+                    else {
+                        // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
+                        const textScenario = logData["AF-text-scenario"];
+                        // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
+                        const isMultiKdma = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
+                        obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
+                            isMultiKdma ? adjustScenarioNumber(textScenario) : textScenario
+                        );
+                    }
                     obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
                     obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
                     obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
@@ -305,16 +376,47 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 }
                 else if ((page.pageType === 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
                     if (!showLegacy) {
-                        const alignment = page.admAlignment?.split(' vs ');
                         const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
-                        const alignedVsBaseline = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')];
-                        const alignedVsMisaligned = order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')];
+                        // only works for dre/ph1 where we labelled alignment 
+                        let alignment = page.admAlignment?.split(' vs ');
+                        if (showPh2) {
+                            alignment = [];
+                            for (const adm of order) {
+                                alignment.push(entry[adm]['admAlignment']);
+                            }
+                        }
+
+                        // multikdma! 
+                        let multiFc1 = '';
+                        let multiFc2 = '';
+                        let multiFc3 = '';
+                        let mostAligned = '';
+                        let targets = ['high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'low-affiliation-high-merit'];
+                        if (alignment.length > 3) {
+                            for (const t of targets) {
+                                if (alignment.indexOf(t) == -1) {
+                                    mostAligned = t;
+                                    break;
+                                }
+                            }
+                            multiFc1 = mostAligned + ' vs ' + alignment[1];
+                            multiFc2 = mostAligned + ' vs ' + alignment[2];
+                            multiFc3 = mostAligned + ' vs ' + alignment[3];
+                        }
+                        const alignedVsBaseline = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')]) : (order[0] + ' vs ' + order[1]);
+                        const alignedVsMisaligned = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')]) : (order[0] + ' vs ' + order[2]);
+                        const vsFc3MultiKdma = order[0] + ' vs ' + order[3];
                         obj[`B${block}_Compare_DM1`] = order[0] + ' - ' + alignment[0];
                         obj[`B${block}_Compare_DM2`] = order[1] + ' - ' + alignment[1];
                         obj[`B${block}_Compare_DM3`] = order[2] + ' - ' + alignment[2];
+                        if (showPh2 && order.length > 3) {
+                            obj[`B${block}_Compare_DM4`] = order[3] + ' - ' + alignment[3];
+                        }
                         obj[`B${block}_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
                         obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
+
                         const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
+                        obj[`B${block}_Compare_FC1_Alignment`] = order.length < 4 ? 'aligned vs baseline' : multiFc1; 
                         obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
                         obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
@@ -327,6 +429,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             obj[`B${block}_FC1_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Baseline)) ? (ph1Aligned - ph1Baseline) : null;
                         }
                         const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
+                        obj[`B${block}_Compare_FC2_Alignment`] = order.length < 4 ? 'aligned vs misaligned' : multiFc2;
                         obj[`B${block}_Compare_FC2`] = fc2 + ' - ' + alignment[order.indexOf(fc2)];
                         obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
@@ -337,6 +440,21 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             const ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
                             obj[`B${block}_FC2_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
                             obj[`B${block}_FC2_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
+                        }
+                        if (showPh2) {
+                            const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
+                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? '' : multiFc3;
+                            obj[`B${block}_Compare_FC3`] = fc3 + ' - ' + alignment[order.indexOf(fc3)];
+                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
+                            if (exploratory && comparisonData) {
+                                const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                                const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                                const dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                                const ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                                obj[`B${block}_FC3_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
+                                obj[`B${block}_FC3_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
+                            }
                         }
                     }
                     else {
@@ -360,6 +478,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_Omni${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
                         obj[`B${block}_Omni${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         obj[`B${block}_Omni${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
+
                         obj[`B${block}_Omni${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
                         obj[`B${block}_Omni${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
                         obj[`B${block}_Omni${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
@@ -422,11 +541,15 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         const filtered = formattedData.filter((x) =>
             (versionFilters.length === 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
             (evalFilters.length === 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
-            (roleFilters.length === 0 || roleFilters.some((filter) => x['What is your current role (choose all that apply):']?.split('; ').includes(filter))) &&
+            (roleFilters.length === 0 || roleFilters.some((filter) => x[(showPh2 ? 'What is your current role' : 'What is your current role (choose all that apply):')]?.split('; ').includes(filter))) &&
             (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
-            (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
-            (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))
+            ((showPh2 && (!milFilters || x['Served in Military']) &&
+                (!milFilters?.includes('Yes') || !x['Served in Military']?.includes('Never Served')) &&
+                (!milFilters?.includes('No') || x['Served in Military']?.includes('Never Served'))) ||
+                (!showPh2 && 
+                (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
+                    (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))))
         );
         setFilteredData(filtered);
         // remove extra headers that have no data
@@ -454,6 +577,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
     const toggleDataType = (event) => {
         setShowLegacy(event.target.value === 'Legacy');
+        setShowPh2(event.target.value === 'PH2')
         setFilteredData(formattedData);
         setEvalFilters([]);
         setMilFilters(null);
@@ -590,6 +714,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                 {showLegacy ? <RQDefinitionTable downloadName={'Survey Results Definitions - Legacy.pdf'} xlFile={definitionXLFileLegacy} pdfFile={definitionPDFFileLegacy} /> :
+                    showPh2 ? <RQDefinitionTable downloadName={'Survey Results Definitions - PH2.pdf'} xlFile={definitionXLFilePH2} pdfFile={definitionPDFFilePH2} /> :
                     exploratory ? <RQDefinitionTable downloadName={'Delegation Data By Block Definitions.xlsx'} xlFile={definitionXLFileExploratory} pdfFile={definitionXLFileExploratory} /> :
                     <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />}
             </div>
