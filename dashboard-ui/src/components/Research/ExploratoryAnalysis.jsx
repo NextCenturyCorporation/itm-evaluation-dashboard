@@ -36,7 +36,7 @@ export function ExploratoryAnalysis() {
                 }}
             />
         </div>
-        {/* <div className="section-container">
+        <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
             <p className='indented'>
                 <b>H<sub>1</sub></b> = Alignment score calculated between the responses of one human on attribute-driven
@@ -142,7 +142,7 @@ export function ExploratoryAnalysis() {
 
         <div className="section-container">
             {selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
-        </div> */}
+        </div>
 
         <>
             <div className="section-container">
