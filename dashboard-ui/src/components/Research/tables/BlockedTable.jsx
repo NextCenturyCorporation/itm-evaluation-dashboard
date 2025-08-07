@@ -77,6 +77,7 @@ export function BlockedTable({ evalNum }) {
     React.useEffect(() => {
         updateEvalNums(includeJAN, JAN);
     //updateEvalNums excluded to prevent infinite loop from constant function recreation
+    // eslint-disable-next-line
     }, [includeJAN]);
 
     return (
