@@ -36,7 +36,7 @@ export function ExploratoryAnalysis() {
                 }}
             />
         </div>
-        <div className="section-container">
+        {/* <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
             <p className='indented'>
                 <b>H<sub>1</sub></b> = Alignment score calculated between the responses of one human on attribute-driven
@@ -139,22 +139,21 @@ export function ExploratoryAnalysis() {
                 tagging accuracy; use of expectant tag (yes/no); time per patient; number of visits per patient; triage time total; evacuation patients
             </p>
         </div>
-        
+
         <div className="section-container">
             {selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
-        </div>
-        
-        {selectedEval < 8 &&
-            <>
-                <div className="section-container">
-                    <BlockedTable evalNum={selectedEval} />
-                </div>
-            {selectedEval > 4 &&
+        </div> */}
+
+        <>
+            <div className="section-container">
+                <BlockedTable evalNum={selectedEval} />
+            </div>
+            {selectedEval > 4 && selectedEval < 8 &&
                 <div className="section-container">
                     <CalibrationData evalNum={selectedEval} />
                 </div>
             }
-            </>
-        }
+        </>
+
     </div>);
 }

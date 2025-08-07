@@ -23,6 +23,8 @@ const GET_COMPARISON_DATA = gql`
 const DRE = { 'value': '4', 'label': '4 - DRE' };
 const PH1 = { 'value': '5', 'label': '5 - PH1' };
 const JAN = { 'value': '6', 'label': '6 - JAN25' };
+const JUNE = { 'value': '8', 'label': '8 - PH2 June' }
+const JULY = { 'value': '9', 'label': '9 - PH2 July' }
 
 export function BlockedTable({ evalNum }) {
     const { data: surveyData } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'network-only' });
@@ -30,7 +32,7 @@ export function BlockedTable({ evalNum }) {
     const { data: comparisonData } = useQuery(GET_COMPARISON_DATA);
     const [includeDRE, setIncludeDRE] = React.useState(false);
     const [includeJAN, setIncludeJAN] = React.useState(false);
-    const [evalNumbers, setEvalNumbers] = React.useState([evalNum === 4 ? DRE : evalNum === 5 ? PH1 : JAN])
+    const [evalNumbers, setEvalNumbers] = React.useState([evalNum === 9 ? JULY : evalNum === 8 ? JUNE : evalNum === 6 ? JAN : evalNum === 5 ? PH1 : DRE])
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);
     };
@@ -40,32 +42,32 @@ export function BlockedTable({ evalNum }) {
     };
 
     const updateEvalNums = useCallback((includeEval, evalObj) => {
-    if (includeEval) {
-      const newEvalNumbers = structuredClone(evalNumbers);
-      newEvalNumbers.push(evalObj);
-      setEvalNumbers(newEvalNumbers);
-    }
-    else {
-      const newEvalNumbers = structuredClone(evalNumbers);
-      let index = -1;
-      for (let i = 0; i < newEvalNumbers.length; i++) {
-        if (newEvalNumbers[i]['value'] === evalObj["value"]) {
-          index = i;
-          break;
+        if (includeEval) {
+            const newEvalNumbers = structuredClone(evalNumbers);
+            newEvalNumbers.push(evalObj);
+            setEvalNumbers(newEvalNumbers);
         }
-      }
-      if (index > -1) {
-        newEvalNumbers.splice(index, 1);
-      }
-      setEvalNumbers(newEvalNumbers);
-    }
-  }, [evalNumbers]);
+        else {
+            const newEvalNumbers = structuredClone(evalNumbers);
+            let index = -1;
+            for (let i = 0; i < newEvalNumbers.length; i++) {
+                if (newEvalNumbers[i]['value'] === evalObj["value"]) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index > -1) {
+                newEvalNumbers.splice(index, 1);
+            }
+            setEvalNumbers(newEvalNumbers);
+        }
+    }, [evalNumbers]);
 
     React.useEffect(() => {
         // reset toggles on render
         setIncludeDRE(false);
         setIncludeJAN(false);
-        setEvalNumbers([evalNum === 4 ? DRE : evalNum === 5 ? PH1 : JAN]);
+        setEvalNumbers([evalNum === 9 ? JULY : evalNum === 8 ? JUNE : evalNum === 6 ? JAN : evalNum === 5 ? PH1 : DRE]);
     }, [evalNum]);
 
     React.useEffect(() => {
