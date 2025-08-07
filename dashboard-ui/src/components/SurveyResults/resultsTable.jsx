@@ -191,7 +191,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 nonExploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
                 nonExploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
                 nonExploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
-                nonExploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3_Conf', 'Compare_FC3_Explain');
+                nonExploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain');
             }
             const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', (!showPh2 ? [...'FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff'] : 'FC1_Align_Diff'), 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', (!showPh2 ? [...'FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'] : 'FC2_Align_Diff')];
             if (showPh2) {
@@ -485,10 +485,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         }
                         if (showPh2) {
                             const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
-                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? '' : multiFc3;
-                            obj[`B${block}_Compare_FC3`] = fc3 + ' - ' + alignment[order.indexOf(fc3)];
-                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
+                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? null : multiFc3;
+                            obj[`B${block}_Compare_FC3`] = order.length < 4 ? null : (fc3 + ' - ' + alignment[order.indexOf(fc3)] + (alignment[order.indexOf(fc3)] == 'most aligned group' ? ' (' + mostAligned + ')' : ''));
+                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[vsFc3MultiKdma + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
                             if (exploratory && comparisonData) {
                                 obj[`B${block}_FC3_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi4)) ? (ph2Multi1 - ph2Multi4) : null;
                             }
