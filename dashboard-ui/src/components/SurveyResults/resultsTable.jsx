@@ -12,7 +12,7 @@ import definitionXLFileExploratory from './Exploratory Delegation Variables.xlsx
 import definitionXLFileLegacy from './Survey Delegation Variables - Legacy.xlsx';
 import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf';
 import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
-import definitionPDFFilePH2 from './Survey Delegation Variables - PH2.pdf';
+import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
 import { getEval89Attributes } from "../Research/utils";
 
@@ -649,7 +649,39 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
     const isFiltered = () => {
         return filteredData.length < (exploratory ? (evalFilters.length === 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length);
-    }
+    };
+
+    const makeDownloadButton = () => {
+        let name, xlFile, pdfFile;
+        if (showLegacy) {
+            name = 'Survey Results Definitions - Legacy.pdf';
+            xlFile = definitionXLFileLegacy;
+            pdfFile = definitionPDFFileLegacy;
+        }
+        else if (showPh2) {
+            if (exploratory) {
+                name = 'Delegation Data By Block Definitions - PH2.xlsx';
+                xlFile = definitionXLFileExploratoryPH2;
+                pdfFile = definitionXLFileExploratoryPH2;
+            }
+            else {
+                name = 'Survey Results Definitions - PH2.pdf';
+                xlFile = definitionXLFilePH2;
+                pdfFile = definitionXLFilePH2;
+            }
+        }
+        else if (exploratory) {
+            name = 'Delegation Data By Block Definitions.xlsx';
+            xlFile = definitionXLFileExploratory;
+            pdfFile = definitionXLFileExploratory;
+        }
+        else {
+            name = 'Survey Results Definitions.pdf';
+            xlFile = definitionXLFile;
+            pdfFile = definitionPDFFile;
+        }
+        return <RQDefinitionTable downloadName={name} xlFile={xlFile} pdfFile={pdfFile} />
+    };
 
     return (<div className={!isFiltered() && exploratory ? 'lowered-table' : ''}>
         {isFiltered() &&
@@ -766,10 +798,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                {showLegacy ? <RQDefinitionTable downloadName={'Survey Results Definitions - Legacy.pdf'} xlFile={definitionXLFileLegacy} pdfFile={definitionPDFFileLegacy} /> :
-                    showPh2 ? <RQDefinitionTable downloadName={'Survey Results Definitions - PH2.pdf'} xlFile={definitionXLFilePH2} pdfFile={definitionPDFFilePH2} /> :
-                        exploratory ? <RQDefinitionTable downloadName={'Delegation Data By Block Definitions.xlsx'} xlFile={definitionXLFileExploratory} pdfFile={definitionXLFileExploratory} /> :
-                            <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />}
+                {makeDownloadButton()}
             </div>
         </Modal>
     </div>);
