@@ -61,7 +61,7 @@ const STARTING_HEADERS = [
     // ph1 demographics
     "The VR training experience was helpful in making the delegation decisions in these scenarios",
     "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
-    "I am a computer gaming enthusiast",
+    "I am a computer gaming enthusiast", 
     "I consider myself a seasoned first responder",
     "I have completed the SALT Triage Certificate Training Course",
     "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
@@ -490,6 +490,21 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
                             if (exploratory && comparisonData) {
                                 obj[`B${block}_FC3_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi4)) ? (ph2Multi1 - ph2Multi4) : null;
+                            }
+                        }
+                        if (showPh2) {
+                            const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
+                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? null : multiFc3;
+                            obj[`B${block}_Compare_FC3`] = order.length < 4 ? null : (fc3 + ' - ' + alignment[order.indexOf(fc3)] + (alignment[order.indexOf(fc3)] == 'most aligned group' ? ' (' + mostAligned + ')' : ''));
+                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[vsFc3MultiKdma + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
+                            if (exploratory && comparisonData) {
+                                const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                                const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                                const dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                                const ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                                obj[`B${block}_FC3_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
+                                obj[`B${block}_FC3_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
                             }
                         }
                     }
