@@ -197,6 +197,27 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
+export function getEval89Attributes(target) {
+    target = target.toLowerCase();
+    if (target.indexOf("safety") > -1) {
+        return "PS";
+    }
+    else if (target.indexOf("search") > -1) {
+        return "SS";
+    }
+    else if (target.indexOf("affiliation") > -1) {
+        if (target.indexOf("merit") > -1) {
+            return "AF-MF";
+        }
+        return "AF";
+    }
+    else if (target.indexOf("merit") > -1) {
+        return "MF";
+    }
+    console.error("No attribute found for target " + target);
+    return "";
+}
+
 export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
