@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { ResultsTable } from '../../SurveyResults/resultsTable';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
@@ -41,7 +41,7 @@ export function BlockedTable({ evalNum }) {
         setIncludeJAN(event.target.checked);
     };
 
-    const updateEvalNums = useCallback((includeEval, evalObj) => {
+    const updateEvalNums = (includeEval, evalObj) => {
         if (includeEval) {
             const newEvalNumbers = structuredClone(evalNumbers);
             newEvalNumbers.push(evalObj);
@@ -51,7 +51,7 @@ export function BlockedTable({ evalNum }) {
             const newEvalNumbers = structuredClone(evalNumbers);
             let index = -1;
             for (let i = 0; i < newEvalNumbers.length; i++) {
-                if (newEvalNumbers[i]['value'] === evalObj["value"]) {
+                if (newEvalNumbers[i]['value'] === String(evalObj["value"])) {
                     index = i;
                     break;
                 }
@@ -61,7 +61,7 @@ export function BlockedTable({ evalNum }) {
             }
             setEvalNumbers(newEvalNumbers);
         }
-    }, [evalNumbers]);
+    };
 
     React.useEffect(() => {
         // reset toggles on render
@@ -72,11 +72,15 @@ export function BlockedTable({ evalNum }) {
 
     React.useEffect(() => {
         updateEvalNums(includeDRE, DRE);
-    }, [includeDRE, updateEvalNums]);
+    //updateEvalNums excluded to prevent infinite loop from constant function recreation
+    // eslint-disable-next-line
+    }, [includeDRE]);
 
     React.useEffect(() => {
         updateEvalNums(includeJAN, JAN);
-    }, [includeJAN, updateEvalNums]);
+    //updateEvalNums excluded to prevent infinite loop from constant function recreation
+    // eslint-disable-next-line
+    }, [includeJAN]);
 
     return (
         <>

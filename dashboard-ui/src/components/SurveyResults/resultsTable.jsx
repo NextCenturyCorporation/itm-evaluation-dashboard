@@ -143,7 +143,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
     const [showLegacy, setShowLegacy] = React.useState(false);
-    const [showPh2, setShowPh2] = React.useState(true);
+    const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
@@ -569,8 +569,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     }, [data, pLog, showLegacy, showPh2, formatData]);
 
     React.useEffect(() => {
-        if (exploratory)
+        if (exploratory) {
             setEvalFilters(evalNumbers);
+            setShowPh2((evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false));
+        }
     }, [evalNumbers, exploratory]);
 
     React.useEffect(() => {

@@ -72,6 +72,10 @@
     font-size: 18px !important;
 }
 
+.floating-toggle.centered-toggle {
+    margin-top: 12px;
+}
+
 .rq134-header {
     display: flex;
     flex-direction: row;
