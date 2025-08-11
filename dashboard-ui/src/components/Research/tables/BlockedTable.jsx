@@ -32,6 +32,8 @@ export function BlockedTable({ evalNum }) {
     const { data: comparisonData } = useQuery(GET_COMPARISON_DATA);
     const [includeDRE, setIncludeDRE] = React.useState(false);
     const [includeJAN, setIncludeJAN] = React.useState(false);
+    const [includeJune, setIncludeJune] = React.useState(false);
+    const [includeJuly, setIncludeJuly] = React.useState(false);
     const [evalNumbers, setEvalNumbers] = React.useState([evalNum === 9 ? JULY : evalNum === 8 ? JUNE : evalNum === 6 ? JAN : evalNum === 5 ? PH1 : DRE])
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);
@@ -41,7 +43,17 @@ export function BlockedTable({ evalNum }) {
         setIncludeJAN(event.target.checked);
     };
 
+    const updateJuneStatus = (event) => {
+        setIncludeJune(event.target.checked);
+    };
+
+    const updateJulyStatus = (event) => {
+        setIncludeJuly(event.target.checked);
+    };
+
     const updateEvalNums = (includeEval, evalObj) => {
+        if (evalObj["value"].toString() === evalNum.toString())
+            return;
         if (includeEval) {
             const newEvalNumbers = structuredClone(evalNumbers);
             newEvalNumbers.push(evalObj);
@@ -67,6 +79,8 @@ export function BlockedTable({ evalNum }) {
         // reset toggles on render
         setIncludeDRE(false);
         setIncludeJAN(false);
+        setIncludeJune(false);
+        setIncludeJuly(false);
         setEvalNumbers([evalNum === 9 ? JULY : evalNum === 8 ? JUNE : evalNum === 6 ? JAN : evalNum === 5 ? PH1 : DRE]);
     }, [evalNum]);
 
@@ -82,6 +96,18 @@ export function BlockedTable({ evalNum }) {
     // eslint-disable-next-line
     }, [includeJAN]);
 
+    React.useEffect(() => {
+        updateEvalNums(includeJune, JUNE);
+        //updateEvalNums excluded to prevent infinite loop from constant function recreation
+        // eslint-disable-next-line
+    }, [includeJune]);
+
+    React.useEffect(() => {
+        updateEvalNums(includeJuly, JULY);
+        //updateEvalNums excluded to prevent infinite loop from constant function recreation
+        // eslint-disable-next-line
+    }, [includeJuly]);
+
     return (
         <>
             <h2 className='rq134-header'>Delegation Data by Block
@@ -89,6 +115,14 @@ export function BlockedTable({ evalNum }) {
                     <div className='stacked-checkboxes'>
                         <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
                         <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                    </div>}
+                {evalNum === 8 &&
+                    <div className='stacked-checkboxes'>
+                        <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJuly} onChange={updateJulyStatus} />} label="Include July 2025 Eval Data" />
+                    </div>}
+                {evalNum === 9 &&
+                    <div className='stacked-checkboxes'>
+                        <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
                     </div>}
             </h2>
             {surveyData?.getAllSurveyResults && pLogData?.getParticipantLog && comparisonData?.getHumanToADMComparison &&
