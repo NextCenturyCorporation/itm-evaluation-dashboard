@@ -7,6 +7,8 @@ import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedSc
 import { useHistory, useLocation } from 'react-router-dom';
 import bcrypt from 'bcryptjs';
 import '../../css/scenario-page.css';
+import store from "../../store/store";
+import { SURVEY_VERSION_DATA } from "../Survey/survey";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -68,7 +70,7 @@ export default function StartOnline() {
         const participantData = {
             "ParticipantID": newPid, "Type": "Online", "prolificId": currentSearchParams.get('PROLIFIC_PID'), "contactId": currentSearchParams.get('ContactID'),
             "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT),
-            "AF-text-scenario": scenarioSet, "MF-text-scenario": scenarioSet, "PS-text-scenario": scenarioSet, "SS-text-scenario": scenarioSet
+            "AF-text-scenario": scenarioSet, "MF-text-scenario": scenarioSet, "PS-text-scenario": scenarioSet, "SS-text-scenario": scenarioSet, 'evalNum': SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNum
         };
         // update database
         const addRes = await addParticipant({ variables: { participantData, lowPid, highPid } });

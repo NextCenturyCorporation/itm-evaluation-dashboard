@@ -137,7 +137,7 @@
 
 .filters>* {
     min-width: 150px;
-    max-width: 180px;
+    max-width: 200px;
 }
 
 .too-many-filters>* {
@@ -239,11 +239,12 @@
 .simple-radios {
     display: flex;
     flex-direction: row;
-    min-width: 240px !important;
+    min-width: 320px !important;
     border: 1px solid rgb(175, 175, 175);
     padding-left: 16px;
     border-radius: 4px;
     max-height: 40px !important;
+    justify-content: space-between;
 }
 
 .hide-header {

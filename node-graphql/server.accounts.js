@@ -39,7 +39,7 @@ async function createUniqueIndex() {
         
         // This should allow for multiple hashedEmail fields to be null (april eval 2025)
         await dashboardDB.db.collection('participantLog').createIndex(
-            { "hashedEmail": 1 },
+            { "hashedEmail": 1, "evalNum": 1 },
             { 
                 unique: true,
                 partialFilterExpression: { hashedEmail: { $type: "string" } }

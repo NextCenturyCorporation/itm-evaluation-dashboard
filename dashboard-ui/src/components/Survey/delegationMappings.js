@@ -9,17 +9,17 @@ export const getEnvMappingToText = (sv) => {
     }
 }
 
-export const getDelEnvMapping = (sv) => {
+export const getDelEnvMapping = (evalNum) => {
     return {
         "AD-1": ["DryRunEval-MJ2-eval", "DryRunEval-IO2-eval"],
         "AD-2": ["DryRunEval-MJ4-eval", "DryRunEval-IO4-eval"],
         "AD-3": ["DryRunEval-MJ5-eval", "DryRunEval-IO5-eval"],
-        "ST-1": sv === 4 ? ["qol-dre-1-eval", "vol-dre-1-eval"] : ["qol-ph1-eval-2", "vol-ph1-eval-2"],
-        "ST-2": sv === 4 ? ["qol-dre-2-eval", "vol-dre-2-eval"] : ["qol-ph1-eval-3", "vol-ph1-eval-3"],
-        "ST-3": sv === 4 ? ["qol-dre-3-eval", "vol-dre-3-eval"] : ["qol-ph1-eval-4", "vol-ph1-eval-4"],
-        "PH1-1": ["June2025-AF1-eval", "June2025-MF1-eval", "June2025-SS1-eval","June2025-PS1-eval", "June2025-AF-MF1-eval"],
-        "PH1-2": ["June2025-AF2-eval", "June2025-MF2-eval", "June2025-SS2-eval","June2025-PS2-eval", "June2025-AF-MF2-eval"],
-        "PH1-3": ["June2025-AF3-eval", "June2025-MF3-eval", "June2025-SS3-eval","June2025-PS3-eval", "June2025-AF-MF3-eval"]
+        "ST-1": evalNum === 4 ? ["qol-dre-1-eval", "vol-dre-1-eval"] : ["qol-ph1-eval-2", "vol-ph1-eval-2"],
+        "ST-2": evalNum === 4 ? ["qol-dre-2-eval", "vol-dre-2-eval"] : ["qol-ph1-eval-3", "vol-ph1-eval-3"],
+        "ST-3": evalNum === 4 ? ["qol-dre-3-eval", "vol-dre-3-eval"] : ["qol-ph1-eval-4", "vol-ph1-eval-4"],
+        "PH2-1": evalNum === 8 ? ["June2025-AF1-eval", "June2025-MF1-eval", "June2025-SS1-eval", "June2025-PS1-eval", "June2025-AF-MF1-eval"] : ["July2025-AF1-eval", "July2025-MF1-eval", "July2025-SS1-eval", "July2025-PS1-eval", "July2025-AF-MF1-eval"],
+        "PH2-2": evalNum === 8 ? ["June2025-AF2-eval", "June2025-MF2-eval", "June2025-SS2-eval", "June2025-PS2-eval", "June2025-AF-MF2-eval"] : ["July2025-AF2-eval", "July2025-MF2-eval", "July2025-SS2-eval", "July2025-PS2-eval", "July2025-AF-MF2-eval"],
+        "PH2-3": evalNum === 8 ? ["June2025-AF3-eval", "June2025-MF3-eval", "June2025-SS3-eval", "June2025-PS3-eval", "June2025-AF-MF3-eval"] : ["July2025-AF3-eval", "July2025-MF3-eval", "July2025-SS3-eval", "July2025-PS3-eval", "July2025-AF-MF3-eval"],
     }
 }
 

@@ -75,7 +75,7 @@ export function PH2RQ8({ evalNum }) {
             const allAttributes = [];
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
-            const evals = [evalNum];
+            const evals = evalNum >= 8 ? [8, 9] : [evalNum];
 
             for (let evalNum of evals) {
                 const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
@@ -144,7 +144,12 @@ export function PH2RQ8({ evalNum }) {
                         if (value === undefined) {
                             value = openWorld.Urban_data?.[field];
                         }
-                        entryObj[field] = value ?? '';
+                        if (typeof value === 'number' && !isNaN(value)) {
+                            entryObj[field] = Math.round(value * 100) / 100;
+                        }
+                        else {
+                            entryObj[field] = value;
+                        }
                     }
 
                     allObjs.push(entryObj);

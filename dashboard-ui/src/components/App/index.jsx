@@ -10,7 +10,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 // Components
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
-import { SurveyPageWrapper } from '../Survey/survey';
+import { SURVEY_VERSION_DATA, SurveyPageWrapper } from '../Survey/survey';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
@@ -41,6 +41,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'material-design-icons/iconfont/material-icons.css';
 import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
+import store from '../../store/store';
 
 
 const history = createBrowserHistory();
@@ -230,8 +231,9 @@ export function App() {
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
+        const evalNum = SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNumber;
 
-        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail);
+        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
 
         if (foundParticipant) {
             const pid = foundParticipant['ParticipantID'];
@@ -253,6 +255,8 @@ export function App() {
                 "surveyEntryCount": 0,
                 "textEntryCount": 0,
                 "hashedEmail": hashedEmail,
+                "evalNum": evalNum,
+                "timeCreated": new Date(),
                 
                 "AF-text-scenario": scenarioSet,
                 "MF-text-scenario": scenarioSet,
