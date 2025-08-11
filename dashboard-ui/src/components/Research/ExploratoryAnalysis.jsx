@@ -140,22 +140,21 @@ export function ExploratoryAnalysis() {
                 tagging accuracy; use of expectant tag (yes/no); time per patient; number of visits per patient; triage time total; evacuation patients
             </p>
         </div>
-        
+
         <div className="section-container">
             {selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
         </div>
-        
-        {selectedEval < 8 &&
-            <>
-                <div className="section-container">
-                    <BlockedTable evalNum={selectedEval} />
-                </div>
-            {selectedEval > 4 &&
+
+        <>
+            <div className="section-container">
+                <BlockedTable evalNum={selectedEval} />
+            </div>
+            {selectedEval > 4 && selectedEval < 8 &&
                 <div className="section-container">
                     <CalibrationData evalNum={selectedEval} />
                 </div>
             }
-            </>
-        }
+        </>
+
     </div>);
 }

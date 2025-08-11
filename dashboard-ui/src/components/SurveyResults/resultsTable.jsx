@@ -12,7 +12,7 @@ import definitionXLFileExploratory from './Exploratory Delegation Variables.xlsx
 import definitionXLFileLegacy from './Survey Delegation Variables - Legacy.xlsx';
 import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf';
 import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
-import definitionPDFFilePH2 from './Survey Delegation Variables - PH2.pdf';
+import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
 import { getEval89Attributes } from "../Research/utils";
 
@@ -143,7 +143,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
     const [showLegacy, setShowLegacy] = React.useState(false);
-    const [showPh2, setShowPh2] = React.useState(true);
+    const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
@@ -162,6 +162,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return basicChecks && ph1Check;
     };
 
+    const searchForPh2Comparison = (comparisonEntry, pid, admType, scenario) => {
+        return comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
+    }
+
     const formatData = React.useCallback((data) => {
         const allObjs = [];
         const allEvals = [];
@@ -171,7 +175,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         // set up block headers
         let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Attribute', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', (showPh2 ? 'Probe_Set_Observation' : 'Scenario'), 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
         if (exploratory) {
-            subheaders = subheaders.concat(['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
+            subheaders = subheaders.concat(showPh2 ? ['Delegator|Observed_ADM'] : ['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
         }
 
         const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
@@ -189,12 +193,12 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 nonExploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
                 nonExploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain');
             }
-            const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', 'FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'];
+            const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', ...(!showPh2 ? ['FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff'] : ['FC1_Align_Diff']), 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', ...(!showPh2 ? ['FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'] : ['FC2_Align_Diff'])];
             if (showPh2) {
-                exploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
+                exploratoryCompHeaders.splice(9, 0, 'Compare_FC2_Alignment');
                 exploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
                 exploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
-                exploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain');
+                exploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain', 'FC3_Align_Diff');
             }
             const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
             for (let subhead of comparisons) {
@@ -369,8 +373,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
                     obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
                     if (exploratory) {
-                        obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
-                        obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                        if (!showPh2) {
+                            obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                            obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                        }
+                        else {
+                            obj[`B${block}_DM${dm}_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                        }
                     }
                     dm += 1;
                 }
@@ -386,7 +395,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             }
                         }
 
-                        // multikdma! 
+                        // multikdma setup 
                         let multiFc1 = '';
                         let multiFc2 = '';
                         let multiFc3 = '';
@@ -403,6 +412,31 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             multiFc2 = mostAligned + ' vs ' + alignment[2];
                             multiFc3 = mostAligned + ' vs ' + alignment[3];
                         }
+
+                        // set up exploratory variables to find alignment difference
+                        let dreAligned, ph1Aligned, dreBaseline, ph1Baseline, dreMisaligned, ph1Misaligned, ph2Aligned, ph2Baseline, ph2Misaligned, ph2Multi1, ph2Multi2, ph2Multi3, ph2Multi4;
+
+                        if (exploratory && comparisonData) {
+                            if (!showPh2) {
+                                dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                                ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                                dreBaseline = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
+                                ph1Baseline = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
+                                dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                                ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                            }
+                            else if (order.length < 4) {
+                                ph2Aligned = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
+                                ph2Baseline = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
+                                ph2Misaligned = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                            } else {
+                                ph2Multi1 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'most aligned group', page['scenarioIndex']))?.['score'];
+                                ph2Multi2 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[1], page['scenarioIndex']))?.['score'];
+                                ph2Multi3 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[2], page['scenarioIndex']))?.['score'];
+                                ph2Multi4 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[3], page['scenarioIndex']))?.['score'];
+                            }
+                        }
+
                         const alignedVsBaseline = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')]) : (order[0] + ' vs ' + order[1]);
                         const alignedVsMisaligned = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')]) : (order[0] + ' vs ' + order[2]);
                         const vsFc3MultiKdma = order[0] + ' vs ' + order[3];
@@ -416,17 +450,21 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
 
                         const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
-                        obj[`B${block}_Compare_FC1_Alignment`] = order.length < 4 ? 'aligned vs baseline' : multiFc1; 
+                        obj[`B${block}_Compare_FC1_Alignment`] = order.length < 4 ? 'aligned vs baseline' : multiFc1;
                         obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
                         obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
                         if (exploratory && comparisonData) {
-                            const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                            const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                            const dreBaseline = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                            const ph1Baseline = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                            obj[`B${block}_FC1_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreBaseline)) ? (dreAligned - dreBaseline) : null;
-                            obj[`B${block}_FC1_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Baseline)) ? (ph1Aligned - ph1Baseline) : null;
+                            if (!showPh2) {
+                                obj[`B${block}_FC1_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreBaseline)) ? (dreAligned - dreBaseline) : null;
+                                obj[`B${block}_FC1_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Baseline)) ? (ph1Aligned - ph1Baseline) : null;
+                            }
+                            else if (order.length < 4) {
+                                obj[`B${block}_FC1_Align_Diff`] = (isDefined(ph2Aligned) && isDefined(ph2Baseline)) ? (ph2Aligned - ph2Baseline) : null;
+                            }
+                            else {
+                                obj[`B${block}_FC1_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi2)) ? (ph2Multi1 - ph2Multi2) : null;
+                            }
                         }
                         const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
                         obj[`B${block}_Compare_FC2_Alignment`] = order.length < 4 ? 'aligned vs misaligned' : multiFc2;
@@ -434,12 +472,25 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
                         obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
                         if (exploratory && comparisonData) {
-                            const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                            const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                            const dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                            const ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                            obj[`B${block}_FC2_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
-                            obj[`B${block}_FC2_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
+                            if (!showPh2) {
+                                obj[`B${block}_FC2_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
+                                obj[`B${block}_FC2_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
+                            } else if (order.length < 4) {
+                                obj[`B${block}_FC2_Align_Diff`] = (isDefined(ph2Aligned) && isDefined(ph2Misaligned)) ? (ph2Aligned - ph2Misaligned) : null;
+                            }
+                            else {
+                                obj[`B${block}_FC2_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi3)) ? (ph2Multi1 - ph2Multi3) : null;
+                            }
+                        }
+                        if (showPh2) {
+                            const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
+                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? null : multiFc3;
+                            obj[`B${block}_Compare_FC3`] = order.length < 4 ? null : (fc3 + ' - ' + alignment[order.indexOf(fc3)] + (alignment[order.indexOf(fc3)] == 'most aligned group' ? ' (' + mostAligned + ')' : ''));
+                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[vsFc3MultiKdma + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
+                            if (exploratory && comparisonData) {
+                                obj[`B${block}_FC3_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi4)) ? (ph2Multi1 - ph2Multi4) : null;
+                            }
                         }
                         if (showPh2) {
                             const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
@@ -533,8 +584,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     }, [data, pLog, showLegacy, showPh2, formatData]);
 
     React.useEffect(() => {
-        if (exploratory)
+        if (exploratory) {
             setEvalFilters(evalNumbers);
+            setShowPh2((evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false));
+        }
     }, [evalNumbers, exploratory]);
 
     React.useEffect(() => {
@@ -547,8 +600,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             ((showPh2 && (!milFilters || x['Served in Military']) &&
                 (!milFilters?.includes('Yes') || !x['Served in Military']?.includes('Never Served')) &&
                 (!milFilters?.includes('No') || x['Served in Military']?.includes('Never Served'))) ||
-                (!showPh2 && 
-                (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
+                (!showPh2 &&
+                    (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
                     (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))))
         );
         setFilteredData(filtered);
@@ -596,7 +649,39 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
     const isFiltered = () => {
         return filteredData.length < (exploratory ? (evalFilters.length === 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length);
-    }
+    };
+
+    const makeDownloadButton = () => {
+        let name, xlFile, pdfFile;
+        if (showLegacy) {
+            name = 'Survey Results Definitions - Legacy.pdf';
+            xlFile = definitionXLFileLegacy;
+            pdfFile = definitionPDFFileLegacy;
+        }
+        else if (showPh2) {
+            if (exploratory) {
+                name = 'Delegation Data By Block Definitions - PH2.xlsx';
+                xlFile = definitionXLFileExploratoryPH2;
+                pdfFile = definitionXLFileExploratoryPH2;
+            }
+            else {
+                name = 'Survey Results Definitions - PH2.pdf';
+                xlFile = definitionXLFilePH2;
+                pdfFile = definitionXLFilePH2;
+            }
+        }
+        else if (exploratory) {
+            name = 'Delegation Data By Block Definitions.xlsx';
+            xlFile = definitionXLFileExploratory;
+            pdfFile = definitionXLFileExploratory;
+        }
+        else {
+            name = 'Survey Results Definitions.pdf';
+            xlFile = definitionXLFile;
+            pdfFile = definitionPDFFile;
+        }
+        return <RQDefinitionTable downloadName={name} xlFile={xlFile} pdfFile={pdfFile} />
+    };
 
     return (<div className={!isFiltered() && exploratory ? 'lowered-table' : ''}>
         {isFiltered() &&
@@ -713,10 +798,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                {showLegacy ? <RQDefinitionTable downloadName={'Survey Results Definitions - Legacy.pdf'} xlFile={definitionXLFileLegacy} pdfFile={definitionPDFFileLegacy} /> :
-                    showPh2 ? <RQDefinitionTable downloadName={'Survey Results Definitions - PH2.pdf'} xlFile={definitionXLFilePH2} pdfFile={definitionPDFFilePH2} /> :
-                    exploratory ? <RQDefinitionTable downloadName={'Delegation Data By Block Definitions.xlsx'} xlFile={definitionXLFileExploratory} pdfFile={definitionXLFileExploratory} /> :
-                    <RQDefinitionTable downloadName={'Survey Results Definitions.pdf'} xlFile={definitionXLFile} pdfFile={definitionPDFFile} />}
+                {makeDownloadButton()}
             </div>
         </Modal>
     </div>);
