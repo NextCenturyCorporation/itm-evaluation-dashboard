@@ -20,11 +20,14 @@ const GET_COMPARISON_DATA = gql`
         getHumanToADMComparison
     }`;
 
-const DRE = { 'value': '4', 'label': '4 - DRE' };
-const PH1 = { 'value': '5', 'label': '5 - PH1' };
-const JAN = { 'value': '6', 'label': '6 - JAN25' };
-const JUNE = { 'value': '8', 'label': '8 - PH2 June' }
-const JULY = { 'value': '9', 'label': '9 - PH2 July' }
+const EVAL_MAP = {
+    4: { 'value': '4', 'label': '4 - DRE' },
+    5: { 'value': '5', 'label': '5 - PH1' },
+    6: { 'value': '6', 'label': '6 - JAN25' },
+    8: { 'value': '8', 'label': '8 - PH2 June' },
+    9: { 'value': '9', 'label': '9 - PH2 July' }
+};
+
 
 export function BlockedTable({ evalNum }) {
     const { data: surveyData } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'network-only' });
@@ -34,7 +37,8 @@ export function BlockedTable({ evalNum }) {
     const [includeJAN, setIncludeJAN] = React.useState(false);
     const [includeJune, setIncludeJune] = React.useState(false);
     const [includeJuly, setIncludeJuly] = React.useState(false);
-    const [evalNumbers, setEvalNumbers] = React.useState([evalNum === 9 ? JULY : evalNum === 8 ? JUNE : evalNum === 6 ? JAN : evalNum === 5 ? PH1 : DRE])
+    const [evalNumbers, setEvalNumbers] = React.useState([EVAL_MAP[evalNum]])
+
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);
     };
@@ -81,29 +85,29 @@ export function BlockedTable({ evalNum }) {
         setIncludeJAN(false);
         setIncludeJune(false);
         setIncludeJuly(false);
-        setEvalNumbers([evalNum === 9 ? JULY : evalNum === 8 ? JUNE : evalNum === 6 ? JAN : evalNum === 5 ? PH1 : DRE]);
+        setEvalNumbers([EVAL_MAP[evalNum]]);
     }, [evalNum]);
 
     React.useEffect(() => {
-        updateEvalNums(includeDRE, DRE);
+        updateEvalNums(includeDRE, EVAL_MAP[4]);
     //updateEvalNums excluded to prevent infinite loop from constant function recreation
     // eslint-disable-next-line
     }, [includeDRE]);
 
     React.useEffect(() => {
-        updateEvalNums(includeJAN, JAN);
+        updateEvalNums(includeJAN, EVAL_MAP[6]);
     //updateEvalNums excluded to prevent infinite loop from constant function recreation
     // eslint-disable-next-line
     }, [includeJAN]);
 
     React.useEffect(() => {
-        updateEvalNums(includeJune, JUNE);
+        updateEvalNums(includeJune, EVAL_MAP[8]);
         //updateEvalNums excluded to prevent infinite loop from constant function recreation
         // eslint-disable-next-line
     }, [includeJune]);
 
     React.useEffect(() => {
-        updateEvalNums(includeJuly, JULY);
+        updateEvalNums(includeJuly, EVAL_MAP[9]);
         //updateEvalNums excluded to prevent infinite loop from constant function recreation
         // eslint-disable-next-line
     }, [includeJuly]);
