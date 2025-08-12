@@ -1,6 +1,6 @@
 module.exports = {
     launch: {
-        headless: true,  // Set to `false` to see the browser window
+        headless: false,  // Set to `false` to see the browser window
         // slowMo: 25,       // Optional: Slow down actions to see what is happening
         defaultViewport: null,  // Optional: Fullscreen viewport
     },

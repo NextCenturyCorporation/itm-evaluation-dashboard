@@ -87,7 +87,7 @@ const TextBasedConfig = createSchema('textBasedConfig', {
     scenario_id: { type: String, required: true },
     name: { type: String, required: true },
     pages: { type: JSON, required: true },
-    author: { type: String, required: true },
+    author: { type: String },
     showQuestionNumbers: { type: Boolean, required: true },
     showPrevButton: { type: Boolean, required: true },
     title: { type: String, required: true },

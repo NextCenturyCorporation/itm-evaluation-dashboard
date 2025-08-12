@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText, loginAdmin, logout, takeTextScenario, pressAllKeys } from "../__mocks__/testUtils";
+import { countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys } from "../__mocks__/testUtils";
 
 let firstPid = 0;
 
@@ -134,8 +134,6 @@ describe('Test email-entry text scenarios', () => {
     }, 10000);
 
     it('any key combo on text-scenario page should have no effect on progress', async () => {
-        // pid should be 702, which should use vol4 for ST. If this test starts failing, the pid has likely changed
-        // and more text configs will need to be added to the mock database
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
         await page.waitForSelector('input[placeholder="Email"]');
 
@@ -151,12 +149,10 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
-        await pressAllKeys(page, 'Move Springer to evac');
+        await pressAllKeys(page, 'Scenario Details');
     }, 10000);
 
     it('text-scenario through email-entry should be navigable', async () => {
-        // pid should be 702, which should use vol4 for ST. If this test starts failing, the pid has likely changed
-        // and more text configs will need to be added to the mock database
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
         await page.waitForSelector('input[placeholder="Email"]');
 
@@ -172,7 +168,7 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
-        await takeTextScenario(page);
+        await takePhase2TextScenario(page);
         await page.waitForSelector('text/Uploading documents');
 
     }, 40000);

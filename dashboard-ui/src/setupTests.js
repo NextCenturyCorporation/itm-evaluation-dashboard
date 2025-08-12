@@ -7,7 +7,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
 import { ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
-import { surveyResultMock, surveyV5, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
+import { surveyResultMock, surveyV5, surveyV7, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
@@ -44,7 +44,7 @@ beforeAll(async () => {
 
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
-            version: '5',
+            version: '7',
         });
 
         await surveyVersion.save();
@@ -65,8 +65,10 @@ beforeAll(async () => {
             }
         });
         const surveyConfig5 = new SurveyConfig(surveyV5);
+        const surveyConfig7 = new SurveyConfig(surveyV7);
         await surveyConfig4.save();
         await surveyConfig5.save();
+        await surveyConfig7.save();
         const { ObjectId } = require('mongodb');
 
         const sessionConfig = new SessionConfig({

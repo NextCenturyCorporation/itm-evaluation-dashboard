@@ -44,7 +44,7 @@ describe('Verify content on page matches expectation for route', () => {
         await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
     });
     it('Check /humanSimParticipant route content', async () => {
-        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', 'AD_Scenario_Text']);
+        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', 'Date']);
     });
     it('Check /humanProbeData route content', async () => {
         await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);

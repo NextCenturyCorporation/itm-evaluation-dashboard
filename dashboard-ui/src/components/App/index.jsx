@@ -91,8 +91,8 @@ const GET_CONFIGS_PHASE_2 = gql`
 `
 
 
-const LOW_PID = 202507100;
-const HIGH_PID = 202507299;
+const LOW_PID = Number(process.env.REACT_APP_LOW_PID);
+const HIGH_PID = Number(process.env.REACT_APP_HIGH_PID);
 
 
 

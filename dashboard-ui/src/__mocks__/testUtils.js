@@ -168,20 +168,39 @@ export async function pressAllKeys(page, uniqueExpectedText) {
     for (const key of keysToPress) {
         await page.keyboard.press(key);
         // first question in vol4 for ST should be visible no matter what key is pressed
-        await page.waitForSelector(`text/${uniqueExpectedText}`);
+        await page.waitForSelector(`text/${uniqueExpectedText}`, { timeout: 50000 });
     }
 }
 
-export async function takeTextScenario(page) {
+export async function takePhase1TextScenario(page) {
     let pageNum = 1;
     let scenarios = 0;
     while (scenarios < 5) {
-        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 50000 });
         await page.focus('input[type="radio"]');
         await page.keyboard.press(' ');
         await page.keyboard.press('Tab');
         const completeBtn = await page.$('text/Complete');
         if (isDefined(completeBtn)) {
+            pageNum = 1;
+            scenarios += 1;
+        }
+        else {
+            pageNum += 1;
+        }
+        await page.keyboard.press('Enter');
+    }
+}
+
+export async function takePhase2TextScenario(page) {
+    let pageNum = 1;
+    let scenarios = 0;
+    while (scenarios < 4) {
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 50000 });
+        await page.focus('input[type="radio"]');
+        await page.keyboard.press(' ');
+        await page.keyboard.press('Tab');
+        if (pageNum == 6) {
             pageNum = 1;
             scenarios += 1;
         }

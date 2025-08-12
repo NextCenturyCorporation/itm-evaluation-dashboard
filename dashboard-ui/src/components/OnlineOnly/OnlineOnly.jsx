@@ -58,8 +58,8 @@ export default function StartOnline() {
     const startSurvey = async () => {
         const result = await refetch();
         // calculate new pid
-        const lowPid = 202507100;
-        const highPid = 202507299;
+        const lowPid = Number(process.env.REACT_APP_ONLINE_LOW_PID);
+        const highPid = Number(process.env.REACT_APP_ONLINE_HIGH_PID);
         let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
             !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
             x.ParticipantID >= lowPid && x.ParticipantID <= highPid
