@@ -7,7 +7,8 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
@@ -15,7 +16,6 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import gql from 'graphql-tag';
-import AlignmentScoreBox from './alignmentScore';
 import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import { RQ2223 } from '../Research/tables/rq22-rq23';
@@ -74,7 +74,10 @@ class ResultsTable extends React.Component {
             evalNumber: 9,
             ADMQueryString: "history.parameters.adm_name",
             showScrollButton: false,
-            alignmentTarget: null
+            alignmentTarget: null,
+            hideEmpty: true,
+            expandAllVersion: 0,
+            collapseAllVersion: 0
         }
     }
 
@@ -103,6 +106,14 @@ class ResultsTable extends React.Component {
             top: 0,
             behavior: "smooth"
         });
+    };
+
+    handleExpandAll = () => {
+        this.setState(s => ({ expandAllVersion: s.expandAllVersion + 1 }));
+    };
+
+    handleCollapseAll = () => {
+        this.setState(s => ({ collapseAllVersion: s.collapseAllVersion + 1 }));
     };
 
     setEval(target) {
@@ -371,13 +382,62 @@ class ResultsTable extends React.Component {
                                             <>
                                                 {testData !== null && testData !== undefined &&
                                                     <>
-                                                        <AlignmentScoreBox performer={this.formatADMString(this.state.adm)} data={testData} scenario={this.state.scenario} />
-                                                        <div className='paper-container'>
+                                                        <div className="results-header">
+                                                            <div className="summary-grid">
+                                                                <div className="summary-card card--scenario">
+                                                                    <div className="summary-label">Scenario</div>
+                                                                    <div className="summary-value">{this.state.scenario}</div>
+                                                                </div>
+                                                                <div className="summary-card card--adm">
+                                                                    <div className="summary-label">ADM</div>
+                                                                    <div className="summary-value">{this.formatADMString(this.state.adm)}</div>
+                                                                </div>
+                                                                <div className="summary-card card--score">
+                                                                    <div className="summary-label">Alignment Score</div>
+                                                                    <div className="summary-value">
+                                                                        {(() => {
+                                                                            const hist = Array.isArray(testData?.history) ? testData.history : [];
+                                                                            const last = hist.length ? hist[hist.length - 1] : null;
+                                                                            const raw = last?.response?.score;
+                                                                            const num = typeof raw === 'number' ? raw
+                                                                                      : (typeof raw === 'string' ? parseFloat(raw) : NaN);
+                                                                            return Number.isFinite(num) ? num : '—';
+                                                                        })()}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="summary-card card--align">
+                                                                    <div className="summary-label">Alignment Target</div>
+                                                                    <div className="summary-value">{this.state.alignmentTarget ?? '—'}</div>
+                                                                </div>
+                                                                <div className="controls-cell">
+                                                                    <button className="control-btn" onClick={this.handleExpandAll}>Expand</button>
+                                                                    <button className="control-btn" onClick={this.handleCollapseAll}>Collapse</button>
+                                                                    <FormControlLabel
+                                                                        className="hide-empty-checkbox"
+                                                                        control={
+                                                                            <Checkbox
+                                                                                size="small"
+                                                                                checked={this.state.hideEmpty}
+                                                                                onChange={(e) => this.setState({ hideEmpty: e.target.checked })}
+                                                                            />
+                                                                        }
+                                                                        label="Hide Empty Fields"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className='paper-container command-list'>
                                                             <TableContainer>
-                                                                <Table className='itm-table' stickyHeader aria-label="simple table">
-                                                                    <TableBody className='TableBodyScrollable'>
+                                                                <Table className='itm-table' aria-label="commands">
+                                                                    <TableBody>
                                                                         {testData.history.map((item, index) => (
-                                                                            <ActionRow key={item.command + index} item={item} />
+                                                                            <ActionRow
+                                                                                key={item.command + index}
+                                                                                item={item}
+                                                                                hideEmpty={this.state.hideEmpty}
+                                                                                expandAllVersion={this.state.expandAllVersion}
+                                                                                collapseAllVersion={this.state.collapseAllVersion}
+                                                                            />
                                                                         ))}
                                                                     </TableBody>
                                                                 </Table>
@@ -420,8 +480,13 @@ class ResultsTable extends React.Component {
 }
 
 
-function ActionRow({ item }) {
+function ActionRow({ item, hideEmpty, expandAllVersion, collapseAllVersion }) {
     const [open, setOpen] = React.useState(false);
+    React.useEffect(() => { setOpen(true); }, [expandAllVersion]);
+    React.useEffect(() => { setOpen(false); }, [collapseAllVersion]);
+
+    const isEmpty = (v) =>
+        v === null || v === undefined || v === '' || v === 'Unknown' || (Array.isArray(v) && v.length === 0) || (isObject(v) && Object.keys(v).length === 0);
 
     const renderNestedItems = (item, response = null) => {
         // pass response through for treatment counts
@@ -429,9 +494,7 @@ function ActionRow({ item }) {
             return renderNestedTable(item, response);
         } else if (Array.isArray(item)) {
             return (
-                <>
-                    {item.map((el, i) => <React.Fragment key={i}>{renderNestedItems(el)}</React.Fragment>)}
-                </>
+                <>{item.filter(el => (hideEmpty ? !isEmpty(el) : true)).map((el, i) => <React.Fragment key={i}>{renderNestedItems(el)}</React.Fragment>)}</>
             );
         } else {
             return <span>{item}</span>;
@@ -442,10 +505,12 @@ function ActionRow({ item }) {
         const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] === 'APPLY_TREATMENT';
         const character = tableData['character'];
         const location = tableData['location'];
-        return (
-            <Table size="small">
+            return (
+            <Table size="small" className="kv-table">
                 <TableBody>
-                    {Object.entries(tableData).map(([key, value], i) => {
+                    {Object.entries(tableData)
+                        .filter(([_, value]) => (hideEmpty ? !isEmpty(value) : true))
+                        .map(([key, value], i) => {
                         if (isTreatment && response && key === 'treatment') {
                             for (const c of (response?.characters ?? [])) {
                                 if (c['id'] === character) {
@@ -461,11 +526,9 @@ function ActionRow({ item }) {
                             }
                         }
                         return (
-                            <TableRow key={i}>
-                                <TableCell className='tableCellKey'>
-                                    <strong>{snakeCaseToNormalCase(key)}</strong>
-                                </TableCell>
-                                <TableCell className='tableCellValue'>{renderNestedItems(value)}</TableCell>
+                            <TableRow key={i} className="kv-row">
+                                <TableCell className='kv-key'><strong>{snakeCaseToNormalCase(key)}</strong></TableCell>
+                                <TableCell className='kv-val'>{renderNestedItems(value)}</TableCell>
                             </TableRow>
                         )
                     })}
@@ -487,7 +550,7 @@ function ActionRow({ item }) {
 
     return (
         <React.Fragment>
-            <TableRow className='noBorderRow' onClick={() => setOpen(!open)}>
+            <TableRow className='cmd-row' onClick={() => setOpen(!open)}>
                 <TableCell className="noBorderCell tableCellIcon">
                     <IconButton
                         aria-label="expand row"
@@ -500,19 +563,26 @@ function ActionRow({ item }) {
                     </IconButton>
                 </TableCell>
                 <TableCell className="noBorderCell tableCellCommand">
-                    <Typography><strong>Command:</strong> {item.command}</Typography>
-                    <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>
-                    {renderNestedItems(item.parameters, item.command === 'Take Action' ? item.response : null)}
+                    <div className="cmd-header">
+                        <div className="cmd-title">{item.command}</div>
+                        {item?.status && <div className="cmd-meta">{item.status}</div>}
+                    </div>
+                    <div className="cmd-params-label">Parameters</div>
+                    <div className="cmd-params">
+                        {Object.keys(item.parameters).length === 0
+                            ? <span className="muted">None</span>
+                            : renderNestedItems(item.parameters, item.command === 'Take Action' ? item.response : null)}
+                    </div>
                 </TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
-                        <Box sx={{ margin: 1 }}>
-                            <Typography><strong>Response:</strong></Typography>
-                            <div style={{ paddingLeft: '16px' }}>
-                                {renderNestedItems(item.response)}
-                            </div>
+                        <Box className="response-panel">
+                                <div className="response-title">Response</div>
+                                <div className="response-body">
+                                    {renderNestedItems(item.response)}
+                                </div>
                         </Box>
                     </Collapse>
                 </TableCell>
