@@ -52,6 +52,7 @@ const UPDATE_PARTICIPANT_LOG = gql`
 
 
 export function TextBasedScenariosPageWrapper(props) {
+    const currentTextEval = useSelector(state => state.configs.currentTextEval)
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
@@ -66,6 +67,7 @@ export function TextBasedScenariosPageWrapper(props) {
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
+        currentTextEval={currentTextEval}
         participantLogs={participantLogData}
         scenarioResults={scenarioResultsData.getAllScenarioResults}
         getServerTimestamp={getServerTimestamp}

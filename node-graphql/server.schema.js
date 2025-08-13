@@ -64,6 +64,8 @@ const typeDefs = gql`
     getCurrentStyle: String @complexity(value: 5)
     getADMTextProbeMatches: [JSON] @complexity(value: 250)
     getMultiKdmaAnalysisData: [JSON] @complexity(value: 200)
+    getCurrentTextEval: String @complexity(value: 5)
+    getTextEvalOptions: [String] @complexity(value: 10)
   }
 
   type Mutation {
@@ -78,8 +80,9 @@ const typeDefs = gql`
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateUIStyle(version: String!): String,
-    updateParticipantLog(pid: String, updates: JSON): JSON
-    getServerTimestamp: String
+    updateParticipantLog(pid: String, updates: JSON): JSON,
+    getServerTimestamp: String,
+    updateTextEval(eval: String!): String
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
@@ -495,6 +498,16 @@ const resolvers = {
     },
     getMultiKdmaAnalysisData: async (obj, args, context, info) => {
       return await context.db.collection('multiKdmaData').find().toArray().then(result => { return result });
+    },
+    getCurrentTextEval: async (obj, args, context, info) => {
+      const result = await context.db.collection('textEvalVersion').findOne();
+      return result ? result.eval : null;
+    },
+    getTextEvalOptions: async (obj, args, context, info) => {
+      const evals = await context.db.collection('textBasedConfig')
+        .distinct('eval')
+        .then(result => result.filter(eval => eval != null));
+      return evals.sort();
     }
   },
   Mutation: {
@@ -706,8 +719,15 @@ const resolvers = {
       const isDST = currentOffset < januaryOffset;
 
       return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
+    },
+    updateTextEval: async (obj, args, context, info) => {
+      const result = await context.db.collection('textEvalVersion').findOneAndUpdate(
+        {},
+        { $set: { eval: args.eval } },
+        { upsert: true, returnDocument: 'after' }
+      );
+      return result.value.eval;
     }
-
   },
   StringOrFloat: new GraphQLScalarType({
     name: "StringOrFloat",

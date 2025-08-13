@@ -6,7 +6,7 @@ import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
-import { setSurveyVersion, setupConfigWithImages, setCurrentUIStyle } from '../App/setupUtils';
+import { setSurveyVersion, setupConfigWithImages, setTextEval as setTextEvalInStore, setCurrentUIStyle } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
@@ -51,6 +51,24 @@ const UPDATE_USER_APPROVAL = gql`
     mutation updateUserApproval($caller: JSON!, $username: String!, $isApproved: Boolean!, $isRejected: Boolean!, $isAdmin: Boolean!, $isEvaluator: Boolean!, $isExperimenter: Boolean!, $isAdeptUser: Boolean!) {
         updateUserApproval(caller: $caller, username: $username, isApproved: $isApproved, isRejected: $isRejected, isAdmin: $isAdmin, isEvaluator: $isEvaluator, isExperimenter: $isExperimenter, isAdeptUser: $isAdeptUser)
     }
+`;
+
+const GET_CURRENT_TEXT_EVAL = gql`
+  query getCurrentTextEval {
+    getCurrentTextEval
+  }
+`;
+
+const GET_TEXT_EVAL_OPTIONS = gql`
+  query getTextEvalOptions {
+    getTextEvalOptions
+  }
+`;
+
+const UPDATE_TEXT_EVAL = gql`
+  mutation updateTextEval($eval: String!) {
+    updateTextEval(eval: $eval)
+  }
 `;
 
 const GET_CURRENT_SURVEY_VERSION = gql`
@@ -380,11 +398,70 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const [sessionId, setSessionId] = useState(null);
     const [errorCount, setErrorCount] = useState(0);
     const [unapproved, setUnapproved] = useState([]);
-    // UI Style state
     const [usePhase1Styling, setUsePhase1Styling] = useState(false);
     const [pendingStyleVersion, setPendingStyleVersion] = useState(null);
+    const [textEval, setTextEval] = useState('');
+    const [textEvalOptions, setTextEvalOptions] = useState([]);
+    const [pendingTextEval, setPendingTextEval] = useState(null);
+    const [showTextEvalConfirmation, setShowTextEvalConfirmation] = useState(false);
 
-    // Query and mutation for UI styling
+    const { loading: textEvalLoading, error: textEvalError } = useQuery(GET_CURRENT_TEXT_EVAL, {
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            if (data && data.getCurrentTextEval) {
+                setTextEval(data.getCurrentTextEval);
+                setTextEvalInStore(data.getCurrentTextEval);
+            }
+        }
+    });
+
+    const { loading: textEvalOptionsLoading, error: textEvalOptionsError } = useQuery(GET_TEXT_EVAL_OPTIONS, {
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            if (data && data.getTextEvalOptions) {
+                setTextEvalOptions(data.getTextEvalOptions);
+            }
+        }
+    });
+
+    const [updateTextEval] = useMutation(UPDATE_TEXT_EVAL);
+
+    const handleTextEvalChange = (event) => {
+        event.preventDefault();
+        const newEval = event.target.value;
+        if (newEval !== '') {
+            setPendingTextEval(newEval);
+            setShowTextEvalConfirmation(true);
+        }
+    };
+
+    const confirmTextEvalChange = async () => {
+        try {
+            setIsLoading(true);
+            const { data } = await updateTextEval({
+                variables: { eval: pendingTextEval }
+            });
+            if (data && data.updateTextEval) {
+                setTextEval(pendingTextEval);
+                setTextEvalInStore(pendingTextEval)
+                setPendingTextEval(null);
+                setShowTextEvalConfirmation(false);
+            } else {
+                throw new Error("Failed to update text-based eval");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Failed to update text-based evaluation. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const cancelTextEvalChange = () => {
+        setPendingTextEval(null);
+        setShowTextEvalConfirmation(false);
+    };
+
     const { loading: uiStyleLoading, error: uiStyleError } = useQuery(GET_CURRENT_UI_STYLE, {
         fetchPolicy: 'no-cache',
         onCompleted: (data) => {
@@ -401,11 +478,11 @@ function AdminPage({ currentUser, updateUserHandler }) {
 
     useEffect(() => {
         if (sessionId && currentUser) {
-          getUsersQuery({
-            variables: { caller: { username: currentUser.username, sessionId } }
-          });
+            getUsersQuery({
+                variables: { caller: { username: currentUser.username, sessionId } }
+            });
         }
-      }, [sessionId, currentUser, getUsersQuery]);
+    }, [sessionId, currentUser, getUsersQuery]);
 
     useEffect(() => {
         if (users)
@@ -464,33 +541,32 @@ function AdminPage({ currentUser, updateUserHandler }) {
         }
     };
 
-    // Handler for UI style change
     const handleStylingChange = (event) => {
         const newStyle = event.target.value;
         setPendingStyleVersion(newStyle);
         setShowStyleConfirmation(true);
     };
 
-    const confirmStylingChange = async () => {        
+    const confirmStylingChange = async () => {
         try {
             setIsLoading(true);
-            
+
             const { data } = await updateUIStyle({
                 variables: { version: pendingStyleVersion }
             });
-            
+
             if (data && data.updateUIStyle !== undefined) {
                 setUsePhase1Styling(pendingStyleVersion === 'phase1');
-                
+
                 setCurrentUIStyle(pendingStyleVersion);
-                
+
                 setPendingStyleVersion(null);
                 setShowStyleConfirmation(false);
             } else {
                 throw new Error("Failed to update UI style");
             }
         } catch (error) {
-            alert("Failed to update UI style. Error: " + error.message );
+            alert("Failed to update UI style. Error: " + error.message);
         } finally {
             setIsLoading(false);
         }
@@ -568,7 +644,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
         }
     };
 
-    if (surveyVersionLoading || uiStyleLoading) return <div className="loading">Loading data...</div>;
+    if (surveyVersionLoading || uiStyleLoading || textEvalLoading || textEvalOptionsLoading) return <div className="loading">Loading data...</div>;
     if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
     if (uiStyleError) return <div className="error">Error loading UI style: {uiStyleError.message}</div>;
 
@@ -612,120 +688,154 @@ function AdminPage({ currentUser, updateUserHandler }) {
                 </form>
             </Card>}
 
-            {confirmedAdmin && <><Row className="mb-4">
-                {unapproved.length > 0 && <ApprovalTable unapproved={unapproved} updateUnapproved={setUnapproved} caller={{ username: currentUser.username, sessionId }} />}
+            {confirmedAdmin &&
+                <>
+                    <Row className="mb-4">
+                        {unapproved.length > 0 && <ApprovalTable unapproved={unapproved} updateUnapproved={setUnapproved} caller={{ username: currentUser.username, sessionId }} />}
 
-                <Col md={6}>
-                    <Card>
-                        <Card.Header as="h5">Survey Version</Card.Header>
-                        <Card.Body>
-                            <Card.Text>
-                                Current Survey Version: <strong>{surveyVersion || 'Not set'}</strong>
-                            </Card.Text>
-                            <Form.Group>
-                                <Form.Label>Change Survey Version:</Form.Label>
-                                <Form.Select
-                                    value=''
-                                    onChange={handleSurveyVersionChange}
-                                >
-                                    <option value="" disabled>Select survey version</option>
-                                    {surveyVersions.map((version) => (
-                                        <option key={version} value={version}>
-                                            Version {version}
-                                        </option>
-                                    ))}
-                                </Form.Select>
-                            </Form.Group>
-                        </Card.Body>
-                    </Card>
-                </Col>
+                        <Col md={4}>
+                            <Card>
+                                <Card.Header as="h5">Survey Version</Card.Header>
+                                <Card.Body>
+                                    <Card.Text>
+                                        Current Survey Version: <strong>{surveyVersion || 'Not set'}</strong>
+                                    </Card.Text>
+                                    <Form.Group>
+                                        <Form.Label>Change Survey Version:</Form.Label>
+                                        <Form.Select
+                                            value=''
+                                            onChange={handleSurveyVersionChange}
+                                        >
+                                            <option value="" disabled>Select survey version</option>
+                                            {surveyVersions.map((version) => (
+                                                <option key={version} value={version}>
+                                                    Version {version}
+                                                </option>
+                                            ))}
+                                        </Form.Select>
+                                    </Form.Group>
+                                </Card.Body>
+                            </Card>
+                        </Col>
 
-                <Col md={6}>
-                    <Card>
-                        <Card.Header as="h5">Delegation/Text Scenarios Styling</Card.Header>
-                        <Card.Body>
-                            <Card.Text>
-                                Current UI Style: <strong>{usePhase1Styling ? 'Phase 1 Styling' : 'Updated Styling'}</strong>
-                            </Card.Text>
-                            <Form.Group>
-                                <Form.Label>Change UI Style:</Form.Label>
-                                <Form.Select
-                                    value={usePhase1Styling ? 'phase1' : 'updated'}
-                                    onChange={handleStylingChange}
-                                >
-                                    <option value="updated">Updated Styling</option>
-                                    <option value="phase1">Use Phase 1 Styling</option>
-                                </Form.Select>
-                            </Form.Group>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
+                        <Col md={4}>
+                            <Card>
+                                <Card.Header as="h5">Text-Based Scenarios Evaluation</Card.Header>
+                                <Card.Body>
+                                    <Card.Text>
+                                        Current Text Eval: <strong>{textEval || 'Not set'}</strong>
+                                    </Card.Text>
+                                    <Form.Group>
+                                        <Form.Label>Change Text-Based Eval:</Form.Label>
+                                        <Form.Select
+                                            value=''
+                                            onChange={handleTextEvalChange}
+                                        >
+                                            <option value="" disabled>Select evaluation</option>
+                                            {textEvalOptions.map((evalOption) => (
+                                                <option key={evalOption} value={evalOption}>
+                                                    {evalOption}
+                                                </option>
+                                            ))}
+                                        </Form.Select>
+                                    </Form.Group>
+                                </Card.Body>
+                            </Card>
+                        </Col>
 
-                <ConfirmationDialog
-                    show={showConfirmation}
-                    onConfirm={confirmSurveyVersionChange}
-                    onCancel={cancelSurveyVersionChange}
-                    message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
-                />
+                        <Col md={4}>
+                            <Card>
+                                <Card.Header as="h5">Delegation/Text Scenarios Styling</Card.Header>
+                                <Card.Body>
+                                    <Card.Text>
+                                        Current UI Style: <strong>{usePhase1Styling ? 'Phase 1 Styling' : 'Updated Styling'}</strong>
+                                    </Card.Text>
+                                    <Form.Group>
+                                        <Form.Label>Change UI Style:</Form.Label>
+                                        <Form.Select
+                                            value={usePhase1Styling ? 'phase1' : 'updated'}
+                                            onChange={handleStylingChange}
+                                        >
+                                            <option value="updated">Updated Styling</option>
+                                            <option value="phase1">Use Phase 1 Styling</option>
+                                        </Form.Select>
+                                    </Form.Group>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    </Row>
 
-                <ConfirmationDialog
-                    show={showStyleConfirmation}
-                    onConfirm={confirmStylingChange}
-                    onCancel={cancelStylingChange}
-                    message={`Are you sure you want to change to the ${pendingStyleVersion === 'phase1' ? 'Phase 1' : 'Updated'} UI Style? This will affect the appearance for all users.`}
-                />
+                    <ConfirmationDialog
+                        show={showConfirmation}
+                        onConfirm={confirmSurveyVersionChange}
+                        onCancel={cancelSurveyVersionChange}
+                        message={`Are you sure you want to change to Survey Version ${pendingSurveyVersion}? This action may affect ongoing surveys.`}
+                    />
 
-                <Query
-                    query={GET_USERS}
-                    variables={{ caller: { username: currentUser.username, sessionId } }}
-                    fetchPolicy='no-cache'
-                    skip={!sessionId || !currentUser}
-                >
-                    {({ loading, error, data }) => {
-                        if (loading) return <div className="loading">Loading ...</div>;
-                        if (error) return <div className="error">Error: {error.message}</div>;
+                    <ConfirmationDialog
+                        show={showTextEvalConfirmation}
+                        onConfirm={confirmTextEvalChange}
+                        onCancel={cancelTextEvalChange}
+                        message={`Are you sure you want to change to Text-Based Evaluation "${pendingTextEval}"? This will affect which scenarios are loaded for text-based experiments.`}
+                    />
 
-                        const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [] };
+                    <ConfirmationDialog
+                        show={showStyleConfirmation}
+                        onConfirm={confirmStylingChange}
+                        onCancel={cancelStylingChange}
+                        message={`Are you sure you want to change to the ${pendingStyleVersion === 'phase1' ? 'Phase 1' : 'Updated'} UI Style? This will affect the appearance for all users.`}
+                    />
 
-                        let adminSelectedOptions = [];
-                        let evaluatorSelectedOptions = [];
-                        let experimenterSelectedOptions = [];
-                        let adeptSelectedOptions = [];
+                    <Query
+                        query={GET_USERS}
+                        variables={{ caller: { username: currentUser.username, sessionId } }}
+                        fetchPolicy='no-cache'
+                        skip={!sessionId || !currentUser}
+                    >
+                        {({ loading, error, data }) => {
+                            if (loading) return <div className="loading">Loading ...</div>;
+                            if (error) return <div className="error">Error: {error.message}</div>;
 
-                        const users = data[getUsersQueryName].filter((x) => x.approved);
-                        for (let i = 0; i < users.length; i++) {
-                            for (let k in nonSelected) {
-                                nonSelected[k].push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                            const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [] };
+
+                            let adminSelectedOptions = [];
+                            let evaluatorSelectedOptions = [];
+                            let experimenterSelectedOptions = [];
+                            let adeptSelectedOptions = [];
+
+                            const users = data[getUsersQueryName].filter((x) => x.approved);
+                            for (let i = 0; i < users.length; i++) {
+                                for (let k in nonSelected) {
+                                    nonSelected[k].push({ value: users[i].username, label: users[i].username + " (" + (users[i].emails !== undefined ? users[i].emails[0].address : "") + ")" });
+                                }
+                                if (users[i].admin) {
+                                    adminSelectedOptions.push(users[i].username);
+                                }
+
+                                if (users[i].evaluator) {
+                                    evaluatorSelectedOptions.push(users[i].username);
+                                }
+
+                                if (users[i].experimenter) {
+                                    experimenterSelectedOptions.push(users[i].username);
+                                }
+
+                                if (users[i].adeptUser) {
+                                    adeptSelectedOptions.push(users[i].username);
+                                }
                             }
-                            if (users[i].admin) {
-                                adminSelectedOptions.push(users[i].username);
-                            }
 
-                            if (users[i].evaluator) {
-                                evaluatorSelectedOptions.push(users[i].username);
-                            }
-
-                            if (users[i].experimenter) {
-                                experimenterSelectedOptions.push(users[i].username);
-                            }
-
-                            if (users[i].adeptUser) {
-                                adeptSelectedOptions.push(users[i].username);
-                            }
-                        }
-
-                        return (
-                            <>
-                                <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                            </>
-                        );
-                    }}
-                </Query>
-            </>}
+                            return (
+                                <>
+                                    <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                </>
+                            );
+                        }}
+                    </Query>
+                </>}
         </Container>
     );
 }
