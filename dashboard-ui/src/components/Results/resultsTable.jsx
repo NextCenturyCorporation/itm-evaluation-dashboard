@@ -77,7 +77,9 @@ class ResultsTable extends React.Component {
             alignmentTarget: null,
             hideEmpty: true,
             expandAllVersion: 0,
-            collapseAllVersion: 0
+            collapseAllVersion: 0,
+            selectedIndex: 0,
+            truncateLong: true
         }
     }
 
@@ -108,13 +110,11 @@ class ResultsTable extends React.Component {
         });
     };
 
-    handleExpandAll = () => {
-        this.setState(s => ({ expandAllVersion: s.expandAllVersion + 1 }));
-    };
 
-    handleCollapseAll = () => {
-        this.setState(s => ({ collapseAllVersion: s.collapseAllVersion + 1 }));
-    };
+    handleExpandAll = () => this.setState({ truncateLong: false });
+    handleCollapseAll = () => this.setState({ truncateLong: true });
+
+    selectCommand = (index) => this.setState({ selectedIndex: index });
 
     setEval(target) {
         this.setState({
@@ -122,7 +122,8 @@ class ResultsTable extends React.Component {
             adm: "",
             scenario: "",
             ADMQueryString: target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name",
-            alignmentTarget: null
+            alignmentTarget: null,
+            selectedIndex: 0
         });
     }
 
@@ -130,20 +131,23 @@ class ResultsTable extends React.Component {
         this.setState({
             scenario: target,
             adm: "",
-            alignmentTarget: null
+            alignmentTarget: null,
+            selectedIndex: 0
         });
     }
 
     setPerformerADM(target) {
         this.setState({
             adm: target,
-            alignmentTarget: null
+            alignmentTarget: null,
+            selectedIndex: 0
         });
     }
 
     setAlignmentTarget(target) {
         this.setState({
-            alignmentTarget: target
+            alignmentTarget: target,
+            selectedIndex: 0
         });
     }
 
@@ -206,6 +210,64 @@ class ResultsTable extends React.Component {
             );
         }
     }
+
+
+    isObject = (val) => (typeof val === 'object' && !Array.isArray(val) && val !== null);
+    isEmpty = (v) =>
+        v === null || v === undefined || v === '' || v === 'Unknown' ||
+        (Array.isArray(v) && v.length === 0) ||
+        (this.isObject(v) && Object.keys(v).length === 0);
+    snakeCaseToNormalCase = (s) => s.replace(/_/g, ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+    truncateText = (s) => {
+        if (!this.state.truncateLong || typeof s !== 'string') return s;
+        const max = 200;
+        return s.length > max ? `${s.slice(0, max)}…` : s;
+    };
+    renderNestedItemsInline = (item, response = null) => {
+        if (this.isObject(item)) {
+            return this.renderNestedTableInline(item, response);
+        } else if (Array.isArray(item)) {
+            return <>{item.filter(el => (this.state.hideEmpty ? !this.isEmpty(el) : true))
+                       .map((el, i) => <React.Fragment key={i}>{this.renderNestedItemsInline(el)}</React.Fragment>)}</>;
+        } else {
+            return <span>{this.truncateText(item)}</span>;
+        }
+    };
+    renderNestedTableInline = (tableData, response = null) => {
+        const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] === 'APPLY_TREATMENT';
+        const character = tableData['character'];
+        const location = tableData['location'];
+        return (
+            <Table size="small" className="kv-table">
+                <TableBody>
+                    {Object.entries(tableData)
+                        .filter(([_, v]) => (this.state.hideEmpty ? !this.isEmpty(v) : true))
+                        .map(([key, value], i) => {
+                            if (isTreatment && response && key === 'treatment') {
+                                for (const c of (response?.characters ?? [])) {
+                                    if (c['id'] === character) {
+                                        for (const injury of c['injuries']) {
+                                            if (injury['location'] === location) {
+                                                if (injury['treatments_applied'])
+                                                    value = `${value} (current count: ${injury['treatments_applied']})`;
+                                                break;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            return (
+                                <TableRow key={i} className="kv-row">
+                                    <TableCell className='kv-key'><strong>{this.snakeCaseToNormalCase(key)}</strong></TableCell>
+                                    <TableCell className='kv-val'>{this.renderNestedItemsInline(value)}</TableCell>
+                                </TableRow>
+                            );
+                        })}
+                </TableBody>
+            </Table>
+        );
+    };
 
     render() {
         return (
@@ -426,22 +488,43 @@ class ResultsTable extends React.Component {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className='paper-container command-list'>
-                                                            <TableContainer>
-                                                                <Table className='itm-table' aria-label="commands">
-                                                                    <TableBody>
-                                                                        {testData.history.map((item, index) => (
-                                                                            <ActionRow
-                                                                                key={item.command + index}
-                                                                                item={item}
-                                                                                hideEmpty={this.state.hideEmpty}
-                                                                                expandAllVersion={this.state.expandAllVersion}
-                                                                                collapseAllVersion={this.state.collapseAllVersion}
-                                                                            />
-                                                                        ))}
-                                                                    </TableBody>
-                                                                </Table>
-                                                            </TableContainer>
+                                                        <div className="results-body">
+                                                            <div className="commands-pane">
+                                                                <div className="commands-title">Commands</div>
+                                                                <ul className="commands-timeline" role="list">
+                                                                    {testData.history.map((h, i) => (
+                                                                        <li
+                                                                            key={`${h.command}_${i}`}
+                                                                            className={`command-item ${i === this.state.selectedIndex ? 'active' : ''}`}
+                                                                            onClick={() => this.selectCommand(i)}
+                                                                            title={h.command}
+                                                                        >
+                                                                            <span className="command-name">{h.command}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                            <div className="details-pane">
+                                                                {(() => {
+                                                                    const hist = Array.isArray(testData?.history) ? testData.history : [];
+                                                                    const idx = Math.min(this.state.selectedIndex, Math.max(hist.length - 1, 0));
+                                                                    const sel = hist[idx] || {};
+                                                                    return (
+                                                                        <>
+                                                                            <div className="details-section">
+                                                                                <div className="details-title">Parameters</div>
+                                                                                {Object.keys(sel?.parameters || {}).length === 0
+                                                                                    ? <div className="muted">None</div>
+                                                                                    : this.renderNestedItemsInline(sel.parameters, sel.command === 'Take Action' ? sel.response : null)}
+                                                                            </div>
+                                                                            <div className="details-section">
+                                                                                <div className="details-title">Response</div>
+                                                                                {this.renderNestedItemsInline(sel?.response)}
+                                                                            </div>
+                                                                        </>
+                                                                    );
+                                                                })()}
+                                                            </div>
                                                         </div>
                                                     </>
                                                 }
