@@ -2,8 +2,9 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys } from "../__mocks__/testUtils";
+import { countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys, takePhase1TextScenario } from "../__mocks__/testUtils";
 
+const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 let firstPid = 0;
 
 describe('Test email-entry text scenarios', () => {
@@ -149,7 +150,7 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
-        await pressAllKeys(page, 'Scenario Details');
+        await pressAllKeys(page, IS_PH1 ? 'Move Springer to evac' : 'Scenario Details');
     }, 10000);
 
     it('text-scenario through email-entry should be navigable', async () => {
@@ -168,7 +169,12 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
-        await takePhase2TextScenario(page);
+        if (IS_PH1) {
+            await takePhase1TextScenario(page);
+        }
+        else {
+            await takePhase2TextScenario(page);
+        }
         await page.waitForSelector('text/Uploading documents');
 
     }, 40000);

@@ -5,6 +5,7 @@
 import { pressAllKeys, startAdeptQualtrixSurvey, takePhase2TextScenario } from "../__mocks__/testUtils";
 import { isDefined } from "../components/AggregateResults/DataFunctions";
 
+const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 
 describe('Test adept qualtrix entry method', () => {
     beforeEach(async () => {
@@ -34,10 +35,7 @@ describe('Test adept qualtrix entry method', () => {
 
     it('any key combo during text scenario should have no effect on progress', async () => {
         await startAdeptQualtrixSurvey(page);
-        // June/July
-        await pressAllKeys(page, "Scenario Details");
-        // Phase 1
-        // await pressAllKeys(page, 'Treat Casualty O with');
+        await pressAllKeys(page, IS_PH1 ? "Treat Casualty O with" : "Scenario Details");
     }, 30000);
 
     it('text-scenario through ADEPT Qualtrix should be navigable and end with survey', async () => {
@@ -47,59 +45,61 @@ describe('Test adept qualtrix entry method', () => {
         await page.waitForSelector('text/In the final part of the study,', { timeout: 10000000 });
         await pressAllKeys(page, 'In the final part of the study,');
         // very long test because it connects to ST and ADEPT servers to send fake responses
-    }, 10000000);
+    }, 80000000);
 
     it('any key combo during survey should have no effect on progress', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true&startSurvey=true&pid=123`);
-        await page.waitForSelector('text/In the final part of the study,', { timeout: 500000 });
+        await page.waitForSelector('text/In the final part of the study,', { timeout: 500 });
         await pressAllKeys(page, 'In the final part of the study,');
     });
 
     it('survey through ADEPT Qualtrix should be navigable', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true&startSurvey=true&pid=123`);
-        await page.waitForSelector('text/In the final part of the study,', { timeout: 50000000 });
+        await page.waitForSelector('text/In the final part of the study,', { timeout: 500 });
         await page.$$eval('input', buttons => {
             Array.from(buttons).find(btn => btn.value == 'Next').click();
         });
 
         // phase 1 only
-        // await page.waitForSelector('text/Note that in some scenarios', { timeout: 50000 });
-        // await page.$$eval('input', buttons => {
-        //     Array.from(buttons).find(btn => btn.value == 'Next').click();
-        // });
-        // await page.waitForSelector('text/Situation', { timeout: 500 });
-        // let pageNum = 3;
-        // let medics = 0;
-        // while (medics < 3) {
-        //     await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
-        //     await page.focus('input[type="radio"]');
-        //     for (let i = 0; i < 4; i++) {
-        //         await page.keyboard.press(' ');
-        //         await page.keyboard.press('Tab');
-        //     }
-        //     await page.$$eval('input', buttons => {
-        //         Array.from(buttons).find(btn => btn.value == 'Next').click();
-        //     });
-        //     medics += 1;
-        //     pageNum += 1;
-        // }
-        // // reached comparison page!
-        // await page.waitForSelector('text/Medic-B21 vs Medic-V17', { timeout: 500 });
-        // await page.waitForSelector('text/Medic-B16 vs Medic-B21', { timeout: 500 });
-        // await page.focus('input[type="radio"]');
-        // // two MC followed by short answer, twice
-        // for (let i = 0; i < 2; i++) {
-        //     await page.keyboard.press(' ');
-        //     await page.keyboard.press('Tab');
-        //     await page.keyboard.press(' ');
-        //     await page.keyboard.press('Tab');
-        //     await page.keyboard.press('m');
-        //     await page.keyboard.press('Tab');
-        //     await page.keyboard.press('Tab');
-        // }
-        // await page.$$eval('input', buttons => {
-        //     Array.from(buttons).find(btn => btn.value == 'Next').click();
-        // });
+        if (IS_PH1) {
+            await page.waitForSelector('text/Note that in some scenarios', { timeout: 50000 });
+            await page.$$eval('input', buttons => {
+                Array.from(buttons).find(btn => btn.value == 'Next').click();
+            });
+            await page.waitForSelector('text/Situation', { timeout: 500 });
+            let pageNum = 3;
+            let medics = 0;
+            while (medics < 3) {
+                await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+                await page.focus('input[type="radio"]');
+                for (let i = 0; i < 4; i++) {
+                    await page.keyboard.press(' ');
+                    await page.keyboard.press('Tab');
+                }
+                await page.$$eval('input', buttons => {
+                    Array.from(buttons).find(btn => btn.value == 'Next').click();
+                });
+                medics += 1;
+                pageNum += 1;
+            }
+            // reached comparison page!
+            await page.waitForSelector('text/Medic-B21 vs Medic-V17', { timeout: 500 });
+            await page.waitForSelector('text/Medic-B16 vs Medic-B21', { timeout: 500 });
+            await page.focus('input[type="radio"]');
+            // two MC followed by short answer, twice
+            for (let i = 0; i < 2; i++) {
+                await page.keyboard.press(' ');
+                await page.keyboard.press('Tab');
+                await page.keyboard.press(' ');
+                await page.keyboard.press('Tab');
+                await page.keyboard.press('m');
+                await page.keyboard.press('Tab');
+                await page.keyboard.press('Tab');
+            }
+            await page.$$eval('input', buttons => {
+                Array.from(buttons).find(btn => btn.value == 'Next').click();
+            });
+        }
         // reached post-scenario measures
         await page.waitForSelector('text/What was the biggest influence on your delegation decision between different medics?', { timeout: 500 });
         // answer short-text question
@@ -111,31 +111,35 @@ describe('Test adept qualtrix entry method', () => {
             await page.keyboard.press(' ');
         }
         // skip past roles
-        for (let i = 0; i < 9; i++) {
+        for (let i = 0; i < (IS_PH1 ? 8 : 9); i++) {
             await page.keyboard.press('Tab');
         }
-        await page.keyboard.press('m');
-        // answer the rest
-        for (let i = 0; i < 5; i++) {
-            await page.keyboard.press('Tab');
-            await page.keyboard.press(' ');
-        }
-        // skip past roles
-        for (let i = 0; i < 7; i++) {
-            await page.keyboard.press('Tab');
-        }
-        for (let i = 0; i < 2; i++) {
-            await page.keyboard.press('Tab');
-            await page.keyboard.press(' ');
-        }
-        await page.keyboard.press('m');
-        for (let i = 0; i < 2; i++) {
-            await page.keyboard.press('Tab');
-            await page.keyboard.press(' ');
-        }
-        // skip past environments
-        for (let i = 0; i < 7; i++) {
-            await page.keyboard.press('Tab');
+
+        if (!IS_PH1) {
+        // phase 2 
+            await page.keyboard.press('m');
+            // answer the rest
+            for (let i = 0; i < 5; i++) {
+                await page.keyboard.press('Tab');
+                await page.keyboard.press(' ');
+            }
+            // skip past roles
+            for (let i = 0; i < 7; i++) {
+                await page.keyboard.press('Tab');
+            }
+            for (let i = 0; i < 2; i++) {
+                await page.keyboard.press('Tab');
+                await page.keyboard.press(' ');
+            }
+            await page.keyboard.press('m');
+            for (let i = 0; i < 2; i++) {
+                await page.keyboard.press('Tab');
+                await page.keyboard.press(' ');
+            }
+            // skip past environments
+            for (let i = 0; i < 7; i++) {
+                await page.keyboard.press('Tab');
+            }
         }
         for (let i = 0; i < 3; i++) {
             await page.keyboard.press('Tab');

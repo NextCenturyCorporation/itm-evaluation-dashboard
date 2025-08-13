@@ -167,8 +167,7 @@ export async function pressAllKeys(page, uniqueExpectedText) {
         'VolumeUp', 'Tab'];
     for (const key of keysToPress) {
         await page.keyboard.press(key);
-        // first question in vol4 for ST should be visible no matter what key is pressed
-        await page.waitForSelector(`text/${uniqueExpectedText}`, { timeout: 50000 });
+        await page.waitForSelector(`text/${uniqueExpectedText}`, { timeout: 5000 });
     }
 }
 
@@ -176,7 +175,7 @@ export async function takePhase1TextScenario(page) {
     let pageNum = 1;
     let scenarios = 0;
     while (scenarios < 5) {
-        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 50000 });
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
         await page.focus('input[type="radio"]');
         await page.keyboard.press(' ');
         await page.keyboard.press('Tab');
@@ -196,7 +195,7 @@ export async function takePhase2TextScenario(page) {
     let pageNum = 1;
     let scenarios = 0;
     while (scenarios < 4) {
-        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 50000 });
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
         await page.focus('input[type="radio"]');
         await page.keyboard.press(' ');
         await page.keyboard.press('Tab');

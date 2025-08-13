@@ -7,6 +7,8 @@ import alignmentIDs from '../components/TextBasedScenarios/alignmentID.json'
 
 const ADEPT_URL = process.env.REACT_APP_ADEPT_URL;
 const SOARTECH_URL = process.env.REACT_APP_SOARTECH_URL;
+const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
+
 
 // Note: soartech has a mix of 201 or 200 being success codes, hence different expect statements
 
@@ -58,10 +60,10 @@ describe('TA1 Server Tests', () => {
       // dummy probe response for adept
       const responsePayload = {
         response: {
-          choice: 'Response 2-B',
+          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'July2025-MF-eval'
+          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
         },
         session_id: sessionId
       };
@@ -104,10 +106,10 @@ describe('TA1 Server Tests', () => {
 
       const responsePayload = {
         response: {
-          choice: 'Response 2-B',
+          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'July2025-MF-eval'
+          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
         },
         session_id: sessionId
       };
@@ -150,10 +152,10 @@ describe('TA1 Server Tests', () => {
 
       const responsePayload = {
         response: {
-          choice: 'Response 2-B',
+          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'July2025-MF-eval'
+          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
         },
         session_id: sessionId
       };
@@ -169,7 +171,7 @@ describe('TA1 Server Tests', () => {
         {
           params: {
             session_id: sessionId,
-            kdma_id: 'merit'
+            kdma_id: IS_PH1 ? 'Moral judgement' : 'merit'
           }
         }
       );
@@ -359,10 +361,10 @@ describe('TA1 Server Tests', () => {
       // dummy probe responses
       const responsePayload = {
         response: {
-          choice: 'Response 2-B',
+          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
           justification: 'justification',
           probe_id: 'Probe 2',
-          scenario_id: 'July2025-MF-eval'
+          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
         }
       };
 
@@ -383,7 +385,6 @@ describe('TA1 Server Tests', () => {
           params: {
             session_id_1: sessionId1,
             session_id_2: sessionId2,
-            //kdma_filter: 'merit' // we can specify but dont need to
           }
         }
       );

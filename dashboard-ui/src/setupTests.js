@@ -44,7 +44,7 @@ beforeAll(async () => {
 
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
-            version: '7',
+            version: process.env.REACT_APP_TEST_SURVEY_VERSION,
         });
 
         await surveyVersion.save();
