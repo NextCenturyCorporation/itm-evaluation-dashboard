@@ -116,6 +116,26 @@ nav.MuiList-root.nav-list.MuiList-padding {
   padding-right: clamp(8px, 2vw, 24px);
   align-items: stretch;
 }
+.summary-grid.has-1-kdma {
+  /* Four columns: split first row into 2+2, second row inserts kdma1 next to Score */
+  grid-template-areas:
+    "scenario scenario adm adm"
+    "score    kdma1    alignTarget controls";
+  grid-template-columns: minmax(200px, .8fr) minmax(200px, .8fr) minmax(320px, 1.1fr) minmax(260px, .9fr);
+}
+
+.summary-grid.has-2-kdma {
+  /* Five columns: Score | KDMA1 | KDMA2 | AlignTarget | Controls (controls stacks vertically) */
+  grid-template-areas:
+    "scenario scenario adm adm adm"
+    "score    kdma1    kdma2  alignTarget controls";
+  grid-template-columns:
+    minmax(200px, .7fr)
+    minmax(200px, .7fr)
+    minmax(200px, .7fr)
+    minmax(320px, 1fr)
+    minmax(220px, .7fr);
+}
 
 .summary-card {
   background: #fff;
@@ -133,6 +153,8 @@ nav.MuiList-root.nav-list.MuiList-padding {
 .card--score    { grid-area: score; }
 .card--align    { grid-area: alignTarget; }
 .card--adm      { grid-area: adm; }
+.card--kdma1    { grid-area: kdma1; }
+.card--kdma2    { grid-area: kdma2; }
 
 .controls-cell {
   grid-area: controls;
@@ -142,6 +164,12 @@ nav.MuiList-root.nav-list.MuiList-padding {
   gap: clamp(14px, 2vw, 24px);
   padding: 12px;
   height: 100%;
+}
+
+.controls-cell.stack {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 @media (max-width: 1100px) {
@@ -154,6 +182,22 @@ nav.MuiList-root.nav-list.MuiList-padding {
   }
 }
 
+.summary-grid.has-1-kdma {
+    grid-template-areas:
+      "scenario adm"
+      "score    kdma1"
+      "alignTarget controls";
+    grid-template-columns: 1fr 1fr;
+  }
+.summary-grid.has-2-kdma {
+    grid-template-areas:
+      "scenario adm"
+      "score    kdma1"
+      "kdma2    alignTarget"
+      "controls controls";
+    grid-template-columns: 1fr 1fr;
+  }
+
 @media (max-width: 720px) {
   .summary-grid {
     grid-template-areas:
@@ -165,6 +209,19 @@ nav.MuiList-root.nav-list.MuiList-padding {
     grid-template-columns: 1fr;
   }
 }
+
+.summary-grid.has-1-kdma,
+.summary-grid.has-2-kdma {
+    grid-template-areas:
+      "scenario"
+      "adm"
+      "score"
+      "kdma1"
+      "kdma2"
+      "alignTarget"
+      "controls";
+    grid-template-columns: 1fr;
+  }
 
 .command-list { padding-top: 4px; }
 .cmd-row { border-bottom: none !important; }

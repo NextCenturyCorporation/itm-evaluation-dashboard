@@ -246,13 +246,28 @@ class ResultsTable extends React.Component {
         }
     }
 
-    isEmpty = (v) => v === null || v === undefined || v === '' || v === 'Unknown' || (Array.isArray(v) && v.length === 0) || (this.isObject(v) && Object.keys(v).length === 0);
+
+    isEmpty = (v) => this.deepIsEmpty(v);
+
+    deepIsEmpty = (v) => {
+        if (v === null || v === undefined) return true;
+        if (typeof v === 'string') return v.trim() === '' || v === 'Unknown' || v === '—' || v === '-';
+        if (Array.isArray(v)) {
+            return v.every((el) => this.deepIsEmpty(el));
+        }
+        if (this.isObject(v)) {
+            const entries = Object.entries(v);
+            if (entries.length === 0) return true;
+            return entries.every(([, val]) => this.deepIsEmpty(val));
+        }
+        return false;
+    };
 
     renderNestedItemsInline = (item, response = null) => {
         if (this.isObject(item)) {
             return this.renderNestedTableInline(item, response);
         } else if (Array.isArray(item)) {
-            return <>{item.filter(el => (this.state.hideEmpty ? !this.isEmpty(el) : true))
+            return <>{item.filter(el => (this.state.hideEmpty ? !this.deepIsEmpty(el) : true))
                        .map((el, i) => <React.Fragment key={i}>{this.renderNestedItemsInline(el)}</React.Fragment>)}</>;
         } else {
             return <span>{this.truncateText(item)}</span>;
@@ -267,7 +282,7 @@ class ResultsTable extends React.Component {
             <Table size="small" className="kv-table">
                 <TableBody>
                     {Object.entries(tableData)
-                        .filter(([_, v]) => (this.state.hideEmpty ? !this.isEmpty(v) : true))
+                        .filter(([_, v]) => (this.state.hideEmpty ? !this.deepIsEmpty(v) : true))
                         .map(([key, value], i) => {
                             if (isTreatment && response && key === 'treatment') {
                                 for (const c of (response?.characters ?? [])) {
@@ -363,6 +378,46 @@ class ResultsTable extends React.Component {
       if (Number.isFinite(number)) return `Probe-${number}`;
       return null;
     };
+
+    extractKdmaPairsFromHistory = (history) => {
+        if (!Array.isArray(history) || history.length === 0) return [];
+        const root = history[history.length - 1]?.response;
+        if (!root) return [];
+        const pairs = [];
+        const take = (name, value) => {
+            const num = typeof value === 'number' ? value : parseFloat(value);
+            if (!name || !Number.isFinite(num)) return;
+            pairs.push({ name: String(name), value: num });
+        };
+        const visit = (node) => {
+            if (!node) return;
+            if (Array.isArray(node)) { node.forEach(visit); return; }
+            if (typeof node === 'object') {
+                const keys = Object.keys(node).map(k => k.toLowerCase());
+                if (keys.includes('kdma') && keys.includes('value')) {
+                    take(node.kdma ?? node.Kdma ?? node.kdma_name ?? node.name, node.value ?? node.Value);
+                }
+                for (const [k, v] of Object.entries(node)) {
+                    if (/^kdma[\s_-]*values?$/i.test(k) && Array.isArray(v)) {
+                        v.forEach(el => {
+                            if (el && typeof el === 'object') take(el.kdma ?? el.Kdma ?? el.kdma_name ?? el.name, el.value ?? el.Value);
+                        });
+                    }
+                }
+                for (const val of Object.values(node)) visit(val);
+            }
+        };
+        visit(root);
+        const seen = new Set();
+        const out = [];
+        for (const p of pairs) {
+            const key = p.name.toLowerCase();
+            if (!seen.has(key)) { seen.add(key); out.push(p); }
+        }
+        return out.slice(0, 2);
+    };
+
+    niceKdmaName = (s) => { return s ? s[0].toUpperCase() + s.slice(1) : '';};
 
     render() {
         return (
@@ -543,7 +598,12 @@ class ResultsTable extends React.Component {
                                                 {testData !== null && testData !== undefined &&
                                                     <>
                                                         <div className="results-header">
-                                                            <div className="summary-grid">
+                                                            {(() => {
+                                                                const kdmas = this.extractKdmaPairsFromHistory(testData.history);
+                                                                const gridClass =
+                                                                    `summary-grid ${kdmas.length===1 ? 'has-1-kdma' : ''} ${kdmas.length>=2 ? 'has-2-kdma' : ''}`;
+                                                                return (
+                                                            <div className={gridClass}>
                                                                 <div className="summary-card card--scenario">
                                                                     <div className="summary-label">Scenario</div>
                                                                     <div className="summary-value">{this.state.scenario}</div>
@@ -565,13 +625,27 @@ class ResultsTable extends React.Component {
                                                                         })()}
                                                                     </div>
                                                                 </div>
+                                                                {kdmas[0] && (
+                                                                  <div className="summary-card card--kdma1">
+                                                                    <div className="summary-label">{this.niceKdmaName(kdmas[0].name)} KDMA Value</div>
+                                                                    <div className="summary-value">
+                                                                      {Number.isFinite(kdmas[0].value) ? kdmas[0].value.toFixed(5) : 'N/A'}
+                                                                    </div>
+                                                                  </div>
+                                                                )}
+                                                                {kdmas[1] && (
+                                                                  <div className="summary-card card--kdma2">
+                                                                    <div className="summary-label">{this.niceKdmaName(kdmas[1].name)} KDMA Value</div>
+                                                                    <div className="summary-value">
+                                                                      {Number.isFinite(kdmas[1].value) ? kdmas[1].value.toFixed(5) : 'N/A'}
+                                                                    </div>
+                                                                  </div>
+                                                                )}
                                                                 <div className="summary-card card--align">
                                                                     <div className="summary-label">Alignment Target</div>
                                                                     <div className="summary-value">{this.state.alignmentTarget ?? 'N/A'}</div>
                                                                 </div>
-                                                                <div className="controls-cell">
-                                                                    <button className="control-btn" onClick={this.handleExpandAll}>Expand</button>
-                                                                    <button className="control-btn" onClick={this.handleCollapseAll}>Collapse</button>
+                                                                <div className={`controls-cell ${kdmas.length>=2 ? 'stack' : ''}`}>
                                                                     <FormControlLabel
                                                                         className="hide-empty-checkbox"
                                                                         control={
@@ -583,8 +657,20 @@ class ResultsTable extends React.Component {
                                                                         }
                                                                         label="Hide Empty Fields"
                                                                     />
+                                                                    <FormControlLabel
+                                                                        className="truncate-checkbox"
+                                                                        control={
+                                                                            <Checkbox
+                                                                                size="small"
+                                                                                checked={this.state.truncateLong}
+                                                                                onChange={(e) => this.setState({ truncateLong: e.target.checked })}
+                                                                            />
+                                                                        }
+                                                                        label="Truncate Text"
+                                                                    />
                                                                 </div>
-                                                            </div>
+                                                            </div>);
+                                                            })()}
                                                         </div>
                                                         <div className="results-body">
                                                           <div className="left-col">
