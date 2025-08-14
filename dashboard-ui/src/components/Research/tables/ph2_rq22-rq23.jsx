@@ -159,7 +159,7 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Aligned Server Session ID'] = '-';
                     }
 
-                    const mapKey = scenario + "_" + target + "_" + aligned.alignment;
+                    const mapKey = scenario + "_" + target + "_" + aligned?.alignment;
 
                     const rawProbes = probeMap[mapKey] || [];
 
