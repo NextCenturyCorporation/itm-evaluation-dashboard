@@ -305,40 +305,64 @@ class ResultsTable extends React.Component {
         return s.length > max ? `${s.slice(0, max)}…` : s;
     };
 
+    computeAttribute = (evalNumber, scenarioId = '', targetStr = '') => {
+      const s = String(scenarioId || '').toLowerCase();
+      const t = String(targetStr || '').toLowerCase();
+
+      if (evalNumber >= 8) {
+        if (s.includes('mf') && s.includes('af')) return 'AF-MF';
+        if (s.includes('mf')) return 'MF';
+        if (s.includes('af')) return 'AF';
+        if (s.includes('ss')) return 'SS';
+        return 'PS';
+      }
+
+      if (s.includes('qol')) return 'QOL';
+      if (s.includes('vol')) return 'VOL';
+      if (t.includes('moral')) return 'MJ';
+      return 'IO';
+    };
 
     getDisplayCommandName = (histItem) => {
         const base = histItem?.command || '';
         if (typeof base === 'string' && base.toLowerCase() === 'respond to ta1 probe') {
-            const label = this.deriveProbeLabel(histItem?.parameters || {}, this.state.scenario);
+            const label = this.deriveProbeLabel(histItem?.parameters || {});
             return label ? `${base} (${label})` : base;
         }
         return base;
     }
 
-    deriveProbeLabel = (params, scenarioFromState) => {
-        const raw = params?.probe_id ?? '';
-        if (!raw || typeof raw !== 'string') return null;
+    deriveProbeLabel = (params) => {
+      const raw = String(params?.probe_id || '').trim();
+      if (!raw) return null;
 
-        const std = raw.match(/^Probe-([A-Za-z0-9]+)-(\d+)$/i);
-        if (std) {
-            return `Probe-${std[1].toUpperCase()}-${parseInt(std[2], 10)}`;
+      const std = /^Probe-([A-Za-z]+)-(\d+)$/i.exec(raw);
+      if (std) {
+        return `Probe-${std[1].toUpperCase()}-${parseInt(std[2], 10)}`;
+      }
+
+      const numMatch = /(?:^|\b)Probe[^0-9]*([0-9]+)\b/i.exec(raw);
+      const number = numMatch ? parseInt(numMatch[1], 10) : null;
+
+      let attrFromRaw = null;
+      const allowed = ['AF','MF','AF-MF','MJ','IO','QOL','VOL','SS','PS'];
+      const prefix = raw.split(/\.?Probe/i)[0];
+      if (prefix) {
+        const tokens = prefix.split(/[-_\.]/);
+        for (const tok of tokens) {
+          const u = tok.toUpperCase();
+          if (allowed.includes(u)) { attrFromRaw = u; break; }
         }
+      }
+      
+      const targetHint = params?.target_id || this.state.alignmentTarget || '';
+      const attrComputed = this.computeAttribute(this.state.evalNumber, this.state.scenario, targetHint);
+      const attr = attrFromRaw || attrComputed || null;
 
-        const numMatch = raw.match(/probe[^0-9]*?(\d+)/i);
-        const n = numMatch ? parseInt(numMatch[1]) : null;
-
-        let attr = null;
-        const scenarioId = scenarioFromState || params?.scenario_id || '';
-        const tokens = String(scenarioId).split(/[^A-Za-z0-9]+/).filter(Boolean);
-        const lettersOnly = tokens.find(t => /^[A-Z]{2,5}$/.test(t));
-        const alphaNum    = tokens.find(t => /^[A-Z0-9]{2,5}$/.test(t));
-        const token = lettersOnly || alphaNum;
-        if (token) attr = token.toUpperCase();
-
-        if (attr && Number.isFinite(n)) return `Probe-${attr}-${n}`;
-        if (Number.isFinite(n)) return `Probe-${n}`;
-        return null;
-    }
+      if (attr && Number.isFinite(number)) return `Probe-${attr}-${number}`;
+      if (Number.isFinite(number)) return `Probe-${number}`;
+      return null;
+    };
 
     render() {
         return (

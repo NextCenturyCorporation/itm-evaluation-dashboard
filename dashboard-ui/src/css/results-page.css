@@ -330,7 +330,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   font-weight: 600;
 }
 .command-name { display: block; overflow: hidden; }
-.command-name.autofit { line-height: 1.2; } /* smoother vertical rhythm */
+.command-name.autofit { line-height: 1.2; }
 .right-col {
   grid-column: 2 / span 2;
   display: flex;
