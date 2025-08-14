@@ -59,6 +59,46 @@ export const multiSort = (a, b) => {
 };
 
 
+function AutoFitText({ text, max = 16, min = 11, className = '' }) {
+  const wrapRef = React.useRef(null);
+  const spanRef = React.useRef(null);
+  const [size, setSize] = React.useState(max);
+
+  const fit = React.useCallback(() => {
+    const wrap = wrapRef.current;
+    const span = spanRef.current;
+    if (!wrap || !span) return;
+    let s = max;
+    span.style.fontSize = `${s}px`;
+    const maxWidth = Math.max(0, wrap.clientWidth - 4);
+    while (s > min && span.scrollWidth > maxWidth) {
+      s -= 0.2;
+      span.style.fontSize = `${s}px`;
+    }
+    setSize(s);
+  }, [max, min, text]);
+
+  React.useEffect(() => {
+    fit();
+  }, [fit, text]);
+
+  React.useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap || !('ResizeObserver' in window)) return;
+    const ro = new ResizeObserver(() => fit());
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [fit]);
+
+  return (
+    <div ref={wrapRef} className={`command-name autofit ${className}`}>
+      <span ref={spanRef} style={{ fontSize: `${size}px`, whiteSpace: 'nowrap', display: 'inline-block' }}>
+        {text}
+      </span>
+    </div>
+  );
+}
+
 class ResultsTable extends React.Component {
 
     constructor(props) {
@@ -265,6 +305,41 @@ class ResultsTable extends React.Component {
         return s.length > max ? `${s.slice(0, max)}…` : s;
     };
 
+
+    getDisplayCommandName = (histItem) => {
+        const base = histItem?.command || '';
+        if (typeof base === 'string' && base.toLowerCase() === 'respond to ta1 probe') {
+            const label = this.deriveProbeLabel(histItem?.parameters || {}, this.state.scenario);
+            return label ? `${base} (${label})` : base;
+        }
+        return base;
+    }
+
+    deriveProbeLabel = (params, scenarioFromState) => {
+        const raw = params?.probe_id ?? '';
+        if (!raw || typeof raw !== 'string') return null;
+
+        const std = raw.match(/^Probe-([A-Za-z0-9]+)-(\d+)$/i);
+        if (std) {
+            return `Probe-${std[1].toUpperCase()}-${parseInt(std[2], 10)}`;
+        }
+
+        const numMatch = raw.match(/probe[^0-9]*?(\d+)/i);
+        const n = numMatch ? parseInt(numMatch[1]) : null;
+
+        let attr = null;
+        const scenarioId = scenarioFromState || params?.scenario_id || '';
+        const tokens = String(scenarioId).split(/[^A-Za-z0-9]+/).filter(Boolean);
+        const lettersOnly = tokens.find(t => /^[A-Z]{2,5}$/.test(t));
+        const alphaNum    = tokens.find(t => /^[A-Z0-9]{2,5}$/.test(t));
+        const token = lettersOnly || alphaNum;
+        if (token) attr = token.toUpperCase();
+
+        if (attr && Number.isFinite(n)) return `Probe-${attr}-${n}`;
+        if (Number.isFinite(n)) return `Probe-${n}`;
+        return null;
+    }
+
     render() {
         return (
             <div className="layout">
@@ -462,13 +537,13 @@ class ResultsTable extends React.Component {
                                                                             const raw = last?.response?.score;
                                                                             const num = typeof raw === 'number' ? raw
                                                                                       : (typeof raw === 'string' ? parseFloat(raw) : NaN);
-                                                                            return Number.isFinite(num) ? num : '—';
+                                                                            return Number.isFinite(num) ? num.toFixed(5) : 'N/A';
                                                                         })()}
                                                                     </div>
                                                                 </div>
                                                                 <div className="summary-card card--align">
                                                                     <div className="summary-label">Alignment Target</div>
-                                                                    <div className="summary-value">{this.state.alignmentTarget ?? '—'}</div>
+                                                                    <div className="summary-value">{this.state.alignmentTarget ?? 'N/A'}</div>
                                                                 </div>
                                                                 <div className="controls-cell">
                                                                     <button className="control-btn" onClick={this.handleExpandAll}>Expand</button>
@@ -497,9 +572,9 @@ class ResultsTable extends React.Component {
                                                                     key={`${h.command}_${i}`}
                                                                     className={`command-item ${i === this.state.selectedIndex ? 'active' : ''}`}
                                                                     onClick={() => this.selectCommand(i)}
-                                                                    title={h.command}
+                                                                    title={this.getDisplayCommandName(h)}
                                                                   >
-                                                                    <span className="command-name">{h.command}</span>
+                                                                    <AutoFitText text={this.getDisplayCommandName(h)} />
                                                                   </li>
                                                                 ))}
                                                               </ul>

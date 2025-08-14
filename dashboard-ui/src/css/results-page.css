@@ -307,6 +307,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   margin-bottom: 6px;
   cursor: pointer;
   transition: background-color .12s ease;
+  min-height: 34px;
 }
 .command-item::before {
   content: "";
@@ -328,13 +329,8 @@ nav.MuiList-root.nav-list.MuiList-padding {
   background: #e5e7eb;
   font-weight: 600;
 }
-.command-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-}
-
+.command-name { display: block; overflow: hidden; }
+.command-name.autofit { line-height: 1.2; } /* smoother vertical rhythm */
 .right-col {
   grid-column: 2 / span 2;
   display: flex;
