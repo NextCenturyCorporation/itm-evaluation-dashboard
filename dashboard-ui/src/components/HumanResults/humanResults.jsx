@@ -52,6 +52,8 @@ const PH1_SCENARIOS = {
     "vol-ph1-eval-4": "vol-ph1-eval-4"
 };
 
+const SUMMER_SCENARIOS = ['desert-openworld', 'urban-openworld'];
+
 const PH1_MAP = {
     "DryRunEval-MJ2-eval": "phase1-adept-eval-MJ2",
     "DryRunEval-MJ4-eval": "phase1-adept-eval-MJ4",
@@ -64,9 +66,11 @@ const PH1_MAP = {
     "vol-ph1-eval-4": "vol-ph1-eval-4"
 };
 
+const USE_OPEN_WORLD = [8, 9];
+
 export default function HumanResults() {
     const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [selectedEval, setSelectedEval] = React.useState(5);
+    const [selectedEval, setSelectedEval] = React.useState(8);
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         // only pulls from network, never cached
@@ -91,11 +95,11 @@ export default function HumanResults() {
         if (data?.getAllRawSimData && data?.getAllSimAlignment) {
             const organized = {};
             for (const entry of data.getAllRawSimData) {
-                if (entry.openWorld) {
+                if (entry.openWorld && !USE_OPEN_WORLD.includes(selectedEval)) {
                     continue;
                 }
                 const version = entry.evalNumber;
-                const scene = version === 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
+                const scene = USE_OPEN_WORLD.includes(version) ? entry?._id?.split('june2025-')[1] : version === 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
                     const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && pid === x.pid && (version === 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene === x.scenario_id));
@@ -250,11 +254,11 @@ export default function HumanResults() {
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {
-                            (selectedEval === 4 ? DRE_SCENARIOS : Object.keys(PH1_SCENARIOS)).map((item) =>
+                            (selectedEval === 4 ? DRE_SCENARIOS : (selectedEval == 8 || selectedEval == 9) ? SUMMER_SCENARIOS : Object.keys(PH1_SCENARIOS)).map((item) =>
                                 <ListItem id={"scene_" + item} key={"scene_" + item}
                                     button
-                                    selected={selectedScene === (selectedEval === 4 ? item : PH1_SCENARIOS[item])}
-                                    onClick={() => { setSelectedScene(selectedEval === 4 ? item : PH1_SCENARIOS[item]); setSelectedPID(null); }}>
+                                    selected={selectedScene === ([4, 8, 9].includes(selectedEval) ? item : PH1_SCENARIOS[item])}
+                                    onClick={() => { setSelectedScene([4, 8, 9].includes(selectedEval) ? item : PH1_SCENARIOS[item]); setSelectedPID(null); }}>
                                     <ListItemText primary={item} />
                                 </ListItem>
                             )

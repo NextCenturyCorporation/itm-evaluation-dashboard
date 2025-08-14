@@ -68,6 +68,13 @@ const ADD_PARTICIPANT = gql`
     mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
         addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
     }`;
+
+export const SURVEY_VERSION_DATA = {
+    "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
+    "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
+    "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
+    "4.0": { evalName: 'Dry Run Evaluation', evalNumber: 4 }
+};
 class SurveyPage extends Component {
 
     constructor(props) {
@@ -106,13 +113,6 @@ class SurveyPage extends Component {
         }
     }
 
-    SURVEY_VERSION_DATA = {
-            "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
-            "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
-            "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
-            "4.0": { evalName: 'Dry Run Evaluation', evalNumber: 4 }
-    };
-
     setSeenScenarios = () => {
         if (this.survey.getQuestionByName("Text Scenarios Completed")) {
             const text_scenarios = this.state.validPid ? '\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Text-1']] + '\n\t' + getEnvMappingToText(this.state.surveyVersion)[this.state.envsSeen['Text-2']] : '\tInvalid Participant ID; no text scenario log. \n\tPlease double check the participant ID before continuing, or select "No" and enter an explanation.';
@@ -125,7 +125,7 @@ class SurveyPage extends Component {
     }
 
     inSurveyVersionData = () => {
-        return Object.keys(this.SURVEY_VERSION_DATA).includes(this.state.surveyVersion);
+        return Object.keys(SURVEY_VERSION_DATA).includes(this.state.surveyVersion);
     }
 
     postConfigSetup = () => {
@@ -451,7 +451,7 @@ class SurveyPage extends Component {
                     textScenarios[`${scenarioType}-text-scenario`],
                     allPages,
                     participantTextResults,
-                    this.SURVEY_VERSION_DATA[this.state.surveyVersion].evalNumber
+                    SURVEY_VERSION_DATA[this.state.surveyVersion].evalNumber
                 );
                 if (block) {
                     allBlocks.push(block);
@@ -773,7 +773,7 @@ class SurveyPage extends Component {
         // instead of repeating near duplicate code blocks
         
 
-        const versionData = this.SURVEY_VERSION_DATA[this.state.surveyVersion];
+        const versionData = SURVEY_VERSION_DATA[this.state.surveyVersion];
 
         if (versionData) {
             Object.assign(this.surveyData, {
