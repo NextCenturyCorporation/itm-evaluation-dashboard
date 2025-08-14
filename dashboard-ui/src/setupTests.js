@@ -6,8 +6,8 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import { ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
-import { surveyResultMock, surveyV5, surveyV7, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
+import { AdmLog, ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
+import { admMocks, surveyResultMock, surveyV5, surveyV7, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
@@ -34,6 +34,11 @@ beforeAll(async () => {
             const textConfig = new TextBasedConfig(textConfigMock);
 
             await textConfig.save();
+        }
+
+        for (const admMock of admMocks) {
+            const adm = new AdmLog(admMock);
+            await adm.save();
         }
 
         const uiStyle = new UiStyle({

@@ -56,10 +56,12 @@ const User = createSchema('users', {
 });
 
 const AdmLog = createSchema('admTargetRuns', {
+    _id: { type: String, required: true },
     evaluation: { type: JSON },
     history: { type: Array, required: true },
     evalNumber: { type: Number, required: true },
-    evalName: { type: String, required: true }
+    evalName: { type: String, required: true },
+    results: { type: JSON }
 });
 
 const UserScenarioResults = createSchema('userScenarioResults', {

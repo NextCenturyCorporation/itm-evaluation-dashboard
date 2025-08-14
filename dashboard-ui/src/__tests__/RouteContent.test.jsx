@@ -45,7 +45,7 @@ describe('Verify content on page matches expectation for route', () => {
         await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
     });
     it('Check /humanSimParticipant route content', async () => {
-        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', IS_PH1 ? 'AD_Scenario_Text' : 'Date']);
+        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', IS_PH1 ? 'AD_Scenario_Text' : 'Date'], IS_PH1);
     });
     it('Check /humanProbeData route content', async () => {
         await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);
@@ -56,7 +56,7 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /results route content', async () => {
         // based off ph2 RQ2 table
-        await checkRouteContent(page, '/results', ['Evaluation', 'Scenario'] + (IS_PH1 ? ['ADM Name', 'Target Type'] : []));
+        await checkRouteContent(page, '/results', IS_PH1 ? ['Evaluation', 'Scenario', 'Trial_ID', 'TA2_Name', 'TA1_Name'] : ['Evaluation', 'Scenario', 'Attribute', 'Set', 'Probe IDs'], IS_PH1);
     });
     it('Check /adm-results route content', async () => {
         // TODO: find how to check this a little better (more unique)
@@ -73,7 +73,7 @@ describe('Verify content on page matches expectation for route', () => {
     it('Check /research-results/rq2 route content', async () => {
         // Phase 1 version:
         if (IS_PH1) {
-            await checkRouteContent(page, '/research-results/rq2', ['RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?', 'RQ2.1 Data', 'RQ2.2 & 2.3 Data']);
+            await checkRouteContent(page, '/research-results/rq2', ['RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?', 'RQ2.1 Data', 'RQ2.2 & 2.3 Data'], true);
         }
         else {
             // Phase 2 version:
@@ -88,7 +88,7 @@ describe('Verify content on page matches expectation for route', () => {
         if (IS_PH1) {
             await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
                 'RQ5: To what extent does alignment score predict identical', 'RQ5 Data', 'RQ6: Does attribute assessment in different formats produce the same results?', 'RQ6 Data',
-                'RQ7', 'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block', 'Calibration Scores']);
+                'RQ7', 'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block', 'Calibration Scores'], 5);
         }
         else {
             await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
