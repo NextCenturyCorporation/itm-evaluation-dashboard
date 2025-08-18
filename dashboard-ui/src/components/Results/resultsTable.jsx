@@ -63,29 +63,41 @@ function AutoFitText({ text, max = 16, min = 11, className = '' }) {
   const wrapRef = React.useRef(null);
   const spanRef = React.useRef(null);
   const [size, setSize] = React.useState(max);
+  const rafRef = React.useRef(0);
 
   const fit = React.useCallback(() => {
     const wrap = wrapRef.current;
     const span = spanRef.current;
     if (!wrap || !span) return;
-    let s = max;
-    span.style.fontSize = `${s}px`;
     const maxWidth = Math.max(0, wrap.clientWidth - 4);
-    while (s > min && span.scrollWidth > maxWidth) {
-      s -= 0.2;
-      span.style.fontSize = `${s}px`;
+    let s = size;
+    const overflow = span.scrollWidth > maxWidth;
+    if (overflow && s > min) {
+      const next = Math.max(min, +(s - 0.4).toFixed(2));
+      if (next !== s) {
+        span.style.fontSize = `${next}px`;
+        setSize(next);
+      }
+    } else if (!overflow && s < max) {
+      const next = Math.min(max, +(s + 0.4).toFixed(2));
+      span.style.fontSize = `${next}px`;
+      if (span.scrollWidth <= maxWidth && next !== s) setSize(next);
+      else span.style.fontSize = `${s}px`;
     }
-    setSize(s);
-  }, [max, min, text]);
+  }, [max, min, text, size]);
 
   React.useEffect(() => {
-    fit();
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => fit());
   }, [fit, text]);
 
   React.useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap || !('ResizeObserver' in window)) return;
-    const ro = new ResizeObserver(() => fit());
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => fit());
+    });
     ro.observe(wrap);
     return () => ro.disconnect();
   }, [fit]);
@@ -251,7 +263,12 @@ class ResultsTable extends React.Component {
 
     deepIsEmpty = (v) => {
         if (v === null || v === undefined) return true;
-        if (typeof v === 'string') return v.trim() === '' || v === 'Unknown' || v === '—' || v === '-';
+        if (typeof v === 'string') {
+        const t = v.trim();
+        return (t === '' || t.toLowerCase() === 'unknown' || t === '—' || t === '-' || t.toLowerCase() === 'n/a');
+      }
+      if (typeof v === 'number') return Number.isNaN(v);
+      if (typeof v === 'boolean') return v === false;
         if (Array.isArray(v)) {
             return v.every((el) => this.deepIsEmpty(el));
         }
@@ -267,10 +284,19 @@ class ResultsTable extends React.Component {
         if (this.isObject(item)) {
             return this.renderNestedTableInline(item, response);
         } else if (Array.isArray(item)) {
-            return <>{item.filter(el => (this.state.hideEmpty ? !this.deepIsEmpty(el) : true))
-                       .map((el, i) => <React.Fragment key={i}>{this.renderNestedItemsInline(el)}</React.Fragment>)}</>;
+            return (
+              <>
+                {item
+                  .filter(el => (this.state.hideEmpty ? !this.deepIsEmpty(el) : true))
+                  .map((el, i) => <React.Fragment key={i}>{this.renderNestedItemsInline(el)}</React.Fragment>)}
+              </>
+            );
         } else {
-            return <span>{this.truncateText(item)}</span>;
+            return (
+              <span className={this.state.truncateLong ? 'line-clip-1' : undefined}>
+                {item}
+              </span>
+            );
         }
     };
 
@@ -301,7 +327,9 @@ class ResultsTable extends React.Component {
                             return (
                                 <TableRow key={i} className="kv-row">
                                     <TableCell className='kv-key'><strong>{this.snakeCaseToNormalCase(key)}</strong></TableCell>
-                                    <TableCell className='kv-val'>{this.renderNestedItemsInline(value)}</TableCell>
+                                    <TableCell className='kv-val'>
+                                        {this.renderNestedItemsInline(value)}
+                                    </TableCell>
                                 </TableRow>
                             );
                         })}
@@ -313,12 +341,6 @@ class ResultsTable extends React.Component {
     isObject = (item) => (typeof item === 'object' && !Array.isArray(item) && item !== null);
     
     snakeCaseToNormalCase = (string) => string.replace(/_/g, ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase());
-
-    truncateText = (s) => {
-        if (!this.state.truncateLong || typeof s !== 'string') return s;
-        const max = 200;
-        return s.length > max ? `${s.slice(0, max)}…` : s;
-    };
 
     computeAttribute = (evalNumber, scenarioId = '', targetStr = '') => {
       const s = String(scenarioId || '').toLowerCase();
@@ -417,7 +439,22 @@ class ResultsTable extends React.Component {
         return out.slice(0, 2);
     };
 
-    niceKdmaName = (s) => { return s ? s[0].toUpperCase() + s.slice(1) : '';};
+    kdmaAcronym = (raw) => {
+      if (!raw) return '';
+      const norm = String(raw).trim().toLowerCase().replace(/[_\s-]+/g, '');
+      const MAP = {
+        affiliation: 'AF',
+        merit: 'MF',
+        search: 'SS',
+        personalsafety: 'PS',
+        moraljudgement: 'MJ',
+        ingroupbias: 'IO',
+        qualityoflife: 'QOL',
+        perceivedquantityoflivessaved: 'VOL',
+      };
+      if (MAP[norm]) return MAP[norm];
+      return raw ? raw[0].toUpperCase() + raw.slice(1) : '';
+    };
 
     render() {
         return (
@@ -627,7 +664,7 @@ class ResultsTable extends React.Component {
                                                                 </div>
                                                                 {kdmas[0] && (
                                                                   <div className="summary-card card--kdma1">
-                                                                    <div className="summary-label">{this.niceKdmaName(kdmas[0].name)} KDMA Value</div>
+                                                                    <div className="summary-label">{this.kdmaAcronym(kdmas[0].name)} KDMA Value</div>
                                                                     <div className="summary-value">
                                                                       {Number.isFinite(kdmas[0].value) ? kdmas[0].value.toFixed(5) : 'N/A'}
                                                                     </div>
@@ -635,7 +672,7 @@ class ResultsTable extends React.Component {
                                                                 )}
                                                                 {kdmas[1] && (
                                                                   <div className="summary-card card--kdma2">
-                                                                    <div className="summary-label">{this.niceKdmaName(kdmas[1].name)} KDMA Value</div>
+                                                                    <div className="summary-label">{this.kdmaAcronym(kdmas[1].name)} KDMA Value</div>
                                                                     <div className="summary-value">
                                                                       {Number.isFinite(kdmas[1].value) ? kdmas[1].value.toFixed(5) : 'N/A'}
                                                                     </div>

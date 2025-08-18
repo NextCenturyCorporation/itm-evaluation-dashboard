@@ -116,25 +116,25 @@ nav.MuiList-root.nav-list.MuiList-padding {
   padding-right: clamp(8px, 2vw, 24px);
   align-items: stretch;
 }
+
 .summary-grid.has-1-kdma {
-  /* Four columns: split first row into 2+2, second row inserts kdma1 next to Score */
   grid-template-areas:
-    "scenario scenario adm adm"
-    "score    kdma1    alignTarget controls";
-  grid-template-columns: minmax(200px, .8fr) minmax(200px, .8fr) minmax(320px, 1.1fr) minmax(260px, .9fr);
+    "scenario scenario adm adm adm adm"
+    "score    kdma1    alignTarget alignTarget controls controls";
+  grid-template-columns:
+    minmax(180px, .9fr) minmax(180px, .9fr)
+    minmax(200px, .9fr) minmax(200px, .9fr)
+    minmax(200px, .9fr) minmax(180px, .8fr);
 }
 
 .summary-grid.has-2-kdma {
-  /* Five columns: Score | KDMA1 | KDMA2 | AlignTarget | Controls (controls stacks vertically) */
   grid-template-areas:
-    "scenario scenario adm adm adm"
-    "score    kdma1    kdma2  alignTarget controls";
+    "scenario scenario adm adm adm adm"
+    "score    kdma1    kdma2  alignTarget alignTarget controls";
   grid-template-columns:
-    minmax(200px, .7fr)
-    minmax(200px, .7fr)
-    minmax(200px, .7fr)
-    minmax(320px, 1fr)
-    minmax(220px, .7fr);
+    minmax(180px, .9fr) minmax(180px, .9fr)
+    minmax(200px, .9fr) minmax(200px, .9fr)
+    minmax(220px, 1fr)  minmax(180px, .8fr);
 }
 
 .summary-card {
@@ -147,7 +147,6 @@ nav.MuiList-root.nav-list.MuiList-padding {
 
 .summary-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; }
 .summary-value { font-weight: 600; }
-
 
 .card--scenario { grid-area: scenario; }
 .card--score    { grid-area: score; }
@@ -168,8 +167,32 @@ nav.MuiList-root.nav-list.MuiList-padding {
 
 .controls-cell.stack {
   flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 10px;
+}
+
+.controls-cell.stack .MuiFormControlLabel-root {
+  margin: 0;
+  min-height: 0;
+  align-items: center;
+  width: auto;
+}
+
+.controls-cell .MuiFormControlLabel-label {
+  font-size: clamp(14px, 1.05vw, 15px);
+  line-height: 1.1;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.controls-cell.stack .MuiCheckbox-root {
+  padding: 3px 6px;
+}
+
+.controls-cell.stack .MuiSvgIcon-root {
+  font-size: 21px;
 }
 
 @media (max-width: 1100px) {
@@ -180,16 +203,14 @@ nav.MuiList-root.nav-list.MuiList-padding {
       "controls controls";
     grid-template-columns: 1fr 1fr;
   }
-}
-
-.summary-grid.has-1-kdma {
+  .summary-grid.has-1-kdma {
     grid-template-areas:
       "scenario adm"
       "score    kdma1"
       "alignTarget controls";
     grid-template-columns: 1fr 1fr;
   }
-.summary-grid.has-2-kdma {
+  .summary-grid.has-2-kdma {
     grid-template-areas:
       "scenario adm"
       "score    kdma1"
@@ -197,6 +218,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
       "controls controls";
     grid-template-columns: 1fr 1fr;
   }
+}
 
 @media (max-width: 720px) {
   .summary-grid {
@@ -208,10 +230,8 @@ nav.MuiList-root.nav-list.MuiList-padding {
       "controls";
     grid-template-columns: 1fr;
   }
-}
-
-.summary-grid.has-1-kdma,
-.summary-grid.has-2-kdma {
+  .summary-grid.has-1-kdma,
+  .summary-grid.has-2-kdma {
     grid-template-areas:
       "scenario"
       "adm"
@@ -222,6 +242,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
       "controls";
     grid-template-columns: 1fr;
   }
+}
 
 .command-list { padding-top: 4px; }
 .cmd-row { border-bottom: none !important; }
@@ -231,8 +252,15 @@ nav.MuiList-root.nav-list.MuiList-padding {
 .cmd-params-label { margin-top: 2px; font-size: 12px; color: #6b7280; }
 .cmd-params { margin-top: 4px; }
 
-.kv-table { width: auto; border-collapse: separate; border-spacing: 0 6px; }
+.kv-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+}
+
 .kv-row { background: #fff; }
+
 .kv-key {
   width: 220px;
   white-space: nowrap;
@@ -251,6 +279,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   max-width: 700px;
   white-space: normal;
   word-wrap: break-word;
+  overflow: hidden;
   border: none;
   padding: 6px 10px;
   border-right: 1px solid #e5e7eb;
@@ -267,7 +296,9 @@ nav.MuiList-root.nav-list.MuiList-padding {
   border-radius: 8px;
   padding: 12px;
 }
+
 .response-title { font-weight: 600; margin-bottom: 6px; }
+
 .response-body { padding-left: 0; }
 
 .muted { color: #6b7280; }
@@ -303,6 +334,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
 .control-btn:hover {
   background-color: rgb(204, 204, 204);
 }
+
 .control-btn:active {
   background-color: darkgrey !important;
   color: white;
@@ -341,12 +373,14 @@ nav.MuiList-root.nav-list.MuiList-padding {
   max-height: 1200px;
   overflow: auto;
 }
+
 .commands-timeline {
   list-style: none;
   margin: 0;
   padding: 0 0 0 0;
   position: relative;
 }
+
 .commands-timeline::before {
   content: "";
   position: absolute;
@@ -366,6 +400,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   transition: background-color .12s ease;
   min-height: 34px;
 }
+
 .command-item::before {
   content: "";
   position: absolute;
@@ -379,15 +414,20 @@ nav.MuiList-root.nav-list.MuiList-padding {
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px #d1d5db;
 }
+
 .command-item:hover {
   background: #f3f4f6;
 }
+
 .command-item.active {
   background: #e5e7eb;
   font-weight: 600;
 }
+
 .command-name { display: block; overflow: hidden; }
+
 .command-name.autofit { line-height: 1.2; }
+
 .right-col {
   grid-column: 2 / span 2;
   display: flex;
@@ -401,4 +441,18 @@ nav.MuiList-root.nav-list.MuiList-padding {
   }
   .left-col, .right-col { grid-column: 1; }
   .commands-pane { max-height: initial; }
+}
+
+.line-clip-1 {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kv-val .kv-table {
+  width: 100%;
+  table-layout: fixed;
 }
