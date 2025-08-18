@@ -334,7 +334,12 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
                 const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
                 // override 102, who is military
-                entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid === '202409102' ? 'yes' : 'no';
+                if (evalNum < 8) {
+                    entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid === '202409102' ? 'yes' : 'no';
+                }
+                else {
+                    entryObj['Delegator_mil'] = res.results?.['Post-Scenario Measures']?.questions?.["Served in Military"]?.['response'] == 'Never Served' ? 'no' : 'yes';
+                }
                 entryObj['Delegator_Role'] = roles ?? '-'
                 if (Array.isArray(entryObj['Delegator_Role'])) {
                     entryObj['Delegator_Role'] = entryObj['Delegator_Role'].join('; ');
