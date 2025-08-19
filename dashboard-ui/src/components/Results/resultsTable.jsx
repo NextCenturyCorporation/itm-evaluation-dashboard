@@ -737,14 +737,18 @@ class ResultsTable extends React.Component {
                                                               <div className="right-col">
                                                                 {hasParams && <div className="section-heading">Parameters</div>}
                                                                 {hasParams && (
-                                                                  <div className="params-table">
-                                                                    {this.renderNestedItemsInline(sel.parameters, sel.command === 'Take Action' ? sel.response : null)}
+                                                                  <div className="panel-card">
+                                                                    <div className="params-table">
+                                                                      {this.renderNestedItemsInline(sel.parameters, sel.command === 'Take Action' ? sel.response : null)}
+                                                                    </div>
                                                                   </div>
                                                                 )}
                                                                 {hasResponse && <div className="section-heading">Response</div>}
                                                                 {hasResponse && (
-                                                                  <div className="response-table">
-                                                                    {this.renderNestedItemsInline(sel.response)}
+                                                                  <div className="panel-card">
+                                                                    <div className="response-table">
+                                                                      {this.renderNestedItemsInline(sel.response)}
+                                                                    </div>
                                                                   </div>
                                                                 )}
                                                               </div>

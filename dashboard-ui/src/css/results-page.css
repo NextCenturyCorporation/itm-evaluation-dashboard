@@ -121,20 +121,14 @@ nav.MuiList-root.nav-list.MuiList-padding {
   grid-template-areas:
     "scenario scenario adm adm adm adm"
     "score    kdma1    alignTarget alignTarget controls controls";
-  grid-template-columns:
-    minmax(180px, .9fr) minmax(180px, .9fr)
-    minmax(200px, .9fr) minmax(200px, .9fr)
-    minmax(200px, .9fr) minmax(180px, .8fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .summary-grid.has-2-kdma {
   grid-template-areas:
     "scenario scenario adm adm adm adm"
     "score    kdma1    kdma2  alignTarget alignTarget controls";
-  grid-template-columns:
-    minmax(180px, .9fr) minmax(180px, .9fr)
-    minmax(200px, .9fr) minmax(200px, .9fr)
-    minmax(220px, 1fr)  minmax(180px, .8fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .summary-card {
@@ -143,6 +137,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   border-radius: 8px;
   padding: 12px;
   height: 100%;
+  min-width: 0;
 }
 
 .summary-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; }
@@ -163,6 +158,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   gap: clamp(14px, 2vw, 24px);
   padding: 12px;
   height: 100%;
+  min-width: 0;
 }
 
 .controls-cell.stack {
@@ -455,4 +451,11 @@ nav.MuiList-root.nav-list.MuiList-padding {
 .kv-val .kv-table {
   width: 100%;
   table-layout: fixed;
+}
+
+.panel-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
 }
