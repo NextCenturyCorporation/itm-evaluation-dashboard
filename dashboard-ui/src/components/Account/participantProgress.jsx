@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import '../SurveyResults/resultsTable.css';
 import '../../css/admInfo.css';
-import { Autocomplete, TextField, Modal } from "@mui/material";
+import { Autocomplete, TextField, Modal, Box } from "@mui/material";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
@@ -11,6 +11,8 @@ import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
 import { determineChoiceProcessJune2025 } from '../Research/utils';
 import { formatTargetWithDecimal } from "../Survey/surveyUtils";
+import DeleteIcon from '@material-ui/icons/Delete';
+
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -43,7 +45,7 @@ function formatLoading(val) {
     return val;
 }
 
-export function ParticipantProgressTable({ canViewProlific = false }) {
+export function ParticipantProgressTable({ canViewProlific = false, isAdmin = false }) {
     const KDMA_MAP = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search' };
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
@@ -62,14 +64,23 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
     const [searchPid, setSearchPid] = React.useState('');
     const [isRefreshing, setIsRefreshing] = React.useState(false);
     const [selectedPhase, setSelectedPhase] = React.useState('Phase 2');
+    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = React.useState(false);
+    const [rowToDelete, setRowToDelete] = React.useState({});
 
     const getHeaders = () => {
+        let headers = [];
         if (selectedPhase === 'Phase 2') {
-            return canViewProlific ? HEADERS_PHASE2_WITH_PROLIFIC : HEADERS_PHASE2_NO_PROLIFIC;
+            headers = canViewProlific ? [...HEADERS_PHASE2_WITH_PROLIFIC] : [...HEADERS_PHASE2_NO_PROLIFIC];
         }
-        return canViewProlific ? HEADERS_PHASE1_WITH_PROLIFIC : HEADERS_PHASE1_NO_PROLIFIC;
+        else {
+            headers = canViewProlific ? [...HEADERS_PHASE1_WITH_PROLIFIC] : [...HEADERS_PHASE1_NO_PROLIFIC];
+        }
+        if (isAdmin) {
+            headers.splice(3, 0, "Delete");
+        }
+        return headers;
     };
-    const HEADERS = getHeaders();
+    const HEADERS = [...getHeaders()];
 
     const getCompletionOptions = () => {
         const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
@@ -100,6 +111,10 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
 
     const closePopup = () => {
         setPopupInfo({ open: false, pid: null, scenarioId: null });
+    };
+
+    const cancelDeletion = () => {
+        setDeleteConfirmationOpen(false);
     };
 
     const sortData = React.useCallback((data) => {
@@ -255,7 +270,19 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
         }
     }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults, canViewProlific, sortData]);
 
+    const confirmDeletion = (toDelete) => {
+        setRowToDelete(toDelete);
+        setDeleteConfirmationOpen(true);
+    };
+
     const formatCell = (header, dataSet) => {
+        if (header === 'Delete') {
+            return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
+                <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
+                    <DeleteIcon />
+                </button>
+            </td>
+        }
         const val = dataSet[header];
         const scenarioResults = dataTextResults?.getAllScenarioResults || [];
 
@@ -289,7 +316,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
             }
             return 'white-cell';
         };
-        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column' : '') + ' ' + (header.length > 17 ? 'large-column' : '')}>
+        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column ' : ' ') + (header.length > 17 ? 'large-column' : '')}>
             {header === 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
         </td>);
     };
@@ -551,7 +578,7 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 <thead>
                     <tr>
                         {HEADERS.map((val, index) => {
-                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className={val.length < 5 ? 'small-column' : ''}>
+                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className={(val.length < 5 ? 'small-column ' : ' ') + (val === 'Delete' ? 'delete-column' : '')}>
                                 {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
                             </th>);
                         })}
@@ -577,6 +604,37 @@ export function ParticipantProgressTable({ canViewProlific = false }) {
                 </tbody>
             </table>
         </div>
+        <Modal open={deleteConfirmationOpen} onClose={cancelDeletion}>
+            <Box className='delete-modal-box'>
+                <h2 className="deletion-header">
+                    Confirm Deletion
+                </h2>
+                <div className='delete-table-container'>
+                    <table className='itm-table'>
+                        <thead>
+                            {HEADERS.map((header) => {
+                                if (header !== 'Delete') {
+                                    return <th key={'delete-' + header}>
+                                        <td>{header}</td>
+                                    </th>
+                                }
+                            })}
+                        </thead>
+                        <tr>
+                            {HEADERS.map((header) => {
+                                if (header !== 'Delete') {
+                                    return formatCell(header, rowToDelete)
+                                }
+                            })}
+                        </tr>
+                    </table>
+                </div>
+                <div className='delete-btn-group'>
+                    <button className='downloadBtn' onClick={cancelDeletion}>Cancel</button>
+                    <button className='downloadBtn'>Delete Participant</button>
+                </div>
+            </Box>
+        </Modal >
         <Modal open={popupInfo.open && selectedPhase === 'Phase 2'} onClose={closePopup}>
             <div className="adm-popup-body">
                 {(() => {
