@@ -18,6 +18,7 @@ import { shuffle } from '../Survey/surveyUtils';
 import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
+import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 
@@ -197,12 +198,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     scenariosFromLog = (participantLog) => {
-        const scenarioIds = [
-            `July2025-AF${participantLog['AF-text-scenario']}-eval`,
-            `July2025-MF${participantLog['MF-text-scenario']}-eval`,
-            `July2025-PS${participantLog['PS-text-scenario']}-eval`,
-            `July2025-SS${participantLog['SS-text-scenario']}-eval`
-        ];
+        const scenarioIds = scenarioIdsFromLog(participantLog)
 
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
             config.scenario_id && scenarioIds.includes(config.scenario_id)
@@ -358,8 +354,8 @@ class TextBasedScenariosPage extends Component {
         });
 
         scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id);
-        scenarioData.evalNumber = 9
-        scenarioData.evalName = 'July 2025 Collaboration'
+        scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
+        scenarioData.evalName = this.props.currentTextEval
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -825,7 +821,7 @@ ReactQuestionFactory.Instance.registerQuestion("phase2Text", (props) => {
     return React.createElement(Phase2Text, props)
 })
 
-/*
+
 const p1Mappings = {
     'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
     'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
@@ -834,7 +830,7 @@ const p1Mappings = {
     'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
     'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
 }
-*/
+
 
 export const simNameMappings = {
     'AD-1': ['Eval_Adept_Urban'],
@@ -848,7 +844,7 @@ export const simNameMappings = {
 /* 
     I needed to save these configs separately from the dre configs despite the fact they have the same ids.
     Using this mapping to get id that matches up with ADEPT ta1 server for server calls
-
+*/
 const adeptScenarioIdMap = {
     'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
     'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
@@ -856,4 +852,3 @@ const adeptScenarioIdMap = {
     'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
     'phase1-adept-train-IO1': 'DryRunEval.IO1'
 }
-*/

@@ -33,7 +33,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase2ParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, phase2ParticipantData } from '../OnlineOnly/config';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -243,9 +243,12 @@ export function App() {
                 x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
             ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
 
-
-            const participantData = phase2ParticipantData(null, newPid, hashedEmail, isTester ? 'Test' : 'emailParticipant')
-
+            let participantData;
+            if (evalNum >= 8) {
+                participantData = phase2ParticipantData(null, newPid, hashedEmail, isTester ? 'Test' : 'emailParticipant')
+            } else {
+                participantData = phase1ParticipantData()
+            }
             const addRes = await addParticipant({
                 variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }
             });
