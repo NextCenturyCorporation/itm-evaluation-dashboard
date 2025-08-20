@@ -198,11 +198,12 @@ class TextBasedScenariosPage extends Component {
     }
 
     scenariosFromLog = (participantLog) => {
-        const scenarioIds = scenarioIdsFromLog(participantLog)
+        const scenarioIds = scenarioIdsFromLog(participantLog, this.props.currentTextEval)
 
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
             config.scenario_id && scenarioIds.includes(config.scenario_id)
         );
+
 
         for (let i = scenarios.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));

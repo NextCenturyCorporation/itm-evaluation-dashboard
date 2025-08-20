@@ -4,7 +4,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle } from './setupUtils';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 
 // Components
@@ -46,6 +46,12 @@ import store from '../../store/store';
 
 
 const history = createBrowserHistory();
+
+const GET_TEXT_EVAL = gql`
+    query GetCurrentTextEval {
+        getCurrentTextEval
+    }
+`
 
 const GET_SURVEY_VERSION = gql`
   query GetSurveyVersion {
@@ -102,11 +108,13 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
+    const { data: textEvalData} = useQuery(GET_TEXT_EVAL, { fetchPolicy: 'no-cache' });
     const { data: styleData } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
     const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [isSetup, setIsSetup] = React.useState(false);
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
+    const [isTextEvalDataLoaded, setIsTextEvalDataLoaded] = React.useState(false);
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
     const [configQuery, setConfigQuery] = React.useState(GET_CONFIGS)
     const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
@@ -147,6 +155,13 @@ export function App() {
             setIsStyleDataLoaded(true);
         }
     }, [styleData]);
+
+    React.useEffect(() => {
+        if (isDefined(textEvalData)) {
+            setTextEval(textEvalData.getCurrentTextEval);
+            setIsTextEvalDataLoaded(true);
+        }
+    }, [textEvalData])
 
     const setup = async () => {
         // refresh the session to get a new accessToken if expired
@@ -354,7 +369,7 @@ export function App() {
 
     return (
         <Router history={history}>
-            {isSetup && isVersionDataLoaded && isConfigDataLoaded && isStyleDataLoaded && <div className="itm-app">
+            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isConfigDataLoaded && isStyleDataLoaded && <div className="itm-app">
                 {currentUser?.approved &&
                     <Header currentUser={currentUser} logout={logout} />
                 }

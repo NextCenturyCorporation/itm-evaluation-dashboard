@@ -81,9 +81,10 @@ export const phase2ParticipantData = (currentSearchParams, hashedEmail, newPid, 
 };
 
 
-export const scenarioIdsFromLog = (participantLog) => {
+export const scenarioIdsFromLog = (participantLog, currentEval) => {
     let scenarios = [];
-    if (participantLog['evalNum'] === 9) {
+    const num = evalNameToNumber[currentEval]
+    if (num === 9) {
         scenarios = [
             `July2025-AF${participantLog['AF-text-scenario']}-eval`,
             `July2025-MF${participantLog['MF-text-scenario']}-eval`,
@@ -92,7 +93,7 @@ export const scenarioIdsFromLog = (participantLog) => {
         ]
     }
 
-    if (participantLog['evalNum'] === 8) {
+    if (num === 8) {
         scenarios = [
             `June2025-AF${participantLog['AF-text-scenario']}-eval`,
             `June2025-MF${participantLog['MF-text-scenario']}-eval`,
@@ -100,6 +101,7 @@ export const scenarioIdsFromLog = (participantLog) => {
             `June2025-SS${participantLog['SS-text-scenario']}-eval`
         ]
     }
+    console.log(scenarios)
 
     return scenarios
 }
