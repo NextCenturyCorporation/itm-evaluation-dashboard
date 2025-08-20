@@ -127,7 +127,8 @@ class ResultsTable extends React.Component {
             collapseAllVersion: 0,
             selectedIndex: 0,
             truncateLong: true,
-            expandedPaths: new Set(),
+            expandedPathsParams: new Set(),
+            expandedPathsResponse: new Set(),
             inspectorOpen: false,
             inspectorNode: null,
             inspectorTitle: ''
@@ -170,7 +171,13 @@ class ResultsTable extends React.Component {
     handleExpandAll = () => this.setState({ truncateLong: false });
     handleCollapseAll = () => this.setState({ truncateLong: true });
 
-    selectCommand = (index) => this.setState({ selectedIndex: index, expandedPaths: new Set(), inspectorOpen: false });
+    selectCommand = (index) =>
+      this.setState({
+        selectedIndex: index,
+        expandedPathsParams: new Set(),
+        expandedPathsResponse: new Set(),
+        inspectorOpen: false
+      });
 
     setEval(target) {
         this.setState({
@@ -313,9 +320,10 @@ class ResultsTable extends React.Component {
       this.setState({ inspectorOpen: false });
     };
 
-    renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null) => {
+    renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null, scope = 'params') => {
       const rows = [];
       if (!this.isExpandable(obj)) return rows;
+      const setName = scope === 'resp' ? 'expandedPathsResponse' : 'expandedPathsParams';
       const entries = Object.entries(obj).filter(([_, v]) => (this.state.hideEmpty ? !this.deepIsEmpty(v) : true));
       for (const [key, rawVal] of entries) {
         let value = rawVal;
@@ -341,7 +349,7 @@ class ResultsTable extends React.Component {
         const childPath = [...path, key];
         const pathId = this.pathKey(childPath);
         const expandable = this.isExpandable(value);
-        const expanded = expandable && this.state.expandedPaths.has(pathId);
+        const expanded = expandable && this.state[setName].has(pathId);
 
         rows.push(
           <TableRow key={pathId} className="tree-row">
@@ -353,9 +361,9 @@ class ResultsTable extends React.Component {
                     aria-label={expanded ? 'Collapse' : 'Expand'}
                     aria-expanded={expanded}
                     onClick={() => {
-                      const next = new Set(this.state.expandedPaths);
+                      const next = new Set(this.state[setName]);
                       if (expanded) next.delete(pathId); else next.add(pathId);
-                      this.setState({ expandedPaths: next });
+                      this.setState({ [setName]: next });
                     }}
                   >
                     {expanded ? '▾' : '▸'}
@@ -389,7 +397,8 @@ class ResultsTable extends React.Component {
               const subPath = [...childPath, `[${idx}]`];
               const subId = this.pathKey(subPath);
               const isObj = this.isExpandable(el);
-              const subExpanded = isObj && this.state.expandedPaths.has(subId);
+              const subSet = new Set(this.state[setName]);
+              const isSubExpanded = isObj && subSet.has(subId);
               rows.push(
                 <TableRow key={subId} className="tree-row">
                   <TableCell className="tree-key">
@@ -397,15 +406,15 @@ class ResultsTable extends React.Component {
                       {isObj ? (
                         <button
                           className="toggle-btn"
-                          aria-label={subExpanded ? 'Collapse' : 'Expand'}
-                          aria-expanded={subExpanded}
+                          aria-label={isSubExpanded ? 'Collapse' : 'Expand'}
+                          aria-expanded={isSubExpanded}
                           onClick={() => {
-                            const next = new Set(this.state.expandedPaths);
-                            if (subExpanded) next.delete(subId); else next.add(subId);
-                            this.setState({ expandedPaths: next });
+                            const next = new Set(this.state[setName]);
+                            if (isSubExpanded) next.delete(subId); else next.add(subId);
+                            this.setState({ [setName]: next });
                           }}
                         >
-                          {subExpanded ? '▾' : '▸'}
+                          {isSubExpanded ? '▾' : '▸'}
                         </button>
                       ) : (
                         <span className="toggle-spacer" />
@@ -431,29 +440,29 @@ class ResultsTable extends React.Component {
                   </TableCell>
                 </TableRow>
               );
-              if (isObj && subExpanded) {
-                rows.push(...this.renderTreeRows(el, [...childPath, `[${idx}]`], depth + 2, responseCtx, el));
+              if (isObj && isSubExpanded) {
+                rows.push(...this.renderTreeRows(el, [...childPath, `[${idx}]`], depth + 2, responseCtx, el, scope));
               }
             });
           } else {
-            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value));
+            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope));
           }
         }
       }
       return rows;
     };
 
-    renderTreeTable = (data, responseCtx = null) => {
+    renderTreeTable = (data, scope = 'params', responseCtx = null) => {
       if (!data || typeof data !== 'object') return null;
       return (
         <Table size="small" className="tree-table">
-          <TableBody>{this.renderTreeRows(data, [], 0, responseCtx, data)}</TableBody>
+          <TableBody>{this.renderTreeRows(data, [], 0, responseCtx, data, scope)}</TableBody>
         </Table>
       );
     };
 
-    renderValueOrTree = (data, responseCtx = null) => {
-      if (data && typeof data === 'object') return this.renderTreeTable(data, responseCtx);
+    renderValueOrTree = (data, scope = 'resp', responseCtx = null) => {
+      if (data && typeof data === 'object') return this.renderTreeTable(data, scope, responseCtx);
       return (
         <div className="value-wrap">
           <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
@@ -461,6 +470,38 @@ class ResultsTable extends React.Component {
           </div>
         </div>
       );
+    };
+
+    collectExpandablePaths = (node, path = [], acc = new Set()) => {
+      if (!node || typeof node !== 'object') return acc;
+      if (Array.isArray(node)) {
+        node.forEach((el, idx) => {
+          if (el && typeof el === 'object') {
+            const p = this.pathKey([...path, `[${idx}]`]);
+            acc.add(p);
+            this.collectExpandablePaths(el, [...path, `[${idx}]`], acc);
+          }
+        });
+      } else {
+        Object.entries(node).forEach(([k, v]) => {
+          if (v && typeof v === 'object') {
+            const p = this.pathKey([...path, k]);
+            acc.add(p);
+            this.collectExpandablePaths(v, [...path, k], acc);
+          }
+        });
+      }
+      return acc;
+    };
+
+    expandAllResponse = (resp) => {
+      if (!resp || typeof resp !== 'object') return;
+      const all = this.collectExpandablePaths(resp);
+      this.setState({ expandedPathsResponse: all });
+    };
+
+    collapseAllResponse = () => {
+      this.setState({ expandedPathsResponse: new Set() });
     };
 
     isObject = (item) => (typeof item === 'object' && !Array.isArray(item) && item !== null);
@@ -858,6 +899,7 @@ class ResultsTable extends React.Component {
                                                             const sel = hist[idx] || {};
                                                             const hasParams = sel?.parameters && Object.keys(sel.parameters).length > 0;
                                                             const hasResponse = sel?.response !== undefined && sel?.response !== null && !(this.isEmpty(sel.response));
+                                                            const responseIsTree = hasResponse && typeof sel.response === 'object';
                                                             return (
                                                               <div className="right-col">
                                                                 {hasParams && <div className="section-heading">Parameters</div>}
@@ -865,14 +907,37 @@ class ResultsTable extends React.Component {
                                                                   <div className="panel-card">
                                                                     {this.renderTreeTable(
                                                                       sel.parameters,
+                                                                      'params',
                                                                       sel.command === 'Take Action' ? sel.response : null
                                                                     )}
                                                                   </div>
                                                                 )}
-                                                                {hasResponse && <div className="section-heading">Response</div>}
+                                                                {hasResponse && (
+                                                                  <div className="section-bar">
+                                                                    <div className="section-heading">Response</div>
+                                                                    {responseIsTree && (
+                                                                      <div className="section-controls">
+                                                                        <button
+                                                                          className="control-btn"
+                                                                          onClick={() => this.expandAllResponse(sel.response)}
+                                                                        >
+                                                                          Expand All
+                                                                        </button>
+                                                                        <button
+                                                                          className="control-btn"
+                                                                          onClick={this.collapseAllResponse}
+                                                                        >
+                                                                          Collapse All
+                                                                        </button>
+                                                                      </div>
+                                                                    )}
+                                                                  </div>
+                                                                )}
                                                                 {hasResponse && (
                                                                   <div className="panel-card">
-                                                                    {this.renderValueOrTree(sel.response)}
+                                                                    {responseIsTree
+                                                                      ? this.renderTreeTable(sel.response, 'resp')
+                                                                      : this.renderValueOrTree(sel.response)}
                                                                   </div>
                                                                 )}
                                                               </div>
@@ -910,9 +975,9 @@ class ResultsTable extends React.Component {
                         <button className="btn-link" onClick={this.closeInspector}>Close</button>
                       </div>
                       <div className="inspector-body">
-                        {this.renderValueOrTree(this.state.inspectorNode)}
+                        {this.renderValueOrTree(this.state.inspectorNode, 'resp')}
                         <pre className="inspector-json">
-{JSON.stringify(this.state.inspectorNode, null, 2)}
+                            {JSON.stringify(this.state.inspectorNode, null, 2)}
                         </pre>
                       </div>
                     </div>

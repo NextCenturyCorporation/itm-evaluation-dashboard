@@ -352,6 +352,18 @@ nav.MuiList-root.nav-list.MuiList-padding {
   line-height: 1.25;
 }
 
+.section-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+}
+
+.section-controls{
+  display:flex;
+  gap:14px;
+}
+
 .left-col {
   grid-column: 1;
   display: flex;
