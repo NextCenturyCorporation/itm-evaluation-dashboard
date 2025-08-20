@@ -3,6 +3,10 @@
     min-height: 100vh;
 }
 
+:root {
+  --page-gutter-right: clamp(16px, 2.6vw, 40px);
+}
+
 .layout-board {
     margin-bottom: 10px;
     display: flex;
@@ -113,7 +117,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   gap: clamp(8px, 1.2vw, 16px);
   margin-top: 8px;
   padding-left: clamp(8px, 2vw, 24px);
-  padding-right: clamp(8px, 2vw, 24px);
+  padding-right: var(--page-gutter-right);
   align-items: stretch;
 }
 
@@ -342,7 +346,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   column-gap: clamp(12px, 2vw, 24px);
   row-gap: clamp(8px, 1.2vw, 16px);
   padding-left: clamp(8px, 2vw, 24px);
-  padding-right: clamp(8px, 2vw, 24px);
+  padding-right: var(--page-gutter-right);
   margin-top: clamp(8px, 1.2vw, 16px);
 }
 
@@ -479,10 +483,21 @@ nav.MuiList-root.nav-list.MuiList-padding {
 .inspector-title{ font-weight:600; }
 
 .btn-link{
-  background:transparent; border:0; color:#2563eb; cursor:pointer;
-  font-weight:500; padding:4px 6px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-weight: 400;
+  padding: 0;
 }
-.btn-link:hover{ text-decoration:underline; }
+
+.btn-link,
+.btn-link:hover,
+.btn-link:focus,
+.btn-link:active,
+.btn-link:visited{
+  color: black !important;
+  text-decoration: none !important;
+}
 
 .inspector-body{ padding:12px 16px; overflow:auto; }
 
@@ -522,6 +537,7 @@ nav.MuiList-root.nav-list.MuiList-padding {
   color:#374151;
   background:#f9fafb;
   border-left:1px solid #e5e7eb;
+  border-right:1px solid #e5e7eb;
   border-top:1px solid #e5e7eb;
   border-bottom:1px solid #e5e7eb;
   border-top-left-radius:6px;

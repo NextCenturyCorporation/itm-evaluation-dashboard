@@ -281,10 +281,9 @@ class ResultsTable extends React.Component {
         if (v === null || v === undefined) return true;
         if (typeof v === 'string') {
         const t = v.trim();
-        return (t === '' || t.toLowerCase() === 'unknown' || t === '—' || t === '-' || t.toLowerCase() === 'n/a');
+        return (t === '' || t === '—' || t === '-' || t.toLowerCase() === 'n/a');
       }
-      if (typeof v === 'number') return Number.isNaN(v);
-      if (typeof v === 'boolean') return v === false;
+        if (typeof v === 'number') return Number.isNaN(v);
         if (Array.isArray(v)) {
             return v.every((el) => this.deepIsEmpty(el));
         }
@@ -311,19 +310,75 @@ class ResultsTable extends React.Component {
     };
 
     openInspector = (node, title) => {
-      console.debug('[Inspector] open:', title, node);
       this.setState({ inspectorOpen: true, inspectorNode: node, inspectorTitle: title });
     };
 
     closeInspector = () => {
-      console.debug('[Inspector] close');
       this.setState({ inspectorOpen: false });
     };
+
+  formatPathTitle = (pathArr) =>
+    pathArr.map(tok => (tok.startsWith('[') ? tok : this.snakeCaseToNormalCase(tok))).join(' > ');
 
     renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null, scope = 'params') => {
       const rows = [];
       if (!this.isExpandable(obj)) return rows;
       const setName = scope === 'resp' ? 'expandedPathsResponse' : 'expandedPathsParams';
+
+      if (Array.isArray(obj)) {
+        obj.forEach((value, idx) => {
+          const childPath = [...path, `[${idx}]`];
+          const pathId = this.pathKey(childPath);
+          const expandable = this.isExpandable(value);
+          const expanded = expandable && this.state[setName].has(pathId);
+
+          rows.push(
+            <TableRow key={pathId} className="tree-row">
+              <TableCell className="tree-key">
+                <div className="tree-key-wrap" style={{ paddingLeft: depth * 14 }}>
+                  {expandable ? (
+                    <button
+                      className="toggle-btn"
+                      aria-label={expanded ? 'Collapse' : 'Expand'}
+                      aria-expanded={expanded}
+                      onClick={() => {
+                        const next = new Set(this.state[setName]);
+                        if (expanded) next.delete(pathId); else next.add(pathId);
+                        this.setState({ [setName]: next });
+                      }}
+                    >
+                      {expanded ? '▾' : '▸'}
+                    </button>
+                  ) : (
+                    <span className="toggle-spacer" />
+                  )}
+                  <strong>{`[${idx}]`}</strong>
+                </div>
+              </TableCell>
+              <TableCell className="tree-val">
+                {!expandable ? (
+                  <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+                    {this.formatLeaf(value)}
+                  </div>
+                ) : (
+                  <button
+                    className="view-btn"
+                    onClick={() => this.openInspector(value, childPath.join(' > '))}
+                  >
+                    View
+                  </button>
+                )}
+              </TableCell>
+            </TableRow>
+          );
+
+          if (expandable && expanded) {
+            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope));
+          }
+        });
+        return rows;
+      }
+
       const entries = Object.entries(obj).filter(([_, v]) => (this.state.hideEmpty ? !this.deepIsEmpty(v) : true));
       for (const [key, rawVal] of entries) {
         let value = rawVal;
@@ -382,7 +437,7 @@ class ResultsTable extends React.Component {
               ) : (
                 <button
                     className="view-btn"
-                    onClick={() => this.openInspector(value, childPath.join(' > '))}
+                    onClick={() => this.openInspector(value, this.formatPathTitle(childPath))}
                 >
                   View
                 </button>
@@ -397,8 +452,7 @@ class ResultsTable extends React.Component {
               const subPath = [...childPath, `[${idx}]`];
               const subId = this.pathKey(subPath);
               const isObj = this.isExpandable(el);
-              const subSet = new Set(this.state[setName]);
-              const isSubExpanded = isObj && subSet.has(subId);
+              const isSubExpanded = isObj && this.state[setName].has(subId);
               rows.push(
                 <TableRow key={subId} className="tree-row">
                   <TableCell className="tree-key">
@@ -431,7 +485,7 @@ class ResultsTable extends React.Component {
                       <button
                         className="view-btn"
                         onClick={() =>
-                          this.openInspector(el, [...childPath, `[${idx}]`].join(' > '))
+                          this.openInspector(el, this.formatPathTitle([...childPath, `[${idx}]`]))
                         }
                       >
                         View
