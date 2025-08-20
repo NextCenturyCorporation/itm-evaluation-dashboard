@@ -126,7 +126,11 @@ class ResultsTable extends React.Component {
             expandAllVersion: 0,
             collapseAllVersion: 0,
             selectedIndex: 0,
-            truncateLong: true
+            truncateLong: true,
+            expandedPaths: new Set(),
+            inspectorOpen: false,
+            inspectorNode: null,
+            inspectorTitle: ''
         }
     }
 
@@ -161,7 +165,7 @@ class ResultsTable extends React.Component {
     handleExpandAll = () => this.setState({ truncateLong: false });
     handleCollapseAll = () => this.setState({ truncateLong: true });
 
-    selectCommand = (index) => this.setState({ selectedIndex: index });
+    selectCommand = (index) => this.setState({ selectedIndex: index, expandedPaths: new Set() });
 
     setEval(target) {
         this.setState({
@@ -280,62 +284,163 @@ class ResultsTable extends React.Component {
         return false;
     };
 
-    renderNestedItemsInline = (item, response = null) => {
-        if (this.isObject(item)) {
-            return this.renderNestedTableInline(item, response);
-        } else if (Array.isArray(item)) {
-            return (
-              <>
-                {item
-                  .filter(el => (this.state.hideEmpty ? !this.deepIsEmpty(el) : true))
-                  .map((el, i) => <React.Fragment key={i}>{this.renderNestedItemsInline(el)}</React.Fragment>)}
-              </>
-            );
-        } else {
-            return (
-              <span className={this.state.truncateLong ? 'line-clip-1' : undefined}>
-                {item}
-              </span>
-            );
-        }
+    pathKey = (arr) => arr.join('.');
+    isExpandable = (v) => (v && typeof v === 'object');
+    needsInspector = (v) => {
+      if (this.isExpandable(v)) return true;
+      if (typeof v === 'string') return v.length > 180 || v.indexOf('\n') !== -1;
+      return false;
+    };
+    formatLeaf = (v) => {
+      if (v === null || v === undefined) return '';
+      if (typeof v === 'string') return v;
+      if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+      return JSON.stringify(v);
     };
 
-    renderNestedTableInline = (tableData, response = null) => {
-        const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] === 'APPLY_TREATMENT';
-        const character = tableData['character'];
-        const location = tableData['location'];
-        return (
-            <Table size="small" className="kv-table">
-                <TableBody>
-                    {Object.entries(tableData)
-                        .filter(([_, v]) => (this.state.hideEmpty ? !this.deepIsEmpty(v) : true))
-                        .map(([key, value], i) => {
-                            if (isTreatment && response && key === 'treatment') {
-                                for (const c of (response?.characters ?? [])) {
-                                    if (c['id'] === character) {
-                                        for (const injury of c['injuries']) {
-                                            if (injury['location'] === location) {
-                                                if (injury['treatments_applied'])
-                                                    value = `${value} (current count: ${injury['treatments_applied']})`;
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            return (
-                                <TableRow key={i} className="kv-row">
-                                    <TableCell className='kv-key'><strong>{this.snakeCaseToNormalCase(key)}</strong></TableCell>
-                                    <TableCell className='kv-val'>
-                                        {this.renderNestedItemsInline(value)}
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                </TableBody>
-            </Table>
+    renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null) => {
+      const rows = [];
+      if (!this.isExpandable(obj)) return rows;
+      const entries = Object.entries(obj).filter(([_, v]) => (this.state.hideEmpty ? !this.deepIsEmpty(v) : true));
+      for (const [key, rawVal] of entries) {
+        let value = rawVal;
+        if (
+          parentObj &&
+          parentObj.action_type === 'APPLY_TREATMENT' &&
+          key === 'treatment' &&
+          responseCtx
+        ) {
+          const character = parentObj.character;
+          const location = parentObj.location;
+          for (const c of (responseCtx?.characters ?? [])) {
+            if (c.id === character) {
+              for (const inj of (c.injuries ?? [])) {
+                if (inj.location === location && inj.treatments_applied) {
+                  value = `${rawVal} (current count: ${inj.treatments_applied})`;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        const childPath = [...path, key];
+        const pathId = this.pathKey(childPath);
+        const expandable = this.isExpandable(value);
+        const expanded = expandable && this.state.expandedPaths.has(pathId);
+
+        rows.push(
+          <TableRow key={pathId} className="tree-row">
+            <TableCell className="tree-key">
+              <div className="tree-key-wrap" style={{ paddingLeft: depth * 14 }}>
+                {expandable ? (
+                  <button
+                    className="toggle-btn"
+                    aria-label={expanded ? 'Collapse' : 'Expand'}
+                    aria-expanded={expanded}
+                    onClick={() => {
+                      const next = new Set(this.state.expandedPaths);
+                      if (expanded) next.delete(pathId); else next.add(pathId);
+                      this.setState({ expandedPaths: next });
+                    }}
+                  >
+                    {expanded ? '▾' : '▸'}
+                  </button>
+                ) : (
+                  <span className="toggle-spacer" />
+                )}
+                <strong>{this.snakeCaseToNormalCase(key)}</strong>
+              </div>
+            </TableCell>
+            <TableCell className="tree-val">
+              {!expandable ? (
+                <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+                  {this.formatLeaf(value)}
+                </div>
+              ) : (
+                <button
+                  className="view-btn"
+                  onClick={() => this.setState({
+                    inspectorOpen: true,
+                    inspectorNode: value,
+                    inspectorTitle: childPath.join(' › ')
+                  })}
+                >
+                  View
+                </button>
+              )}
+            </TableCell>
+          </TableRow>
         );
+
+        if (expandable && expanded) {
+          if (Array.isArray(value)) {
+            value.forEach((el, idx) => {
+              const subPath = [...childPath, `[${idx}]`];
+              const subId = this.pathKey(subPath);
+              const isObj = this.isExpandable(el);
+              const subExpanded = isObj && this.state.expandedPaths.has(subId);
+              rows.push(
+                <TableRow key={subId} className="tree-row">
+                  <TableCell className="tree-key">
+                    <div className="tree-key-wrap" style={{ paddingLeft: (depth + 1) * 14 }}>
+                      {isObj ? (
+                        <button
+                          className="toggle-btn"
+                          aria-label={subExpanded ? 'Collapse' : 'Expand'}
+                          aria-expanded={subExpanded}
+                          onClick={() => {
+                            const next = new Set(this.state.expandedPaths);
+                            if (subExpanded) next.delete(subId); else next.add(subId);
+                            this.setState({ expandedPaths: next });
+                          }}
+                        >
+                          {subExpanded ? '▾' : '▸'}
+                        </button>
+                      ) : (
+                        <span className="toggle-spacer" />
+                      )}
+                      <strong>{`[${idx}]`}</strong>
+                    </div>
+                  </TableCell>
+                  <TableCell className="tree-val">
+                    {!isObj ? (
+                      <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+                        {this.formatLeaf(el)}
+                      </div>
+                    ) : (
+                      <button
+                        className="view-btn"
+                        onClick={() => this.setState({
+                          inspectorOpen: true,
+                          inspectorNode: el,
+                          inspectorTitle: [...childPath, `[${idx}]`].join(' › ')
+                        })}
+                      >
+                        View
+                      </button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+              if (isObj && subExpanded) {
+                rows.push(...this.renderTreeRows(el, [...childPath, `[${idx}]`], depth + 2, responseCtx, el));
+              }
+            });
+          } else {
+            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value));
+          }
+        }
+      }
+      return rows;
+    };
+
+    renderTreeTable = (data, responseCtx = null) => {
+      if (!data || typeof data !== 'object') return null;
+      return (
+        <Table size="small" className="tree-table">
+          <TableBody>{this.renderTreeRows(data, [], 0, responseCtx, data)}</TableBody>
+        </Table>
+      );
     };
 
     isObject = (item) => (typeof item === 'object' && !Array.isArray(item) && item !== null);
@@ -738,17 +843,16 @@ class ResultsTable extends React.Component {
                                                                 {hasParams && <div className="section-heading">Parameters</div>}
                                                                 {hasParams && (
                                                                   <div className="panel-card">
-                                                                    <div className="params-table">
-                                                                      {this.renderNestedItemsInline(sel.parameters, sel.command === 'Take Action' ? sel.response : null)}
-                                                                    </div>
+                                                                    {this.renderTreeTable(
+                                                                      sel.parameters,
+                                                                      sel.command === 'Take Action' ? sel.response : null
+                                                                    )}
                                                                   </div>
                                                                 )}
                                                                 {hasResponse && <div className="section-heading">Response</div>}
                                                                 {hasResponse && (
                                                                   <div className="panel-card">
-                                                                    <div className="response-table">
-                                                                      {this.renderNestedItemsInline(sel.response)}
-                                                                    </div>
+                                                                    {this.renderTreeTable(sel.response)}
                                                                   </div>
                                                                 )}
                                                               </div>
