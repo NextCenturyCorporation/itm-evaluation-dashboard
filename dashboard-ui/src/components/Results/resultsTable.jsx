@@ -136,10 +136,15 @@ class ResultsTable extends React.Component {
 
     componentDidMount() {
         window.addEventListener('scroll', this.toggleVisibility);
+        this._onKeyDown = (e) => {
+          if (e.key === 'Escape') this.setState({ inspectorOpen: false });
+        };
+        window.addEventListener('keydown', this._onKeyDown);
     }
 
     componentWillUnmount() {
         window.removeEventListener('scroll', this.toggleVisibility);
+        window.removeEventListener('keydown', this._onKeyDown);
     }
 
     toggleVisibility = () => {
@@ -165,7 +170,7 @@ class ResultsTable extends React.Component {
     handleExpandAll = () => this.setState({ truncateLong: false });
     handleCollapseAll = () => this.setState({ truncateLong: true });
 
-    selectCommand = (index) => this.setState({ selectedIndex: index, expandedPaths: new Set() });
+    selectCommand = (index) => this.setState({ selectedIndex: index, expandedPaths: new Set(), inspectorOpen: false });
 
     setEval(target) {
         this.setState({
@@ -298,6 +303,16 @@ class ResultsTable extends React.Component {
       return JSON.stringify(v);
     };
 
+    openInspector = (node, title) => {
+      console.debug('[Inspector] open:', title, node);
+      this.setState({ inspectorOpen: true, inspectorNode: node, inspectorTitle: title });
+    };
+
+    closeInspector = () => {
+      console.debug('[Inspector] close');
+      this.setState({ inspectorOpen: false });
+    };
+
     renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null) => {
       const rows = [];
       if (!this.isExpandable(obj)) return rows;
@@ -358,12 +373,8 @@ class ResultsTable extends React.Component {
                 </div>
               ) : (
                 <button
-                  className="view-btn"
-                  onClick={() => this.setState({
-                    inspectorOpen: true,
-                    inspectorNode: value,
-                    inspectorTitle: childPath.join(' › ')
-                  })}
+                    className="view-btn"
+                    onClick={() => this.openInspector(value, childPath.join(' > '))}
                 >
                   View
                 </button>
@@ -410,11 +421,9 @@ class ResultsTable extends React.Component {
                     ) : (
                       <button
                         className="view-btn"
-                        onClick={() => this.setState({
-                          inspectorOpen: true,
-                          inspectorNode: el,
-                          inspectorTitle: [...childPath, `[${idx}]`].join(' › ')
-                        })}
+                        onClick={() =>
+                          this.openInspector(el, [...childPath, `[${idx}]`].join(' > '))
+                        }
                       >
                         View
                       </button>
@@ -440,6 +449,17 @@ class ResultsTable extends React.Component {
         <Table size="small" className="tree-table">
           <TableBody>{this.renderTreeRows(data, [], 0, responseCtx, data)}</TableBody>
         </Table>
+      );
+    };
+
+    renderValueOrTree = (data, responseCtx = null) => {
+      if (data && typeof data === 'object') return this.renderTreeTable(data, responseCtx);
+      return (
+        <div className="value-wrap">
+          <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+            {this.formatLeaf(data)}
+          </div>
+        </div>
       );
     };
 
@@ -837,7 +857,7 @@ class ResultsTable extends React.Component {
                                                             const idx = Math.min(this.state.selectedIndex, Math.max(hist.length - 1, 0));
                                                             const sel = hist[idx] || {};
                                                             const hasParams = sel?.parameters && Object.keys(sel.parameters).length > 0;
-                                                            const hasResponse = sel?.response && !(this.isEmpty(sel.response));
+                                                            const hasResponse = sel?.response !== undefined && sel?.response !== null && !(this.isEmpty(sel.response));
                                                             return (
                                                               <div className="right-col">
                                                                 {hasParams && <div className="section-heading">Parameters</div>}
@@ -852,7 +872,7 @@ class ResultsTable extends React.Component {
                                                                 {hasResponse && <div className="section-heading">Response</div>}
                                                                 {hasResponse && (
                                                                   <div className="panel-card">
-                                                                    {this.renderTreeTable(sel.response)}
+                                                                    {this.renderValueOrTree(sel.response)}
                                                                   </div>
                                                                 )}
                                                               </div>
@@ -872,6 +892,32 @@ class ResultsTable extends React.Component {
                         }
                     </div>
                 </div>
+                {this.state.inspectorOpen && (
+                  <div
+                    className="inspector-backdrop"
+                    role="presentation"
+                    onClick={this.closeInspector}
+                  >
+                    <div
+                      className="inspector-drawer"
+                      role="dialog"
+                      aria-modal="true"
+                      aria-label="Inspector"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="inspector-header">
+                        <div className="inspector-title">{this.state.inspectorTitle || 'Details'}</div>
+                        <button className="btn-link" onClick={this.closeInspector}>Close</button>
+                      </div>
+                      <div className="inspector-body">
+                        {this.renderValueOrTree(this.state.inspectorNode)}
+                        <pre className="inspector-json">
+{JSON.stringify(this.state.inspectorNode, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {this.state.showScrollButton && (
                     <IconButton onClick={(e) => {
                         e.stopPropagation()
