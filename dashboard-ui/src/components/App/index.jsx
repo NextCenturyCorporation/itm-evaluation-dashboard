@@ -33,6 +33,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
+import { phase2ParticipantData } from '../OnlineOnly/config';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -90,11 +91,8 @@ const GET_CONFIGS_PHASE_2 = gql`
     }
 `
 
-
 const LOW_PID = 202507100;
 const HIGH_PID = 202507299;
-
-
 
 export function isUserElevated(currentUser) {
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
@@ -245,24 +243,8 @@ export function App() {
                 x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
             ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
 
-            const scenarioSet = Math.floor(Math.random() * 3) + 1;
 
-            const participantData = {
-                "ParticipantID": newPid,
-                "Type": isTester ? "Test" : "emailParticipant",
-                "claimed": true,
-                "simEntryCount": 0,
-                "surveyEntryCount": 0,
-                "textEntryCount": 0,
-                "hashedEmail": hashedEmail,
-                "evalNum": evalNum,
-                "timeCreated": new Date(),
-                
-                "AF-text-scenario": scenarioSet,
-                "MF-text-scenario": scenarioSet,
-                "PS-text-scenario": scenarioSet,
-                "SS-text-scenario": scenarioSet
-            };
+            const participantData = phase2ParticipantData(null, newPid, hashedEmail, isTester ? 'Test' : 'emailParticipant')
 
             const addRes = await addParticipant({
                 variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }

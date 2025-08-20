@@ -5,10 +5,8 @@ import consentPdf from './consentForm2025.pdf';
 import gql from "graphql-tag";
 import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedScenariosPage";
 import { useHistory, useLocation } from 'react-router-dom';
-import bcrypt from 'bcryptjs';
 import '../../css/scenario-page.css';
-import store from "../../store/store";
-import { SURVEY_VERSION_DATA } from "../Survey/survey";
+import { phase2ParticipantData } from "./config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -66,18 +64,12 @@ export default function StartOnline() {
         ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         // get correct plog data
         const currentSearchParams = new URLSearchParams(location.search);
-        const scenarioSet = Math.floor(Math.random() * 3) + 1;
-        const participantData = {
-            "ParticipantID": newPid, "Type": "Online", "prolificId": currentSearchParams.get('PROLIFIC_PID'), "contactId": currentSearchParams.get('ContactID'),
-            "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT),
-            "AF-text-scenario": scenarioSet, "MF-text-scenario": scenarioSet, "PS-text-scenario": scenarioSet, "SS-text-scenario": scenarioSet, 'evalNum': SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNum
-        };
+        const participantData = phase2ParticipantData(currentSearchParams, null, newPid, 'Online')
+
         // update database
         const addRes = await addParticipant({ variables: { participantData, lowPid, highPid } });
         // extra step to prevent duplicate pids
         newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
-
-
 
         currentSearchParams.set('pid', newPid);
         currentSearchParams.set('class', 'Online');

@@ -6,6 +6,7 @@ import DualListBox from 'react-dual-listbox';
 import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
+import { evalNameToNumber } from '../OnlineOnly/config';
 import { setSurveyVersion, setupConfigWithImages, setTextEval as setTextEvalInStore, setCurrentUIStyle } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
@@ -419,7 +420,8 @@ function AdminPage({ currentUser, updateUserHandler }) {
         fetchPolicy: 'no-cache',
         onCompleted: (data) => {
             if (data && data.getTextEvalOptions) {
-                setTextEvalOptions(data.getTextEvalOptions);
+                const includedOptions = data.getTextEvalOptions.filter((entry) => evalNameToNumber[entry])
+                setTextEvalOptions(includedOptions);
             }
         }
     });
