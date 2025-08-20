@@ -616,15 +616,18 @@ const resolvers = {
       }
     },
     updatePidBounds: async (obj, args, context, info) => {
-      await context.db.collection('pidBounds').findOneAndUpdate(
+      const res = await context.db.collection('pidBounds').findOneAndUpdate(
         {},
         {
           $set: {
             lowPid: args.lowPid,
             highPid: args.highPid,
           }
-        }
+        },
+        {upsert: true, returnDocument: 'after'}
       )
+
+      return res.value
     },
     addNewParticipantToLog: async (obj, args, context, inflow) => {
       try {

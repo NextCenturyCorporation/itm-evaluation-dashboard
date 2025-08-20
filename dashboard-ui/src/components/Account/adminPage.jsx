@@ -17,6 +17,18 @@ import { FaInfoCircle } from 'react-icons/fa'
 
 const history = createBrowserHistory({ forceRefresh: true });
 
+const GET_PID_BOUNDS = gql`
+    query GetPidBounds {
+        getPidBounds
+    }
+`;
+
+const UPDATE_PID_BOUNDS = gql`
+    mutation UpdatePidBounds($lowPid: Int!, $highPid: Int!) {
+        updatePidBounds(lowPid: $lowPid, highPid: $highPid)
+    }
+`;
+
 const getUsersQueryName = "getUsers";
 const GET_USERS = gql`
     query getUsers($caller: JSON!) {
@@ -405,6 +417,56 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const [textEvalOptions, setTextEvalOptions] = useState([]);
     const [pendingTextEval, setPendingTextEval] = useState(null);
     const [showTextEvalConfirmation, setShowTextEvalConfirmation] = useState(false);
+    const [lowPid, setLowPid] = useState('');
+    const [highPid, setHighPid] = useState('');
+    const [pendingPidBounds, setPendingPidBounds] = useState(null);
+    const [showPidConfirmation, setShowPidConfirmation] = useState(false);
+
+    const { loading: pidLoading, error: pidError } = useQuery(GET_PID_BOUNDS, {
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            if (data && data.getPidBounds) {
+                setLowPid(data.getPidBounds.low);
+                setHighPid(data.getPidBounds.high);
+            }
+        }
+    });
+
+    const [updatePidBounds] = useMutation(UPDATE_PID_BOUNDS);
+
+    const handlePidChange = (type, value) => {
+        if (type === 'low') setLowPid(value);
+        if (type === 'high') setHighPid(value);
+    };
+
+    const savePidBounds = (e) => {
+        e.preventDefault();
+        setPendingPidBounds({ low: parseInt(lowPid, 10), high: parseInt(highPid, 10) });
+        setShowPidConfirmation(true);
+    };
+
+    const confirmPidChange = async () => {
+        try {
+            setIsLoading(true);
+            await updatePidBounds({
+                variables: {
+                    lowPid: pendingPidBounds.low,
+                    highPid: pendingPidBounds.high
+                }
+            });
+            setShowPidConfirmation(false);
+            setPendingPidBounds(null);
+        } catch (error) {
+            alert("Failed to update PID bounds. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const cancelPidChange = () => {
+        setPendingPidBounds(null);
+        setShowPidConfirmation(false);
+    };
 
     const { loading: textEvalLoading, error: textEvalError } = useQuery(GET_CURRENT_TEXT_EVAL, {
         fetchPolicy: 'no-cache',
@@ -741,6 +803,33 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                             ))}
                                         </Form.Select>
                                     </Form.Group>
+                                    <Form.Group className='my-2'>
+                                        <Form.Label>Change PID Bounds</Form.Label>
+                                        <Row className="align-items-end">
+                                            <Col md={4}>
+                                                <Form.Label>Low PID</Form.Label>
+                                                <Form.Control
+                                                    type="number"
+                                                    value={lowPid}
+                                                    onChange={(e) => handlePidChange('low', e.target.value)}
+                                                />
+                                            </Col>
+                                            <Col md={4}>
+                                                <Form.Label>High PID</Form.Label>
+                                                <Form.Control
+                                                    type="number"
+                                                    value={highPid}
+                                                    onChange={(e) => handlePidChange('high', e.target.value)}
+                                                />
+                                            </Col>
+                                            <Col md="auto">
+                                                <Button variant="primary" onClick={savePidBounds}>
+                                                    Save
+                                                </Button>
+                                            </Col>
+                                        </Row>
+                                    </Form.Group>
+
                                 </Card.Body>
                             </Card>
                         </Col>
@@ -787,6 +876,14 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         onCancel={cancelStylingChange}
                         message={`Are you sure you want to change to the ${pendingStyleVersion === 'phase1' ? 'Phase 1' : 'Updated'} UI Style? This will affect the appearance for all users.`}
                     />
+
+                    <ConfirmationDialog
+                        show={showPidConfirmation}
+                        onConfirm={confirmPidChange}
+                        onCancel={cancelPidChange}
+                        message={`Are you sure you want to set PID bounds to Low: ${pendingPidBounds?.low}, High: ${pendingPidBounds?.high}? This will affect which participants are included.`}
+                    />
+
 
                     <Query
                         query={GET_USERS}

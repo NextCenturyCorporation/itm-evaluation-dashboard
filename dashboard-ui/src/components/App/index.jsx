@@ -4,7 +4,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval } from './setupUtils';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { evalNameToNumber } from '../OnlineOnly/config';
 // Components
@@ -46,6 +46,12 @@ import store from '../../store/store';
 
 
 const history = createBrowserHistory();
+
+const GET_PID_BOUNDS = gql`
+    query GetPidBounds {
+        getPidBounds
+    }
+`;
 
 const GET_TEXT_EVAL = gql`
     query GetCurrentTextEval {
@@ -97,9 +103,6 @@ const GET_CONFIGS_PHASE_2 = gql`
     }
 `
 
-const LOW_PID = 202507100;
-const HIGH_PID = 202507299;
-
 export function isUserElevated(currentUser) {
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
 }
@@ -118,6 +121,16 @@ export function App() {
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
     const [configQuery, setConfigQuery] = React.useState(GET_CONFIGS)
     const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
+
+    // grab upper and lower bounds for new participant pids from mongo and set them in redux
+    const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, { 
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            if (data && data.getPidBounds) {
+                setPidBoundsInStore(data.getPidBounds);
+            }
+        }
+    });
 
     React.useEffect(() => {
         if (versionData?.getCurrentSurveyVersion) {
@@ -246,6 +259,10 @@ export function App() {
         const dbPLog = await fetchParticipantLog();
         const evalNum = evalNameToNumber[textEvalData.getCurrentTextEval]
 
+        const pidBounds = store.getState().configs.pidBounds;
+        const lowPid = pidBounds.lowPid;
+        const highPid = pidBounds.highPid;
+
         const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
 
         if (foundParticipant) {
@@ -255,18 +272,17 @@ export function App() {
         } else {
             let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
                 !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
-                x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
-            ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
+                x.ParticipantID >= lowPid && x.ParticipantID <= highPid
+            ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
             let participantData;
             if (evalNum >= 8) {
                 participantData = phase2ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant')
             } else {
-                console.log('hit p1 entry')
                 participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant')
             }
             const addRes = await addParticipant({
-                variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }
+                variables: { participantData}
             });
             if (addRes?.data?.addNewParticipantToLog === -1) {
                 alert("This email address is taken. Please enter a different email.");

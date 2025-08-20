@@ -1,5 +1,5 @@
 import store from '../../store/store';
-import { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle, setCurrentTextEval } from '../../store/slices/configSlice';
+import { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle, setCurrentTextEval, setPidBounds } from '../../store/slices/configSlice';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { setParticipantLog } from '../../store/slices/participantSlice';
 
@@ -98,4 +98,8 @@ export function setTextEval(evalName) {
 
 export function setCurrentUIStyle(version) {
     store.dispatch(setCurrentStyle(version));
+}
+
+export function setPidBoundsInStore(bounds) {
+    store.dispatch(setPidBounds(bounds));
 }

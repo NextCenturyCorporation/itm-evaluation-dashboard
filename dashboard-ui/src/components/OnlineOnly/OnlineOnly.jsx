@@ -21,6 +21,7 @@ const ADD_PARTICIPANT = gql`
 
 export default function StartOnline() {
     const currentTextEval = useSelector(state => state.configs.currentTextEval)
+    const pidBounds = useSelector(state => state.configs.pidBounds);
     const { refetch } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [showConsentForm, setShowConsentForm] = React.useState(false);
@@ -58,9 +59,11 @@ export default function StartOnline() {
     const startSurvey = async () => {
         const result = await refetch();
         const evalNumber = evalNameToNumber[currentTextEval]
+
+        const lowPid = pidBounds.lowPid;
+        const highPid = pidBounds.highPid;
+
         // calculate new pid
-        const lowPid = 202507100;
-        const highPid = 202507299;
         let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
             !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
             x.ParticipantID >= lowPid && x.ParticipantID <= highPid
@@ -75,7 +78,7 @@ export default function StartOnline() {
         }
 
         // update database
-        const addRes = await addParticipant({ variables: { participantData, lowPid, highPid } });
+        const addRes = await addParticipant({ variables: { participantData } });
         // extra step to prevent duplicate pids
         newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
 
