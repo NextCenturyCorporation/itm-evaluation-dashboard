@@ -66,6 +66,7 @@ const typeDefs = gql`
     getMultiKdmaAnalysisData: [JSON] @complexity(value: 200)
     getCurrentTextEval: String @complexity(value: 5)
     getTextEvalOptions: [String] @complexity(value: 10)
+    getPidBounds: JSON @complexity(value: 5)
   }
 
   type Mutation {
@@ -83,6 +84,7 @@ const typeDefs = gql`
     updateParticipantLog(pid: String, updates: JSON): JSON,
     getServerTimestamp: String,
     updateTextEval(eval: String!): String
+    updatePidBounds(lowPid: Int!, highPid: Int!): JSON
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
@@ -508,6 +510,10 @@ const resolvers = {
         .distinct('eval')
         .then(result => result.filter(eval => eval != null));
       return evals.sort();
+    },
+    getPidBounds: async (obj, args, context, info) => {
+      const bounds = await context.db.collection('pidBounds').findOne();
+      return bounds
     }
   },
   Mutation: {
@@ -609,8 +615,23 @@ const resolvers = {
         await context.db.collection('userScenarioResults').insertOne(result)
       }
     },
+    updatePidBounds: async (obj, args, context, info) => {
+      await context.db.collection('pidBounds').findOneAndUpdate(
+        {},
+        {
+          $set: {
+            lowPid: args.lowPid,
+            highPid: args.highPid,
+          }
+        }
+      )
+    },
     addNewParticipantToLog: async (obj, args, context, inflow) => {
       try {
+        const pidBounds = await context.db.collection('pidBounds').findOne();
+        const lowPid = pidBounds?.lowPid;
+        const highPid = pidBounds?.highPid
+
         const timestamp = new Date().toISOString();
         let generatedPid;
         if (!Number.isFinite(args.participantData.ParticipantID)) {
@@ -618,13 +639,13 @@ const resolvers = {
 
           const highestPidDoc = await context.db.collection('participantLog')
             .find({
-              ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
+              ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
             })
             .sort({ ParticipantID: -1 })
             .limit(1)
             .toArray();
 
-          generatedPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : args.lowPid;
+          generatedPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : lowPid;
 
           args.participantData.ParticipantID = generatedPid;
         } else {
@@ -644,7 +665,7 @@ const resolvers = {
             // get absolute latest highest PID
             const highestPidDoc = await context.db.collection('participantLog')
               .find({
-                ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
+                ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
               })
               .sort({ ParticipantID: -1 })
               .limit(1)
