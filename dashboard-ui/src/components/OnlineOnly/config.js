@@ -5,8 +5,16 @@ import bcrypt from 'bcryptjs';
 export const evalNameToNumber = {
     'Phase 2 July 2025 Collaboration': 9,
     'Phase 2 June 2025 Collaboration': 8,
-    'phase1': 5,
-    'dre': 4
+    'phase1': 5
+}
+
+const p1Mappings = {
+    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
+    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
+    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
+    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
 }
 
 export const LOG_VARIATIONS_PHASE1 = [
@@ -41,6 +49,12 @@ export const phase1ParticipantData = (currentSearchParams, hashedEmail, newPid, 
     const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
     const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
 
+    const setNum = newPid % 24
+    console.log('newPid:', newPid, 'type:', typeof newPid);
+    console.log('setNum:', setNum, 'type:', typeof setNum);
+    console.log('LOG_VARIATIONS_PHASE1 length:', LOG_VARIATIONS_PHASE1.length);
+    console.log(LOG_VARIATIONS_PHASE1[setNum])
+
     return {
         "ParticipantID": newPid,
         "Type": type,
@@ -51,7 +65,8 @@ export const phase1ParticipantData = (currentSearchParams, hashedEmail, newPid, 
         "surveyEntryCount": 0,
         "textEntryCount": 0,
         "hashedEmail": email,
-        'evalNum': SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNum
+        'evalNum': SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNum,
+        ...LOG_VARIATIONS_PHASE1[setNum]
     };
 }
 
@@ -101,7 +116,21 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
             `June2025-SS${participantLog['SS-text-scenario']}-eval`
         ]
     }
-    console.log(scenarios)
+
+    if (num === 5) {
+        console.log(participantLog)
+        scenarios.push(...p1Mappings[participantLog['Text-1']])
+        scenarios.push(...p1Mappings[participantLog['Text-2']])
+
+        console.log(scenarios)
+    }
+
+    if (num >= 8) {
+        for (let i = scenarios.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
+        }
+    }
 
     return scenarios
 }

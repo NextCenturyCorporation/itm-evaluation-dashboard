@@ -170,6 +170,7 @@ class TextBasedScenariosPage extends Component {
             } else {
                 // if you want to go through with a non-matched or duplicate PID, giving default experience
                 if (!matchedLog && !isDuplicate) {
+
                     const scenarioSet = Math.floor(Math.random() * 3) + 1;
 
                     matchedLog = {
@@ -203,12 +204,6 @@ class TextBasedScenariosPage extends Component {
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
             config.scenario_id && scenarioIds.includes(config.scenario_id)
         );
-
-
-        for (let i = scenarios.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
-        }
         return scenarios;
     }
 
@@ -354,7 +349,9 @@ class TextBasedScenariosPage extends Component {
             });
         });
 
-        scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id);
+        scenarioData.scenarioOrder = this.props.currentTextEval >= 8 ?
+            this.state.scenarios.map(scenario => scenario.scenario_id) :
+            [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
         scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
         scenarioData.evalName = this.props.currentTextEval
         await this.getAlignmentScore(scenarioData)
@@ -392,7 +389,7 @@ class TextBasedScenariosPage extends Component {
                 adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
                 adeptScenarios: updatedAdeptScenarios
             }), async () => {
-                if (this.state.adeptSessionsCompleted === 4) {
+                if (this.state.adeptSessionsCompleted === this.props.currentTextEval >= 8 ? 4 : 3) {
                     await this.uploadAdeptScenarios(updatedAdeptScenarios)
                 }
             });
@@ -411,8 +408,9 @@ class TextBasedScenariosPage extends Component {
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
+                        const scenarioId = this.props.currentTextEval >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
                 this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+                    await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
                 })
             }
         } catch (e) {
@@ -422,7 +420,8 @@ class TextBasedScenariosPage extends Component {
 
     continueRunningSession = async (scenario) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
+        const scenarioId = this.props.currentTextEval >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
+        await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
@@ -471,7 +470,9 @@ class TextBasedScenariosPage extends Component {
                 targets = ['PerceivedQuantityOfLivesSaved']
             }
         } else {
-            targets = ['affiliation', 'merit', 'search', 'personal_safety']
+            targets = this.props.currentTextEval >= 8 ? 
+                ['affiliation', 'merit', 'search', 'personal_safety'] :
+                ['Moral judgement', 'Ingroup Bias']
         }
 
         let responses = []
@@ -603,7 +604,9 @@ class TextBasedScenariosPage extends Component {
             ...scenarioConfigs[0],
             pages: [...scenarioConfigs[0].pages]
         };
-        config.pages = shuffle([...config.pages])
+
+        // randomize probe order for phase 2 (non narrative). Keep order intact for phase 1
+        if (this.props.currentTextEval >= 8 ) {config.pages = shuffle([...config.pages])}
 
         config.title = title;
         config.showTitle = false;
@@ -821,17 +824,6 @@ ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
 ReactQuestionFactory.Instance.registerQuestion("phase2Text", (props) => {
     return React.createElement(Phase2Text, props)
 })
-
-
-const p1Mappings = {
-    'AD-1': ['phase1-adept-eval-MJ2', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'AD-2': ['phase1-adept-eval-MJ4', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'AD-3': ['phase1-adept-eval-MJ5', 'phase1-adept-train-MJ1', 'phase1-adept-train-IO1'],
-    'ST-1': ['qol-ph1-eval-2', 'vol-ph1-eval-2'],
-    'ST-2': ['qol-ph1-eval-3', 'vol-ph1-eval-3'],
-    'ST-3': ['qol-ph1-eval-4', 'vol-ph1-eval-4'],
-}
-
 
 export const simNameMappings = {
     'AD-1': ['Eval_Adept_Urban'],

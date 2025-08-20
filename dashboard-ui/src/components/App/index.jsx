@@ -6,7 +6,7 @@ import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
-
+import { evalNameToNumber } from '../OnlineOnly/config';
 // Components
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
@@ -244,7 +244,7 @@ export function App() {
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
-        const evalNum = SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNumber;
+        const evalNum = evalNameToNumber[textEvalData.getCurrentTextEval]
 
         const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
 
@@ -260,9 +260,10 @@ export function App() {
 
             let participantData;
             if (evalNum >= 8) {
-                participantData = phase2ParticipantData(null, newPid, hashedEmail, isTester ? 'Test' : 'emailParticipant')
+                participantData = phase2ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant')
             } else {
-                participantData = phase1ParticipantData()
+                console.log('hit p1 entry')
+                participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant')
             }
             const addRes = await addParticipant({
                 variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }
