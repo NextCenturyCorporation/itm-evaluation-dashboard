@@ -123,8 +123,6 @@ class ResultsTable extends React.Component {
             showScrollButton: false,
             alignmentTarget: null,
             hideEmpty: true,
-            expandAllVersion: 0,
-            collapseAllVersion: 0,
             selectedIndex: 0,
             truncateLong: true,
             expandedPathsParams: new Set(),
@@ -148,17 +146,7 @@ class ResultsTable extends React.Component {
         window.removeEventListener('keydown', this._onKeyDown);
     }
 
-    toggleVisibility = () => {
-        if (window.pageYOffset > 300) {
-            this.setState({
-                showScrollButton: true
-            });
-        } else {
-            this.setState({
-                showScrollButton: false
-            });
-        }
-    };
+    toggleVisibility = () => this.setState({ showScrollButton: window.pageYOffset > 300 });
 
     scrollToTop = () => {
         window.scrollTo({
@@ -166,10 +154,6 @@ class ResultsTable extends React.Component {
             behavior: "smooth"
         });
     };
-
-
-    handleExpandAll = () => this.setState({ truncateLong: false });
-    handleCollapseAll = () => this.setState({ truncateLong: true });
 
     selectCommand = (index) =>
       this.setState({
@@ -297,11 +281,6 @@ class ResultsTable extends React.Component {
 
     pathKey = (arr) => arr.join('.');
     isExpandable = (v) => (v && typeof v === 'object');
-    needsInspector = (v) => {
-      if (this.isExpandable(v)) return true;
-      if (typeof v === 'string') return v.length > 180 || v.indexOf('\n') !== -1;
-      return false;
-    };
     formatLeaf = (v) => {
       if (v === null || v === undefined) return '';
       if (typeof v === 'string') return v;
