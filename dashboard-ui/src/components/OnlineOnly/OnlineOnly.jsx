@@ -5,8 +5,9 @@ import consentPdf from './consentForm2025.pdf';
 import gql from "graphql-tag";
 import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedScenariosPage";
 import { useHistory, useLocation } from 'react-router-dom';
+import { useSelector } from "react-redux";
 import '../../css/scenario-page.css';
-import { phase2ParticipantData } from "./config";
+import { evalNameToNumber, phase1ParticipantData, phase2ParticipantData } from "./config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -19,6 +20,7 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export default function StartOnline() {
+    const currentTextEval = useSelector(state => state.configs.currentTextEval)
     const { refetch } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [showConsentForm, setShowConsentForm] = React.useState(false);
@@ -55,6 +57,7 @@ export default function StartOnline() {
 
     const startSurvey = async () => {
         const result = await refetch();
+        const evalNumber = evalNameToNumber[currentTextEval]
         // calculate new pid
         const lowPid = 202507100;
         const highPid = 202507299;
@@ -64,7 +67,12 @@ export default function StartOnline() {
         ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         // get correct plog data
         const currentSearchParams = new URLSearchParams(location.search);
-        const participantData = phase2ParticipantData(currentSearchParams, null, newPid, 'Online')
+        let participantData
+        if (evalNumber >= 8) {
+            participantData = phase2ParticipantData(currentSearchParams, null, newPid, 'Online')
+        } else {
+            participantData = phase1ParticipantData(currentSearchParams, null, newPid, 'Online')
+        }
 
         // update database
         const addRes = await addParticipant({ variables: { participantData, lowPid, highPid } });
