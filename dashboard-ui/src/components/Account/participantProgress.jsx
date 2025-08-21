@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import '../SurveyResults/resultsTable.css';
 import '../../css/admInfo.css';
 import { Autocomplete, TextField, Modal, Box } from "@mui/material";
-import { useQuery } from 'react-apollo'
+import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
@@ -12,6 +12,7 @@ import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
 import { determineChoiceProcessJune2025 } from '../Research/utils';
 import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 import DeleteIcon from '@material-ui/icons/Delete';
+import { accountsClient } from "../../services/accountsService";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -33,6 +34,12 @@ const GET_SIM_DATA = gql`
         getAllSimAlignment
     }`;
 
+const DELETE_PID_DATA = gql`
+    mutation deleteDataByPID($caller: JSON!, $pid: String!) {
+        deleteDataByPID(caller: $caller, pid: $pid) 
+    }
+`;
+
 const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
@@ -45,7 +52,7 @@ function formatLoading(val) {
     return val;
 }
 
-export function ParticipantProgressTable({ canViewProlific = false, isAdmin = false }) {
+export function ParticipantProgressTable({ canViewProlific = false, isAdmin = false, currentUser = null }) {
     const KDMA_MAP = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search' };
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
@@ -66,6 +73,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const [selectedPhase, setSelectedPhase] = React.useState('Phase 2');
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = React.useState(false);
     const [rowToDelete, setRowToDelete] = React.useState({});
+    const [deleteInput, setDeleteInput] = React.useState('');
+    const [deleteUser] = useMutation(DELETE_PID_DATA);
 
     const getHeaders = () => {
         let headers = [];
@@ -80,6 +89,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         }
         return headers;
     };
+
     const HEADERS = [...getHeaders()];
 
     const getCompletionOptions = () => {
@@ -115,6 +125,62 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     const cancelDeletion = () => {
         setDeleteConfirmationOpen(false);
+    };
+
+    const updateDeleteInput = (e) => {
+        setDeleteInput(e.target.value);
+    };
+
+    const activateDelete = async () => {
+        if (!isData24HoursOld(rowToDelete)) {
+            // TODO: warn that data was not deleted
+            setDeleteConfirmationOpen(false);
+            setDeleteInput('');
+            await refreshData();
+            return;
+        }
+        const tokens = await accountsClient.getTokens();
+        await deleteUser({
+            variables: {
+                pid: rowToDelete['Participant ID'],
+                caller: { user: currentUser, tokens: tokens }
+            }
+        });
+        // TODO: check result and if it fails, warn that data was not deleted
+        setDeleteConfirmationOpen(false);
+        setDeleteInput('');
+        await refreshData();
+    };
+
+    const isData24HoursOld = (row) => {
+        const oldEnough = (milliseconds) => {
+            // del or text end time does not exist and had not been started, so we ignore
+            if (isNaN(milliseconds)) {
+                return true;
+            }
+            return (milliseconds / (1000 * 60 * 60)) >= 24;
+        };
+
+        const now = new Date();
+        const participantCreation = row['Participant Creation Date-Time'];
+        if (isDefined(participantCreation)) {
+            const timeSincePID = now - new Date(participantCreation);
+            if (!oldEnough(timeSincePID)) {
+                return false;
+            }
+        }
+        // check if it was started, unfinished, and not yet 24 hours old (if text or survey is 24 hours old, it's probably not real data and can be deleted)
+        const delInProgress = isDefined(row['Del Start Date-Time']) && !isDefined(row['Del End Date-Time']) && !oldEnough(now - row['Unformatted Delegation Start']);
+        const textInProgress = isDefined(row['Text Start Date-Time']) && !isDefined(row['Text End Date-Time']) && !oldEnough(now - row['Unformatted Text Start']);
+        if (delInProgress || textInProgress) {
+            return false;
+        }
+        const delEnd = row['Unformatted Delegation End'];
+        const textEnd = row['Unformatted Text End'];
+        const timeSinceDel = now - delEnd;
+        const timeSinceText = now - textEnd;
+        return oldEnough(timeSinceDel) && oldEnough(timeSinceText);
+
     };
 
     const sortData = React.useCallback((data) => {
@@ -160,6 +226,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 const pid = res['ParticipantID']?.toString();
                 obj['Participant ID'] = pid;
                 obj['Participant Type'] = res['Type'];
+                obj['Participant Creation Date-Time'] = res['timeCreated'];
                 if (res['Type']) {
                     allTypes.push(res['Type']);
                 }
@@ -196,8 +263,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const lastIncompleteSurvey = incompleteSurveys?.slice(-1)?.[0];
                 const surveyToUse = lastSurvey || lastIncompleteSurvey;
-                const survey_start_date =new Date(surveyToUse?.results?.startTime);
+                const survey_start_date = new Date(surveyToUse?.results?.startTime);
                 const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
+                obj['Unformatted Delegation Start'] = survey_start_date;
+                obj['Unformatted Delegation End'] = survey_end_date;
                 obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Del End Date-Time'] = String(survey_end_date) !== 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 const delScenarios = surveyToUse?.results?.orderLog?.filter((x) => x.includes(' vs '));
@@ -225,6 +294,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 const lastScenario = scenarios?.slice(-1)?.[0];
                 const text_start_date = new Date(scenarios[0]?.startTime);
                 const text_end_date = new Date(lastScenario?.timeComplete);
+                obj['Unformatted Text Start'] = text_start_date;
+                obj['Unformatted Text End'] = text_end_date;
                 obj['Text Start Date-Time'] = String(text_start_date) !== 'Invalid Date' ? `${text_start_date?.getMonth() + 1}/${text_start_date?.getDate()}/${text_start_date?.getFullYear()} - ${text_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text End Date-Time'] = String(text_end_date) !== 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Text'] = scenarios.length;
@@ -270,18 +341,21 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         }
     }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults, canViewProlific, sortData]);
 
-    const confirmDeletion = (toDelete) => {
+    const confirmDeletion = async (toDelete) => {
         setRowToDelete(toDelete);
         setDeleteConfirmationOpen(true);
     };
 
     const formatCell = (header, dataSet) => {
         if (header === 'Delete') {
+            if (isData24HoursOld(dataSet)) {
             return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
                 <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
                     <DeleteIcon />
                 </button>
             </td>
+            }
+            else return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>-</td>
         }
         const val = dataSet[header];
         const scenarioResults = dataTextResults?.getAllScenarioResults || [];
@@ -609,29 +683,38 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 <h2 className="deletion-header">
                     Confirm Deletion
                 </h2>
+                <p>All sim data, survey data, and text scenario data related to this participant will be permanently deleted.</p>
                 <div className='delete-table-container'>
                     <table className='itm-table'>
                         <thead>
-                            {HEADERS.map((header) => {
-                                if (header !== 'Delete') {
-                                    return <th key={'delete-' + header}>
-                                        <td>{header}</td>
-                                    </th>
-                                }
-                            })}
+                            <tr>
+                                {HEADERS.map((header) => {
+                                    if (header !== 'Delete') {
+                                        return <th key={'delete-' + header}>
+                                            {header}
+                                        </th>
+                                    }
+                                })}
+                            </tr>
                         </thead>
-                        <tr>
-                            {HEADERS.map((header) => {
-                                if (header !== 'Delete') {
-                                    return formatCell(header, rowToDelete)
-                                }
-                            })}
-                        </tr>
+                        <tbody>
+                            <tr>
+                                {HEADERS.map((header) => {
+                                    if (header !== 'Delete') {
+                                        return formatCell(header, rowToDelete)
+                                    }
+                                })}
+                            </tr>
+                        </tbody>
                     </table>
+                </div>
+                <div className="type-to-delete">
+                    <p>Type in the Participant ID to confirm deletion:</p>
+                    <TextField className='delete-input' value={deleteInput} onInput={updateDeleteInput} />
                 </div>
                 <div className='delete-btn-group'>
                     <button className='downloadBtn' onClick={cancelDeletion}>Cancel</button>
-                    <button className='downloadBtn'>Delete Participant</button>
+                    <button className='downloadBtn' disabled={deleteInput !== rowToDelete['Participant ID']} onClick={activateDelete}>Delete Participant</button>
                 </div>
             </Box>
         </Modal >

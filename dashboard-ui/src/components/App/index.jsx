@@ -305,7 +305,7 @@ export function App() {
             return <Redirect push to="/login" />;
         } else {
             if (isUserElevated(currentUser)) {
-                return <ParticipantProgressTable canViewProlific={currentUser.adeptUser || currentUser.admin} isAdmin={currentUser.admin} />
+                return <ParticipantProgressTable canViewProlific={currentUser.adeptUser || currentUser.admin} isAdmin={currentUser.admin} currentUser={currentUser} />
             } else {
                 return <Redirect push to="/" />;
             }

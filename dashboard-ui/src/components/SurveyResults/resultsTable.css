@@ -334,6 +334,11 @@
     box-shadow: 24;
 }
 
+.delete-modal-box p {
+    text-align: center;
+}
+
+
 .deletion-header {
     text-align: center;
     border-bottom: 4px solid black;
@@ -348,13 +353,10 @@
 }
 
 .delete-table-container .itm-table td {
-    border: none;
-    border-right: 1px solid grey;
     padding: 12px 8px;
 }
 
-.delete-table-container .itm-table th td {
-    border: none;
+.delete-table-container .itm-table thead tr th {
     padding: 12px 8px !important;
 }
 
@@ -375,4 +377,23 @@
 .delete-column {
     min-width: 120px !important;
     width: 120px;
+}
+
+.type-to-delete {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.delete-btn-group .downloadBtn:disabled {
+    color: white;
+    background-color: rgb(99, 99, 99);
+    opacity: 0.3 !important;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
 }

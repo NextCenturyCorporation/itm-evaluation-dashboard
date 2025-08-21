@@ -1,6 +1,7 @@
 const { gql } = require('apollo-server');
 const { ObjectId } = require('mongodb');
 const { GraphQLScalarType, Kind, GraphQLError } = require("graphql");
+const jwt = require('jsonwebtoken');
 
 const typeDefs = gql`
   scalar JSON
@@ -78,8 +79,9 @@ const typeDefs = gql`
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateUIStyle(version: String!): String,
-    updateParticipantLog(pid: String, updates: JSON): JSON
-    getServerTimestamp: String
+    updateParticipantLog(pid: String, updates: JSON): JSON,
+    getServerTimestamp: String,
+    deleteDataByPID(caller: JSON, pid: String): JSON
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
@@ -706,7 +708,97 @@ const resolvers = {
       const isDST = currentOffset < januaryOffset;
 
       return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
-    }
+    },
+    deleteDataByPID: async (obj, args, context, inflow) => {
+      const accessToken = args['caller']?.['tokens']?.['accessToken'];
+      if (!accessToken) {
+        throw new GraphQLError('Invalid Access Token.', {
+          extensions: { code: '400' }
+        });
+      }
+      const sessionToken = jwt.decode(accessToken)?.data?.token;
+      if (!sessionToken) {
+        throw new GraphQLError('Invalid Access Token.', {
+          extensions: { code: '400' }
+        });
+      }
+      const session = await context.db.collection('sessions').find({ "token": sessionToken })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['user']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        const foundPlog = await context.db.collection('participantLog').find({ 'ParticipantID': Number(args['pid']) }).toArray();
+        const foundText = await context.db.collection('userScenarioResults').find({ 'participantID': args['pid'] }).toArray();
+        const foundSurvey = await context.db.collection('surveyResults').find({ 'results.Participant ID Page.questions.Participant ID.response': args['pid'] }).toArray();
+        const oldEnough = (milliseconds) => {
+          if (isNaN(milliseconds)) {
+            return true;
+          }
+          return (milliseconds / (1000 * 60 * 60)) >= 24;
+        };
+        const now = new Date();
+        const allOldEnough = true;
+
+        // check that pid was created at least 24 hours ago
+        for (const doc of foundPlog) {
+          if (!doc['timeCreated']) {
+            continue;
+          }
+          const plogDate = new Date(doc['timeCreated']);
+          const timeSincePID = now - plogDate;
+          if (!oldEnough(timeSincePID)) {
+            allOldEnough = false;
+            break;
+          }
+        }
+
+        // check that text ended 24 hours ago OR if incomplete, was started 24 hours ago
+        for (const doc of foundText) {
+          let timeToCheck = doc.timeComplete;
+          if (!timeToCheck) {
+            timeToCheck = doc.startTime;
+          }
+          const timeSinceText = now - Date(timeToCheck);
+          if (!oldEnough(timeSinceText)) {
+            allOldEnough = false;
+            break;
+          }
+        }
+
+        // check that survey ended 24 hours ago OR if incomplete, was started 24 hours ago
+        for (const doc of foundSurvey) {
+          if (!doc.results) {
+            continue;
+          }
+          let timeToCheck = doc.results.timeComplete;
+          if (!timeToCheck) {
+            timeToCheck = doc.results.startTime;
+          }
+          const timeSinceText = now - Date(timeToCheck);
+          if (!oldEnough(timeSinceText)) {
+            allOldEnough = false;
+            break;
+          }
+        }
+
+
+        if (!allOldEnough) {
+          throw new GraphQLError('Data is not yet 24 hours old. Please wait to delete.', {
+            extensions: { code: '400' }
+          });
+        }
+
+        const plogRes = await context.db.collection('participantLog').deleteMany({ 'ParticipantID': Number(args['pid']) });
+        const textRes = await context.db.collection('userScenarioResults').deleteMany({ 'participantID': args['pid'] });
+        const surveyRes = await context.db.collection('surveyResults').deleteMany({ 'results.Participant ID Page.questions.Participant ID.response': args['pid'] });
+        const rawSimRes = await context.db.collection('humanSimulatorRaw').deleteMany({ 'pid': args['pid'] });
+        const analyzedSimRes = await context.db.collection('humanSimulator').deleteMany({ 'pid': args['pid'] });
+        return { plogRes, textRes, surveyRes, rawSimRes, analyzedSimRes };
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot delete participant data.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
 
   },
   StringOrFloat: new GraphQLScalarType({
