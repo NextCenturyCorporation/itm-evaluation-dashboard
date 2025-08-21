@@ -338,7 +338,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid === '202409102' ? 'yes' : 'no';
                 }
                 else {
-                    entryObj['Delegator_mil'] = res.results?.['Post-Scenario Measures']?.questions?.["Served in Military"]?.['response'] == 'Never Served' ? 'no' : 'yes';
+                    const served = res.results?.['Post-Scenario Measures']?.questions?.["Served in Military"]?.['response'];
+                    entryObj['Delegator_mil'] = isDefined(served) ? served == 'Never Served' ? 'no' : 'yes' : null;
                 }
                 entryObj['Delegator_Role'] = roles ?? '-'
                 if (Array.isArray(entryObj['Delegator_Role'])) {
