@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import '../SurveyResults/resultsTable.css';
 import '../../css/admInfo.css';
-import { Autocomplete, TextField, Modal, Box } from "@mui/material";
+import { Autocomplete, TextField, Modal, Box, Snackbar, Alert } from "@mui/material";
 import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
@@ -74,6 +74,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = React.useState(false);
     const [rowToDelete, setRowToDelete] = React.useState({});
     const [deleteInput, setDeleteInput] = React.useState('');
+    const [deleteResultMessage, setDeleteResultMessage] = React.useState('');
     const [deleteUser] = useMutation(DELETE_PID_DATA);
 
     const getHeaders = () => {
@@ -131,22 +132,41 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         setDeleteInput(e.target.value);
     };
 
+    const closeSnackbar = () => {
+        setDeleteResultMessage('');
+    }
+
     const activateDelete = async () => {
         if (!isData24HoursOld(rowToDelete)) {
-            // TODO: warn that data was not deleted
+            setDeleteResultMessage(`${rowToDelete['Participant ID']}'s data was not deleted. Data is not old enough.`);
             setDeleteConfirmationOpen(false);
             setDeleteInput('');
             await refreshData();
             return;
         }
         const tokens = await accountsClient.getTokens();
-        await deleteUser({
+        const res = await deleteUser({
             variables: {
                 pid: rowToDelete['Participant ID'],
                 caller: { user: currentUser, tokens: tokens }
             }
         });
-        // TODO: check result and if it fails, warn that data was not deleted
+        if (!res.data?.deleteDataByPID) {
+            setDeleteResultMessage(`${rowToDelete['Participant ID']}'s data was not deleted.`);
+        }
+        else {
+            let wasDeleted = true;
+            for (const k of Object.keys(res.data.deleteDataByPID)) {
+                if (!res.data.deleteDataByPID[k].ok) {
+                    wasDeleted = false;
+                    setDeleteResultMessage(`${rowToDelete['Participant ID']}'s data was not deleted.`);
+                    break;
+                }
+            }
+            if (wasDeleted) {
+                setDeleteResultMessage(`${rowToDelete['Participant ID']}'s data was deleted.`)
+            }
+        }
         setDeleteConfirmationOpen(false);
         setDeleteInput('');
         await refreshData();
@@ -718,6 +738,11 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 </div>
             </Box>
         </Modal >
+        <Snackbar open={deleteResultMessage !== ''} autoHideDuration={10000} onClose={closeSnackbar}>
+            <Alert severity={deleteResultMessage.includes("not") ? "error" : "success"} onClose={closeSnackbar} variant="filled" >
+                {deleteResultMessage}
+            </Alert>
+        </Snackbar>
         <Modal open={popupInfo.open && selectedPhase === 'Phase 2'} onClose={closePopup}>
             <div className="adm-popup-body">
                 {(() => {
