@@ -502,8 +502,8 @@ const resolvers = {
       return await context.db.collection('multiKdmaData').find().toArray().then(result => { return result });
     },
     getCurrentTextEval: async (obj, args, context, info) => {
-      const result = await context.db.collection('textEvalVersion').findOne();
-      return result ? result.eval : null;
+      const result = await context.db.collection('surveyVersion').findOne();
+      return result ? result.textScenarios : null;
     },
     getTextEvalOptions: async (obj, args, context, info) => {
       const evals = await context.db.collection('textBasedConfig')
@@ -512,7 +512,7 @@ const resolvers = {
       return evals.sort();
     },
     getPidBounds: async (obj, args, context, info) => {
-      const bounds = await context.db.collection('pidBounds').findOne();
+      const bounds = await context.db.collection('surveyVersion').findOne();
       return bounds
     }
   },
@@ -616,7 +616,7 @@ const resolvers = {
       }
     },
     updatePidBounds: async (obj, args, context, info) => {
-      const res = await context.db.collection('pidBounds').findOneAndUpdate(
+      const res = await context.db.collection('surveyVersion').findOneAndUpdate(
         {},
         {
           $set: {
@@ -631,7 +631,7 @@ const resolvers = {
     },
     addNewParticipantToLog: async (obj, args, context, inflow) => {
       try {
-        const pidBounds = await context.db.collection('pidBounds').findOne();
+        const pidBounds = await context.db.collection('surveyVersion').findOne();
         const lowPid = pidBounds?.lowPid;
         const highPid = pidBounds?.highPid
 
@@ -745,12 +745,12 @@ const resolvers = {
       return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
     },
     updateTextEval: async (obj, args, context, info) => {
-      const result = await context.db.collection('textEvalVersion').findOneAndUpdate(
+      const result = await context.db.collection('surveyVersion').findOneAndUpdate(
         {},
-        { $set: { eval: args.eval } },
+        { $set: { textScenarios: args.eval } },
         { upsert: true, returnDocument: 'after' }
       );
-      return result.value.eval;
+      return result.value.textScenarios;
     }
   },
   StringOrFloat: new GraphQLScalarType({

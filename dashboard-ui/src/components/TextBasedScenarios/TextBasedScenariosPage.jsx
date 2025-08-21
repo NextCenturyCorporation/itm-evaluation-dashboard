@@ -349,7 +349,7 @@ class TextBasedScenariosPage extends Component {
             });
         });
 
-        scenarioData.scenarioOrder = this.props.currentTextEval >= 8 ?
+        scenarioData.scenarioOrder = evalNameToNumber[this.props.currentTextEval] >= 8 ?
             this.state.scenarios.map(scenario => scenario.scenario_id) :
             [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
         scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
@@ -389,7 +389,7 @@ class TextBasedScenariosPage extends Component {
                 adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
                 adeptScenarios: updatedAdeptScenarios
             }), async () => {
-                if (this.state.adeptSessionsCompleted === this.props.currentTextEval >= 8 ? 4 : 3) {
+                if (this.state.adeptSessionsCompleted === (evalNameToNumber[this.props.currentTextEval] >= 8 ? 4 : 3)) {
                     await this.uploadAdeptScenarios(updatedAdeptScenarios)
                 }
             });
@@ -408,7 +408,7 @@ class TextBasedScenariosPage extends Component {
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
-                        const scenarioId = this.props.currentTextEval >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
+                const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
                 this.setState({ combinedSessionId: session.data }, async () => {
                     await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
                 })
@@ -420,7 +420,7 @@ class TextBasedScenariosPage extends Component {
 
     continueRunningSession = async (scenario) => {
         const url = process.env.REACT_APP_ADEPT_URL;
-        const scenarioId = this.props.currentTextEval >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
+        const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
         await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
     }
 
@@ -470,7 +470,7 @@ class TextBasedScenariosPage extends Component {
                 targets = ['PerceivedQuantityOfLivesSaved']
             }
         } else {
-            targets = this.props.currentTextEval >= 8 ? 
+            targets = evalNameToNumber[this.props.currentTextEval] >= 8 ? 
                 ['affiliation', 'merit', 'search', 'personal_safety'] :
                 ['Moral judgement', 'Ingroup Bias']
         }
@@ -606,7 +606,7 @@ class TextBasedScenariosPage extends Component {
         };
 
         // randomize probe order for phase 2 (non narrative). Keep order intact for phase 1
-        if (this.props.currentTextEval >= 8 ) {config.pages = shuffle([...config.pages])}
+        if (evalNameToNumber[this.props.currentTextEval] >= 8 ) {config.pages = shuffle([...config.pages])}
 
         config.title = title;
         config.showTitle = false;

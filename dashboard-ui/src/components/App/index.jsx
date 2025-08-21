@@ -111,7 +111,7 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
-    const { data: textEvalData} = useQuery(GET_TEXT_EVAL, { fetchPolicy: 'no-cache' });
+    const { data: textEvalData } = useQuery(GET_TEXT_EVAL, { fetchPolicy: 'no-cache' });
     const { data: styleData } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
     const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
@@ -123,11 +123,12 @@ export function App() {
     const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
 
     // grab upper and lower bounds for new participant pids from mongo and set them in redux
-    const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, { 
+    const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, {
         fetchPolicy: 'no-cache',
         onCompleted: (data) => {
             if (data && data.getPidBounds) {
-                setPidBoundsInStore(data.getPidBounds);
+                const { lowPid, highPid } = data.getPidBounds;
+                setPidBoundsInStore({ lowPid, highPid });
             }
         }
     });
@@ -282,7 +283,7 @@ export function App() {
                 participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant')
             }
             const addRes = await addParticipant({
-                variables: { participantData}
+                variables: { participantData }
             });
             if (addRes?.data?.addNewParticipantToLog === -1) {
                 alert("This email address is taken. Please enter a different email.");

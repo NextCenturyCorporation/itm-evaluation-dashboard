@@ -101,5 +101,9 @@ export function setCurrentUIStyle(version) {
 }
 
 export function setPidBoundsInStore(bounds) {
-    store.dispatch(setPidBounds(bounds));
+    const pidBounds = {
+        lowPid: bounds.lowPid || null,
+        highPid: bounds.highPid || null
+    };
+    store.dispatch(setPidBounds(pidBounds));
 }
