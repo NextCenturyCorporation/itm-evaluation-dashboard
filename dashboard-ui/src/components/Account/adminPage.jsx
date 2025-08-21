@@ -426,8 +426,8 @@ function AdminPage({ currentUser, updateUserHandler }) {
         fetchPolicy: 'no-cache',
         onCompleted: (data) => {
             if (data && data.getPidBounds) {
-                setLowPid(data.getPidBounds.low);
-                setHighPid(data.getPidBounds.high);
+                setLowPid(data.getPidBounds.lowPid);
+                setHighPid(data.getPidBounds.highPid);
             }
         }
     });
@@ -441,7 +441,20 @@ function AdminPage({ currentUser, updateUserHandler }) {
 
     const savePidBounds = (e) => {
         e.preventDefault();
-        setPendingPidBounds({ low: parseInt(lowPid, 10), high: parseInt(highPid, 10) });
+        const lowValue = parseInt(lowPid, 10);
+        const highValue = parseInt(highPid, 10);
+
+        if (isNaN(lowValue) || isNaN(highValue)) {
+            alert("Please enter valid numeric values for both PID bounds.");
+            return;
+        }
+
+        if (lowValue >= highValue) {
+            alert("Low PID cannot be greater than High PID. Please correct the values.");
+            return;
+        }
+
+        setPendingPidBounds({ low: lowValue, high: highValue });
         setShowPidConfirmation(true);
     };
 
@@ -809,17 +822,17 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                             <Col md={4}>
                                                 <Form.Label>Low PID</Form.Label>
                                                 <Form.Control
-                                                    type="number"
                                                     value={lowPid}
                                                     onChange={(e) => handlePidChange('low', e.target.value)}
+                                                    className={lowPid && highPid && parseInt(lowPid, 10) > parseInt(highPid, 10) ? 'border-danger' : ''}
                                                 />
                                             </Col>
                                             <Col md={4}>
                                                 <Form.Label>High PID</Form.Label>
                                                 <Form.Control
-                                                    type="number"
                                                     value={highPid}
                                                     onChange={(e) => handlePidChange('high', e.target.value)}
+                                                    className={lowPid && highPid && parseInt(lowPid, 10) > parseInt(highPid, 10) ? 'border-danger' : ''}
                                                 />
                                             </Col>
                                             <Col md="auto">
@@ -881,7 +894,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         show={showPidConfirmation}
                         onConfirm={confirmPidChange}
                         onCancel={cancelPidChange}
-                        message={`Are you sure you want to set PID bounds to Low: ${pendingPidBounds?.low}, High: ${pendingPidBounds?.high}? This will affect which participants are included.`}
+                        message={`Are you sure you want to set PID bounds to Low: ${pendingPidBounds?.low}, High: ${pendingPidBounds?.high}?`}
                     />
 
 
