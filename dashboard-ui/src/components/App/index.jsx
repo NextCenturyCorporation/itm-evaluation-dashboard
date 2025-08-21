@@ -77,8 +77,8 @@ const GET_PARTICIPANT_LOG = gql`
     }`;
 
 const ADD_PARTICIPANT = gql`
-    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
-        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
+    mutation addNewParticipantToLog($participantData: JSON!) {
+        addNewParticipantToLog(participantData: $participantData) 
     }`;
 
 const GET_CONFIGS = gql`

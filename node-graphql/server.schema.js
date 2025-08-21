@@ -77,7 +77,7 @@ const typeDefs = gql`
     updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
-    addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
+    addNewParticipantToLog(participantData: JSON): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateUIStyle(version: String!): String,
