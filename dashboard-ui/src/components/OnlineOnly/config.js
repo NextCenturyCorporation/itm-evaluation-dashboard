@@ -44,7 +44,7 @@ export const LOG_VARIATIONS_PHASE1 = [
     { "Text-1": "ST-3", "Text-2": "AD-1", "Sim-1": "ST-1", "Sim-2": "AD-2", "Del-1": "ST-2", "Del-2": "AD-3", "ADMOrder": 2 }
 ];
 
-export const phase1ParticipantData = (currentSearchParams, hashedEmail, newPid, type) => {
+export const phase1ParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
     const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
     const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
     const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
@@ -61,12 +61,12 @@ export const phase1ParticipantData = (currentSearchParams, hashedEmail, newPid, 
         "surveyEntryCount": 0,
         "textEntryCount": 0,
         "hashedEmail": email,
-        'evalNum': SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNum,
+        'evalNum': evalNum,
         ...LOG_VARIATIONS_PHASE1[setNum]
     };
 }
 
-export const phase2ParticipantData = (currentSearchParams, hashedEmail, newPid, type) => {
+export const phase2ParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
     const scenarioSet = Math.floor(Math.random() * 3) + 1;
 
     const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
@@ -87,7 +87,7 @@ export const phase2ParticipantData = (currentSearchParams, hashedEmail, newPid, 
         "MF-text-scenario": scenarioSet,
         "PS-text-scenario": scenarioSet,
         "SS-text-scenario": scenarioSet,
-        'evalNum': SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNum
+        'evalNum': evalNum
     };
 };
 

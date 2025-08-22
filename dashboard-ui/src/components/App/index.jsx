@@ -278,9 +278,9 @@ export function App() {
 
             let participantData;
             if (evalNum >= 8) {
-                participantData = phase2ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant')
+                participantData = phase2ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
             } else {
-                participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant')
+                participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
             }
             const addRes = await addParticipant({
                 variables: { participantData }
