@@ -90,6 +90,18 @@ const typeDefs = gql`
   directive @complexity(value: Int) on FIELD_DEFINITION
 `;
 
+const generateServerTimestamp = () => {
+  process.env.TZ = 'America/New_York';
+  const date = new Date();
+
+  const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
+  const currentOffset = date.getTimezoneOffset();
+  const isDST = currentOffset < januaryOffset;
+
+  return date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, 
+    isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)');
+};
+
 const resolvers = {
   Query: {
     checkUserExists: async (obj, args, context, infow) => {
@@ -635,7 +647,7 @@ const resolvers = {
         const lowPid = pidBounds?.lowPid;
         const highPid = pidBounds?.highPid
 
-        const timestamp = new Date().toISOString();
+        const timestamp = generateServerTimestamp();
         let generatedPid;
         if (!Number.isFinite(args.participantData.ParticipantID)) {
           console.log(`[${timestamp}] Invalid PID detected, querying for highest PID`);
@@ -657,6 +669,7 @@ const resolvers = {
 
         // try to insert with our validated PID
         try {
+          args.participantData.timestamp = timestamp;
           const result = await context.db.collection('participantLog').insertOne(args.participantData);
           console.log(`[${timestamp}] Insert SUCCESS for PID: ${args.participantData.ParticipantID}`);
           return { ...result, generatedPid };
@@ -689,7 +702,7 @@ const resolvers = {
           throw error;
         }
       } catch (error) {
-        const timestamp = new Date().toISOString();
+        const timestamp = generateServerTimestamp()
         console.error(`[${timestamp}] CRITICAL ERROR in addNewParticipantToLog:`, error);
         if (error.code === 11000) {
           return -1;
@@ -735,14 +748,7 @@ const resolvers = {
       );
     },
     getServerTimestamp: async () => {
-      process.env.TZ = 'America/New_York';
-      const date = new Date();
-
-      const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
-      const currentOffset = date.getTimezoneOffset();
-      const isDST = currentOffset < januaryOffset;
-
-      return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
+      return generateServerTimestamp();
     },
     updateTextEval: async (obj, args, context, info) => {
       const result = await context.db.collection('surveyVersion').findOneAndUpdate(
