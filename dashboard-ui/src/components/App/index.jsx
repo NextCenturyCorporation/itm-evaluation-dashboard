@@ -238,6 +238,10 @@ export function App() {
     };
 
     const Login = ({ participantTextLogin, testerLogin }) => {
+        if (testerLogin && (!pidBoundsData || !textEvalData)) {
+            return <div>Loading configuration...</div>;
+        }
+        
         if (currentUser && !currentUser?.approved) {
             logout();
             return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
@@ -258,9 +262,22 @@ export function App() {
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
+        
+        if (!textEvalData?.getCurrentTextEval) {
+            console.error("Text eval data not loaded yet");
+            return;
+        }
+        
         const evalNum = evalNameToNumber[textEvalData.getCurrentTextEval]
 
         const pidBounds = store.getState().configs.pidBounds;
+        
+        // Ensure PID bounds are properly set
+        if (!pidBounds || !pidBounds.lowPid || !pidBounds.highPid) {
+            console.error("PID bounds not set right", pidBounds);
+            return;
+        }
+        
         const lowPid = pidBounds.lowPid;
         const highPid = pidBounds.highPid;
 
