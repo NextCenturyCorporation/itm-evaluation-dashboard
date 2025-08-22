@@ -513,7 +513,7 @@ const resolvers = {
     },
     getPidBounds: async (obj, args, context, info) => {
       const bounds = await context.db.collection('surveyVersion').findOne();
-      return bounds
+      return {lowPid: bounds.lowPid, highPid: bounds.highPid}
     }
   },
   Mutation: {
