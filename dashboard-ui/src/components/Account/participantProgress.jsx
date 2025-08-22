@@ -660,7 +660,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     return selectedPhase === `Phase ${participantPhase}`;
                 }))}
                 filteredData={refineData(filteredData)}
-                HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x))}
+                HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x) && x !== 'Delete')}
                 fileName={'Participant_Progress'}
                 extraAction={refreshData}
                 extraActionText={'Refresh Data'}
