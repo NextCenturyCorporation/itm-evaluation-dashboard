@@ -522,7 +522,7 @@ const resolvers = {
     getTextEvalOptions: async (obj, args, context, info) => {
       const evals = await context.db.collection('textBasedConfig')
         .distinct('eval')
-        .then(result => result.filter(eval => eval != null));
+        .then(result => result.filter(evalId => evalId != null));
       return evals.sort();
     },
     getPidBounds: async (obj, args, context, info) => {
