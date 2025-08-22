@@ -4,9 +4,9 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle } from './setupUtils';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
-
+import { evalNameToNumber } from '../OnlineOnly/config';
 // Components
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
@@ -33,6 +33,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
+import { phase1ParticipantData, phase2ParticipantData } from '../OnlineOnly/config';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -45,6 +46,18 @@ import store from '../../store/store';
 
 
 const history = createBrowserHistory();
+
+const GET_PID_BOUNDS = gql`
+    query GetPidBounds {
+        getPidBounds
+    }
+`;
+
+const GET_TEXT_EVAL = gql`
+    query GetCurrentTextEval {
+        getCurrentTextEval
+    }
+`
 
 const GET_SURVEY_VERSION = gql`
   query GetSurveyVersion {
@@ -64,8 +77,8 @@ const GET_PARTICIPANT_LOG = gql`
     }`;
 
 const ADD_PARTICIPANT = gql`
-    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
-        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
+    mutation addNewParticipantToLog($participantData: JSON!) {
+        addNewParticipantToLog(participantData: $participantData) 
     }`;
 
 const GET_CONFIGS = gql`
@@ -90,12 +103,6 @@ const GET_CONFIGS_PHASE_2 = gql`
     }
 `
 
-
-const LOW_PID = 202507100;
-const HIGH_PID = 202507299;
-
-
-
 export function isUserElevated(currentUser) {
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
 }
@@ -104,14 +111,27 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
+    const { data: textEvalData } = useQuery(GET_TEXT_EVAL, { fetchPolicy: 'no-cache' });
     const { data: styleData } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
     const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [isSetup, setIsSetup] = React.useState(false);
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
+    const [isTextEvalDataLoaded, setIsTextEvalDataLoaded] = React.useState(false);
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
     const [configQuery, setConfigQuery] = React.useState(GET_CONFIGS)
     const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
+
+    // grab upper and lower bounds for new participant pids from mongo and set them in redux
+    const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, {
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            if (data && data.getPidBounds) {
+                const { lowPid, highPid } = data.getPidBounds;
+                setPidBoundsInStore({ lowPid, highPid });
+            }
+        }
+    });
 
     React.useEffect(() => {
         if (versionData?.getCurrentSurveyVersion) {
@@ -149,6 +169,13 @@ export function App() {
             setIsStyleDataLoaded(true);
         }
     }, [styleData]);
+
+    React.useEffect(() => {
+        if (isDefined(textEvalData)) {
+            setTextEval(textEvalData.getCurrentTextEval);
+            setIsTextEvalDataLoaded(true);
+        }
+    }, [textEvalData])
 
     const setup = async () => {
         // refresh the session to get a new accessToken if expired
@@ -211,6 +238,10 @@ export function App() {
     };
 
     const Login = ({ participantTextLogin, testerLogin }) => {
+        if (testerLogin && (!pidBoundsData || !textEvalData)) {
+            return <div>Loading configuration...</div>;
+        }
+        
         if (currentUser && !currentUser?.approved) {
             logout();
             return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
@@ -231,7 +262,24 @@ export function App() {
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
-        const evalNum = SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNumber;
+        
+        if (!textEvalData?.getCurrentTextEval) {
+            console.error("Text eval data not loaded yet");
+            return;
+        }
+        
+        const evalNum = evalNameToNumber[textEvalData.getCurrentTextEval]
+
+        const pidBounds = store.getState().configs.pidBounds;
+        
+        // Ensure PID bounds are properly set
+        if (!pidBounds || !pidBounds.lowPid || !pidBounds.highPid) {
+            console.error("PID bounds not set right", pidBounds);
+            return;
+        }
+        
+        const lowPid = pidBounds.lowPid;
+        const highPid = pidBounds.highPid;
 
         const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
 
@@ -242,30 +290,17 @@ export function App() {
         } else {
             let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
                 !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
-                x.ParticipantID >= LOW_PID && x.ParticipantID <= HIGH_PID
-            ).map((x) => Number(x['ParticipantID'])), LOW_PID - 1) + 1;
+                x.ParticipantID >= lowPid && x.ParticipantID <= highPid
+            ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
-            const scenarioSet = Math.floor(Math.random() * 3) + 1;
-
-            const participantData = {
-                "ParticipantID": newPid,
-                "Type": isTester ? "Test" : "emailParticipant",
-                "claimed": true,
-                "simEntryCount": 0,
-                "surveyEntryCount": 0,
-                "textEntryCount": 0,
-                "hashedEmail": hashedEmail,
-                "evalNum": evalNum,
-                "timeCreated": new Date(),
-                
-                "AF-text-scenario": scenarioSet,
-                "MF-text-scenario": scenarioSet,
-                "PS-text-scenario": scenarioSet,
-                "SS-text-scenario": scenarioSet
-            };
-
+            let participantData;
+            if (evalNum >= 8) {
+                participantData = phase2ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
+            } else {
+                participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
+            }
             const addRes = await addParticipant({
-                variables: { participantData, lowPid: LOW_PID, highPid: HIGH_PID }
+                variables: { participantData }
             });
             if (addRes?.data?.addNewParticipantToLog === -1) {
                 alert("This email address is taken. Please enter a different email.");
@@ -369,7 +404,7 @@ export function App() {
 
     return (
         <Router history={history}>
-            {isSetup && isVersionDataLoaded && isConfigDataLoaded && isStyleDataLoaded && <div className="itm-app">
+            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isConfigDataLoaded && isStyleDataLoaded && <div className="itm-app">
                 {currentUser?.approved &&
                     <Header currentUser={currentUser} logout={logout} />
                 }

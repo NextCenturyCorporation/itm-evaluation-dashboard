@@ -65,6 +65,9 @@ const typeDefs = gql`
     getCurrentStyle: String @complexity(value: 5)
     getADMTextProbeMatches: [JSON] @complexity(value: 250)
     getMultiKdmaAnalysisData: [JSON] @complexity(value: 200)
+    getCurrentTextEval: String @complexity(value: 5)
+    getTextEvalOptions: [String] @complexity(value: 10)
+    getPidBounds: JSON @complexity(value: 5)
   }
 
   type Mutation {
@@ -75,17 +78,31 @@ const typeDefs = gql`
     updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
-    addNewParticipantToLog(participantData: JSON, lowPid: Int, highPid: Int): JSON,
+    addNewParticipantToLog(participantData: JSON): JSON,
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateUIStyle(version: String!): String,
-    updateParticipantLog(pid: String, updates: JSON): JSON,
+    updateParticipantLog(pid: String, updates: JSON): JSON,,
     getServerTimestamp: String,
+    updateTextEval(eval: String!): String
+    updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
     deleteDataByPID(caller: JSON, pid: String): JSON
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
 `;
+
+const generateServerTimestamp = () => {
+  process.env.TZ = 'America/New_York';
+  const date = new Date();
+
+  const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
+  const currentOffset = date.getTimezoneOffset();
+  const isDST = currentOffset < januaryOffset;
+
+  return date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, 
+    isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)');
+};
 
 const resolvers = {
   Query: {
@@ -497,6 +514,20 @@ const resolvers = {
     },
     getMultiKdmaAnalysisData: async (obj, args, context, info) => {
       return await context.db.collection('multiKdmaData').find().toArray().then(result => { return result });
+    },
+    getCurrentTextEval: async (obj, args, context, info) => {
+      const result = await context.db.collection('surveyVersion').findOne();
+      return result ? result.textScenarios : null;
+    },
+    getTextEvalOptions: async (obj, args, context, info) => {
+      const evals = await context.db.collection('textBasedConfig')
+        .distinct('eval')
+        .then(result => result.filter(eval => eval != null));
+      return evals.sort();
+    },
+    getPidBounds: async (obj, args, context, info) => {
+      const bounds = await context.db.collection('surveyVersion').findOne();
+      return {lowPid: bounds.lowPid, highPid: bounds.highPid}
     }
   },
   Mutation: {
@@ -598,22 +629,40 @@ const resolvers = {
         await context.db.collection('userScenarioResults').insertOne(result)
       }
     },
+    updatePidBounds: async (obj, args, context, info) => {
+      const res = await context.db.collection('surveyVersion').findOneAndUpdate(
+        {},
+        {
+          $set: {
+            lowPid: args.lowPid,
+            highPid: args.highPid,
+          }
+        },
+        {upsert: true, returnDocument: 'after'}
+      )
+
+      return res.value
+    },
     addNewParticipantToLog: async (obj, args, context, inflow) => {
       try {
-        const timestamp = new Date().toISOString();
+        const pidBounds = await context.db.collection('surveyVersion').findOne();
+        const lowPid = pidBounds?.lowPid;
+        const highPid = pidBounds?.highPid
+
+        const timestamp = generateServerTimestamp();
         let generatedPid;
         if (!Number.isFinite(args.participantData.ParticipantID)) {
           console.log(`[${timestamp}] Invalid PID detected, querying for highest PID`);
 
           const highestPidDoc = await context.db.collection('participantLog')
             .find({
-              ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
+              ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
             })
             .sort({ ParticipantID: -1 })
             .limit(1)
             .toArray();
 
-          generatedPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : args.lowPid;
+          generatedPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : lowPid;
 
           args.participantData.ParticipantID = generatedPid;
         } else {
@@ -622,6 +671,7 @@ const resolvers = {
 
         // try to insert with our validated PID
         try {
+          args.participantData.timestamp = timestamp;
           const result = await context.db.collection('participantLog').insertOne(args.participantData);
           console.log(`[${timestamp}] Insert SUCCESS for PID: ${args.participantData.ParticipantID}`);
           return { ...result, generatedPid };
@@ -633,7 +683,7 @@ const resolvers = {
             // get absolute latest highest PID
             const highestPidDoc = await context.db.collection('participantLog')
               .find({
-                ParticipantID: { $type: "number", $lt: args.highPid, $gte: args.lowPid }
+                ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
               })
               .sort({ ParticipantID: -1 })
               .limit(1)
@@ -654,7 +704,7 @@ const resolvers = {
           throw error;
         }
       } catch (error) {
-        const timestamp = new Date().toISOString();
+        const timestamp = generateServerTimestamp()
         console.error(`[${timestamp}] CRITICAL ERROR in addNewParticipantToLog:`, error);
         if (error.code === 11000) {
           return -1;
@@ -700,14 +750,15 @@ const resolvers = {
       );
     },
     getServerTimestamp: async () => {
-      process.env.TZ = 'America/New_York';
-      const date = new Date();
-
-      const januaryOffset = new Date(date.getFullYear(), 0, 1).getTimezoneOffset();
-      const currentOffset = date.getTimezoneOffset();
-      const isDST = currentOffset < januaryOffset;
-
-      return `${date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)')}`;
+      return generateServerTimestamp();
+    },
+    updateTextEval: async (obj, args, context, info) => {
+      const result = await context.db.collection('surveyVersion').findOneAndUpdate(
+        {},
+        { $set: { textScenarios: args.eval } },
+        { upsert: true, returnDocument: 'after' }
+      );
+      return result.value.textScenarios;
     },
     deleteDataByPID: async (obj, args, context, inflow) => {
       const accessToken = args['caller']?.['tokens']?.['accessToken'];
@@ -799,7 +850,6 @@ const resolvers = {
         });
       }
     },
-
   },
   StringOrFloat: new GraphQLScalarType({
     name: "StringOrFloat",
