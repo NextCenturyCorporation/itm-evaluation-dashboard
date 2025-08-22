@@ -82,7 +82,7 @@ const typeDefs = gql`
     updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateUIStyle(version: String!): String,
-    updateParticipantLog(pid: String, updates: JSON): JSON,,
+    updateParticipantLog(pid: String, updates: JSON): JSON,
     getServerTimestamp: String,
     updateTextEval(eval: String!): String
     updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
