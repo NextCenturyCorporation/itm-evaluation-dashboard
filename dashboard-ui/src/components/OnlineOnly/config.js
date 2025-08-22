@@ -50,10 +50,6 @@ export const phase1ParticipantData = (currentSearchParams, hashedEmail, newPid, 
     const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
 
     const setNum = newPid % 24
-    console.log('newPid:', newPid, 'type:', typeof newPid);
-    console.log('setNum:', setNum, 'type:', typeof setNum);
-    console.log('LOG_VARIATIONS_PHASE1 length:', LOG_VARIATIONS_PHASE1.length);
-    console.log(LOG_VARIATIONS_PHASE1[setNum])
 
     return {
         "ParticipantID": newPid,
@@ -118,11 +114,8 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
     }
 
     if (num === 5) {
-        console.log(participantLog)
         scenarios.push(...p1Mappings[participantLog['Text-1']])
         scenarios.push(...p1Mappings[participantLog['Text-2']])
-
-        console.log(scenarios)
     }
 
     if (num >= 8) {
