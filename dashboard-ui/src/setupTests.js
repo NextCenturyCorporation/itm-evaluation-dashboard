@@ -46,10 +46,20 @@ beforeAll(async () => {
         });
 
         await uiStyle.save();
+        const surveyNum = process.env.REACT_APP_TEST_SURVEY_VERSION;
+
+        const surveyToTextMap = {
+            5: 'phase1',
+            6: 'Phase 2 June 2025 Collaboration',
+            7: 'Phase 2 July 2025 Collaboration'
+        };
 
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
-            version: process.env.REACT_APP_TEST_SURVEY_VERSION,
+            version: surveyNum,
+            lowPid: Number(process.env.REACT_APP_TEST_LOW_PID),
+            highPid: Number(process.env.REACT_APP_TEST_LOW_PID) + 200,
+            textScenarios: surveyToTextMap[surveyNum]
         });
 
         await surveyVersion.save();

@@ -1615,6 +1615,9 @@ function populateDataSetP2(data) {
         if (!pid || seen.has(pid) || (survey &&!survey?.results?.['Post-Scenario Measures'])) continue;
 
         const participant = pLog.find((p) => p.ParticipantID === Number(pid));
+        if (!participant) {
+            continue
+        }
 
         const row = {};
         row['Participant ID'] = pid;

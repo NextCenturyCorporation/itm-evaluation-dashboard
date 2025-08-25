@@ -301,3 +301,99 @@
 .lowered-table {
     margin-top: 40px;
 }
+
+.delete-btn {
+    display: block;
+    margin: auto;
+    border: none;
+    background-color: transparent;
+    border-radius: 50%;
+    padding: 8px;
+}
+
+.delete-btn:hover {
+    background-color: rgba(167, 165, 165, 0.232);
+}
+
+.delete-btn:active {
+    background-color: rgba(110, 110, 110, 0.232);
+    color: rgb(188, 13, 13);
+}
+
+.delete-modal-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    min-width: 500px;
+    height: fit-content;
+    background-color: white;
+    border: 2px solid #000;
+    border-radius: 8px;
+    box-shadow: 24;
+}
+
+.delete-modal-box p {
+    text-align: center;
+}
+
+
+.deletion-header {
+    text-align: center;
+    border-bottom: 4px solid black;
+    padding: 16px;
+}
+
+.delete-table-container {
+    overflow: auto;
+    margin: 12px;
+    border: 3px solid black;
+    border-radius: 8px;
+}
+
+.delete-table-container .itm-table td {
+    padding: 12px 8px;
+}
+
+.delete-table-container .itm-table thead tr th {
+    padding: 12px 8px !important;
+}
+
+.delete-table-container .itm-table th {
+    padding: 0px;
+}
+
+.delete-btn-group {
+    display: flex;
+    justify-content: space-between;
+    margin: 12px;
+}
+
+.delete-btn-group button {
+    padding: 6px;
+}
+
+.delete-column {
+    min-width: 120px !important;
+    width: 120px;
+}
+
+.type-to-delete {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.delete-btn-group .downloadBtn:disabled {
+    color: white;
+    background-color: rgb(99, 99, 99);
+    opacity: 0.3 !important;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+}

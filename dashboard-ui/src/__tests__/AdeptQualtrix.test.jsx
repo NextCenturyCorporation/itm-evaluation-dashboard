@@ -16,7 +16,7 @@ describe('Test adept qualtrix entry method', () => {
         await startAdeptQualtrixSurvey(page);
         const currentUrl = page.url();
         const pid = currentUrl.split('pid=').slice(-1)[0].split('&')[0];
-        expect(pid).toBe(process.env.REACT_APP_ONLINE_LOW_PID);
+        expect(pid).toBe(process.env.REACT_APP_TEST_LOW_PID);
     });
 
     it('PIDs should increase by 1 with each login to /remote-text-survey?adeptQualtrix=true', async () => {

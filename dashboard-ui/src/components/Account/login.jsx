@@ -68,7 +68,7 @@ class LoginApp extends React.Component {
 
         $("#text-entry-feedback").removeClass("feedback-display");
         try {
-            this.props.participantLoginHandler(hashedEmail, this.props.history.location.pathname === '/participantTextTester');
+            await this.props.participantLoginHandler(hashedEmail, this.props.history.location.pathname === '/participantTextTester');
         } catch (err) {
             $("#text-entry-feedback").addClass("feedback-display");
             this.setState({ error: err.message, pidCreationFailed: true });
@@ -390,12 +390,12 @@ class LoginApp extends React.Component {
                                                 </div>
                                             </div>
                                             <div className="form-group">
-                                                {this.state.loginFailed && (
-                                                    <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ loginFailed: false })}>
+                                                {this.state.pidCreationFailed && (
+                                                    <Toast bg='danger' className='mt-1' autohide={false} onClose={() => this.setState({ pidCreationFailed: false })}>
                                                         <Toast.Header>
                                                             <strong className="me-auto">Error Creating User</strong>
                                                         </Toast.Header>
-                                                        <Toast.Body className='text-white'>{this.loginErrorMappings[this.state.error] ?? this.state.error}</Toast.Body>
+                                                        <Toast.Body className='text-white'>{this.state.error}</Toast.Body>
                                                     </Toast>
                                                 )}
                                                 {!this.state.emailsMatch && this.state.confirmTextEmail && (
