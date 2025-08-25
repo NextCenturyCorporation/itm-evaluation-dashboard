@@ -16,6 +16,23 @@ import { Query } from 'react-apollo';
 import { RQ2223 } from '../Research/tables/rq22-rq23';
 import { MultiKDMA_RQ23 as MultiKdmaRq23 } from '../Research/tables/rq23_multiKDMA'
 import { PH2RQ2223 } from '../Research/tables/ph2_rq22-rq23';
+import {
+  multiSort,
+  isExpandable,
+  snakeCaseToNormalCase,
+  formatPathTitle,
+  formatLeaf,
+  pathKey,
+  deepIsEmpty,
+  isEmpty,
+  getNodeAtPath,
+  collectExpandablePaths,
+  formatADMString,
+  formatScenarioString,
+  getDisplayCommandName,
+  extractKdmaPairsFromHistory,
+  kdmaAcronym
+} from './utils';
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
@@ -44,20 +61,6 @@ const alignment_target_by_scenario = gql`
     query getAlignmentTargetsPerScenario($evalNumber: Float!, $scenarioID: ID, $admName: ID){
         getAlignmentTargetsPerScenario(evalNumber: $evalNumber, scenarioID: $scenarioID, admName: $admName)
     }`;
-
-export const multiSort = (a, b) => {
-    const aMatch = a.match(/^([a-zA-Z]+)(\d+)$/);
-    const bMatch = b.match(/^([a-zA-Z]+)(\d+)$/);
-
-    // only if same base string
-    if (aMatch && bMatch && aMatch[1] === bMatch[1]) {
-        return parseInt(aMatch[2], 10) - parseInt(bMatch[2], 10);
-    }
-
-    // if different base string just use alph.
-    return a.localeCompare(b);
-};
-
 
 function AutoFitText({ text, max = 16, min = 11, className = '' }) {
   const wrapRef = React.useRef(null);
@@ -201,38 +204,6 @@ class ResultsTable extends React.Component {
         });
     }
 
-    formatScenarioString(id) {
-        if (this.state.evalNumber < 3) {
-            if (id.toLowerCase().indexOf("adept") > -1) {
-                return ("BBN: " + id);
-            } else {
-                return ("Soartech: " + id);
-            }
-        } else if (this.state.evalNumber === 3) {
-            if (id.toLowerCase().indexOf("metricseval") > -1) {
-                return ("ADEPT: " + id);
-            } else {
-                return ("Soartech: " + id);
-            }
-        } else {
-            if (id.toLowerCase().includes("qol") || id.toLowerCase().includes("vol")) {
-                return ("Soartech: " + id);
-            } else {
-                return ("Adept: " + id);
-            }
-        }
-    }
-
-    formatADMString(peformerADMString) {
-        if (peformerADMString.indexOf("ALIGN-ADM") > -1) {
-            return ("Kitware: " + peformerADMString);
-        } else if (peformerADMString.indexOf("TAD") > -1) {
-            return ("Parallax: " + peformerADMString);
-        } else {
-            return peformerADMString;
-        }
-    }
-
     renderRq2() {
         const { evalNumber, scenario, adm } = this.state;
         if (evalNumber >= 4) {
@@ -261,59 +232,12 @@ class ResultsTable extends React.Component {
         }
     }
 
-
-    isEmpty = (v) => this.deepIsEmpty(v);
-
-    deepIsEmpty = (v) => {
-        if (v === null || v === undefined) return true;
-        if (typeof v === 'string') {
-        const t = v.trim();
-        return (t === '' || t === '—' || t === '-' || t.toLowerCase() === 'n/a');
-      }
-        if (typeof v === 'number') return Number.isNaN(v);
-        if (Array.isArray(v)) {
-            return v.every((el) => this.deepIsEmpty(el));
-        }
-        if (this.isObject(v)) {
-            const entries = Object.entries(v);
-            if (entries.length === 0) return true;
-            return entries.every(([, val]) => this.deepIsEmpty(val));
-        }
-        return false;
-    };
-
-    pathKey = (arr) => arr.join('.');
-    isExpandable = (v) => (v && typeof v === 'object');
-    formatLeaf = (v) => {
-      if (v === null || v === undefined) return '';
-      if (typeof v === 'string') return v;
-      if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-      return JSON.stringify(v);
-    };
-
-    getNodeAtPath = (root, pathArr = []) => {
-      if (!root || typeof root !== 'object') return root;
-      let cur = root;
-      for (const tok of pathArr) {
-        if (!cur) break;
-        if (/^\[\d+\]$/.test(tok)) {
-          const idx = parseInt(tok.slice(1, -1), 10);
-          if (!Array.isArray(cur) || idx >= cur.length) return undefined;
-          cur = cur[idx];
-        } else {
-          if (typeof cur !== 'object') return undefined;
-          cur = cur[tok];
-        }
-      }
-      return cur;
-    };
-
     openInspector = (root, pathArr = [], rootLabel = 'Root') => {
       this.setState({
         inspectorOpen: true,
         inspectorRoot: root,
         inspectorPath: Array.isArray(pathArr) ? pathArr : [],
-        inspectorTitle: this.formatPathTitle(Array.isArray(pathArr) ? pathArr : []),
+        inspectorTitle: formatPathTitle(Array.isArray(pathArr) ? pathArr : []),
         inspectorRootLabel: rootLabel || 'Root',
       });
     };
@@ -322,19 +246,16 @@ class ResultsTable extends React.Component {
       this.setState({ inspectorOpen: false });
     };
 
-  formatPathTitle = (pathArr) =>
-    pathArr.map(tok => (tok.startsWith('[') ? tok : this.snakeCaseToNormalCase(tok))).join(' > ');
-
   renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null, scope = 'params', root = null, basePath = []) => {
       const rows = [];
-      if (!this.isExpandable(obj)) return rows;
+      if (!isExpandable(obj)) return rows;
       const setName = scope === 'resp' ? 'expandedPathsResponse' : 'expandedPathsParams';
 
       if (Array.isArray(obj)) {
         obj.forEach((value, idx) => {
           const childPath = [...path, `[${idx}]`];
-          const pathId = this.pathKey(childPath);
-          const expandable = this.isExpandable(value);
+          const pathId = pathKey(childPath);
+          const expandable = isExpandable(value);
           const expanded = expandable && this.state[setName].has(pathId);
 
           rows.push(
@@ -363,7 +284,7 @@ class ResultsTable extends React.Component {
               <TableCell className="tree-val">
                 {!expandable ? (
                   <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
-                    {this.formatLeaf(value)}
+                    {formatLeaf(value)}
                   </div>
                 ) : (
                   <button
@@ -390,7 +311,7 @@ class ResultsTable extends React.Component {
         return rows;
       }
 
-      const entries = Object.entries(obj).filter(([_, v]) => (this.state.hideEmpty ? !this.deepIsEmpty(v) : true));
+      const entries = Object.entries(obj).filter(([_, v]) => (this.state.hideEmpty ? !deepIsEmpty(v) : true));
       for (const [key, rawVal] of entries) {
         let value = rawVal;
         if (
@@ -413,8 +334,8 @@ class ResultsTable extends React.Component {
           }
         }
         const childPath = [...path, key];
-        const pathId = this.pathKey(childPath);
-        const expandable = this.isExpandable(value);
+        const pathId = pathKey(childPath);
+        const expandable = isExpandable(value)
         const expanded = expandable && this.state[setName].has(pathId);
 
         rows.push(
@@ -437,13 +358,13 @@ class ResultsTable extends React.Component {
                 ) : (
                   <span className="toggle-spacer" />
                 )}
-                <strong>{this.snakeCaseToNormalCase(key)}</strong>
+                <strong>{snakeCaseToNormalCase(key)}</strong>
               </div>
             </TableCell>
             <TableCell className="tree-val">
               {!expandable ? (
                 <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
-                  {this.formatLeaf(value)}
+                   {formatLeaf(value)}
                 </div>
               ) : (
                 <button
@@ -467,8 +388,8 @@ class ResultsTable extends React.Component {
           if (Array.isArray(value)) {
             value.forEach((el, idx) => {
               const subPath = [...childPath, `[${idx}]`];
-              const subId = this.pathKey(subPath);
-              const isObj = this.isExpandable(el);
+              const subId = pathKey(subPath);
+              const isObj = isExpandable(el);
               const isSubExpanded = isObj && this.state[setName].has(subId);
               rows.push(
                 <TableRow key={subId} className="tree-row">
@@ -496,7 +417,7 @@ class ResultsTable extends React.Component {
                   <TableCell className="tree-val">
                     {!isObj ? (
                       <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
-                        {this.formatLeaf(el)}
+                        {formatLeaf(el)}
                       </div>
                     ) : (
                       <button
@@ -545,160 +466,20 @@ class ResultsTable extends React.Component {
       return (
         <div className="value-wrap">
           <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
-            {this.formatLeaf(data)}
+            {formatLeaf(data)}
           </div>
         </div>
       );
     };
 
-    collectExpandablePaths = (node, path = [], acc = new Set()) => {
-      if (!node || typeof node !== 'object') return acc;
-      if (Array.isArray(node)) {
-        node.forEach((el, idx) => {
-          if (el && typeof el === 'object') {
-            const p = this.pathKey([...path, `[${idx}]`]);
-            acc.add(p);
-            this.collectExpandablePaths(el, [...path, `[${idx}]`], acc);
-          }
-        });
-      } else {
-        Object.entries(node).forEach(([k, v]) => {
-          if (v && typeof v === 'object') {
-            const p = this.pathKey([...path, k]);
-            acc.add(p);
-            this.collectExpandablePaths(v, [...path, k], acc);
-          }
-        });
-      }
-      return acc;
-    };
-
     expandAllResponse = (resp) => {
       if (!resp || typeof resp !== 'object') return;
-      const all = this.collectExpandablePaths(resp);
+      const all = collectExpandablePaths(resp);
       this.setState({ expandedPathsResponse: all });
     };
 
     collapseAllResponse = () => {
       this.setState({ expandedPathsResponse: new Set() });
-    };
-
-    isObject = (item) => (typeof item === 'object' && !Array.isArray(item) && item !== null);
-    
-    snakeCaseToNormalCase = (string) => string.replace(/_/g, ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase());
-
-    computeAttribute = (evalNumber, scenarioId = '', targetStr = '') => {
-      const s = String(scenarioId || '').toLowerCase();
-      const t = String(targetStr || '').toLowerCase();
-
-      if (evalNumber >= 8) {
-        if (s.includes('mf') && s.includes('af')) return 'AF-MF';
-        if (s.includes('mf')) return 'MF';
-        if (s.includes('af')) return 'AF';
-        if (s.includes('ss')) return 'SS';
-        return 'PS';
-      }
-
-      if (s.includes('qol')) return 'QOL';
-      if (s.includes('vol')) return 'VOL';
-      if (t.includes('moral')) return 'MJ';
-      return 'IO';
-    };
-
-    getDisplayCommandName = (histItem) => {
-        const base = histItem?.command || '';
-        if (typeof base === 'string' && base.toLowerCase() === 'respond to ta1 probe') {
-            const label = this.deriveProbeLabel(histItem?.parameters || {});
-            return label ? `${base} (${label})` : base;
-        }
-        return base;
-    }
-
-    deriveProbeLabel = (params) => {
-      const raw = String(params?.probe_id || '').trim();
-      if (!raw) return null;
-
-      const std = /^Probe-([A-Za-z]+)-(\d+)$/i.exec(raw);
-      if (std) {
-        return `Probe-${std[1].toUpperCase()}-${parseInt(std[2], 10)}`;
-      }
-
-      const numMatch = /(?:^|\b)Probe[^0-9]*([0-9]+)\b/i.exec(raw);
-      const number = numMatch ? parseInt(numMatch[1], 10) : null;
-
-      let attrFromRaw = null;
-      const allowed = ['AF','MF','AF-MF','MJ','IO','QOL','VOL','SS','PS'];
-      const prefix = raw.split(/\.?Probe/i)[0];
-      if (prefix) {
-        const tokens = prefix.split(/[-_\.]/);
-        for (const tok of tokens) {
-          const u = tok.toUpperCase();
-          if (allowed.includes(u)) { attrFromRaw = u; break; }
-        }
-      }
-      
-      const targetHint = params?.target_id || this.state.alignmentTarget || '';
-      const attrComputed = this.computeAttribute(this.state.evalNumber, this.state.scenario, targetHint);
-      const attr = attrFromRaw || attrComputed || null;
-
-      if (attr && Number.isFinite(number)) return `Probe-${attr}-${number}`;
-      if (Number.isFinite(number)) return `Probe-${number}`;
-      return null;
-    };
-
-    extractKdmaPairsFromHistory = (history) => {
-        if (!Array.isArray(history) || history.length === 0) return [];
-        const root = history[history.length - 1]?.response;
-        if (!root) return [];
-        const pairs = [];
-        const take = (name, value) => {
-            const num = typeof value === 'number' ? value : parseFloat(value);
-            if (!name || !Number.isFinite(num)) return;
-            pairs.push({ name: String(name), value: num });
-        };
-        const visit = (node) => {
-            if (!node) return;
-            if (Array.isArray(node)) { node.forEach(visit); return; }
-            if (typeof node === 'object') {
-                const keys = Object.keys(node).map(k => k.toLowerCase());
-                if (keys.includes('kdma') && keys.includes('value')) {
-                    take(node.kdma ?? node.Kdma ?? node.kdma_name ?? node.name, node.value ?? node.Value);
-                }
-                for (const [k, v] of Object.entries(node)) {
-                    if (/^kdma[\s_-]*values?$/i.test(k) && Array.isArray(v)) {
-                        v.forEach(el => {
-                            if (el && typeof el === 'object') take(el.kdma ?? el.Kdma ?? el.kdma_name ?? el.name, el.value ?? el.Value);
-                        });
-                    }
-                }
-                for (const val of Object.values(node)) visit(val);
-            }
-        };
-        visit(root);
-        const seen = new Set();
-        const out = [];
-        for (const p of pairs) {
-            const key = p.name.toLowerCase();
-            if (!seen.has(key)) { seen.add(key); out.push(p); }
-        }
-        return out.slice(0, 2);
-    };
-
-    kdmaAcronym = (raw) => {
-      if (!raw) return '';
-      const norm = String(raw).trim().toLowerCase().replace(/[_\s-]+/g, '');
-      const MAP = {
-        affiliation: 'AF',
-        merit: 'MF',
-        search: 'SS',
-        personalsafety: 'PS',
-        moraljudgement: 'MJ',
-        ingroupbias: 'IO',
-        qualityoflife: 'QOL',
-        perceivedquantityoflivessaved: 'VOL',
-      };
-      if (MAP[norm]) return MAP[norm];
-      return raw ? raw[0].toUpperCase() + raw.slice(1) : '';
     };
 
     render() {
@@ -774,7 +555,7 @@ class ResultsTable extends React.Component {
                                                                 button
                                                                 selected={this.state.scenario === item.value}
                                                                 onClick={() => this.setScenario(item.value)}>
-                                                                <ListItemText primary={this.formatScenarioString(item.value)} />
+                                                                <ListItemText primary={formatScenarioString(this.state.evalNumber, item.value)} />
                                                             </ListItem>
                                                         )}
                                                     </List>
@@ -814,7 +595,7 @@ class ResultsTable extends React.Component {
                                                                 button
                                                                 selected={this.state.adm === item.value}
                                                                 onClick={() => this.setPerformerADM(item.value)}>
-                                                                <ListItemText primary={this.formatADMString(item.value)} />
+                                                                <ListItemText primary={formatADMString(item.value)} />
                                                             </ListItem>
                                                         )}
                                                     </List>
@@ -881,7 +662,7 @@ class ResultsTable extends React.Component {
                                                     <>
                                                         <div className="results-header">
                                                             {(() => {
-                                                                const kdmas = this.extractKdmaPairsFromHistory(testData.history);
+                                                                const kdmas = extractKdmaPairsFromHistory(testData.history);
                                                                 const gridClass =
                                                                     `summary-grid ${kdmas.length===1 ? 'has-1-kdma' : ''} ${kdmas.length>=2 ? 'has-2-kdma' : ''}`;
                                                                 return (
@@ -892,7 +673,7 @@ class ResultsTable extends React.Component {
                                                                 </div>
                                                                 <div className="summary-card card--adm">
                                                                     <div className="summary-label">ADM</div>
-                                                                    <div className="summary-value">{this.formatADMString(this.state.adm)}</div>
+                                                                    <div className="summary-value">{formatADMString(this.state.adm)}</div>
                                                                 </div>
                                                                 <div className="summary-card card--score">
                                                                     <div className="summary-label">Alignment Score</div>
@@ -909,7 +690,7 @@ class ResultsTable extends React.Component {
                                                                 </div>
                                                                 {kdmas[0] && (
                                                                   <div className="summary-card card--kdma1">
-                                                                    <div className="summary-label">{this.kdmaAcronym(kdmas[0].name)} KDMA Value</div>
+                                                                    <div className="summary-label">{kdmaAcronym(kdmas[0].name)} KDMA Value</div>
                                                                     <div className="summary-value">
                                                                       {Number.isFinite(kdmas[0].value) ? kdmas[0].value.toFixed(5) : 'N/A'}
                                                                     </div>
@@ -917,7 +698,7 @@ class ResultsTable extends React.Component {
                                                                 )}
                                                                 {kdmas[1] && (
                                                                   <div className="summary-card card--kdma2">
-                                                                    <div className="summary-label">{this.kdmaAcronym(kdmas[1].name)} KDMA Value</div>
+                                                                    <div className="summary-label">{kdmaAcronym(kdmas[1].name)} KDMA Value</div>
                                                                     <div className="summary-value">
                                                                       {Number.isFinite(kdmas[1].value) ? kdmas[1].value.toFixed(5) : 'N/A'}
                                                                     </div>
@@ -964,9 +745,19 @@ class ResultsTable extends React.Component {
                                                                     key={`${h.command}_${i}`}
                                                                     className={`command-item ${i === this.state.selectedIndex ? 'active' : ''}`}
                                                                     onClick={() => this.selectCommand(i)}
-                                                                    title={this.getDisplayCommandName(h)}
+                                                                    title={getDisplayCommandName(h, {
+                                                                      alignmentTarget: this.state.alignmentTarget,
+                                                                      evalNumber: this.state.evalNumber,
+                                                                      scenario: this.state.scenario
+                                                                    })}
                                                                   >
-                                                                    <AutoFitText text={this.getDisplayCommandName(h)} />
+                                                                <AutoFitText
+                                                                    text={getDisplayCommandName(h, {
+                                                                        alignmentTarget: this.state.alignmentTarget,
+                                                                        evalNumber: this.state.evalNumber,
+                                                                        scenario: this.state.scenario
+                                                                    })}
+                                                                />
                                                                   </li>
                                                                 ))}
                                                               </ul>
@@ -977,7 +768,7 @@ class ResultsTable extends React.Component {
                                                             const idx = Math.min(this.state.selectedIndex, Math.max(hist.length - 1, 0));
                                                             const sel = hist[idx] || {};
                                                             const hasParams = sel?.parameters && Object.keys(sel.parameters).length > 0;
-                                                            const hasResponse = sel?.response !== undefined && sel?.response !== null && !(this.isEmpty(sel.response));
+                                                            const hasResponse = sel?.response !== undefined && sel?.response !== null && !isEmpty(sel.response);
                                                             const responseIsTree = hasResponse && typeof sel.response === 'object';
                                                             return (
                                                               <div className="right-col">
@@ -1052,7 +843,6 @@ class ResultsTable extends React.Component {
                       onClick={(e) => e.stopPropagation()}
                     >
                     <div className="inspector-header">
-                        {/* Breadcrumb navigation */}
                         <nav className="inspector-breadcrumb" aria-label="Breadcrumb">
                           <ol className="crumbs">
                             <li className="crumb">
@@ -1070,7 +860,7 @@ class ResultsTable extends React.Component {
                               </button>
                             </li>
                             {this.state.inspectorPath.map((tok, i) => {
-                              const label = tok.startsWith('[') ? tok : this.snakeCaseToNormalCase(tok);
+                              const label = tok.startsWith('[') ? tok : snakeCaseToNormalCase(tok);
                               const isLast = i === this.state.inspectorPath.length - 1;
                               return (
                                 <React.Fragment key={`${tok}_${i}`}>
@@ -1085,7 +875,7 @@ class ResultsTable extends React.Component {
                                         onClick={() =>
                                           this.setState({
                                             inspectorPath: this.state.inspectorPath.slice(0, i + 1),
-                                            inspectorTitle: this.formatPathTitle(this.state.inspectorPath.slice(0, i + 1))
+                                            inspectorTitle: formatPathTitle(this.state.inspectorPath.slice(0, i + 1))
                                           })
                                         }
                                       >
@@ -1102,7 +892,7 @@ class ResultsTable extends React.Component {
                       </div>
                       <div className="inspector-body">
                         {(() => {
-                          const node = this.getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath);
+                          const node = getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath);
                           return this.renderValueOrTree(
                             node,
                             'resp',
@@ -1112,7 +902,7 @@ class ResultsTable extends React.Component {
                           );
                         })()}
                         <pre className="inspector-json">
-                            {JSON.stringify(this.getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath), null, 2)}
+                            {JSON.stringify(getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath), null, 2)}
                         </pre>
                       </div>
                     </div>
