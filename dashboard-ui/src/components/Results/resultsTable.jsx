@@ -129,7 +129,10 @@ class ResultsTable extends React.Component {
             expandedPathsResponse: new Set(),
             inspectorOpen: false,
             inspectorNode: null,
-            inspectorTitle: ''
+            inspectorTitle: '',
+            inspectorRoot: null,
+            inspectorPath: [],
+            inspectorRootLabel: 'Root'
         }
     }
 
@@ -288,8 +291,31 @@ class ResultsTable extends React.Component {
       return JSON.stringify(v);
     };
 
-    openInspector = (node, title) => {
-      this.setState({ inspectorOpen: true, inspectorNode: node, inspectorTitle: title });
+    getNodeAtPath = (root, pathArr = []) => {
+      if (!root || typeof root !== 'object') return root;
+      let cur = root;
+      for (const tok of pathArr) {
+        if (!cur) break;
+        if (/^\[\d+\]$/.test(tok)) {
+          const idx = parseInt(tok.slice(1, -1), 10);
+          if (!Array.isArray(cur) || idx >= cur.length) return undefined;
+          cur = cur[idx];
+        } else {
+          if (typeof cur !== 'object') return undefined;
+          cur = cur[tok];
+        }
+      }
+      return cur;
+    };
+
+    openInspector = (root, pathArr = [], rootLabel = 'Root') => {
+      this.setState({
+        inspectorOpen: true,
+        inspectorRoot: root,
+        inspectorPath: Array.isArray(pathArr) ? pathArr : [],
+        inspectorTitle: this.formatPathTitle(Array.isArray(pathArr) ? pathArr : []),
+        inspectorRootLabel: rootLabel || 'Root',
+      });
     };
 
     closeInspector = () => {
@@ -299,7 +325,7 @@ class ResultsTable extends React.Component {
   formatPathTitle = (pathArr) =>
     pathArr.map(tok => (tok.startsWith('[') ? tok : this.snakeCaseToNormalCase(tok))).join(' > ');
 
-    renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null, scope = 'params') => {
+  renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null, scope = 'params', root = null, basePath = []) => {
       const rows = [];
       if (!this.isExpandable(obj)) return rows;
       const setName = scope === 'resp' ? 'expandedPathsResponse' : 'expandedPathsParams';
@@ -342,7 +368,13 @@ class ResultsTable extends React.Component {
                 ) : (
                   <button
                     className="view-btn"
-                    onClick={() => this.openInspector(value, childPath.join(' > '))}
+                    onClick={() =>
+                    this.openInspector(
+                      root ?? obj,
+                      [...basePath, ...childPath],
+                      scope === 'resp' ? 'Response' : 'Parameters'
+                    )
+                  }
                   >
                     View
                   </button>
@@ -352,7 +384,7 @@ class ResultsTable extends React.Component {
           );
 
           if (expandable && expanded) {
-            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope));
+            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope, root ?? obj, basePath));
           }
         });
         return rows;
@@ -416,7 +448,13 @@ class ResultsTable extends React.Component {
               ) : (
                 <button
                     className="view-btn"
-                    onClick={() => this.openInspector(value, this.formatPathTitle(childPath))}
+                    onClick={() =>
+                      this.openInspector(
+                        root ?? obj,
+                        [...basePath, ...childPath],
+                        scope === 'resp' ? 'Response' : 'Parameters'
+                      )
+                    }
                 >
                   View
                 </button>
@@ -464,7 +502,11 @@ class ResultsTable extends React.Component {
                       <button
                         className="view-btn"
                         onClick={() =>
-                          this.openInspector(el, this.formatPathTitle([...childPath, `[${idx}]`]))
+                          this.openInspector(
+                            root ?? obj,
+                            [...basePath, ...childPath, `[${idx}]`],
+                            scope === 'resp' ? 'Response' : 'Parameters'
+                          )
                         }
                       >
                         View
@@ -474,28 +516,32 @@ class ResultsTable extends React.Component {
                 </TableRow>
               );
               if (isObj && isSubExpanded) {
-                rows.push(...this.renderTreeRows(el, [...childPath, `[${idx}]`], depth + 2, responseCtx, el, scope));
+                rows.push(...this.renderTreeRows(el, [...childPath, `[${idx}]`], depth + 2, responseCtx, el, scope, root ?? obj, basePath));
               }
             });
           } else {
-            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope));
+            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope, root ?? obj, basePath));
           }
         }
       }
       return rows;
     };
 
-    renderTreeTable = (data, scope = 'params', responseCtx = null) => {
+    renderTreeTable = (data, scope = 'params', responseCtx = null, rootOverride = null, basePath = []) => {
       if (!data || typeof data !== 'object') return null;
       return (
         <Table size="small" className="tree-table">
-          <TableBody>{this.renderTreeRows(data, [], 0, responseCtx, data, scope)}</TableBody>
+          <TableBody>
+            {this.renderTreeRows(data, [], 0, responseCtx, data, scope, rootOverride ?? data, basePath)}
+          </TableBody>
         </Table>
       );
     };
 
-    renderValueOrTree = (data, scope = 'resp', responseCtx = null) => {
-      if (data && typeof data === 'object') return this.renderTreeTable(data, scope, responseCtx);
+    renderValueOrTree = (data, scope = 'resp', responseCtx = null, rootOverride = null, basePath = []) => {
+      if (data && typeof data === 'object') {
+        return this.renderTreeTable(data, scope, responseCtx, rootOverride ?? data, basePath);
+      }
       return (
         <div className="value-wrap">
           <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
@@ -941,7 +987,9 @@ class ResultsTable extends React.Component {
                                                                     {this.renderTreeTable(
                                                                       sel.parameters,
                                                                       'params',
-                                                                      sel.command === 'Take Action' ? sel.response : null
+                                                                      sel.command === 'Take Action' ? sel.response : null,
+                                                                      sel.parameters,
+                                                                      []
                                                                     )}
                                                                   </div>
                                                                 )}
@@ -969,7 +1017,7 @@ class ResultsTable extends React.Component {
                                                                 {hasResponse && (
                                                                   <div className="panel-card">
                                                                     {responseIsTree
-                                                                      ? this.renderTreeTable(sel.response, 'resp')
+                                                                      ? this.renderTreeTable(sel.response, 'resp', null, sel.response, [])
                                                                       : this.renderValueOrTree(sel.response)}
                                                                   </div>
                                                                 )}
@@ -1003,14 +1051,68 @@ class ResultsTable extends React.Component {
                       aria-label="Inspector"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="inspector-header">
-                        <div className="inspector-title">{this.state.inspectorTitle || 'Details'}</div>
+                    <div className="inspector-header">
+                        {/* Breadcrumb navigation */}
+                        <nav className="inspector-breadcrumb" aria-label="Breadcrumb">
+                          <ol className="crumbs">
+                            <li className="crumb">
+                              <button
+                                type="button"
+                                className="crumb-btn"
+                                onClick={() =>
+                                  this.setState({
+                                    inspectorPath: [],
+                                    inspectorTitle: this.state.inspectorRootLabel
+                                  })
+                                }
+                              >
+                                {this.state.inspectorRootLabel}
+                              </button>
+                            </li>
+                            {this.state.inspectorPath.map((tok, i) => {
+                              const label = tok.startsWith('[') ? tok : this.snakeCaseToNormalCase(tok);
+                              const isLast = i === this.state.inspectorPath.length - 1;
+                              return (
+                                <React.Fragment key={`${tok}_${i}`}>
+                                  <li className="crumb-sep" aria-hidden="true">›</li>
+                                  <li className={`crumb ${isLast ? 'crumb-current' : ''}`}>
+                                    {isLast ? (
+                                      <span>{label}</span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="crumb-btn"
+                                        onClick={() =>
+                                          this.setState({
+                                            inspectorPath: this.state.inspectorPath.slice(0, i + 1),
+                                            inspectorTitle: this.formatPathTitle(this.state.inspectorPath.slice(0, i + 1))
+                                          })
+                                        }
+                                      >
+                                        {label}
+                                      </button>
+                                    )}
+                                  </li>
+                                </React.Fragment>
+                              );
+                            })}
+                          </ol>
+                        </nav>
                         <button className="btn-link" onClick={this.closeInspector}>Close</button>
                       </div>
                       <div className="inspector-body">
-                        {this.renderValueOrTree(this.state.inspectorNode, 'resp')}
+                        {(() => {
+                          const node = this.getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath);
+                          return this.renderValueOrTree(
+                            node,
+                            'resp',
+                            null,
+                            this.state.inspectorRoot,
+                            this.state.inspectorPath
+                          );
+                        })()}
                         <pre className="inspector-json">
-                            {JSON.stringify(this.state.inspectorNode, null, 2)}
+                            {JSON.stringify(this.getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath), null, 2)}
                         </pre>
                       </div>
                     </div>

@@ -486,7 +486,48 @@ nav.MuiList-root.nav-list.MuiList-padding {
   display:flex; align-items:center; justify-content:space-between;
 }
 
-.inspector-title{ font-weight:600; }
+.inspector-breadcrumb{
+  overflow:auto;
+  max-width: 75%;
+  white-space: nowrap;
+}
+
+.crumbs{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.crumb{ display:flex; align-items:center; }
+
+.crumb-sep{ color:#9ca3af; }
+
+.crumb-btn{
+  background:transparent;
+  border:0;
+  padding:0;
+  cursor:pointer;
+  color:#374151;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.crumb-btn:hover{
+  color:#111827;
+  text-decoration: underline;
+}
+
+.crumb-btn:focus-visible{
+  outline: 2px solid #9ca3af;
+  outline-offset: 2px;
+  text-decoration: underline;
+}
+
+.crumb-current{ color:#6b7280; cursor:default; }
 
 .btn-link{
   background: transparent;
