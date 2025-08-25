@@ -454,6 +454,11 @@ function AdminPage({ currentUser, updateUserHandler }) {
             return;
         }
 
+        if (highValue - lowValue < 100) {
+            alert("The PID range must be at least 100. Please correct the values.");
+            return;
+        }
+
         setPendingPidBounds({ low: lowValue, high: highValue });
         setShowPidConfirmation(true);
     };
