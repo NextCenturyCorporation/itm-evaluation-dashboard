@@ -5,10 +5,9 @@ import consentPdf from './consentForm2025.pdf';
 import gql from "graphql-tag";
 import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedScenariosPage";
 import { useHistory, useLocation } from 'react-router-dom';
-import bcrypt from 'bcryptjs';
+import { useSelector } from "react-redux";
 import '../../css/scenario-page.css';
-import store from "../../store/store";
-import { SURVEY_VERSION_DATA } from "../Survey/survey";
+import { evalNameToNumber, phase1ParticipantData, phase2ParticipantData } from "./config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -16,11 +15,13 @@ const GET_PARTICIPANT_LOG = gql`
     }`;
 
 const ADD_PARTICIPANT = gql`
-    mutation addNewParticipantToLog($participantData: JSON!, $lowPid: Int!, $highPid: Int!) {
-        addNewParticipantToLog(participantData: $participantData, lowPid: $lowPid, highPid: $highPid) 
+    mutation addNewParticipantToLog($participantData: JSON!) {
+        addNewParticipantToLog(participantData: $participantData) 
     }`;
 
 export default function StartOnline() {
+    const currentTextEval = useSelector(state => state.configs.currentTextEval)
+    const pidBounds = useSelector(state => state.configs.pidBounds);
     const { refetch } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
     const [showConsentForm, setShowConsentForm] = React.useState(false);
@@ -57,27 +58,29 @@ export default function StartOnline() {
 
     const startSurvey = async () => {
         const result = await refetch();
+        const evalNumber = evalNameToNumber[currentTextEval]
+
+        const lowPid = pidBounds.lowPid;
+        const highPid = pidBounds.highPid;
+
         // calculate new pid
-        const lowPid = 202507100;
-        const highPid = 202507299;
         let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
             !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
             x.ParticipantID >= lowPid && x.ParticipantID <= highPid
         ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         // get correct plog data
         const currentSearchParams = new URLSearchParams(location.search);
-        const scenarioSet = Math.floor(Math.random() * 3) + 1;
-        const participantData = {
-            "ParticipantID": newPid, "Type": "Online", "prolificId": currentSearchParams.get('PROLIFIC_PID'), "contactId": currentSearchParams.get('ContactID'),
-            "claimed": true, "simEntryCount": 0, "surveyEntryCount": 0, "textEntryCount": 0, "hashedEmail": bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT),
-            "AF-text-scenario": scenarioSet, "MF-text-scenario": scenarioSet, "PS-text-scenario": scenarioSet, "SS-text-scenario": scenarioSet, 'evalNum': SURVEY_VERSION_DATA[store.getState().configs.currentSurveyVersion].evalNum
-        };
+        let participantData
+        if (evalNumber >= 8) {
+            participantData = phase2ParticipantData(currentSearchParams, null, newPid, 'Online')
+        } else {
+            participantData = phase1ParticipantData(currentSearchParams, null, newPid, 'Online')
+        }
+
         // update database
-        const addRes = await addParticipant({ variables: { participantData, lowPid, highPid } });
+        const addRes = await addParticipant({ variables: { participantData } });
         // extra step to prevent duplicate pids
         newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
-
-
 
         currentSearchParams.set('pid', newPid);
         currentSearchParams.set('class', 'Online');
