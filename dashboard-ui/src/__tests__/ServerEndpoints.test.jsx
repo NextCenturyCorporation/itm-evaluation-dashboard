@@ -251,10 +251,10 @@ describe('TA1 Server Tests', () => {
 
         const responsePayload = {
           response: {
-            choice: 'Response 2-B',
+            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
             justification: 'justification',
             probe_id: 'Probe 2',
-            scenario_id: 'July2025-MF-eval'
+            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
           },
           session_id: sessionId
         };
@@ -277,7 +277,7 @@ describe('TA1 Server Tests', () => {
           {
             params: {
               session_id: sessionId,
-              kdma_id: 'merit'
+              kdma_id: IS_PH1 ? 'Moral judgement' : 'merit'
             }
           }
         );
