@@ -3,6 +3,7 @@ import store from "../../store/store";
 import bcrypt from 'bcryptjs';
 
 export const evalNameToNumber = {
+    'Phase 2 September 2025 Collaboration': 10,
     'Phase 2 July 2025 Collaboration': 9,
     'Phase 2 June 2025 Collaboration': 8,
     'phase1': 5
@@ -93,36 +94,26 @@ export const phase2ParticipantData = (currentSearchParams, hashedEmail, newPid, 
 
 
 export const scenarioIdsFromLog = (participantLog, currentEval) => {
-    let scenarios = [];
     const num = evalNameToNumber[currentEval]
-    if (num === 9) {
-        scenarios = [
-            `July2025-AF${participantLog['AF-text-scenario']}-eval`,
-            `July2025-MF${participantLog['MF-text-scenario']}-eval`,
-            `July2025-PS${participantLog['PS-text-scenario']}-eval`,
-            `July2025-SS${participantLog['SS-text-scenario']}-eval`
-        ]
-    }
+    let scenarios = [];
 
-    if (num === 8) {
-        scenarios = [
-            `June2025-AF${participantLog['AF-text-scenario']}-eval`,
-            `June2025-MF${participantLog['MF-text-scenario']}-eval`,
-            `June2025-PS${participantLog['PS-text-scenario']}-eval`,
-            `June2025-SS${participantLog['SS-text-scenario']}-eval`
-        ]
-    }
+    if (num === 8 || num === 9) {
+        const monthPrefix = num === 9 ? 'July2025' : 'June2025';
+        const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
 
-    if (num === 5) {
-        scenarios.push(...p1Mappings[participantLog['Text-1']])
-        scenarios.push(...p1Mappings[participantLog['Text-2']])
-    }
+        scenarios = scenarioTypes.map(type =>
+            `${monthPrefix}-${type}${participantLog[`${type}-text-scenario`]}-eval`
+        );
 
-    if (num >= 8) {
         for (let i = scenarios.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
         }
+    } else if (num === 5) {
+        scenarios = [
+            ...p1Mappings[participantLog['Text-1']] || [],
+            ...p1Mappings[participantLog['Text-2']] || []
+        ];
     }
 
     return scenarios
