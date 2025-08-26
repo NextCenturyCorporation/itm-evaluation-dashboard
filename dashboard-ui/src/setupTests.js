@@ -57,8 +57,8 @@ beforeAll(async () => {
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
             version: surveyNum,
-            lowPid: Number(process.env.REACT_APP_TEST_LOW_PID),
-            highPid: Number(process.env.REACT_APP_TEST_LOW_PID) + 200,
+            lowPid: surveyNum == 5 ? 202501700 : 202507100,
+            highPid: surveyNum == 5 ? 202501900 : 202507300,
             textScenarios: surveyToTextMap[surveyNum]
         });
 

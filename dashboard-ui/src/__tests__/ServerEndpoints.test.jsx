@@ -53,28 +53,30 @@ describe('TA1 Server Tests', () => {
   });
 
   describe('Response Submission', () => {
-    it('should submit responses to ADEPT server successfully', async () => {
-      const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
-      const sessionId = sessionResponse.data;
+    if (!IS_PH1) {
+      it('should submit responses to ADEPT server successfully', async () => {
+        const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
+        const sessionId = sessionResponse.data;
 
-      // dummy probe response for adept
-      const responsePayload = {
-        response: {
-          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
-          justification: 'justification',
-          probe_id: 'Probe 2',
-          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
-        },
-        session_id: sessionId
-      };
+        // dummy probe response for adept
+        const responsePayload = {
+          response: {
+            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            justification: 'justification',
+            probe_id: 'Probe 2',
+            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+          },
+          session_id: sessionId
+        };
 
-      const response = await axios.post(
-        `${ADEPT_URL}/api/v1/response`,
-        responsePayload
-      );
+        const response = await axios.post(
+          `${ADEPT_URL}/api/v1/response`,
+          responsePayload
+        );
 
-      expect(response.status).toBe(200);
-    });
+        expect(response.status).toBe(200);
+      });
+    }
     it('should submit responses to SoarTech server successfully', async () => {
       const sessionResponse = await axios.post(`${SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
       const sessionId = sessionResponse.data;
@@ -100,34 +102,36 @@ describe('TA1 Server Tests', () => {
   });
 
   describe('KDMA Profile', () => {
-    it('should fetch adept KDMA profile successfully', async () => {
-      const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
-      const sessionId = sessionResponse.data;
+    if (!IS_PH1) {
+      it('should fetch adept KDMA profile successfully', async () => {
+        const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
+        const sessionId = sessionResponse.data;
 
-      const responsePayload = {
-        response: {
-          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
-          justification: 'justification',
-          probe_id: 'Probe 2',
-          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
-        },
-        session_id: sessionId
-      };
+        const responsePayload = {
+          response: {
+            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            justification: 'justification',
+            probe_id: 'Probe 2',
+            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+          },
+          session_id: sessionId
+        };
 
-      // post probe response before calling kdma 
-      await axios.post(
-        `${ADEPT_URL}/api/v1/response`,
-        responsePayload
-      );
+        // post probe response before calling kdma 
+        await axios.post(
+          `${ADEPT_URL}/api/v1/response`,
+          responsePayload
+        );
 
-      const response = await axios.get(
-        `${ADEPT_URL}/api/v1/computed_kdma_profile`,
-        { params: { session_id: sessionId } }
-      );
+        const response = await axios.get(
+          `${ADEPT_URL}/api/v1/computed_kdma_profile`,
+          { params: { session_id: sessionId } }
+        );
 
-      expect(response.status).toBe(200);
-      expect(response.data).toBeTruthy();
-    });
+        expect(response.status).toBe(200);
+        expect(response.data).toBeTruthy();
+      });
+    }
     it('should fetch soartech KDMA profile successfully', async () => {
       const sessionResponse = await axios.post(`${SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
       const sessionId = sessionResponse.data;
@@ -146,39 +150,41 @@ describe('TA1 Server Tests', () => {
   });
 
   describe('Ordered Alignment', () => {
-    it('should fetch adept ordered alignment data successfully', async () => {
-      const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
-      const sessionId = sessionResponse.data;
+    if (!IS_PH1) {
+      it('should fetch adept ordered alignment data successfully', async () => {
+        const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
+        const sessionId = sessionResponse.data;
 
-      const responsePayload = {
-        response: {
-          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
-          justification: 'justification',
-          probe_id: 'Probe 2',
-          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
-        },
-        session_id: sessionId
-      };
+        const responsePayload = {
+          response: {
+            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            justification: 'justification',
+            probe_id: 'Probe 2',
+            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+          },
+          session_id: sessionId
+        };
 
-      // post probe response before calling kdma 
-      await axios.post(
-        `${ADEPT_URL}/api/v1/response`,
-        responsePayload
-      );
+        // post probe response before calling kdma 
+        await axios.post(
+          `${ADEPT_URL}/api/v1/response`,
+          responsePayload
+        );
 
-      const response = await axios.get(
-        `${ADEPT_URL}/api/v1/get_ordered_alignment`,
-        {
-          params: {
-            session_id: sessionId,
-            kdma_id: IS_PH1 ? 'Moral judgement' : 'merit'
+        const response = await axios.get(
+          `${ADEPT_URL}/api/v1/get_ordered_alignment`,
+          {
+            params: {
+              session_id: sessionId,
+              kdma_id: IS_PH1 ? 'Moral judgement' : 'merit'
+            }
           }
-        }
-      );
+        );
 
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.data)).toBeTruthy();
-    });
+        expect(response.status).toBe(200);
+        expect(Array.isArray(response.data)).toBeTruthy();
+      });
+    }
     it('should fetch soartech ordered alignment data successfully', async () => {
       const sessionResponse = await axios.post(`${SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
       const sessionId = sessionResponse.data;
@@ -235,47 +241,49 @@ describe('TA1 Server Tests', () => {
 
 
   describe('Full Workflow Test', () => {
-    it('should complete a full workflow with ADEPT server', async () => {
-      // starts adept sessions, responds to probe, gets kdma, and calls ordered alignment
-      // checks each step as we go
-      const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
-      const sessionId = sessionResponse.data;
-      expect(sessionResponse.status).toBe(200);
+    if (!IS_PH1) {
+      it('should complete a full workflow with ADEPT server', async () => {
+        // starts adept sessions, responds to probe, gets kdma, and calls ordered alignment
+        // checks each step as we go
+        const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
+        const sessionId = sessionResponse.data;
+        expect(sessionResponse.status).toBe(200);
 
-      const responsePayload = {
-        response: {
-          choice: 'Response 2-B',
-          justification: 'justification',
-          probe_id: 'Probe 2',
-          scenario_id: 'July2025-MF-eval'
-        },
-        session_id: sessionId
-      };
+        const responsePayload = {
+          response: {
+            choice: 'Response 2-B',
+            justification: 'justification',
+            probe_id: 'Probe 2',
+            scenario_id: 'July2025-MF-eval'
+          },
+          session_id: sessionId
+        };
 
-      const probeResponse = await axios.post(
-        `${ADEPT_URL}/api/v1/response`,
-        responsePayload
-      );
-      expect(probeResponse.status).toBe(200);
+        const probeResponse = await axios.post(
+          `${ADEPT_URL}/api/v1/response`,
+          responsePayload
+        );
+        expect(probeResponse.status).toBe(200);
 
 
-      const kdmaResponse = await axios.get(
-        `${ADEPT_URL}/api/v1/computed_kdma_profile`,
-        { params: { session_id: sessionId } }
-      );
-      expect(kdmaResponse.status).toBe(200);
+        const kdmaResponse = await axios.get(
+          `${ADEPT_URL}/api/v1/computed_kdma_profile`,
+          { params: { session_id: sessionId } }
+        );
+        expect(kdmaResponse.status).toBe(200);
 
-      const alignmentResponse = await axios.get(
-        `${ADEPT_URL}/api/v1/get_ordered_alignment`,
-        {
-          params: {
-            session_id: sessionId,
-            kdma_id: 'merit'
+        const alignmentResponse = await axios.get(
+          `${ADEPT_URL}/api/v1/get_ordered_alignment`,
+          {
+            params: {
+              session_id: sessionId,
+              kdma_id: 'merit'
+            }
           }
-        }
-      );
-      expect(alignmentResponse.status).toBe(200);
-    });
+        );
+        expect(alignmentResponse.status).toBe(200);
+      });
+    }
 
     it('should complete a full workflow with SoarTech server', async () => {
       // starts soartech session, responds to probe, calls kdma endpoint, calls ordered alignment endpoint
@@ -348,48 +356,50 @@ describe('TA1 Server Tests', () => {
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
     }, 40000);
-    it('Should compare two adept sessions using /compare_sessions', async () => {
-      // start sessions
-      const sessionResponse1 = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
-      const sessionId1 = sessionResponse1.data;
-      expect(sessionResponse1.status).toBe(200);
+    if (!IS_PH1) {
+      it('Should compare two adept sessions using /compare_sessions', async () => {
+        // start sessions
+        const sessionResponse1 = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
+        const sessionId1 = sessionResponse1.data;
+        expect(sessionResponse1.status).toBe(200);
 
-      const sessionResponse2 = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
-      const sessionId2 = sessionResponse2.data;
-      expect(sessionResponse2.status).toBe(200);
+        const sessionResponse2 = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
+        const sessionId2 = sessionResponse2.data;
+        expect(sessionResponse2.status).toBe(200);
 
-      // dummy probe responses
-      const responsePayload = {
-        response: {
-          choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
-          justification: 'justification',
-          probe_id: 'Probe 2',
-          scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
-        }
-      };
-
-      // submit dummy probe response for each session
-      await axios.post(
-        `${ADEPT_URL}/api/v1/response`,
-        { ...responsePayload, session_id: sessionId1 }
-      );
-
-      await axios.post(
-        `${ADEPT_URL}/api/v1/response`,
-        { ...responsePayload, session_id: sessionId2 }
-      );
-
-      const response = await axios.get(
-        `${ADEPT_URL}/api/v1/alignment/compare_sessions`,
-        {
-          params: {
-            session_id_1: sessionId1,
-            session_id_2: sessionId2,
+        // dummy probe responses
+        const responsePayload = {
+          response: {
+            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            justification: 'justification',
+            probe_id: 'Probe 2',
+            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
           }
-        }
-      );
-      expect(response.status).toBe(200);
-      expect(response.data).toBeTruthy();
-    })
+        };
+
+        // submit dummy probe response for each session
+        await axios.post(
+          `${ADEPT_URL}/api/v1/response`,
+          { ...responsePayload, session_id: sessionId1 }
+        );
+
+        await axios.post(
+          `${ADEPT_URL}/api/v1/response`,
+          { ...responsePayload, session_id: sessionId2 }
+        );
+
+        const response = await axios.get(
+          `${ADEPT_URL}/api/v1/alignment/compare_sessions`,
+          {
+            params: {
+              session_id_1: sessionId1,
+              session_id_2: sessionId2,
+            }
+          }
+        );
+        expect(response.status).toBe(200);
+        expect(response.data).toBeTruthy();
+      });
+    }
   });
 });

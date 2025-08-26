@@ -190,7 +190,17 @@ export async function takePhase1TextScenario(page) {
     let pageNum = 1;
     let scenarios = 0;
     while (scenarios < 5) {
-        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        try {
+            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 200 });
+        } catch (error) {
+            if (error.name === 'TimeoutError') {
+                await page.waitForSelector(`text/Page 1 of`, { timeout: 100 });
+                scenarios += 1;
+                pageNum = 1;
+            } else {
+                throw error;
+            }
+        }
         await page.focus('input[type="radio"]');
         await page.keyboard.press(' ');
         await page.keyboard.press('Tab');

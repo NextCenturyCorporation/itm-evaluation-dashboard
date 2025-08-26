@@ -18,7 +18,10 @@ const SurveyResults = createSchema('surveyResults', {
 });
 
 const SurveyVersion = createSchema('surveyVersion', {
-    version: { type: String, required: true }
+    version: { type: String, required: true },
+    textScenarios: { type: String, required: true },
+    lowPid: { type: Number, required: true },
+    highPid: { type: Number, required: true }
 });
 
 const UiStyle = createSchema('uiStyle', {

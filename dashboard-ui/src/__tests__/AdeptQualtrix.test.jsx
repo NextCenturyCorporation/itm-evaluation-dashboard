@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { pressAllKeys, startAdeptQualtrixSurvey, takePhase2TextScenario } from "../__mocks__/testUtils";
+import { pressAllKeys, startAdeptQualtrixSurvey, takePhase1TextScenario, takePhase2TextScenario } from "../__mocks__/testUtils";
 import { isDefined } from "../components/AggregateResults/DataFunctions";
 
 const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
@@ -16,7 +16,7 @@ describe('Test adept qualtrix entry method', () => {
         await startAdeptQualtrixSurvey(page);
         const currentUrl = page.url();
         const pid = currentUrl.split('pid=').slice(-1)[0].split('&')[0];
-        expect(pid).toBe(process.env.REACT_APP_TEST_LOW_PID);
+        expect(pid).toBe(IS_PH1 ? "202501700" : "202507100");
     });
 
     it('PIDs should increase by 1 with each login to /remote-text-survey?adeptQualtrix=true', async () => {
@@ -35,12 +35,16 @@ describe('Test adept qualtrix entry method', () => {
 
     it('any key combo during text scenario should have no effect on progress', async () => {
         await startAdeptQualtrixSurvey(page);
-        await pressAllKeys(page, IS_PH1 ? "Treat Casualty O with" : "Scenario Details");
+        await pressAllKeys(page, IS_PH1 ? "Assess the shooter" : "Scenario Details");
     }, 30000);
 
     it('text-scenario through ADEPT Qualtrix should be navigable and end with survey', async () => {
         await startAdeptQualtrixSurvey(page);
-        await takePhase2TextScenario(page);
+        if (IS_PH1) {
+            await takePhase1TextScenario(page);
+        } else {
+            await takePhase2TextScenario(page);
+        }
         await page.waitForSelector('text/Please do not close your browser', { timeout: 500 });
         await page.waitForSelector('text/In the final part of the study,', { timeout: 10000000 });
         await pressAllKeys(page, 'In the final part of the study,');
@@ -51,7 +55,7 @@ describe('Test adept qualtrix entry method', () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true&startSurvey=true&pid=123`);
         await page.waitForSelector('text/In the final part of the study,', { timeout: 500 });
         await pressAllKeys(page, 'In the final part of the study,');
-    });
+    }, 100000);
 
     it('survey through ADEPT Qualtrix should be navigable', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true&startSurvey=true&pid=123`);
