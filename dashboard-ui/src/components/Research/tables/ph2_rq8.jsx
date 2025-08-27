@@ -88,7 +88,7 @@ export function PH2RQ8({ evalNum }) {
                     }
                     // see if participant has completed the open world scenario
                     const sim_entries = simData.filter((x) => x['pid'] === pid);
-                    const openWorld = sim_entries.find((x) => x['openWorld'] === true);
+                    const openWorld = sim_entries.find((x) => x['openWorld'] === true || x['evalNumber'] >= 8);
                     if (!openWorld) {
                         continue;
                     }
