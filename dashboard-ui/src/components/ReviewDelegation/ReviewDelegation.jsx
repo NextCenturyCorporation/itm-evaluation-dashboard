@@ -79,6 +79,7 @@ const PH1_NAME_MAP = {
 
 export function ReviewDelegationPage() {
     const delegationConfigs = useSelector(state => state.configs.surveyConfigs);
+    console.log(delegationConfigs)
     const [selectedConfig, setSelectedConfig] = useState(null);
     const [reviewingText, setReviewingText] = useState(null);
 
@@ -111,13 +112,15 @@ export function ReviewDelegationPage() {
         const ph1_scenarios = {};
         const ph2_june_scenarios = {};
         const ph2_july_scenarios = {};
+        const ph2_sept_scenarios = {};
 
         const dre_config = delegationConfigs["delegation_v4.0"];
         const ph1_config = delegationConfigs["delegation_v5.0"];
         const ph2_june_config = delegationConfigs["delegation_v6.0"];
         const ph2_july_config = delegationConfigs["delegation_v7.0"];
+        const ph2_sept_config = delegationConfigs["delegation_v8.0"];
 
-        [dre_config, ph1_config, ph2_june_config, ph2_july_config].forEach((config, i) => {
+        [dre_config, ph1_config, ph2_june_config, ph2_july_config, ph2_sept_config].forEach((config, i) => {
             if (!config) return;
 
             for (const page of config['pages']) {
@@ -160,6 +163,15 @@ export function ReviewDelegationPage() {
                             ph2_july_scenarios[scenarioKey][page['admName']] = [];
                         }
                         ph2_july_scenarios[scenarioKey][page['admName']].push(page);
+                    } else if (i === 4) {
+                        scenarioKey = page['scenarioName'] || page['scenarioIndex'];
+                        if (!Object.keys(ph2_sept_scenarios).includes(scenarioKey)) {
+                            ph2_sept_scenarios[scenarioKey] = {};
+                        }
+                        if (!Object.keys(ph2_sept_scenarios[scenarioKey]).includes(page['admName'])) {
+                            ph2_sept_scenarios[scenarioKey][page['admName']] = [];
+                        }
+                        ph2_sept_scenarios[scenarioKey][page['admName']].push(page);
                     }
                 }
             }
@@ -205,6 +217,20 @@ export function ReviewDelegationPage() {
 
         return (
             <>
+                {Object.keys(ph2_sept_scenarios).length > 0 && (
+                    <Card className="mb-4 border-0 shadow">
+                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                            Phase 2 September 2025 Collaboration
+                        </Card.Header>
+                        <Card.Body className="bg-light">
+                            {Object.keys(ph2_sept_scenarios).sort().map((scenarioName => (
+                                <div key={scenarioName}>
+                                    {renderConfigGroup(ph2_sept_scenarios[scenarioName], scenarioName, true)}
+                                </div>
+                            )))}
+                        </Card.Body>
+                    </Card>
+                )}
                 {Object.keys(ph2_july_scenarios).length > 0 && (
                     <Card className="mb-4 border-0 shadow">
                         <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
