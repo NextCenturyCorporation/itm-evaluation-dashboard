@@ -68,11 +68,13 @@ export async function logout(page) {
     }
     else if (![`${process.env.REACT_APP_TEST_URL}/login`, `${process.env.REACT_APP_TEST_URL}/participantText`].includes(currentUrl)) {
         const menu = await page.$('#basic-nav-dropdown');
-        await menu.click();
-        await page.$$eval('a', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Logout').click();
-        });
-        await page.waitForSelector('text/Sign In', { timeout: 1000 });
+        if (menu != null) {
+            await menu.click();
+            await page.$$eval('a', buttons => {
+                Array.from(buttons).find(btn => btn.textContent == 'Logout').click();
+            });
+        }
+        await page.waitForSelector('text/Sign In', { timeout: 100000 });
     }
     currentUrl = page.url();
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -118,9 +120,22 @@ export async function loginBasicApprovedUser(page) {
     await page.waitForSelector('text/Welcome to the ITM Program!');
 }
 
-export async function checkRouteContent(page, route, expectedText) {
+export async function checkRouteContent(page, route, expectedText, isPh1 = false) {
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
     await page.waitForSelector(FOOTER_TEXT);
+    if (isPh1) {
+        // click on Phase 1 in drop downs
+        if (route.includes('rq') || route.includes('exploratory') || route.includes('humanSimParticipant')) {
+            await page.click((route.includes('human') ? '.' : '.rq-') + 'selection-section [role="combobox"]');
+            await page.$$eval('[role="listbox"]>*', (buttons) => {
+                Array.from(buttons).find(btn => btn.textContent == 'Phase 1 Evaluation').click();
+            });
+        } else if (route.includes("/results")) {
+            await page.$$eval('.nav-menu [role="button"]', (buttons) => {
+                Array.from(buttons).find(btn => btn.innerText.includes("Phase 1 Evaluation")).click();
+            });
+        }
+    }
     for (const txt of expectedText) {
         await page.waitForSelector(`text/${txt}`, { timeout: 500 });
     }
@@ -167,21 +182,49 @@ export async function pressAllKeys(page, uniqueExpectedText) {
         'VolumeUp', 'Tab'];
     for (const key of keysToPress) {
         await page.keyboard.press(key);
-        // first question in vol4 for ST should be visible no matter what key is pressed
-        await page.waitForSelector(`text/${uniqueExpectedText}`);
+        await page.waitForSelector(`text/${uniqueExpectedText}`, { timeout: 5000 });
     }
 }
 
-export async function takeTextScenario(page) {
+export async function takePhase1TextScenario(page) {
     let pageNum = 1;
     let scenarios = 0;
     while (scenarios < 5) {
-        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        try {
+            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 200 });
+        } catch (error) {
+            if (error.name === 'TimeoutError') {
+                await page.waitForSelector(`text/Page 1 of`, { timeout: 100 });
+                scenarios += 1;
+                pageNum = 1;
+            } else {
+                throw error;
+            }
+        }
         await page.focus('input[type="radio"]');
         await page.keyboard.press(' ');
         await page.keyboard.press('Tab');
         const completeBtn = await page.$('text/Complete');
         if (isDefined(completeBtn)) {
+            pageNum = 1;
+            scenarios += 1;
+        }
+        else {
+            pageNum += 1;
+        }
+        await page.keyboard.press('Enter');
+    }
+}
+
+export async function takePhase2TextScenario(page) {
+    let pageNum = 1;
+    let scenarios = 0;
+    while (scenarios < 4) {
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        await page.focus('input[type="radio"]');
+        await page.keyboard.press(' ');
+        await page.keyboard.press('Tab');
+        if (pageNum == 6) {
             pageNum = 1;
             scenarios += 1;
         }

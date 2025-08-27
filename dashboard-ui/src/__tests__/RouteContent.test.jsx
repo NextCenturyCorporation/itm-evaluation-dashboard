@@ -4,6 +4,7 @@
 
 import { checkRouteContent, loginAdmin, createAccount, FOOTER_TEXT } from "../__mocks__/testUtils";
 
+const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 
 describe('Verify content on page matches expectation for route', () => {
     // log in as admin
@@ -44,7 +45,7 @@ describe('Verify content on page matches expectation for route', () => {
         await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
     });
     it('Check /humanSimParticipant route content', async () => {
-        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', 'AD_Scenario_Text']);
+        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', IS_PH1 ? 'AD_Scenario_Text' : 'Date'], IS_PH1);
     });
     it('Check /humanProbeData route content', async () => {
         await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);
@@ -55,7 +56,7 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /results route content', async () => {
         // based off ph2 RQ2 table
-        await checkRouteContent(page, '/results', ['Evaluation', 'Scenario', 'ADM Name', 'Target Type']);
+        await checkRouteContent(page, '/results', IS_PH1 ? ['Evaluation', 'Scenario', 'Trial_ID', 'TA2_Name', 'TA1_Name'] : ['Evaluation', 'Scenario', 'Attribute', 'Set', 'Probe IDs'], IS_PH1);
     });
     it('Check /adm-results route content', async () => {
         // TODO: find how to check this a little better (more unique)
@@ -70,17 +71,31 @@ describe('Verify content on page matches expectation for route', () => {
         await checkRouteContent(page, '/research-results/rq1', ['RQ1: Does alignment score predict measures of trust?', 'RQ1 Data']);
     });
     it('Check /research-results/rq2 route content', async () => {
-        await checkRouteContent(page, '/research-results/rq2', ['RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?', 'RQ2.1 Data', 'RQ2.2 & 2.3 Data']);
+        // Phase 1 version:
+        if (IS_PH1) {
+            await checkRouteContent(page, '/research-results/rq2', ['RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?', 'RQ2.1 Data', 'RQ2.2 & 2.3 Data'], true);
+        }
+        else {
+            // Phase 2 version:
+            await checkRouteContent(page, '/research-results/rq2', ['RQ2: Do aligned ADMs have the ability to tune to a subset of the attribute space?', 'RQ2.2 & 2.3 Data']);
+        }
     });
     it('Check /research-results/rq3 route content', async () => {
         await checkRouteContent(page, '/research-results/rq3', ['RQ3: Does alignment affect delegation preference for ADMs?', 'RQ3 Data']);
     });
-    it('Check /research-results/exploratory-analysis route content', async () => {
-        await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
-            'RQ5: To what extent does alignment score predict identical', 'RQ5 Data', 'RQ6: Does attribute assessment in different formats produce the same results?', 'RQ6 Data',
-            'RQ7', 'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block']);
-    });
 
+    it('Check /research-results/exploratory-analysis route content', async () => {
+        if (IS_PH1) {
+            await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
+                'RQ5: To what extent does alignment score predict identical', 'RQ5 Data', 'RQ6: Does attribute assessment in different formats produce the same results?', 'RQ6 Data',
+                'RQ7', 'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block', 'Calibration Scores'], 5);
+        }
+        else {
+            await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
+                'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block']);
+        }
+
+    });
     it('Check /myaccount route content', async () => {
         await checkRouteContent(page, '/myaccount', ['My Account', 'Manage your account settings', 'Username', 'admin', 'Email Address', 'admin@123.com', 'Confirm New Password']);
     });
