@@ -829,9 +829,9 @@ export function getTextScenariosForParticipant(pid, participantLog) {
     };
 }
 
-export function adjustScenarioNumber(num) {
-    if (num === 1 || num === 2) return num + 1;
-    if (num === 3) return 1;
+export function adjustScenarioNumber(num, upperBound) {
+    if (num < upperBound) return num + 1;
+    if (num === upperBound) return 1;
     return null;
 }
 
@@ -906,7 +906,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     }
 
     const getScenarioGroups = evalNum === 8 ? getEval8ScenarioGroups : getEval9ScenarioGroups;
-    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
+    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum), 3);
     if (!scenarioGroups) {
         return handleRandomSelection('no group configuration found');
     }
@@ -1007,7 +1007,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
 export function createScenarioBlock(scenarioType, textScenarioNum, allPages, participantTextResults, evalNum) {
     if (!textScenarioNum) return null;
 
-    const adjustedNum = adjustScenarioNumber(textScenarioNum);
+    const adjustedNum = adjustScenarioNumber(textScenarioNum, 3);
     const targetScenarioIndex = `2025-${scenarioType}${adjustedNum}-eval`;
     const alignmentData = getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults);
     const matchingPages = allPages.filter(page => page.scenarioIndex?.includes(targetScenarioIndex));
@@ -1071,7 +1071,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
 export function createAFMFBlock(textScenarios, allPages, participantTextResults) {
     if (!textScenarios["SS-text-scenario"]) return null;
 
-    const ssAdjustedNum = adjustScenarioNumber(adjustScenarioNumber(textScenarios["SS-text-scenario"]));
+    const ssAdjustedNum = adjustScenarioNumber(adjustScenarioNumber(textScenarios["SS-text-scenario"], 3), 3);
     const afMfScenarioIndex = `AF-MF${ssAdjustedNum}-eval`;
 
     // grab alignment on mf and af scenarios
@@ -1506,3 +1506,24 @@ const getEval8ScenarioGroups = (scenarioType, scenarioNum) => {
 
     return groups[scenarioKey] || null;
 };
+
+
+export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
+    let typeString, scenarioNum;
+    if (scenarioType === 'combined') {
+        // adjusted num needs to be called twice so that it doesn't show the same probes as the single attr blocks
+        scenarioNum = adjustScenarioNumber(adjustScenarioNumber(matchedLog['AF-text-scenario'], 3), 3)
+        typeString = `PSAF${scenarioNum}-combined`
+    }
+    else {
+        // PS-AF only has two sets, others have 3
+        scenarioNum = adjustScenarioNumber(matchedLog[`${scenarioType}-text-scenario`], scenarioType === 'PS-AF' ? 2 : 3)
+        typeString = `${scenarioType}${scenarioNum}`
+    }
+
+    const blockPages = allPages.filter(page => page.scenarioIndex?.includes(`2025-${typeString}-eval`))
+
+    if (!scenarioType === 'PS-AF') { return shuffle(blockPages) }
+
+    return blockPages
+}

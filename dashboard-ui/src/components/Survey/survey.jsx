@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock } from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8} from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -70,6 +70,7 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
+    "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10},
     "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
     "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
     "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
@@ -440,7 +441,7 @@ class SurveyPage extends Component {
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
-            console.log("Participant text results:", participantTextResults);
+           
 
             const allBlocks = [];
             const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
@@ -484,6 +485,49 @@ class SurveyPage extends Component {
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
 
+            return {};
+        } else if (this.state.surveyVersion === "8.0") {
+            const allPages = this.surveyConfigClone.pages;
+            const introPages = [...allPages.slice(0, 4)];
+
+            const matchedLog = this.props.participantLog.getParticipantLog.find(
+                    log => String(log['ParticipantID']) === this.state.pid
+            );
+
+            const allBlocks = [];
+            const scenarioTypes = ['AF', 'PS', 'PS-AF', 'combined'];
+            for (const scenarioType of scenarioTypes) {
+                const block = createScenarioBlockv8(
+                    scenarioType,
+                    matchedLog,
+                    allPages
+                );
+                if (block) {
+                    allBlocks.push(block);
+                }
+            }
+
+            // randomize blocks
+            const shuffledBlocks = shuffle(allBlocks);
+            const selectedPages = [];
+
+            shuffledBlocks.forEach(block => {
+                selectedPages.push(...block);
+            });
+
+            console.log(selectedPages)
+
+            const finalPages = [...introPages, ...selectedPages];
+            const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
+            if (postScenarioPage) {
+                finalPages.push(postScenarioPage);
+            }
+
+            this.surveyConfigClone.pages = finalPages;
+            console.log(this.surveyConfigClone.pages);
+
+            const pageOrder = finalPages.map(page => page.name);
+            this.setState({ orderLog: pageOrder });
             return {};
         }
     }
