@@ -1523,7 +1523,7 @@ export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
 
     const blockPages = allPages.filter(page => page.scenarioIndex?.includes(`2025-${typeString}-eval`))
 
-    if (!scenarioType === 'PS-AF') { return shuffle(blockPages) }
+    if (scenarioType !== 'PS-AF') { return shuffle(blockPages) }
 
     return blockPages
 }
