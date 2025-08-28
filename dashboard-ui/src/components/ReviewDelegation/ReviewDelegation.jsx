@@ -79,7 +79,6 @@ const PH1_NAME_MAP = {
 
 export function ReviewDelegationPage() {
     const delegationConfigs = useSelector(state => state.configs.surveyConfigs);
-    console.log(delegationConfigs)
     const [selectedConfig, setSelectedConfig] = useState(null);
     const [reviewingText, setReviewingText] = useState(null);
 

@@ -1521,9 +1521,83 @@ export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
         typeString = `${scenarioType}${scenarioNum}`
     }
 
-    const blockPages = shuffle(allPages.filter(page => page.scenarioIndex?.includes(`2025-${typeString}-eval`)))
+    const blockPages = allPages.filter(page => page.scenarioIndex?.includes(`2025-${typeString}-eval`))
 
-    if (scenarioType !== 'PS-AF') { return blockPages }
+    if (scenarioType !== 'PS-AF') { return shuffle(blockPages) }
+    
+    const shuffledPages = shuffle([...blockPages]);
+    const comparisonPages = [];
 
-    return blockPages
+    for (let i = 0; i < shuffledPages.length; i++) {
+        for (let j = i + 1; j < shuffledPages.length; j++) {
+            const comparisonPage = genComparisonPagev8(shuffledPages[i], shuffledPages[j]);
+            if (comparisonPage) {comparisonPages.push(comparisonPage)}
+        }
+    }
+
+
+    return [...shuffledPages, ...comparisonPages]
+}
+
+const genComparisonPagev8 = (dm1, dm2) => {
+    const name1 = dm1.name;
+    const name2 = dm2.name;
+    
+    return {
+        "name": `${name1} vs ${name2}`,
+        "scenarioIndex": dm1.scenarioIndex,
+        "pageType": "comparison",
+        "admAuthor": dm1.admAuthor,
+        "dm1Name": dm1.admName,
+        "dm1Target": dm1.target,
+        "dm2Name": dm2.admName,
+        "dm2Target": dm2.target,
+        "elements": [
+            {
+                "type": "comparison-phase-2",
+                "name": `${name1} vs ${name2}: Review`,
+                "title": "",
+                "decisionMakers": [name1, name2]
+            },
+            {
+                "type": "radiogroup",
+                "name": `${name1} vs ${name2}: Forced Choice`,
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [name1, name2],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": `${name1} vs ${name2}: Percent Delegation`,
+                "title": "For a set of future patients, you can delegate the patients to either or both of these decision-makers. In this scenario, either of these decision makers could handle 100% of this task load in a timely manner and it is not more or less efficient to divide the work between them. How would you allocate the patients between these two decision makers?",
+                "choices": [
+                    `${name1} 100%`,
+                    `${name1} 75% / ${name2} 25%`,
+                    `${name1} 50% / ${name2} 50%`,
+                    `${name1} 25% / ${name2} 75%`,
+                    `${name2} 100%`
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": `${name1} vs ${name2}: Rate your confidence about the delegation decision indicated in the previous question`,
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": `${name1} vs ${name2}: Explain your response to the delegation preference question`,
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            }
+        ]
+    };
 }
