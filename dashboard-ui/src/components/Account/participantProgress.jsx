@@ -11,7 +11,7 @@ import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
 import DeleteIcon from '@material-ui/icons/Delete';
 import { accountsClient } from "../../services/accountsService";
-import { AdmInfoModal } from "./admInfoModal";
+import AdmInfoModal from "./admInfoModal";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {

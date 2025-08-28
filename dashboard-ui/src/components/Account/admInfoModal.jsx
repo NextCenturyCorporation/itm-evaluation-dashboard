@@ -3,7 +3,7 @@ import { Modal } from "@mui/material";
 import { determineChoiceProcessJune2025 } from '../Research/utils';
 import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 
-export function AdmInfoModal({
+export default function AdmInfoModal({
     open,
     onClose,
     pid,
@@ -210,3 +210,5 @@ export function AdmInfoModal({
         </Modal>
     );
 }
+
+AdmInfoModal.displayName = 'AdmInfoModal';
