@@ -515,8 +515,6 @@ class SurveyPage extends Component {
                 selectedPages.push(...block);
             });
 
-            console.log(selectedPages)
-
             const finalPages = [...introPages, ...selectedPages];
             const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
             if (postScenarioPage) {
