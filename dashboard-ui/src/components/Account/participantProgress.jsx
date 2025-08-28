@@ -400,12 +400,13 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
             }
+            const isPH2 = selectedPhase === 'Phase 2';
             // phase dependent
-            const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+            const textThreshold = isPH2 ? 4 : 5;
+            const delThreshold = isPH2 ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val >= textThreshold) ||
-                (header === 'Sim Count' && val === 4)) {
+                (header === 'Sim Count' && (val === 4 || (isPH2 && val === 2)))) {
                 return 'dk-green-cell';
             }
             return 'white-cell';

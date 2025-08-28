@@ -140,9 +140,9 @@ export function PH2RQ8({ evalNum }) {
                     }
 
                     for (const field of variableFields) {
-                        let value = openWorld.Desert_data?.[field];
+                        let value = desert_entry?.actionAnalysis?.[field];
                         if (value === undefined) {
-                            value = openWorld.Urban_data?.[field];
+                            value = urban_entry?.actionAnalysis?.[field];
                         }
                         if (typeof value === 'number' && !isNaN(value)) {
                             entryObj[field] = Math.round(value * 100) / 100;
