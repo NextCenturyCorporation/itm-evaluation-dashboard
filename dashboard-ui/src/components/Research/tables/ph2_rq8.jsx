@@ -57,7 +57,7 @@ export function PH2RQ8({ evalNum }) {
             }
             const variablesRow = data[variablesRowIdx];
             // first column we need to grab, go from there
-            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Personal_safety');
+            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Probe1_AF');
             if (startColIdx === -1) {
                 setVariableFields([]);
                 return;
@@ -137,6 +137,30 @@ export function PH2RQ8({ evalNum }) {
                     if (urban_kdmas) {
                         entryObj['Urban MF KDMA'] = urban_kdmas?.find((x) => x['kdma'] === 'merit')?.value;
                         entryObj['Urban AF KDMA'] = urban_kdmas?.find((x) => x['kdma'] === 'affiliation')?.value;
+                    }
+
+                    const dataEntries = [desert_entry, urban_entry];
+
+                    for (const entry of dataEntries) {
+                        if (entry?.data?.data) {
+                            const scenes = entry?.data?.data;
+                            for (const scene of scenes) {
+                                if (!scene['found_match']) {
+                                    continue;
+                                }
+                                const probeId = scene.probe_id;
+                                let fieldName = entry === desert_entry ? 'Desert Probe' : 'Urban Probe';
+                                if (/[a-zA-Z]/.test(probeId.slice(-1))) {
+                                    fieldName += probeId.slice(-2, -1) + '_AFMF';
+                                }
+                                else {
+                                    fieldName += probeId.slice(-1) + (probeId.includes('-AF-') ? '_AF' : '_MF');
+                                }
+                                if (entry.actionAnalysis) {
+                                    entry.actionAnalysis[fieldName] = "Patient " + scene['response'].slice(-1);
+                                }
+                            }
+                        }
                     }
 
                     for (const field of variableFields) {
