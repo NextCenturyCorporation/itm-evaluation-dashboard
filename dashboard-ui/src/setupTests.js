@@ -6,8 +6,8 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import { ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
-import { surveyResultMock, surveyV5, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
+import { AdmLog, ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults } from './__mocks__/mockDbSchema.js';
+import { admMocks, surveyResultMock, surveyV5, surveyV7, textConfigMocks, userScenarioResultMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
@@ -36,15 +36,30 @@ beforeAll(async () => {
             await textConfig.save();
         }
 
+        for (const admMock of admMocks) {
+            const adm = new AdmLog(admMock);
+            await adm.save();
+        }
+
         const uiStyle = new UiStyle({
             version: 'updated',
         });
 
         await uiStyle.save();
+        const surveyNum = process.env.REACT_APP_TEST_SURVEY_VERSION;
+
+        const surveyToTextMap = {
+            5: 'phase1',
+            6: 'Phase 2 June 2025 Collaboration',
+            7: 'Phase 2 July 2025 Collaboration'
+        };
 
         // Insert the mock surveyVersion data
         const surveyVersion = new SurveyVersion({
-            version: '5',
+            version: surveyNum,
+            lowPid: surveyNum == 5 ? 202501700 : 202507100,
+            highPid: surveyNum == 5 ? 202501900 : 202507300,
+            textScenarios: surveyToTextMap[surveyNum]
         });
 
         await surveyVersion.save();
@@ -65,8 +80,10 @@ beforeAll(async () => {
             }
         });
         const surveyConfig5 = new SurveyConfig(surveyV5);
+        const surveyConfig7 = new SurveyConfig(surveyV7);
         await surveyConfig4.save();
         await surveyConfig5.save();
+        await surveyConfig7.save();
         const { ObjectId } = require('mongodb');
 
         const sessionConfig = new SessionConfig({

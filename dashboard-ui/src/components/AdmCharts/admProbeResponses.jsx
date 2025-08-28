@@ -7,7 +7,7 @@ import * as XLSX from 'sheetjs-style';
 import { saveAs } from 'file-saver';
 import '../../css/results-page.css';
 import '../../css/aggregateResults.css';
-import { multiSort } from '../Results/resultsTable';
+import { multiSort } from '../Results/utils';
 
 const get_eval_name_numbers = gql`
     query getEvalNameNumbers {
