@@ -88,7 +88,7 @@ export function PH2RQ8({ evalNum }) {
                     }
                     // see if participant has completed the open world scenario
                     const sim_entries = simData.filter((x) => x['pid'] === pid);
-                    const openWorld = sim_entries.find((x) => x['openWorld'] === true);
+                    const openWorld = sim_entries.find((x) => x['openWorld'] === true || x['evalNumber'] >= 8);
                     if (!openWorld) {
                         continue;
                     }
@@ -140,9 +140,9 @@ export function PH2RQ8({ evalNum }) {
                     }
 
                     for (const field of variableFields) {
-                        let value = openWorld.Desert_data?.[field];
+                        let value = desert_entry?.actionAnalysis?.[field];
                         if (value === undefined) {
-                            value = openWorld.Urban_data?.[field];
+                            value = urban_entry?.actionAnalysis?.[field];
                         }
                         if (typeof value === 'number' && !isNaN(value)) {
                             entryObj[field] = Math.round(value * 100) / 100;
