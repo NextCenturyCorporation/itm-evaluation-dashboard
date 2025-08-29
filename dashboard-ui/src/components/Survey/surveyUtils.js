@@ -829,9 +829,9 @@ export function getTextScenariosForParticipant(pid, participantLog) {
     };
 }
 
-export function adjustScenarioNumber(num) {
-    if (num === 1 || num === 2) return num + 1;
-    if (num === 3) return 1;
+export function adjustScenarioNumber(num, upperBound) {
+    if (num < upperBound) return num + 1;
+    if (num === upperBound) return 1;
     return null;
 }
 
@@ -906,7 +906,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     }
 
     const getScenarioGroups = evalNum === 8 ? getEval8ScenarioGroups : getEval9ScenarioGroups;
-    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum));
+    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum), 3);
     if (!scenarioGroups) {
         return handleRandomSelection('no group configuration found');
     }
@@ -1007,7 +1007,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
 export function createScenarioBlock(scenarioType, textScenarioNum, allPages, participantTextResults, evalNum) {
     if (!textScenarioNum) return null;
 
-    const adjustedNum = adjustScenarioNumber(textScenarioNum);
+    const adjustedNum = adjustScenarioNumber(textScenarioNum, 3);
     const targetScenarioIndex = `2025-${scenarioType}${adjustedNum}-eval`;
     const alignmentData = getAlignmentForAttribute(scenarioType, textScenarioNum, participantTextResults);
     const matchingPages = allPages.filter(page => page.scenarioIndex?.includes(targetScenarioIndex));
@@ -1071,7 +1071,7 @@ export function createScenarioBlock(scenarioType, textScenarioNum, allPages, par
 export function createAFMFBlock(textScenarios, allPages, participantTextResults) {
     if (!textScenarios["SS-text-scenario"]) return null;
 
-    const ssAdjustedNum = adjustScenarioNumber(adjustScenarioNumber(textScenarios["SS-text-scenario"]));
+    const ssAdjustedNum = adjustScenarioNumber(adjustScenarioNumber(textScenarios["SS-text-scenario"], 3), 3);
     const afMfScenarioIndex = `AF-MF${ssAdjustedNum}-eval`;
 
     // grab alignment on mf and af scenarios
@@ -1506,3 +1506,98 @@ const getEval8ScenarioGroups = (scenarioType, scenarioNum) => {
 
     return groups[scenarioKey] || null;
 };
+
+
+export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
+    let typeString, scenarioNum;
+    if (scenarioType === 'combined') {
+        // adjusted num needs to be called twice so that it doesn't show the same probes as the single attr blocks
+        scenarioNum = adjustScenarioNumber(adjustScenarioNumber(matchedLog['AF-text-scenario'], 3), 3)
+        typeString = `PSAF${scenarioNum}-combined`
+    }
+    else {
+        // PS-AF only has two sets, others have 3
+        scenarioNum = adjustScenarioNumber(matchedLog[`${scenarioType}-text-scenario`], scenarioType === 'PS-AF' ? 2 : 3)
+        typeString = `${scenarioType}${scenarioNum}`
+    }
+
+    const blockPages = allPages.filter(page => page.scenarioIndex?.includes(`2025-${typeString}-eval`))
+
+    if (scenarioType !== 'PS-AF') { return shuffle(blockPages) }
+    
+    const shuffledPages = shuffle([...blockPages]);
+    const comparisonPages = [];
+
+    for (let i = 0; i < shuffledPages.length; i++) {
+        for (let j = i + 1; j < shuffledPages.length; j++) {
+            const comparisonPage = genComparisonPagev8(shuffledPages[i], shuffledPages[j]);
+            if (comparisonPage) {comparisonPages.push(comparisonPage)}
+        }
+    }
+
+
+    return [...shuffledPages, ...comparisonPages]
+}
+
+const genComparisonPagev8 = (dm1, dm2) => {
+    const name1 = dm1.name;
+    const name2 = dm2.name;
+    
+    return {
+        "name": `${name1} vs ${name2}`,
+        "scenarioIndex": dm1.scenarioIndex,
+        "pageType": "comparison",
+        "admAuthor": dm1.admAuthor,
+        "dm1Name": dm1.admName,
+        "dm1Target": dm1.target,
+        "dm2Name": dm2.admName,
+        "dm2Target": dm2.target,
+        "elements": [
+            {
+                "type": "comparison-phase-2",
+                "name": `${name1} vs ${name2}: Review`,
+                "title": "",
+                "decisionMakers": [name1, name2]
+            },
+            {
+                "type": "radiogroup",
+                "name": `${name1} vs ${name2}: Forced Choice`,
+                "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+                "choices": [name1, name2],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": `${name1} vs ${name2}: Percent Delegation`,
+                "title": "For a set of future patients, you can delegate the patients to either or both of these decision-makers. In this scenario, either of these decision makers could handle 100% of this task load in a timely manner and it is not more or less efficient to divide the work between them. How would you allocate the patients between these two decision makers?",
+                "choices": [
+                    `${name1} 100%`,
+                    `${name1} 75% / ${name2} 25%`,
+                    `${name1} 50% / ${name2} 50%`,
+                    `${name1} 25% / ${name2} 75%`,
+                    `${name2} 100%`
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "radiogroup",
+                "name": `${name1} vs ${name2}: Rate your confidence about the delegation decision indicated in the previous question`,
+                "title": "Rate your confidence about the delegation decision indicated in the previous question",
+                "choices": [
+                    "Not confident at all",
+                    "Not confident",
+                    "Somewhat confident",
+                    "Confident",
+                    "Completely confident"
+                ],
+                "isRequired": true
+            },
+            {
+                "type": "comment",
+                "name": `${name1} vs ${name2}: Explain your response to the delegation preference question`,
+                "title": "Explain your response to the delegation preference question:",
+                "isRequired": true
+            }
+        ]
+    };
+}
