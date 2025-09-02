@@ -6,7 +6,6 @@ import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
-import { evalNameToNumber, septemberParticipantData } from '../OnlineOnly/config';
 // Components
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
@@ -33,7 +32,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData } from '../OnlineOnly/config';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -268,7 +267,7 @@ export function App() {
             return;
         }
 
-        const evalNum = evalNameToNumber[textEvalData.getCurrentTextEval]
+        const evalNum = evalNameToNumber[store.getState().configs.currentTextEval]
 
         const pidBounds = store.getState().configs.pidBounds;
 
