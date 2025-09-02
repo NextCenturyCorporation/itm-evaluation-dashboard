@@ -406,12 +406,14 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (exists) {
                 return (
                     <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell'>
-                        <button
+                        {dataSet['_evalNumber'] !== 10 ? <button
                             className="view-adm-btn"
                             onClick={() => openPopup(dataSet['Participant ID'], val)}
                         >
                             {val}
-                        </button>
+                        </button> :
+                            <p>{ val }</p>
+                        }
                     </td>
                 );
             }
