@@ -126,6 +126,7 @@ class SurveyPage extends Component {
     }
 
     inSurveyVersionData = () => {
+        console.log(Object.keys(SURVEY_VERSION_DATA).includes(this.state.surveyVersion))
         return Object.keys(SURVEY_VERSION_DATA).includes(this.state.surveyVersion);
     }
 
@@ -152,7 +153,7 @@ class SurveyPage extends Component {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const relevantVersions = [4, 5, 6, 7]
+            const relevantVersions = [4, 5, 6, 7, 8]
             const pidExists = this.props.surveyResults.filter((res) => relevantVersions.includes(res.results?.surveyVersion) && res.results['Participant ID Page']?.questions['Participant ID']?.response === this.state.pid && isDefined(res.results['Post-Scenario Measures']));
             this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
