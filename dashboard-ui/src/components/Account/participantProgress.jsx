@@ -42,8 +42,8 @@ const DELETE_PID_DATA = gql`
 const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
-const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
@@ -399,12 +399,13 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
             }
+            const isPH2 = selectedPhase === 'Phase 2';
             // phase dependent
-            const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+            const textThreshold = isPH2 ? 4 : 5;
+            const delThreshold = isPH2 ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val >= textThreshold) ||
-                (header === 'Sim Count' && val === 4)) {
+                (header === 'Sim Count' && (val === 4 || (isPH2 && val === 2)))) {
                 return 'dk-green-cell';
             }
             return 'white-cell';

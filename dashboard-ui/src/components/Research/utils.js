@@ -64,7 +64,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
     if (participantData) {
         // apply conditional formatting to participant data
         const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
-        const phase2 = dataCopy[0]['Evaluation'] === 'June 2025 Collaboration'
+        const phase2 = dataCopy[0]['Evaluation'] === 'June 2025 Collaboration' || dataCopy[0]['Evaluation'] === 'July 2025 Collaboration';
 
         for (let row = 1; row <= dataCopy.length; row++) {
             for (let col = 0; col < columnHeaders.length; col++) {
@@ -83,7 +83,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                         };
                     }
                     const delThreshold = phase2 ? 5 : 4;
-                    if ((headerName === 'Delegation' && val >= delThreshold) || (headerName === 'Text' && ((val === 5 && !phase2) || (val === 4 && phase2))) || (headerName === 'Sim Count' && val === 4)) {
+                    if ((headerName === 'Delegation' && val >= delThreshold) || (headerName === 'Text' && ((val === 5 && !phase2) || (val === 4 && phase2))) || (headerName === 'Sim Count' && (val === 4 || (phase2 && val === 2)))) {
                         cell.s = {
                             fill: {
                                 fgColor: { rgb: '7bbc7b' }  // Dark green color
