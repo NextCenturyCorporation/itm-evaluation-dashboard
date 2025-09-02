@@ -42,8 +42,8 @@ const DELETE_PID_DATA = gql`
 const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
-const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
+const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
 
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
@@ -230,6 +230,28 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         setFilteredData(dataCopy);
     }, [sortBy]);
 
+    const findPagesV10 = (survey) => {
+        if (!survey?.results?.orderLog) {
+            return [];
+        }
+
+        const uniquePageKeys = [];
+        const seenIndices = new Set();
+
+        for (const pageName of survey.results.orderLog) {
+            if (pageName.includes('Medic') && !pageName.includes('vs.')) {
+                const scenarioIndex = survey.results[pageName]?.scenarioIndex;
+
+                if (scenarioIndex && !seenIndices.has(scenarioIndex)) {
+                    seenIndices.add(scenarioIndex);
+                    uniquePageKeys.push(pageName);
+                }
+            }
+        }
+
+        return uniquePageKeys;
+    };
+
     React.useEffect(() => {
         if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
             const participantLog = dataParticipantLog.getParticipantLog;
@@ -288,7 +310,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 obj['Unformatted Delegation End'] = survey_end_date;
                 obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
                 obj['Del End Date-Time'] = String(survey_end_date) !== 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                const delScenarios = surveyToUse?.results?.orderLog?.filter((x) => x.includes(' vs '));
+                const delScenarios = surveyToUse?.results?.evalNumber < 10 ? surveyToUse?.results?.orderLog?.filter((x) => x.includes(' vs ')) : findPagesV10(surveyToUse);
                 if (delScenarios) {
                     obj['Del-1'] = surveyToUse?.results?.[delScenarios[0]]?.scenarioIndex;
                     obj['Del-2'] = surveyToUse?.results?.[delScenarios[1]]?.scenarioIndex;
@@ -368,11 +390,11 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const formatCell = (header, dataSet) => {
         if (header === 'Delete') {
             if (isData24HoursOld(dataSet)) {
-            return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
-                <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
-                    <DeleteIcon />
-                </button>
-            </td>
+                return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
+                    <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
+                        <DeleteIcon />
+                    </button>
+                </td>
             }
             else return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>-</td>
         }
@@ -384,25 +406,27 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (exists) {
                 return (
                     <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell'>
-                        <button
+                        {dataSet['_evalNumber'] !== 10 ? <button
                             className="view-adm-btn"
                             onClick={() => openPopup(dataSet['Participant ID'], val)}
                         >
                             {val}
-                        </button>
+                        </button> :
+                            <p>{ val }</p>
+                        }
                     </td>
                 );
             }
         }
 
-        const getClassName = (header, val) => {
+        const getClassName = (header, val, dataSet) => {
             if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
             }
             const isPH2 = selectedPhase === 'Phase 2';
             // phase dependent
             const textThreshold = isPH2 ? 4 : 5;
-            const delThreshold = isPH2 ? 5 : 4;
+            const delThreshold = (isPH2 && dataSet['_evalNumber'] !== 10) ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val >= textThreshold) ||
                 (header === 'Sim Count' && (val === 4 || (isPH2 && val === 2)))) {
@@ -410,7 +434,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             }
             return 'white-cell';
         };
-        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val) + ' ' + (header.length < 5 ? 'small-column ' : ' ') + (header.length > 17 ? 'large-column' : '')}>
+        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val, dataSet) + ' ' + (header.length < 5 ? 'small-column ' : ' ') + (header.length > 17 ? 'large-column' : '')}>
             {header === 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
         </td>);
     };
