@@ -9,10 +9,9 @@ import { isDefined } from "../AggregateResults/DataFunctions";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
-import { determineChoiceProcessJune2025 } from '../Research/utils';
-import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 import DeleteIcon from '@material-ui/icons/Delete';
 import { accountsClient } from "../../services/accountsService";
+import AdmInfoModal from "./admInfoModal";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -43,8 +42,8 @@ const DELETE_PID_DATA = gql`
 const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
-const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
 
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
@@ -400,12 +399,13 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
             }
+            const isPH2 = selectedPhase === 'Phase 2';
             // phase dependent
-            const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+            const textThreshold = isPH2 ? 4 : 5;
+            const delThreshold = isPH2 ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val >= textThreshold) ||
-                (header === 'Sim Count' && val === 4)) {
+                (header === 'Sim Count' && (val === 4 || (isPH2 && val === 2)))) {
                 return 'dk-green-cell';
             }
             return 'white-cell';
@@ -743,199 +743,15 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 {deleteResultMessage}
             </Alert>
         </Snackbar>
-        <Modal open={popupInfo.open && selectedPhase === 'Phase 2'} onClose={closePopup}>
-            <div className="adm-popup-body">
-                {(() => {
-                    const allScenarios = dataTextResults.getAllScenarioResults;
-                    const doc = allScenarios.find(r => r.participantID === popupInfo.pid);
-                    if (!doc) return <p>No data available.</p>;
-
-                    const match = popupInfo.scenarioId.match(/^[^-]+-([A-Z]+)\d+-eval$/);
-                    const code = match?.[1] || '';
-
-                    const allSurveys = dataSurveyResults.getAllSurveyResults;
-
-                    const surveyEntry = allSurveys.find(s => {
-                        const r = s.results;
-                        if (!r) return false;
-                        const pidMatches = r.pid === popupInfo.pid || r["Participant ID Page"]?.questions?.["Participant ID"]?.response === popupInfo.pid;
-                        return pidMatches && Object.values(r).some(page => page?.pageType === "comparison" && page?.scenarioIndex === popupInfo.scenarioId);
-                    });
-
-                    if (!surveyEntry) return <p>No data available.</p>;
-
-                    const cmpPage = Object.values(surveyEntry.results).find(page => page?.pageType === "comparison" && page?.scenarioIndex === popupInfo.scenarioId);
-
-                    if (!cmpPage) return <p>No comparison page for {popupInfo.scenarioId}</p>;
-
-                    // need to handle multi kdma differently
-                    const isMultiKDMA = popupInfo.scenarioId.includes('AF') && popupInfo.scenarioId.includes('MF');
-
-                    let medicData = [];
-
-                    let target = '';
-                    let filteredArr = [];
-
-                    if (isMultiKDMA) {
-                        const medicIds = cmpPage.pageName.split(" vs ");
-
-                        medicIds.forEach(medicId => {
-                            const singlePage = surveyEntry?.results?.[medicId];
-                            if (singlePage?.pageType === "singleMedic") {
-                                medicData.push({
-                                    type: singlePage.admAlignment.charAt(0).toUpperCase() + singlePage.admAlignment.slice(1),
-                                    admName: singlePage.admName || "-",
-                                    target: singlePage.admTarget || "-",
-                                    // there is no exemption loading for multi kdma
-                                    loading: 'Normal'
-                                });
-                            }
-                        });
-                    } else {
-                        const { baselineName, alignedTarget, misalignedTarget } = cmpPage;
-                        target = KDMA_MAP[code] || code.toLowerCase();
-                        const entry = doc.mostLeastAligned.find(o => o.target === target) || {};
-                        const arr = entry.response || [];
-
-                        if (arr.length === 0) return <p>No alignments.</p>;
-
-                        filteredArr = arr.filter(o => {
-                            const key = Object.keys(o)[0];
-                            return !key.split("-").pop().includes("_");
-                        });
-
-                        const medicIds = cmpPage.pageName.split(" vs ");
-                        let alignedName = "-";
-                        let misalignedName = "-";
-                        medicIds.forEach(id => {
-                            const singlePage = surveyEntry?.results?.[id];
-                            if (singlePage?.pageType === "singleMedic") {
-                                if (singlePage.admAlignment === "aligned") alignedName = singlePage.admName;
-                                if (singlePage.admAlignment === "misaligned") misalignedName = singlePage.admName;
-                            }
-                        });
-
-                        const alignedPage = surveyEntry.results[medicIds.find(id => surveyEntry.results[id]?.admAlignment === "aligned")];
-                        const misalignedPage = surveyEntry.results[medicIds.find(id => surveyEntry.results[id]?.admAlignment === "misaligned")];
-
-                        const alignedLoading = alignedPage ? determineChoiceProcessJune2025([doc], alignedPage, "aligned") : "N/A";
-                        const misalignedLoading = misalignedPage ? determineChoiceProcessJune2025([doc], misalignedPage, "misaligned") : "N/A";
-
-                        medicData = [
-                            { type: "Baseline", admName: baselineName || "-", target: "N/A", loading: "N/A" },
-                            { type: "Aligned", admName: alignedName || "-", target: alignedTarget || "-", loading: formatLoading(alignedLoading) },
-                            { type: "Misaligned", admName: misalignedName || "-", target: misalignedTarget || "-", loading: formatLoading(misalignedLoading) }
-                        ];
-                    }
-
-                    return (
-                        <>
-                            <div className="adm-header">
-                                <h2>ADM Information</h2>
-                                <button className="close-popup" onClick={closePopup}>Close</button>
-                            </div>
-
-                            <div className="adm-popup-content">
-                                <div className="adm-left">
-                                    <div className="adm-info-block">
-                                        <div className="adm-info-block-label">Participant ID</div>
-                                        <div className="adm-info-block-value">{popupInfo.pid}</div>
-                                    </div>
-                                    <div className="adm-info-block">
-                                        <div className="adm-info-block-label">Scenario ID</div>
-                                        <div className="adm-info-block-value">{popupInfo.scenarioId}</div>
-                                    </div>
-                                    {!isMultiKDMA ? (
-                                        <>
-                                            <div className="adm-info-block">
-                                                <div className="adm-info-block-label">Attribute</div>
-                                                <div className="adm-info-block-value">
-                                                    {target.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
-                                                </div>
-                                            </div>
-                                            <div className="adm-info-block">
-                                                <div className="adm-info-block-value adm-align-list">
-                                                    {filteredArr.map((o, idx) => {
-                                                        const key = Object.keys(o)[0];
-                                                        const score = o[key];
-                                                        return (
-                                                            <div key={key}> {idx === 0 && (
-                                                                <><span className="adm-info-block-label" style={{ marginBottom: '0.75rem' }}>All Alignments (Highest to Lowest)</span>
-                                                                    <br />
-                                                                </>
-                                                            )}
-                                                                {formatTargetWithDecimal(key)} ({score.toFixed(3)})
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="adm-info-block">
-                                                <div className="adm-info-block-label">Type</div>
-                                                <div className="adm-info-block-value">Multi-KDMA Comparison</div>
-                                            </div>
-                                            <div className="adm-info-block">
-                                                <div className="adm-info-block-label">KDMA Scores</div>
-
-                                                {(() => {
-                                                    const meritScore = doc.kdmas?.find(k => k.kdma === 'merit')?.value;
-                                                    const affiliationScore = doc.kdmas?.find(k => k.kdma === 'affiliation')?.value;
-
-                                                    return (
-                                                        <>
-                                                            {meritScore !== undefined && (
-                                                                <div>Merit: {meritScore.toFixed(3)}</div>
-                                                            )}
-                                                            {affiliationScore !== undefined && (
-                                                                <div>Affiliation: {affiliationScore.toFixed(3)}</div>
-                                                            )}
-                                                            {meritScore === undefined && affiliationScore === undefined && (
-                                                                <div>No KDMA scores available</div>
-                                                            )}
-                                                        </>
-                                                    );
-                                                })()}
-
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                                <div className="adm-right">
-                                    <table>
-                                        <colgroup>
-                                            <col style={{ width: '14%' }} />
-                                            <col style={{ width: '48%' }} />
-                                            <col style={{ width: '22%' }} />
-                                            <col style={{ width: '15%' }} />
-                                        </colgroup>
-                                        <thead>
-                                            <tr>
-                                                <th>Type</th>
-                                                <th>ADM Name</th>
-                                                <th>Target</th>
-                                                <th>ADM Loading</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {medicData.map((medic, index) => (
-                                                <tr key={index}>
-                                                    <td>{medic.type}</td>
-                                                    <td>{medic.admName}</td>
-                                                    <td>{medic.target}</td>
-                                                    <td>{medic.loading}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </>
-                    );
-                })()}
-            </div>
-        </Modal>
+        <AdmInfoModal
+            open={popupInfo.open && selectedPhase === 'Phase 2'}
+            onClose={closePopup}
+            pid={popupInfo.pid}
+            scenarioId={popupInfo.scenarioId}
+            dataTextResults={dataTextResults}
+            dataSurveyResults={dataSurveyResults}
+            KDMA_MAP={KDMA_MAP}
+            formatLoading={formatLoading}
+        />
     </>);
 }

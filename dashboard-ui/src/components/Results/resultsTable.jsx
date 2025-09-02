@@ -1,26 +1,38 @@
 import * as React from 'react';
-import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import gql from 'graphql-tag';
-import AlignmentScoreBox from './alignmentScore';
 import '../../css/results-page.css';
 import { Query } from 'react-apollo';
 import { RQ2223 } from '../Research/tables/rq22-rq23';
 import { MultiKDMA_RQ23 as MultiKdmaRq23 } from '../Research/tables/rq23_multiKDMA'
 import { PH2RQ2223 } from '../Research/tables/ph2_rq22-rq23';
+import {
+  multiSort,
+  isExpandable,
+  snakeCaseToNormalCase,
+  formatPathTitle,
+  formatLeaf,
+  pathKey,
+  deepIsEmpty,
+  isEmpty,
+  getNodeAtPath,
+  collectExpandablePaths,
+  formatADMString,
+  formatScenarioString,
+  getDisplayCommandName,
+  extractKdmaPairsFromHistory,
+  kdmaAcronym
+} from './utils';
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
@@ -50,19 +62,57 @@ const alignment_target_by_scenario = gql`
         getAlignmentTargetsPerScenario(evalNumber: $evalNumber, scenarioID: $scenarioID, admName: $admName)
     }`;
 
-export const multiSort = (a, b) => {
-    const aMatch = a.match(/^([a-zA-Z]+)(\d+)$/);
-    const bMatch = b.match(/^([a-zA-Z]+)(\d+)$/);
+function AutoFitText({ text, max = 16, min = 11, className = '' }) {
+  const wrapRef = React.useRef(null);
+  const spanRef = React.useRef(null);
+  const [size, setSize] = React.useState(max);
+  const rafRef = React.useRef(0);
 
-    // only if same base string
-    if (aMatch && bMatch && aMatch[1] === bMatch[1]) {
-        return parseInt(aMatch[2], 10) - parseInt(bMatch[2], 10);
+  const fit = React.useCallback(() => {
+    const wrap = wrapRef.current;
+    const span = spanRef.current;
+    if (!wrap || !span) return;
+    const maxWidth = Math.max(0, wrap.clientWidth - 4);
+    let s = size;
+    const overflow = span.scrollWidth > maxWidth;
+    if (overflow && s > min) {
+      const next = Math.max(min, +(s - 0.4).toFixed(2));
+      if (next !== s) {
+        span.style.fontSize = `${next}px`;
+        setSize(next);
+      }
+    } else if (!overflow && s < max) {
+      const next = Math.min(max, +(s + 0.4).toFixed(2));
+      span.style.fontSize = `${next}px`;
+      if (span.scrollWidth <= maxWidth && next !== s) setSize(next);
+      else span.style.fontSize = `${s}px`;
     }
+  }, [max, min, text, size]);
 
-    // if different base string just use alph.
-    return a.localeCompare(b);
-};
+  React.useEffect(() => {
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => fit());
+  }, [fit, text]);
 
+  React.useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap || !('ResizeObserver' in window)) return;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => fit());
+    });
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [fit]);
+
+  return (
+    <div ref={wrapRef} className={`command-name autofit ${className}`}>
+      <span ref={spanRef} style={{ fontSize: `${size}px`, whiteSpace: 'nowrap', display: 'inline-block' }}>
+        {text}
+      </span>
+    </div>
+  );
+}
 
 class ResultsTable extends React.Component {
 
@@ -74,29 +124,35 @@ class ResultsTable extends React.Component {
             evalNumber: 9,
             ADMQueryString: "history.parameters.adm_name",
             showScrollButton: false,
-            alignmentTarget: null
+            alignmentTarget: null,
+            hideEmpty: true,
+            selectedIndex: 0,
+            truncateLong: true,
+            expandedPathsParams: new Set(),
+            expandedPathsResponse: new Set(),
+            inspectorOpen: false,
+            inspectorNode: null,
+            inspectorTitle: '',
+            inspectorRoot: null,
+            inspectorPath: [],
+            inspectorRootLabel: 'Root'
         }
     }
 
     componentDidMount() {
         window.addEventListener('scroll', this.toggleVisibility);
+        this._onKeyDown = (e) => {
+          if (e.key === 'Escape') this.setState({ inspectorOpen: false });
+        };
+        window.addEventListener('keydown', this._onKeyDown);
     }
 
     componentWillUnmount() {
         window.removeEventListener('scroll', this.toggleVisibility);
+        window.removeEventListener('keydown', this._onKeyDown);
     }
 
-    toggleVisibility = () => {
-        if (window.pageYOffset > 300) {
-            this.setState({
-                showScrollButton: true
-            });
-        } else {
-            this.setState({
-                showScrollButton: false
-            });
-        }
-    };
+    toggleVisibility = () => this.setState({ showScrollButton: window.pageYOffset > 300 });
 
     scrollToTop = () => {
         window.scrollTo({
@@ -105,13 +161,22 @@ class ResultsTable extends React.Component {
         });
     };
 
+    selectCommand = (index) =>
+      this.setState({
+        selectedIndex: index,
+        expandedPathsParams: new Set(),
+        expandedPathsResponse: new Set(),
+        inspectorOpen: false
+      });
+
     setEval(target) {
         this.setState({
             evalNumber: target,
             adm: "",
             scenario: "",
             ADMQueryString: target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name",
-            alignmentTarget: null
+            alignmentTarget: null,
+            selectedIndex: 0
         });
     }
 
@@ -119,53 +184,24 @@ class ResultsTable extends React.Component {
         this.setState({
             scenario: target,
             adm: "",
-            alignmentTarget: null
+            alignmentTarget: null,
+            selectedIndex: 0
         });
     }
 
     setPerformerADM(target) {
         this.setState({
             adm: target,
-            alignmentTarget: null
+            alignmentTarget: null,
+            selectedIndex: 0
         });
     }
 
     setAlignmentTarget(target) {
         this.setState({
-            alignmentTarget: target
+            alignmentTarget: target,
+            selectedIndex: 0
         });
-    }
-
-    formatScenarioString(id) {
-        if (this.state.evalNumber < 3) {
-            if (id.toLowerCase().indexOf("adept") > -1) {
-                return ("BBN: " + id);
-            } else {
-                return ("Soartech: " + id);
-            }
-        } else if (this.state.evalNumber === 3) {
-            if (id.toLowerCase().indexOf("metricseval") > -1) {
-                return ("ADEPT: " + id);
-            } else {
-                return ("Soartech: " + id);
-            }
-        } else {
-            if (id.toLowerCase().includes("qol") || id.toLowerCase().includes("vol")) {
-                return ("Soartech: " + id);
-            } else {
-                return ("Adept: " + id);
-            }
-        }
-    }
-
-    formatADMString(peformerADMString) {
-        if (peformerADMString.indexOf("ALIGN-ADM") > -1) {
-            return ("Kitware: " + peformerADMString);
-        } else if (peformerADMString.indexOf("TAD") > -1) {
-            return ("Parallax: " + peformerADMString);
-        } else {
-            return peformerADMString;
-        }
     }
 
     renderRq2() {
@@ -196,6 +232,256 @@ class ResultsTable extends React.Component {
         }
     }
 
+    openInspector = (root, pathArr = [], rootLabel = 'Root') => {
+      this.setState({
+        inspectorOpen: true,
+        inspectorRoot: root,
+        inspectorPath: Array.isArray(pathArr) ? pathArr : [],
+        inspectorTitle: formatPathTitle(Array.isArray(pathArr) ? pathArr : []),
+        inspectorRootLabel: rootLabel || 'Root',
+      });
+    };
+
+    closeInspector = () => {
+      this.setState({ inspectorOpen: false });
+    };
+
+  renderTreeRows = (obj, path = [], depth = 0, responseCtx = null, parentObj = null, scope = 'params', root = null, basePath = []) => {
+      const rows = [];
+      if (!isExpandable(obj)) return rows;
+      const setName = scope === 'resp' ? 'expandedPathsResponse' : 'expandedPathsParams';
+
+      if (Array.isArray(obj)) {
+        obj.forEach((value, idx) => {
+          const childPath = [...path, `[${idx}]`];
+          const pathId = pathKey(childPath);
+          const expandable = isExpandable(value);
+          const expanded = expandable && this.state[setName].has(pathId);
+
+          rows.push(
+            <TableRow key={pathId} className="tree-row">
+              <TableCell className="tree-key">
+                <div className="tree-key-wrap" style={{ paddingLeft: depth * 14 }}>
+                  {expandable ? (
+                    <button
+                      className="toggle-btn"
+                      aria-label={expanded ? 'Collapse' : 'Expand'}
+                      aria-expanded={expanded}
+                      onClick={() => {
+                        const next = new Set(this.state[setName]);
+                        if (expanded) next.delete(pathId); else next.add(pathId);
+                        this.setState({ [setName]: next });
+                      }}
+                    >
+                      {expanded ? '▾' : '▸'}
+                    </button>
+                  ) : (
+                    <span className="toggle-spacer" />
+                  )}
+                  <strong>{`[${idx}]`}</strong>
+                </div>
+              </TableCell>
+              <TableCell className="tree-val">
+                {!expandable ? (
+                  <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+                    {formatLeaf(value)}
+                  </div>
+                ) : (
+                  <button
+                    className="view-btn"
+                    onClick={() =>
+                    this.openInspector(
+                      root ?? obj,
+                      [...basePath, ...childPath],
+                      scope === 'resp' ? 'Response' : 'Parameters'
+                    )
+                  }
+                  >
+                    View
+                  </button>
+                )}
+              </TableCell>
+            </TableRow>
+          );
+
+          if (expandable && expanded) {
+            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope, root ?? obj, basePath));
+          }
+        });
+        return rows;
+      }
+
+      const entries = Object.entries(obj).filter(([_, v]) => (this.state.hideEmpty ? !deepIsEmpty(v) : true));
+      for (const [key, rawVal] of entries) {
+        let value = rawVal;
+        if (
+          parentObj &&
+          parentObj.action_type === 'APPLY_TREATMENT' &&
+          key === 'treatment' &&
+          responseCtx
+        ) {
+          const character = parentObj.character;
+          const location = parentObj.location;
+          for (const c of (responseCtx?.characters ?? [])) {
+            if (c.id === character) {
+              for (const inj of (c.injuries ?? [])) {
+                if (inj.location === location && inj.treatments_applied) {
+                  value = `${rawVal} (current count: ${inj.treatments_applied})`;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        const childPath = [...path, key];
+        const pathId = pathKey(childPath);
+        const expandable = isExpandable(value)
+        const expanded = expandable && this.state[setName].has(pathId);
+
+        rows.push(
+          <TableRow key={pathId} className="tree-row">
+            <TableCell className="tree-key">
+              <div className="tree-key-wrap" style={{ paddingLeft: depth * 14 }}>
+                {expandable ? (
+                  <button
+                    className="toggle-btn"
+                    aria-label={expanded ? 'Collapse' : 'Expand'}
+                    aria-expanded={expanded}
+                    onClick={() => {
+                      const next = new Set(this.state[setName]);
+                      if (expanded) next.delete(pathId); else next.add(pathId);
+                      this.setState({ [setName]: next });
+                    }}
+                  >
+                    {expanded ? '▾' : '▸'}
+                  </button>
+                ) : (
+                  <span className="toggle-spacer" />
+                )}
+                <strong>{snakeCaseToNormalCase(key)}</strong>
+              </div>
+            </TableCell>
+            <TableCell className="tree-val">
+              {!expandable ? (
+                <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+                   {formatLeaf(value)}
+                </div>
+              ) : (
+                <button
+                    className="view-btn"
+                    onClick={() =>
+                      this.openInspector(
+                        root ?? obj,
+                        [...basePath, ...childPath],
+                        scope === 'resp' ? 'Response' : 'Parameters'
+                      )
+                    }
+                >
+                  View
+                </button>
+              )}
+            </TableCell>
+          </TableRow>
+        );
+
+        if (expandable && expanded) {
+          if (Array.isArray(value)) {
+            value.forEach((el, idx) => {
+              const subPath = [...childPath, `[${idx}]`];
+              const subId = pathKey(subPath);
+              const isObj = isExpandable(el);
+              const isSubExpanded = isObj && this.state[setName].has(subId);
+              rows.push(
+                <TableRow key={subId} className="tree-row">
+                  <TableCell className="tree-key">
+                    <div className="tree-key-wrap" style={{ paddingLeft: (depth + 1) * 14 }}>
+                      {isObj ? (
+                        <button
+                          className="toggle-btn"
+                          aria-label={isSubExpanded ? 'Collapse' : 'Expand'}
+                          aria-expanded={isSubExpanded}
+                          onClick={() => {
+                            const next = new Set(this.state[setName]);
+                            if (isSubExpanded) next.delete(subId); else next.add(subId);
+                            this.setState({ [setName]: next });
+                          }}
+                        >
+                          {isSubExpanded ? '▾' : '▸'}
+                        </button>
+                      ) : (
+                        <span className="toggle-spacer" />
+                      )}
+                      <strong>{`[${idx}]`}</strong>
+                    </div>
+                  </TableCell>
+                  <TableCell className="tree-val">
+                    {!isObj ? (
+                      <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+                        {formatLeaf(el)}
+                      </div>
+                    ) : (
+                      <button
+                        className="view-btn"
+                        onClick={() =>
+                          this.openInspector(
+                            root ?? obj,
+                            [...basePath, ...childPath, `[${idx}]`],
+                            scope === 'resp' ? 'Response' : 'Parameters'
+                          )
+                        }
+                      >
+                        View
+                      </button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+              if (isObj && isSubExpanded) {
+                rows.push(...this.renderTreeRows(el, [...childPath, `[${idx}]`], depth + 2, responseCtx, el, scope, root ?? obj, basePath));
+              }
+            });
+          } else {
+            rows.push(...this.renderTreeRows(value, childPath, depth + 1, responseCtx, value, scope, root ?? obj, basePath));
+          }
+        }
+      }
+      return rows;
+    };
+
+    renderTreeTable = (data, scope = 'params', responseCtx = null, rootOverride = null, basePath = []) => {
+      if (!data || typeof data !== 'object') return null;
+      return (
+        <Table size="small" className="tree-table">
+          <TableBody>
+            {this.renderTreeRows(data, [], 0, responseCtx, data, scope, rootOverride ?? data, basePath)}
+          </TableBody>
+        </Table>
+      );
+    };
+
+    renderValueOrTree = (data, scope = 'resp', responseCtx = null, rootOverride = null, basePath = []) => {
+      if (data && typeof data === 'object') {
+        return this.renderTreeTable(data, scope, responseCtx, rootOverride ?? data, basePath);
+      }
+      return (
+        <div className="value-wrap">
+          <div className={this.state.truncateLong ? 'line-clip-1' : 'value-wrap'}>
+            {formatLeaf(data)}
+          </div>
+        </div>
+      );
+    };
+
+    expandAllResponse = (resp) => {
+      if (!resp || typeof resp !== 'object') return;
+      const all = collectExpandablePaths(resp);
+      this.setState({ expandedPathsResponse: all });
+    };
+
+    collapseAllResponse = () => {
+      this.setState({ expandedPathsResponse: new Set() });
+    };
+
     render() {
         return (
             <div className="layout">
@@ -222,14 +508,18 @@ class ResultsTable extends React.Component {
 
                                         return (
                                             <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
-                                                {evalOptions.map((item, key) =>
-                                                    <ListItem className="nav-list-item" id={"eval_" + key} key={"eval_" + key}
+                                                {evalOptions.map((item, key) => (
+                                                    <ListItem
+                                                        className="nav-list-item"
+                                                        id={"eval_" + key}
+                                                        key={"eval_" + key}
                                                         button
                                                         selected={this.state.evalNumber === item.value}
-                                                        onClick={() => this.setEval(item.value)}>
+                                                        onClick={() => this.setEval(item.value)}
+                                                    >
                                                         <ListItemText primary={item.label} />
                                                     </ListItem>
-                                                )}
+                                                ))}
                                             </List>
                                         )
                                     }
@@ -265,7 +555,7 @@ class ResultsTable extends React.Component {
                                                                 button
                                                                 selected={this.state.scenario === item.value}
                                                                 onClick={() => this.setScenario(item.value)}>
-                                                                <ListItemText primary={this.formatScenarioString(item.value)} />
+                                                                <ListItemText primary={formatScenarioString(this.state.evalNumber, item.value)} />
                                                             </ListItem>
                                                         )}
                                                     </List>
@@ -305,7 +595,7 @@ class ResultsTable extends React.Component {
                                                                 button
                                                                 selected={this.state.adm === item.value}
                                                                 onClick={() => this.setPerformerADM(item.value)}>
-                                                                <ListItemText primary={this.formatADMString(item.value)} />
+                                                                <ListItemText primary={formatADMString(item.value)} />
                                                             </ListItem>
                                                         )}
                                                     </List>
@@ -328,28 +618,27 @@ class ResultsTable extends React.Component {
                                                 if (loading) return <div>Loading ...</div>
                                                 if (error) return <div>Error</div>
 
-                                                const alignmentTargetOptions = data[getAlignmentTargetsPerScenario];
-                                                let alignmentTargetArray = [];
-                                                for (const element of alignmentTargetOptions) {
-                                                    alignmentTargetArray.push({
-                                                        "value": element,
-                                                        "name": element
-                                                    });
-                                                }
-
-                                                alignmentTargetArray.sort((a, b) => multiSort(a.value, b.value))
+                                                const alignmentTargets = (data[getAlignmentTargetsPerScenario] || [])
+                                                  .map(el => ({ value: el, name: el }))
+                                                  .sort((a, b) => multiSort(a.value, b.value));
 
                                                 return (
+                                                  <div>
                                                     <List className="nav-list" component="nav" aria-label="secondary mailbox folder">
-                                                        {alignmentTargetArray.map((item, key) =>
-                                                            <ListItem className="nav-list-item" id={"alignTarget_" + key} key={"alignTarget_" + key}
-                                                                button
-                                                                selected={this.state.alignmentTarget === item.value}
-                                                                onClick={() => this.setAlignmentTarget(item.value)}>
-                                                                <ListItemText primary={item.value} />
-                                                            </ListItem>
-                                                        )}
+                                                      {alignmentTargets.map((item, key) => (
+                                                        <ListItem
+                                                          className="nav-list-item"
+                                                          id={"alignTarget_" + key}
+                                                          key={"alignTarget_" + key}
+                                                          button
+                                                          selected={this.state.alignmentTarget === item.value}
+                                                          onClick={() => this.setAlignmentTarget(item.value)}
+                                                        >
+                                                          <ListItemText primary={item.value} />
+                                                        </ListItem>
+                                                      ))}
                                                     </List>
+                                                  </div>
                                                 )
                                             }
                                         }
@@ -371,17 +660,161 @@ class ResultsTable extends React.Component {
                                             <>
                                                 {testData !== null && testData !== undefined &&
                                                     <>
-                                                        <AlignmentScoreBox performer={this.formatADMString(this.state.adm)} data={testData} scenario={this.state.scenario} />
-                                                        <div className='paper-container'>
-                                                            <TableContainer>
-                                                                <Table className='itm-table' stickyHeader aria-label="simple table">
-                                                                    <TableBody className='TableBodyScrollable'>
-                                                                        {testData.history.map((item, index) => (
-                                                                            <ActionRow key={item.command + index} item={item} />
-                                                                        ))}
-                                                                    </TableBody>
-                                                                </Table>
-                                                            </TableContainer>
+                                                        <div className="results-header">
+                                                            {(() => {
+                                                                const kdmas = extractKdmaPairsFromHistory(testData.history);
+                                                                const gridClass =
+                                                                    `summary-grid ${kdmas.length===1 ? 'has-1-kdma' : ''} ${kdmas.length>=2 ? 'has-2-kdma' : ''}`;
+                                                                return (
+                                                            <div className={gridClass}>
+                                                                <div className="summary-card card--scenario">
+                                                                    <div className="summary-label">Scenario</div>
+                                                                    <div className="summary-value">{this.state.scenario}</div>
+                                                                </div>
+                                                                <div className="summary-card card--adm">
+                                                                    <div className="summary-label">ADM</div>
+                                                                    <div className="summary-value">{formatADMString(this.state.adm)}</div>
+                                                                </div>
+                                                                <div className="summary-card card--score">
+                                                                    <div className="summary-label">Alignment Score</div>
+                                                                    <div className="summary-value">
+                                                                        {(() => {
+                                                                            const hist = Array.isArray(testData?.history) ? testData.history : [];
+                                                                            const last = hist.length ? hist[hist.length - 1] : null;
+                                                                            const raw = last?.response?.score;
+                                                                            const num = typeof raw === 'number' ? raw
+                                                                                      : (typeof raw === 'string' ? parseFloat(raw) : NaN);
+                                                                            return Number.isFinite(num) ? num.toFixed(5) : 'N/A';
+                                                                        })()}
+                                                                    </div>
+                                                                </div>
+                                                                {kdmas[0] && (
+                                                                  <div className="summary-card card--kdma1">
+                                                                    <div className="summary-label">{kdmaAcronym(kdmas[0].name)} KDMA Value</div>
+                                                                    <div className="summary-value">
+                                                                      {Number.isFinite(kdmas[0].value) ? kdmas[0].value.toFixed(5) : 'N/A'}
+                                                                    </div>
+                                                                  </div>
+                                                                )}
+                                                                {kdmas[1] && (
+                                                                  <div className="summary-card card--kdma2">
+                                                                    <div className="summary-label">{kdmaAcronym(kdmas[1].name)} KDMA Value</div>
+                                                                    <div className="summary-value">
+                                                                      {Number.isFinite(kdmas[1].value) ? kdmas[1].value.toFixed(5) : 'N/A'}
+                                                                    </div>
+                                                                  </div>
+                                                                )}
+                                                                <div className="summary-card card--align">
+                                                                    <div className="summary-label">Alignment Target</div>
+                                                                    <div className="summary-value">{this.state.alignmentTarget ?? 'N/A'}</div>
+                                                                </div>
+                                                                <div className={`controls-cell ${kdmas.length>=2 ? 'stack' : ''}`}>
+                                                                    <FormControlLabel
+                                                                        className="hide-empty-checkbox"
+                                                                        control={
+                                                                            <Checkbox
+                                                                                size="small"
+                                                                                checked={this.state.hideEmpty}
+                                                                                onChange={(e) => this.setState({ hideEmpty: e.target.checked })}
+                                                                            />
+                                                                        }
+                                                                        label="Hide Empty Fields"
+                                                                    />
+                                                                    <FormControlLabel
+                                                                        className="truncate-checkbox"
+                                                                        control={
+                                                                            <Checkbox
+                                                                                size="small"
+                                                                                checked={this.state.truncateLong}
+                                                                                onChange={(e) => this.setState({ truncateLong: e.target.checked })}
+                                                                            />
+                                                                        }
+                                                                        label="Truncate Text"
+                                                                    />
+                                                                </div>
+                                                            </div>);
+                                                            })()}
+                                                        </div>
+                                                        <div className="results-body">
+                                                          <div className="left-col">
+                                                            <div className="section-heading">Commands</div>
+                                                            <div className="commands-pane">
+                                                              <ul className="commands-timeline" role="list">
+                                                                {testData.history.map((h, i) => (
+                                                                  <li
+                                                                    key={`${h.command}_${i}`}
+                                                                    className={`command-item ${i === this.state.selectedIndex ? 'active' : ''}`}
+                                                                    onClick={() => this.selectCommand(i)}
+                                                                    title={getDisplayCommandName(h, {
+                                                                      alignmentTarget: this.state.alignmentTarget,
+                                                                      evalNumber: this.state.evalNumber,
+                                                                      scenario: this.state.scenario
+                                                                    })}
+                                                                  >
+                                                                <AutoFitText
+                                                                    text={getDisplayCommandName(h, {
+                                                                        alignmentTarget: this.state.alignmentTarget,
+                                                                        evalNumber: this.state.evalNumber,
+                                                                        scenario: this.state.scenario
+                                                                    })}
+                                                                />
+                                                                  </li>
+                                                                ))}
+                                                              </ul>
+                                                            </div>
+                                                          </div>
+                                                          {(() => {
+                                                            const hist = Array.isArray(testData?.history) ? testData.history : [];
+                                                            const idx = Math.min(this.state.selectedIndex, Math.max(hist.length - 1, 0));
+                                                            const sel = hist[idx] || {};
+                                                            const hasParams = sel?.parameters && Object.keys(sel.parameters).length > 0;
+                                                            const hasResponse = sel?.response !== undefined && sel?.response !== null && !isEmpty(sel.response);
+                                                            const responseIsTree = hasResponse && typeof sel.response === 'object';
+                                                            return (
+                                                              <div className="right-col">
+                                                                {hasParams && <div className="section-heading">Parameters</div>}
+                                                                {hasParams && (
+                                                                  <div className="panel-card">
+                                                                    {this.renderTreeTable(
+                                                                      sel.parameters,
+                                                                      'params',
+                                                                      sel.command === 'Take Action' ? sel.response : null,
+                                                                      sel.parameters,
+                                                                      []
+                                                                    )}
+                                                                  </div>
+                                                                )}
+                                                                {hasResponse && (
+                                                                  <div className="section-bar">
+                                                                    <div className="section-heading">Response</div>
+                                                                    {responseIsTree && (
+                                                                      <div className="section-controls">
+                                                                        <button
+                                                                          className="control-btn"
+                                                                          onClick={() => this.expandAllResponse(sel.response)}
+                                                                        >
+                                                                          Expand All
+                                                                        </button>
+                                                                        <button
+                                                                          className="control-btn"
+                                                                          onClick={this.collapseAllResponse}
+                                                                        >
+                                                                          Collapse All
+                                                                        </button>
+                                                                      </div>
+                                                                    )}
+                                                                  </div>
+                                                                )}
+                                                                {hasResponse && (
+                                                                  <div className="panel-card">
+                                                                    {responseIsTree
+                                                                      ? this.renderTreeTable(sel.response, 'resp', null, sel.response, [])
+                                                                      : this.renderValueOrTree(sel.response)}
+                                                                  </div>
+                                                                )}
+                                                              </div>
+                                                            );
+                                                          })()}
                                                         </div>
                                                     </>
                                                 }
@@ -396,6 +829,85 @@ class ResultsTable extends React.Component {
                         }
                     </div>
                 </div>
+                {this.state.inspectorOpen && (
+                  <div
+                    className="inspector-backdrop"
+                    role="presentation"
+                    onClick={this.closeInspector}
+                  >
+                    <div
+                      className="inspector-drawer"
+                      role="dialog"
+                      aria-modal="true"
+                      aria-label="Inspector"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                    <div className="inspector-header">
+                        <nav className="inspector-breadcrumb" aria-label="Breadcrumb">
+                          <ol className="crumbs">
+                            <li className="crumb">
+                              <button
+                                type="button"
+                                className="crumb-btn"
+                                onClick={() =>
+                                  this.setState({
+                                    inspectorPath: [],
+                                    inspectorTitle: this.state.inspectorRootLabel
+                                  })
+                                }
+                              >
+                                {this.state.inspectorRootLabel}
+                              </button>
+                            </li>
+                            {this.state.inspectorPath.map((tok, i) => {
+                              const label = tok.startsWith('[') ? tok : snakeCaseToNormalCase(tok);
+                              const isLast = i === this.state.inspectorPath.length - 1;
+                              return (
+                                <React.Fragment key={`${tok}_${i}`}>
+                                  <li className="crumb-sep" aria-hidden="true">›</li>
+                                  <li className={`crumb ${isLast ? 'crumb-current' : ''}`}>
+                                    {isLast ? (
+                                      <span>{label}</span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="crumb-btn"
+                                        onClick={() =>
+                                          this.setState({
+                                            inspectorPath: this.state.inspectorPath.slice(0, i + 1),
+                                            inspectorTitle: formatPathTitle(this.state.inspectorPath.slice(0, i + 1))
+                                          })
+                                        }
+                                      >
+                                        {label}
+                                      </button>
+                                    )}
+                                  </li>
+                                </React.Fragment>
+                              );
+                            })}
+                          </ol>
+                        </nav>
+                        <button className="btn-link" onClick={this.closeInspector}>Close</button>
+                      </div>
+                      <div className="inspector-body">
+                        {(() => {
+                          const node = getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath);
+                          return this.renderValueOrTree(
+                            node,
+                            'resp',
+                            null,
+                            this.state.inspectorRoot,
+                            this.state.inspectorPath
+                          );
+                        })()}
+                        <pre className="inspector-json">
+                            {JSON.stringify(getNodeAtPath(this.state.inspectorRoot, this.state.inspectorPath), null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {this.state.showScrollButton && (
                     <IconButton onClick={(e) => {
                         e.stopPropagation()
@@ -418,108 +930,5 @@ class ResultsTable extends React.Component {
         );
     }
 }
-
-
-function ActionRow({ item }) {
-    const [open, setOpen] = React.useState(false);
-
-    const renderNestedItems = (item, response = null) => {
-        // pass response through for treatment counts
-        if (isObject(item)) {
-            return renderNestedTable(item, response);
-        } else if (Array.isArray(item)) {
-            return (
-                <>
-                    {item.map((el, i) => <React.Fragment key={i}>{renderNestedItems(el)}</React.Fragment>)}
-                </>
-            );
-        } else {
-            return <span>{item}</span>;
-        }
-    }
-
-    const renderNestedTable = (tableData, response = null) => {
-        const isTreatment = Object.keys(tableData).includes('action_type') && tableData['action_type'] === 'APPLY_TREATMENT';
-        const character = tableData['character'];
-        const location = tableData['location'];
-        return (
-            <Table size="small">
-                <TableBody>
-                    {Object.entries(tableData).map(([key, value], i) => {
-                        if (isTreatment && response && key === 'treatment') {
-                            for (const c of (response?.characters ?? [])) {
-                                if (c['id'] === character) {
-                                    for (const injury of c['injuries']) {
-                                        if (injury['location'] === location) {
-                                            if (injury['treatments_applied'])
-                                                value = value + ` (current count: ${injury['treatments_applied']})`;
-                                            break;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        return (
-                            <TableRow key={i}>
-                                <TableCell className='tableCellKey'>
-                                    <strong>{snakeCaseToNormalCase(key)}</strong>
-                                </TableCell>
-                                <TableCell className='tableCellValue'>{renderNestedItems(value)}</TableCell>
-                            </TableRow>
-                        )
-                    })}
-                </TableBody>
-            </Table>
-        );
-    }
-
-
-    const isObject = (item) => {
-        return (typeof item === 'object' && !Array.isArray(item) && item !== null);
-    }
-
-    const snakeCaseToNormalCase = (string) => {
-        return string
-            .replace(/_/g, ' ')
-            .replace(/(^\w|\s\w)/g, m => m.toUpperCase());
-    }
-
-    return (
-        <React.Fragment>
-            <TableRow className='noBorderRow' onClick={() => setOpen(!open)}>
-                <TableCell className="noBorderCell tableCellIcon">
-                    <IconButton
-                        aria-label="expand row"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setOpen(!open);
-                        }}
-                    >
-                        {open ? <KeyboardArrowUpIcon fontSize='large' /> : <KeyboardArrowDownIcon fontSize='large' />}
-                    </IconButton>
-                </TableCell>
-                <TableCell className="noBorderCell tableCellCommand">
-                    <Typography><strong>Command:</strong> {item.command}</Typography>
-                    <Typography>Parameters: {!(Object.keys(item.parameters).length > 0) ? "None" : ""}</Typography>
-                    {renderNestedItems(item.parameters, item.command === 'Take Action' ? item.response : null)}
-                </TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
-                        <Box sx={{ margin: 1 }}>
-                            <Typography><strong>Response:</strong></Typography>
-                            <div style={{ paddingLeft: '16px' }}>
-                                {renderNestedItems(item.response)}
-                            </div>
-                        </Box>
-                    </Collapse>
-                </TableCell>
-            </TableRow>
-        </React.Fragment>
-    );
-}
-
 
 export default ResultsTable;
