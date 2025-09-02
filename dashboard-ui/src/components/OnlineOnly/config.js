@@ -150,7 +150,5 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
         }
     }
 
-    console.log(scenarios)
-
     return scenarios
 }

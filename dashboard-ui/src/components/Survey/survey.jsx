@@ -126,7 +126,6 @@ class SurveyPage extends Component {
     }
 
     inSurveyVersionData = () => {
-        console.log(Object.keys(SURVEY_VERSION_DATA).includes(this.state.surveyVersion))
         return Object.keys(SURVEY_VERSION_DATA).includes(this.state.surveyVersion);
     }
 
@@ -481,7 +480,6 @@ class SurveyPage extends Component {
             }
 
             this.surveyConfigClone.pages = finalPages;
-            console.log(this.surveyConfigClone.pages);
 
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
@@ -523,7 +521,6 @@ class SurveyPage extends Component {
             }
 
             this.surveyConfigClone.pages = finalPages;
-            console.log(this.surveyConfigClone.pages);
 
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
