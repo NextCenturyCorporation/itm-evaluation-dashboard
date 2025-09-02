@@ -7,7 +7,7 @@ import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-b
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
 import { evalNameToNumber } from '../OnlineOnly/config';
-import { setSurveyVersion, setupConfigWithImages, setTextEval as setTextEvalInStore, setCurrentUIStyle } from '../App/setupUtils';
+import { setSurveyVersion, setupConfigWithImages, setTextEval as setTextEvalInStore, setPidBoundsInStore, setCurrentUIStyle } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
@@ -471,6 +471,10 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     lowPid: pendingPidBounds.low,
                     highPid: pendingPidBounds.high
                 }
+            });
+            setPidBoundsInStore({
+                lowPid: pendingPidBounds.low,
+                highPid: pendingPidBounds.high
             });
             setShowPidConfirmation(false);
             setPendingPidBounds(null);
