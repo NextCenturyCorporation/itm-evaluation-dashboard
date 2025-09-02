@@ -14,7 +14,7 @@ const PHASE1_SCENARIOS = {
     VOL4: ['vol-ph1-eval-4']
 };
 
-const PHASE2_SCENARIO_KEYS = ['AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
+const PHASE2_SCENARIO_KEYS = ['AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
 
 export const SCENARIO_HEADERS = [
     'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4',
@@ -23,7 +23,8 @@ export const SCENARIO_HEADERS = [
 ];
 
 const isPhase2Scenario = (scenarioId, targetKey) => {
-    return scenarioId.includes(`${targetKey}-eval`);
+
+    return scenarioId.endsWith(`2025-${targetKey}-eval`);
 };
 
 export const setScenarioCompletion = (obj, completedScenarios) => {
