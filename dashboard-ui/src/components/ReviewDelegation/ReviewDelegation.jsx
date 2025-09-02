@@ -94,7 +94,7 @@ export function ReviewDelegationPage() {
                 if (page['evalNumber'] === 4) {
                     reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
                 } else if (page['evalNumber'] >= 8) {
-                    reviewText = page['scenarioName'] + ' - ' + page['admName'] + ' - ' + page['target'];
+                    reviewText = page['scenarioName'] ? page['scenarioName'] : page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['target'];
                 } else {
                     reviewText = (page['scenarioIndex'] ? PH1_NAME_MAP[page['scenarioIndex']] : 'Unknown') + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
                 }
