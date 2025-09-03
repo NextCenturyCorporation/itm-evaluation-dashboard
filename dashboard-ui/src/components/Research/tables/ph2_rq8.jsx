@@ -57,7 +57,7 @@ export function PH2RQ8({ evalNum }) {
             }
             const variablesRow = data[variablesRowIdx];
             // first column we need to grab, go from there
-            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Probe1_AF');
+            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Probe_AF1');
             if (startColIdx === -1) {
                 setVariableFields([]);
                 return;
@@ -142,24 +142,38 @@ export function PH2RQ8({ evalNum }) {
                     const dataEntries = [desert_entry, urban_entry];
 
                     for (const entry of dataEntries) {
-                        if (entry?.data?.data) {
+                        if (entry?.data?.data && entry?.actionAnalysis) {
+                            const fieldPrefix = entry === desert_entry ? 'Desert Probe' : 'Urban Probe';
                             const scenes = entry?.data?.data;
+                            let afCount = 1;
+                            let mfCount = 1;
+                            let afmfCount = 1;
                             for (const scene of scenes) {
                                 if (!scene['found_match']) {
                                     continue;
                                 }
                                 const probeId = scene.probe_id;
-                                let fieldName = entry === desert_entry ? 'Desert Probe' : 'Urban Probe';
+                                let fieldName = fieldPrefix;
                                 if (/[a-zA-Z]/.test(probeId.slice(-1))) {
-                                    fieldName += probeId.slice(-2, -1) + '_AFMF';
+                                    fieldName += '_AFMF' + afmfCount.toString();
+                                    afmfCount += 1;
                                 }
                                 else {
-                                    fieldName += probeId.slice(-1) + (probeId.includes('-AF-') ? '_AF' : '_MF');
+                                    fieldName += (probeId.includes('-AF-') ? '_AF' : '_MF') + (probeId.includes('-AF-') ? afCount.toString() : mfCount.toString());
+                                    if (probeId.includes('-AF-')) {
+                                        afCount += 1;
+                                    }
+                                    else {
+                                        mfCount += 1;
+                                    }
                                 }
                                 if (entry.actionAnalysis) {
                                     entry.actionAnalysis[fieldName] = "Patient " + scene['response'].slice(-1);
                                 }
                             }
+                            entry.actionAnalysis[fieldPrefix + '_PS1'] = entry.actionAnalysis[fieldPrefix.split(' ')[0] + ' Personal_safety']
+                            entry.actionAnalysis[fieldPrefix + '_SS1'] = entry.actionAnalysis[fieldPrefix.split(' ')[0] + ' Search1']
+                            entry.actionAnalysis[fieldPrefix + '_SS2'] = entry.actionAnalysis[fieldPrefix.split(' ')[0] + ' Search2']
                         }
                     }
 
