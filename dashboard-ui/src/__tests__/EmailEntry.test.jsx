@@ -2,8 +2,9 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText, loginAdmin, logout, takeTextScenario, pressAllKeys } from "../__mocks__/testUtils";
+import { countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys, takePhase1TextScenario } from "../__mocks__/testUtils";
 
+const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 let firstPid = 0;
 
 describe('Test email-entry text scenarios', () => {
@@ -134,8 +135,6 @@ describe('Test email-entry text scenarios', () => {
     }, 10000);
 
     it('any key combo on text-scenario page should have no effect on progress', async () => {
-        // pid should be 702, which should use vol4 for ST. If this test starts failing, the pid has likely changed
-        // and more text configs will need to be added to the mock database
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
         await page.waitForSelector('input[placeholder="Email"]');
 
@@ -151,12 +150,10 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
-        await pressAllKeys(page, 'Move Springer to evac');
+        await pressAllKeys(page, IS_PH1 ? 'Move Springer to evac' : 'Scenario Details');
     }, 10000);
 
     it('text-scenario through email-entry should be navigable', async () => {
-        // pid should be 702, which should use vol4 for ST. If this test starts failing, the pid has likely changed
-        // and more text configs will need to be added to the mock database
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
         await page.waitForSelector('input[placeholder="Email"]');
 
@@ -172,7 +169,12 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
-        await takeTextScenario(page);
+        if (IS_PH1) {
+            await takePhase1TextScenario(page);
+        }
+        else {
+            await takePhase2TextScenario(page);
+        }
         await page.waitForSelector('text/Uploading documents');
 
     }, 40000);

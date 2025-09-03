@@ -6,11 +6,10 @@ import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
-import { evalNameToNumber } from '../OnlineOnly/config';
 // Components
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
-import { SURVEY_VERSION_DATA, SurveyPageWrapper } from '../Survey/survey';
+import { SurveyPageWrapper } from '../Survey/survey';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
@@ -33,7 +32,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, phase2ParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData } from '../OnlineOnly/config';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -241,7 +240,7 @@ export function App() {
         if (testerLogin && (!pidBoundsData || !textEvalData)) {
             return <div>Loading configuration...</div>;
         }
-        
+
         if (currentUser && !currentUser?.approved) {
             logout();
             return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
@@ -262,22 +261,22 @@ export function App() {
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
         const dbPLog = await fetchParticipantLog();
-        
+
         if (!textEvalData?.getCurrentTextEval) {
             console.error("Text eval data not loaded yet");
             return;
         }
-        
-        const evalNum = evalNameToNumber[textEvalData.getCurrentTextEval]
+
+        const evalNum = evalNameToNumber[store.getState().configs.currentTextEval]
 
         const pidBounds = store.getState().configs.pidBounds;
-        
+
         // Ensure PID bounds are properly set
         if (!pidBounds || !pidBounds.lowPid || !pidBounds.highPid) {
             console.error("PID bounds not set right", pidBounds);
             return;
         }
-        
+
         const lowPid = pidBounds.lowPid;
         const highPid = pidBounds.highPid;
 
@@ -294,11 +293,14 @@ export function App() {
             ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
             let participantData;
-            if (evalNum >= 8) {
-                participantData = phase2ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
+            if (evalNum === 10) {
+                participantData = septemberParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
+            } else if (evalNum === 8 || evalNum === 9) {
+                participantData = juneJulyParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
             } else {
                 participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
             }
+            
             const addRes = await addParticipant({
                 variables: { participantData }
             });

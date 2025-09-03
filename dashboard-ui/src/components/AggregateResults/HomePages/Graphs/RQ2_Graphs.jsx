@@ -244,26 +244,26 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                         showInLegend: true,
                         name: 'Aligned',
                         color: '#5B89C1',
-                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['aligned']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['aligned']]?.[target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
                     },
                     {
                         type: 'spline',
                         showInLegend: true,
                         name: 'Baseline',
                         color: '#C15B5B',
-                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['baseline']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getMean(admAlignment[admAccessMap[ta2]['baseline']]?.[target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target), label: ['MJ', 'IO'].includes(att) ? '' : target } })
                     },
                     {
                         type: 'error',
                         name: 'Variability Range (aligned)',
                         color: '#555',
-                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['aligned']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['aligned']]?.[target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
                     },
                     {
                         type: 'error',
                         name: 'Variability Range (baseline)',
                         color: '#555',
-                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['baseline']][target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
+                        dataPoints: targetMap[att].map((target) => { return { y: getStandardError(admAlignment[admAccessMap[ta2]['baseline']]?.[target] ?? []), x: ['MJ', 'IO'].includes(att) ? Number(target.slice(-3)) : targetMap[att].indexOf(target) } })
 
                     }
                 ]
@@ -348,10 +348,10 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                 <div>
                     <h3>Parallax Aligned and Baseline ADM Alignment Scores on Individual Targets across Attributes</h3>
                     {generateAlignedBaselineChart('TAD-aligned', 'TAD-severity-baseline',
-                        [{ 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
-                        { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
-                        { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
-                        { 'target': Object.keys(admAlignment['TAD-aligned']).filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
+                        [{ 'target': Object.keys(admAlignment?.['TAD-aligned'] ?? {})?.filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
+                            { 'target': Object.keys(admAlignment?.['TAD-aligned'] ?? {})?.filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
+                            { 'target': Object.keys(admAlignment?.['TAD-aligned'] ?? {})?.filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
+                            { 'target': Object.keys(admAlignment?.['TAD-aligned'] ?? {})?.filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
                 </div>
 
                 <div>
@@ -377,10 +377,10 @@ export default function RQ2Graphs({ admAlignment, evalNumber, groupTargets }) {
                 <div>
                     <h3>Kitware Aligned and Baseline ADM Alignment Scores on Individual Targets across Attributes</h3>
                     {generateAlignedBaselineChart('ALIGN-ADM-ComparativeRegression-ICL-Template', 'ALIGN-ADM-OutlinesBaseline',
-                        [{ 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
-                        { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
-                        { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
-                        { 'target': Object.keys(admAlignment['ALIGN-ADM-OutlinesBaseline']).filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
+                        [{ 'target': Object.keys(admAlignment?.['ALIGN-ADM-OutlinesBaseline'] ?? {})?.filter((x) => x.includes('Moral judgement') && !x.includes('Group')), 'label': 'MJ' },
+                            { 'target': Object.keys(admAlignment?.['ALIGN-ADM-OutlinesBaseline'] ?? {})?.filter((x) => x.includes('Ingroup Bias') && !x.includes('Group')), 'label': 'IO' },
+                            { 'target': Object.keys(admAlignment?.['ALIGN-ADM-OutlinesBaseline'] ?? {})?.filter((x) => x.includes('qol') && !x.includes('group')), 'label': 'QOL' },
+                            { 'target': Object.keys(admAlignment?.['ALIGN-ADM-OutlinesBaseline'] ?? {})?.filter((x) => x.includes('vol') && !x.includes('group')), 'label': 'VOL' }])}
                 </div>
 
                 <div>

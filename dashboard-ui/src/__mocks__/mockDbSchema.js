@@ -18,7 +18,10 @@ const SurveyResults = createSchema('surveyResults', {
 });
 
 const SurveyVersion = createSchema('surveyVersion', {
-    version: { type: String, required: true }
+    version: { type: String, required: true },
+    textScenarios: { type: String, required: true },
+    lowPid: { type: Number, required: true },
+    highPid: { type: Number, required: true }
 });
 
 const UiStyle = createSchema('uiStyle', {
@@ -56,10 +59,12 @@ const User = createSchema('users', {
 });
 
 const AdmLog = createSchema('admTargetRuns', {
+    _id: { type: String, required: true },
     evaluation: { type: JSON },
     history: { type: Array, required: true },
     evalNumber: { type: Number, required: true },
-    evalName: { type: String, required: true }
+    evalName: { type: String, required: true },
+    results: { type: JSON }
 });
 
 const UserScenarioResults = createSchema('userScenarioResults', {
@@ -87,7 +92,7 @@ const TextBasedConfig = createSchema('textBasedConfig', {
     scenario_id: { type: String, required: true },
     name: { type: String, required: true },
     pages: { type: JSON, required: true },
-    author: { type: String, required: true },
+    author: { type: String },
     showQuestionNumbers: { type: Boolean, required: true },
     showPrevButton: { type: Boolean, required: true },
     title: { type: String, required: true },
