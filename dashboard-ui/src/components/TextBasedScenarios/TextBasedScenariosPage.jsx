@@ -200,7 +200,6 @@ class TextBasedScenariosPage extends Component {
 
     scenariosFromLog = (participantLog) => {
         const scenarioIds = scenarioIdsFromLog(participantLog, this.props.currentTextEval)
-
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
             config.scenario_id && scenarioIds.includes(config.scenario_id)
         );
@@ -377,28 +376,84 @@ class TextBasedScenariosPage extends Component {
 
     getAlignmentScore = async (scenario) => {
         if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025')) {
-            if (this.state.adeptSessionsCompleted === 0) {
-                await this.beginRunningSession(scenario)
+            const isPSAF = scenario.scenario_id.includes('PS-AF');
+            const evalNum = evalNameToNumber[this.props.currentTextEval]
+            // ps-af needs its own individual session
+            const needsIsolatedSession = evalNum === 10 && isPSAF;
+
+            if (needsIsolatedSession) {
+                await this.processIsolatedAdeptScenario(scenario);
             } else {
-                await this.continueRunningSession(scenario)
-            }
-
-            let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
-
-            this.setState(prevState => ({
-                adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
-                adeptScenarios: updatedAdeptScenarios
-            }), async () => {
-                if (this.state.adeptSessionsCompleted === (evalNameToNumber[this.props.currentTextEval] >= 8 ? 4 : 3)) {
-                    await this.uploadAdeptScenarios(updatedAdeptScenarios)
+                if (this.state.adeptSessionsCompleted === 0) {
+                    await this.beginRunningSession(scenario);
+                } else {
+                    await this.continueRunningSession(scenario);
                 }
-            });
 
+                let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
+
+                this.setState(prevState => ({
+                    adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
+                    adeptScenarios: updatedAdeptScenarios
+                }), async () => {
+                    /*
+                    Phase 1/Jan/Dre 3 adept scenarios
+                    June/July 4
+                    September 3 (because PS-AF scored separately)
+                    */
+                    const expectedScenarios = evalNameToNumber[this.props.currentTextEval] >= 8 ?
+                        (evalNum === 10 ? 3 : 4) : 3;
+
+                    if (this.state.adeptSessionsCompleted === expectedScenarios) {
+                        await this.uploadAdeptScenarios(updatedAdeptScenarios);
+                    }
+                });
+            }
         } else {
-            await this.calcScore(scenario, 'soartech')
-            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL)
-            scenario.kdmas = kdma_data
+            await this.calcScore(scenario, 'soartech');
+            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL);
+            scenario.kdmas = kdma_data;
         }
+    }
+
+    processIsolatedAdeptScenario = async (scenario) => {
+        const sessionEndpoint = '/api/v1/new_session';
+        const url = process.env.REACT_APP_ADEPT_URL;
+        try {
+            const session = await axios.post(`${url}${sessionEndpoint}`);
+            if (session.status === 200) {
+                const sessionId = session.data;
+
+                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
+                const mostLeastAligned = await this.mostLeastAligned(sessionId, 'adept', url, null);
+
+                scenario.combinedSessionId = sessionId;
+                scenario.mostLeastAligned = mostLeastAligned;
+                scenario.kdmas = await this.attachKdmaValue(sessionId, url);
+
+                // can upload without waiting for the others
+                await this.uploadSingleScenario(scenario);
+            }
+        } catch (e) {
+            console.error('Error creating isolated session:', e);
+        }
+    }
+
+    uploadSingleScenario = async (scenario) => {
+        const sanitizedData = this.sanitizeKeys(scenario);
+
+        return new Promise(resolve => {
+            this.setState({
+                uploadData: true,
+                sanitizedData,
+                isUploadButtonEnabled: true,
+            }, () => {
+                if (this.uploadButtonRef.current) {
+                    this.uploadButtonRef.current.click();
+                }
+                resolve();
+            });
+        });
     }
 
     beginRunningSession = async (scenario) => {
@@ -470,7 +525,7 @@ class TextBasedScenariosPage extends Component {
                 targets = ['PerceivedQuantityOfLivesSaved']
             }
         } else {
-            targets = evalNameToNumber[this.props.currentTextEval] >= 8 ? 
+            targets = evalNameToNumber[this.props.currentTextEval] >= 8 ?
                 ['affiliation', 'merit', 'search', 'personal_safety'] :
                 ['Moral judgement', 'Ingroup Bias']
         }
@@ -606,7 +661,7 @@ class TextBasedScenariosPage extends Component {
         };
 
         // randomize probe order for phase 2 (non narrative). Keep order intact for phase 1
-        if (evalNameToNumber[this.props.currentTextEval] >= 8 ) {config.pages = shuffle([...config.pages])}
+        if (evalNameToNumber[this.props.currentTextEval] >= 8) { config.pages = shuffle([...config.pages]) }
 
         config.title = title;
         config.showTitle = false;

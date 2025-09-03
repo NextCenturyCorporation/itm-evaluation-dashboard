@@ -7,7 +7,7 @@ import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedSc
 import { useHistory, useLocation } from 'react-router-dom';
 import { useSelector } from "react-redux";
 import '../../css/scenario-page.css';
-import { evalNameToNumber, phase1ParticipantData, phase2ParticipantData } from "./config";
+import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData } from "./config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -71,8 +71,10 @@ export default function StartOnline() {
         // get correct plog data
         const currentSearchParams = new URLSearchParams(location.search);
         let participantData
-        if (evalNumber >= 8) {
-            participantData = phase2ParticipantData(currentSearchParams, null, newPid, 'Online')
+        if (evalNumber === 10) {
+            participantData = septemberParticipantData(currentSearchParams, null, newPid, 'Online')
+        } else if (evalNumber === 8 || evalNumber === 9) {
+            participantData = juneJulyParticipantData(currentSearchParams, null, newPid, 'Online')
         } else {
             participantData = phase1ParticipantData(currentSearchParams, null, newPid, 'Online')
         }
