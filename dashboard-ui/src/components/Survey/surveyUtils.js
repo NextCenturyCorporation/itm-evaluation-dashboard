@@ -906,7 +906,7 @@ export function selectMostAndLeastAlignedPages(alignmentData, nonBaselinePages, 
     }
 
     const getScenarioGroups = evalNum === 8 ? getEval8ScenarioGroups : getEval9ScenarioGroups;
-    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum), 3);
+    const scenarioGroups = getScenarioGroups(scenarioType, adjustScenarioNumber(textScenarioNum, 3));
     if (!scenarioGroups) {
         return handleRandomSelection('no group configuration found');
     }
@@ -1380,7 +1380,6 @@ const getEval9ScenarioGroups = (scenarioType, scenarioNum) => {
             ]
         }
     };
-
     return groups[scenarioKey] || null;
 };
 
