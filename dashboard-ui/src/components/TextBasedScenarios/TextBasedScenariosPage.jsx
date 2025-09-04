@@ -352,7 +352,7 @@ class TextBasedScenariosPage extends Component {
             this.state.scenarios.map(scenario => scenario.scenario_id) :
             [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
         scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
-        scenarioData.evalName = this.props.currentTextEval
+        scenarioData.evalName = (this.props.currentTextEval).replace(/Phase 2\s*/g, '')
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
