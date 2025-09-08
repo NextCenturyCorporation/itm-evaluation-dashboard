@@ -486,7 +486,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['Probe Set Observation'] = adjustScenarioNumber(
                         isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
                     );
-                    console.log(entryObj['Probe Set Observation'])
+                    
                     allProbeSetObservation.push(entryObj['Probe Set Observation'])
                     entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
