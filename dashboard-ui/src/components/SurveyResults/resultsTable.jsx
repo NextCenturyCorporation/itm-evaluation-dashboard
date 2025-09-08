@@ -22,7 +22,8 @@ const EVAL_MAP = {
     5: 'PH1',
     6: 'JAN25',
     8: 'PH2 June',
-    9: 'PH2 July'
+    9: 'PH2 July',
+    10: 'PH2 September'
 }
 
 const TRUST_MAP = {
