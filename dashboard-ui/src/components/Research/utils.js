@@ -484,8 +484,9 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
                     const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
                     entryObj['Probe Set Observation'] = adjustScenarioNumber(
-                        isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment']) : entryObj['Probe Set Assessment']
+                        isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
                     );
+                    console.log(entryObj['Probe Set Observation'])
                     allProbeSetObservation.push(entryObj['Probe Set Observation'])
                     entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
@@ -552,7 +553,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         }
     }
 
-    return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation};
+    return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation };
 }
 
 function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
