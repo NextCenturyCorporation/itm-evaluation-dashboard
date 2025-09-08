@@ -366,7 +366,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     foundADM = admData.find((adm) => adm.history?.[0].parameters.adm_name === page['admName'] && (adm.history?.[0].response?.id ?? adm.history?.[1].response?.id) === page['scenarioIndex'].replace('IO', 'MJ') &&
                         adm.history?.[adm.history.length - 1].parameters.target_id === page['admTarget']);
                 } else {
-                    foundADM = admData.find((adm) => adm.adm_name === page['admName'] && adm.evaluation.scenario_id === page['scenarioIndex'] &&
+                    foundADM = admData.find((adm) => adm.evaluation.adm_name.includes(page['admName']) && adm.evaluation.scenario_id === page['scenarioIndex'] &&
                         adm.evaluation.alignment_target_id === page['admTarget']);
                 }
 
@@ -484,8 +484,9 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
                     const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
                     entryObj['Probe Set Observation'] = adjustScenarioNumber(
-                        isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment']) : entryObj['Probe Set Assessment']
+                        isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
                     );
+                    
                     allProbeSetObservation.push(entryObj['Probe Set Observation'])
                     entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
@@ -552,7 +553,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         }
     }
 
-    return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation};
+    return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation };
 }
 
 function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
