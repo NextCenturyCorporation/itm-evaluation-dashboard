@@ -89,7 +89,6 @@ const STARTING_HEADERS = [
     "When did you last complete TCCC training or recertification",
     "How would you rate your expertise with TCCC procedures",
     "How many real-world casualties have you assessed using TCCC protocols",
-
     "I feel that people are generally reliable",
     "I usually trust people until they give me a reason not to trust them",
     "Trusting another person is not difficult for me",
@@ -104,10 +103,16 @@ const STARTING_HEADERS = [
 ];
 
 const MULTI_KDMA_MAP = {
+    //MF-AF targets
     "0.0_0.0": "low/low",
     "0.0_1.0": "low/high",
     "1.0_0.0": "high/low",
-    "1.0_1.0": "high/high"
+    "1.0_1.0": "high/high",
+    //PS-AF hand made targets
+    "1": "Target 1",
+    "2": "Target 2",
+    "3": "Target 3",
+    "4": "Target 4"
 }
 
 function formatTimeMMSS(seconds, includeHours = false) {
@@ -128,7 +133,7 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, {'value': '10', 'label': '10 - PH2 September'}] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -144,7 +149,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
     const [showLegacy, setShowLegacy] = React.useState(false);
-    const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false);
+    const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
@@ -339,10 +344,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
                         if (showPh2) {
-                            const att = getEval89Attributes(page.admTarget);
+                            const att = getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
-                            if (att != "AF-MF") {
+                            if (att != "AF-MF" && att != "PS-AF") {
                                 target = page.admTarget.split("-").slice(-1);
                             }
                             else {
@@ -587,7 +592,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     React.useEffect(() => {
         if (exploratory) {
             setEvalFilters(evalNumbers);
-            setShowPh2((evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false));
+            setShowPh2((evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false));
         }
     }, [evalNumbers, exploratory]);
 
