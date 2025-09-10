@@ -199,22 +199,26 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
 
 export function getEval89Attributes(target, scenarioIndex) {
     const scenario = scenarioIndex.toLowerCase();
-    if (scenario.indexOf("ps") > -1) {
+
+    if (scenario.includes("combined")) {
+        return "PS, AF (Combined)"
+    }
+    if (scenario.includes("ps")) {
         if (scenario.indexOf("af") > -1) {
             return "PS-AF"
         }
         return "PS";
     }
-    else if (scenario.indexOf("ss") > -1) {
+    else if (scenario.includes("ss")) {
         return "SS";
     }
-    else if (scenario.indexOf("af") > -1) {
-        if (scenario.indexOf("mf") > -1) {
+    else if (scenario.includes("af")) {
+        if (scenario.includes("mf")) {
             return "AF-MF";
         }
         return "AF";
     }
-    else if (scenario.indexOf("mf") > -1) {
+    else if (scenario.includes("mf")) {
         return "MF";
     }
 
