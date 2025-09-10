@@ -218,7 +218,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
             const legacyCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
             const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
-            if (showPh2 ) {
+            if (showPh2) {
                 nonExploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
                 nonExploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
                 nonExploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
@@ -232,22 +232,18 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 exploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain', 'FC3_Align_Diff');
             }
 
-            if (showPh2 && hasMultipleComparisonsPerBlock) {
-                for (let comp = 1; comp <= 6; comp++) {
-                    updatedHeaders.push(`B${block}_Compare${comp}_Medics`);
-                    updatedHeaders.push(`B${block}_Compare${comp}_FC`);
-                    updatedHeaders.push(`B${block}_Compare${comp}_Percent`);
-                    updatedHeaders.push(`B${block}_Compare${comp}_Conf`);
-                    updatedHeaders.push(`B${block}_Compare${comp}_Explain`);
+            if (showPh2) {
+                // Generate headers for up to 10 FCs per block (should be more than enough)
+                for (let fc = 1; fc <= 6; fc++) {
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_DMs`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Percent`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Conf`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Explain`);
                 }
                 updatedHeaders.push(`B${block}_Compare_Time`);
                 updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
                 updatedHeaders.push(`B${block}_Compare_Count`);
-            } else {
-                const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
-                for (let subhead of comparisons) {
-                    updatedHeaders.push(`B${block}_${subhead}`);
-                }
             }
         }
         if (showLegacy) {
@@ -461,138 +457,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         dm += 1;
                     }
 
-                    if (comparisonPages.length === 1) {
-                        const page = comparisonPages[0];
-                        const pageName = page.pageName;
-
-                        const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
-                        // only works for dre/ph1 where we labelled alignment 
-                        let alignment = page.admAlignment?.split(' vs ');
-                        if (showPh2) {
-                            alignment = [];
-                            for (const adm of order) {
-                                alignment.push(entry[adm]['admAlignment']);
-                            }
-                        }
-
-                        // multikdma setup 
-                        let multiFc1 = '';
-                        let multiFc2 = '';
-                        let multiFc3 = '';
-                        let mostAligned = '';
-                        let targets = ['high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'low-affiliation-high-merit'];
-                        if (alignment.length > 3) {
-                            for (const t of targets) {
-                                if (alignment.indexOf(t) == -1) {
-                                    mostAligned = t;
-                                    break;
-                                }
-                            }
-                            multiFc1 = mostAligned + ' vs ' + alignment[1];
-                            multiFc2 = mostAligned + ' vs ' + alignment[2];
-                            multiFc3 = mostAligned + ' vs ' + alignment[3];
-                        }
-
-                        // set up exploratory variables to find alignment difference
-                        let dreAligned, ph1Aligned, dreBaseline, ph1Baseline, dreMisaligned, ph1Misaligned, ph2Aligned, ph2Baseline, ph2Misaligned, ph2Multi1, ph2Multi2, ph2Multi3, ph2Multi4;
-
-                        if (exploratory && comparisonData) {
-                            if (!showPh2) {
-                                dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                dreBaseline = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                                ph1Baseline = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                                dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                                ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                            }
-                            else if (order.length < 4) {
-                                ph2Aligned = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                ph2Baseline = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                                ph2Misaligned = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                            } else {
-                                ph2Multi1 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'most aligned group', page['scenarioIndex']))?.['score'];
-                                ph2Multi2 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[1], page['scenarioIndex']))?.['score'];
-                                ph2Multi3 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[2], page['scenarioIndex']))?.['score'];
-                                ph2Multi4 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[3], page['scenarioIndex']))?.['score'];
-                            }
-                        }
-
-                        const alignedVsBaseline = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')]) : (order[0] + ' vs ' + order[1]);
-                        const alignedVsMisaligned = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')]) : (order[0] + ' vs ' + order[2]);
-                        const vsFc3MultiKdma = order[0] + ' vs ' + order[3];
-                        obj[`B${block}_Compare_DM1`] = order[0] + ' - ' + alignment[0];
-                        obj[`B${block}_Compare_DM2`] = order[1] + ' - ' + alignment[1];
-                        obj[`B${block}_Compare_DM3`] = order[2] + ' - ' + alignment[2];
-                        if (showPh2 && order.length > 3) {
-                            obj[`B${block}_Compare_DM4`] = order[3] + ' - ' + alignment[3];
-                        }
-                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-
-                        const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
-                        obj[`B${block}_Compare_FC1_Alignment`] = order.length < 4 ? 'aligned vs baseline' : multiFc1;
-                        obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
-                        obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
-                        if (exploratory && comparisonData) {
-                            if (!showPh2) {
-                                obj[`B${block}_FC1_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreBaseline)) ? (dreAligned - dreBaseline) : null;
-                                obj[`B${block}_FC1_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Baseline)) ? (ph1Aligned - ph1Baseline) : null;
-                            }
-                            else if (order.length < 4) {
-                                obj[`B${block}_FC1_Align_Diff`] = (isDefined(ph2Aligned) && isDefined(ph2Baseline)) ? (ph2Aligned - ph2Baseline) : null;
-                            }
-                            else {
-                                obj[`B${block}_FC1_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi2)) ? (ph2Multi1 - ph2Multi2) : null;
-                            }
-                        }
-                        const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
-                        obj[`B${block}_Compare_FC2_Alignment`] = order.length < 4 ? 'aligned vs misaligned' : multiFc2;
-                        obj[`B${block}_Compare_FC2`] = fc2 + ' - ' + alignment[order.indexOf(fc2)];
-                        obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
-                        if (exploratory && comparisonData) {
-                            if (!showPh2) {
-                                obj[`B${block}_FC2_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
-                                obj[`B${block}_FC2_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
-                            } else if (order.length < 4) {
-                                obj[`B${block}_FC2_Align_Diff`] = (isDefined(ph2Aligned) && isDefined(ph2Misaligned)) ? (ph2Aligned - ph2Misaligned) : null;
-                            }
-                            else {
-                                obj[`B${block}_FC2_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi3)) ? (ph2Multi1 - ph2Multi3) : null;
-                            }
-                        }
-                        if (showPh2) {
-                            const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
-                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? null : multiFc3;
-                            obj[`B${block}_Compare_FC3`] = order.length < 4 ? null : (fc3 + ' - ' + alignment[order.indexOf(fc3)] + (alignment[order.indexOf(fc3)] == 'most aligned group' ? ' (' + mostAligned + ')' : ''));
-                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[vsFc3MultiKdma + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
-                            if (exploratory && comparisonData) {
-                                obj[`B${block}_FC3_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi4)) ? (ph2Multi1 - ph2Multi4) : null;
-                            }
-                        }
-                        if (showPh2) {
-                            const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
-                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? null : multiFc3;
-                            obj[`B${block}_Compare_FC3`] = order.length < 4 ? null : (fc3 + ' - ' + alignment[order.indexOf(fc3)] + (alignment[order.indexOf(fc3)] == 'most aligned group' ? ' (' + mostAligned + ')' : ''));
-                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[vsFc3MultiKdma + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
-                            if (exploratory && comparisonData) {
-                                const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                const dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                                const ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                                obj[`B${block}_FC3_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
-                                obj[`B${block}_FC3_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
-                            }
-                        }
-                    } else if (comparisonPages.length > 1) {
-                        // Eval 10 style - multiple comparison pages per block
+                    if (comparisonPages.length > 0) {
                         let totalComparisonTime = 0;
-                        let comparisonIndex = 1;
+                        let fcIndex = 1;
 
-                        // Sort comparison pages by order in orderLog for consistent ordering
                         const sortedComparisonPages = comparisonPages.sort((a, b) => {
                             const aIndex = entry.orderLog.indexOf(a.pageName);
                             const bIndex = entry.orderLog.indexOf(b.pageName);
@@ -601,34 +469,60 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
                         for (const page of sortedComparisonPages) {
                             const pageName = page.pageName;
-                            const order = pageName.split(' vs ');
                             totalComparisonTime += page.timeSpentOnPage;
 
-                            // Store each comparison's results in structured format matching headers
-                            obj[`B${block}_Compare${comparisonIndex}_Medics`] = pageName;
+                            if (pageName.includes(' vs ')) {
+                                const forcedChoiceKeys = Object.keys(page.questions).filter(key =>
+                                    key.endsWith(': Forced Choice') || key.endsWith(': Percent Delegation')
+                                );
 
-                            const fc = page.questions?.[pageName + ': Forced Choice']?.response;
-                            obj[`B${block}_Compare${comparisonIndex}_FC`] = fc;
+                                if (forcedChoiceKeys.length > 1) {
+                                    const forcedChoicePairs = forcedChoiceKeys
+                                        .filter(key => key.endsWith(': Forced Choice'))
+                                        .map(key => key.replace(': Forced Choice', ''));
 
-                            // Handle percent delegation if it exists
-                            const percentDelegation = page.questions?.[pageName + ': Percent Delegation']?.response;
-                            if (percentDelegation) {
-                                obj[`B${block}_Compare${comparisonIndex}_Percent`] = percentDelegation;
+                                    for (const pair of forcedChoicePairs) {
+                                        const response = page.questions[`${pair}: Forced Choice`]?.response;
+                                        const confidence = page.questions[`${pair}: Rate your confidence about the delegation decision indicated in the previous question`]?.response;
+                                        const explanation = page.questions[`${pair}: Explain your response to the delegation preference question`]?.response;
+                                        const percentDelegation = page.questions[`${pair}: Percent Delegation`]?.response;
+
+                                        obj[`B${block}_Compare_FC${fcIndex}_DMs`] = pair;
+                                        obj[`B${block}_Compare_FC${fcIndex}`] = response;
+                                        obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
+                                        obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
+
+                                        if (percentDelegation) {
+                                            obj[`B${block}_Compare_FC${fcIndex}_Percent`] = percentDelegation;
+                                        }
+
+                                        fcIndex++;
+                                    }
+                                } else {
+                                    const response = page.questions[`${pageName}: Forced Choice`]?.response;
+                                    const confidence = page.questions[`${pageName}: Rate your confidence about the delegation decision indicated in the previous question`]?.response;
+                                    const explanation = page.questions[`${pageName}: Explain your response to the delegation preference question`]?.response;
+                                    const percentDelegation = page.questions[`${pageName}: Percent Delegation`]?.response;
+
+                                    obj[`B${block}_Compare_FC${fcIndex}_DMs`] = pageName;
+                                    obj[`B${block}_Compare_FC${fcIndex}`] = response;
+                                    obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
+                                    obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
+
+                                    if (percentDelegation) {
+                                        obj[`B${block}_Compare_FC${fcIndex}_Percent`] = percentDelegation;
+                                    }
+
+                                    fcIndex++;
+                                }
                             }
-
-                            obj[`B${block}_Compare${comparisonIndex}_Conf`] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                            obj[`B${block}_Compare${comparisonIndex}_Explain`] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
-
-                            comparisonIndex++;
                         }
 
-                        // Store aggregate comparison time for the block
+                        // Store aggregate comparison data for the block
                         obj[`B${block}_Compare_Time`] = formatTimeMinutes(totalComparisonTime);
                         obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(totalComparisonTime);
-                        obj[`B${block}_Compare_Count`] = sortedComparisonPages.length;
+                        obj[`B${block}_Compare_Count`] = fcIndex - 1;
                     }
-
-                    // Always increment block counter after processing each scenario
                     block += 1;
                 }
             }
@@ -636,6 +530,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         }
         // prep filters and data (sort by pid)
         allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
+        console.log(allObjs)
         setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
         setVersions(Array.from(new Set(allVersions)).filter((x) => isDefined(x)).map((x) => x.toString()));
         setFormattedData(allObjs);
