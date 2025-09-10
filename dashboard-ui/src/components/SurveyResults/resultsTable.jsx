@@ -190,6 +190,26 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         }
 
         const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
+
+
+        const hasMultipleComparisonsPerBlock = data.some(entry => {
+            const e = entry.results ?? entry;
+            if (!e || !e.orderLog) return false;
+
+            const pagesByScenario = {};
+            for (const pageName in e) {
+                const page = e[pageName];
+                if (page && typeof page === 'object' && page.scenarioIndex && page.pageType === 'comparison') {
+                    if (!pagesByScenario[page.scenarioIndex]) {
+                        pagesByScenario[page.scenarioIndex] = 0;
+                    }
+                    pagesByScenario[page.scenarioIndex]++;
+                }
+            }
+
+            return Object.values(pagesByScenario).some(count => count > 1);
+        });
+
         for (let block = 1; block < 5; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
@@ -198,7 +218,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
             const legacyCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
             const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
-            if (showPh2) {
+            if (showPh2 ) {
                 nonExploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
                 nonExploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
                 nonExploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
@@ -211,9 +231,23 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 exploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
                 exploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain', 'FC3_Align_Diff');
             }
-            const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
-            for (let subhead of comparisons) {
-                updatedHeaders.push(`B${block}_${subhead}`);
+
+            if (showPh2 && hasMultipleComparisonsPerBlock) {
+                for (let comp = 1; comp <= 6; comp++) {
+                    updatedHeaders.push(`B${block}_Compare${comp}_Medics`);
+                    updatedHeaders.push(`B${block}_Compare${comp}_FC`);
+                    updatedHeaders.push(`B${block}_Compare${comp}_Percent`);
+                    updatedHeaders.push(`B${block}_Compare${comp}_Conf`);
+                    updatedHeaders.push(`B${block}_Compare${comp}_Explain`);
+                }
+                updatedHeaders.push(`B${block}_Compare_Time`);
+                updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
+                updatedHeaders.push(`B${block}_Compare_Count`);
+            } else {
+                const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
+                for (let subhead of comparisons) {
+                    updatedHeaders.push(`B${block}_${subhead}`);
+                }
             }
         }
         if (showLegacy) {
@@ -406,7 +440,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             } else {
                                 const psAFScenario = logData['PS-AF-text-scenario']
                                 obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
-                                   psAFScenario, 2
+                                    psAFScenario, 2
                                 );
                             }
                         }
@@ -426,10 +460,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
                         dm += 1;
                     }
-                    
-                    // Handle comparison pages for this block (can be multiple or none)
+
                     if (comparisonPages.length === 1) {
-                        // Evals 8 and 9 style - single comparison page per block
                         const page = comparisonPages[0];
                         const pageName = page.pageName;
 
@@ -557,42 +589,45 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         }
                     } else if (comparisonPages.length > 1) {
                         // Eval 10 style - multiple comparison pages per block
-                        // For eval 10, we need to handle the pairwise comparisons differently
-                        // We'll aggregate the time spent and store individual comparison results
                         let totalComparisonTime = 0;
-                        let comparisonCount = 0;
-                        
-                        for (const page of comparisonPages) {
+                        let comparisonIndex = 1;
+
+                        // Sort comparison pages by order in orderLog for consistent ordering
+                        const sortedComparisonPages = comparisonPages.sort((a, b) => {
+                            const aIndex = entry.orderLog.indexOf(a.pageName);
+                            const bIndex = entry.orderLog.indexOf(b.pageName);
+                            return aIndex - bIndex;
+                        });
+
+                        for (const page of sortedComparisonPages) {
                             const pageName = page.pageName;
                             const order = pageName.split(' vs ');
                             totalComparisonTime += page.timeSpentOnPage;
-                            comparisonCount++;
-                            
-                            // Extract the comparison pair indices from the medic names
-                            const medic1 = order[0];
-                            const medic2 = order[1];
-                            
-                            // Store each comparison's results with a unique identifier
-                            const compKey = `B${block}_${medic1}_vs_${medic2}`;
-                            
+
+                            // Store each comparison's results in structured format matching headers
+                            obj[`B${block}_Compare${comparisonIndex}_Medics`] = pageName;
+
                             const fc = page.questions?.[pageName + ': Forced Choice']?.response;
-                            obj[compKey + '_FC'] = fc;
-                            obj[compKey + '_Conf'] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                            obj[compKey + '_Explain'] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
-                            
+                            obj[`B${block}_Compare${comparisonIndex}_FC`] = fc;
+
                             // Handle percent delegation if it exists
                             const percentDelegation = page.questions?.[pageName + ': Percent Delegation']?.response;
                             if (percentDelegation) {
-                                obj[compKey + '_Percent'] = percentDelegation;
+                                obj[`B${block}_Compare${comparisonIndex}_Percent`] = percentDelegation;
                             }
+
+                            obj[`B${block}_Compare${comparisonIndex}_Conf`] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                            obj[`B${block}_Compare${comparisonIndex}_Explain`] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
+
+                            comparisonIndex++;
                         }
-                        
+
                         // Store aggregate comparison time for the block
                         obj[`B${block}_Compare_Time`] = formatTimeMinutes(totalComparisonTime);
                         obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(totalComparisonTime);
-                        obj[`B${block}_Compare_Count`] = comparisonCount;
+                        obj[`B${block}_Compare_Count`] = sortedComparisonPages.length;
                     }
-                    
+
                     // Always increment block counter after processing each scenario
                     block += 1;
                 }
