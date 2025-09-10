@@ -62,7 +62,7 @@ const STARTING_HEADERS = [
     // ph1 demographics
     "The VR training experience was helpful in making the delegation decisions in these scenarios",
     "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
-    "I am a computer gaming enthusiast", 
+    "I am a computer gaming enthusiast",
     "I consider myself a seasoned first responder",
     "I have completed the SALT Triage Certificate Training Course",
     "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
@@ -112,7 +112,12 @@ const MULTI_KDMA_MAP = {
     "1": "Target 1",
     "2": "Target 2",
     "3": "Target 3",
-    "4": "Target 4"
+    "4": "Target 4",
+    //PSAF Combined hand made targets
+    "PS-low_AF-low": "low/low",
+    "PS-low_AF-high": "low/high",
+    "PS-high_AF-low": "high/low",
+    "PS-high_AF-high": "high/high",
 }
 
 function formatTimeMMSS(seconds, includeHours = false) {
@@ -133,7 +138,7 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, {'value': '10', 'label': '10 - PH2 September'}] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -327,19 +332,43 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             // get blocks of dms
             let block = 1;
             let dm = 1;
-            for (const pageName of ((!showLegacy && entry['orderLog']) ? entry['orderLog'] : Object.keys(entry)).filter((x) => x.includes('Medic'))) {
-                const page = entry[pageName.trimEnd()];
-                if (!page) {
-                    // should never occur
-                    if (lastPage) {
-                        console.error('Page not found! ', pageName);
+            if (!showLegacy && entry['orderLog']) {
+                const pagesByScenario = {}
+                // group pages into blocks using scenarioIndex
+                for (const pageName in entry) {
+                    const page = entry[pageName]
+                    if (page && typeof page === 'object' && page.scenarioIndex && (page.pageType === 'singleMedic' || page.pageType === 'comparison')) {
+                        if (!pagesByScenario[page.scenarioIndex]) {
+                            pagesByScenario[page.scenarioIndex] = [];
+                        }
+                        pagesByScenario[page.scenarioIndex].push(page)
                     }
-                    continue;
                 }
 
-                if ((page.pageType === 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
-                    const cleanPageName = pageName.split(': ').slice(-1).toString();
-                    if (!showLegacy) {
+                //use order log to determine order of blocks
+                const orderedScenarios = []
+                for (const pageName of entry.orderLog) {
+                    const page = entry[pageName.trimEnd()];
+                    if (page && page.scenarioIndex && !orderedScenarios.includes(page.scenarioIndex)) {
+                        orderedScenarios.push(page.scenarioIndex)
+                    }
+                }
+
+                //add data
+                for (const scenario of orderedScenarios) {
+                    const blockPages = pagesByScenario[scenario];
+                    if (!blockPages) continue;
+
+                    // Separate single medic pages from the comparison pages
+                    const singleMedicPages = blockPages.filter(p => p.pageType === 'singleMedic' && !p.pageName.includes('Omnibus'));
+                    const comparisonPages = blockPages.filter(p => p.pageType === 'comparison' && !p.pageName.includes('Omnibus'));
+
+                    dm = 1; // Reset decision-maker count for each block
+                    for (const page of singleMedicPages) {
+                        const pageName = page.pageName; // The original code uses pageName for some lookups
+                        const cleanPageName = pageName.split(': ').slice(-1).toString();
+
+                        // --- Start of singleMedic processing logic (copied from original) ---
                         obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
@@ -347,50 +376,63 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             const att = getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
-                            if (att != "AF-MF" && att != "PS-AF") {
+                            if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
                                 target = page.admTarget.split("-").slice(-1);
                             }
                             else {
-                                target = MULTI_KDMA_MAP[page.admTarget.split("-").slice(-1)];
+                                target = MULTI_KDMA_MAP[att.includes('Combined') ? page.admTarget : page.admTarget.split("-").slice(-1)];
                             }
                             obj[`B${block}_DM${dm}_Target`] = target;
                         }
                         else {
                             obj[`B${block}_DM${dm}_Target`] = page.admTarget;
                         }
-                    }
-                    obj[`B${block}_DM${dm}_Name`] = cleanPageName;
-                    obj[`B${block}_DM${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                    obj[`B${block}_DM${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                    if (!showPh2) {
-                        obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
-                    }
-                    else {
-                        // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
-                        const textScenario = logData["AF-text-scenario"];
-                        // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
-                        const isMultiKdma = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
-                        obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
-                            isMultiKdma ? adjustScenarioNumber(textScenario) : textScenario
-                        );
-                    }
-                    obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
-                    obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
-                    obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
-                    obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
-                    if (exploratory) {
+                        obj[`B${block}_DM${dm}_Name`] = cleanPageName;
+                        obj[`B${block}_DM${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
+                        obj[`B${block}_DM${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         if (!showPh2) {
-                            obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
-                            obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                            obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
                         }
                         else {
-                            obj[`B${block}_DM${dm}_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                            const textScenario = logData["AF-text-scenario"];
+                            const isMFAF = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
+                            const isCombined = page.scenarioIndex.includes('combined')
+                            const isPSAF = page.scenarioIndex.includes('PS-AF');
+
+                            if (!isPSAF) {
+                                obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
+                                    (isMFAF || isCombined) ? adjustScenarioNumber(textScenario, 3) : textScenario, 3
+                                );
+                            } else {
+                                const psAFScenario = logData['PS-AF-text-scenario']
+                                obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
+                                   psAFScenario, 2
+                                );
+                            }
                         }
+                        obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
+                        obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
+                        obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
+                        obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
+                        if (exploratory) {
+                            if (!showPh2) {
+                                obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                                obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                            }
+                            else {
+                                obj[`B${block}_DM${dm}_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                            }
+                        }
+
+                        dm += 1;
                     }
-                    dm += 1;
-                }
-                else if ((page.pageType === 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
-                    if (!showLegacy) {
+                    
+                    // Handle comparison pages for this block (can be multiple or none)
+                    if (comparisonPages.length === 1) {
+                        // Evals 8 and 9 style - single comparison page per block
+                        const page = comparisonPages[0];
+                        const pageName = page.pageName;
+
                         const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
                         // only works for dre/ph1 where we labelled alignment 
                         let alignment = page.admAlignment?.split(' vs ');
@@ -513,50 +555,48 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                 obj[`B${block}_FC3_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
                             }
                         }
+                    } else if (comparisonPages.length > 1) {
+                        // Eval 10 style - multiple comparison pages per block
+                        // For eval 10, we need to handle the pairwise comparisons differently
+                        // We'll aggregate the time spent and store individual comparison results
+                        let totalComparisonTime = 0;
+                        let comparisonCount = 0;
+                        
+                        for (const page of comparisonPages) {
+                            const pageName = page.pageName;
+                            const order = pageName.split(' vs ');
+                            totalComparisonTime += page.timeSpentOnPage;
+                            comparisonCount++;
+                            
+                            // Extract the comparison pair indices from the medic names
+                            const medic1 = order[0];
+                            const medic2 = order[1];
+                            
+                            // Store each comparison's results with a unique identifier
+                            const compKey = `B${block}_${medic1}_vs_${medic2}`;
+                            
+                            const fc = page.questions?.[pageName + ': Forced Choice']?.response;
+                            obj[compKey + '_FC'] = fc;
+                            obj[compKey + '_Conf'] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
+                            obj[compKey + '_Explain'] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
+                            
+                            // Handle percent delegation if it exists
+                            const percentDelegation = page.questions?.[pageName + ': Percent Delegation']?.response;
+                            if (percentDelegation) {
+                                obj[compKey + '_Percent'] = percentDelegation;
+                            }
+                        }
+                        
+                        // Store aggregate comparison time for the block
+                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(totalComparisonTime);
+                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(totalComparisonTime);
+                        obj[`B${block}_Compare_Count`] = comparisonCount;
                     }
-                    else {
-                        const order = pageName.split(' vs ');
-                        obj[`B${block}_Compare_DM1`] = order[0];
-                        obj[`B${block}_Compare_DM2`] = order[1];
-                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                        obj[`B${block}_Compare_FC1`] = page.questions?.[pageName + ': Forced Choice']?.response ?? page.questions?.[pageName + ': Given the information provided']?.response;
-                        obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
-                        obj[`B${block}_Compare_FC1_Differences`] = page.questions?.[pageName + ': What, if anything, would you have done differently in the presented scenario?']?.response;
-                    }
+                    
+                    // Always increment block counter after processing each scenario
                     block += 1;
-                    dm = 1;
-                }
-                if (showLegacy && pageName.includes('Omnibus')) {
-                    const cleanPageName = pageName.split(': ').slice(-1).toString();
-                    if (page.pageType === 'singleMedic') {
-                        obj[`B${block}_Omni${dm}_Name`] = cleanPageName;
-                        obj[`B${block}_Omni${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Omni${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                        obj[`B${block}_Omni${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
-
-                        obj[`B${block}_Omni${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
-                        obj[`B${block}_Omni${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
-                        obj[`B${block}_Omni${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
-                        obj[`B${block}_Omni${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
-                        dm += 1;
-                    }
-                    else if (page.pageType === 'comparison') {
-                        const order = cleanPageName.split(' vs ');
-                        obj[`B${block}_Compare_Omni1`] = order[0];
-                        obj[`B${block}_Compare_Omni2`] = order[1];
-                        obj[`B${block}_Omni_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Omni_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                        obj[`B${block}_Omni_Compare_FC1`] = page.questions?.[cleanPageName + ': Forced Choice']?.response ?? page.questions?.[cleanPageName + ': Given the information provided']?.response;
-                        obj[`B${block}_Omni_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[cleanPageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Omni_Compare_FC1_Explain`] = page.questions?.[cleanPageName + ': Explain your response to the delegation preference question']?.response;
-                        block += 1;
-                        dm = 1;
-                    }
                 }
             }
-
             allObjs.push(obj);
         }
         // prep filters and data (sort by pid)
