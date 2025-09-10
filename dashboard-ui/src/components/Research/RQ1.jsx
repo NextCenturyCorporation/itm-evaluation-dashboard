@@ -12,7 +12,8 @@ const ALLOWED_EVAL_OPTIONS = [
     { value: 5, label: 'Phase 1 Evaluation' },
     { value: 6, label: 'Jan 2025 Evaluation' },
     { value: 8, label: 'Phase II June 2025 Collaboration' },
-    { value: 9, label: 'Phase II July 2025 Collaboration' }
+    { value: 9, label: 'Phase II July 2025 Collaboration' },
+    { value: 10, label: 'Phase II September 2025 Collaboration' }
 ];
 
 export function RQ1() {

@@ -219,6 +219,7 @@ export function getEval89Attributes(target) {
 }
 
 export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
+    const isPhase2 = [8, 9, 10].includes(evalNum);
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = dataTextResults.getAllScenarioResults;
@@ -241,7 +242,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     }
 
     // find participants that have completed the delegation survey
-    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || ((evalNum === 5 || evalNum === 6 || evalNum === 8 || evalNum === 9) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const wrong_del_materials = evalNum === 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
@@ -262,8 +263,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
             continue;
         }
         const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
-        if (evalNum === 8 || evalNum === 9) {
-            logData['ADMOrder'] = 5;
+        if (isPhase2) {
+            logData['ADMOrder'] = evalNum == 10 ? 6 : 5;
         }
         // set up object to store participant data
         const admOrder = pid === '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
@@ -281,7 +282,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     const ta2Matches = obj['admAuthor'] === (entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
 
-                    if (evalNum >= 8) {
+                    if (evalNum == 8 || evalNum == 9) {
                         // All text scenarios are same number
                         const ph2_scenario = "PH2-" + logData["AF-text-scenario"];
                         let mapping_array_number;
@@ -310,6 +311,37 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                         return alignMatches && ta2Matches && scenarioMatches;
                     }
+                    if (evalNum == 10) {
+                        const ph2_scenario = "PH2-" + logData["AF-text-scenario"];
+                        let mapping_array_number;
+                        switch (entry['Attribute']) {
+                            case "AF":
+                                mapping_array_number = 0;
+                                break;
+                            case "MF":
+                                mapping_array_number = 1;
+                                break;
+                            case "PS":
+                                mapping_array_number = 2;
+                                break;
+                            case "PSAF":
+                            case "PS-AF":
+                                mapping_array_number = 3;
+                                break;
+                            default:
+                                console.log("Scenario not found");
+                        }
+                        if (mapping_array_number == 3) {
+                            scenario = `Sept2025-${entry["Attribute"]}${logData["PS-AF-text-scenario"]}-eval`;
+                        }
+                        else {
+                            scenario = getDelEnvMapping(evalNum)[ph2_scenario][mapping_array_number];
+                        }
+
+                        const scenarioMatches = obj['scenarioIndex']?.slice(0, -6) === scenario?.slice(0, -6);
+
+                        return ta2Matches && scenarioMatches;
+                    }
 
                     if (entry['TA1'] === 'Adept') {
                         scenario = entry['Attribute'] === 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
@@ -329,7 +361,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 const entryObj = {};
                 entryObj['Delegator ID'] = pid;
                 entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
-                entryObj['Datasource'] = evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
+                entryObj['Datasource'] = evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : evalNum == 10 ? "P2E_Sept_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
                 entryObj['Delegator_grp'] = logData['Type'] === 'Civ' ? 'Civilian' : logData['Type'] === 'Mil' ? 'Military' : logData['Type'];
                 const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
                 const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
@@ -403,7 +435,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] === 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] === 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
                 entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'comparison' ? '-' : t;
 
-                const choiceProcess = ((evalNum === 8 || evalNum === 9) && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
+                const choiceProcess = ((isPhase2) && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
                     ? determineChoiceProcessJune2025(textResultsForPID, page, t)
                     : page['admChoiceProcess'];
 
@@ -453,7 +485,11 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                     switch (true) {
                         case entryObj['Target'].toLowerCase().indexOf("safety") !== -1 || aligned_target_name.indexOf("safety") !== -1:
-                            entryObj['Attribute'] = "PS";
+                            if (entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1) {
+                                entryObj['Attribute'] = "PS-AF";
+                            } else {
+                                entryObj['Attribute'] = "PS";
+                            }
                             break;
                         case entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1:
                             if (entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
@@ -476,7 +512,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             entryObj['Attribute'] = "AF-MF";
                             break;
                         default:
-                            console.log("Target and Attributes don't match for Evaluations greater than 8.")
+                            console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name)
                     }
                     // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
                     entryObj['Probe Set Assessment'] = logData["AF-text-scenario"];
@@ -518,7 +554,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         entryObj['Delegation preference (A/M)'] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
                         // need to back-populate previous rows with which was chosen
                         for (let i = 0; i < 3; i++) {
-                            switch (allObjs[allObjs.length - 1 - i]['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                            switch (allObjs?.[allObjs.length - 1 - i]?.['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
                                 case 'aligned':
                                     allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
                                     allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
@@ -543,7 +579,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                 entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': This medic is trustworthy']?.['response'] ?? '-' : '-'];
                 entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decisions that this medic made?']?.['response'] ?? '-' : '-'];
-                if (evalNum === 8 || evalNum === 9) {
+                if (isPhase2) {
                     entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': this medic is trustworthy']?.['response'] ?? '-' : '-'];
                     entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decision that this medic made?']?.['response'] ?? '-' : '-'];
                 }
