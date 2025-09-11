@@ -273,12 +273,12 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         const ad_scenario = pid === '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1']?.includes('AD') ? logData['Del-1'] : logData['Del-2']));
 
         for (const entry of admOrder) {
-            const types = ['baseline', 'aligned', 'misaligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group', 'comparison'];
+            const types = ['baseline', 'aligned', 'misaligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group', 'comparison', 'PS-AF-1', 'PS-AF-2', 'PS-AF-3', 'PS-AF-4', 'low', 'high'];
             for (const t of types) {
 
                 let page = Object.keys(res.results).find((k) => {
                     const obj = res.results[k];
-                    const alignMatches = obj['admAlignment'] === t || (obj['pageType'] === 'comparison' && t === 'comparison');
+                    const alignMatches = obj['admAlignment'] === t || (obj['pageType'] === 'comparison' && t === 'comparison') || (evalNum === 10 && (obj['admTarget'] == t));
                     const ta2Matches = obj['admAuthor'] === (entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
 
@@ -340,7 +340,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                         const scenarioMatches = obj['scenarioIndex']?.replace('-combined', '').slice(0, -6) === scenario?.replace('-combined', '').slice(0, -6);
 
-                        return ta2Matches && scenarioMatches;
+                        return ta2Matches && scenarioMatches && alignMatches;
                     }
 
                     if (entry['TA1'] === 'Adept') {
@@ -387,7 +387,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 allScenarios.push(entryObj['Scenario']);
                 entryObj['TA2_Name'] = entry['TA2'];
                 allTA2s.push(entry['TA2']);
-                entryObj['ADM_Type'] = t === 'comparison' ? 'comparison' : ['misaligned', 'aligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'].includes(t) ? 'aligned' : 'baseline';
+                entryObj['ADM_Type'] = t === 'comparison' ? 'comparison' : evalNum === 10 ? 'aligned' : ['misaligned', 'aligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'].includes(t) ? 'aligned' : 'baseline';
                 entryObj['Target'] = (evalNum >= 8 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
                 if (entryObj['Target'] !== '-') {
                     allTargets.push(entryObj['Target']);
@@ -474,55 +474,74 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 }
 
                 if (evalNum >= 8) {
-                    entryObj['Alignment score (ADM|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
-                    entryObj['Alignment score (Delegator|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
-                    entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+                    if (evalNum !== 10) {
+                        entryObj['Alignment score (ADM|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
+                        entryObj['Alignment score (Delegator|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
+                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+                    }
 
                     let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
+                    const entryObjTarget = entryObj['Target'].toLowerCase();
+                    const scenario = page["scenarioIndex"]?.toLowerCase();
                     if (aligned_target_name === undefined) {
                         aligned_target_name = "";
                     }
 
+                    const doesTargetContain = (str) => {
+                        return entryObjTarget.indexOf(str) !== -1 || aligned_target_name.indexOf(str) !== -1;
+                    }
+
+                    const doesScenarioContain = (str) => {
+                        return scenario?.indexOf(str) !== -1;
+                    }
+
                     switch (true) {
-                        case entryObj['Target'].toLowerCase().indexOf("safety") !== -1 || aligned_target_name.indexOf("safety") !== -1:
-                            if (entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1) {
+                        case doesTargetContain("safety") || doesTargetContain("ps-") || doesScenarioContain("-ps"):
+                            if (doesTargetContain("affiliation") || doesTargetContain("ps-af") || doesScenarioContain("ps-af")) {
                                 entryObj['Attribute'] = "PS-AF";
                             } else {
                                 entryObj['Attribute'] = "PS";
                             }
                             break;
-                        case entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1:
-                            if (entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
+                        case doesTargetContain("affiliation") || doesScenarioContain("-af"):
+                            if (entryObjTarget.indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
                                 entryObj['Attribute'] = "AF-MF";
                             } else {
                                 entryObj['Attribute'] = "AF";
                             }
                             break;
-                        case entryObj['Target'].toLowerCase().indexOf("search") !== -1 || aligned_target_name.indexOf("search") !== -1:
+                        case doesTargetContain("search"):
                             entryObj['Attribute'] = "SS";
                             break;
-                        case entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1:
-                            if (entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1) {
+                        case doesTargetContain("merit"):
+                            if (doesTargetContain("affiliation")) {
                                 entryObj['Attribute'] = "AF-MF";
                             } else {
                                 entryObj['Attribute'] = "MF";
                             }
                             break;
-                        case page["scenarioIndex"]?.indexOf("-AF-MF") !== -1:
+                        case doesScenarioContain("-af-mf"):
                             entryObj['Attribute'] = "AF-MF";
                             break;
                         default:
-                            console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name)
+                            console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name, scenario)
                     }
+
                     // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
-                    entryObj['Probe Set Assessment'] = logData["AF-text-scenario"];
+                    entryObj['Probe Set Assessment'] = page["scenarioIndex"].includes('PS-AF') ? logData["PS-AF-text-scenario"] : logData["AF-text-scenario"];
                     allProbeSetAssessment.push(entryObj['Probe Set Assessment'])
                     // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
-                    const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
-                    entryObj['Probe Set Observation'] = adjustScenarioNumber(
-                        isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
-                    );
-                    
+                    if (evalNum !== 10) {
+                        const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
+                        entryObj['Probe Set Observation'] = adjustScenarioNumber(
+                            isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
+                        );
+                    }
+                    else {
+                        const isMultiKdma = page['scenarioIndex'].includes('PS-AF');
+                        const isCombined = page['scenarioIndex'].includes("PSAF");
+                        entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData["PS-AF-text-scenario"], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
+                    }
                     allProbeSetObservation.push(entryObj['Probe Set Observation'])
                     entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                 }
@@ -538,11 +557,14 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                 }
 
                 entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
+
                 if (t === 'comparison') {
                     const adms = page['pageName'].split(' vs ');
-
-                    if (evalNum >= 8 && adms.length === 4) {
-                        handleMultiKdmaComparison(res.results, page, entryObj, allObjs)
+                    if (evalNum == 10 && adms.length === 2) {
+                        handlePSAFPreferences(res.results, page, entryObj, allObjs);
+                    }
+                    else if (evalNum >= 8 && adms.length === 4) {
+                        handleMultiKdmaComparison(res.results, page, entryObj, allObjs);
                     } else {
                         const alignedAdm = adms[1];
                         const baselineAdm = adms[0];
@@ -590,6 +612,31 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     }
 
     return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation };
+}
+
+function handlePSAFPreferences(survey, page, entryObj, allObjs) {
+    const adms = page['pageName'].split(' vs ');
+    const admTargetMap = {};
+    const targetIDs = [];
+    for (const adm of adms) {
+        const admPage = survey[adm];
+        if (admPage) {
+            admTargetMap[adm] = admPage.admTarget;
+            targetIDs.push(admPage.admTarget.slice(-1));
+        }
+    }
+    const pid = entryObj['Delegator ID'];
+    const choice = admTargetMap[page.questions?.[page['pageName'] + ": Forced Choice"]?.response] ?? null;
+    const columnName = `Delegation Preference (PSAF-${targetIDs[0]}/PSAF-${targetIDs[1]})`
+    entryObj[columnName] = choice;
+    const firstRow = allObjs.find(obj => obj['Delegator ID'] === pid && obj['Target'] === admTargetMap[adms[0]])
+    if (firstRow) {
+        firstRow[columnName] = choice === admTargetMap[adms[0]] ? 'y' : 'n'
+    }
+    const secondRow = allObjs.find(obj => obj['Delegator ID'] === pid && obj['Target'] === admTargetMap[adms[1]])
+    if (secondRow) {
+        secondRow[columnName] = choice === admTargetMap[adms[1]] ? 'y' : 'n'
+    }
 }
 
 function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
