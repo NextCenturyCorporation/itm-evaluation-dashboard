@@ -338,7 +338,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             scenario = getDelEnvMapping(evalNum)[ph2_scenario][mapping_array_number];
                         }
 
-                        const scenarioMatches = obj['scenarioIndex']?.slice(0, -6) === scenario?.slice(0, -6);
+                        const scenarioMatches = obj['scenarioIndex']?.replace('-combined', '').slice(0, -6) === scenario?.replace('-combined', '').slice(0, -6);
 
                         return ta2Matches && scenarioMatches;
                     }
