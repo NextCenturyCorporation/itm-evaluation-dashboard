@@ -222,7 +222,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
 
                 for (let fc = 1; fc <= 6; fc++) {
-                    updatedHeaders.push(`B${block}_Compare_FC${fc}_DMs`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Alignment`);
                     updatedHeaders.push(`B${block}_Compare_FC${fc}`);
                     updatedHeaders.push(`B${block}_Compare_FC${fc}_Percent`);
                     updatedHeaders.push(`B${block}_Compare_FC${fc}_Conf`);
@@ -376,9 +376,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     const singleMedicPages = blockPages.filter(p => p.pageType === 'singleMedic' && !p.pageName.includes('Omnibus'));
                     const comparisonPages = blockPages.filter(p => p.pageType === 'comparison' && !p.pageName.includes('Omnibus'));
 
-                    dm = 1; 
+                    dm = 1;
                     for (const page of singleMedicPages) {
-                        const pageName = page.pageName; 
+                        const pageName = page.pageName;
                         const cleanPageName = pageName.split(': ').slice(-1).toString();
 
                         obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
@@ -493,7 +493,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                         const explanation = page.questions[`${pair}: Explain your response to the delegation preference question`]?.response;
                                         const percentDelegation = page.questions[`${pair}: Percent Delegation`]?.response;
 
-                                        obj[`B${block}_Compare_FC${fcIndex}_DMs`] = pair;
+                                        const medicNames = pair.split(' vs ').map(name => name.trim());
+                                        const alignments = medicNames.map(name => {
+                                            const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
+                                            return MULTI_KDMA_MAP[alignment] || alignment;
+                                        });
+
+                                        obj[`B${block}_Compare_FC${fcIndex}_Alignment`] = alignments.join(' vs ');
                                         obj[`B${block}_Compare_FC${fcIndex}`] = response;
                                         obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
                                         obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
@@ -510,7 +516,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                     const explanation = page.questions[`${pageName}: Explain your response to the delegation preference question`]?.response;
                                     const percentDelegation = page.questions[`${pageName}: Percent Delegation`]?.response;
 
-                                    obj[`B${block}_Compare_FC${fcIndex}_DMs`] = pageName;
+                                    const medicNames = pageName.split(' vs ').map(name => name.trim()); 
+                                    const alignments = medicNames.map(name => {
+                                        const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
+                                        return MULTI_KDMA_MAP[alignment] || alignment;
+                                    });
+
+                                    obj[`B${block}_Compare_FC${fcIndex}_Alignment`] = alignments.join(' vs ');
                                     obj[`B${block}_Compare_FC${fcIndex}`] = response;
                                     obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
                                     obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
