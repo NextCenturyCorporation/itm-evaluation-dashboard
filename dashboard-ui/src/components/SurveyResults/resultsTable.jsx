@@ -191,25 +191,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
         const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
 
-
-        const hasMultipleComparisonsPerBlock = data.some(entry => {
-            const e = entry.results ?? entry;
-            if (!e || !e.orderLog) return false;
-
-            const pagesByScenario = {};
-            for (const pageName in e) {
-                const page = e[pageName];
-                if (page && typeof page === 'object' && page.scenarioIndex && page.pageType === 'comparison') {
-                    if (!pagesByScenario[page.scenarioIndex]) {
-                        pagesByScenario[page.scenarioIndex] = 0;
-                    }
-                    pagesByScenario[page.scenarioIndex]++;
-                }
-            }
-
-            return Object.values(pagesByScenario).some(count => count > 1);
-        });
-
         for (let block = 1; block < 5; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
@@ -237,6 +218,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     updatedHeaders.push(`B${block}_Compare_DM${dm}`);
                 }
 
+                updatedHeaders.push(`B${block}_Compare_Time`);
+                updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
+
                 for (let fc = 1; fc <= 6; fc++) {
                     updatedHeaders.push(`B${block}_Compare_FC${fc}_DMs`);
                     updatedHeaders.push(`B${block}_Compare_FC${fc}`);
@@ -244,8 +228,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     updatedHeaders.push(`B${block}_Compare_FC${fc}_Conf`);
                     updatedHeaders.push(`B${block}_Compare_FC${fc}_Explain`);
                 }
-                updatedHeaders.push(`B${block}_Compare_Time`);
-                updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
             }
         }
         if (showLegacy) {
@@ -391,16 +373,14 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     const blockPages = pagesByScenario[scenario];
                     if (!blockPages) continue;
 
-                    // Separate single medic pages from the comparison pages
                     const singleMedicPages = blockPages.filter(p => p.pageType === 'singleMedic' && !p.pageName.includes('Omnibus'));
                     const comparisonPages = blockPages.filter(p => p.pageType === 'comparison' && !p.pageName.includes('Omnibus'));
 
-                    dm = 1; // Reset decision-maker count for each block
+                    dm = 1; 
                     for (const page of singleMedicPages) {
-                        const pageName = page.pageName; // The original code uses pageName for some lookups
+                        const pageName = page.pageName; 
                         const cleanPageName = pageName.split(': ').slice(-1).toString();
 
-                        // --- Start of singleMedic processing logic (copied from original) ---
                         obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
