@@ -638,6 +638,7 @@ function handlePSAFPreferences(survey, page, entryObj, allObjs) {
             targetIDs.push(admPage.admTarget.slice(-1));
         }
     }
+    targetIDs.sort();
     const pid = entryObj['Delegator ID'];
     const choice = admTargetMap[page.questions?.[page['pageName'] + ": Forced Choice"]?.response] ?? null;
     const columnName = `Delegation Preference (PSAF-${targetIDs[0]}/PSAF-${targetIDs[1]})`
