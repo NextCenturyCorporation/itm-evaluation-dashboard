@@ -389,7 +389,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
                             if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
-                                target = page.admTarget.split("-").slice(-1);
+                                target = page.admTarget.split("-").slice(-1)[0];
                             }
                             else {
                                 target = MULTI_KDMA_MAP[att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1)];
