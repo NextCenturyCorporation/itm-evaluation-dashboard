@@ -109,10 +109,10 @@ const MULTI_KDMA_MAP = {
     "1.0_0.0": "high/low",
     "1.0_1.0": "high/high",
     //PS-AF hand made targets
-    "1": "Target 1",
-    "2": "Target 2",
-    "3": "Target 3",
-    "4": "Target 4",
+    "PS-AF-1": "Target 1",
+    "PS-AF-2": "Target 2",
+    "PS-AF-3": "Target 3",
+    "PS-AF-4": "Target 4",
     //PSAF Combined hand made targets
     "PS-low_AF-low": "low/low",
     "PS-low_AF-high": "low/high",
@@ -233,7 +233,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
 
             if (showPh2) {
-                // Generate headers for up to 10 FCs per block (should be more than enough)
+                for (let dm = 1; dm <= 4; dm++) {
+                    updatedHeaders.push(`B${block}_Compare_DM${dm}`);
+                }
+
                 for (let fc = 1; fc <= 6; fc++) {
                     updatedHeaders.push(`B${block}_Compare_FC${fc}_DMs`);
                     updatedHeaders.push(`B${block}_Compare_FC${fc}`);
@@ -410,7 +413,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                 target = page.admTarget.split("-").slice(-1);
                             }
                             else {
-                                target = MULTI_KDMA_MAP[att.includes('Combined') ? page.admTarget : page.admTarget.split("-").slice(-1)];
+                                target = MULTI_KDMA_MAP[att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1)];
                             }
                             obj[`B${block}_DM${dm}_Target`] = target;
                         }
@@ -467,11 +470,35 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             return aIndex - bIndex;
                         });
 
+                        const uniqueMedics = [];
+                        const seenMedics = new Set();
+
+                        for (const page of sortedComparisonPages) {
+                            const pageName = page.pageName;
+                            if (pageName.includes(' vs ')) {
+                                const medicNames = pageName.split(' vs ');
+                                medicNames.forEach(name => {
+                                    const trimmedName = name.trim();
+                                    if (!seenMedics.has(trimmedName)) {
+                                        uniqueMedics.push(trimmedName);
+                                        seenMedics.add(trimmedName);
+                                    }
+                                });
+                            }
+                        }
+
+                        uniqueMedics.forEach((medicName, index) => {
+                            const dmNumber = index + 1;
+                            const medicAlignment = entry[medicName]?.admAlignment || entry[medicName]?.admTarget || 'unknown';
+                            obj[`B${block}_Compare_DM${dmNumber}`] = `${medicName} - ${MULTI_KDMA_MAP[medicAlignment] || medicAlignment}`;
+                        });
+
                         for (const page of sortedComparisonPages) {
                             const pageName = page.pageName;
                             totalComparisonTime += page.timeSpentOnPage;
 
                             if (pageName.includes(' vs ')) {
+
                                 const forcedChoiceKeys = Object.keys(page.questions).filter(key =>
                                     key.endsWith(': Forced Choice') || key.endsWith(': Percent Delegation')
                                 );
@@ -530,7 +557,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         }
         // prep filters and data (sort by pid)
         allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
-        console.log(allObjs)
         setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
         setVersions(Array.from(new Set(allVersions)).filter((x) => isDefined(x)).map((x) => x.toString()));
         setFormattedData(allObjs);
