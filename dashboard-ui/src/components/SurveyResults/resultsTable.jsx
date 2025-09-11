@@ -246,7 +246,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 }
                 updatedHeaders.push(`B${block}_Compare_Time`);
                 updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
-                updatedHeaders.push(`B${block}_Compare_Count`);
             }
         }
         if (showLegacy) {
@@ -545,10 +544,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             }
                         }
 
-                        // Store aggregate comparison data for the block
                         obj[`B${block}_Compare_Time`] = formatTimeMinutes(totalComparisonTime);
                         obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(totalComparisonTime);
-                        obj[`B${block}_Compare_Count`] = fcIndex - 1;
                     }
                     block += 1;
                 }
