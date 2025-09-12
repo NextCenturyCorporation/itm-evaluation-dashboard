@@ -238,6 +238,23 @@ export const HEADER = {
         "MF_KDMA_Text",
         "PS_KDMA_Text",
         "SS_KDMA_Text"
+    ],
+    10: [
+        "Participant ID",
+        "Date",
+        "MedRole",
+        "MedExp",
+        "MilitaryExp",
+        "YrsMilExp",
+        "PropTrust",
+        "Delegation",
+        "Trust",
+        "Probe Set",
+        "AF_KDMA_Text",
+        "MF_KDMA_Text",
+        "PS_KDMA_Text",
+        "PS_Multi_KDMA_Text",
+        "AF_Multi_KDMA_TEXT"
     ]
 };
 
