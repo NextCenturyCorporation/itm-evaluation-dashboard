@@ -345,7 +345,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     evalNumber = lastScenario.evalNumber;
                 }
 
-                obj['Evaluation'] = obj['Evaluation'] ?? lastScenario?.evalName;
+                obj['Evaluation'] = (obj['Evaluation'] ?? lastScenario?.evalName)?.replace(/Phase 2\s*/g, '');
                 const completedScenarios = scenarios.map((x) => x.scenario_id);
 
                 const isPhase2 = evalNumber >= 8;

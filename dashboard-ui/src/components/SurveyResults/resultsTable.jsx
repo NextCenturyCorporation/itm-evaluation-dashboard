@@ -22,7 +22,8 @@ const EVAL_MAP = {
     5: 'PH1',
     6: 'JAN25',
     8: 'PH2 June',
-    9: 'PH2 July'
+    9: 'PH2 July',
+    10: 'PH2 September'
 }
 
 const TRUST_MAP = {
@@ -61,7 +62,7 @@ const STARTING_HEADERS = [
     // ph1 demographics
     "The VR training experience was helpful in making the delegation decisions in these scenarios",
     "I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs",
-    "I am a computer gaming enthusiast", 
+    "I am a computer gaming enthusiast",
     "I consider myself a seasoned first responder",
     "I have completed the SALT Triage Certificate Training Course",
     "I have completed disaster response training such as those offered by the American Red Cross, FEMA, or the Community Emergency Response Team (CERT)",
@@ -88,7 +89,6 @@ const STARTING_HEADERS = [
     "When did you last complete TCCC training or recertification",
     "How would you rate your expertise with TCCC procedures",
     "How many real-world casualties have you assessed using TCCC protocols",
-
     "I feel that people are generally reliable",
     "I usually trust people until they give me a reason not to trust them",
     "Trusting another person is not difficult for me",
@@ -103,10 +103,21 @@ const STARTING_HEADERS = [
 ];
 
 const MULTI_KDMA_MAP = {
+    //MF-AF targets
     "0.0_0.0": "low/low",
     "0.0_1.0": "low/high",
     "1.0_0.0": "high/low",
-    "1.0_1.0": "high/high"
+    "1.0_1.0": "high/high",
+    //PS-AF hand made targets
+    "PS-AF-1": "Target 1",
+    "PS-AF-2": "Target 2",
+    "PS-AF-3": "Target 3",
+    "PS-AF-4": "Target 4",
+    //PSAF Combined hand made targets
+    "PS-low_AF-low": "low/low",
+    "PS-low_AF-high": "low/high",
+    "PS-high_AF-low": "high/low",
+    "PS-high_AF-high": "high/high",
 }
 
 function formatTimeMMSS(seconds, includeHours = false) {
@@ -127,7 +138,7 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -143,7 +154,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
     const [showLegacy, setShowLegacy] = React.useState(false);
-    const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false);
+    const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
@@ -179,6 +190,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         }
 
         const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
+
         for (let block = 1; block < 5; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
@@ -200,9 +212,22 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 exploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
                 exploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain', 'FC3_Align_Diff');
             }
-            const comparisons = showLegacy ? legacyCompHeaders : (exploratory ? exploratoryCompHeaders : nonExploratoryCompHeaders);
-            for (let subhead of comparisons) {
-                updatedHeaders.push(`B${block}_${subhead}`);
+
+            if (showPh2) {
+                for (let dm = 1; dm <= 4; dm++) {
+                    updatedHeaders.push(`B${block}_Compare_DM${dm}`);
+                }
+
+                updatedHeaders.push(`B${block}_Compare_Time`);
+                updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
+
+                for (let fc = 1; fc <= 6; fc++) {
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Alignment`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Percent`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Conf`);
+                    updatedHeaders.push(`B${block}_Compare_FC${fc}_Explain`);
+                }
             }
         }
         if (showLegacy) {
@@ -321,236 +346,202 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             // get blocks of dms
             let block = 1;
             let dm = 1;
-            for (const pageName of ((!showLegacy && entry['orderLog']) ? entry['orderLog'] : Object.keys(entry)).filter((x) => x.includes('Medic'))) {
-                const page = entry[pageName.trimEnd()];
-                if (!page) {
-                    // should never occur
-                    if (lastPage) {
-                        console.error('Page not found! ', pageName);
+            if (!showLegacy && entry['orderLog']) {
+                const pagesByScenario = {}
+                // group pages into blocks using scenarioIndex
+                for (const pageName in entry) {
+                    const page = entry[pageName]
+                    if (page && typeof page === 'object' && page.scenarioIndex && (page.pageType === 'singleMedic' || page.pageType === 'comparison')) {
+                        if (!pagesByScenario[page.scenarioIndex]) {
+                            pagesByScenario[page.scenarioIndex] = [];
+                        }
+                        pagesByScenario[page.scenarioIndex].push(page)
                     }
-                    continue;
                 }
 
-                if ((page.pageType === 'singleMedic' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes('Scenario'))) {
-                    const cleanPageName = pageName.split(': ').slice(-1).toString();
-                    if (!showLegacy) {
+                //use order log to determine order of blocks
+                const orderedScenarios = []
+                for (const pageName of entry.orderLog) {
+                    const page = entry[pageName.trimEnd()];
+                    if (page && page.scenarioIndex && !orderedScenarios.includes(page.scenarioIndex)) {
+                        orderedScenarios.push(page.scenarioIndex)
+                    }
+                }
+
+                //add data
+                for (const scenario of orderedScenarios) {
+                    const blockPages = pagesByScenario[scenario];
+                    if (!blockPages) continue;
+
+                    const singleMedicPages = blockPages.filter(p => p.pageType === 'singleMedic' && !p.pageName.includes('Omnibus'));
+                    const comparisonPages = blockPages.filter(p => p.pageType === 'comparison' && !p.pageName.includes('Omnibus'));
+
+                    dm = 1;
+                    for (const page of singleMedicPages) {
+                        const pageName = page.pageName;
+                        const cleanPageName = pageName.split(': ').slice(-1).toString();
+
                         obj[`B${block}_DM${dm}_TA1`] = page.scenarioIndex?.includes('vol') || page.scenarioIndex?.includes('qol') ? 'ST' : 'AD';
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
                         if (showPh2) {
-                            const att = getEval89Attributes(page.admTarget);
+                            const att = getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
-                            if (att != "AF-MF") {
-                                target = page.admTarget.split("-").slice(-1);
+                            if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
+                                target = page.admTarget.split("-").slice(-1)[0];
                             }
                             else {
-                                target = MULTI_KDMA_MAP[page.admTarget.split("-").slice(-1)];
+                                target = MULTI_KDMA_MAP[att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1)];
                             }
                             obj[`B${block}_DM${dm}_Target`] = target;
                         }
                         else {
                             obj[`B${block}_DM${dm}_Target`] = page.admTarget;
                         }
-                    }
-                    obj[`B${block}_DM${dm}_Name`] = cleanPageName;
-                    obj[`B${block}_DM${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                    obj[`B${block}_DM${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                    if (!showPh2) {
-                        obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
-                    }
-                    else {
-                        // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
-                        const textScenario = logData["AF-text-scenario"];
-                        // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
-                        const isMultiKdma = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
-                        obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
-                            isMultiKdma ? adjustScenarioNumber(textScenario) : textScenario
-                        );
-                    }
-                    obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
-                    obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
-                    obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
-                    obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
-                    if (exploratory) {
+                        obj[`B${block}_DM${dm}_Name`] = cleanPageName;
+                        obj[`B${block}_DM${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
+                        obj[`B${block}_DM${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         if (!showPh2) {
-                            obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
-                            obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                            obj[`B${block}_DM${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
                         }
                         else {
-                            obj[`B${block}_DM${dm}_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
-                        }
-                    }
-                    dm += 1;
-                }
-                else if ((page.pageType === 'comparison' && !pageName.includes('Omnibus')) || (showLegacy && !page.pageType && pageName.includes(' vs '))) {
-                    if (!showLegacy) {
-                        const order = pageName.replace(' vs  vs ', ' vs ').split(' vs ');
-                        // only works for dre/ph1 where we labelled alignment 
-                        let alignment = page.admAlignment?.split(' vs ');
-                        if (showPh2) {
-                            alignment = [];
-                            for (const adm of order) {
-                                alignment.push(entry[adm]['admAlignment']);
-                            }
-                        }
+                            const textScenario = logData["AF-text-scenario"];
+                            const isMFAF = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
+                            const isCombined = page.scenarioIndex.includes('combined')
+                            const isPSAF = page.scenarioIndex.includes('PS-AF');
 
-                        // multikdma setup 
-                        let multiFc1 = '';
-                        let multiFc2 = '';
-                        let multiFc3 = '';
-                        let mostAligned = '';
-                        let targets = ['high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'low-affiliation-high-merit'];
-                        if (alignment.length > 3) {
-                            for (const t of targets) {
-                                if (alignment.indexOf(t) == -1) {
-                                    mostAligned = t;
-                                    break;
-                                }
-                            }
-                            multiFc1 = mostAligned + ' vs ' + alignment[1];
-                            multiFc2 = mostAligned + ' vs ' + alignment[2];
-                            multiFc3 = mostAligned + ' vs ' + alignment[3];
-                        }
-
-                        // set up exploratory variables to find alignment difference
-                        let dreAligned, ph1Aligned, dreBaseline, ph1Baseline, dreMisaligned, ph1Misaligned, ph2Aligned, ph2Baseline, ph2Misaligned, ph2Multi1, ph2Multi2, ph2Multi3, ph2Multi4;
-
-                        if (exploratory && comparisonData) {
-                            if (!showPh2) {
-                                dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                dreBaseline = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                                ph1Baseline = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                                dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                                ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                            }
-                            else if (order.length < 4) {
-                                ph2Aligned = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                ph2Baseline = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'baseline', page['scenarioIndex']))?.['score'];
-                                ph2Misaligned = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
+                            if (!isPSAF) {
+                                obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
+                                    (isMFAF || isCombined) ? adjustScenarioNumber(textScenario, 3) : textScenario, 3
+                                );
                             } else {
-                                ph2Multi1 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, 'most aligned group', page['scenarioIndex']))?.['score'];
-                                ph2Multi2 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[1], page['scenarioIndex']))?.['score'];
-                                ph2Multi3 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[2], page['scenarioIndex']))?.['score'];
-                                ph2Multi4 = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, alignment[3], page['scenarioIndex']))?.['score'];
+                                const psAFScenario = logData['PS-AF-text-scenario']
+                                obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
+                                    psAFScenario, 2
+                                );
                             }
                         }
-
-                        const alignedVsBaseline = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('baseline')]) : (order[0] + ' vs ' + order[1]);
-                        const alignedVsMisaligned = order.length < 4 ? (order[alignment.indexOf('aligned')] + ' vs ' + order[alignment.indexOf('misaligned')]) : (order[0] + ' vs ' + order[2]);
-                        const vsFc3MultiKdma = order[0] + ' vs ' + order[3];
-                        obj[`B${block}_Compare_DM1`] = order[0] + ' - ' + alignment[0];
-                        obj[`B${block}_Compare_DM2`] = order[1] + ' - ' + alignment[1];
-                        obj[`B${block}_Compare_DM3`] = order[2] + ' - ' + alignment[2];
-                        if (showPh2 && order.length > 3) {
-                            obj[`B${block}_Compare_DM4`] = order[3] + ' - ' + alignment[3];
-                        }
-                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-
-                        const fc1 = page.questions?.[alignedVsBaseline + ': Forced Choice']?.response
-                        obj[`B${block}_Compare_FC1_Alignment`] = order.length < 4 ? 'aligned vs baseline' : multiFc1;
-                        obj[`B${block}_Compare_FC1`] = fc1 + ' - ' + alignment[order.indexOf(fc1)];
-                        obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsBaseline + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[alignedVsBaseline + ': Explain your response to the delegation preference question']?.response;
-                        if (exploratory && comparisonData) {
+                        obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
+                        obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
+                        obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
+                        obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
+                        if (exploratory) {
                             if (!showPh2) {
-                                obj[`B${block}_FC1_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreBaseline)) ? (dreAligned - dreBaseline) : null;
-                                obj[`B${block}_FC1_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Baseline)) ? (ph1Aligned - ph1Baseline) : null;
-                            }
-                            else if (order.length < 4) {
-                                obj[`B${block}_FC1_Align_Diff`] = (isDefined(ph2Aligned) && isDefined(ph2Baseline)) ? (ph2Aligned - ph2Baseline) : null;
+                                obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                                obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
                             }
                             else {
-                                obj[`B${block}_FC1_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi2)) ? (ph2Multi1 - ph2Multi2) : null;
+                                obj[`B${block}_DM${dm}_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
                             }
                         }
-                        const fc2 = page.questions?.[alignedVsMisaligned + ': Forced Choice']?.response
-                        obj[`B${block}_Compare_FC2_Alignment`] = order.length < 4 ? 'aligned vs misaligned' : multiFc2;
-                        obj[`B${block}_Compare_FC2`] = fc2 + ' - ' + alignment[order.indexOf(fc2)];
-                        obj[`B${block}_Compare_FC2_Conf`] = CONFIDENCE_MAP[page.questions?.[alignedVsMisaligned + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Compare_FC2_Explain`] = page.questions?.[alignedVsMisaligned + ': Explain your response to the delegation preference question']?.response;
-                        if (exploratory && comparisonData) {
-                            if (!showPh2) {
-                                obj[`B${block}_FC2_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
-                                obj[`B${block}_FC2_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
-                            } else if (order.length < 4) {
-                                obj[`B${block}_FC2_Align_Diff`] = (isDefined(ph2Aligned) && isDefined(ph2Misaligned)) ? (ph2Aligned - ph2Misaligned) : null;
-                            }
-                            else {
-                                obj[`B${block}_FC2_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi3)) ? (ph2Multi1 - ph2Multi3) : null;
-                            }
-                        }
-                        if (showPh2) {
-                            const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
-                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? null : multiFc3;
-                            obj[`B${block}_Compare_FC3`] = order.length < 4 ? null : (fc3 + ' - ' + alignment[order.indexOf(fc3)] + (alignment[order.indexOf(fc3)] == 'most aligned group' ? ' (' + mostAligned + ')' : ''));
-                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[vsFc3MultiKdma + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
-                            if (exploratory && comparisonData) {
-                                obj[`B${block}_FC3_Align_Diff`] = (isDefined(ph2Multi1) && isDefined(ph2Multi4)) ? (ph2Multi1 - ph2Multi4) : null;
-                            }
-                        }
-                        if (showPh2) {
-                            const fc3 = page.questions?.[vsFc3MultiKdma + ': Forced Choice']?.response
-                            obj[`B${block}_Compare_FC3_Alignment`] = order.length < 4 ? null : multiFc3;
-                            obj[`B${block}_Compare_FC3`] = order.length < 4 ? null : (fc3 + ' - ' + alignment[order.indexOf(fc3)] + (alignment[order.indexOf(fc3)] == 'most aligned group' ? ' (' + mostAligned + ')' : ''));
-                            obj[`B${block}_Compare_FC3_Conf`] = CONFIDENCE_MAP[page.questions?.[vsFc3MultiKdma + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                            obj[`B${block}_Compare_FC3_Explain`] = page.questions?.[vsFc3MultiKdma + ': Explain your response to the delegation preference question']?.response;
-                            if (exploratory && comparisonData) {
-                                const dreAligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                const ph1Aligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'aligned', page['scenarioIndex']))?.['score'];
-                                const dreMisaligned = comparisonData.findLast((x) => searchForDreComparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                                const ph1Misaligned = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, 'misaligned', page['scenarioIndex']))?.['score'];
-                                obj[`B${block}_FC3_DRE_Align_Diff`] = (isDefined(dreAligned) && isDefined(dreMisaligned)) ? (dreAligned - dreMisaligned) : null;
-                                obj[`B${block}_FC3_P1E_Align_Diff`] = (isDefined(ph1Aligned) && isDefined(ph1Misaligned)) ? (ph1Aligned - ph1Misaligned) : null;
-                            }
-                        }
-                    }
-                    else {
-                        const order = pageName.split(' vs ');
-                        obj[`B${block}_Compare_DM1`] = order[0];
-                        obj[`B${block}_Compare_DM2`] = order[1];
-                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                        obj[`B${block}_Compare_FC1`] = page.questions?.[pageName + ': Forced Choice']?.response ?? page.questions?.[pageName + ': Given the information provided']?.response;
-                        obj[`B${block}_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[pageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Compare_FC1_Explain`] = page.questions?.[pageName + ': Explain your response to the delegation preference question']?.response;
-                        obj[`B${block}_Compare_FC1_Differences`] = page.questions?.[pageName + ': What, if anything, would you have done differently in the presented scenario?']?.response;
-                    }
-                    block += 1;
-                    dm = 1;
-                }
-                if (showLegacy && pageName.includes('Omnibus')) {
-                    const cleanPageName = pageName.split(': ').slice(-1).toString();
-                    if (page.pageType === 'singleMedic') {
-                        obj[`B${block}_Omni${dm}_Name`] = cleanPageName;
-                        obj[`B${block}_Omni${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Omni${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                        obj[`B${block}_Omni${dm}_Scenario`] = page.scenarioIndex ?? pageName.split(': ')[0];
 
-                        obj[`B${block}_Omni${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
-                        obj[`B${block}_Omni${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
-                        obj[`B${block}_Omni${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
-                        obj[`B${block}_Omni${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
                         dm += 1;
                     }
-                    else if (page.pageType === 'comparison') {
-                        const order = cleanPageName.split(' vs ');
-                        obj[`B${block}_Compare_Omni1`] = order[0];
-                        obj[`B${block}_Compare_Omni2`] = order[1];
-                        obj[`B${block}_Omni_Compare_Time`] = formatTimeMinutes(page.timeSpentOnPage);
-                        obj[`B${block}_Omni_Compare_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
-                        obj[`B${block}_Omni_Compare_FC1`] = page.questions?.[cleanPageName + ': Forced Choice']?.response ?? page.questions?.[cleanPageName + ': Given the information provided']?.response;
-                        obj[`B${block}_Omni_Compare_FC1_Conf`] = CONFIDENCE_MAP[page.questions?.[cleanPageName + ': Rate your confidence about the delegation decision indicated in the previous question']?.response];
-                        obj[`B${block}_Omni_Compare_FC1_Explain`] = page.questions?.[cleanPageName + ': Explain your response to the delegation preference question']?.response;
-                        block += 1;
-                        dm = 1;
+
+                    if (comparisonPages.length > 0) {
+                        let totalComparisonTime = 0;
+                        let fcIndex = 1;
+
+                        const sortedComparisonPages = comparisonPages.sort((a, b) => {
+                            const aIndex = entry.orderLog.indexOf(a.pageName);
+                            const bIndex = entry.orderLog.indexOf(b.pageName);
+                            return aIndex - bIndex;
+                        });
+
+                        const uniqueMedics = [];
+                        const seenMedics = new Set();
+
+                        for (const page of sortedComparisonPages) {
+                            const pageName = page.pageName;
+                            if (pageName.includes(' vs ')) {
+                                const medicNames = pageName.split(' vs ');
+                                medicNames.forEach(name => {
+                                    const trimmedName = name.trim();
+                                    if (!seenMedics.has(trimmedName)) {
+                                        uniqueMedics.push(trimmedName);
+                                        seenMedics.add(trimmedName);
+                                    }
+                                });
+                            }
+                        }
+
+                        uniqueMedics.forEach((medicName, index) => {
+                            const dmNumber = index + 1;
+                            const medicAlignment = entry[medicName]?.admAlignment || entry[medicName]?.admTarget || 'unknown';
+                            obj[`B${block}_Compare_DM${dmNumber}`] = `${medicName} - ${MULTI_KDMA_MAP[medicAlignment] || medicAlignment}`;
+                        });
+
+                        for (const page of sortedComparisonPages) {
+                            const pageName = page.pageName;
+                            totalComparisonTime += page.timeSpentOnPage;
+
+                            if (pageName.includes(' vs ')) {
+
+                                const forcedChoiceKeys = Object.keys(page.questions).filter(key =>
+                                    key.endsWith(': Forced Choice') || key.endsWith(': Percent Delegation')
+                                );
+
+                                if (forcedChoiceKeys.length > 1) {
+                                    const forcedChoicePairs = forcedChoiceKeys
+                                        .filter(key => key.endsWith(': Forced Choice'))
+                                        .map(key => key.replace(': Forced Choice', ''));
+
+                                    for (const pair of forcedChoicePairs) {
+                                        const response = page.questions[`${pair}: Forced Choice`]?.response;
+                                        const confidence = page.questions[`${pair}: Rate your confidence about the delegation decision indicated in the previous question`]?.response;
+                                        const explanation = page.questions[`${pair}: Explain your response to the delegation preference question`]?.response;
+                                        const percentDelegation = page.questions[`${pair}: Percent Delegation`]?.response;
+
+                                        const medicNames = pair.split(' vs ').map(name => name.trim());
+                                        const alignments = medicNames.map(name => {
+                                            const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
+                                            return MULTI_KDMA_MAP[alignment] || alignment;
+                                        });
+
+                                        obj[`B${block}_Compare_FC${fcIndex}_Alignment`] = alignments.join(' vs ');
+                                        obj[`B${block}_Compare_FC${fcIndex}`] = response;
+                                        obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
+                                        obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
+
+                                        if (percentDelegation) {
+                                            obj[`B${block}_Compare_FC${fcIndex}_Percent`] = percentDelegation;
+                                        }
+
+                                        fcIndex++;
+                                    }
+                                } else {
+                                    const response = page.questions[`${pageName}: Forced Choice`]?.response;
+                                    const confidence = page.questions[`${pageName}: Rate your confidence about the delegation decision indicated in the previous question`]?.response;
+                                    const explanation = page.questions[`${pageName}: Explain your response to the delegation preference question`]?.response;
+                                    const percentDelegation = page.questions[`${pageName}: Percent Delegation`]?.response;
+
+                                    const medicNames = pageName.split(' vs ').map(name => name.trim()); 
+                                    const alignments = medicNames.map(name => {
+                                        const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
+                                        return MULTI_KDMA_MAP[alignment] || alignment;
+                                    });
+
+                                    obj[`B${block}_Compare_FC${fcIndex}_Alignment`] = alignments.join(' vs ');
+                                    obj[`B${block}_Compare_FC${fcIndex}`] = response;
+                                    obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
+                                    obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
+
+                                    if (percentDelegation) {
+                                        obj[`B${block}_Compare_FC${fcIndex}_Percent`] = percentDelegation;
+                                    }
+
+                                    fcIndex++;
+                                }
+                            }
+                        }
+
+                        obj[`B${block}_Compare_Time`] = formatTimeMinutes(totalComparisonTime);
+                        obj[`B${block}_Compare_Time (mm:ss)`] = formatTimeMMSS(totalComparisonTime);
                     }
+                    block += 1;
                 }
             }
-
             allObjs.push(obj);
         }
         // prep filters and data (sort by pid)
@@ -586,7 +577,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     React.useEffect(() => {
         if (exploratory) {
             setEvalFilters(evalNumbers);
-            setShowPh2((evalNumbers.filter((x) => x.value === '8' || x.value === '9').length > 0 ? true : false));
+            setShowPh2((evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false));
         }
     }, [evalNumbers, exploratory]);
 

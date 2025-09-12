@@ -197,25 +197,32 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
-export function getEval89Attributes(target) {
-    target = target.toLowerCase();
-    if (target.indexOf("safety") > -1) {
+export function getEval89Attributes(target, scenarioIndex) {
+    const scenario = scenarioIndex.toLowerCase();
+
+    if (scenario.includes("combined")) {
+        return "PS, AF (Combined)"
+    }
+    if (scenario.includes("ps")) {
+        if (scenario.indexOf("af") > -1) {
+            return "PS-AF"
+        }
         return "PS";
     }
-    else if (target.indexOf("search") > -1) {
+    else if (scenario.includes("ss")) {
         return "SS";
     }
-    else if (target.indexOf("affiliation") > -1) {
-        if (target.indexOf("merit") > -1) {
+    else if (scenario.includes("af")) {
+        if (scenario.includes("mf")) {
             return "AF-MF";
         }
         return "AF";
     }
-    else if (target.indexOf("merit") > -1) {
+    else if (scenario.includes("mf")) {
         return "MF";
     }
-    console.error("No attribute found for target " + target);
-    return "";
+
+    return target;
 }
 
 export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {

@@ -11,7 +11,8 @@ const configSlice = createSlice({
         pidBounds: {
             lowPid: null,
             highPid: null
-        }
+        },
+        showDemographics: false
     },
     reducers: {
         addConfig: (state, action) => {
@@ -38,10 +39,13 @@ const configSlice = createSlice({
 
         setPidBounds: (state, action) => {
             state.pidBounds = action.payload;
+        },
+        setShowDemographics: (state, action) => {  
+            state.showDemographics = action.payload;
         }
     }
 });
 
-export const { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentTextEval, setCurrentStyle, setPidBounds } = configSlice.actions;
+export const { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentTextEval, setCurrentStyle, setPidBounds, setShowDemographics } = configSlice.actions;
 export default configSlice.reducer;
 

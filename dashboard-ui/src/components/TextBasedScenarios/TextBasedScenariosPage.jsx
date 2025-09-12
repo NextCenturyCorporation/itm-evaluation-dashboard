@@ -24,6 +24,11 @@ import { Phase2Text } from './phase2Text';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
+const UPLOAD_SURVEY_RESULTS = gql`
+  mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
+    uploadSurveyResults(surveyId: $surveyId, results: $results)
+  }`;
+
 const GET_SERVER_TIMESTAMP = gql`
   mutation GetServerTimestamp {
     getServerTimestamp
@@ -54,6 +59,7 @@ const UPDATE_PARTICIPANT_LOG = gql`
 
 export function TextBasedScenariosPageWrapper(props) {
     const currentTextEval = useSelector(state => state.configs.currentTextEval)
+    const showDemographics = useSelector(state => state.configs.showDemographics)
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
@@ -72,6 +78,7 @@ export function TextBasedScenariosPageWrapper(props) {
         participantLogs={participantLogData}
         scenarioResults={scenarioResultsData.getAllScenarioResults}
         getServerTimestamp={getServerTimestamp}
+        showDemographics={showDemographics}
     />;
 }
 
@@ -101,7 +108,13 @@ class TextBasedScenariosPage extends Component {
             updatePLog: false,
             startCount: 0,
             onlineOnly: false,
-            skipText: false
+            skipText: false,
+            showDemographics: props.showDemographics,
+            demographicsConfig: null,
+            demographicsCompleted: false,
+            demographicsUploadData: null,
+            isDemographicsUploadEnabled: false,
+            demographicsStartTime: null
         };
 
         this.surveyData = {};
@@ -112,6 +125,7 @@ class TextBasedScenariosPage extends Component {
         this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
+        this.uploadButtonRefDemographics = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true
     }
@@ -198,6 +212,55 @@ class TextBasedScenariosPage extends Component {
         });
     }
 
+    loadDemographicsSurvey = () => {
+        const demographicsConfig = Object.values(this.props.textBasedConfigs).find(
+            config => config.name === 'Post-Scenario Measures Phase 2'
+        );
+
+        if (demographicsConfig) {
+            const configCopy = JSON.parse(JSON.stringify(demographicsConfig));
+            configCopy.showTitle = false;
+
+            const surveyModel = new Model(configCopy);
+            surveyModel.applyTheme(surveyTheme);
+            surveyModel.onComplete.add(this.demographicsSurveyComplete);
+
+            this.props.getServerTimestamp().then(startTime => {
+                this.setState({
+                    demographicsStartTime: startTime.data.getServerTimestamp
+                });
+            });
+
+            this.setState({
+                demographicsConfig: surveyModel,
+                showDemographicsSurvey: true
+            });
+        }
+    };
+
+    demographicsSurveyComplete = async (survey) => {
+        const endStamp = await this.props.getServerTimestamp();
+
+        let results = {}
+        results['Post-Scenario Measures'] = survey.data
+        results.evalNumber = evalNameToNumber[this.props.currentTextEval]
+        results.evalName = (this.props.currentTextEval).replace(/Phase 2\s*/g, '')
+        results.timeComplete = endStamp.data.getServerTimestamp
+        results.startTime = this.state.demographicsStartTime
+        results.pid = this.state.participantID
+
+        const sanitizedData = this.sanitizeKeys(results);
+
+        this.setState({
+            demographicsUploadData: sanitizedData,
+            isDemographicsUploadEnabled: true
+        }, () => {
+            if (this.uploadButtonRefDemographics.current) {
+                this.uploadButtonRefDemographics.current.click();
+            }
+        });
+    };
+
     scenariosFromLog = (participantLog) => {
         const scenarioIds = scenarioIdsFromLog(participantLog, this.props.currentTextEval)
         const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
@@ -230,6 +293,10 @@ class TextBasedScenariosPage extends Component {
             });
         } else {
             this.setState({ allScenariosCompleted: true });
+        }
+
+        if (this.state.showDemographics) {
+            this.loadDemographicsSurvey();
         }
     }
 
@@ -352,7 +419,7 @@ class TextBasedScenariosPage extends Component {
             this.state.scenarios.map(scenario => scenario.scenario_id) :
             [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
         scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
-        scenarioData.evalName = this.props.currentTextEval
+        scenarioData.evalName = (this.props.currentTextEval).replace(/Phase 2\s*/g, '')
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
@@ -722,7 +789,7 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
-                <NavigationGuard surveyComplete={this.state.allScenariosCompleted} />
+                <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
                 {!this.state.skipText && !this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
                 )}
@@ -752,6 +819,33 @@ class TextBasedScenariosPage extends Component {
                     <>
                         <Survey model={this.survey} />
                     </>
+                )}
+                {!this.state.skipText && this.state.demographicsUploadData && (
+                    <Mutation
+                        mutation={UPLOAD_SURVEY_RESULTS}
+                        onCompleted={() => {
+                            this.setState({
+                                demographicsCompleted: true,
+                                demographicsUploadData: null
+                            });
+                        }}
+                    >
+                        {(uploadSurveyResults, { data }) => (
+                            <div style={{ display: 'none' }}>
+                                <button ref={this.uploadButtonRefDemographics} disabled={!this.state.isDemographicsUploadEnabled} onClick={(e) => {
+                                    e.preventDefault();
+                                    if (this.state.isDemographicsUploadEnabled) {
+                                        uploadSurveyResults({
+                                            variables: {
+                                                surveyId: this.state.participantID,
+                                                results: this.state.demographicsUploadData
+                                            }
+                                        });
+                                    }
+                                }}></button>
+                            </div>
+                        )}
+                    </Mutation>
                 )}
                 {!this.state.skipText && this.state.uploadData && (
                     <Mutation
@@ -807,7 +901,10 @@ class TextBasedScenariosPage extends Component {
                         </div>
                     </div>
                 )}
-                {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length)) && (
+                {!this.state.skipText && this.state.allScenariosCompleted && this.state.showDemographics && !this.state.demographicsCompleted && this.state.showDemographicsSurvey && (
+                    <Survey model={this.state.demographicsConfig} />
+                )}
+                {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length && (!this.state.showDemographics || this.state.demographicsCompleted))) && (
                     <ScenarioCompletionScreen
                         sim1={this.state.sim1}
                         sim2={this.state.sim2}
