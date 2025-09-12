@@ -254,7 +254,7 @@ export const HEADER = {
         "MF_KDMA_Text",
         "PS_KDMA_Text",
         "PS_Multi_KDMA_Text",
-        "AF_Multi_KDMA_TEXT"
+        "AF_Multi_KDMA_Text"
     ]
 };
 
