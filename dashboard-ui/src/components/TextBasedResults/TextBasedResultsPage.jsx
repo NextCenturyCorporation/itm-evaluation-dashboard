@@ -427,6 +427,7 @@ export default function TextBasedResultsPage() {
             // First, initialize structure from configs
             Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
+                if (scenario === 'undefined') { return }
                 filteredTextBasedConfigs[scenario].pages.forEach(page => {
                     page.elements.forEach(element => {
                         if (element.choices) {
