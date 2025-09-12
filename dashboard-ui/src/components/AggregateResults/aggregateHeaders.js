@@ -247,7 +247,6 @@ export const HEADER = {
         "MilitaryExp",
         "YrsMilExp",
         "PropTrust",
-        "Delegation",
         "Trust",
         "Probe Set",
         "AF_KDMA_Text",
