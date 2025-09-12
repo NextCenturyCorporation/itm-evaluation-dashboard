@@ -7,7 +7,7 @@ import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-b
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
 import { evalNameToNumber } from '../OnlineOnly/config';
-import { setSurveyVersion, setupConfigWithImages, setTextEval as setTextEvalInStore, setPidBoundsInStore, setCurrentUIStyle } from '../App/setupUtils';
+import { setSurveyVersion, setupConfigWithImages, setTextEval as setTextEvalInStore, setPidBoundsInStore, setCurrentUIStyle, setShowDemographicsInStore } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
@@ -16,6 +16,18 @@ import { IconButton, Switch } from '@material-ui/core';
 import { FaInfoCircle } from 'react-icons/fa'
 
 const history = createBrowserHistory({ forceRefresh: true });
+
+const GET_SHOW_DEMOGRAPHICS = gql`
+    query GetShowDemographics {
+        getShowDemographics
+    }
+`;
+
+const UPDATE_SHOW_DEMOGRAPHICS = gql`
+    mutation UpdateShowDemographics($showDemographics: Boolean!) {
+        updateShowDemographics(showDemographics: $showDemographics)
+    }
+`;
 
 const GET_PID_BOUNDS = gql`
     query GetPidBounds {
@@ -421,6 +433,51 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const [highPid, setHighPid] = useState('');
     const [pendingPidBounds, setPendingPidBounds] = useState(null);
     const [showPidConfirmation, setShowPidConfirmation] = useState(false);
+    const [showDemographics, setShowDemographics] = useState(false);
+    const [showDemographicsConfirmation, setShowDemographicsConfirmation] = useState(false);
+    const [pendingDemographicsValue, setPendingDemographicsValue] = useState(null);
+
+    const { loading: demographicsLoading, error: demographicsError } = useQuery(GET_SHOW_DEMOGRAPHICS, {
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            if (data && data.getShowDemographics !== undefined) {
+                setShowDemographics(data.getShowDemographics);
+                setShowDemographicsInStore(data.getShowDemographics);
+            }
+        }
+    });
+
+    const [updateShowDemographics] = useMutation(UPDATE_SHOW_DEMOGRAPHICS);
+
+    const handleDemographicsToggle = () => {
+        const newValue = !showDemographics;
+        setPendingDemographicsValue(newValue);
+        setShowDemographicsConfirmation(true);
+    };
+
+    const confirmDemographicsChange = async () => {
+        try {
+            setIsLoading(true);
+            await updateShowDemographics({
+                variables: {
+                    showDemographics: pendingDemographicsValue
+                }
+            });
+            setShowDemographics(pendingDemographicsValue);
+            setShowDemographicsInStore(pendingDemographicsValue);
+            setShowDemographicsConfirmation(false);
+            setPendingDemographicsValue(null);
+        } catch (error) {
+            alert("Failed to update demographics setting. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const cancelDemographicsChange = () => {
+        setPendingDemographicsValue(null);
+        setShowDemographicsConfirmation(false);
+    };
 
     const { loading: pidLoading, error: pidError } = useQuery(GET_PID_BOUNDS, {
         fetchPolicy: 'no-cache',
@@ -730,7 +787,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
         }
     };
 
-    if (surveyVersionLoading || uiStyleLoading || textEvalLoading || textEvalOptionsLoading) return <div className="loading">Loading data...</div>;
+    if (surveyVersionLoading || uiStyleLoading || textEvalLoading || textEvalOptionsLoading || demographicsLoading) return <div className="loading">Loading data...</div>;
     if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
     if (uiStyleError) return <div className="error">Error loading UI style: {uiStyleError.message}</div>;
 
@@ -851,6 +908,16 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                             </Col>
                                         </Row>
                                     </Form.Group>
+                                    <Form.Group className='my-2'>
+                                        <div className="d-flex align-items-center justify-content-between">
+                                            <Form.Label className="mb-0">Show demographics questions</Form.Label>
+                                            <Switch
+                                                checked={showDemographics}
+                                                onChange={handleDemographicsToggle}
+                                                color="primary"
+                                            />
+                                        </div>
+                                    </Form.Group>
 
                                 </Card.Body>
                             </Card>
@@ -905,7 +972,12 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         onCancel={cancelPidChange}
                         message={`Are you sure you want to set PID bounds to Low: ${pendingPidBounds?.low}, High: ${pendingPidBounds?.high}?`}
                     />
-
+                    <ConfirmationDialog
+                        show={showDemographicsConfirmation}
+                        onConfirm={confirmDemographicsChange}
+                        onCancel={cancelDemographicsChange}
+                        message={`Are you sure you want to ${pendingDemographicsValue ? 'show' : 'hide'} demographics questions? This will affect the text-based scenarios survey.`}
+                    />
 
                     <Query
                         query={GET_USERS}

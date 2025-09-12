@@ -4,7 +4,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore } from './setupUtils';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 // Components
 import ResultsPage from '../Results/results';
@@ -45,6 +45,12 @@ import store from '../../store/store';
 
 
 const history = createBrowserHistory();
+
+const GET_SHOW_DEMOGRAPHICS = gql`
+    query GetShowDemographics {
+        getShowDemographics
+    }
+`;
 
 const GET_PID_BOUNDS = gql`
     query GetPidBounds {
@@ -120,6 +126,8 @@ export function App() {
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
     const [configQuery, setConfigQuery] = React.useState(GET_CONFIGS)
     const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
+    const { data: demographicsData } = useQuery(GET_SHOW_DEMOGRAPHICS, { fetchPolicy: 'no-cache' });
+    const [isDemographicsDataLoaded, setIsDemographicsDataLoaded] = React.useState(false);
 
     // grab upper and lower bounds for new participant pids from mongo and set them in redux
     const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, {
@@ -131,6 +139,13 @@ export function App() {
             }
         }
     });
+
+    React.useEffect(() => {
+        if (isDefined(demographicsData)) {
+            setShowDemographicsInStore(demographicsData.getShowDemographics);
+            setIsDemographicsDataLoaded(true);
+        }
+    }, [demographicsData]);
 
     React.useEffect(() => {
         if (versionData?.getCurrentSurveyVersion) {
@@ -300,7 +315,7 @@ export function App() {
             } else {
                 participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
             }
-            
+
             const addRes = await addParticipant({
                 variables: { participantData }
             });
@@ -406,7 +421,7 @@ export function App() {
 
     return (
         <Router history={history}>
-            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isConfigDataLoaded && isStyleDataLoaded && <div className="itm-app">
+            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isConfigDataLoaded && isStyleDataLoaded && isDemographicsDataLoaded && <div className="itm-app">
                 {currentUser?.approved &&
                     <Header currentUser={currentUser} logout={logout} />
                 }

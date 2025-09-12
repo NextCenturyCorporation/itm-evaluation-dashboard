@@ -68,6 +68,7 @@ const typeDefs = gql`
     getCurrentTextEval: String @complexity(value: 5)
     getTextEvalOptions: [String] @complexity(value: 10)
     getPidBounds: JSON @complexity(value: 5)
+    getShowDemographics: JSON @complexity(value: 5)
   }
 
   type Mutation {
@@ -86,6 +87,7 @@ const typeDefs = gql`
     getServerTimestamp: String,
     updateTextEval(eval: String!): String
     updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
+    updateShowDemographics(showDemographics: Boolean!): JSON,
     deleteDataByPID(caller: JSON, pid: String): JSON
   }
 
@@ -528,6 +530,10 @@ const resolvers = {
     getPidBounds: async (obj, args, context, info) => {
       const bounds = await context.db.collection('surveyVersion').findOne();
       return {lowPid: bounds.lowPid, highPid: bounds.highPid}
+    },
+    getShowDemographics: async (obj, args, context, info) => {
+      const demographics = await context.db.collection('surveyVersion').findOne();
+      return demographics.showDemographics;
     }
   },
   Mutation: {
@@ -641,6 +647,18 @@ const resolvers = {
         {upsert: true, returnDocument: 'after'}
       )
 
+      return res.value
+    },
+    updateShowDemographics: async (obj, args, context, info) => {
+      const res = await context.db.collection('surveyVersion').findOneAndUpdate(
+        {},
+        {
+          $set: {
+            showDemographics: args.showDemographics
+          }
+        },
+        {upsert: true, returnDocument: 'after'}
+      )
       return res.value
     },
     addNewParticipantToLog: async (obj, args, context, inflow) => {

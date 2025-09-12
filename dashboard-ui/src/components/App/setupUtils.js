@@ -1,5 +1,5 @@
 import store from '../../store/store';
-import { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle, setCurrentTextEval, setPidBounds } from '../../store/slices/configSlice';
+import { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle, setCurrentTextEval, setPidBounds, setShowDemographics } from '../../store/slices/configSlice';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { setParticipantLog } from '../../store/slices/participantSlice';
 
@@ -106,4 +106,8 @@ export function setPidBoundsInStore(bounds) {
         highPid: bounds.highPid || null
     };
     store.dispatch(setPidBounds(pidBounds));
+}
+
+export function setShowDemographicsInStore(showDemographics) {
+    store.dispatch(setShowDemographics(showDemographics));
 }
