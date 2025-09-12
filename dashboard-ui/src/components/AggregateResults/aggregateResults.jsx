@@ -21,7 +21,7 @@ const get_eval_name_numbers = gql`
 
 let evalOptions = [];
 
-const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9];
+const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9, 10];
 
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults($evalNumber: Float!){
@@ -177,8 +177,8 @@ export default function AggregateResults({ type }) {
         if (type == 'HumanProbeData' && EXCLUDED_EVALS_HUMAN_PROBES.includes(selectedEval)) {
             return [];
         }
-        const splitPoint = headers.indexOf('ADEPT_Session_Id');
-        return [...headers.slice(0, splitPoint), ...ADEPT_HEADERS_DRE[adeptScenario] ?? [], ...headers.slice(splitPoint)];
+        const splitPoint = headers?.indexOf('ADEPT_Session_Id');
+        return [...headers?.slice(0, splitPoint), ...ADEPT_HEADERS_DRE[adeptScenario] ?? [], ...headers?.slice(splitPoint)];
     }
 
     const showGraph = (url, name) => {
