@@ -143,7 +143,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6, 8];
+export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -477,7 +477,7 @@ function getOverallDelRate(res) {
             if (pageName.includes(' vs ')) {
                 for (const q of Object.keys(res.results[pageName].questions)) {
                     // ignore parallax runs where it's only misaligned vs baseline
-                    if (q.includes("Forced Choice") && (res.results[pageName]['admAlignment'].includes(' aligned') || res.results[pageName]['admAlignment'].includes('multi-KDMA comparison')) ) {
+                    if (q?.includes("Forced Choice") && (res.results[pageName]['admAlignment']?.includes(' aligned') || res.results[pageName]['admAlignment']?.includes('multi-KDMA comparison')) ) {
                         tally += 1;
                         const response = res.results[pageName].questions[q].response;
                         const aligned = q.split(' vs ')[0]; // aligned is always listed first in forced choice questions
@@ -1606,52 +1606,93 @@ function getRatingsBySelectionStatus(data) {
 function populateDataSetP2(data) {
     const pLog = data.getParticipantLog;
     const results = [];
-    const seen = new Set();
+    const processedPids = new Set();
+    
+    const scenariosByPid = {};
     for (const res of data.getAllScenarioResultsByEval) {
         const pid = res['participantID'];
-        const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
-        // skip if the pid isn't valid, we processed it already, or the survey is incomplete
-        // but if there is no survey at all, it means initial june 2025 batch and we want to include them
-        if (!pid || seen.has(pid) || (survey &&!survey?.results?.['Post-Scenario Measures'])) continue;
-
-        const participant = pLog.find((p) => p.ParticipantID === Number(pid));
-        if (!participant) {
-            continue
+        if (!pid) continue;
+        
+        if (!scenariosByPid[pid]) {
+            scenariosByPid[pid] = [];
         }
-
+        scenariosByPid[pid].push(res);
+    }
+    
+    for (const pid of Object.keys(scenariosByPid)) {
+        if (processedPids.has(pid)) continue;
+        
+        const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
+        // skip if the survey is incomplete (but include if no survey at all for initial june 2025 batch)
+        if (survey && !survey?.results?.['Post-Scenario Measures']) continue;
+        
+        const participant = pLog.find((p) => p.ParticipantID === Number(pid));
+        if (!participant) continue;
+        
         const row = {};
         row['Participant ID'] = pid;
-        seen.add(pid);
-        row['Date'] = new Date(safeGet(res, ['startTime'], ['timeComplete'])).toLocaleDateString();
-        // all the same so using first one
+        processedPids.add(pid);
+        
+        const scenarios = scenariosByPid[pid];
+        
+        if (scenarios.length > 0) {
+            row['Date'] = new Date(safeGet(scenarios[0], ['startTime'], ['timeComplete'])).toLocaleDateString();
+        }
+        
         row['Probe Set'] = participant['AF-text-scenario'];
-        row['AF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'affiliation')?.value;
-        row['MF_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'merit')?.value;
-        row['PS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'personal_safety')?.value;
-        row['SS_KDMA_Text'] = res['kdmas']?.find((x) => x.kdma === 'search')?.value;
-
+        row['AF_KDMA_Text'] = null;
+        row['MF_KDMA_Text'] = null;
+        row['PS_KDMA_Text'] = null;
+        row['SS_KDMA_Text'] = null;
+        
+        if (data.getAllScenarioResultsByEval[0]?.evalNumber === 10) {
+            row['PS_Multi_KDMA_Text'] = null;
+            row['AF_Multi_KDMA_Text'] = null;
+        }
+        
+        for (const scenario of scenarios) {
+            if (scenario['kdmas']) {
+                const afValue = scenario['kdmas'].find((x) => x.kdma === 'affiliation')?.value;
+                const mfValue = scenario['kdmas'].find((x) => x.kdma === 'merit')?.value;
+                const psValue = scenario['kdmas'].find((x) => x.kdma === 'personal_safety')?.value;
+                const ssValue = scenario['kdmas'].find((x) => x.kdma === 'search')?.value;
+                
+                if (afValue) row['AF_KDMA_Text'] = afValue;
+                if (mfValue) row['MF_KDMA_Text'] = mfValue;
+                if (psValue ) row['PS_KDMA_Text'] = psValue;
+                if (ssValue) row['SS_KDMA_Text'] = ssValue;
+                
+                if (data.getAllScenarioResultsByEval[0]?.evalNumber === 10 && 
+                    scenario['scenario_id'] && scenario['scenario_id'].includes('PS-AF')) {
+                    // multi kdma scores PS-AF
+                    const psMultiValue = scenario['kdmas'].find((x) => x.kdma === 'personal_safety')?.value;
+                    const afMultiValue = scenario['kdmas'].find((x) => x.kdma === 'affiliation')?.value;
+                    
+                    if (psMultiValue) row['PS_Multi_KDMA_Text'] = psMultiValue;
+                    if (afMultiValue) row['AF_Multi_KDMA_Text'] = afMultiValue;
+                }
+            }
+        }
+        
         if (survey) {
-            //demographics
+            // Demographics
             row['MedRole'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role', 'response'], '');
-            row['MedExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '')
-            row['MilitaryExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Served in Military', 'response'], '')
-            row['YrsMilExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'How many years of experience do you have serving in a medical role in the military', 'response'], '')
-
-            // propensity to trust
+            row['MedExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '');
+            row['MilitaryExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Served in Military', 'response'], '');
+            row['YrsMilExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'How many years of experience do you have serving in a medical role in the military', 'response'], '');
+            
+            // Propensity to trust
             const trust1 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I feel that people are generally reliable', 'response'])] ?? 0;
             const trust2 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I usually trust people until they give me a reason not to trust them', 'response'])] ?? 0;
             const trust3 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Trusting another person is not difficult for me', 'response'])] ?? 0;
             row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
-
-            //overall trust rating
             row['Trust'] = getOverallTrust(survey);
-
-            //overall del rating
             row['Delegation'] = getOverallDelRate(survey);
         }
+        
         results.push(row);
-
     }
+    
     return results;
 }
 
