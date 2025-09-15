@@ -377,7 +377,7 @@ export default function TextBasedResultsPage() {
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(10);
+    const [selectedEval, setSelectedEval] = React.useState(8);
     const [evalOptions, setEvalOptions] = React.useState([]);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
@@ -413,8 +413,7 @@ export default function TextBasedResultsPage() {
                 .map(result => ({
                     value: result._id.evalNumber,
                     label: result._id.evalName
-                }))
-                .sort((a, b) => b.value - a.value);
+                }));
             setEvalOptions(options);
         }
     }, [evalIdOptionsRaw]);
