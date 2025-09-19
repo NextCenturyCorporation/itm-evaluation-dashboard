@@ -83,7 +83,7 @@ export function PH2RQ8({ evalNum }) {
                 const pids = [];
                 for (const res of textResults) {
                     const pid = res['participantID'];
-                    if (pids.includes(pid)) {
+                    if (pids.includes(pid) || res['scenario_id'].includes("PS-AF")) {
                         continue;
                     }
                     // see if participant has completed the open world scenario
