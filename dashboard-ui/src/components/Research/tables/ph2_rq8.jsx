@@ -107,7 +107,10 @@ export function PH2RQ8({ evalNum }) {
                     // this batch of sim data was before all sets were of the same group, V for various
                     if (openWorld.evalName.includes('June')) {
                         entryObj['Probe Set Assessment'] = 'Various';
-                    } 
+                    } else {
+                        // in all other phase two experiments the probe set assessment was consistent
+                        entryObj['Probe Set Assessment'] = logData['AF-text-scenario']
+                    }
 
                     let attributes = ['AF', 'MF', 'PS', 'SS'];
                     const att_map = {
