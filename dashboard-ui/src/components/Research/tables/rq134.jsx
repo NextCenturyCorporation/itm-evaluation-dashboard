@@ -8,6 +8,7 @@ import { Autocomplete, Modal, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ134_DRE.xlsx';
 import ph1DefinitionXLFile from '../variables/Variable Definitions RQ134_PH1.xlsx';
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2.xlsx';
+import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -46,6 +47,7 @@ const GET_SIM_DATA = gql`
 const HEADERS_DRE = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Competence Error', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH1 = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'DRE/Distance Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'DRE/Distance Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'DRE/Distance Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Delegation (A/HH)', 'Delegation (A/HL)', 'Delegation (A/LH)', 'Delegation (A/LL)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Server Session ID (Delegator)', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation Preference (PSAF-1/PSAF-2)', 'Delegation Preference (PSAF-1/PSAF-3)', 'Delegation Preference (PSAF-1/PSAF-4)', 'Delegation Preference (PSAF-2/PSAF-3)', 'Delegation Preference (PSAF-2/PSAF-4)', 'Delegation Preference (PSAF-3/PSAF-4)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -127,8 +129,11 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
-        if (evalNum >= 8) {
+        if ([8, 9].includes(evalNum)) {
             currentHeaders = [...HEADERS_PH2_JUNE_2025];
+        }
+        if (evalNum == 10) {
+            currentHeaders = [...HEADERS_PH2_SEPT_2025];
         }
         if (!(evalNum === 6 || (evalNum === 5 && includeJAN))) {
             currentHeaders = currentHeaders.filter(header => header !== 'Truncation Error');
@@ -523,7 +528,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum >= 8 ? ph2DefinitionXLFile : (evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum === 10 ? septemberDefinitionXLFile : evalNum >= 8 ? ph2DefinitionXLFile : (evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

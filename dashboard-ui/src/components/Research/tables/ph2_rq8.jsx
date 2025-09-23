@@ -75,7 +75,7 @@ export function PH2RQ8({ evalNum }) {
             const allAttributes = [];
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
-            const evals = evalNum >= 8 ? [8, 9] : [evalNum];
+            const evals = evalNum >= 8 ? [8, 9, 10] : [evalNum];
 
             for (let evalNum of evals) {
                 const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
@@ -83,7 +83,7 @@ export function PH2RQ8({ evalNum }) {
                 const pids = [];
                 for (const res of textResults) {
                     const pid = res['participantID'];
-                    if (pids.includes(pid)) {
+                    if (pids.includes(pid) || res['scenario_id'].includes("PS-AF")) {
                         continue;
                     }
                     // see if participant has completed the open world scenario
@@ -107,7 +107,10 @@ export function PH2RQ8({ evalNum }) {
                     // this batch of sim data was before all sets were of the same group, V for various
                     if (openWorld.evalName.includes('June')) {
                         entryObj['Probe Set Assessment'] = 'Various';
-                    } 
+                    } else {
+                        // in all other phase two experiments the probe set assessment was consistent
+                        entryObj['Probe Set Assessment'] = logData['AF-text-scenario']
+                    }
 
                     let attributes = ['AF', 'MF', 'PS', 'SS'];
                     const att_map = {

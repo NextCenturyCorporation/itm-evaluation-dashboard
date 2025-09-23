@@ -233,3 +233,7 @@
     margin: 12px;
     width: calc(100% - 24px);
 }
+
+.itm-table td {
+    white-space: pre-line;
+}

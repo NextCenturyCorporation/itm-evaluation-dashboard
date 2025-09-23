@@ -226,6 +226,7 @@ export function getEval89Attributes(target, scenarioIndex) {
 }
 
 export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
+    const isPhase2 = [8, 9, 10].includes(evalNum);
     const surveyResults = dataSurveyResults.getAllSurveyResults;
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = dataTextResults.getAllScenarioResults;
@@ -248,7 +249,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     }
 
     // find participants that have completed the delegation survey
-    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || ((evalNum === 5 || evalNum === 6 || evalNum === 8 || evalNum === 9) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const wrong_del_materials = evalNum === 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
@@ -269,8 +270,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
             continue;
         }
         const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
-        if (evalNum === 8 || evalNum === 9) {
-            logData['ADMOrder'] = 5;
+        if (isPhase2) {
+            logData['ADMOrder'] = evalNum == 10 ? 6 : 5;
         }
         // set up object to store participant data
         const admOrder = pid === '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
@@ -279,16 +280,16 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         const ad_scenario = pid === '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1']?.includes('AD') ? logData['Del-1'] : logData['Del-2']));
 
         for (const entry of admOrder) {
-            const types = ['baseline', 'aligned', 'misaligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group', 'comparison'];
+            const types = evalNum !== 10 ? ['baseline', 'aligned', 'misaligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group', 'comparison'] : ['PS-AF-1', 'PS-AF-2', 'PS-AF-3', 'PS-AF-4', 'low', 'high', 'PS-high_AF-low', 'PS-high_AF-high', 'PS-low_AF-low', 'PS-low_AF-high', 'comparison'];
             for (const t of types) {
 
-                let page = Object.keys(res.results).find((k) => {
+                let pagesFound = Object.keys(res.results).filter((k) => {
                     const obj = res.results[k];
-                    const alignMatches = obj['admAlignment'] === t || (obj['pageType'] === 'comparison' && t === 'comparison');
+                    const alignMatches = obj['admAlignment'] === t || (obj['pageType'] === 'comparison' && t === 'comparison') || (evalNum === 10 && (obj['admTarget'] == t));
                     const ta2Matches = obj['admAuthor'] === (entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD');
                     let scenario = false;
 
-                    if (evalNum >= 8) {
+                    if (evalNum == 8 || evalNum == 9) {
                         // All text scenarios are same number
                         const ph2_scenario = "PH2-" + logData["AF-text-scenario"];
                         let mapping_array_number;
@@ -317,6 +318,42 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                         return alignMatches && ta2Matches && scenarioMatches;
                     }
+                    if (evalNum == 10) {
+                        const ph2_scenario = "PH2-" + logData["AF-text-scenario"];
+                        let mapping_array_number;
+                        switch (entry['Attribute']) {
+                            case "AF":
+                                mapping_array_number = 0;
+                                break;
+                            case "MF":
+                                mapping_array_number = 1;
+                                break;
+                            case "PS":
+                                mapping_array_number = 2;
+                                break;
+                            case "PS-AF":
+                                mapping_array_number = 3;
+                                break;
+                            case "PSAF":
+                                mapping_array_number = 4;
+                                break;
+                            default:
+                                console.log("Scenario not found");
+                        }
+                        if (mapping_array_number == 3) {
+                            scenario = `Sept2025-${entry["Attribute"]}${logData["PS-AF-text-scenario"]}-eval`;
+                        }
+                        else if (mapping_array_number == 4) {
+                            scenario = `Sept2025-PSAF${logData["AF-text-scenario"]}-eval`;
+                        }
+                        else {
+                            scenario = getDelEnvMapping(evalNum)[ph2_scenario][mapping_array_number];
+                        }
+
+                        const scenarioMatches = obj['scenarioIndex']?.replace('-combined', '').slice(0, -6) === scenario?.replace('-combined', '').slice(0, -6);
+
+                        return ta2Matches && scenarioMatches && alignMatches;
+                    }
 
                     if (entry['TA1'] === 'Adept') {
                         scenario = entry['Attribute'] === 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
@@ -328,239 +365,328 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                     return alignMatches && ta2Matches && scenarioMatches;
                 });
-                if (!page) {
+                if (pagesFound.length == 0) {
                     // likely from missing misaligned/aligned for those few parallax adms
                     continue;
                 }
-                page = res.results[page];
-                const entryObj = {};
-                entryObj['Delegator ID'] = pid;
-                entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
-                entryObj['Datasource'] = evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
-                entryObj['Delegator_grp'] = logData['Type'] === 'Civ' ? 'Civilian' : logData['Type'] === 'Mil' ? 'Military' : logData['Type'];
-                const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
-                const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
-                // override 102, who is military
-                if (evalNum < 8) {
-                    entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid === '202409102' ? 'yes' : 'no';
+                if (!(evalNum === 10 && t === 'comparison')) {
+                    pagesFound = [pagesFound[0]];
                 }
-                else {
-                    const served = res.results?.['Post-Scenario Measures']?.questions?.["Served in Military"]?.['response'];
-                    entryObj['Delegator_mil'] = isDefined(served) ? served == 'Never Served' ? 'no' : 'yes' : null;
-                }
-                entryObj['Delegator_Role'] = roles ?? '-'
-                if (Array.isArray(entryObj['Delegator_Role'])) {
-                    entryObj['Delegator_Role'] = entryObj['Delegator_Role'].join('; ');
-                }
-                entryObj['TA1_Name'] = entry['TA1'];
-                allTA1s.push(entry['TA1']);
-                entryObj['Trial_ID'] = orderLog ? orderLog.indexOf(page['pageName']) + 1 : trial_num;
-                trial_num += 1;
-                entryObj['Attribute'] = entry['Attribute'];
-                allAttributes.push(entryObj['Attribute']);
-                entryObj['Scenario'] = entry['TA1'] === 'Adept' ? ad_scenario : st_scenario;
-                allScenarios.push(entryObj['Scenario']);
-                entryObj['TA2_Name'] = entry['TA2'];
-                allTA2s.push(entry['TA2']);
-                entryObj['ADM_Type'] = t === 'comparison' ? 'comparison' : ['misaligned', 'aligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'].includes(t) ? 'aligned' : 'baseline';
-                entryObj['Target'] = (evalNum >= 8 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
-                if (entryObj['Target'] !== '-') {
-                    allTargets.push(entryObj['Target']);
-                }
-
-                let foundADM;
-                if (evalNum < 8) {
-                    foundADM = admData.find((adm) => adm.history?.[0].parameters.adm_name === page['admName'] && (adm.history?.[0].response?.id ?? adm.history?.[1].response?.id) === page['scenarioIndex'].replace('IO', 'MJ') &&
-                        adm.history?.[adm.history.length - 1].parameters.target_id === page['admTarget']);
-                } else {
-                    foundADM = admData.find((adm) => adm.evaluation.adm_name.includes(page['admName']) && adm.evaluation.scenario_id === page['scenarioIndex'] &&
-                        adm.evaluation.alignment_target_id === page['admTarget']);
-                }
-
-                const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
-                const distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
-
-                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (ADM|target)'] = alignment;
-                if (evalNum === 5 || evalNum === 6)
-                    entryObj['DRE/Distance Alignment score (ADM|target)'] = entry['TA1'] === 'Adept' ? distance_alignment : alignment;
-
-                // if DRE data is included in PH1 set, update DRE columns accordingly
-                if (evalNum === 4 && fullSetOnly && includeDreServer) {
-                    entryObj['DRE/Distance Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)'];
-                    entryObj['P1E/Population Alignment score (ADM|target)'] = entry['TA1'] === 'Adept' ? page.ph1AdmAlignment : entryObj['P1E/Population Alignment score (ADM|target)']
-                }
-
-                const simEntry = simData.find((x) => x.evalNumber === evalNum && x.pid === pid &&
-                    (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 === 'st' : x.ta1 === 'ad') &&
-                    x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
-                const alignmentData = simEntry?.data?.alignment?.adms_vs_text;
-                entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] === (entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD')) &&
-                    x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] === page['admTarget'])?.score ?? '-';
-
-                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target === page['admTarget']?.replaceAll('.', '') || a.target === page['admTarget'])?.score ?? '-';
-                const txt_distance = distanceAlignments.find((a) => a.target === page['admTarget'] || ((evalNum === 5 || evalNum === 6) && a.target === page['admTarget']?.replace('.', '')))?.score ?? '-';
-                if (evalNum === 5 || evalNum === 6)
-                    entryObj['DRE/Distance Alignment score (Delegator|target)'] = entry['TA1'] === 'Adept' ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
-                // if DRE data is included in PH1 set, update DRE columns accordingly
-                if (evalNum === 4 && fullSetOnly && includeDreServer) {
-                    entryObj['DRE/Distance Alignment score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)'];
-                    entryObj['P1E/Population Alignment score (Delegator|target)'] = entry['TA1'] === 'Adept' ? page.ph1TxtAlignment : entryObj['P1E/Population Alignment score (Delegator|target)']
-                }
-
-                entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] === 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] === 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
-                entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'comparison' ? '-' : t;
-
-                const choiceProcess = ((evalNum === 8 || evalNum === 9) && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
-                    ? determineChoiceProcessJune2025(textResultsForPID, page, t)
-                    : page['admChoiceProcess'];
-
-                entryObj['ADM Loading'] = t === 'comparison' ? '-' :
-                    t === 'baseline' ? 'normal' :
-                        ['least aligned', 'most aligned'].includes(choiceProcess) ? 'normal' : 'exemption';
-                if (evalNum === 5 || evalNum === 6)
-                    entryObj['DRE ADM Loading'] = entry['TA1'] === 'Adept' ? page.dreChoiceProcess : entryObj['ADM Loading'];
-                // if DRE data is included in PH1 set, update DRE columns accordingly
-                if (evalNum === 4 && fullSetOnly && includeDreServer) {
-                    entryObj['DRE ADM Loading'] = entryObj['ADM Loading'];
-                    entryObj['ADM Loading'] = entry['TA1'] === 'Adept' ? page.ph1ChoiceProcess : entryObj['ADM Loading']
-                }
-
-                entryObj['Competence Error'] = (evalNum === 5 || evalNum === 6) && entry['TA2'] === 'Kitware' && entryObj['ADM_Type'] === 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
-
-                let comparison_entry;
-                if (evalNum < 8) {
-                    comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] === t && x['pid'] === pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] === 'Parallax' && x['adm_author'] === 'TAD') || (entry['TA2'] === 'Kitware' && x['adm_author'] === 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                } else {
-                    comparison_entry = comparisons?.find((x) => x['adm_type'] === t && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget']);
-                }
-                const alignmentComparison = comparison_entry?.score ?? '-'
-
-                entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
-                if (evalNum === 5 || evalNum === 6) {
-                    entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] === 'Adept' ? comparison_entry?.distance_based_score : entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
-                }
-
-                if (calibrationScores) {
-                    entryObj['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = JSON.stringify(comparison_entry?.calibration_scores)
-                    // st only files so don't use adpet specific column labels
-                    entryObj['P1E Alignment Score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)']
-                    entryObj['P1E Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))']
-                    entryObj['P1E Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)']
-                }
-
-                if (evalNum >= 8) {
-                    entryObj['Alignment score (ADM|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
-                    entryObj['Alignment score (Delegator|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
-                    entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
-
-                    let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
-                    if (aligned_target_name === undefined) {
-                        aligned_target_name = "";
+                for (const pageFound of pagesFound) {
+                    const page = res.results[pageFound];
+                    const entryObj = {};
+                    entryObj['Delegator ID'] = pid;
+                    entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
+                    entryObj['Datasource'] = evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : evalNum == 10 ? "P2E_Sept_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
+                    entryObj['Delegator_grp'] = logData['Type'] === 'Civ' ? 'Civilian' : logData['Type'] === 'Mil' ? 'Military' : logData['Type'];
+                    const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
+                    const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
+                    // override 102, who is military
+                    if (evalNum < 8) {
+                        entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid === '202409102' ? 'yes' : 'no';
+                    }
+                    else {
+                        const served = res.results?.['Post-Scenario Measures']?.questions?.["Served in Military"]?.['response'];
+                        entryObj['Delegator_mil'] = isDefined(served) ? served == 'Never Served' ? 'no' : 'yes' : null;
+                    }
+                    entryObj['Delegator_Role'] = roles ?? '-'
+                    if (Array.isArray(entryObj['Delegator_Role'])) {
+                        entryObj['Delegator_Role'] = entryObj['Delegator_Role'].join('; ');
+                    }
+                    entryObj['TA1_Name'] = entry['TA1'];
+                    allTA1s.push(entry['TA1']);
+                    entryObj['Trial_ID'] = orderLog ? orderLog.indexOf(page['pageName']) + 1 : trial_num;
+                    trial_num += 1;
+                    entryObj['Attribute'] = entry['Attribute'];
+                    allAttributes.push(entryObj['Attribute']);
+                    entryObj['Scenario'] = entry['TA1'] === 'Adept' ? ad_scenario : st_scenario;
+                    allScenarios.push(entryObj['Scenario']);
+                    entryObj['TA2_Name'] = entry['TA2'];
+                    allTA2s.push(entry['TA2']);
+                    entryObj['ADM_Type'] = t === 'comparison' ? 'comparison' : evalNum === 10 ? 'aligned' : ['misaligned', 'aligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'].includes(t) ? 'aligned' : 'baseline';
+                    entryObj['Target'] = (evalNum >= 8 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
+                    if (entryObj['Target'] !== '-') {
+                        allTargets.push(entryObj['Target']);
                     }
 
-                    switch (true) {
-                        case entryObj['Target'].toLowerCase().indexOf("safety") !== -1 || aligned_target_name.indexOf("safety") !== -1:
-                            entryObj['Attribute'] = "PS";
-                            break;
-                        case entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1:
-                            if (entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
-                                entryObj['Attribute'] = "AF-MF";
-                            } else {
-                                entryObj['Attribute'] = "AF";
-                            }
-                            break;
-                        case entryObj['Target'].toLowerCase().indexOf("search") !== -1 || aligned_target_name.indexOf("search") !== -1:
-                            entryObj['Attribute'] = "SS";
-                            break;
-                        case entryObj['Target'].toLowerCase().indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1:
-                            if (entryObj['Target'].toLowerCase().indexOf("affiliation") !== -1 || aligned_target_name.indexOf("affiliation") !== -1) {
-                                entryObj['Attribute'] = "AF-MF";
-                            } else {
-                                entryObj['Attribute'] = "MF";
-                            }
-                            break;
-                        case page["scenarioIndex"]?.indexOf("-AF-MF") !== -1:
-                            entryObj['Attribute'] = "AF-MF";
-                            break;
-                        default:
-                            console.log("Target and Attributes don't match for Evaluations greater than 8.")
-                    }
-                    // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
-                    entryObj['Probe Set Assessment'] = logData["AF-text-scenario"];
-                    allProbeSetAssessment.push(entryObj['Probe Set Assessment'])
-                    // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
-                    const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
-                    entryObj['Probe Set Observation'] = adjustScenarioNumber(
-                        isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
-                    );
-                    
-                    allProbeSetObservation.push(entryObj['Probe Set Observation'])
-                    entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
-                }
-
-                // include truncation error status for all, column visibility toggled from rq134.jsx
-                entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;
-
-                if (evalNum === 4 && fullSetOnly) {
-                    const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] === t && x['pid'] === pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] === 'Parallax' && x['adm_author'] === 'TAD') || (entry['TA2'] === 'Kitware' && x['adm_author'] === 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                    entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
-                    if (entryObj['TA1_Name'] === 'Adept')
-                        entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] = ph1_comparison_entry?.score ?? '-';
-                }
-
-                entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
-                if (t === 'comparison') {
-                    const adms = page['pageName'].split(' vs ');
-
-                    if (evalNum >= 8 && adms.length === 4) {
-                        handleMultiKdmaComparison(res.results, page, entryObj, allObjs)
+                    let foundADM;
+                    if (evalNum < 8) {
+                        foundADM = admData.find((adm) => adm.history?.[0].parameters.adm_name === page['admName'] && (adm.history?.[0].response?.id ?? adm.history?.[1].response?.id) === page['scenarioIndex'].replace('IO', 'MJ') &&
+                            adm.history?.[adm.history.length - 1].parameters.target_id === page['admTarget']);
                     } else {
-                        const alignedAdm = adms[1];
-                        const baselineAdm = adms[0];
-                        const misalignedAdm = adms[2];
-                        const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
-                        const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
+                        foundADM = admData.find((adm) => adm.evaluation.adm_name.includes(page['admName']) && adm.evaluation.scenario_id === page['scenarioIndex'] &&
+                            adm.evaluation.alignment_target_id === page['admTarget']);
+                    }
 
-                        entryObj['Delegation preference (A/B)'] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : 'B');
-                        entryObj['Delegation preference (A/M)'] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
-                        // need to back-populate previous rows with which was chosen
-                        for (let i = 0; i < 3; i++) {
-                            switch (allObjs[allObjs.length - 1 - i]['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
-                                case 'aligned':
-                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
-                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
-                                    break
-                                case 'baseline':
-                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
-                                    break
-                                case 'misaligned':
-                                    allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
-                                    break
-                                default:
-                                    break
+                    const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
+                    const distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
+
+                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (ADM|target)'] = alignment;
+                    if (evalNum === 5 || evalNum === 6)
+                        entryObj['DRE/Distance Alignment score (ADM|target)'] = entry['TA1'] === 'Adept' ? distance_alignment : alignment;
+
+                    // if DRE data is included in PH1 set, update DRE columns accordingly
+                    if (evalNum === 4 && fullSetOnly && includeDreServer) {
+                        entryObj['DRE/Distance Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)'];
+                        entryObj['P1E/Population Alignment score (ADM|target)'] = entry['TA1'] === 'Adept' ? page.ph1AdmAlignment : entryObj['P1E/Population Alignment score (ADM|target)']
+                    }
+
+                    const simEntry = simData.find((x) => x.evalNumber === evalNum && x.pid === pid &&
+                        (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 === 'st' : x.ta1 === 'ad') &&
+                        x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+                    const alignmentData = simEntry?.data?.alignment?.adms_vs_text;
+                    entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] === (entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD')) &&
+                        x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] === page['admTarget'])?.score ?? '-';
+
+                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target === page['admTarget']?.replaceAll('.', '') || a.target === page['admTarget'])?.score ?? '-';
+                    const txt_distance = distanceAlignments.find((a) => a.target === page['admTarget'] || ((evalNum === 5 || evalNum === 6) && a.target === page['admTarget']?.replace('.', '')))?.score ?? '-';
+                    if (evalNum === 5 || evalNum === 6)
+                        entryObj['DRE/Distance Alignment score (Delegator|target)'] = entry['TA1'] === 'Adept' ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
+                    // if DRE data is included in PH1 set, update DRE columns accordingly
+                    if (evalNum === 4 && fullSetOnly && includeDreServer) {
+                        entryObj['DRE/Distance Alignment score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)'];
+                        entryObj['P1E/Population Alignment score (Delegator|target)'] = entry['TA1'] === 'Adept' ? page.ph1TxtAlignment : entryObj['P1E/Population Alignment score (Delegator|target)']
+                    }
+
+                    entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(entryObj['TA1_Name'] === 'Adept' ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[entryObj['TA1_Name'] === 'Adept' ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
+                    entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'comparison' ? '-' : t;
+
+                    const choiceProcess = ((isPhase2) && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
+                        ? determineChoiceProcessJune2025(textResultsForPID, page, t)
+                        : page['admChoiceProcess'];
+
+                    entryObj['ADM Loading'] = t === 'comparison' ? '-' :
+                        t === 'baseline' ? 'normal' :
+                            ['least aligned', 'most aligned'].includes(choiceProcess) ? 'normal' : 'exemption';
+                    if (evalNum === 5 || evalNum === 6)
+                        entryObj['DRE ADM Loading'] = entry['TA1'] === 'Adept' ? page.dreChoiceProcess : entryObj['ADM Loading'];
+                    // if DRE data is included in PH1 set, update DRE columns accordingly
+                    if (evalNum === 4 && fullSetOnly && includeDreServer) {
+                        entryObj['DRE ADM Loading'] = entryObj['ADM Loading'];
+                        entryObj['ADM Loading'] = entry['TA1'] === 'Adept' ? page.ph1ChoiceProcess : entryObj['ADM Loading']
+                    }
+
+                    entryObj['Competence Error'] = (evalNum === 5 || evalNum === 6) && entry['TA2'] === 'Kitware' && entryObj['ADM_Type'] === 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
+
+                    let comparison_entry;
+                    if (evalNum < 8) {
+                        comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] === t && x['pid'] === pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] === 'Parallax' && x['adm_author'] === 'TAD') || (entry['TA2'] === 'Kitware' && x['adm_author'] === 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                    } else {
+                        comparison_entry = comparisons?.find((x) => (evalNum === 10 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget']);
+                    }
+                    let alignmentComparison;
+                    // for the combined psaf block from eval 10 we need to collect the two separate comparisons
+                    if (evalNum === 10 && page['scenarioIndex']?.includes('combined')) {
+                        const psEntry = comparisons?.find((x) =>
+                            x['pid'] === pid &&
+                            x['adm_scenario'] === page['scenarioIndex'] &&
+                            x['adm_alignment_target'] === page['admTarget'] &&
+                            x['attribute'] === 'PS' &&
+                            x['text_scenario'].includes('PS') &&
+                            !x['text_scenario'].includes('PS-AF')
+                        );
+                        const afEntry = comparisons?.find((x) =>
+                            x['pid'] === pid &&
+                            x['adm_scenario'] === page['scenarioIndex'] &&
+                            x['adm_alignment_target'] === page['admTarget'] &&
+                            x['attribute'] === 'AF' &&
+                            x['text_scenario'].includes('AF') &&
+                            !x['text_scenario'].includes('PS-AF')
+                        );
+
+                        if (psEntry?.score && afEntry?.score) {
+                            alignmentComparison = `PS Score: ${psEntry.score}\nAF Score: ${afEntry.score}`;
+                        } else if (psEntry?.score) {
+                            alignmentComparison = `PS Score: ${psEntry.score}`;
+                        } else if (afEntry?.score) {
+                            alignmentComparison = `AF Score: ${afEntry.score}`;
+                        } else {
+                            alignmentComparison = '-';
+                        }
+                    } else {
+                        alignmentComparison = comparison_entry?.score ?? '-';
+                    }
+
+                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
+                    if (evalNum === 5 || evalNum === 6) {
+                        entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entry['TA1'] === 'Adept' ? comparison_entry?.distance_based_score : entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+                    }
+
+                    if (calibrationScores) {
+                        entryObj['Calibration Alignment Score (Delegator|Observed_ADM (target))'] = JSON.stringify(comparison_entry?.calibration_scores)
+                        // st only files so don't use adpet specific column labels
+                        entryObj['P1E Alignment Score (Delegator|target)'] = entryObj['P1E/Population Alignment score (Delegator|target)']
+                        entryObj['P1E Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))']
+                        entryObj['P1E Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)']
+                    }
+
+                    if (evalNum >= 8) {
+                        entryObj['Alignment score (ADM|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
+                        entryObj['Alignment score (Delegator|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
+                        entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+
+                        let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
+                        const entryObjTarget = entryObj['Target'].toLowerCase();
+                        const scenario = page["scenarioIndex"]?.toLowerCase();
+                        if (aligned_target_name === undefined) {
+                            aligned_target_name = "";
+                        }
+
+                        const doesTargetContain = (str) => {
+                            return entryObjTarget.indexOf(str) !== -1 || aligned_target_name.indexOf(str) !== -1;
+                        }
+
+                        const doesScenarioContain = (str) => {
+                            return scenario?.indexOf(str) !== -1;
+                        }
+
+                        switch (true) {
+                            case doesTargetContain("safety") || doesTargetContain("ps-") || doesScenarioContain("-ps"):
+                                if (doesTargetContain("affiliation") || doesTargetContain("ps-af") || doesScenarioContain("ps-af")) {
+                                    entryObj['Attribute'] = "PS-AF";
+                                }
+                                else if (doesScenarioContain("-psaf") && doesScenarioContain("-combined")) {
+                                    entryObj['Attribute'] = "PSAF-combined"
+                                } else {
+                                    entryObj['Attribute'] = "PS";
+                                }
+                                break;
+                            case doesTargetContain("affiliation") || doesScenarioContain("-af"):
+                                if (entryObjTarget.indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
+                                    entryObj['Attribute'] = "AF-MF";
+                                } else {
+                                    entryObj['Attribute'] = "AF";
+                                }
+                                break;
+                            case doesTargetContain("search"):
+                                entryObj['Attribute'] = "SS";
+                                break;
+                            case doesTargetContain("merit"):
+                                if (doesTargetContain("affiliation")) {
+                                    entryObj['Attribute'] = "AF-MF";
+                                } else {
+                                    entryObj['Attribute'] = "MF";
+                                }
+                                break;
+                            case doesScenarioContain("-af-mf"):
+                                entryObj['Attribute'] = "AF-MF";
+                                break;
+                            default:
+                                console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name, scenario)
+                        }
+
+                        // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
+                        entryObj['Probe Set Assessment'] = page["scenarioIndex"].includes('PS-AF') ? logData["PS-AF-text-scenario"] : logData["AF-text-scenario"];
+                        allProbeSetAssessment.push(entryObj['Probe Set Assessment'])
+                        // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
+                        if (evalNum !== 10) {
+                            const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
+                            entryObj['Probe Set Observation'] = adjustScenarioNumber(
+                                isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
+                            );
+                        }
+                        else {
+                            const isMultiKdma = page['scenarioIndex'].includes('PS-AF');
+                            const isCombined = page['scenarioIndex'].includes("PSAF");
+                            entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData["PS-AF-text-scenario"], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
+                        }
+                        allProbeSetObservation.push(entryObj['Probe Set Observation'])
+                        entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
+                    }
+
+                    // include truncation error status for all, column visibility toggled from rq134.jsx
+                    entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;
+
+                    if (evalNum === 4 && fullSetOnly) {
+                        const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] === t && x['pid'] === pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] === 'Parallax' && x['adm_author'] === 'TAD') || (entry['TA2'] === 'Kitware' && x['adm_author'] === 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
+                        entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+                        if (entryObj['TA1_Name'] === 'Adept')
+                            entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] = ph1_comparison_entry?.score ?? '-';
+                    }
+
+                    entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
+
+                    if (t === 'comparison') {
+                        const adms = page['pageName'].split(' vs ');
+                        if (evalNum == 10 && adms.length === 2) {
+                            handlePSAFPreferences(res.results, page, entryObj, allObjs);
+                        }
+                        else if (evalNum >= 8 && adms.length === 4) {
+                            handleMultiKdmaComparison(res.results, page, entryObj, allObjs);
+                        } else {
+                            const alignedAdm = adms[1];
+                            const baselineAdm = adms[0];
+                            const misalignedAdm = adms[2];
+                            const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
+                            const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
+
+                            entryObj['Delegation preference (A/B)'] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : 'B');
+                            entryObj['Delegation preference (A/M)'] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
+                            // need to back-populate previous rows with which was chosen
+                            for (let i = 0; i < 3; i++) {
+                                switch (allObjs?.[allObjs.length - 1 - i]?.['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                                    case 'aligned':
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
+                                        break
+                                    case 'baseline':
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
+                                        break
+                                    case 'misaligned':
+                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
+                                        break
+                                    default:
+                                        break
+                                }
                             }
                         }
+
+                    }
+                    else {
+                        entryObj['Delegation preference (A/B)'] = '-';
+                        entryObj['Delegation preference (A/M)'] = '-';
                     }
 
+                    entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': This medic is trustworthy']?.['response'] ?? '-' : '-'];
+                    entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decisions that this medic made?']?.['response'] ?? '-' : '-'];
+                    if (isPhase2) {
+                        entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': this medic is trustworthy']?.['response'] ?? '-' : '-'];
+                        entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decision that this medic made?']?.['response'] ?? '-' : '-'];
+                    }
+                    entryObj['SRAlign_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': The way this medic makes medical decisions is how I make decisions']?.['response'] ?? '-' : '-'];
+                    allObjs.push(entryObj);
                 }
-                else {
-                    entryObj['Delegation preference (A/B)'] = '-';
-                    entryObj['Delegation preference (A/M)'] = '-';
-                }
-
-                entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': This medic is trustworthy']?.['response'] ?? '-' : '-'];
-                entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decisions that this medic made?']?.['response'] ?? '-' : '-'];
-                if (evalNum === 8 || evalNum === 9) {
-                    entryObj['Trustworthy_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': this medic is trustworthy']?.['response'] ?? '-' : '-'];
-                    entryObj['Agreement_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': Do you agree with the decision that this medic made?']?.['response'] ?? '-' : '-'];
-                }
-                entryObj['SRAlign_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': The way this medic makes medical decisions is how I make decisions']?.['response'] ?? '-' : '-'];
-                allObjs.push(entryObj);
             }
         }
     }
 
     return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation };
+}
+
+function handlePSAFPreferences(survey, page, entryObj, allObjs) {
+    const adms = page['pageName'].split(' vs ');
+    const admTargetMap = {};
+    const targetIDs = [];
+    for (const adm of adms) {
+        const admPage = survey[adm];
+        if (admPage) {
+            admTargetMap[adm] = admPage.admTarget;
+            targetIDs.push(admPage.admTarget.slice(-1));
+        }
+    }
+    targetIDs.sort();
+    const pid = entryObj['Delegator ID'];
+    const choice = admTargetMap[page.questions?.[page['pageName'] + ": Forced Choice"]?.response] ?? null;
+    const columnName = `Delegation Preference (PSAF-${targetIDs[0]}/PSAF-${targetIDs[1]})`
+    entryObj[columnName] = choice;
+    const firstRow = allObjs.find(obj => obj['Delegator ID'] === pid && obj['Target'] === admTargetMap[adms[0]])
+    if (firstRow) {
+        firstRow[columnName] = choice === admTargetMap[adms[0]] ? 'y' : 'n'
+    }
+    const secondRow = allObjs.find(obj => obj['Delegator ID'] === pid && obj['Target'] === admTargetMap[adms[1]])
+    if (secondRow) {
+        secondRow[columnName] = choice === admTargetMap[adms[1]] ? 'y' : 'n'
+    }
 }
 
 function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
