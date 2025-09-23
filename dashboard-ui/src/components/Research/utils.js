@@ -467,7 +467,38 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     } else {
                         comparison_entry = comparisons?.find((x) => (evalNum === 10 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget']);
                     }
-                    const alignmentComparison = comparison_entry?.score ?? '-'
+                    let alignmentComparison;
+                    // for the combined psaf block from eval 10 we need to collect the two separate comparisons
+                    if (evalNum === 10 && page['scenarioIndex']?.includes('combined')) {
+                        const psEntry = comparisons?.find((x) =>
+                            x['pid'] === pid &&
+                            x['adm_scenario'] === page['scenarioIndex'] &&
+                            x['adm_alignment_target'] === page['admTarget'] &&
+                            x['attribute'] === 'PS' &&
+                            x['text_scenario'].includes('PS') &&
+                            !x['text_scenario'].includes('PS-AF')
+                        );
+                        const afEntry = comparisons?.find((x) =>
+                            x['pid'] === pid &&
+                            x['adm_scenario'] === page['scenarioIndex'] &&
+                            x['adm_alignment_target'] === page['admTarget'] &&
+                            x['attribute'] === 'AF' &&
+                            x['text_scenario'].includes('AF') &&
+                            !x['text_scenario'].includes('PS-AF')
+                        );
+
+                        if (psEntry?.score && afEntry?.score) {
+                            alignmentComparison = `PS Score: ${psEntry.score}\nAF Score: ${afEntry.score}`;
+                        } else if (psEntry?.score) {
+                            alignmentComparison = `PS Score: ${psEntry.score}`;
+                        } else if (afEntry?.score) {
+                            alignmentComparison = `AF Score: ${afEntry.score}`;
+                        } else {
+                            alignmentComparison = '-';
+                        }
+                    } else {
+                        alignmentComparison = comparison_entry?.score ?? '-';
+                    }
 
                     entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
                     if (evalNum === 5 || evalNum === 6) {
