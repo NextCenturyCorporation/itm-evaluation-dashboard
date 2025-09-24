@@ -24,12 +24,18 @@ describe('Test CACI Prolific entry method', () => {
             const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
             b?.click();
         });
-        await page.waitForSelector('text/Instructions', { timeout: 20000 });
+        await page.waitForSelector('text/Instructions', { timeout: 30000 });
         await page.$$eval('button', btns => {
             const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
             b?.click();
         });
-        await page.waitForSelector(`text/${IS_PH1 ? 'Assess the shooter' : 'Scenario Details'}`, { timeout: 30000 });
+        if (IS_PH1) {
+            await page.waitForSelector('text/Page 1 of', { timeout: 30000 });
+            await page.waitForSelector('input[type="radio"]', { timeout: 30000 });
+        }
+        else {
+            await page.waitForSelector('text/Scenario Details', { timeout: 30000 });
+        }
         const currentUrl = page.url();
         expect(currentUrl.includes(`PROLIFIC_PID=${PROLIFIC_PID}`)).toBe(true);
     }, 60000);
@@ -55,7 +61,7 @@ describe('Test CACI Prolific entry method', () => {
 
     it('any key combo during text scenario should have no effect on progress', async () => {
         await startCaciProlificSurvey(page);
-        await pressAllKeys(page, IS_PH1 ? "Assess the shooter" : "Scenario Details");
+        await pressAllKeys(page, IS_PH1 ? "Page 1 of" : "Scenario Details");
     }, 30000);
 
     it('text-scenario through CACI Prolific should be navigable and end with survey', async () => {

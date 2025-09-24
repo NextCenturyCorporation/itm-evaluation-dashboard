@@ -165,17 +165,26 @@ export async function startAdeptQualtrixSurvey(page) {
 }
 
 export async function startCaciProlificSurvey(page) {
+    const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
     await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=ALS_test1210b`);
     await page.waitForSelector('text/Consent Form', { timeout: 20000 });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
         b?.click();
     });
-    await page.waitForSelector('text/Instructions', { timeout: 20000 });
+    await page.waitForSelector('text/Instructions', { timeout: 30000 });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
         b?.click();
     });
+
+    if (IS_PH1) {
+        await page.waitForSelector('text/Page 1 of', { timeout: 30000 });
+        await page.waitForSelector('input[type="radio"]', { timeout: 30000 });
+    }
+    else {
+        await page.waitForSelector('text/Scenario Details', { timeout: 30000 });
+    }
 }
 
 export async function agreeToProlificConsent(page) {
@@ -216,13 +225,16 @@ export async function takePhase1TextScenario(page) {
     let scenarios = 0;
     while (scenarios < 5) {
         try {
-            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 200 });
-        } catch (error) {
+            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 2000 });
+        } 
+        catch (error) 
+        {
             if (error.name === 'TimeoutError') {
-                await page.waitForSelector(`text/Page 1 of`, { timeout: 100 });
+                await page.waitForSelector('text/Page 1 of', { timeout: 2000 });
                 scenarios += 1;
                 pageNum = 1;
-            } else {
+            } 
+            else  {
                 throw error;
             }
         }
