@@ -74,6 +74,11 @@ describe('Test CACI Prolific entry method', () => {
     it('any key combo during survey should have no effect on progress', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&startSurvey=true&PROLIFIC_PID=${PROLIFIC_PID}&pid=123`);
         await agreeToProlificConsent(page);
+        const startSurveyUrl = page.url();
+        expect(startSurveyUrl.includes(`PROLIFIC_PID=${PROLIFIC_PID}`)).toBe(true);
+        const maybeInstructions = await page.$('text/Instructions');
+        expect(maybeInstructions).toBeNull();
+
         await page.waitForSelector('text/In the final part of the study,', { timeout: 500 });
         await pressAllKeys(page, 'In the final part of the study,');
     }, 100000);
