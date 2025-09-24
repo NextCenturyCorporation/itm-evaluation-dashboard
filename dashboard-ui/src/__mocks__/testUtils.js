@@ -164,6 +164,31 @@ export async function startAdeptQualtrixSurvey(page) {
     await page.waitForSelector('text/Page 1 of', { timeout: 500 });
 }
 
+export async function startCaciProlificSurvey(page) {
+    await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=ALS_test1210b`);
+    await page.waitForSelector('text/Consent Form', { timeout: 20000 });
+    await page.$$eval('button', btns => {
+        const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
+        b?.click();
+    });
+    await page.waitForSelector('text/Instructions', { timeout: 20000 });
+    await page.$$eval('button', btns => {
+        const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
+        b?.click();
+    });
+}
+
+export async function agreeToProlificConsent(page) {
+    try {
+        await page.waitForSelector('text/Consent Form', { timeout: 1000 });
+        await page.$$eval('button', btns => {
+            const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
+            b?.click();
+        });
+    } catch (_) {
+    }
+}
+
 export async function pressAllKeys(page, uniqueExpectedText) {
     // https://pptr.dev/api/puppeteer.keyinput
     const keysToPress = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Power', 'Eject', 'Abort', 'Help', 'Backspace', 'Numpad5', 'NumpadEnter',
