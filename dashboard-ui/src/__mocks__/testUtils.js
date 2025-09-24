@@ -226,15 +226,12 @@ export async function takePhase1TextScenario(page) {
     while (scenarios < 5) {
         try {
             await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 2000 });
-        } 
-        catch (error) 
-        {
+        } catch (error) {
             if (error.name === 'TimeoutError') {
-                await page.waitForSelector('text/Page 1 of', { timeout: 2000 });
+                await page.waitForSelector(`text/Page 1 of`, { timeout: 2000 });
                 scenarios += 1;
                 pageNum = 1;
-            } 
-            else  {
+            } else {
                 throw error;
             }
         }
