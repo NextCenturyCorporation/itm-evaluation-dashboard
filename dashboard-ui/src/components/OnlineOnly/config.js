@@ -160,7 +160,7 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
             ...p1Mappings[participantLog['Text-1']] || [],
             ...p1Mappings[participantLog['Text-2']] || []
         ];
-    } else if (num === 11) {
+    } else if (num === 12) {
         scenarios = [
             'DryRunEval-MJ5-eval',
             'vol-ph1-eval-2',
