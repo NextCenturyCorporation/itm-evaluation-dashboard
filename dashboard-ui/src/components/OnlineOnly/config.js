@@ -3,6 +3,7 @@ import store from "../../store/store";
 import bcrypt from 'bcryptjs';
 
 export const evalNameToNumber = {
+    'Eval 12 UK Phase 1': 12,
     'Phase 2 September 2025 Collaboration': 10,
     'Phase 2 July 2025 Collaboration': 9,
     'Phase 2 June 2025 Collaboration': 8,
@@ -117,6 +118,24 @@ export const septemberParticipantData = (currentSearchParams, hashedEmail, newPi
     };
 }
 
+export const ukParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
+    const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
+    const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
+    const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
+
+    return {
+        "ParticipantID": newPid,
+        "Type": type,
+        "prolificId": prolificId,
+        "contactId": contactId,
+        "claimed": true,
+        "simEntryCount": 0,
+        "surveyEntryCount": 0,
+        "textEntryCount": 0,
+        "hashedEmail": email,
+        'evalNum': evalNum
+    };
+}
 
 export const scenarioIdsFromLog = (participantLog, currentEval) => {
     const num = evalNameToNumber[currentEval]
@@ -141,6 +160,13 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
             ...p1Mappings[participantLog['Text-1']] || [],
             ...p1Mappings[participantLog['Text-2']] || []
         ];
+    } else if (num === 11) {
+        scenarios = [
+            'DryRunEval-MJ5-eval',
+            'vol-ph1-eval-2',
+            'DryRunEval.IO1',
+            'DryRunEval.MJ1'
+        ]
     }
 
     if (num >= 8) {
