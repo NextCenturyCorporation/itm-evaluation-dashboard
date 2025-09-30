@@ -1,13 +1,13 @@
 import React from 'react';
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
-import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine, FaWalking } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs';
 
 const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) => {
   const vitalIcons = {
     avpu: <FaEye size={18} />,
-    ambulatory: <FaAmbulance size={18} />,
+    ambulatory: <FaWalking size={18} />,
     breathing: <FaLungs size={18} />,
     heart_rate: <FaHeartbeat size={18} />,
     spo2: <FaPercent size={18} />,

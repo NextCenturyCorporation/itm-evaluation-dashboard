@@ -309,7 +309,6 @@ export function App() {
 
             let participantData;
             if (evalNum === 12) {
-                console.log('hit')
                 participantData = ukParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
             }
             if (evalNum === 10) {

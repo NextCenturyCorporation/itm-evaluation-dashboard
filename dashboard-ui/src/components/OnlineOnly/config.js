@@ -163,7 +163,7 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
     } else if (num === 12) {
         scenarios = [
             'DryRunEval-MJ5-eval',
-            'vol-ph1-eval-2',
+            //'vol-ph1-eval-2',
             'DryRunEval.IO1',
             'DryRunEval.MJ1'
         ]
