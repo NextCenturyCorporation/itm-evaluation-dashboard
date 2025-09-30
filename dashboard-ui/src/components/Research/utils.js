@@ -478,8 +478,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             x['pid'] === pid &&
                             x['adm_scenario'] === page['scenarioIndex'] &&
                             x['adm_alignment_target'] === page['admTarget'] &&
+                            (evalNum !== 10 || x['text_scenario'].includes(entryObj['Attribute'])) &&
                             (page['scenarioIndex']?.includes('PS-AF') ? x['text_scenario']?.includes('PS-AF') : !x['text_scenario']?.includes('PS-AF'))
                         );
+                        console.log(comparison_entry)
                     }
                     let alignmentComparison;
                     // for the combined psaf block from eval 10 we need to collect the two separate comparisons
