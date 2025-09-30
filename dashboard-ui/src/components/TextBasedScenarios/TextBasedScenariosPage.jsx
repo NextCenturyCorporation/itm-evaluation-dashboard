@@ -728,7 +728,10 @@ class TextBasedScenariosPage extends Component {
         };
 
         // randomize probe order for phase 2 (non narrative). Keep order intact for phase 1
-        if (evalNameToNumber[this.props.currentTextEval] >= 8) { config.pages = shuffle([...config.pages]) }
+        const evalNum = evalNameToNumber[this.props.currentTextEval];
+        if (evalNum >= 8 && evalNum !== 12) {
+            config.pages = shuffle([...config.pages])
+        }
 
         config.title = title;
         config.showTitle = false;
@@ -934,6 +937,7 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation })
                             <Card className="border-0 shadow">
                                 <Card.Body className="text-center p-5">
                                     <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                                    <h3 className="display-4 mb-4">Your Participant ID is {this.state.participantID.slice(-3)}</h3>
                                     {moderatorExists ?
                                         <>
                                             <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
