@@ -18,7 +18,7 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
 
   const vitalNames = {
     avpu: "AVPU",
-    ambulatory: "Ambulatory",
+    ambulatory: "Walking",
     breathing: "RR",
     heart_rate: "HR",
     spo2: "SPO2",
