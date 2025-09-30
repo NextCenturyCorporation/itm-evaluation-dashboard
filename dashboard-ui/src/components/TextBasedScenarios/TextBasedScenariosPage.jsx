@@ -913,6 +913,7 @@ class TextBasedScenariosPage extends Component {
                         sim2={this.state.sim2}
                         moderatorExists={this.state.moderated}
                         toDelegation={this.state.onlineOnly}
+                        participantID={this.state.participantID}
                     />
                 )}
             </>
@@ -922,7 +923,7 @@ class TextBasedScenariosPage extends Component {
 
 export default withRouter(TextBasedScenariosPage);
 
-const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation }) => {
+const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, participantID }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
 
@@ -937,7 +938,7 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation })
                             <Card className="border-0 shadow">
                                 <Card.Body className="text-center p-5">
                                     <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
-                                    <h3 className="display-4 mb-4">Your Participant ID is {this.state.participantID.slice(-3)}</h3>
+                                    <h3 className="display-4 mb-4">Your Participant ID is {participantID?.slice(-3)}</h3>
                                     {moderatorExists ?
                                         <>
                                             <p className="lead mb-5">Please ask the session moderator to advance the screen</p>

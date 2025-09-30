@@ -175,6 +175,5 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
             [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
         }
     }
-    console.log(scenarios)
     return scenarios
 }
