@@ -58,8 +58,7 @@ export function setupTextBasedConfig(data) {
     
     for (const config of data.getAllTextBasedConfigs) {
         let tempConfig = JSON.parse(JSON.stringify(config));
-        
-        if (hasTextBasedImages && tempConfig.eval !== 'mre-eval') {
+        if (hasTextBasedImages && tempConfig.eval !== 'mre-eval' && tempConfig.pages && Array.isArray(tempConfig.pages)) {
             for (const page of tempConfig.pages) {
                 for (const el of page.elements) {
                     if (Object.keys(el).includes("patients")) {

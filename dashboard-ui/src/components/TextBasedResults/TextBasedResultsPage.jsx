@@ -36,8 +36,12 @@ const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAl
 const cleanTitle = (title, scenario) => {
     const foundAttr = p2Attributes.find(attr => scenario && scenario.includes(attr));
     const attrOrScenario = foundAttr || '';
-    const match = title.match(/(\d+)/);
-    const number = match ? match[1] : title;
+    const probeMatch = title.match(/Probe\s*(\d+)/i);
+    let number;
+
+    if (probeMatch) {
+        number = probeMatch[1];
+    }
     return `Probe-${attrOrScenario}-${number}`;
 };
 
@@ -215,31 +219,31 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
     const exportToExcel = async (allScenarios = false, attribute = null, singleScenario = null) => {
         const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
         const fileExtension = '.xlsx';
-        
-        const fixedHeaders = allScenarios 
+
+        const fixedHeaders = allScenarios
             ? ['Participant ID', 'Eval Number', 'Set']
             : ['Participant ID'];
         const dynamicHeaders = [];
         const headerMap = new Map();
         const participantDataMap = new Map();
-    
+
         const processProbeData = (entry, pageName, scenario, participantRow) => {
             const probeData = entry[pageName];
             if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
-    
+
             const time_key = getQuestionText(pageName + ' time (s)', scenario);
-    
+
             if (!headerMap.has(time_key)) {
                 headerMap.set(time_key, dynamicHeaders.length);
                 dynamicHeaders.push(time_key);
             }
             participantRow[time_key] = Math.round(probeData.timeSpentOnPage * 100) / 100;
-    
+
             if (probeData.questions) {
                 Object.entries(probeData.questions).forEach(([q, qData]) => {
                     if (qData?.response !== undefined) {
                         const questionHeader = getQuestionText(q, scenario);
-    
+
                         if (!headerMap.has(questionHeader)) {
                             headerMap.set(questionHeader, dynamicHeaders.length);
                             dynamicHeaders.push(questionHeader);
@@ -249,72 +253,82 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 });
             }
         };
-    
+
         const processEntry = (entry, scenario) => {
             const participantId = entry.participantID;
-            const participantRow = participantDataMap.get(participantId) || 
+            const participantRow = participantDataMap.get(participantId) ||
                 participantDataMap.set(participantId, {
                     'Participant ID': participantId,
                     ...(allScenarios && { 'Eval Number': entry.evalNumber })
                 }).get(participantId);
-    
+
             const pageOrder = textBasedConfigs[scenario]?.pages?.map(page => page.name) || [];
-            
+
             // use order from config to determine headers
             pageOrder.forEach(pageName => processProbeData(entry, pageName, scenario, participantRow));
-            
+
             // if not in config
             Object.keys(entry)
                 .filter(key => !KEYS_WITHOUT_TIME.includes(key) && !pageOrder.includes(key))
                 .forEach(key => processProbeData(entry, key, scenario, participantRow));
-    
-            if (allScenarios) {
 
+            if (allScenarios) {
                 const logEntry = participantLog?.getParticipantLog?.find(
                     log => String(log['ParticipantID']) === participantId
                 );
-    
-                const setValues = ['AF', 'MF', 'PS', 'SS']
-                    .map(attr => logEntry?.[`${attr}-text-scenario`])
-                    .filter(Boolean);
-    
-                participantRow['Set'] = new Set(setValues).size === 1 ? setValues[0] : 'Various';
+
+                if (attribute) {
+                    // for attr download only look at specific set in plog
+                    const attributeSetValue = logEntry?.[`${attribute}-text-scenario`];
+                    participantRow['Set'] = attributeSetValue || '';
+                } else {
+                    // ownloading all results, check all attributes
+                    const setValues = ['PS-AF', 'AF', 'MF', 'PS', 'SS']
+                        .map(attr => logEntry?.[`${attr}-text-scenario`])
+                        .filter(Boolean);
+
+                    participantRow['Set'] = new Set(setValues).size === 1 ? setValues[0] : 'Various';
+                }
             }
         };
-    
-        const scenariosToProcess = allScenarios 
-            ? scenarioOptions.filter(scenario => 
+
+        const scenariosToProcess = allScenarios
+            ? scenarioOptions.filter(scenario =>
                 !attribute || new RegExp(`\\b${attribute}\\d*\\b`, 'i').test(scenario)
-              )
+            )
             : [singleScenario];
-    
+
         for (const scenario of scenariosToProcess) {
             const scenarioData = participantBased?.[scenario];
             if (!scenarioData) continue;
-    
+
             for (const entry of scenarioData) {
                 processEntry(entry, scenario);
             }
         }
-    
+
         const allHeaders = [...fixedHeaders, ...dynamicHeaders];
         const allData = Array.from(participantDataMap.values())
             .map(row => allHeaders.reduce((acc, header) => ({ ...acc, [header]: row[header] || '' }), {}))
             .sort((a, b) => a['Participant ID'].localeCompare(b['Participant ID'], undefined, { numeric: true, sensitivity: 'base' }));
-    
+
         const ws = XLSX.utils.json_to_sheet(allData, { header: allHeaders });
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
-        
+
         const filename = allScenarios
             ? `text_result_data_${attribute ? attribute + '_' : ''}all_scenarios_eval${selectedEval}${fileExtension}`
             : `text_result_data_${singleScenario}${fileExtension}`;
-        
+
         FileSaver.saveAs(data, filename);
     };
 
-    const getScenarioAttribute = scenarioName => (scenarioName.match(/-(AF|MF|PS|SS)\d*-eval/i) || [])[1] || null;
+    const getScenarioAttribute = scenarioName => {
+        // PS-AF first (before checking PS or AF individually)
+        const match = scenarioName.match(/-(PS-AF|AF|MF|PS|SS)\d*-eval/i);
+        return match ? match[1] : null;
+    };
 
     return (<div className="participant-text-results">
         {selectedEval >= 8 && (
