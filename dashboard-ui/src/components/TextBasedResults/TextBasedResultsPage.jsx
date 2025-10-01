@@ -293,9 +293,14 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         };
 
         const scenariosToProcess = allScenarios
-            ? scenarioOptions.filter(scenario =>
-                !attribute || new RegExp(`\\b${attribute}\\d*\\b`, 'i').test(scenario)
-            )
+            ? scenarioOptions.filter(scenario => {
+                if (!attribute) return true;
+
+                const match = scenario.match(/-(PS-AF|AF|MF|PS|SS)\d*-eval/i);
+                const scenarioAttr = match ? match[1] : null;
+
+                return scenarioAttr && scenarioAttr.toUpperCase() === attribute.toUpperCase();
+            })
             : [singleScenario];
 
         for (const scenario of scenariosToProcess) {
