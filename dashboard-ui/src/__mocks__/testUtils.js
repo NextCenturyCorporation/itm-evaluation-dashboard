@@ -268,3 +268,118 @@ export async function takePhase2TextScenario(page) {
         await page.keyboard.press('Enter');
     }
 }
+
+export async function waitForSurveyIntro(page) {
+    await page.waitForSelector('text/In the final part of the study,', { timeout: 500 });
+}
+
+export async function clickNext(page) {
+    await page.$$eval('input', buttons => {
+        Array.from(buttons).find(btn => btn.value == 'Next')?.click();
+    });
+}
+
+export async function completeTextScenarioAndReachSurvey(page, { isPhase1 }) {
+    if (isPhase1) {
+        await takePhase1TextScenario(page);
+    } else {
+        await takePhase2TextScenario(page);
+    }
+    await page.waitForSelector('text/Please do not close your browser', { timeout: 500 });
+    await page.waitForSelector('text/In the final part of the study,', { timeout: 10000000 });
+    await pressAllKeys(page, 'In the final part of the study,');
+}
+
+export async function surveyFlowNavigateAndComplete(page, { isPhase1 }) {
+    // we start on the survey intro page
+    await clickNext(page);
+
+    // phase 1 only
+    if (isPhase1) {
+        await page.waitForSelector('text/Note that in some scenarios', { timeout: 50000 });
+        await clickNext(page);
+        await page.waitForSelector('text/Situation', { timeout: 500 });
+        let pageNum = 3;
+        let medics = 0;
+        while (medics < 3) {
+            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+            await page.focus('input[type="radio"]');
+            for (let i = 0; i < 4; i++) {
+                await page.keyboard.press(' ');
+                await page.keyboard.press('Tab');
+            }
+            await clickNext(page);
+            medics += 1;
+            pageNum += 1;
+        }
+        // reached comparison page!
+        await page.waitForSelector('text/Medic-B21 vs Medic-V17', { timeout: 500 });
+        await page.waitForSelector('text/Medic-B16 vs Medic-B21', { timeout: 500 });
+        await page.focus('input[type="radio"]');
+        // two MC followed by short answer, twice
+        for (let i = 0; i < 2; i++) {
+            await page.keyboard.press(' ');
+            await page.keyboard.press('Tab');
+            await page.keyboard.press(' ');
+            await page.keyboard.press('Tab');
+            await page.keyboard.press('m');
+            await page.keyboard.press('Tab');
+            await page.keyboard.press('Tab');
+        }
+        await clickNext(page);
+    }
+    // reached post-scenario measures
+    await page.waitForSelector('text/What was the biggest influence on your delegation decision between different medics?', { timeout: 500 });
+    // answer short-text question
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('m');
+    // answer initial radio questions
+    for (let i = 0; i < 9; i++) {
+        await page.keyboard.press('Tab');
+        await page.keyboard.press(' ');
+    }
+    // skip past roles
+    for (let i = 0; i < (isPhase1 ? 8 : 9); i++) {
+        await page.keyboard.press('Tab');
+    }
+
+    if (!isPhase1) {
+    // phase 2 
+        await page.keyboard.press('m');
+        // answer the rest
+        for (let i = 0; i < 5; i++) {
+            await page.keyboard.press('Tab');
+            await page.keyboard.press(' ');
+        }
+        // skip past roles
+        for (let i = 0; i < 7; i++) {
+            await page.keyboard.press('Tab');
+        }
+        for (let i = 0; i < 2; i++) {
+            await page.keyboard.press('Tab');
+            await page.keyboard.press(' ');
+        }
+        await page.keyboard.press('m');
+        for (let i = 0; i < 2; i++) {
+            await page.keyboard.press('Tab');
+            await page.keyboard.press(' ');
+        }
+        // skip past environments
+        for (let i = 0; i < 7; i++) {
+            await page.keyboard.press('Tab');
+        }
+    }
+    for (let i = 0; i < 3; i++) {
+        await page.keyboard.press('Tab');
+        await page.keyboard.press(' ');
+    }
+    // don't leave to the adept qualtrix form, stay here!
+    page.on('dialog', async dialog => {
+        expect(dialog.message()).toContain('');
+        await dialog.dismiss();
+    });
+    await page.$$eval('input', buttons => {
+        Array.from(buttons).find(btn => btn.value == 'Complete').click();
+    });
+    await page.waitForSelector('text/Thank you for completing the survey', { timeout: 50000 });
+}
