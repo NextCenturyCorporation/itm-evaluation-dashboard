@@ -803,8 +803,6 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
     return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
 }
 
-// Add these functions to surveyUtils.js
-
 export function getTextScenariosForParticipant(pid, participantLog) {
     const defaultScenarios = {
         "AF-text-scenario": null,
@@ -1601,6 +1599,56 @@ const genComparisonPagev8 = (dm1, dm2) => {
     };
 }
 
-export const createScenarioBlockUK = (scenarioType, matchedLog, allPages) => {
+export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, participantTextResults) => {
+    let pages = []
+    if (scenarioType === 'VOL') {
+        const volResult = participantTextResults.find(x => x.scenario_id === 'vol-ph1-eval-2')
+        const mostAligned = volResult.mostLeastAligned[0].response[0]
+        const mostAlignedPage = allPages.find(x => x.admName === 'TAD-aligned' && x.admAlignment === mostAligned.target)
+        pages.push(mostAlignedPage)
+        const leastAligned = volResult.mostLeastAligned[0].response.at(-1)
+        const leastAlignedPage = allPages.find(x => x.admName === 'TAD-aligned' && x.admAlignment === leastAligned.target)
+        pages.push(leastAlignedPage)
+        const baselinePage = allPages.find(x => x.admName === 'TAD-severity-baseline')
+        pages.push(baselinePage)
 
+        pages = shuffle([...pages])
+
+        const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
+        pages.push(comp_page)
+    }
+    else if (scenarioType === 'MJ') {
+        const mjResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval-MJ5-eval')
+        const mostAligned = Object.keys(mjResult.mostLeastAligned.find(x => x.target === 'Moral judgement').response[0])[0]
+        const mostAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-MJ2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(mostAligned))
+        pages.push(mostAlignedPage)
+        const leastAligned = Object.keys(mjResult.mostLeastAligned.find(x => x.target === 'Moral judgement').response.at(-1))[0]
+        const leastAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-MJ2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(leastAligned))
+        pages.push(leastAlignedPage)
+
+        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.scenarioIndex === 'DryRunEval-MJ2-eval')
+        pages.push(baselinePage)
+        pages = shuffle([...pages])
+
+        const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
+        pages.push(comp_page)
+    }
+    else if (scenarioType === 'IO') {
+        const ioResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval.IO1')
+        const mostAligned = Object.keys(ioResult.mostLeastAligned.find(x => x.target === 'Ingroup Bias').response[0])[0]
+        const mostAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-IO2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(mostAligned))
+        pages.push(mostAlignedPage)
+        const leastAligned = Object.keys(ioResult.mostLeastAligned.find(x => x.target === 'Ingroup Bias').response.at(-1))[0]
+        const leastAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-IO2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(leastAligned))
+        pages.push(leastAlignedPage)
+
+        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.scenarioIndex === 'DryRunEval-IO2-eval')
+        pages.push(baselinePage)
+        pages = shuffle([...pages])
+
+        const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
+        pages.push(comp_page)
+    }
+    console.log(pages)
+    return pages
 }

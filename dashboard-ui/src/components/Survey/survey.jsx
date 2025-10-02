@@ -530,18 +530,23 @@ class SurveyPage extends Component {
             const allPages = this.surveyConfigClone.pages;
             console.log(allPages)
             const introPages = [...allPages.slice(0, 4)];
-            console.log(introPages)
 
             const matchedLog = this.props.participantLog.getParticipantLog.find(
                     log => String(log['ParticipantID']) === this.state.pid
             );
+
+            const participantTextResults = this.props.textResults.filter(
+                (res) => String(res['participantID']) === this.state.pid
+            );
+
             const allBlocks = [];
             const scenarioTypes = ['MJ', 'IO', 'VOL']
             for (const scenarioType of scenarioTypes) {
                 const block = createScenarioBlockUK(
                     scenarioType,
                     matchedLog,
-                    allPages
+                    allPages,
+                    participantTextResults
                 )
                 if (block) { allBlocks.push(block)}
             }
