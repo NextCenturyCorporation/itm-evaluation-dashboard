@@ -442,7 +442,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025')) {
+        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025') || scenario.scenario_id.includes('DryRun')) {
             const isPSAF = scenario.scenario_id.includes('PS-AF');
             const evalNum = evalNameToNumber[this.props.currentTextEval]
             // ps-af needs its own individual session
@@ -467,9 +467,10 @@ class TextBasedScenariosPage extends Component {
                     Phase 1/Jan/Dre 3 adept scenarios
                     June/July 4
                     September 3 (because PS-AF scored separately)
+                    UK 3 (MJ5, IO2, MJ2)
                     */
                     const expectedScenarios = evalNameToNumber[this.props.currentTextEval] >= 8 ?
-                        (evalNum === 10 ? 3 : 4) : 3;
+                        (evalNum >= 10 ? 3 : 4) : 3;
 
                     if (this.state.adeptSessionsCompleted === expectedScenarios) {
                         await this.uploadAdeptScenarios(updatedAdeptScenarios);
@@ -592,7 +593,8 @@ class TextBasedScenariosPage extends Component {
                 targets = ['PerceivedQuantityOfLivesSaved']
             }
         } else {
-            targets = evalNameToNumber[this.props.currentTextEval] >= 8 ?
+            const evalNumber = evalNameToNumber[this.props.currentTextEval];
+            targets = (evalNumber >= 8 && evalNumber !== 12) ?
                 ['affiliation', 'merit', 'search', 'personal_safety'] :
                 ['Moral judgement', 'Ingroup Bias']
         }
