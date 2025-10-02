@@ -283,7 +283,11 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         misalignedStatus = 'default for invalid pid';
     }
     else {
-        if (targets.response) {
+        const hasTargetProperty = targets.response && targets.response[0] && 'target' in targets.response[0];
+        if (hasTargetProperty) { 
+            alignedTarget = targets.response[i].target;
+        }
+        else if (targets.response) {
             alignedTarget = Object.keys(targets.response[i])[0];
         } else {
             alignedTarget = targets[i].target;
@@ -312,7 +316,9 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
 
         i = 1;
 
-        if (targets.response) {
+        if (hasTargetProperty) {
+            misalignedTarget = targets.response[targets.response.length - i].target;
+        } else if (targets.response) {
             misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
         } else {
             misalignedTarget = targets[targets.length - i].target;
@@ -792,9 +798,11 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'vol-ph1-eval-3':
+            console.log(volTargets)
             cols1to3 = ['vol-human-5032922-SplitLowMulti-ph1'];
             set1 = ["vol-synth-LowCluster-ph1", "vol-human-8478698-SplitLowMulti-ph1"]
             validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, set1, [], []);
+            console.log(validAdms)
             alignedTarget = validAdms['aligned'];
             misalignedTarget = validAdms['misaligned'];
             alignedStatus = validAdms['alignedStatus'];
@@ -1614,13 +1622,12 @@ const genComparisonPagev8 = (dm1, dm2) => {
 
 export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, participantTextResults) => {
     let pages = []
-
+    // vol matches with parallax, io and mj match to kitware
     if (scenarioType === 'VOL') {
         const volResult = participantTextResults.find(x => x.scenario_id === 'vol-ph1-eval-2')
 
-        // Use getParallaxAdms to handle overlap logic
-        const volTargets = volResult.mostLeastAligned[0]; // The full alignment data
-        const admSelection = getParallaxAdms(5, 'vol-ph1-eval-2', null, null, null, volTargets);
+        const volTargets = volResult.mostLeastAligned[0]; 
+        const admSelection = getParallaxAdms(5, 'vol-ph1-eval-3', null, null, null, volTargets);
 
         const mostAlignedTarget = admSelection.aligned;
         const leastAlignedTarget = admSelection.misaligned;
@@ -1657,7 +1664,6 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
     else if (scenarioType === 'MJ') {
         const mjResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval-MJ5-eval')
 
-        // Use getKitwareAdms to handle overlap logic
         const mjTargets = mjResult.mostLeastAligned.find(x => x.target === 'Moral judgement');
         const admSelection = getKitwareAdms(5, 'DryRunEval-MJ2-eval', null, mjTargets, null, null);
 
@@ -1699,7 +1705,6 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
     else if (scenarioType === 'IO') {
         const ioResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval.IO1')
 
-        // Use getKitwareAdms to handle overlap logic
         const ioTargets = ioResult.mostLeastAligned.find(x => x.target === 'Ingroup Bias');
         const admSelection = getKitwareAdms(5, 'DryRunEval-IO2-eval', ioTargets, null, null, null);
 
