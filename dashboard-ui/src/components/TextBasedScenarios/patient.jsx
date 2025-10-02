@@ -5,7 +5,7 @@ import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLi
 import { BsPersonFillGear } from 'react-icons/bs';
 
 export const filterLangauge = (str) => {
-  if (!str) return str;
+  if (!str || typeof str !== 'string') return str;
 
   return str
     .replace(/\bUS\b/g, 'British')

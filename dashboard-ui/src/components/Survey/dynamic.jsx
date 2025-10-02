@@ -331,7 +331,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                                         key={`action-${groupIndex}-${index}`}
                                                         className={actionClass}
                                                     >
-                                                        {processActionText(action, index, group)}
+                                                        {filterLangauge(processActionText(action, index, group))}
                                                     </div>
                                                 );
                                             })}
