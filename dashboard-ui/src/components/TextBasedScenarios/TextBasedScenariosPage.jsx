@@ -430,7 +430,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025') &&  !scenarioId.includes('DryRun')) {
                 this.uploadButtonRef.current.click();
             }
         });
