@@ -295,16 +295,21 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
             }
             return target
         }
-
+        let alignedSkipped = 0;
         while (cols1to3.includes(adeptSlice(alignedTarget))) {
+            alignedSkipped += 1;
             i += 1;
             if (targets.response) {
                 alignedTarget = Object.keys(targets.response[i])[0];
             } else {
                 alignedTarget = targets[i].target;
             }
-            alignedStatus = `overlapped with baseline. Is ${i} below most aligned`;
         }
+
+        if (alignedSkipped > 0) {
+            alignedStatus = `overlapped with baseline. Is ${alignedSkipped} below most aligned`;
+        }
+
         i = 1;
 
         if (targets.response) {
@@ -314,31 +319,39 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         }
         let baselineOverlap = false;
         let alignedOverlap = false;
+        let misalignedSkipped = 0;
         while (cols1to3.includes(adeptSlice(misalignedTarget)) ||
             (set1.includes(adeptSlice(misalignedTarget)) && set1.includes(adeptSlice(alignedTarget))) ||
             (set2.includes(adeptSlice(misalignedTarget)) && set2.includes(adeptSlice(alignedTarget))) ||
             (set3.includes(adeptSlice(misalignedTarget)) && set3.includes(adeptSlice(alignedTarget)))) {
-            i += 1;
-            if (targets.response) {
-                misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
-            } else {
-                misalignedTarget = targets[targets.length - i].target;
-            }
+
+            misalignedSkipped += 1;
+
             if (cols1to3.includes(adeptSlice(misalignedTarget))) {
                 baselineOverlap = true;
             }
             else {
                 alignedOverlap = true;
             }
+
+            i += 1;
+            if (targets.response) {
+                misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
+            } else {
+                misalignedTarget = targets[targets.length - i].target;
+            }
         }
-        if (baselineOverlap && !alignedOverlap) {
-            misalignedStatus = `overlapped with baseline. Is ${i} over least aligned`;
-        }
-        else if (!baselineOverlap && alignedOverlap) {
-            misalignedStatus = `overlapped with aligned. Is ${i} over least aligned`;
-        }
-        else if (baselineOverlap && alignedOverlap) {
-            misalignedStatus = `overlapped with aligned and baseline. Is ${i} over least aligned`;
+
+        if (misalignedSkipped > 0) {
+            if (baselineOverlap && !alignedOverlap) {
+                misalignedStatus = `overlapped with baseline. Is ${misalignedSkipped} over least aligned`;
+            }
+            else if (!baselineOverlap && alignedOverlap) {
+                misalignedStatus = `overlapped with aligned. Is ${misalignedSkipped} over least aligned`;
+            }
+            else if (baselineOverlap && alignedOverlap) {
+                misalignedStatus = `overlapped with aligned and baseline. Is ${misalignedSkipped} over least aligned`;
+            }
         }
     }
     return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
@@ -1521,14 +1534,14 @@ export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
     const blockPages = allPages.filter(page => page.scenarioIndex?.includes(`2025-${typeString}-eval`))
 
     if (scenarioType !== 'PS-AF') { return shuffle(blockPages) }
-    
+
     const shuffledPages = shuffle([...blockPages]);
     const comparisonPages = [];
 
     for (let i = 0; i < shuffledPages.length; i++) {
         for (let j = i + 1; j < shuffledPages.length; j++) {
             const comparisonPage = genComparisonPagev8(shuffledPages[i], shuffledPages[j]);
-            if (comparisonPage) {comparisonPages.push(comparisonPage)}
+            if (comparisonPage) { comparisonPages.push(comparisonPage) }
         }
     }
 
@@ -1539,7 +1552,7 @@ export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
 const genComparisonPagev8 = (dm1, dm2) => {
     const name1 = dm1.name;
     const name2 = dm2.name;
-    
+
     return {
         "name": `${name1} vs ${name2}`,
         "scenarioIndex": dm1.scenarioIndex,
@@ -1601,16 +1614,40 @@ const genComparisonPagev8 = (dm1, dm2) => {
 
 export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, participantTextResults) => {
     let pages = []
+
     if (scenarioType === 'VOL') {
         const volResult = participantTextResults.find(x => x.scenario_id === 'vol-ph1-eval-2')
-        const mostAligned = volResult.mostLeastAligned[0].response[0]
-        const mostAlignedPage = allPages.find(x => x.admName === 'TAD-aligned' && x.admAlignment === mostAligned.target)
-        pages.push(mostAlignedPage)
-        const leastAligned = volResult.mostLeastAligned[0].response.at(-1)
-        const leastAlignedPage = allPages.find(x => x.admName === 'TAD-aligned' && x.admAlignment === leastAligned.target)
-        pages.push(leastAlignedPage)
-        const baselinePage = allPages.find(x => x.admName === 'TAD-severity-baseline' && x.admAlignment === 'vol-human-6403274-SplitEvenBinary-ph1')
-        pages.push(baselinePage)
+
+        // Use getParallaxAdms to handle overlap logic
+        const volTargets = volResult.mostLeastAligned[0]; // The full alignment data
+        const admSelection = getParallaxAdms(5, 'vol-ph1-eval-2', null, null, null, volTargets);
+
+        const mostAlignedTarget = admSelection.aligned;
+        const leastAlignedTarget = admSelection.misaligned;
+
+        const mostAlignedPage = allPages.find(x =>
+            x.admName === 'TAD-aligned' &&
+            x.admAlignment === mostAlignedTarget
+        );
+        if (mostAlignedPage) {
+            mostAlignedPage.admChoiceProcess = admSelection.alignedStatus;
+            pages.push(mostAlignedPage);
+        }
+
+        const leastAlignedPage = allPages.find(x =>
+            x.admName === 'TAD-aligned' &&
+            x.admAlignment === leastAlignedTarget
+        );
+        if (leastAlignedPage) {
+            leastAlignedPage.admChoiceProcess = admSelection.misalignedStatus;
+            pages.push(leastAlignedPage);
+        }
+
+        const baselinePage = allPages.find(x =>
+            x.admName === 'TAD-severity-baseline' &&
+            x.admAlignment === 'vol-human-6403274-SplitEvenBinary-ph1'
+        );
+        if (baselinePage) pages.push(baselinePage);
 
         pages = shuffle([...pages])
 
@@ -1619,15 +1656,41 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
     }
     else if (scenarioType === 'MJ') {
         const mjResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval-MJ5-eval')
-        const mostAligned = Object.keys(mjResult.mostLeastAligned.find(x => x.target === 'Moral judgement').response[0])[0]
-        const mostAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-MJ2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(mostAligned))
-        pages.push(mostAlignedPage)
-        const leastAligned = Object.keys(mjResult.mostLeastAligned.find(x => x.target === 'Moral judgement').response.at(-1))[0]
-        const leastAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-MJ2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(leastAligned))
-        pages.push(leastAlignedPage)
 
-        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.admAlignment === 'ADEPT-DryRun-Moral judgement-0.8' && x.scenarioIndex === 'DryRunEval-MJ2-eval')
-        pages.push(baselinePage)
+        // Use getKitwareAdms to handle overlap logic
+        const mjTargets = mjResult.mostLeastAligned.find(x => x.target === 'Moral judgement');
+        const admSelection = getKitwareAdms(5, 'DryRunEval-MJ2-eval', null, mjTargets, null, null);
+
+        const mostAlignedTarget = formatTargetWithDecimal(admSelection.aligned);
+        const leastAlignedTarget = formatTargetWithDecimal(admSelection.misaligned);
+
+        const mostAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-MJ2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === mostAlignedTarget
+        );
+        if (mostAlignedPage) {
+            mostAlignedPage.admChoiceProcess = admSelection.alignedStatus;
+            pages.push(mostAlignedPage);
+        }
+
+        const leastAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-MJ2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === leastAlignedTarget
+        );
+        if (leastAlignedPage) {
+            leastAlignedPage.admChoiceProcess = admSelection.misalignedStatus;
+            pages.push(leastAlignedPage);
+        }
+
+        const baselinePage = allPages.find(x =>
+            x.admName === 'ALIGN-ADM-OutlinesBaseline' &&
+            x.admAlignment === 'ADEPT-DryRun-Moral judgement-0.8' &&
+            x.scenarioIndex === 'DryRunEval-MJ2-eval'
+        );
+        if (baselinePage) pages.push(baselinePage);
+
         pages = shuffle([...pages])
 
         const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
@@ -1635,15 +1698,41 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
     }
     else if (scenarioType === 'IO') {
         const ioResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval.IO1')
-        const mostAligned = Object.keys(ioResult.mostLeastAligned.find(x => x.target === 'Ingroup Bias').response[0])[0]
-        const mostAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-IO2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(mostAligned))
-        pages.push(mostAlignedPage)
-        const leastAligned = Object.keys(ioResult.mostLeastAligned.find(x => x.target === 'Ingroup Bias').response.at(-1))[0]
-        const leastAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-IO2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(leastAligned))
-        pages.push(leastAlignedPage)
 
-        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.admAlignment === 'ADEPT-DryRun-Ingroup Bias-0.6' && x.scenarioIndex === 'DryRunEval-IO2-eval')
-        pages.push(baselinePage)
+        // Use getKitwareAdms to handle overlap logic
+        const ioTargets = ioResult.mostLeastAligned.find(x => x.target === 'Ingroup Bias');
+        const admSelection = getKitwareAdms(5, 'DryRunEval-IO2-eval', ioTargets, null, null, null);
+
+        const mostAlignedTarget = formatTargetWithDecimal(admSelection.aligned);
+        const leastAlignedTarget = formatTargetWithDecimal(admSelection.misaligned);
+
+        const mostAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-IO2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === mostAlignedTarget
+        );
+        if (mostAlignedPage) {
+            mostAlignedPage.admChoiceProcess = admSelection.alignedStatus;
+            pages.push(mostAlignedPage);
+        }
+
+        const leastAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-IO2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === leastAlignedTarget
+        );
+        if (leastAlignedPage) {
+            leastAlignedPage.admChoiceProcess = admSelection.misalignedStatus;
+            pages.push(leastAlignedPage);
+        }
+
+        const baselinePage = allPages.find(x =>
+            x.admName === 'ALIGN-ADM-OutlinesBaseline' &&
+            x.admAlignment === 'ADEPT-DryRun-Ingroup Bias-0.6' &&
+            x.scenarioIndex === 'DryRunEval-IO2-eval'
+        );
+        if (baselinePage) pages.push(baselinePage);
+
         pages = shuffle([...pages])
 
         const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
