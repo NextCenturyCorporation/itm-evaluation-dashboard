@@ -239,9 +239,9 @@ export function generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAd
         "pageType": "comparison",
         'admAuthor': baselineAdm?.admAuthor,
         'baselineName': baselineAdm?.admName,
-        'baselineTarget': baselineAdm?.target,
-        'alignedTarget': alignedAdm?.target,
-        'misalignedTarget': misalignedAdm?.target,
+        'baselineTarget': baselineAdm?.admAlignment,
+        'alignedTarget': alignedAdm?.admAlignment,
+        'misalignedTarget': misalignedAdm?.admAlignment,
         "elements": elements,
         "alignment": secondName === '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName === aname ? "aligned" : "misaligned"))
     };
@@ -1609,7 +1609,7 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
         const leastAligned = volResult.mostLeastAligned[0].response.at(-1)
         const leastAlignedPage = allPages.find(x => x.admName === 'TAD-aligned' && x.admAlignment === leastAligned.target)
         pages.push(leastAlignedPage)
-        const baselinePage = allPages.find(x => x.admName === 'TAD-severity-baseline')
+        const baselinePage = allPages.find(x => x.admName === 'TAD-severity-baseline' && x.admAlignment === 'vol-human-6403274-SplitEvenBinary-ph1')
         pages.push(baselinePage)
 
         pages = shuffle([...pages])
@@ -1626,7 +1626,7 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
         const leastAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-MJ2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(leastAligned))
         pages.push(leastAlignedPage)
 
-        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.scenarioIndex === 'DryRunEval-MJ2-eval')
+        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.admAlignment === 'ADEPT-DryRun-Moral judgement-0.8' && x.scenarioIndex === 'DryRunEval-MJ2-eval')
         pages.push(baselinePage)
         pages = shuffle([...pages])
 
@@ -1642,7 +1642,7 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
         const leastAlignedPage = allPages.find(x => x.scenarioIndex === 'DryRunEval-IO2-eval' && x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' && x.admAlignment === formatTargetWithDecimal(leastAligned))
         pages.push(leastAlignedPage)
 
-        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.scenarioIndex === 'DryRunEval-IO2-eval')
+        const baselinePage = allPages.find(x => x.admName === 'ALIGN-ADM-OutlinesBaseline' && x.admAlignment === 'ADEPT-DryRun-Ingroup Bias-0.6' && x.scenarioIndex === 'DryRunEval-IO2-eval')
         pages.push(baselinePage)
         pages = shuffle([...pages])
 
