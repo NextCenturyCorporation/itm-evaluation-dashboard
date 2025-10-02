@@ -151,12 +151,12 @@ export function App() {
         if (versionData?.getCurrentSurveyVersion) {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
-            if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {
+            const version = parseFloat(versionData.getCurrentSurveyVersion);
+            if (version <= 3.0) {
                 setConfigQuery(GET_CONFIGS_DEL_MEDIA);
-            } else if (parseFloat(versionData.getCurrentSurveyVersion) >= 6.0) {
-                setConfigQuery(GET_CONFIGS_PHASE_2)
-            }
-            else {
+            } else if (version >= 6.0 && version < 9.0) {
+                setConfigQuery(GET_CONFIGS_PHASE_2);
+            } else {
                 setConfigQuery(GET_CONFIGS);
             }
             setSendConfigQuery(true);
