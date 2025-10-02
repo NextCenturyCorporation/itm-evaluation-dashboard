@@ -1600,3 +1600,7 @@ const genComparisonPagev8 = (dm1, dm2) => {
         ]
     };
 }
+
+export const createScenarioBlockUK = (scenarioType, matchedLog, allPages) => {
+
+}
