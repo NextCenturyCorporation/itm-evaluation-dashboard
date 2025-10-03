@@ -92,4 +92,4 @@ export function shortenAnswer(answer) {
     }
 }
 
-export const p2Attributes = ['AF', 'MF', 'SS', 'PS']
+export const p2Attributes = [ 'PS-AF', 'AF', 'MF', 'SS', 'PS']
