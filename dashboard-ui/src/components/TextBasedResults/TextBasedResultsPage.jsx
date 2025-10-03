@@ -314,7 +314,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
 
         const allHeaders = [...fixedHeaders, ...dynamicHeaders];
         const allData = Array.from(participantDataMap.values())
-            .map(row => allHeaders.reduce((acc, header) => ({ ...acc, [header]: row[header] || '' }), {}))
+            .map(row => allHeaders.reduce((acc, header) => ({ ...acc, [header]: row[header] !== undefined ? row[header] : '' }), {}))
             .sort((a, b) => a['Participant ID'].localeCompare(b['Participant ID'], undefined, { numeric: true, sensitivity: 'base' }));
 
         const ws = XLSX.utils.json_to_sheet(allData, { header: allHeaders });
