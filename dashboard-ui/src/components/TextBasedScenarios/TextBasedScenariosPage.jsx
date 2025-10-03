@@ -131,6 +131,12 @@ class TextBasedScenariosPage extends Component {
         this.shouldBlockNavigation = true
     }
 
+    getAdeptUrl = () => {
+        // for eval 12 (uk collection) we need to use the old adept server, not the current phase 2 one
+        const evalNum = evalNameToNumber[this.props.currentTextEval]
+        return evalNum === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL
+    }
+
     duplicatePid = (pid) => {
         if (!this.props.scenarioResults || !Array.isArray(this.props.scenarioResults)) {
             return false;
@@ -487,7 +493,7 @@ class TextBasedScenariosPage extends Component {
 
     processIsolatedAdeptScenario = async (scenario) => {
         const sessionEndpoint = '/api/v1/new_session';
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl();
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
@@ -526,7 +532,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     beginRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl(); 
         const sessionEndpoint = '/api/v1/new_session';
 
         try {
@@ -543,13 +549,13 @@ class TextBasedScenariosPage extends Component {
     }
 
     continueRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl(); 
         const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
         await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl(); 
 
         const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
 
