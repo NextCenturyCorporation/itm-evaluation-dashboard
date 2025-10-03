@@ -92,7 +92,9 @@ export function ReviewTextBasedPage() {
         Object.entries(textBasedConfigs).forEach(([configName, config]) => {
             if (config.eval === 'mre-eval') return;
             
-            const evalGroup = config.eval || 'unspecified';
+            const evalGroup = config.eval || null;
+            if (!evalGroup) { return }
+            
             const author = config.author || 'adept';
             
             if (!organized[evalGroup]) {

@@ -32,7 +32,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData } from '../OnlineOnly/config';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -151,12 +151,12 @@ export function App() {
         if (versionData?.getCurrentSurveyVersion) {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
-            if (parseFloat(versionData.getCurrentSurveyVersion) <= 3.0) {
+            const version = parseFloat(versionData.getCurrentSurveyVersion);
+            if (version <= 3.0) {
                 setConfigQuery(GET_CONFIGS_DEL_MEDIA);
-            } else if (parseFloat(versionData.getCurrentSurveyVersion) >= 6.0) {
-                setConfigQuery(GET_CONFIGS_PHASE_2)
-            }
-            else {
+            } else if (version >= 6.0 && version < 9.0) {
+                setConfigQuery(GET_CONFIGS_PHASE_2);
+            } else {
                 setConfigQuery(GET_CONFIGS);
             }
             setSendConfigQuery(true);
@@ -308,6 +308,9 @@ export function App() {
             ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
             let participantData;
+            if (evalNum === 12) {
+                participantData = ukParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
+            }
             if (evalNum === 10) {
                 participantData = septemberParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
             } else if (evalNum === 8 || evalNum === 9) {

@@ -112,14 +112,16 @@ export function ReviewDelegationPage() {
         const ph2_june_scenarios = {};
         const ph2_july_scenarios = {};
         const ph2_sept_scenarios = {};
+        const uk_scenarios = {};
 
         const dre_config = delegationConfigs["delegation_v4.0"];
         const ph1_config = delegationConfigs["delegation_v5.0"];
         const ph2_june_config = delegationConfigs["delegation_v6.0"];
         const ph2_july_config = delegationConfigs["delegation_v7.0"];
         const ph2_sept_config = delegationConfigs["delegation_v8.0"];
+        const uk_config = delegationConfigs["delegation_v9.0"];
 
-        [dre_config, ph1_config, ph2_june_config, ph2_july_config, ph2_sept_config].forEach((config, i) => {
+        [dre_config, ph1_config, ph2_june_config, ph2_july_config, ph2_sept_config, uk_config].forEach((config, i) => {
             if (!config) return;
 
             for (const page of config['pages']) {
@@ -144,7 +146,7 @@ export function ReviewDelegationPage() {
                             ph1_scenarios[scenarioKey][page['admName']] = [];
                         }
                         ph1_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 2) { 
+                    } else if (i === 2) {
                         scenarioKey = page['scenarioName'] || page['scenarioIndex'];
                         if (!Object.keys(ph2_june_scenarios).includes(scenarioKey)) {
                             ph2_june_scenarios[scenarioKey] = {};
@@ -171,6 +173,15 @@ export function ReviewDelegationPage() {
                             ph2_sept_scenarios[scenarioKey][page['admName']] = [];
                         }
                         ph2_sept_scenarios[scenarioKey][page['admName']].push(page);
+                    } else if (i === 5) {
+                        scenarioKey = page['scenarioIndex'];
+                        if (!Object.keys(uk_scenarios).includes(scenarioKey)) {
+                            uk_scenarios[scenarioKey] = {};
+                        }
+                        if (!Object.keys(uk_scenarios[scenarioKey]).includes(page['admName'])) {
+                            uk_scenarios[scenarioKey][page['admName']] = [];
+                        }
+                        uk_scenarios[scenarioKey][page['admName']].push(page);
                     }
                 }
             }
@@ -216,6 +227,20 @@ export function ReviewDelegationPage() {
 
         return (
             <>
+                {Object.keys(uk_scenarios).length > 0 && (
+                    <Card className="mb-4 border-0 shadow">
+                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                            UK Collaboration
+                        </Card.Header>
+                        <Card.Body className="bg-light">
+                            {Object.keys(uk_scenarios).sort().map((scenarioName => (
+                                <div key={scenarioName}>
+                                    {renderConfigGroup(uk_scenarios[scenarioName], scenarioName)}
+                                </div>
+                            )))}
+                        </Card.Body>
+                    </Card>
+                )}
                 {Object.keys(ph2_sept_scenarios).length > 0 && (
                     <Card className="mb-4 border-0 shadow">
                         <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
@@ -320,7 +345,7 @@ export function ReviewDelegationPage() {
                     </Container>
                     <h5 className='subtitle'>Reviewing {reviewingText}</h5>
                     <div className="flex-grow-1 overflow-auto">
-                        <Survey model={selectedConfig}/>
+                        <Survey model={selectedConfig} />
                     </div>
                 </>
             )}
