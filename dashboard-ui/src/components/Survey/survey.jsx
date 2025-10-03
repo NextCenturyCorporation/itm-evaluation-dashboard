@@ -528,23 +528,19 @@ class SurveyPage extends Component {
             return {};
         } else if (this.state.surveyVersion === "9.0") {
             const allPages = this.surveyConfigClone.pages;
-            console.log(allPages)
             const introPages = [...allPages.slice(0, 4)];
 
-            const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => String(log['ParticipantID']) === this.state.pid
-            );
 
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
+            console.log(participantTextResults)
 
             const allBlocks = [];
             const scenarioTypes = ['MJ', 'IO', 'VOL']
             for (const scenarioType of scenarioTypes) {
                 const block = createScenarioBlockUK(
                     scenarioType,
-                    matchedLog,
                     allPages,
                     participantTextResults
                 )

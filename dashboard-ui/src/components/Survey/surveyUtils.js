@@ -798,11 +798,9 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
             misalignedStatus = validAdms['misalignedStatus'];
             break;
         case 'vol-ph1-eval-3':
-            console.log(volTargets)
             cols1to3 = ['vol-human-5032922-SplitLowMulti-ph1'];
             set1 = ["vol-synth-LowCluster-ph1", "vol-human-8478698-SplitLowMulti-ph1"]
             validAdms = getValidADM(getAllVolTargets(surveyVersion), volTargets, cols1to3, set1, [], []);
-            console.log(validAdms)
             alignedTarget = validAdms['aligned'];
             misalignedTarget = validAdms['misaligned'];
             alignedStatus = validAdms['alignedStatus'];
@@ -1620,7 +1618,7 @@ const genComparisonPagev8 = (dm1, dm2) => {
     };
 }
 
-export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, participantTextResults) => {
+export const createScenarioBlockUK = (scenarioType, allPages, participantTextResults) => {
     let pages = []
     // vol matches with parallax, io and mj match to kitware
     if (scenarioType === 'VOL') {
@@ -1743,6 +1741,5 @@ export const createScenarioBlockUK = (scenarioType, matchedLog, allPages, partic
         const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
         pages.push(comp_page)
     }
-    console.log(pages)
     return pages
 }
