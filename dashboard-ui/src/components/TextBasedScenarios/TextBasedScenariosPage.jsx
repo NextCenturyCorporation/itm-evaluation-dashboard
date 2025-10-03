@@ -10,7 +10,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner, Button} from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
@@ -21,6 +21,7 @@ import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
+import { useHistory } from 'react-router-dom';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -430,7 +431,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025') &&  !scenarioId.includes('DryRun')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025') && !scenarioId.includes('DryRun')) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -929,6 +930,12 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
 
+    const history = useHistory();
+
+    const handleReturnToLogin = () => {
+        history.push('/login');
+    };
+
     return (
         <>
             {toDelegation ?
@@ -964,7 +971,15 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
                                                 </ListGroup>
                                             </Card>
                                             <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
-                                        </> : <p>You may now close the browser</p>
+                                        </> : <><p className="mb-4">You may now close the browser</p>
+                                            <Button
+                                                variant="primary"
+                                                size="lg"
+                                                onClick={handleReturnToLogin}
+                                                style={{ backgroundColor: customColor, borderColor: customColor }}
+                                            >
+                                                Return to Login
+                                            </Button></>
                                     }
                                 </Card.Body>
                             </Card>
