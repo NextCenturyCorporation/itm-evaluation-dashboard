@@ -13,7 +13,7 @@ export const filterLangauge = (str) => {
     .replace(/\bsquad\b/gi, 'team');
 }
 
-const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) => {
+const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled, hideImages }) => {
   const vitalIcons = {
     avpu: <FaEye size={18} />,
     ambulatory: <FaWalking size={18} />,
@@ -192,7 +192,7 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
             {filterLangauge(patient.unstructured)}
           </p>
 
-          {patient.imgUrl && (
+          {patient.imgUrl && !hideImages &&(
             <Row className="mb-3">
               <Col md={12}>
                 <div className="text-white text-center w-100 rounded" style={{ position: 'relative', height: '300px', overflow: 'hidden', backgroundColor: '#fff' }}>
