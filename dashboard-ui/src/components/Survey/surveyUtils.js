@@ -284,7 +284,7 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
     }
     else {
         const hasTargetProperty = targets.response && targets.response[0] && 'target' in targets.response[0];
-        if (hasTargetProperty) { 
+        if (hasTargetProperty) {
             alignedTarget = targets.response[i].target;
         }
         else if (targets.response) {
@@ -294,7 +294,7 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         }
 
         function adeptSlice(target) {
-            if (targets.response) {
+            if (!hasTargetProperty) {
                 return target.slice(0, -1) + '.' + target.slice(-1);
             }
             return target
@@ -303,10 +303,10 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         while (cols1to3.includes(adeptSlice(alignedTarget))) {
             alignedSkipped += 1;
             i += 1;
-            if (targets.response) {
+            if (!hasTargetProperty) {
                 alignedTarget = Object.keys(targets.response[i])[0];
             } else {
-                alignedTarget = targets[i].target;
+                alignedTarget = targets.response[i].target;
             }
         }
 
@@ -341,7 +341,9 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
             }
 
             i += 1;
-            if (targets.response) {
+            if (hasTargetProperty) {
+                misalignedTarget = targets.response[targets.response.length - i].target;
+            } else if (targets.response) {
                 misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
             } else {
                 misalignedTarget = targets[targets.length - i].target;
@@ -1624,7 +1626,7 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
     if (scenarioType === 'VOL') {
         const volResult = participantTextResults.find(x => x.scenario_id === 'vol-ph1-eval-2')
 
-        const volTargets = volResult.mostLeastAligned[0]; 
+        const volTargets = volResult.mostLeastAligned[0];
         const admSelection = getParallaxAdms(5, 'vol-ph1-eval-3', null, null, null, volTargets);
 
         const mostAlignedTarget = admSelection.aligned;
