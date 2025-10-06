@@ -1650,7 +1650,7 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
 
         const baselinePage = allPages.find(x =>
             x.admName === 'TAD-severity-baseline' &&
-            x.admAlignment === 'vol-human-6403274-SplitEvenBinary-ph1'
+            x.admAlignment === 'vol-human-5032922-SplitLowMulti-ph1'
         );
         if (baselinePage) pages.push(baselinePage);
 
