@@ -4,8 +4,12 @@ import ZoomInIcon from '@material-ui/icons/ZoomIn';
 import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine, FaWalking } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs';
 
-export const filterLangauge = (str) => {
+export const filterLanguage = (str, question) => {
+  const probes = ['template P1', 'template P5']
   if (!str || typeof str !== 'string') return str;
+  if (question && probes.includes(question.name)) {
+    return str
+  }
 
   return str
     .replace(/\bUS\b/g, 'British')
@@ -13,7 +17,7 @@ export const filterLangauge = (str) => {
     .replace(/\bsquad\b/gi, 'team');
 }
 
-const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled, hideImages }) => {
+const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled, hideImages, question }) => {
   const vitalIcons = {
     avpu: <FaEye size={18} />,
     ambulatory: <FaWalking size={18} />,
@@ -179,7 +183,7 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled, hid
     <Card className="patient-card-container">
       <Card.Body className="p-0">
         <div className="patient-card-header">
-          <h4 className="patient-card-title">{filterLangauge(patient.name)}</h4>
+          <h4 className="patient-card-title">{filterLanguage(patient.name, question)}</h4>
           {patient.demographics.age && (
             <div className="patient-card-subtitle">
               {patient.demographics.age} years old, {patient.demographics.sex === 'F' ? 'Female' : 'Male'}
@@ -189,7 +193,7 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled, hid
 
         <div className="p-3">
           <p className="patient-description mb-3">
-            {filterLangauge(patient.unstructured)}
+            {filterLanguage(patient.unstructured, question)}
           </p>
 
           {patient.imgUrl && !hideImages &&(

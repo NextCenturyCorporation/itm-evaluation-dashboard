@@ -342,6 +342,7 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                 onImageClick={this.handleImageClick}
                 blockedVitals={this.blockedVitals}
                 hideImages={this.shouldHidePatientImages()}
+                question={this.question.jsonObj}
               />
             </Col>
           ))}

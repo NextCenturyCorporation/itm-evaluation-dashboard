@@ -7,7 +7,7 @@ import '../../css/template.css';
 import { useSelector } from "react-redux";
 import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
-import { filterLangauge } from "../TextBasedScenarios/patient";
+import { filterLanguage } from "../TextBasedScenarios/patient";
 const CUSTOM_TYPE = "adeptComparison";
 
 export class AdeptComparisonModel extends Question {
@@ -203,7 +203,7 @@ export class AdeptComparison extends SurveyQuestionElementBase {
                                         className="action-item p-3 mb-2 rounded"
                                         style={this.getSceneStyle(action)}
                                     >
-                                        {filterLangauge(this.processActionText(action, actionIndex, dm.scenes[0]?.actions))}
+                                        {filterLanguage(this.processActionText(action, actionIndex, dm.scenes[0]?.actions))}
                                     </div>
                                 ))}
                             </Card.Body>
