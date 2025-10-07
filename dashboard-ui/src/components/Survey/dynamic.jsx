@@ -12,7 +12,7 @@ import Patient from '../TextBasedScenarios/patient';
 import Supplies from '../TextBasedScenarios/supplies';
 import MoreDetailsModal from '../TextBasedScenarios/moreDetailsModal';
 import { useSelector } from 'react-redux';
-import { filterLangauge } from '../TextBasedScenarios/patient';
+import { filterLanguage } from '../TextBasedScenarios/patient';
 
 const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, scenes, explanation, showModal, updateActionLogs, mission, scenarioIndex }) => {
     const [visiblePatients, setVisiblePatients] = useState(() => {
@@ -221,7 +221,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                         onClick={() => togglePatientVisibility(patient.name)}
                         className="me-1"
                     >
-                        {filterLangauge(patient.name)} {visiblePatients[patient.name] && <CheckCircleIcon />}
+                        {filterLanguage(patient.name)} {visiblePatients[patient.name] && <CheckCircleIcon />}
                     </Button>
                 </div>
             )
@@ -331,7 +331,7 @@ const Dynamic = ({ patients, situation, supplies, decision, dmName, actions, sce
                                                         key={`action-${groupIndex}-${index}`}
                                                         className={actionClass}
                                                     >
-                                                        {filterLangauge(processActionText(action, index, group))}
+                                                        {filterLanguage(processActionText(action, index, group))}
                                                     </div>
                                                 );
                                             })}

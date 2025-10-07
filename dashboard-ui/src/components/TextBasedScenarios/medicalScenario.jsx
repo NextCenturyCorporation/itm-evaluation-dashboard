@@ -270,9 +270,21 @@ export class MedicalScenario extends SurveyQuestionElementBase {
     this.setState({});
   }
 
+  // edge case for first scene of mj5 to hide patient images
+  shouldHidePatientImages = () => {
+    const hiddenImageTemplates = [
+      'template Scene 0',
+      'template Probe 1-B.1',
+      'template Probe 1-A.1'
+    ];
+
+
+    return hiddenImageTemplates.includes(this.question.jsonObj.name);
+  }
+
   renderElement() {
     const isPhase1Style = this.state.currentStyle === 'phase1';
-    
+
     const PatientComponent = isPhase1Style ? PatientPhase1 : Patient;
     const SuppliesComponent = isPhase1Style ? SuppliesPhase1 : Supplies;
 
@@ -329,6 +341,8 @@ export class MedicalScenario extends SurveyQuestionElementBase {
                 patient={patient}
                 onImageClick={this.handleImageClick}
                 blockedVitals={this.blockedVitals}
+                hideImages={this.shouldHidePatientImages()}
+                question={this.question.jsonObj}
               />
             </Col>
           ))}

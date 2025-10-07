@@ -258,7 +258,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             // ignore invalid versions
             const version = entry.surveyVersion;
-            if (!version || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
+            // temp filter version 9 data
+            if (!version || version === 9 || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
                 continue;
             }
 
