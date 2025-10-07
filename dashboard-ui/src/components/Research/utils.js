@@ -800,7 +800,14 @@ export const PAGES = {
     RQ1: 'rq1',
     RQ2: 'rq2',
     RQ3: 'rq3',
-    EXPLORATORY_ANALYSIS: 'exploratoryAnalysis'
+    EXPLORATORY_ANALYSIS: 'exploratoryAnalysis',
+    ADM_PROBE_RESPONSES: 'admProbeResponses',
+    ADM_ALIGNMENT: 'admAlignment',
+    ADM_RESULTS: 'admResults',
+    HUMAN_SIM_PLAY_BY_PLAY: 'humanSimPlayByPlay',
+    HUMAN_SIM_PROBES: 'humanSimProbes',
+    PARTICIPANT_LEVEL_DATA: 'participantLevelData',
+    TEXT_RESULTS: 'textResults'
 }
 
 /*

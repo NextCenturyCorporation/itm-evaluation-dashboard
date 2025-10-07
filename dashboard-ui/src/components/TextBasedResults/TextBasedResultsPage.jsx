@@ -15,11 +15,7 @@ import Select from 'react-select';
 import { useSelector } from 'react-redux';
 import NoSelection from './NoSelection';
 import { shortenAnswer, p2Attributes } from './util';
-
-const get_eval_name_numbers = gql`
-    query getEvalIdsForAllScenarioResults{
-        getEvalIdsForAllScenarioResults
-  }`;
+import { PAGES, getEvalOptionsForPage } from '../Research/utils';
 
 const GET_SCENARIO_RESULTS_BY_EVAL = gql`
     query getAllScenarioResultsByEval($evalNumber: Float!){
@@ -389,15 +385,14 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
 }
 
 export default function TextBasedResultsPage() {
-    const { loading: loadingEvalNames, data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
     const { data: participantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [scenarioChosen, setScenario] = React.useState(null);
     const [dataFormat, setDataFormat] = React.useState("text")
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const [selectedEval, setSelectedEval] = React.useState(10);
-    const [evalOptions, setEvalOptions] = React.useState([]);
+    const evalOptions = getEvalOptionsForPage(PAGES.TEXT_RESULTS);
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const filteredTextBasedConfigs = useMemo(() => {
@@ -425,18 +420,6 @@ export default function TextBasedResultsPage() {
         skip: !selectedEval
     });
 
-    React.useEffect(() => {
-        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
-            const options = evalIdOptionsRaw.getEvalIdsForAllScenarioResults
-                .filter(result => result && result._id && result._id.evalNumber !== undefined && result._id.evalName)
-                .map(result => ({
-                    value: result._id.evalNumber,
-                    label: result._id.evalName
-                }))
-                .sort((a, b) => b.value - a.value);
-            setEvalOptions(options);
-        }
-    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         const tmpResponses = {};
@@ -658,7 +641,6 @@ export default function TextBasedResultsPage() {
                 onChange={selectEvaluation}
                 value={evalOptions.find(option => option.value === selectedEval)}
                 label="Single select"
-                isLoading={loadingEvalNames}
             />
             {selectedEval && scenarioOptions.length > 0 && (
                 <div>

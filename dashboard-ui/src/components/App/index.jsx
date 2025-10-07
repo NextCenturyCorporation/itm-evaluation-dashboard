@@ -149,7 +149,6 @@ export function App() {
     useQuery(GET_EVAL_DATA, {
         fetchPolicy: 'no-cache',
         onCompleted: (data) => {
-            console.log('yo');
             setEvalDataInStore(data);
         }
 
