@@ -1,13 +1,26 @@
 import React from 'react';
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import ZoomInIcon from '@material-ui/icons/ZoomIn';
-import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine } from 'react-icons/fa';
+import { FaHeartbeat, FaLungs, FaBrain, FaPercent, FaEye, FaAmbulance, FaChartLine, FaWalking } from 'react-icons/fa';
 import { BsPersonFillGear } from 'react-icons/bs';
 
-const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) => {
+export const filterLanguage = (str, question) => {
+  const probes = ['template P1', 'template P5']
+  if (!str || typeof str !== 'string') return str;
+  if (question && probes.includes(question.name)) {
+    return str
+  }
+
+  return str
+    .replace(/\bUS\b/g, 'British')
+    .replace(/Blackhawk/g, 'helicopter')
+    .replace(/\bsquad\b/gi, 'team');
+}
+
+const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled, hideImages, question }) => {
   const vitalIcons = {
     avpu: <FaEye size={18} />,
-    ambulatory: <FaAmbulance size={18} />,
+    ambulatory: <FaWalking size={18} />,
     breathing: <FaLungs size={18} />,
     heart_rate: <FaHeartbeat size={18} />,
     spo2: <FaPercent size={18} />,
@@ -18,7 +31,7 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
 
   const vitalNames = {
     avpu: "AVPU",
-    ambulatory: "Ambulatory",
+    ambulatory: "Walking",
     breathing: "RR",
     heart_rate: "HR",
     spo2: "SPO2",
@@ -122,7 +135,7 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
     }
 
     const vitalsVisible = !blockedVitals?.includes(patient.id);
-    
+
     return (
       <div>
         {Object.entries(vitals).map(([key, value]) => (
@@ -155,8 +168,8 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
         </div>
         <div className="injury-severity">
           <span className="injury-severity-label">Severity:</span>
-          <Badge 
-            bg={getInjurySeverityColor(injury.severity)} 
+          <Badge
+            bg={getInjurySeverityColor(injury.severity)}
             className="severity-badge"
           >
             {injury.severity.toUpperCase()}
@@ -170,20 +183,20 @@ const Patient = ({ patient, onImageClick, blockedVitals, imageClickDisabled }) =
     <Card className="patient-card-container">
       <Card.Body className="p-0">
         <div className="patient-card-header">
-          <h4 className="patient-card-title">{patient.name}</h4>
+          <h4 className="patient-card-title">{filterLanguage(patient.name, question)}</h4>
           {patient.demographics.age && (
             <div className="patient-card-subtitle">
               {patient.demographics.age} years old, {patient.demographics.sex === 'F' ? 'Female' : 'Male'}
             </div>
           )}
         </div>
-        
+
         <div className="p-3">
           <p className="patient-description mb-3">
-            {patient.unstructured}
+            {filterLanguage(patient.unstructured, question)}
           </p>
 
-          {patient.imgUrl && (
+          {patient.imgUrl && !hideImages &&(
             <Row className="mb-3">
               <Col md={12}>
                 <div className="text-white text-center w-100 rounded" style={{ position: 'relative', height: '300px', overflow: 'hidden', backgroundColor: '#fff' }}>

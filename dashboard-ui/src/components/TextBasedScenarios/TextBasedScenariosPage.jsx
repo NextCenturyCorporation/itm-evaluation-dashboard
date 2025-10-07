@@ -10,7 +10,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup, Spinner } from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner, Button} from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
@@ -21,6 +21,7 @@ import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
+import { useHistory } from 'react-router-dom';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -128,6 +129,12 @@ class TextBasedScenariosPage extends Component {
         this.uploadButtonRefDemographics = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true
+    }
+
+    getAdeptUrl = () => {
+        // for eval 12 (uk collection) we need to use the old adept server, not the current phase 2 one
+        const evalNum = evalNameToNumber[this.props.currentTextEval]
+        return evalNum === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL
     }
 
     duplicatePid = (pid) => {
@@ -430,7 +437,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025')) {
+            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025') && !scenarioId.includes('DryRun')) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -442,7 +449,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025')) {
+        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025') || scenario.scenario_id.includes('DryRun')) {
             const isPSAF = scenario.scenario_id.includes('PS-AF');
             const evalNum = evalNameToNumber[this.props.currentTextEval]
             // ps-af needs its own individual session
@@ -467,9 +474,10 @@ class TextBasedScenariosPage extends Component {
                     Phase 1/Jan/Dre 3 adept scenarios
                     June/July 4
                     September 3 (because PS-AF scored separately)
+                    UK 3 (MJ5, IO2, MJ2)
                     */
                     const expectedScenarios = evalNameToNumber[this.props.currentTextEval] >= 8 ?
-                        (evalNum === 10 ? 3 : 4) : 3;
+                        (evalNum >= 10 ? 3 : 4) : 3;
 
                     if (this.state.adeptSessionsCompleted === expectedScenarios) {
                         await this.uploadAdeptScenarios(updatedAdeptScenarios);
@@ -485,7 +493,7 @@ class TextBasedScenariosPage extends Component {
 
     processIsolatedAdeptScenario = async (scenario) => {
         const sessionEndpoint = '/api/v1/new_session';
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl();
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
@@ -524,7 +532,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     beginRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl(); 
         const sessionEndpoint = '/api/v1/new_session';
 
         try {
@@ -541,13 +549,13 @@ class TextBasedScenariosPage extends Component {
     }
 
     continueRunningSession = async (scenario) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl(); 
         const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
         await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
-        const url = process.env.REACT_APP_ADEPT_URL;
+        const url = this.getAdeptUrl(); 
 
         const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
 
@@ -592,7 +600,8 @@ class TextBasedScenariosPage extends Component {
                 targets = ['PerceivedQuantityOfLivesSaved']
             }
         } else {
-            targets = evalNameToNumber[this.props.currentTextEval] >= 8 ?
+            const evalNumber = evalNameToNumber[this.props.currentTextEval];
+            targets = (evalNumber >= 8 && evalNumber !== 12) ?
                 ['affiliation', 'merit', 'search', 'personal_safety'] :
                 ['Moral judgement', 'Ingroup Bias']
         }
@@ -728,7 +737,10 @@ class TextBasedScenariosPage extends Component {
         };
 
         // randomize probe order for phase 2 (non narrative). Keep order intact for phase 1
-        if (evalNameToNumber[this.props.currentTextEval] >= 8) { config.pages = shuffle([...config.pages]) }
+        const evalNum = evalNameToNumber[this.props.currentTextEval];
+        if (evalNum >= 8 && evalNum !== 12) {
+            config.pages = shuffle([...config.pages])
+        }
 
         config.title = title;
         config.showTitle = false;
@@ -910,6 +922,7 @@ class TextBasedScenariosPage extends Component {
                         sim2={this.state.sim2}
                         moderatorExists={this.state.moderated}
                         toDelegation={this.state.onlineOnly}
+                        participantID={this.state.participantID}
                     />
                 )}
             </>
@@ -919,9 +932,15 @@ class TextBasedScenariosPage extends Component {
 
 export default withRouter(TextBasedScenariosPage);
 
-const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation }) => {
+const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, participantID }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
+
+    const history = useHistory();
+
+    const handleReturnToLogin = () => {
+        history.push('/login');
+    };
 
     return (
         <>
@@ -934,6 +953,7 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation })
                             <Card className="border-0 shadow">
                                 <Card.Body className="text-center p-5">
                                     <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                                    <h3 className="display-4 mb-4">Your Participant ID is {participantID?.slice(-3)}</h3>
                                     {moderatorExists ?
                                         <>
                                             <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
@@ -957,7 +977,15 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation })
                                                 </ListGroup>
                                             </Card>
                                             <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
-                                        </> : <p>You may now close the browser</p>
+                                        </> : <><p className="mb-4">You may now close the browser</p>
+                                            <Button
+                                                variant="primary"
+                                                size="lg"
+                                                onClick={handleReturnToLogin}
+                                                style={{ backgroundColor: customColor, borderColor: customColor }}
+                                            >
+                                                Return to Login
+                                            </Button></>
                                     }
                                 </Card.Body>
                             </Card>

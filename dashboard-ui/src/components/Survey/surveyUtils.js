@@ -239,9 +239,9 @@ export function generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAd
         "pageType": "comparison",
         'admAuthor': baselineAdm?.admAuthor,
         'baselineName': baselineAdm?.admName,
-        'baselineTarget': baselineAdm?.target,
-        'alignedTarget': alignedAdm?.target,
-        'misalignedTarget': misalignedAdm?.target,
+        'baselineTarget': baselineAdm?.admAlignment,
+        'alignedTarget': alignedAdm?.admAlignment,
+        'misalignedTarget': misalignedAdm?.admAlignment,
         "elements": elements,
         "alignment": secondName === '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName === aname ? "aligned" : "misaligned"))
     };
@@ -283,62 +283,83 @@ function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
         misalignedStatus = 'default for invalid pid';
     }
     else {
-        if (targets.response) {
+        const hasTargetProperty = targets.response && targets.response[0] && 'target' in targets.response[0];
+        if (hasTargetProperty) {
+            alignedTarget = targets.response[i].target;
+        }
+        else if (targets.response) {
             alignedTarget = Object.keys(targets.response[i])[0];
         } else {
             alignedTarget = targets[i].target;
         }
 
         function adeptSlice(target) {
-            if (targets.response) {
+            if (!hasTargetProperty) {
                 return target.slice(0, -1) + '.' + target.slice(-1);
             }
             return target
         }
-
+        let alignedSkipped = 0;
         while (cols1to3.includes(adeptSlice(alignedTarget))) {
+            alignedSkipped += 1;
             i += 1;
-            if (targets.response) {
+            if (!hasTargetProperty) {
                 alignedTarget = Object.keys(targets.response[i])[0];
             } else {
-                alignedTarget = targets[i].target;
+                alignedTarget = targets.response[i].target;
             }
-            alignedStatus = `overlapped with baseline. Is ${i} below most aligned`;
         }
+
+        if (alignedSkipped > 0) {
+            alignedStatus = `overlapped with baseline. Is ${alignedSkipped} below most aligned`;
+        }
+
         i = 1;
 
-        if (targets.response) {
+        if (hasTargetProperty) {
+            misalignedTarget = targets.response[targets.response.length - i].target;
+        } else if (targets.response) {
             misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
         } else {
             misalignedTarget = targets[targets.length - i].target;
         }
         let baselineOverlap = false;
         let alignedOverlap = false;
+        let misalignedSkipped = 0;
         while (cols1to3.includes(adeptSlice(misalignedTarget)) ||
             (set1.includes(adeptSlice(misalignedTarget)) && set1.includes(adeptSlice(alignedTarget))) ||
             (set2.includes(adeptSlice(misalignedTarget)) && set2.includes(adeptSlice(alignedTarget))) ||
             (set3.includes(adeptSlice(misalignedTarget)) && set3.includes(adeptSlice(alignedTarget)))) {
-            i += 1;
-            if (targets.response) {
-                misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
-            } else {
-                misalignedTarget = targets[targets.length - i].target;
-            }
+
+            misalignedSkipped += 1;
+
             if (cols1to3.includes(adeptSlice(misalignedTarget))) {
                 baselineOverlap = true;
             }
             else {
                 alignedOverlap = true;
             }
+
+            i += 1;
+            if (hasTargetProperty) {
+                misalignedTarget = targets.response[targets.response.length - i].target;
+            } else if (targets.response) {
+                misalignedTarget = Object.keys(targets.response[targets.response.length - i])[0];
+            } else {
+                misalignedTarget = targets[targets.length - i].target;
+            }
         }
-        if (baselineOverlap && !alignedOverlap) {
-            misalignedStatus = `overlapped with baseline. Is ${i} over least aligned`;
-        }
-        else if (!baselineOverlap && alignedOverlap) {
-            misalignedStatus = `overlapped with aligned. Is ${i} over least aligned`;
-        }
-        else if (baselineOverlap && alignedOverlap) {
-            misalignedStatus = `overlapped with aligned and baseline. Is ${i} over least aligned`;
+
+        if (misalignedSkipped > 0) {
+            if (baselineOverlap && !alignedOverlap) {
+                misalignedStatus = `overlapped with baseline. Is ${misalignedSkipped} over least aligned`;
+            }
+            else if (!baselineOverlap && alignedOverlap) {
+                misalignedStatus = `overlapped with aligned. Is ${misalignedSkipped} over least aligned`;
+            }
+            else if (baselineOverlap && alignedOverlap) {
+                misalignedStatus = `overlapped with aligned and baseline. Is ${misalignedSkipped} over least aligned`;
+            }
         }
     }
     return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
@@ -802,8 +823,6 @@ export function getParallaxAdms(surveyVersion, scenario, ioTargets, mjTargets, q
 
     return { 'aligned': alignedTarget, 'misaligned': misalignedTarget, 'alignedStatus': alignedStatus, 'misalignedStatus': misalignedStatus };
 }
-
-// Add these functions to surveyUtils.js
 
 export function getTextScenariosForParticipant(pid, participantLog) {
     const defaultScenarios = {
@@ -1523,14 +1542,14 @@ export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
     const blockPages = allPages.filter(page => page.scenarioIndex?.includes(`2025-${typeString}-eval`))
 
     if (scenarioType !== 'PS-AF') { return shuffle(blockPages) }
-    
+
     const shuffledPages = shuffle([...blockPages]);
     const comparisonPages = [];
 
     for (let i = 0; i < shuffledPages.length; i++) {
         for (let j = i + 1; j < shuffledPages.length; j++) {
             const comparisonPage = genComparisonPagev8(shuffledPages[i], shuffledPages[j]);
-            if (comparisonPage) {comparisonPages.push(comparisonPage)}
+            if (comparisonPage) { comparisonPages.push(comparisonPage) }
         }
     }
 
@@ -1541,7 +1560,7 @@ export const createScenarioBlockv8 = (scenarioType, matchedLog, allPages) => {
 const genComparisonPagev8 = (dm1, dm2) => {
     const name1 = dm1.name;
     const name2 = dm2.name;
-    
+
     return {
         "name": `${name1} vs ${name2}`,
         "scenarioIndex": dm1.scenarioIndex,
@@ -1599,4 +1618,130 @@ const genComparisonPagev8 = (dm1, dm2) => {
             }
         ]
     };
+}
+
+export const createScenarioBlockUK = (scenarioType, allPages, participantTextResults) => {
+    let pages = []
+    // vol matches with parallax, io and mj match to kitware
+    if (scenarioType === 'VOL') {
+        const volResult = participantTextResults.find(x => x.scenario_id === 'vol-ph1-eval-2')
+
+        const volTargets = volResult.mostLeastAligned[0];
+        const admSelection = getParallaxAdms(5, 'vol-ph1-eval-3', null, null, null, volTargets);
+
+        const mostAlignedTarget = admSelection.aligned;
+        const leastAlignedTarget = admSelection.misaligned;
+
+        const mostAlignedPage = allPages.find(x =>
+            x.admName === 'TAD-aligned' &&
+            x.admAlignment === mostAlignedTarget
+        );
+        if (mostAlignedPage) {
+            mostAlignedPage.admChoiceProcess = admSelection.alignedStatus;
+            pages.push(mostAlignedPage);
+        }
+
+        const leastAlignedPage = allPages.find(x =>
+            x.admName === 'TAD-aligned' &&
+            x.admAlignment === leastAlignedTarget
+        );
+        if (leastAlignedPage) {
+            leastAlignedPage.admChoiceProcess = admSelection.misalignedStatus;
+            pages.push(leastAlignedPage);
+        }
+
+        const baselinePage = allPages.find(x =>
+            x.admName === 'TAD-severity-baseline' &&
+            x.admAlignment === 'vol-human-5032922-SplitLowMulti-ph1'
+        );
+        if (baselinePage) pages.push(baselinePage);
+
+        pages = shuffle([...pages])
+
+        const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
+        pages.push(comp_page)
+    }
+    else if (scenarioType === 'MJ') {
+        const mjResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval-MJ5-eval')
+
+        const mjTargets = mjResult.mostLeastAligned.find(x => x.target === 'Moral judgement');
+        const admSelection = getKitwareAdms(5, 'DryRunEval-MJ2-eval', null, mjTargets, null, null);
+
+        const mostAlignedTarget = formatTargetWithDecimal(admSelection.aligned);
+        const leastAlignedTarget = formatTargetWithDecimal(admSelection.misaligned);
+
+        const mostAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-MJ2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === mostAlignedTarget
+        );
+        if (mostAlignedPage) {
+            mostAlignedPage.admChoiceProcess = admSelection.alignedStatus;
+            pages.push(mostAlignedPage);
+        }
+
+        const leastAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-MJ2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === leastAlignedTarget
+        );
+        if (leastAlignedPage) {
+            leastAlignedPage.admChoiceProcess = admSelection.misalignedStatus;
+            pages.push(leastAlignedPage);
+        }
+
+        const baselinePage = allPages.find(x =>
+            x.admName === 'ALIGN-ADM-OutlinesBaseline' &&
+            x.admAlignment === 'ADEPT-DryRun-Moral judgement-0.8' &&
+            x.scenarioIndex === 'DryRunEval-MJ2-eval'
+        );
+        if (baselinePage) pages.push(baselinePage);
+
+        pages = shuffle([...pages])
+
+        const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
+        pages.push(comp_page)
+    }
+    else if (scenarioType === 'IO') {
+        const ioResult = participantTextResults.find(x => x.scenario_id === 'DryRunEval.IO1')
+
+        const ioTargets = ioResult.mostLeastAligned.find(x => x.target === 'Ingroup Bias');
+        const admSelection = getKitwareAdms(5, 'DryRunEval-IO2-eval', ioTargets, null, null, null);
+
+        const mostAlignedTarget = formatTargetWithDecimal(admSelection.aligned);
+        const leastAlignedTarget = formatTargetWithDecimal(admSelection.misaligned);
+
+        const mostAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-IO2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === mostAlignedTarget
+        );
+        if (mostAlignedPage) {
+            mostAlignedPage.admChoiceProcess = admSelection.alignedStatus;
+            pages.push(mostAlignedPage);
+        }
+
+        const leastAlignedPage = allPages.find(x =>
+            x.scenarioIndex === 'DryRunEval-IO2-eval' &&
+            x.admName === 'ALIGN-ADM-ComparativeRegression-ICL-Template' &&
+            x.admAlignment === leastAlignedTarget
+        );
+        if (leastAlignedPage) {
+            leastAlignedPage.admChoiceProcess = admSelection.misalignedStatus;
+            pages.push(leastAlignedPage);
+        }
+
+        const baselinePage = allPages.find(x =>
+            x.admName === 'ALIGN-ADM-OutlinesBaseline' &&
+            x.admAlignment === 'ADEPT-DryRun-Ingroup Bias-0.6' &&
+            x.scenarioIndex === 'DryRunEval-IO2-eval'
+        );
+        if (baselinePage) pages.push(baselinePage);
+
+        pages = shuffle([...pages])
+
+        const comp_page = generateComparisonPagev4_5(baselinePage, mostAlignedPage, leastAlignedPage)
+        pages.push(comp_page)
+    }
+    return pages
 }
