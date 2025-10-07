@@ -28,7 +28,7 @@ const typeDefs = gql`
     getAllHistory(id: ID): [JSON] @complexity(value: 150)
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
     getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
-    getEvalIds: [JSON] @complexity(value: 10)
+    getAllEvalData: [JSON] @complexity(value: 10)
     getEvalIdsForAllHistory: [JSON] @complexity(value: 10)
     getAllHistoryByID(historyId: ID): JSON @complexity(value: 25)
     getScenario(scenarioId: ID): JSON @complexity(value: 10)
@@ -196,8 +196,8 @@ const resolvers = {
           }
         }).toArray().then(result => { return result; });
     },
-    getEvalIds: async (obj, args, context, inflow) => {
-      return await context.db.collection('evaluationIDS').find().toArray().then(result => { return result; });
+    getAllEvalData: async (obj, args, context, inflow) => {
+      return await context.db.collection('evalData').find().toArray().then(result => { return result; });
     },
     getEvalIdsForAllHistory: async (obj, args, context, inflow) => {
       return await context.db.collection('admTargetRuns').aggregate(

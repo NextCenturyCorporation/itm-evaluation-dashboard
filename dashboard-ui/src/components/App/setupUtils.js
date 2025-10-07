@@ -1,14 +1,14 @@
 import store from '../../store/store';
-import { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle, setCurrentTextEval, setPidBounds, setShowDemographics } from '../../store/slices/configSlice';
+import { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentStyle, setCurrentTextEval, setPidBounds, setShowDemographics, setEvals } from '../../store/slices/configSlice';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { setParticipantLog } from '../../store/slices/participantSlice';
 
 export function setupConfigWithImages(data) {
     const hasImageData = data.getAllImageUrls || data.getAllTextBasedImages;
-    
+
     for (const config of data.getAllSurveyConfigs) {
         let tempConfig = JSON.parse(JSON.stringify(config));
-        
+
         if (hasImageData) {
             for (const page of tempConfig.survey.pages) {
                 for (const el of page.elements) {
@@ -29,7 +29,7 @@ export function setupConfigWithImages(data) {
                                     foundImg = data.getAllImageUrls.find((x) => x._id === patient.imgUrl);
                                 }
                             }
-                            
+
                             if (isDefined(foundImg)) {
                                 if (config.survey.version === 4 || config.survey.version === 5) {
                                     patient.imgUrl = foundImg.imageByteCode;
@@ -43,7 +43,7 @@ export function setupConfigWithImages(data) {
                 }
             }
         }
-        
+
         store.dispatch(addConfig({ id: tempConfig._id, data: tempConfig }));
     }
 }
@@ -53,12 +53,12 @@ export function setupTextBasedConfig(data) {
         console.warn("No text-based configs found in Mongo");
         return;
     }
-    
+
     const hasTextBasedImages = data.getAllTextBasedImages && data.getAllTextBasedImages.length > 0;
-    
+
     for (const config of data.getAllTextBasedConfigs) {
         let tempConfig = JSON.parse(JSON.stringify(config));
-        
+
         if (hasTextBasedImages && tempConfig.eval !== 'mre-eval') {
             for (const page of tempConfig.pages) {
                 for (const el of page.elements) {
@@ -79,7 +79,7 @@ export function setupTextBasedConfig(data) {
                 }
             }
         }
-        
+
         store.dispatch(addTextBasedConfig({ id: tempConfig._id, data: tempConfig }));
     }
 }
@@ -106,6 +106,10 @@ export function setPidBoundsInStore(bounds) {
         highPid: bounds.highPid || null
     };
     store.dispatch(setPidBounds(pidBounds));
+}
+
+export function setEvalDataInStore(evals) {
+    store.dispatch(setEvals(evals?.getAllEvalData ?? []));
 }
 
 export function setShowDemographicsInStore(showDemographics) {

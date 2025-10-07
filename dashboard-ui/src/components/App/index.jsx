@@ -4,7 +4,7 @@ import { accountsClient, accountsGraphQL } from '../../services/accountsService'
 import { createBrowserHistory } from 'history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore } from './setupUtils';
+import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore, setEvalDataInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 // Components
 import ResultsPage from '../Results/results';
@@ -106,7 +106,13 @@ const GET_CONFIGS_PHASE_2 = gql`
         getAllSurveyConfigs
         getAllTextBasedConfigs
     }
-`
+`;
+
+const GET_EVAL_DATA = gql`
+    query GetAllEvalData {
+        getAllEvalData
+    }
+`;
 
 export function isUserElevated(currentUser) {
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
@@ -139,6 +145,16 @@ export function App() {
             }
         }
     });
+
+    useQuery(GET_EVAL_DATA, {
+        fetchPolicy: 'no-cache',
+        onCompleted: (data) => {
+            console.log('yo');
+            setEvalDataInStore(data);
+        }
+
+    });
+
 
     React.useEffect(() => {
         if (isDefined(demographicsData)) {
