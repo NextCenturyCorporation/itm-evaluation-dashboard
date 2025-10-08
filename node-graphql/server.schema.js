@@ -77,6 +77,9 @@ const typeDefs = gql`
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
     updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
+    updateEvalData(caller: JSON, dataToUpdate: JSON): JSON,
+    addNewEval(caller: JSON, newEval: JSON): JSON,
+    deleteEval(caller: JSON, evalId: String): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON): JSON,
@@ -102,7 +105,7 @@ const generateServerTimestamp = () => {
   const currentOffset = date.getTimezoneOffset();
   const isDST = currentOffset < januaryOffset;
 
-  return date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, 
+  return date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/,
     isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)');
 };
 
@@ -529,7 +532,7 @@ const resolvers = {
     },
     getPidBounds: async (obj, args, context, info) => {
       const bounds = await context.db.collection('surveyVersion').findOne();
-      return {lowPid: bounds.lowPid, highPid: bounds.highPid}
+      return { lowPid: bounds.lowPid, highPid: bounds.highPid }
     },
     getShowDemographics: async (obj, args, context, info) => {
       const demographics = await context.db.collection('surveyVersion').findOne();
@@ -621,6 +624,77 @@ const resolvers = {
         });
       }
     },
+    updateEvalData: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        const data = args['dataToUpdate'];
+        return await context.db.collection('evalData').update(
+          { "_id": new ObjectId(data["_id"]) },
+          {
+            $set: {
+              "evalNumber": data['evalNumber'],
+              "evalName": data['evalName'],
+              "pages": {
+                "rq1": data['pages']['rq1'],
+                "rq2": data['pages']['rq2'],
+                "rq3": data['pages']['rq3'],
+                "exploratoryAnalysis": data['pages']['exploratoryAnalysis'],
+                "admProbeResponses": data['pages']['admProbeResponses'],
+                "admAlignment": data['pages']['admAlignment'],
+                "admResults": data['pages']['admResults'],
+                "humanSimPlayByPlay": data['pages']['humanSimPlayByPlay'],
+                "humanSimProbes": data['pages']['humanSimProbes'],
+                "participantLevelData": data['pages']['participantLevelData'],
+                "textResults": data['pages']['textResults'],
+                "programQuestions": data['pages']['programQuestions']
+              }
+            }
+          }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update evals.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
+    addNewEval: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        try {
+          const result = await context.db.collection('evalData').insertOne(args.newEval);
+          return result;
+        } catch (error) {
+          console.error(`INSERT ERROR:`, error);
+          throw error;
+        }
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot add evals.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
+    deleteEval: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        try {
+          const result = await context.db.collection('evalData').deleteOne({ '_id': ObjectId(args['evalId']) });
+          return result;
+        } catch (error) {
+          console.error(`DELETE ERROR:`, error);
+          throw error;
+        }
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot delete evals.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
     uploadSurveyResults: async (obj, args, context, inflow) => {
       const filter = { surveyId: args.surveyId }
       const update = { $set: { results: args.results } }
@@ -644,7 +718,7 @@ const resolvers = {
             highPid: args.highPid,
           }
         },
-        {upsert: true, returnDocument: 'after'}
+        { upsert: true, returnDocument: 'after' }
       )
 
       return res.value
@@ -657,7 +731,7 @@ const resolvers = {
             showDemographics: args.showDemographics
           }
         },
-        {upsert: true, returnDocument: 'after'}
+        { upsert: true, returnDocument: 'after' }
       )
       return res.value
     },

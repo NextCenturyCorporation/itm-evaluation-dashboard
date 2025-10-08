@@ -1030,7 +1030,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         }}
                     </Query>
 
-                <EditEvals />
+                <EditEvals caller={{ username: currentUser.username, sessionId }} />
                 </>}
         </Container>
     );
