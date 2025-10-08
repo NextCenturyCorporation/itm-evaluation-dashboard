@@ -21,7 +21,7 @@ const get_eval_name_numbers = gql`
 
 let evalOptions = [];
 
-const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9, 10];
+const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9, 10, 12];
 
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults($evalNumber: Float!){
