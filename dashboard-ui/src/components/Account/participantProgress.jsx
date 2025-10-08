@@ -45,6 +45,10 @@ const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Eva
 const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
 const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
 
+const HEADERS_UK_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
+const HEADERS_UK_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
+
+
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
     if (val === 'most aligned' || val === 'least aligned') return 'Normal';
@@ -81,6 +85,9 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         if (selectedPhase === 'Phase 2') {
             headers = canViewProlific ? [...HEADERS_PHASE2_WITH_PROLIFIC] : [...HEADERS_PHASE2_NO_PROLIFIC];
         }
+        else if (selectedPhase === 'UK Phase 1') {
+            headers = canViewProlific ? [...HEADERS_UK_WITH_PROLIFIC] : [...HEADERS_UK_NO_PROLIFIC];
+        }
         else {
             headers = canViewProlific ? [...HEADERS_PHASE1_WITH_PROLIFIC] : [...HEADERS_PHASE1_NO_PROLIFIC];
         }
@@ -93,8 +100,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const HEADERS = [...getHeaders()];
 
     const getCompletionOptions = () => {
-        const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-        const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+        const textThreshold = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1' ? 4 : 5;
+        const delThreshold = selectedPhase === 'Phase 2' ? 5 : selectedPhase === 'UK Phase 1' ? 3 : 4;
         const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', `Delegation (${delThreshold})`, 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
 
         if (selectedPhase === 'Phase 1') {
@@ -106,6 +113,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     };
 
     const getParticipantPhase = (participant) => {
+        const evalNumber = participant['_evalNumber'];
+        if (evalNumber === 12) {
+            return 'UK1';
+        }
         return participant['_phase'] || 1;
     };
 
@@ -401,7 +412,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         const val = dataSet[header];
         const scenarioResults = dataTextResults?.getAllScenarioResults || [];
 
-        if (selectedPhase === 'Phase 2' && /^Del-\d+$/.test(header) && val && dataSet['Delegation'] > 0) {
+        if ((selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1') && /^Del-\d+$/.test(header) && val && dataSet['Delegation'] > 0) {
             const exists = scenarioResults.some(r => r.participantID === dataSet['Participant ID']);
             if (exists) {
                 return (
@@ -412,7 +423,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                         >
                             {val}
                         </button> :
-                            <p>{ val }</p>
+                            <p>{val}</p>
                         }
                     </td>
                 );
@@ -423,13 +434,14 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (SCENARIO_HEADERS.includes(header) && isDefined(val)) {
                 return 'li-green-cell';
             }
-            const isPH2 = selectedPhase === 'Phase 2';
+            const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
+            const isUK = selectedPhase === 'UK Phase 1';
             // phase dependent
-            const textThreshold = isPH2 ? 4 : 5;
-            const delThreshold = (isPH2 && dataSet['_evalNumber'] !== 10) ? 5 : 4;
+            const textThreshold = isPH2OrUK ? 4 : 5;
+            const delThreshold = isUK ? 3 : (isPH2OrUK && dataSet['_evalNumber'] !== 10) ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val >= textThreshold) ||
-                (header === 'Sim Count' && (val === 4 || (isPH2 && val === 2)))) {
+                (header === 'Sim Count' && (val === 4 || (isPH2OrUK && val === 2)))) {
                 return 'dk-green-cell';
             }
             return 'white-cell';
@@ -449,14 +461,14 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (!participant) return false;
 
             const participantPhase = getParticipantPhase(participant);
-            return selectedPhase === `Phase ${participantPhase}`;
+            return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
         });
     }, [evals, selectedPhase, formattedData]);
 
     const getTypesForPhase = useCallback(() => {
         const phaseParticipants = formattedData.filter(participant => {
             const participantPhase = getParticipantPhase(participant);
-            return selectedPhase === `Phase ${participantPhase}`;
+            return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
         });
 
         const phaseTypes = phaseParticipants
@@ -468,12 +480,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
-            const textThreshold = selectedPhase === 'Phase 2' ? 4 : 5;
-            const delThreshold = selectedPhase === 'Phase 2' ? 5 : 4;
+            const textThreshold = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1' ? 4 : 5;
+            const delThreshold = selectedPhase === 'Phase 2' ? 5 : selectedPhase === 'UK Phase 1' ? 3 : 4;
 
             setFilteredData(formattedData.filter((x) => {
                 const participantPhase = getParticipantPhase(x);
-                const shouldShowInPhase = selectedPhase === `Phase ${participantPhase}`;
+                const shouldShowInPhase = selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
 
                 if (!shouldShowInPhase) return false;
 
@@ -573,7 +585,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
-                    options={['Phase 1', 'Phase 2']}
+                    options={['Phase 1', 'Phase 2', 'UK Phase 1']}
                     value={selectedPhase}
                     size="small"
                     style={{ width: '200px' }}
@@ -591,7 +603,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         {(() => {
             const currentPhaseData = formattedData.filter((x) => {
                 const participantPhase = getParticipantPhase(x);
-                return selectedPhase === `Phase ${participantPhase}`;
+                return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
             });
             return filteredData.length < currentPhaseData.length && (
                 <p className='filteredText'>Showing {filteredData.length} of {currentPhaseData.length} rows based on filters</p>
@@ -681,7 +693,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             <DownloadButtons
                 formattedData={refineData(formattedData.filter((x) => {
                     const participantPhase = getParticipantPhase(x);
-                    return selectedPhase === `Phase ${participantPhase}`;
+                    return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
                 }))}
                 filteredData={refineData(filteredData)}
                 HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x) && x !== 'Delete')}
@@ -768,7 +780,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             </Alert>
         </Snackbar>
         <AdmInfoModal
-            open={popupInfo.open && selectedPhase === 'Phase 2'}
+            open={popupInfo.open && (selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1')}
             onClose={closePopup}
             pid={popupInfo.pid}
             scenarioId={popupInfo.scenarioId}
