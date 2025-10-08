@@ -807,7 +807,8 @@ export const PAGES = {
     HUMAN_SIM_PLAY_BY_PLAY: 'humanSimPlayByPlay',
     HUMAN_SIM_PROBES: 'humanSimProbes',
     PARTICIPANT_LEVEL_DATA: 'participantLevelData',
-    TEXT_RESULTS: 'textResults'
+    TEXT_RESULTS: 'textResults',
+    PROGRAM_QUESTIONS: 'programQuestions'
 }
 
 /*

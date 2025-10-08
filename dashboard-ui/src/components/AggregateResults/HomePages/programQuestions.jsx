@@ -6,13 +6,7 @@ import { useQuery } from '@apollo/react-hooks';
 import Select from 'react-select';
 import MreHomePage from './MRE_homePage';
 import DreHomePage from './DRE_homePage';
-
-
-const get_eval_name_numbers = gql`
-    query getEvalIdsForSimAlignment{
-        getEvalIdsForSimAlignment
-  }`;
-let evalOptions = [];
+import { PAGES, getEvalOptionsForPage } from '../../Research/utils';
 
 const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!) {
@@ -30,7 +24,7 @@ const GET_SURVEY_RESULTS = gql`
 
 
 export default function ProgramQuestions() {
-    const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+    const evalOptions = getEvalOptionsForPage(PAGES.PROGRAM_QUESTIONS);
     const [selectedEval, setSelectedEval] = React.useState(5);
     const [fullData, setFullData] = React.useState(null);
     const [admKdmas, setAdmKdmas] = React.useState(null);
@@ -40,16 +34,6 @@ export default function ProgramQuestions() {
         variables: { "evalNumber": selectedEval },
     });
     const { loading, error, data: allData } = useQuery(GET_SURVEY_RESULTS, { variables: { "evalNumber": selectedEval } });
-
-    React.useEffect(() => {
-        evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForSimAlignment) {
-            for (const result of evalIdOptionsRaw.getEvalIdsForSimAlignment) {
-                evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
-            }
-        }
-
-    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         if (!loading && !error && allData?.getAllSurveyResultsByEval && allData?.getAllScenarioResultsByEval) {
