@@ -14,6 +14,7 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
 import { FaInfoCircle } from 'react-icons/fa'
+import { EditEvals } from './editEvals';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -1028,6 +1029,8 @@ function AdminPage({ currentUser, updateUserHandler }) {
                             );
                         }}
                     </Query>
+
+                <EditEvals />
                 </>}
         </Container>
     );

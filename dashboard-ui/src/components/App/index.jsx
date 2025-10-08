@@ -151,7 +151,6 @@ export function App() {
         onCompleted: (data) => {
             setEvalDataInStore(data);
         }
-
     });
 
 

@@ -168,7 +168,7 @@
     font-size: 36px;
 }
 
-.small-table .red-btn {
+.small-table .red-btn, .edit-eval-container .red-btn {
     color: rgb(166, 34, 34);
     font-size: 36px;
 }
@@ -208,4 +208,23 @@
 
 .return-btn:active {
     filter: brightness(80%);
+}
+
+.edit-eval-container {
+    overflow: auto;
+    margin-bottom: 20px;
+    height: 500px;
+    border: 2px solid black;
+}
+
+.edit-eval-container thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+.edit-eval-container tr td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
 }

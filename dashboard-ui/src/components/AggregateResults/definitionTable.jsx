@@ -7,7 +7,6 @@ import ph1XlFile from './Variable Definitions/PH1_Variables.xlsx'
 import ph2XlFile from './Variable Definitions/PH2_Variables.xlsx'
 
 export function DefinitionTable({ evalNumber }) {
-    console.log(evalNumber)
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
