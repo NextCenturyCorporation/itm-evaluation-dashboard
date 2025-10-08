@@ -25,7 +25,7 @@ const GET_SURVEY_RESULTS = gql`
 
 export default function ProgramQuestions() {
     const evalOptions = getEvalOptionsForPage(PAGES.PROGRAM_QUESTIONS);
-    const [selectedEval, setSelectedEval] = React.useState(5);
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     const [fullData, setFullData] = React.useState(null);
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
