@@ -83,7 +83,6 @@ const typeDefs = gql`
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON): JSON,
-    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateUIStyle(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON,
@@ -806,18 +805,6 @@ const resolvers = {
         }
 
       }
-    },
-    updateEvalIdsByPage: async (obj, args, context, inflow) => {
-      // hmm can't do this with graphql?      
-      // var field = args["field"];
-      // var updateObj = {};
-      // updateObj[field] = args["value"]};
-
-      const filter = { evalNumber: args["evalNumber"] }
-      const update = { $set: { "showMainPage": args["value"] } }
-      const options = { upsert: true }
-
-      return await context.db.collection('evaluationIDS').updateOne(filter, update, options)
     },
     updateSurveyVersion: async (obj, args, context, inflow) => {
       const result = await context.db.collection('surveyVersion').findOneAndUpdate(
