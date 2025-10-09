@@ -18,11 +18,11 @@ export default function AdmInfoModal({
             <div className="adm-popup-body">
                 {(() => {
                     const allScenarios = dataTextResults.getAllScenarioResults;
-                    const doc = allScenarios.find(r => r.participantID === pid);
-                    if (!doc) return <p>No data available.</p>;
+                    const docs = allScenarios.filter(r => r.participantID === pid);
+                    if (docs.length === 0) return <p>No data available.</p>;
 
-                    const match = scenarioId.match(/^[^-]+-([A-Z]+)\d+-eval$/);
-                    const code = match?.[1] || '';
+                    const match = scenarioId.match(/^([a-z]+)-|^[^-]+-([A-Z]+)\d+-eval$/);
+                    const code = match?.[1] || match?.[2] || '';
 
                     const allSurveys = dataSurveyResults.getAllSurveyResults;
 
@@ -46,6 +46,7 @@ export default function AdmInfoModal({
 
                     let target = '';
                     let filteredArr = [];
+                    let doc = null;
 
                     if (isMultiKDMA) {
                         const medicIds = cmpPage.pageName.split(" vs ");
@@ -65,7 +66,19 @@ export default function AdmInfoModal({
                     } else {
                         const { baselineName, alignedTarget, misalignedTarget } = cmpPage;
                         target = KDMA_MAP[code] || code.toLowerCase();
-                        const entry = doc.mostLeastAligned.find(o => o.target === target) || {};
+
+                        let entry = null;
+                        let doc = null;
+                        for (const d of docs) {
+                            entry = d.mostLeastAligned.find(o => o.target === target);
+                            if (entry) {
+                                doc = d;
+                                break;
+                            }
+                        }
+
+                        if (!doc || !entry) return <p>No alignments found for target.</p>;
+
                         const arr = entry.response || [];
 
                         if (arr.length === 0) return <p>No alignments.</p>;
@@ -127,14 +140,28 @@ export default function AdmInfoModal({
                                             <div className="adm-info-block">
                                                 <div className="adm-info-block-value adm-align-list">
                                                     {filteredArr.map((o, idx) => {
-                                                        const key = Object.keys(o)[0];
-                                                        const score = o[key];
+                                                        let key, score;
+
+                                                        if (typeof o === 'object' && o.target && o.score !== undefined) {
+                                                            // st way
+                                                            key = o.target;
+                                                            score = o.score;
+                                                        } else {
+                                                            // adept way
+                                                            key = Object.keys(o)[0];
+                                                            score = o[key];
+                                                        }
+
                                                         return (
-                                                            <div key={key}> {idx === 0 && (
-                                                                <><span className="adm-info-block-label" style={{ marginBottom: '0.75rem' }}>All Alignments (Highest to Lowest)</span>
-                                                                    <br />
-                                                                </>
-                                                            )}
+                                                            <div key={key}>
+                                                                {idx === 0 && (
+                                                                    <>
+                                                                        <span className="adm-info-block-label" style={{ marginBottom: '0.75rem' }}>
+                                                                            All Alignments (Highest to Lowest)
+                                                                        </span>
+                                                                        <br />
+                                                                    </>
+                                                                )}
                                                                 {formatTargetWithDecimal(key)} ({score.toFixed(3)})
                                                             </div>
                                                         );

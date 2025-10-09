@@ -6,12 +6,18 @@ import dreXlFile from './Variable Definitions/DRE_Variables.xlsx';
 import ph1XlFile from './Variable Definitions/PH1_Variables.xlsx'
 import ph2XlFile from './Variable Definitions/PH2_Variables.xlsx'
 
+const getDefinitionFile = (evalNumber) => {
+    if (evalNumber === 4) return { file: dreXlFile, prefix: 'dre_' };
+    if (evalNumber === 5 || evalNumber === 12) return { file: ph1XlFile, prefix: 'ph1_' };
+    if (evalNumber >= 8) return { file: ph2XlFile, prefix: 'ph2_' };
+    return { file: mreXlFile, prefix: 'mre_' };
+};
+
 export function DefinitionTable({ evalNumber }) {
-    console.log(evalNumber)
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const xlFile = evalNumber >= 8 ? ph2XlFile : evalNumber === 4 ? dreXlFile : evalNumber === 5 ? ph1XlFile : mreXlFile;
+        const { file: xlFile } = getDefinitionFile(evalNumber);
         const oReq = new XMLHttpRequest();
         oReq.open("GET", xlFile, true);
         oReq.responseType = "arraybuffer";
@@ -34,8 +40,8 @@ export function DefinitionTable({ evalNumber }) {
     }, [evalNumber]);
 
     const exportWordDoc = () => {
-        const xlFile = evalNumber >= 8 ? ph2XlFile : evalNumber === 4 ? dreXlFile : evalNumber === 5 ? ph1XlFile : mreXlFile;
-        FileSaver.saveAs(xlFile, (evalNumber === 3 ? 'mre_' : evalNumber === 4 ? 'dre_' : evalNumber === 5 ? 'ph1_' : 'ph2_') + 'Definitions.xlsx');
+        const { file: xlFile, prefix } = getDefinitionFile(evalNumber);
+        FileSaver.saveAs(xlFile, prefix + 'Definitions.xlsx');
     };
 
     return (<>
