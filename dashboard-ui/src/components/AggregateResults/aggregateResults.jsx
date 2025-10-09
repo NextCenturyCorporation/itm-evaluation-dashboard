@@ -21,7 +21,7 @@ const get_eval_name_numbers = gql`
 
 let evalOptions = [];
 
-const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9, 10];
+const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9, 10, 12];
 
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults($evalNumber: Float!){
@@ -75,7 +75,7 @@ export default function AggregateResults({ type }) {
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
 
             let full;
-            if (selectedEval >= 8) {
+            if (selectedEval >= 8 && selectedEval !== 12) {
                 full = populateDataSetP2(data);
             } else {
                 full = populateDataSet(data);
@@ -288,7 +288,7 @@ export default function AggregateResults({ type }) {
                         <table className='itm-table'>
                             <thead>
                                 <tr>
-                                    {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
+                                    {HEADER[selectedEval === 6 || selectedEval === 12 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
                                         return (<th key={'header-' + index}>
                                             {val}
                                         </th>);
@@ -298,7 +298,7 @@ export default function AggregateResults({ type }) {
                             <tbody>
                                 {fullData.map((dataSet, index) => {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
-                                        {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val) => {
+                                        {HEADER[selectedEval === 6 || selectedEval === 12 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
                                                 {formatData(dataSet, val)}
                                             </td>);
