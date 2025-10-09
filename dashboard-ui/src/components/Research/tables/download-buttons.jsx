@@ -10,7 +10,6 @@ export function DownloadButtons({ formattedData, filteredData, HEADERS, fileName
             )
         );
 
-    console.log(selectedPhase)
     const filteredFormattedData = filterDataByHeaders(formattedData, HEADERS);
     const filteredFilteredData = filterDataByHeaders(filteredData, HEADERS);
 
