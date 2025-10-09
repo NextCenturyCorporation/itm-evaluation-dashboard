@@ -73,7 +73,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const [sortBy, setSortBy] = React.useState('Participant ID ↑');
     const [searchPid, setSearchPid] = React.useState('');
     const [isRefreshing, setIsRefreshing] = React.useState(false);
-    const [selectedPhase, setSelectedPhase] = React.useState('Phase 2');
+    const [selectedPhase, setSelectedPhase] = React.useState('UK Phase 1');
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = React.useState(false);
     const [rowToDelete, setRowToDelete] = React.useState({});
     const [deleteInput, setDeleteInput] = React.useState('');
