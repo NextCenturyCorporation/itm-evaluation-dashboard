@@ -701,6 +701,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 extraAction={refreshData}
                 extraActionText={'Refresh Data'}
                 isParticipantData={true}
+                selectedPhase={selectedPhase}
             />
         </section>
         <div className='resultTableSection'>
