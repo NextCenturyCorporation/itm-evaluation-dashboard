@@ -757,7 +757,6 @@ function populateDataSet(data) {
     }
     const txtAlign = getTextKDMA(data);
     const txtScores = getTextAlignment(data);
-    console.log(txtScores)
     const allResults = [];
     for (const res of data.getAllSurveyResultsByEval) {
         // if survey instructions does not exist, we don't want the entry

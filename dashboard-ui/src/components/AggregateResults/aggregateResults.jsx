@@ -79,7 +79,6 @@ export default function AggregateResults({ type }) {
                 full = populateDataSetP2(data);
             } else {
                 full = populateDataSet(data);
-                console.log(full)
             }
             full.sort((a, b) => a['ParticipantID'] - b['ParticipantID']);
             setFullData(full);
