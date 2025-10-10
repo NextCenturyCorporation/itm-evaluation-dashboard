@@ -143,7 +143,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10];
+export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -760,7 +760,7 @@ function populateDataSet(data) {
     const allResults = [];
     for (const res of data.getAllSurveyResultsByEval) {
         // if survey instructions does not exist, we don't want the entry
-        if ([2, 4, 5, 6].includes(res.results?.surveyVersion) && Object.keys(res.results).includes('Survey Introduction')) {
+        if ([2, 4, 5, 6, 9].includes(res.results?.surveyVersion) && Object.keys(res.results).includes('Survey Introduction')) {
             // use this result!
             const tmpSet = {};
 
