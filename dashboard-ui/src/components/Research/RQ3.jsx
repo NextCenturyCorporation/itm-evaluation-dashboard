@@ -8,19 +8,14 @@ import rq31CodeDre from './rcode/code_for_dashboard_RQ31_and_RQ33_dre.R';
 import rq32CodePh1 from './rcode/code_for_dashboard_RQ32_ph1.R';
 import rq31CodePh1 from './rcode/code_for_dashboard_RQ31_and_RQ33_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
-
-const ALLOWED_EVAL_OPTIONS = [
-    { value: 4, label: 'Dry Run Evaluation' },
-    { value: 5, label: 'Phase 1 Evaluation' },
-    { value: 6, label: 'Jan 2025 Evaluation' },
-    { value: 8, label: 'Phase II June 2025 Collaboration' },
-    { value: 9, label: 'Phase II July 2025 Collaboration' }
-];
+import { PAGES, getEvalOptionsForPage } from './utils';
 
 export function RQ3() {
+    const evalOptions = getEvalOptionsForPage(PAGES.RQ3);
+
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
     const [rq31CodeShowing, setRQ31CodeShowing] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(ALLOWED_EVAL_OPTIONS[ALLOWED_EVAL_OPTIONS.length - 1].value);
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }
@@ -37,10 +32,10 @@ export function RQ3() {
         <div className="rq-selection-section">
             <Select
                 onChange={selectEvaluation}
-                options={ALLOWED_EVAL_OPTIONS}
-                defaultValue={ALLOWED_EVAL_OPTIONS[0]}
+                options={evalOptions}
+                defaultValue={evalOptions[0]}
                 placeholder="Select Evaluation"
-                value={ALLOWED_EVAL_OPTIONS.find(option => option.value === selectedEval)}
+                value={evalOptions.find(option => option.value === selectedEval)}
                 styles={{
                     // Fixes the overlapping problem of the component
                     menu: provided => ({ ...provided, zIndex: 9999 })

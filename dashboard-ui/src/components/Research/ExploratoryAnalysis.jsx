@@ -9,17 +9,12 @@ import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
 import { BlockedTable } from './tables/BlockedTable';
 import { CalibrationData } from './tables/CalibrationData';
-
-const ALLOWED_EVAL_OPTIONS = [
-    { value: 4, label: 'Dry Run Evaluation' },
-    { value: 5, label: 'Phase 1 Evaluation' },
-    { value: 6, label: 'Jan 2025 Evaluation' },
-    { value: 8, label: 'Phase II June 2025 Collaboration' },
-    { value: 9, label: 'Phase II July 2025 Collaboration' }
-];
+import { PAGES, getEvalOptionsForPage } from './utils';
 
 export function ExploratoryAnalysis() {
-    const [selectedEval, setSelectedEval] = React.useState(ALLOWED_EVAL_OPTIONS[ALLOWED_EVAL_OPTIONS.length - 1].value);
+    const evalOptions = getEvalOptionsForPage(PAGES.EXPLORATORY_ANALYSIS);
+
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }
@@ -27,10 +22,10 @@ export function ExploratoryAnalysis() {
         <div className="rq-selection-section">
             <Select
                 onChange={selectEvaluation}
-                options={ALLOWED_EVAL_OPTIONS}
-                defaultValue={ALLOWED_EVAL_OPTIONS[0]}
+                options={evalOptions}
+                defaultValue={evalOptions[0]}
                 placeholder="Select Evaluation"
-                value={ALLOWED_EVAL_OPTIONS.find(option => option.value === selectedEval)}
+                value={evalOptions.find(option => option.value === selectedEval)}
                 styles={{
                     // Fixes the overlapping problem of the component
                     menu: provided => ({ ...provided, zIndex: 9999 })

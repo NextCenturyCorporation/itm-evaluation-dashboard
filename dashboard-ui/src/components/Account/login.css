@@ -173,6 +173,10 @@
     font-size: 36px;
 }
 
+.edit-eval-container .delete-eval-btn {
+    font-size: 30px !important;
+}
+
 .small-table .action-header {
     width: 160px !important;
 }
@@ -208,4 +212,34 @@
 
 .return-btn:active {
     filter: brightness(80%);
+}
+
+.edit-eval-container {
+    overflow: auto;
+    margin-bottom: 20px;
+    height: 500px;
+    border: 2px solid black;
+}
+
+.edit-eval-container thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+.edit-eval-container tr td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+}
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 1.1rem;
 }

@@ -11,19 +11,14 @@ import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
 import { MultiKDMA_RQ23 as MultiKdmaRq23 } from './tables/rq23_multiKDMA';
 import { PH2RQ2223 } from './tables/ph2_rq22-rq23';
-
-const ALLOWED_EVAL_OPTIONS = [
-    { value: 4, label: 'Dry Run Evaluation' },
-    { value: 5, label: 'Phase 1 Evaluation' },
-    { value: 7, label: 'Phase II Experiment 1' },
-    { value: 8, label: 'Phase II June 2025 Collaboration'},
-    { value: 9, label: 'Phase II July 2025 Collaboration'}
-];
+import { PAGES, getEvalOptionsForPage } from './utils';
 
 export function RQ2() {
+    const evalOptions = getEvalOptionsForPage(PAGES.RQ2);
+
     const [rq21CodeShowing, setRQ21CodeShowing] = React.useState(false);
     const [rq2CodeShowing, setRQ2CodeShowing] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(ALLOWED_EVAL_OPTIONS[ALLOWED_EVAL_OPTIONS.length - 1].value);
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
 
     function selectEvaluation(target) {
         setSelectedEval(target.value);
@@ -48,10 +43,10 @@ export function RQ2() {
             <div className="rq-selection-section">
                 <Select
                     onChange={selectEvaluation}
-                    options={ALLOWED_EVAL_OPTIONS}
-                    defaultValue={ALLOWED_EVAL_OPTIONS[0]}
+                    options={evalOptions}
+                    defaultValue={evalOptions[0]}
                     placeholder="Select Evaluation"
-                    value={ALLOWED_EVAL_OPTIONS.find(option => option.value === selectedEval)}
+                    value={evalOptions.find(option => option.value === selectedEval)}
                     styles={{
                         // Fixes the overlapping problem of the component
                         menu: provided => ({ ...provided, zIndex: 9999 })
