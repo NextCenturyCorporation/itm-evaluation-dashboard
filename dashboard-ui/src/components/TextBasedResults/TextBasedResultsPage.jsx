@@ -49,6 +49,10 @@ const cleanTitleLegacy = (title) => {
     return title.replace(/probe\s*/, '').trim();
 };
 
+const shouldUseLegacy = (evalNumber) => {
+    return evalNumber < 8 || evalNumber === 12;
+}
+
 function SingleGraph({ data, pageName, scenario, selectedEval }) {
     const [survey, setSurvey] = React.useState(null);
     const [vizPanel, setVizPanel] = React.useState(null);
@@ -119,8 +123,7 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
 
     return (
         <div className='graph-section'>
-            <h3 className='question-header'>{(selectedEval >= 8 ? cleanTitle(pageName, scenario) : cleanTitleLegacy(pageName))} (N={data['total']})</h3>
-            <div id={"viz_" + pageName} className='full-width-graph' />
+            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(pageName) : cleanTitle(pageName, scenario))} (N={data['total']})</h3>            <div id={"viz_" + pageName} className='full-width-graph' />
         </div>
     );
 }
@@ -194,7 +197,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                                         headers.push(q);
                                     }
                                     formatted[entry['_id']][q] = entry[key].questions[q].response;
-                                    const objKey = entry['evalNumber'] >= 8 ? getQuestionText(q, scenarioName) : getQuestionTextLegacy(q, scenarioName, textBasedConfigs)
+                                    const objKey = shouldUseLegacy(entry['evalNumber']) ? getQuestionTextLegacy(q, scenarioName, textBasedConfigs) : getQuestionText(q, scenarioName)
                                     obj[objKey] = entry[key].questions[q].response;
                                 }
                             });
@@ -336,7 +339,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
     };
 
     return (<div className="participant-text-results">
-        {selectedEval >= 8 && (
+        {!shouldUseLegacy(selectedEval) && (
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
                     {(() => {
@@ -357,7 +360,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 </div>
             </div>
         )}
-        {selectedEval < 8 && (
+        {shouldUseLegacy(selectedEval) && (
             <div className="mb-2">
                 <button onClick={exportToExcel}>Download Scenario Results</button>
             </div>
@@ -367,9 +370,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
-                            const header = selectedEval >= 8
-                                ? getQuestionText(key, scenarioName)
-                                : getQuestionTextLegacy(key, scenarioName, textBasedConfigs);
+                            const header = shouldUseLegacy(selectedEval)
+                                ? getQuestionTextLegacy(key, scenarioName, textBasedConfigs)
+                                : getQuestionText(key, scenarioName);
                             return <th key={scenarioName + "_" + key}>{header}</th>;
                         })}
                     </tr>
@@ -580,7 +583,7 @@ export default function TextBasedResultsPage() {
                     .map((qkey, ind) => {
                         const displayKey = questionAnswerSets[qkey].originalKey || qkey;
                         return (<div className='result-section' key={displayKey + '_' + ind}>
-                            <h3 className='question-header'>{(selectedEval >= 8 ? cleanTitle(displayKey, scenarioChosen) : cleanTitleLegacy(displayKey))} (N={questionAnswerSets[qkey]['total']})</h3>
+                            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(displayKey) : cleanTitle(displayKey, scenarioChosen))} (N={questionAnswerSets[qkey]['total']})</h3>
                             <p>{questionAnswerSets[qkey]['question']}</p>
                             <table className="itm-table text-result-table">
                                 <thead>
