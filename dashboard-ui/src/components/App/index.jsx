@@ -104,6 +104,12 @@ const GET_EVAL_DATA = gql`
     }
 `;
 
+const GET_ALL_TEXT_BASED_IMAGES = gql`
+    query GetAllTextBasedImages {
+        getAllTextBasedImages
+    }
+`;
+
 export function isUserElevated(currentUser) {
     return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
 }
@@ -112,6 +118,10 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
+
+    const { data: textImagesData } = useQuery(GET_ALL_TEXT_BASED_IMAGES, {
+        fetchPolicy: 'cache-first'
+    });
     const { data: textEvalData } = useQuery(GET_TEXT_EVAL, { fetchPolicy: 'no-cache' });
     const { data: styleData } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
     const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
@@ -181,7 +191,6 @@ export function App() {
         }
     );
 
-    // Load text configs when text eval is available
     const { data: textConfigData, loading: textConfigLoading } = useQuery(
         GET_TEXT_CONFIG_BY_EVAL,
         {
@@ -191,31 +200,30 @@ export function App() {
         }
     );
 
-    // Process survey configs when loaded
     React.useEffect(() => {
-        if (surveyConfigData?.getSurveyConfigByVersion) {
+        if (surveyConfigData?.getSurveyConfigByVersion && textImagesData?.getAllTextBasedImages) {
             const configDataToProcess = {
                 getAllSurveyConfigs: surveyConfigData.getSurveyConfigByVersion,
-                getAllImageUrls: [] // Will be handled separately if needed
+                getAllTextBasedImages: textImagesData.getAllTextBasedImages
             };
             setupConfigWithImages(configDataToProcess);
             setSurveyConfigsLoaded(true);
         }
-    }, [surveyConfigData]);
+    }, [surveyConfigData, textImagesData]);
 
-    // Process text configs when loaded
+
     React.useEffect(() => {
-        if (textConfigData?.getTextBasedConfigByEval) {
+        if (textConfigData?.getTextBasedConfigByEval && textImagesData?.getAllTextBasedImages) {
             const configDataToProcess = {
                 getAllTextBasedConfigs: textConfigData.getTextBasedConfigByEval,
-                getAllTextBasedImages: [] // Will be handled separately if needed
+                getAllTextBasedImages: textImagesData.getAllTextBasedImages
             };
             setupTextBasedConfig(configDataToProcess);
             setTextConfigsLoaded(true);
         }
-    }, [textConfigData]);
+    }, [textConfigData, textImagesData]);
 
-    // Update isConfigDataLoaded based on new loading states
+    
     React.useEffect(() => {
         if (surveyConfigsLoaded && textConfigsLoaded) {
             setIsConfigDataLoaded(true);

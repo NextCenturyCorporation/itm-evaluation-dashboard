@@ -4,6 +4,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import { setParticipantLog } from '../../store/slices/participantSlice';
 
 export function setupConfigWithImages(data) {
+    console.log(data)
     const hasImageData = data.getAllImageUrls || data.getAllTextBasedImages;
 
     for (const config of data.getAllSurveyConfigs) {
