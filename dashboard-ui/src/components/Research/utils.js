@@ -3,6 +3,8 @@ import XLSX from 'xlsx-js-style';
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { admOrderMapping, getDelEnvMapping } from '../Survey/delegationMappings';
 import { formatTargetWithDecimal, adjustScenarioNumber } from '../Survey/surveyUtils';
+import store from '../../store/store';
+
 
 export const ADM_NAME_MAP = {
     "TAD-aligned": "Parallax",
@@ -796,4 +798,34 @@ export function determineChoiceProcessJune2025(textResults, page, t) {
     return focusTarget === target
         ? (t === 'aligned' ? 'most aligned' : 'least aligned')
         : 'exemption'
+}
+
+export const PAGES = {
+    RQ1: 'rq1',
+    RQ2: 'rq2',
+    RQ3: 'rq3',
+    EXPLORATORY_ANALYSIS: 'exploratoryAnalysis',
+    ADM_PROBE_RESPONSES: 'admProbeResponses',
+    ADM_ALIGNMENT: 'admAlignment',
+    ADM_RESULTS: 'admResults',
+    HUMAN_SIM_PLAY_BY_PLAY: 'humanSimPlayByPlay',
+    HUMAN_SIM_PROBES: 'humanSimProbes',
+    PARTICIPANT_LEVEL_DATA: 'participantLevelData',
+    TEXT_RESULTS: 'textResults',
+    PROGRAM_QUESTIONS: 'programQuestions'
+}
+
+/*
+ * Returns the list of eval options for the dropdown of a page.
+ * Needs the evalData collection and page name
+ */
+export function getEvalOptionsForPage(page) {
+    const dropdownOptions = [];
+    for (const evalData of store.getState()?.configs?.evals) {
+        if (evalData.pages[page]) {
+            dropdownOptions.push({ value: evalData.evalNumber, label: evalData.evalName });
+        }
+    }
+    dropdownOptions.reverse();
+    return dropdownOptions;
 }

@@ -15,12 +15,8 @@ class AdmCharts extends React.Component {
 
     constructor(props) {
         super();
-
-        const filteredOptions = props.evaluationOptions.filter(option => option.value !== 7);
-        filteredOptions.sort((a, b) => (a.value < b.value) ? 1 : -1);
-        this.filteredOptions = filteredOptions
         this.state = {
-            currentEval: filteredOptions[0],
+            currentEval: props.evaluationOptions[0],
         }
 
         this.selectEvaluation = this.selectEvaluation.bind(this);
@@ -64,7 +60,7 @@ class AdmCharts extends React.Component {
                         <div className="evaluation-selector-holder">
                             <Select
                                 onChange={this.selectEvaluation}
-                                options={this.filteredOptions}
+                                options={this.props.evaluationOptions}
                                 defaultValue={this.state.currentEval}
                             />
                         </div>

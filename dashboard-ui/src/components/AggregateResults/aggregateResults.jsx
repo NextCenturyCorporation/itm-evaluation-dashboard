@@ -11,15 +11,8 @@ import { DefinitionTable } from './definitionTable';
 import CloseIcon from '@material-ui/icons/Close';
 import Select from 'react-select';
 import { HEADER, HEADER_SIM_DATA, ADEPT_HEADERS_DRE } from './aggregateHeaders';
+import { PAGES, getEvalOptionsForPage } from '../Research/utils';
 
-
-const get_eval_name_numbers = gql`
-    query getEvalIdsForAllScenarioResults{
-        getEvalIdsForAllScenarioResults
-  }`;
-
-
-let evalOptions = [];
 
 const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9, 10, 12];
 
@@ -33,14 +26,14 @@ const GET_SURVEY_RESULTS = gql`
 
 
 export default function AggregateResults({ type }) {
-    const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
+    let evalOptions = type == 'HumanProbeData' ? getEvalOptionsForPage(PAGES.HUMAN_SIM_PROBES) : getEvalOptionsForPage(PAGES.PARTICIPANT_LEVEL_DATA);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
     const [fullData, setFullData] = React.useState([]);
     const [aggregateData, setAggregateData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(type == 'HumanProbeData' ? 5 : 9);
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     const [iframeLink, setIframeLink] = React.useState(null);
     const [showIframe, setShowIframe] = React.useState(false);
     const [iframeTitle, setIframeTitle] = React.useState(null);
@@ -52,24 +45,10 @@ export default function AggregateResults({ type }) {
     });
 
     React.useEffect(() => {
-        evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForAllScenarioResults) {
-            for (const result of evalIdOptionsRaw.getEvalIdsForAllScenarioResults) {
-                if (type != 'HumanProbeData' || !EXCLUDED_EVALS_HUMAN_PROBES.includes(result._id.evalNumber)) {
-                    evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
-                }
-            }
-        }
-    }, [evalIdOptionsRaw, type]);
-
-    React.useEffect(() => {
-        if (type == 'HumanProbeData') {
-            setSelectedEval(5);
-        }
-        else {
-            setSelectedEval(9);
-        }
+        evalOptions = type == 'HumanProbeData' ? getEvalOptionsForPage(PAGES.HUMAN_SIM_PROBES) : getEvalOptionsForPage(PAGES.PARTICIPANT_LEVEL_DATA);
+        setSelectedEval(evalOptions[0].value);
     }, [type]);
+
 
     React.useEffect(() => {
         if (!loading && !error && data?.getAllSurveyResultsByEval && data?.getAllScenarioResultsByEval && data?.getParticipantLog) {
