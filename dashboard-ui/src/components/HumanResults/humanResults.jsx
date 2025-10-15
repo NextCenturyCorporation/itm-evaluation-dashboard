@@ -8,12 +8,8 @@ import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import '../../css/humanResults.css';
 import Select from 'react-select';
 import { POST_MRE_EVALS } from "../AggregateResults/DataFunctions";
+import { PAGES, getEvalOptionsForPage } from "../Research/utils";
 
-const get_eval_name_numbers = gql`
-    query getEvalIdsForHumanResults{
-        getEvalIdsForHumanResults
-  }`;
-let evalOptions = [];
 
 const GET_HUMAN_RESULTS = gql`
     query getAllRawSimData {
@@ -69,27 +65,17 @@ const PH1_MAP = {
 const USE_OPEN_WORLD = [8, 9];
 
 export default function HumanResults() {
-    const { data: evalIdOptionsRaw } = useQuery(get_eval_name_numbers);
-    const [selectedEval, setSelectedEval] = React.useState(8);
+    const evalOptions = getEvalOptionsForPage(PAGES.HUMAN_SIM_PLAY_BY_PLAY);
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         // only pulls from network, never cached
-        //fetchPolicy: 'network-only',
+        // fetchPolicy: 'network-only',
     });
     const [dataByScene, setDataByScene] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
     const [teamSelected, setSelectedTeam] = React.useState('adept');
     const [selectedPID, setSelectedPID] = React.useState(null);
-
-    React.useEffect(() => {
-        evalOptions = [];
-        if (evalIdOptionsRaw?.getEvalIdsForHumanResults) {
-            for (const result of evalIdOptionsRaw.getEvalIdsForHumanResults) {
-                evalOptions.push({ value: result._id.evalNumber, label: result._id.evalName })
-            }
-        }
-
-    }, [evalIdOptionsRaw]);
 
     React.useEffect(() => {
         if (data?.getAllRawSimData && data?.getAllSimAlignment) {

@@ -28,7 +28,7 @@ const typeDefs = gql`
     getAllHistory(id: ID): [JSON] @complexity(value: 150)
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
     getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
-    getEvalIds: [JSON] @complexity(value: 10)
+    getAllEvalData: [JSON] @complexity(value: 10)
     getEvalIdsForAllHistory: [JSON] @complexity(value: 10)
     getAllHistoryByID(historyId: ID): JSON @complexity(value: 25)
     getScenario(scenarioId: ID): JSON @complexity(value: 10)
@@ -69,6 +69,8 @@ const typeDefs = gql`
     getTextEvalOptions: [String] @complexity(value: 10)
     getPidBounds: JSON @complexity(value: 5)
     getShowDemographics: JSON @complexity(value: 5)
+    getSurveyConfigByVersion(version: String!): [JSON] @complexity(value: 50)
+    getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
   }
 
   type Mutation {
@@ -77,10 +79,12 @@ const typeDefs = gql`
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
     updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
+    updateEvalData(caller: JSON, dataToUpdate: JSON): JSON,
+    addNewEval(caller: JSON, newEval: JSON): JSON,
+    deleteEval(caller: JSON, evalId: String): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON): JSON,
-    updateEvalIdsByPage(evalNumber: Int, field: String, value: Boolean): JSON,
     updateSurveyVersion(version: String!): String,
     updateUIStyle(version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON,
@@ -102,7 +106,7 @@ const generateServerTimestamp = () => {
   const currentOffset = date.getTimezoneOffset();
   const isDST = currentOffset < januaryOffset;
 
-  return date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/, 
+  return date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/,
     isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)');
 };
 
@@ -196,8 +200,8 @@ const resolvers = {
           }
         }).toArray().then(result => { return result; });
     },
-    getEvalIds: async (obj, args, context, inflow) => {
-      return await context.db.collection('evaluationIDS').find().toArray().then(result => { return result; });
+    getAllEvalData: async (obj, args, context, inflow) => {
+      return await context.db.collection('evalData').find().toArray().then(result => { return result; });
     },
     getEvalIdsForAllHistory: async (obj, args, context, inflow) => {
       return await context.db.collection('admTargetRuns').aggregate(
@@ -529,11 +533,25 @@ const resolvers = {
     },
     getPidBounds: async (obj, args, context, info) => {
       const bounds = await context.db.collection('surveyVersion').findOne();
-      return {lowPid: bounds.lowPid, highPid: bounds.highPid}
+      return { lowPid: bounds.lowPid, highPid: bounds.highPid }
     },
     getShowDemographics: async (obj, args, context, info) => {
       const demographics = await context.db.collection('surveyVersion').findOne();
       return demographics.showDemographics;
+    },
+    getSurveyConfigByVersion: async (obj, args, context, inflow) => {
+      const version = parseFloat(args.version);
+      return await context.db.collection('delegationConfig')
+        .find({ "survey.version": version })
+        .toArray()
+        .then(result => { return result; });
+    },
+
+    getTextBasedConfigByEval: async (obj, args, context, inflow) => {
+      return await context.db.collection('textBasedConfig')
+        .find({ "eval": args.evalName })
+        .toArray()
+        .then(result => { return result; });
     }
   },
   Mutation: {
@@ -621,6 +639,77 @@ const resolvers = {
         });
       }
     },
+    updateEvalData: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        const data = args['dataToUpdate'];
+        return await context.db.collection('evalData').update(
+          { "_id": new ObjectId(data["_id"]) },
+          {
+            $set: {
+              "evalNumber": data['evalNumber'],
+              "evalName": data['evalName'],
+              "pages": {
+                "rq1": data['pages']['rq1'],
+                "rq2": data['pages']['rq2'],
+                "rq3": data['pages']['rq3'],
+                "exploratoryAnalysis": data['pages']['exploratoryAnalysis'],
+                "admProbeResponses": data['pages']['admProbeResponses'],
+                "admAlignment": data['pages']['admAlignment'],
+                "admResults": data['pages']['admResults'],
+                "humanSimPlayByPlay": data['pages']['humanSimPlayByPlay'],
+                "humanSimProbes": data['pages']['humanSimProbes'],
+                "participantLevelData": data['pages']['participantLevelData'],
+                "textResults": data['pages']['textResults'],
+                "programQuestions": data['pages']['programQuestions']
+              }
+            }
+          }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update evals.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
+    addNewEval: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        try {
+          const result = await context.db.collection('evalData').insertOne(args.newEval);
+          return result;
+        } catch (error) {
+          console.error(`INSERT ERROR:`, error);
+          throw error;
+        }
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot add evals.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
+    deleteEval: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        try {
+          const result = await context.db.collection('evalData').deleteOne({ '_id': ObjectId(args['evalId']) });
+          return result;
+        } catch (error) {
+          console.error(`DELETE ERROR:`, error);
+          throw error;
+        }
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot delete evals.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
     uploadSurveyResults: async (obj, args, context, inflow) => {
       const filter = { surveyId: args.surveyId }
       const update = { $set: { results: args.results } }
@@ -644,7 +733,7 @@ const resolvers = {
             highPid: args.highPid,
           }
         },
-        {upsert: true, returnDocument: 'after'}
+        { upsert: true, returnDocument: 'after' }
       )
 
       return res.value
@@ -657,7 +746,7 @@ const resolvers = {
             showDemographics: args.showDemographics
           }
         },
-        {upsert: true, returnDocument: 'after'}
+        { upsert: true, returnDocument: 'after' }
       )
       return res.value
     },
@@ -732,18 +821,6 @@ const resolvers = {
         }
 
       }
-    },
-    updateEvalIdsByPage: async (obj, args, context, inflow) => {
-      // hmm can't do this with graphql?      
-      // var field = args["field"];
-      // var updateObj = {};
-      // updateObj[field] = args["value"]};
-
-      const filter = { evalNumber: args["evalNumber"] }
-      const update = { $set: { "showMainPage": args["value"] } }
-      const options = { upsert: true }
-
-      return await context.db.collection('evaluationIDS').updateOne(filter, update, options)
     },
     updateSurveyVersion: async (obj, args, context, inflow) => {
       const result = await context.db.collection('surveyVersion').findOneAndUpdate(

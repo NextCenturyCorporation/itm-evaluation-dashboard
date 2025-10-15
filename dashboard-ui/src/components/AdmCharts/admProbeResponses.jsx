@@ -8,6 +8,7 @@ import { saveAs } from 'file-saver';
 import '../../css/results-page.css';
 import '../../css/aggregateResults.css';
 import { multiSort } from '../Results/utils';
+import { PAGES, getEvalOptionsForPage } from '../Research/utils';
 
 const get_eval_name_numbers = gql`
     query getEvalNameNumbers {
@@ -139,7 +140,9 @@ const getKdmaTargets = (doc) => {
 }
 
 export const ADMProbeResponses = (props) => {
-    const [currentEval, setCurrentEval] = useState(8);
+    const evalOptions = getEvalOptionsForPage(PAGES.ADM_PROBE_RESPONSES);
+
+    const [currentEval, setCurrentEval] = useState(evalOptions[0].value);
     const [currentScenario, setCurrentScenario] = useState("");
     const [queryString, setQueryString] = useState("adm_name");
     const [queryData, setQueryData] = useState({});
@@ -240,15 +243,6 @@ export const ADMProbeResponses = (props) => {
 
     if (evalNameLoading) return <div>Loading...</div>;
     if (evalNameError) return <div>Error loading evals</div>;
-
-    const evalOptionsRaw = evalNameData.getEvalNameNumbers;
-    const evalOptions = evalOptionsRaw
-        .map(opt => ({
-            value: opt._id.evalNumber,
-            label: opt._id.evalName
-        }))
-        .filter(opt => opt.value >= 3)
-        .sort((a, b) => (a.value < b.value) ? 1 : -1);
 
     const setEval = (target) => {
         setCurrentEval(target);
