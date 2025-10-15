@@ -86,31 +86,27 @@ const ADD_PARTICIPANT = gql`
         addNewParticipantToLog(participantData: $participantData) 
     }`;
 
-const GET_CONFIGS = gql`
-  query GetConfigs {
-    getAllSurveyConfigs
-    getAllTextBasedConfigs
-    getAllTextBasedImages
-  }`;
+const GET_SURVEY_CONFIG_BY_VERSION = gql`
+  query GetSurveyConfigByVersion($version: String!) {
+    getSurveyConfigByVersion(version: $version)
+  }
+`;
 
-const GET_CONFIGS_DEL_MEDIA = gql`
-    query GetConfigsWithImages {
-        getAllSurveyConfigs
-        getAllTextBasedConfigs
-        getAllTextBasedImages
-        getAllImageUrls
-    }`;
-
-const GET_CONFIGS_PHASE_2 = gql`
-    query GetConfigsNoImages {
-        getAllSurveyConfigs
-        getAllTextBasedConfigs
-    }
+const GET_TEXT_CONFIG_BY_EVAL = gql`
+  query GetTextBasedConfigByEval($evalName: String!) {
+    getTextBasedConfigByEval(evalName: $evalName)
+  }
 `;
 
 const GET_EVAL_DATA = gql`
     query GetAllEvalData {
         getAllEvalData
+    }
+`;
+
+const GET_ALL_TEXT_BASED_IMAGES = gql`
+    query GetAllTextBasedImages {
+        getAllTextBasedImages
     }
 `;
 
@@ -122,6 +118,10 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
+
+    const { data: textImagesData } = useQuery(GET_ALL_TEXT_BASED_IMAGES, {
+        fetchPolicy: 'cache-first'
+    });
     const { data: textEvalData } = useQuery(GET_TEXT_EVAL, { fetchPolicy: 'no-cache' });
     const { data: styleData } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
     const [isStyleDataLoaded, setIsStyleDataLoaded] = React.useState(false);
@@ -130,10 +130,10 @@ export function App() {
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
     const [isTextEvalDataLoaded, setIsTextEvalDataLoaded] = React.useState(false);
     const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
-    const [configQuery, setConfigQuery] = React.useState(GET_CONFIGS)
-    const [sendConfigQuery, setSendConfigQuery] = React.useState(false);
     const { data: demographicsData } = useQuery(GET_SHOW_DEMOGRAPHICS, { fetchPolicy: 'no-cache' });
     const [isDemographicsDataLoaded, setIsDemographicsDataLoaded] = React.useState(false);
+    const [surveyConfigsLoaded, setSurveyConfigsLoaded] = React.useState(false);
+    const [textConfigsLoaded, setTextConfigsLoaded] = React.useState(false);
 
     // grab upper and lower bounds for new participant pids from mongo and set them in redux
     const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, {
@@ -153,7 +153,6 @@ export function App() {
         }
     });
 
-
     React.useEffect(() => {
         if (isDefined(demographicsData)) {
             setShowDemographicsInStore(demographicsData.getShowDemographics);
@@ -165,31 +164,8 @@ export function App() {
         if (versionData?.getCurrentSurveyVersion) {
             setSurveyVersion(versionData.getCurrentSurveyVersion);
             setIsVersionDataLoaded(true);
-            const version = parseFloat(versionData.getCurrentSurveyVersion);
-            if (version <= 3.0) {
-                setConfigQuery(GET_CONFIGS_DEL_MEDIA);
-            } else if (version >= 6.0 && version < 9.0) {
-                setConfigQuery(GET_CONFIGS_PHASE_2);
-            } else {
-                setConfigQuery(GET_CONFIGS);
-            }
-            setSendConfigQuery(true);
         }
     }, [versionData]);
-
-    const { data: configData, loading: configLoading, error: configError } =
-        useQuery(configQuery, {
-            skip: !sendConfigQuery, // dont exec query till we know what survey version 
-            fetchPolicy: 'cache-first'
-        });
-
-    React.useEffect(() => {
-        if (configData) {
-            setupConfigWithImages(configData);
-            setupTextBasedConfig(configData);
-            setIsConfigDataLoaded(true);
-        }
-    }, [configData]);
 
     React.useEffect(() => {
         if (isDefined(styleData)) {
@@ -204,6 +180,55 @@ export function App() {
             setIsTextEvalDataLoaded(true);
         }
     }, [textEvalData])
+
+    // Load survey configs when version is available
+    const { data: surveyConfigData, loading: surveyConfigLoading } = useQuery(
+        GET_SURVEY_CONFIG_BY_VERSION,
+        {
+            skip: !versionData?.getCurrentSurveyVersion,
+            variables: { version: versionData?.getCurrentSurveyVersion },
+            fetchPolicy: 'cache-first'
+        }
+    );
+
+    const { data: textConfigData, loading: textConfigLoading } = useQuery(
+        GET_TEXT_CONFIG_BY_EVAL,
+        {
+            skip: !textEvalData?.getCurrentTextEval,
+            variables: { evalName: textEvalData?.getCurrentTextEval },
+            fetchPolicy: 'cache-first'
+        }
+    );
+
+    React.useEffect(() => {
+        if (surveyConfigData?.getSurveyConfigByVersion && textImagesData?.getAllTextBasedImages) {
+            const configDataToProcess = {
+                getAllSurveyConfigs: surveyConfigData.getSurveyConfigByVersion,
+                getAllTextBasedImages: textImagesData.getAllTextBasedImages
+            };
+            setupConfigWithImages(configDataToProcess);
+            setSurveyConfigsLoaded(true);
+        }
+    }, [surveyConfigData, textImagesData]);
+
+
+    React.useEffect(() => {
+        if (textConfigData?.getTextBasedConfigByEval && textImagesData?.getAllTextBasedImages) {
+            const configDataToProcess = {
+                getAllTextBasedConfigs: textConfigData.getTextBasedConfigByEval,
+                getAllTextBasedImages: textImagesData.getAllTextBasedImages
+            };
+            setupTextBasedConfig(configDataToProcess);
+            setTextConfigsLoaded(true);
+        }
+    }, [textConfigData, textImagesData]);
+
+    
+    React.useEffect(() => {
+        if (surveyConfigsLoaded && textConfigsLoaded) {
+            setIsConfigDataLoaded(true);
+        }
+    }, [surveyConfigsLoaded, textConfigsLoaded]);
 
     const setup = async () => {
         // refresh the session to get a new accessToken if expired
@@ -426,14 +451,12 @@ export function App() {
             }
         }
     };
-    if (versionLoading || configLoading) {
+
+    if (versionLoading || surveyConfigLoading || textConfigLoading) {
         return <div>Loading...</div>;
     }
     if (versionError) {
         return <div>Error fetching survey version data</div>;
-    }
-    if (configError) {
-        return <div>Error fetching survey configs</div>;
     }
 
     return (
@@ -484,8 +507,6 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
-                        {/*
-}
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.
                             Otherwise, send to homepage */}
