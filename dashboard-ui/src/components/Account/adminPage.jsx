@@ -137,6 +137,8 @@ const GET_SPECIFIC_CONFIGS = gql`
     query GetSpecificConfigs($surveyVersion: String!, $textEval: String!) {
         getSurveyConfigByVersion(version: $surveyVersion)
         getTextBasedConfigByEval(evalName: $textEval)
+        getAllTextBasedImages
+        getAllImageUrls
     }
 `;
 
@@ -672,13 +674,13 @@ function AdminPage({ currentUser, updateUserHandler }) {
             try {
                 const surveyData = {
                     getAllSurveyConfigs: data.getSurveyConfigByVersion,
-                    getAllImageUrls: [] // Handle separately if needed
+                    getAllImageUrls: data.getAllImageUrls || [] 
                 };
                 await setupConfigWithImages(surveyData);
 
                 const textData = {
                     getAllTextBasedConfigs: data.getTextBasedConfigByEval,
-                    getAllTextBasedImages: [] // Handle separately if needed
+                    getAllTextBasedImages: data.getAllTextBasedImages || [] 
                 };
                 setupTextBasedConfig(textData);
             } finally {
