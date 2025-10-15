@@ -69,6 +69,8 @@ const typeDefs = gql`
     getTextEvalOptions: [String] @complexity(value: 10)
     getPidBounds: JSON @complexity(value: 5)
     getShowDemographics: JSON @complexity(value: 5)
+    getSurveyConfigByVersion(version: String!): [JSON] @complexity(value: 50)
+    getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
   }
 
   type Mutation {
@@ -536,6 +538,20 @@ const resolvers = {
     getShowDemographics: async (obj, args, context, info) => {
       const demographics = await context.db.collection('surveyVersion').findOne();
       return demographics.showDemographics;
+    },
+    getSurveyConfigByVersion: async (obj, args, context, inflow) => {
+      const version = parseFloat(args.version);
+      return await context.db.collection('delegationConfig')
+        .find({ "survey.version": version })
+        .toArray()
+        .then(result => { return result; });
+    },
+
+    getTextBasedConfigByEval: async (obj, args, context, inflow) => {
+      return await context.db.collection('textBasedConfig')
+        .find({ "eval": args.evalName })
+        .toArray()
+        .then(result => { return result; });
     }
   },
   Mutation: {
