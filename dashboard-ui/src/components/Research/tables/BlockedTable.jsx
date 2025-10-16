@@ -58,7 +58,7 @@ export function BlockedTable({ evalNum }) {
 
     const updateEvalNums = (includeEval, evalObj) => {
         if (!evalObj) return;
-        if (evalObj.value?.toString() === evalNum.toString())
+        if (evalObj.value?.toString() === evalNum.toString()) return;
         if (includeEval) {
             const newEvalNumbers = structuredClone(evalNumbers).filter(Boolean);
             newEvalNumbers.push(evalObj);
@@ -86,7 +86,7 @@ export function BlockedTable({ evalNum }) {
         setIncludeJAN(false);
         setIncludeJune(false);
         setIncludeJuly(false);
-        setEvalNumbers([EVAL_MAP[evalNum]]);
+        setEvalNumbers(EVAL_MAP[evalNum] ? [EVAL_MAP[evalNum]] : []);
     }, [evalNum]);
 
     React.useEffect(() => {
@@ -133,7 +133,7 @@ export function BlockedTable({ evalNum }) {
             {surveyData?.getAllSurveyResults && pLogData?.getParticipantLog && comparisonData?.getHumanToADMComparison &&
                 <ResultsTable data={surveyData?.getAllSurveyResults} pLog={pLogData?.getParticipantLog}
                     exploratory={true} comparisonData={comparisonData?.getHumanToADMComparison}
-                    evalNumbers={evalNumbers} />}
+                    evalNumbers={evalNumbers && evalNumbers.length ? evalNumbers : undefined} />}
         </>
     )
 }
