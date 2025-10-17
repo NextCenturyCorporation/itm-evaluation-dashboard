@@ -230,7 +230,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             const probeData = entry[pageName];
             if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
 
-            const time_key = getQuestionText(pageName + ' time (s)', scenario);
+            const time_key = shouldUseLegacy(entry.evalNumber)
+                ? getQuestionTextLegacy(pageName + ' time (s)', scenario, textBasedConfigs)
+                : getQuestionText(pageName + ' time (s)', scenario);
 
             if (!headerMap.has(time_key)) {
                 headerMap.set(time_key, dynamicHeaders.length);
@@ -241,7 +243,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             if (probeData.questions) {
                 Object.entries(probeData.questions).forEach(([q, qData]) => {
                     if (qData?.response !== undefined) {
-                        const questionHeader = getQuestionText(q, scenario);
+                        const questionHeader = shouldUseLegacy(entry.evalNumber)
+                            ? getQuestionTextLegacy(q, scenario, textBasedConfigs)
+                            : getQuestionText(q, scenario);
 
                         if (!headerMap.has(questionHeader)) {
                             headerMap.set(questionHeader, dynamicHeaders.length);
