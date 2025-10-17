@@ -7,13 +7,14 @@ import { Button, Modal, Form, Container, Row, Col, Card, Spinner } from 'react-b
 import { useSelector } from "react-redux";
 import '../../css/admin-page.css';
 import { evalNameToNumber } from '../OnlineOnly/config';
-import { setSurveyVersion, setupConfigWithImages, setTextEval as setTextEvalInStore, setPidBoundsInStore, setCurrentUIStyle, setShowDemographicsInStore } from '../App/setupUtils';
+import { setSurveyVersion, setupConfigWithImages, setupTextBasedConfig, setTextEval as setTextEvalInStore, setPidBoundsInStore, setCurrentUIStyle, setShowDemographicsInStore } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
 import { createBrowserHistory } from 'history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
 import { FaInfoCircle } from 'react-icons/fa'
+import { EditEvals } from './editEvals';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -117,6 +118,27 @@ const UPDATE_SURVEY_VERSION = gql`
 const UPDATE_UI_STYLE = gql`
     mutation updateUIStyle($version: String!) {
         updateUIStyle(version: $version)
+    }
+`;
+
+const GET_SURVEY_CONFIG_BY_VERSION = gql`
+  query GetSurveyConfigByVersion($version: String!) {
+    getSurveyConfigByVersion(version: $version)
+  }
+`;
+
+const GET_TEXT_CONFIG_BY_EVAL = gql`
+  query GetTextBasedConfigByEval($evalName: String!) {
+    getTextBasedConfigByEval(evalName: $evalName)
+  }
+`;
+
+const GET_SPECIFIC_CONFIGS = gql`
+    query GetSpecificConfigs($surveyVersion: String!, $textEval: String!) {
+        getSurveyConfigByVersion(version: $surveyVersion)
+        getTextBasedConfigByEval(evalName: $textEval)
+        getAllTextBasedImages
+        getAllImageUrls
     }
 `;
 
@@ -586,7 +608,16 @@ function AdminPage({ currentUser, updateUserHandler }) {
             });
             if (data && data.updateTextEval) {
                 setTextEval(pendingTextEval);
-                setTextEvalInStore(pendingTextEval)
+                setTextEvalInStore(pendingTextEval);
+
+                // Fetch only the new text configs
+                await getConfigs({
+                    variables: {
+                        surveyVersion: surveyVersion,
+                        textEval: pendingTextEval
+                    }
+                });
+
                 setPendingTextEval(null);
                 setShowTextEvalConfirmation(false);
             } else {
@@ -637,22 +668,21 @@ function AdminPage({ currentUser, updateUserHandler }) {
     });
     const [updateSurveyVersion] = useMutation(UPDATE_SURVEY_VERSION);
 
-    const GET_CONFIGS = useMemo(() => {
-        return gql`
-            query GetConfigs {
-                getAllSurveyConfigs
-                getAllTextBasedConfigs
-                getAllTextBasedImages
-                ${pendingSurveyVersion !== '4' ? 'getAllImageUrls' : ''}
-            }
-        `;
-    }, [pendingSurveyVersion]);
-
-    const [getConfigs, { loading: configsLoading }] = useLazyQuery(GET_CONFIGS, {
+    const [getConfigs, { loading: configsLoading }] = useLazyQuery(GET_SPECIFIC_CONFIGS, {
         fetchPolicy: 'no-cache',
         onCompleted: async (data) => {
             try {
-                await setupConfigWithImages(data);
+                const surveyData = {
+                    getAllSurveyConfigs: data.getSurveyConfigByVersion,
+                    getAllImageUrls: data.getAllImageUrls || [] 
+                };
+                await setupConfigWithImages(surveyData);
+
+                const textData = {
+                    getAllTextBasedConfigs: data.getTextBasedConfigByEval,
+                    getAllTextBasedImages: data.getAllTextBasedImages || [] 
+                };
+                setupTextBasedConfig(textData);
             } finally {
                 setIsLoading(false);
             }
@@ -727,11 +757,17 @@ function AdminPage({ currentUser, updateUserHandler }) {
                 variables: { version: pendingSurveyVersion }
             });
             if (data && data.updateSurveyVersion) {
-                // local for ui
                 setLocalSurveyVersion(pendingSurveyVersion);
-                // redux store
-                setSurveyVersion(pendingSurveyVersion)
-                await getConfigs();
+                setSurveyVersion(pendingSurveyVersion);
+
+                // Fetch only the new configs
+                await getConfigs({
+                    variables: {
+                        surveyVersion: pendingSurveyVersion,
+                        textEval: textEval
+                    }
+                });
+
                 setShowConfirmation(false);
             } else {
                 throw new Error("Failed to update survey version");
@@ -793,23 +829,22 @@ function AdminPage({ currentUser, updateUserHandler }) {
 
     return (
         <Container className="admin-page">
-            {isLoading && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    zIndex: 9999
-                }}>
-                    <Spinner animation="border" role="status" variant="light">
-                        <span className="sr-only">Loading...</span>
-                    </Spinner>
-                </div>
+            {isLoading && (<div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 9999
+            }}>
+                <Spinner animation="border" role="status" variant="light">
+                    <span className="sr-only">Loading...</span>
+                </Spinner>
+            </div>
             )}
             <Row className="mb-4">
                 <Col>
@@ -1028,6 +1063,8 @@ function AdminPage({ currentUser, updateUserHandler }) {
                             );
                         }}
                     </Query>
+
+                    <EditEvals caller={{ username: currentUser.username, sessionId }} />
                 </>}
         </Container>
     );

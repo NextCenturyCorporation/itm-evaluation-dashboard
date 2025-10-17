@@ -31,7 +31,7 @@ export function Header({ currentUser, logout }) {
                     )}
                 </NavDropdown>
             )}
-            {isUserElevated(currentUser) && (
+            {/*{isUserElevated(currentUser) && (
                 <>
                     <NavDropdown title="Human Evaluation Segments">
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
@@ -76,7 +76,7 @@ export function Header({ currentUser, logout }) {
                         </NavDropdown.Item>
                     </NavDropdown>
                 </>
-            )}
+            )}*/}
         </ul>
         <ul className="navbar-nav ml-auto">
             <li className="login-user">
