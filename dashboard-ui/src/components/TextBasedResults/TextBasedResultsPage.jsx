@@ -12,7 +12,6 @@ import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import Select from 'react-select';
-import { useSelector } from 'react-redux';
 import NoSelection from './NoSelection';
 import { shortenAnswer, p2Attributes } from './util';
 import { PAGES, getEvalOptionsForPage } from '../Research/utils';
@@ -25,6 +24,12 @@ const GET_SCENARIO_RESULTS_BY_EVAL = gql`
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
+    }`;
+
+
+const GET_ALL_TEXT_BASED_CONFIGS = gql`
+    query GetAllTextBasedConfigs {
+        getAllTextBasedConfigs
     }`;
 
 const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAlignmentData'];
@@ -401,7 +406,21 @@ export default function TextBasedResultsPage() {
     const evalOptions = getEvalOptionsForPage(PAGES.TEXT_RESULTS);
     const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
-    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const { data: allTextBasedConfigsData, loading: configsLoading } = useQuery(GET_ALL_TEXT_BASED_CONFIGS, {
+        fetchPolicy: 'cache-first'
+    });
+
+    const textBasedConfigs = useMemo(() => {
+        if (!allTextBasedConfigsData?.getAllTextBasedConfigs) return {};
+
+        const configs = {};
+        for (const config of allTextBasedConfigsData.getAllTextBasedConfigs) {
+            let scenarioName = config.scenario_id;
+            configs[scenarioName] = config;
+        }
+        return configs;
+    }, [allTextBasedConfigsData]);
+
     const filteredTextBasedConfigs = useMemo(() => {
         return Object.fromEntries(
             Object.entries(textBasedConfigs)
@@ -438,7 +457,11 @@ export default function TextBasedResultsPage() {
             Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
                 if (scenario === 'undefined') { return }
+                const pages = filteredTextBasedConfigs[scenario].pages;
+                if (!pages || !Array.isArray(pages)) return;
                 filteredTextBasedConfigs[scenario].pages.forEach(page => {
+                    const elements = page.elements;
+                    if (!elements || !Array.isArray(elements)) return;
                     page.elements.forEach(element => {
                         if (element.choices) {
                             tmpResponses[scenario][element.name] = {
@@ -469,7 +492,7 @@ export default function TextBasedResultsPage() {
                     if (scenario) {
                         uniqueScenarios.add(scenario);
                     }
-
+                    
                     if (scenario && filteredTextBasedConfigs[scenario]) {
                         if (!participants[scenario]) {
                             participants[scenario] = [];
@@ -634,6 +657,10 @@ export default function TextBasedResultsPage() {
     function selectEvaluation(option) {
         setSelectedEval(option.value);
         setScenario(null);
+    }
+
+    if (configsLoading) {
+        return <div>Loading configurations...</div>;
     }
 
     return (<div className='text-results'>
