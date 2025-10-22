@@ -12,7 +12,6 @@ import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import * as FileSaver from 'file-saver';
 import XLSX from 'sheetjs-style';
 import Select from 'react-select';
-import { useSelector } from 'react-redux';
 import NoSelection from './NoSelection';
 import { shortenAnswer, p2Attributes } from './util';
 import { PAGES, getEvalOptionsForPage } from '../Research/utils';
@@ -25,6 +24,12 @@ const GET_SCENARIO_RESULTS_BY_EVAL = gql`
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
+    }`;
+
+
+const GET_ALL_TEXT_BASED_CONFIGS = gql`
+    query GetAllTextBasedConfigs {
+        getAllTextBasedConfigs
     }`;
 
 const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAlignmentData'];
@@ -44,6 +49,10 @@ const cleanTitle = (title, scenario) => {
 const cleanTitleLegacy = (title) => {
     return title.replace(/probe\s*/, '').trim();
 };
+
+const shouldUseLegacy = (evalNumber) => {
+    return evalNumber < 8 || evalNumber === 12;
+}
 
 function SingleGraph({ data, pageName, scenario, selectedEval }) {
     const [survey, setSurvey] = React.useState(null);
@@ -115,8 +124,7 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
 
     return (
         <div className='graph-section'>
-            <h3 className='question-header'>{(selectedEval >= 8 ? cleanTitle(pageName, scenario) : cleanTitleLegacy(pageName))} (N={data['total']})</h3>
-            <div id={"viz_" + pageName} className='full-width-graph' />
+            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(pageName) : cleanTitle(pageName, scenario))} (N={data['total']})</h3>            <div id={"viz_" + pageName} className='full-width-graph' />
         </div>
     );
 }
@@ -190,7 +198,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                                         headers.push(q);
                                     }
                                     formatted[entry['_id']][q] = entry[key].questions[q].response;
-                                    const objKey = entry['evalNumber'] >= 8 ? getQuestionText(q, scenarioName) : getQuestionTextLegacy(q, scenarioName, textBasedConfigs)
+                                    const objKey = shouldUseLegacy(entry['evalNumber']) ? getQuestionTextLegacy(q, scenarioName, textBasedConfigs) : getQuestionText(q, scenarioName)
                                     obj[objKey] = entry[key].questions[q].response;
                                 }
                             });
@@ -227,7 +235,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             const probeData = entry[pageName];
             if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
 
-            const time_key = getQuestionText(pageName + ' time (s)', scenario);
+            const time_key = shouldUseLegacy(entry.evalNumber)
+                ? getQuestionTextLegacy(pageName + ' time (s)', scenario, textBasedConfigs)
+                : getQuestionText(pageName + ' time (s)', scenario);
 
             if (!headerMap.has(time_key)) {
                 headerMap.set(time_key, dynamicHeaders.length);
@@ -238,7 +248,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             if (probeData.questions) {
                 Object.entries(probeData.questions).forEach(([q, qData]) => {
                     if (qData?.response !== undefined) {
-                        const questionHeader = getQuestionText(q, scenario);
+                        const questionHeader = shouldUseLegacy(entry.evalNumber)
+                            ? getQuestionTextLegacy(q, scenario, textBasedConfigs)
+                            : getQuestionText(q, scenario);
 
                         if (!headerMap.has(questionHeader)) {
                             headerMap.set(questionHeader, dynamicHeaders.length);
@@ -332,7 +344,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
     };
 
     return (<div className="participant-text-results">
-        {selectedEval >= 8 && (
+        {!shouldUseLegacy(selectedEval) && (
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
                     {(() => {
@@ -353,7 +365,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 </div>
             </div>
         )}
-        {selectedEval < 8 && (
+        {shouldUseLegacy(selectedEval) && (
             <div className="mb-2">
                 <button onClick={exportToExcel}>Download Scenario Results</button>
             </div>
@@ -363,9 +375,9 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                 <thead>
                     <tr>
                         {orderedHeaders.map((key) => {
-                            const header = selectedEval >= 8
-                                ? getQuestionText(key, scenarioName)
-                                : getQuestionTextLegacy(key, scenarioName, textBasedConfigs);
+                            const header = shouldUseLegacy(selectedEval)
+                                ? getQuestionTextLegacy(key, scenarioName, textBasedConfigs)
+                                : getQuestionText(key, scenarioName);
                             return <th key={scenarioName + "_" + key}>{header}</th>;
                         })}
                     </tr>
@@ -394,7 +406,21 @@ export default function TextBasedResultsPage() {
     const evalOptions = getEvalOptionsForPage(PAGES.TEXT_RESULTS);
     const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
-    const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
+    const { data: allTextBasedConfigsData, loading: configsLoading } = useQuery(GET_ALL_TEXT_BASED_CONFIGS, {
+        fetchPolicy: 'cache-first'
+    });
+
+    const textBasedConfigs = useMemo(() => {
+        if (!allTextBasedConfigsData?.getAllTextBasedConfigs) return {};
+
+        const configs = {};
+        for (const config of allTextBasedConfigsData.getAllTextBasedConfigs) {
+            let scenarioName = config.scenario_id;
+            configs[scenarioName] = config;
+        }
+        return configs;
+    }, [allTextBasedConfigsData]);
+
     const filteredTextBasedConfigs = useMemo(() => {
         return Object.fromEntries(
             Object.entries(textBasedConfigs)
@@ -431,7 +457,11 @@ export default function TextBasedResultsPage() {
             Object.keys(filteredTextBasedConfigs).forEach(scenario => {
                 tmpResponses[scenario] = {};
                 if (scenario === 'undefined') { return }
+                const pages = filteredTextBasedConfigs[scenario].pages;
+                if (!pages || !Array.isArray(pages)) return;
                 filteredTextBasedConfigs[scenario].pages.forEach(page => {
+                    const elements = page.elements;
+                    if (!elements || !Array.isArray(elements)) return;
                     page.elements.forEach(element => {
                         if (element.choices) {
                             tmpResponses[scenario][element.name] = {
@@ -462,7 +492,7 @@ export default function TextBasedResultsPage() {
                     if (scenario) {
                         uniqueScenarios.add(scenario);
                     }
-
+                    
                     if (scenario && filteredTextBasedConfigs[scenario]) {
                         if (!participants[scenario]) {
                             participants[scenario] = [];
@@ -563,7 +593,7 @@ export default function TextBasedResultsPage() {
                     .map((qkey, ind) => {
                         const displayKey = questionAnswerSets[qkey].originalKey || qkey;
                         return (<div className='result-section' key={displayKey + '_' + ind}>
-                            <h3 className='question-header'>{(selectedEval >= 8 ? cleanTitle(displayKey, scenarioChosen) : cleanTitleLegacy(displayKey))} (N={questionAnswerSets[qkey]['total']})</h3>
+                            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(displayKey) : cleanTitle(displayKey, scenarioChosen))} (N={questionAnswerSets[qkey]['total']})</h3>
                             <p>{questionAnswerSets[qkey]['question']}</p>
                             <table className="itm-table text-result-table">
                                 <thead>
@@ -627,6 +657,10 @@ export default function TextBasedResultsPage() {
     function selectEvaluation(option) {
         setSelectedEval(option.value);
         setScenario(null);
+    }
+
+    if (configsLoading) {
+        return <div>Loading configurations...</div>;
     }
 
     return (<div className='text-results'>
