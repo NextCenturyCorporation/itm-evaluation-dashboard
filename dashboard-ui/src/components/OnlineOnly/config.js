@@ -3,6 +3,7 @@ import store from "../../store/store";
 import bcrypt from 'bcryptjs';
 
 export const evalNameToNumber = {
+    'Phase 2 October 2025 Collaboration': 13,
     'Eval 12 UK Phase 1': 12,
     'Phase 2 September 2025 Collaboration': 10,
     'Phase 2 July 2025 Collaboration': 9,
@@ -137,6 +138,26 @@ export const ukParticipantData = (currentSearchParams, hashedEmail, newPid, type
     };
 }
 
+export const octoberParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
+
+    const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
+    const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
+    const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
+
+    return {
+        "ParticipantID": newPid,
+        "Type": type,
+        "prolificId": prolificId,
+        "contactId": contactId,
+        "claimed": true,
+        "simEntryCount": 0,
+        "surveyEntryCount": 0,
+        "textEntryCount": 0,
+        "hashedEmail": email,
+        'evalNum': evalNum
+    };
+};
+
 export const scenarioIdsFromLog = (participantLog, currentEval) => {
     const num = evalNameToNumber[currentEval]
     let scenarios = [];
@@ -167,6 +188,11 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
             'DryRunEval.IO1',
             'DryRunEval.MJ1'
         ]
+    } else if (num === 13) {
+        const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
+        scenarios = scenarioTypes.flatMap(type =>
+            [1, 2, 3].map(num => `July2025-${type}${num}-eval`)
+        );
     }
 
     if (num >= 8) {
@@ -175,5 +201,7 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
             [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
         }
     }
+
+    console.log(scenarios)
     return scenarios
 }
