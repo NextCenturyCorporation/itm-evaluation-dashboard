@@ -7,7 +7,7 @@ import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedSc
 import { useHistory, useLocation } from 'react-router-dom';
 import { useSelector } from "react-redux";
 import '../../css/scenario-page.css';
-import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData} from "./config";
+import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData } from "./config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -70,20 +70,17 @@ export default function StartOnline() {
         ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         // get correct plog data
         const currentSearchParams = new URLSearchParams(location.search);
-        let participantData
-        if (evalNum === 13) {
-            participantData = octoberParticipantData(currentSearchParams, null, newPid, 'Online', evalNum)
-        }
-        else if (evalNum === 12) {
-            participantData = ukParticipantData(currentSearchParams, null, newPid, 'Online', evalNum)
-        }
-        else if (evalNumber === 10) {
-            participantData = septemberParticipantData(currentSearchParams, null, newPid, 'Online', evalNum)
-        } else if (evalNumber === 8 || evalNumber === 9) {
-            participantData = juneJulyParticipantData(currentSearchParams, null, newPid, 'Online', evalNum)
-        } else {
-            participantData = phase1ParticipantData(currentSearchParams, null, newPid, 'Online')
-        }
+        const participantDataFunctions = {
+            13: octoberParticipantData,
+            12: ukParticipantData,
+            10: septemberParticipantData,
+            8: juneJulyParticipantData,
+            9: juneJulyParticipantData,
+            5: phase1ParticipantData
+        };
+
+        const getParticipantDataFn = participantDataFunctions[evalNumber] || phase1ParticipantData;
+        const participantData = getParticipantDataFn(currentSearchParams, null, newPid, 'Online', evalNumber);
 
         // update database
         const addRes = await addParticipant({ variables: { participantData } });
