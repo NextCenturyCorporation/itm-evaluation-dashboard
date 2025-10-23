@@ -223,7 +223,7 @@ export function App() {
         }
     }, [textConfigData, textImagesData]);
 
-    
+
     React.useEffect(() => {
         if (surveyConfigsLoaded && textConfigsLoaded) {
             setIsConfigDataLoaded(true);
@@ -346,20 +346,18 @@ export function App() {
                 x.ParticipantID >= lowPid && x.ParticipantID <= highPid
             ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
-            let participantData;
-            if (evalNum === 13) {
-                participantData = octoberParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            }
-            else if (evalNum === 12) {
-                participantData = ukParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            }
-            else if (evalNum === 10) {
-                participantData = septemberParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            } else if (evalNum === 8 || evalNum === 9) {
-                participantData = juneJulyParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            } else {
-                participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            }
+            const participantDataFunctions = {
+                13: octoberParticipantData,
+                12: ukParticipantData,
+                10: septemberParticipantData,
+                8: juneJulyParticipantData,
+                9: juneJulyParticipantData,
+                5: phase1ParticipantData
+            };
+
+            const getParticipantDataFn = participantDataFunctions[evalNum] || phase1ParticipantData;
+            const participantType = isTester ? 'Test' : 'emailParticipant';
+            const participantData = getParticipantDataFn(null, hashedEmail, newPid, participantType, evalNum);
 
             const addRes = await addParticipant({
                 variables: { participantData }
