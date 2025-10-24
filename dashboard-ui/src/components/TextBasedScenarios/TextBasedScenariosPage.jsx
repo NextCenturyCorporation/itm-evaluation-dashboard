@@ -115,7 +115,19 @@ class TextBasedScenariosPage extends Component {
             demographicsCompleted: false,
             demographicsUploadData: null,
             isDemographicsUploadEnabled: false,
-            demographicsStartTime: null
+            demographicsStartTime: null,
+            eval13Groups: {
+                AF: [],
+                MF: [],
+                PS: [],
+                SS: []
+            },
+            eval13CombinedSessions: {
+                AF: null,
+                MF: null,
+                PS: null,
+                SS: null
+            }
         };
 
         this.surveyData = {};
@@ -455,8 +467,12 @@ class TextBasedScenariosPage extends Component {
             // ps-af needs its own individual session
             const needsIsolatedSession = evalNum === 10 && isPSAF;
 
+            const isEval13 = evalNum === 13;
+
             if (needsIsolatedSession) {
                 await this.processIsolatedAdeptScenario(scenario);
+            } else if (isEval13) {
+                await this.processEval13Scenario(scenario);
             } else {
                 if (this.state.adeptSessionsCompleted === 0) {
                     await this.beginRunningSession(scenario);
@@ -511,6 +527,90 @@ class TextBasedScenariosPage extends Component {
             }
         } catch (e) {
             console.error('Error creating isolated session:', e);
+        }
+    }
+
+    // handles individual and combined scoring (when all 3 scenarios for an attribute are complete)
+    processEval13Scenario = async (scenario) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+        
+        //"July2025-AF1-eval" -> "AF"
+        const groupMatch = scenario.scenario_id.match(/-(AF|MF|PS|SS)\d+-/);
+        if (!groupMatch) {
+            console.error('Could not determine group for scenario:', scenario.scenario_id);
+            return;
+        }
+        const groupPrefix = groupMatch[1];
+
+        try {
+            // individual scoring
+            const individualSession = await axios.post(`${url}${sessionEndpoint}`);
+            if (individualSession.status === 200) {
+                const individualSessionId = individualSession.data;
+                
+                await this.submitResponses(scenario, scenario.scenario_id, url, individualSessionId);
+                
+                const individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, null);
+                const individualKdmas = await this.attachKdmaValue(individualSessionId, url);
+                
+                scenario.sessionId = individualSessionId;
+                scenario.mostLeastAligned = individualMostLeastAligned;
+                scenario.kdmas = individualKdmas;
+            }
+
+            //add to attr group
+            const updatedGroup = [...this.state.eval13Groups[groupPrefix], scenario];
+            const updatedGroups = {
+                ...this.state.eval13Groups,
+                [groupPrefix]: updatedGroup
+            };
+
+            this.setState({ eval13Groups: updatedGroups });
+
+            if (updatedGroup.length === 3) {
+                // attr group done
+                await this.processEval13GroupCompletion(groupPrefix, updatedGroup);
+            }
+
+        } catch (e) {
+            console.error('Error processing eval 13 scenario:', e);
+        }
+    }
+
+    processEval13GroupCompletion = async (groupPrefix, groupScenarios) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+
+        try {
+            // combined scoring
+            const combinedSession = await axios.post(`${url}${sessionEndpoint}`);
+            if (combinedSession.status === 200) {
+                const combinedSessionId = combinedSession.data;
+
+                for (const scenario of groupScenarios) {
+                    await this.submitResponses(scenario, scenario.scenario_id, url, combinedSessionId);
+                }
+
+                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null);
+                const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
+
+                const updatedCombinedSessions = {
+                    ...this.state.eval13CombinedSessions,
+                    [groupPrefix]: combinedSessionId
+                };
+                this.setState({ eval13CombinedSessions: updatedCombinedSessions });
+
+                for (const scenario of groupScenarios) {
+                    scenario.combinedSessionId = combinedSessionId;
+                    scenario.combinedMostLeastAligned = combinedMostLeastAligned;
+                    scenario.combinedKdmas = combinedKdmas;
+
+                    await this.uploadSingleScenario(scenario);
+                }
+            }
+        } catch (e) {
+            console.error(e);
         }
     }
 
