@@ -10,7 +10,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup, Spinner, Button} from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner, Button } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
@@ -534,7 +534,7 @@ class TextBasedScenariosPage extends Component {
     processEval13Scenario = async (scenario) => {
         const url = this.getAdeptUrl();
         const sessionEndpoint = '/api/v1/new_session';
-        
+
         //"July2025-AF1-eval" -> "AF"
         const groupMatch = scenario.scenario_id.match(/-(AF|MF|PS|SS)\d+-/);
         if (!groupMatch) {
@@ -548,12 +548,12 @@ class TextBasedScenariosPage extends Component {
             const individualSession = await axios.post(`${url}${sessionEndpoint}`);
             if (individualSession.status === 200) {
                 const individualSessionId = individualSession.data;
-                
+
                 await this.submitResponses(scenario, scenario.scenario_id, url, individualSessionId);
-                
-                const individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, null);
+
+                const individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, scenario);
                 const individualKdmas = await this.attachKdmaValue(individualSessionId, url);
-                
+
                 scenario.sessionId = individualSessionId;
                 scenario.mostLeastAligned = individualMostLeastAligned;
                 scenario.kdmas = individualKdmas;
@@ -592,7 +592,7 @@ class TextBasedScenariosPage extends Component {
                     await this.submitResponses(scenario, scenario.scenario_id, url, combinedSessionId);
                 }
 
-                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null);
+                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, groupScenarios[0]);
                 const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
 
                 const updatedCombinedSessions = {
@@ -632,7 +632,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     beginRunningSession = async (scenario) => {
-        const url = this.getAdeptUrl(); 
+        const url = this.getAdeptUrl();
         const sessionEndpoint = '/api/v1/new_session';
 
         try {
@@ -649,13 +649,13 @@ class TextBasedScenariosPage extends Component {
     }
 
     continueRunningSession = async (scenario) => {
-        const url = this.getAdeptUrl(); 
+        const url = this.getAdeptUrl();
         const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
         await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
-        const url = this.getAdeptUrl(); 
+        const url = this.getAdeptUrl();
 
         const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
 
@@ -691,6 +691,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     mostLeastAligned = async (sessionId, ta1, url, scenario) => {
+        console.log(scenario)
         let targets = []
         const endpoint = '/api/v1/get_ordered_alignment'
         if (ta1 === 'soartech') {
@@ -701,9 +702,22 @@ class TextBasedScenariosPage extends Component {
             }
         } else {
             const evalNumber = evalNameToNumber[this.props.currentTextEval];
-            targets = (evalNumber >= 8 && evalNumber !== 12) ?
-                ['affiliation', 'merit', 'search', 'personal_safety'] :
-                ['Moral judgement', 'Ingroup Bias']
+            // only one target for individual or group eval 13
+            if (evalNumber === 13 && scenario) {
+                if (scenario.scenario_id.includes('AF')) {
+                    targets = ['affiliation'];
+                } else if (scenario.scenario_id.includes('MF')) {
+                    targets = ['merit'];
+                } else if (scenario.scenario_id.includes('PS')) {
+                    targets = ['personal_safety'];
+                } else if (scenario.scenario_id.includes('SS')) {
+                    targets = ['search'];
+                }
+            } else {
+                targets = (evalNumber >= 8 && evalNumber !== 12) ?
+                    ['affiliation', 'merit', 'search', 'personal_safety'] :
+                    ['Moral judgement', 'Ingroup Bias']
+            }
         }
 
         let responses = []
