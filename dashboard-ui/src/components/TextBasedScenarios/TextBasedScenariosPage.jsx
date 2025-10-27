@@ -691,7 +691,6 @@ class TextBasedScenariosPage extends Component {
     }
 
     mostLeastAligned = async (sessionId, ta1, url, scenario) => {
-        console.log(scenario)
         let targets = []
         const endpoint = '/api/v1/get_ordered_alignment'
         if (ta1 === 'soartech') {
