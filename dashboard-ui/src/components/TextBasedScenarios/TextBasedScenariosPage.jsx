@@ -1043,6 +1043,7 @@ class TextBasedScenariosPage extends Component {
                         moderatorExists={this.state.moderated}
                         toDelegation={this.state.onlineOnly}
                         participantID={this.state.participantID}
+                        evalNumber={evalNameToNumber[this.props.currentTextEval]}
                     />
                 )}
             </>
@@ -1052,7 +1053,7 @@ class TextBasedScenariosPage extends Component {
 
 export default withRouter(TextBasedScenariosPage);
 
-const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, participantID }) => {
+const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, participantID, evalNumber }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
 
@@ -1062,56 +1063,75 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
         history.push('/login');
     };
 
+    React.useEffect(() => {
+        if (toDelegation && evalNumber === 13) {
+            const queryParams = new URLSearchParams(window.location.search);
+            const caciProlific = queryParams.get('caciProlific');
+
+            if (caciProlific === 'true') {
+                const returnURL = 'https://app.prolific.com/submissions/complete?cc=C155IMPM';
+                window.location.href = returnURL;
+            }
+        }
+    }, [toDelegation, evalNumber]);
+
     return (
         <>
-            {toDelegation ?
+            {toDelegation && evalNumber !== 13 ?
                 <SurveyPageWrapper />
-                :
-                <Container className="mt-5">
-                    <Row className="justify-content-center">
-                        <Col md={10} lg={8}>
-                            <Card className="border-0 shadow">
-                                <Card.Body className="text-center p-5">
-                                    <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
-                                    <h3 className="display-4 mb-4">Your Participant ID is {participantID?.slice(-3)}</h3>
-                                    {moderatorExists ?
-                                        <>
-                                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
-                                            <Card bg="light" className="p-4">
-                                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
-                                                    Participant should complete the following scenarios in VR:
-                                                </Card.Title>
-                                                <Card.Subtitle className="mb-3 text-muted">
-                                                    Please complete the scenarios in the order listed below:
-                                                </Card.Subtitle>
-                                                <ListGroup variant="flush" className="border rounded">
-                                                    {allScenarios.map((scenario, index) => (
-                                                        <ListGroup.Item
-                                                            key={index}
-                                                            className="py-3 d-flex align-items-center"
-                                                        >
-                                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
-                                                            <span className="fs-5">{scenario}</span>
-                                                        </ListGroup.Item>
-                                                    ))}
-                                                </ListGroup>
-                                            </Card>
-                                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
-                                        </> : <><p className="mb-4">You may now close the browser</p>
-                                            <Button
-                                                variant="primary"
-                                                size="lg"
-                                                onClick={handleReturnToLogin}
-                                                style={{ backgroundColor: customColor, borderColor: customColor }}
-                                            >
-                                                Return to Login
-                                            </Button></>
-                                    }
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    </Row>
-                </Container>}
+                : toDelegation && evalNumber === 13 ?
+                    <div style={{ textAlign: 'center', padding: '50px' }}>
+                        <p>Redirecting you back to Prolific...</p>
+                        <Spinner animation="border" role="status">
+                            <span className="sr-only">Loading...</span>
+                        </Spinner>
+                    </div>
+                    :
+                    <Container className="mt-5">
+                        <Row className="justify-content-center">
+                            <Col md={10} lg={8}>
+                                <Card className="border-0 shadow">
+                                    <Card.Body className="text-center p-5">
+                                        <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                                        <h3 className="display-4 mb-4">Your Participant ID is {participantID?.slice(-3)}</h3>
+                                        {moderatorExists ?
+                                            <>
+                                                <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                                                <Card bg="light" className="p-4">
+                                                    <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                                        Participant should complete the following scenarios in VR:
+                                                    </Card.Title>
+                                                    <Card.Subtitle className="mb-3 text-muted">
+                                                        Please complete the scenarios in the order listed below:
+                                                    </Card.Subtitle>
+                                                    <ListGroup variant="flush" className="border rounded">
+                                                        {allScenarios.map((scenario, index) => (
+                                                            <ListGroup.Item
+                                                                key={index}
+                                                                className="py-3 d-flex align-items-center"
+                                                            >
+                                                                <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                                                <span className="fs-5">{scenario}</span>
+                                                            </ListGroup.Item>
+                                                        ))}
+                                                    </ListGroup>
+                                                </Card>
+                                                <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                                            </> : <><p className="mb-4">You may now close the browser</p>
+                                                <Button
+                                                    variant="primary"
+                                                    size="lg"
+                                                    onClick={handleReturnToLogin}
+                                                    style={{ backgroundColor: customColor, borderColor: customColor }}
+                                                >
+                                                    Return to Login
+                                                </Button></>
+                                        }
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </Container>}
         </>
     );
 };
