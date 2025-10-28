@@ -22,6 +22,7 @@ import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
+import ScenarioProgress from './scenarioProgress';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -914,6 +915,12 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
+                {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                    <ScenarioProgress
+                        current={this.state.currentScenarioIndex + 1}
+                        total={this.state.scenarios.length}
+                    />
+                )}
                 <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
                 {!this.state.skipText && !this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
