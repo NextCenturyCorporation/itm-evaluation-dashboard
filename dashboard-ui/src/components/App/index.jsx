@@ -32,7 +32,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData } from '../OnlineOnly/config';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -223,7 +223,7 @@ export function App() {
         }
     }, [textConfigData, textImagesData]);
 
-    
+
     React.useEffect(() => {
         if (surveyConfigsLoaded && textConfigsLoaded) {
             setIsConfigDataLoaded(true);
@@ -346,17 +346,18 @@ export function App() {
                 x.ParticipantID >= lowPid && x.ParticipantID <= highPid
             ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
-            let participantData;
-            if (evalNum === 12) {
-                participantData = ukParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            }
-            if (evalNum === 10) {
-                participantData = septemberParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            } else if (evalNum === 8 || evalNum === 9) {
-                participantData = juneJulyParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            } else {
-                participantData = phase1ParticipantData(null, hashedEmail, newPid, isTester ? 'Test' : 'emailParticipant', evalNum)
-            }
+            const participantDataFunctions = {
+                13: octoberParticipantData,
+                12: ukParticipantData,
+                10: septemberParticipantData,
+                8: juneJulyParticipantData,
+                9: juneJulyParticipantData,
+                5: phase1ParticipantData
+            };
+
+            const getParticipantDataFn = participantDataFunctions[evalNum] || phase1ParticipantData;
+            const participantType = isTester ? 'Test' : 'emailParticipant';
+            const participantData = getParticipantDataFn(null, hashedEmail, newPid, participantType, evalNum);
 
             const addRes = await addParticipant({
                 variables: { participantData }

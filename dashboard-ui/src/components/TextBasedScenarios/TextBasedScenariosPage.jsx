@@ -10,7 +10,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup, Spinner, Button} from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner, Button } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
@@ -22,6 +22,7 @@ import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
+import ScenarioProgress from './scenarioProgress';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
@@ -115,7 +116,19 @@ class TextBasedScenariosPage extends Component {
             demographicsCompleted: false,
             demographicsUploadData: null,
             isDemographicsUploadEnabled: false,
-            demographicsStartTime: null
+            demographicsStartTime: null,
+            eval13Groups: {
+                AF: [],
+                MF: [],
+                PS: [],
+                SS: []
+            },
+            eval13CombinedSessions: {
+                AF: null,
+                MF: null,
+                PS: null,
+                SS: null
+            }
         };
 
         this.surveyData = {};
@@ -454,9 +467,12 @@ class TextBasedScenariosPage extends Component {
             const evalNum = evalNameToNumber[this.props.currentTextEval]
             // ps-af needs its own individual session
             const needsIsolatedSession = evalNum === 10 && isPSAF;
+            const isEval13 = evalNum === 13;
 
             if (needsIsolatedSession) {
                 await this.processIsolatedAdeptScenario(scenario);
+            } else if (isEval13) {
+                await this.processEval13Scenario(scenario);
             } else {
                 if (this.state.adeptSessionsCompleted === 0) {
                     await this.beginRunningSession(scenario);
@@ -514,6 +530,101 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
+    // handles individual and combined scoring (when all 3 scenarios for an attribute are complete)
+    processEval13Scenario = async (scenario) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+
+        //"July2025-AF1-eval" -> "AF"
+        const groupMatch = scenario.scenario_id.match(/-(AF|MF|PS|SS)\d+-/);
+        if (!groupMatch) {
+            console.error('Could not determine group for scenario:', scenario.scenario_id);
+            return;
+        }
+        const groupPrefix = groupMatch[1];
+
+        try {
+            // individual scoring
+            const individualSession = await axios.post(`${url}${sessionEndpoint}`);
+            if (individualSession.status === 200) {
+                const individualSessionId = individualSession.data;
+
+                await this.submitResponses(scenario, scenario.scenario_id, url, individualSessionId);
+
+                const individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, scenario);
+                const individualKdmas = await this.attachKdmaValue(individualSessionId, url);
+
+                scenario.sessionId = individualSessionId;
+                scenario.mostLeastAligned = individualMostLeastAligned;
+                scenario.kdmas = individualKdmas;
+            }
+        } catch (e) {
+            console.error('Error processing eval 13 scenario:', e);
+            scenario.sessionId = null;
+            scenario.mostLeastAligned = null;
+            scenario.kdmas = null;
+            scenario.scoringError = e.message;
+        }
+
+        //add to attr group
+        const updatedGroup = [...this.state.eval13Groups[groupPrefix], scenario];
+        const updatedGroups = {
+            ...this.state.eval13Groups,
+            [groupPrefix]: updatedGroup
+        };
+
+        this.setState({ eval13Groups: updatedGroups });
+
+        if (updatedGroup.length === 3) {
+            // attr group done
+            await this.processEval13GroupCompletion(groupPrefix, updatedGroup);
+        }
+    }
+
+    processEval13GroupCompletion = async (groupPrefix, groupScenarios) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+
+        try {
+            // combined scoring
+            const combinedSession = await axios.post(`${url}${sessionEndpoint}`);
+            if (combinedSession.status === 200) {
+                const combinedSessionId = combinedSession.data;
+
+                for (const scenario of groupScenarios) {
+                    await this.submitResponses(scenario, scenario.scenario_id, url, combinedSessionId);
+                }
+
+                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, groupScenarios[0]);
+                const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
+
+                const updatedCombinedSessions = {
+                    ...this.state.eval13CombinedSessions,
+                    [groupPrefix]: combinedSessionId
+                };
+                this.setState({ eval13CombinedSessions: updatedCombinedSessions });
+
+                for (const scenario of groupScenarios) {
+                    scenario.combinedSessionId = combinedSessionId;
+                    scenario.combinedMostLeastAligned = combinedMostLeastAligned;
+                    scenario.combinedKdmas = combinedKdmas;
+
+                    await this.uploadSingleScenario(scenario);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            for (const scenario of groupScenarios) {
+                scenario.combinedSessionId = null;
+                scenario.combinedMostLeastAligned = null;
+                scenario.combinedKdmas = null;
+                scenario.combinedScoringError = e.message || 'Failed to communicate with ADEPT server for combined scoring';
+
+                await this.uploadSingleScenario(scenario);
+            }
+        }
+    }
+
     uploadSingleScenario = async (scenario) => {
         const sanitizedData = this.sanitizeKeys(scenario);
 
@@ -532,7 +643,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     beginRunningSession = async (scenario) => {
-        const url = this.getAdeptUrl(); 
+        const url = this.getAdeptUrl();
         const sessionEndpoint = '/api/v1/new_session';
 
         try {
@@ -549,13 +660,13 @@ class TextBasedScenariosPage extends Component {
     }
 
     continueRunningSession = async (scenario) => {
-        const url = this.getAdeptUrl(); 
+        const url = this.getAdeptUrl();
         const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
         await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
-        const url = this.getAdeptUrl(); 
+        const url = this.getAdeptUrl();
 
         const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
 
@@ -601,9 +712,22 @@ class TextBasedScenariosPage extends Component {
             }
         } else {
             const evalNumber = evalNameToNumber[this.props.currentTextEval];
-            targets = (evalNumber >= 8 && evalNumber !== 12) ?
-                ['affiliation', 'merit', 'search', 'personal_safety'] :
-                ['Moral judgement', 'Ingroup Bias']
+            // only one target for individual or group eval 13
+            if (evalNumber === 13 && scenario) {
+                if (scenario.scenario_id.includes('AF')) {
+                    targets = ['affiliation'];
+                } else if (scenario.scenario_id.includes('MF')) {
+                    targets = ['merit'];
+                } else if (scenario.scenario_id.includes('PS')) {
+                    targets = ['personal_safety'];
+                } else if (scenario.scenario_id.includes('SS')) {
+                    targets = ['search'];
+                }
+            } else {
+                targets = (evalNumber >= 8 && evalNumber !== 12) ?
+                    ['affiliation', 'merit', 'search', 'personal_safety'] :
+                    ['Moral judgement', 'Ingroup Bias']
+            }
         }
 
         let responses = []
@@ -801,6 +925,12 @@ class TextBasedScenariosPage extends Component {
     render() {
         return (
             <>
+                {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                    <ScenarioProgress
+                        current={this.state.currentScenarioIndex + 1}
+                        total={this.state.scenarios.length}
+                    />
+                )}
                 <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
                 {!this.state.skipText && !this.state.currentConfig && (
                     <Survey model={this.introSurvey} />
@@ -923,6 +1053,7 @@ class TextBasedScenariosPage extends Component {
                         moderatorExists={this.state.moderated}
                         toDelegation={this.state.onlineOnly}
                         participantID={this.state.participantID}
+                        evalNumber={evalNameToNumber[this.props.currentTextEval]}
                     />
                 )}
             </>
@@ -932,7 +1063,7 @@ class TextBasedScenariosPage extends Component {
 
 export default withRouter(TextBasedScenariosPage);
 
-const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, participantID }) => {
+const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, participantID, evalNumber }) => {
     const allScenarios = [...(sim1 || []), ...(sim2 || [])];
     const customColor = "#b15e2f";
 
@@ -942,56 +1073,75 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
         history.push('/login');
     };
 
+    React.useEffect(() => {
+        if (toDelegation && evalNumber === 13) {
+            const queryParams = new URLSearchParams(window.location.search);
+            const caciProlific = queryParams.get('caciProlific');
+
+            if (caciProlific === 'true') {
+                const returnURL = 'https://app.prolific.com/submissions/complete?cc=C155IMPM';
+                window.location.href = returnURL;
+            }
+        }
+    }, [toDelegation, evalNumber]);
+
     return (
         <>
-            {toDelegation ?
+            {toDelegation && evalNumber !== 13 ?
                 <SurveyPageWrapper />
-                :
-                <Container className="mt-5">
-                    <Row className="justify-content-center">
-                        <Col md={10} lg={8}>
-                            <Card className="border-0 shadow">
-                                <Card.Body className="text-center p-5">
-                                    <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
-                                    <h3 className="display-4 mb-4">Your Participant ID is {participantID?.slice(-3)}</h3>
-                                    {moderatorExists ?
-                                        <>
-                                            <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
-                                            <Card bg="light" className="p-4">
-                                                <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
-                                                    Participant should complete the following scenarios in VR:
-                                                </Card.Title>
-                                                <Card.Subtitle className="mb-3 text-muted">
-                                                    Please complete the scenarios in the order listed below:
-                                                </Card.Subtitle>
-                                                <ListGroup variant="flush" className="border rounded">
-                                                    {allScenarios.map((scenario, index) => (
-                                                        <ListGroup.Item
-                                                            key={index}
-                                                            className="py-3 d-flex align-items-center"
-                                                        >
-                                                            <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
-                                                            <span className="fs-5">{scenario}</span>
-                                                        </ListGroup.Item>
-                                                    ))}
-                                                </ListGroup>
-                                            </Card>
-                                            <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
-                                        </> : <><p className="mb-4">You may now close the browser</p>
-                                            <Button
-                                                variant="primary"
-                                                size="lg"
-                                                onClick={handleReturnToLogin}
-                                                style={{ backgroundColor: customColor, borderColor: customColor }}
-                                            >
-                                                Return to Login
-                                            </Button></>
-                                    }
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    </Row>
-                </Container>}
+                : toDelegation && evalNumber === 13 ?
+                    <div style={{ textAlign: 'center', padding: '50px' }}>
+                        <p>Redirecting you back to Prolific...</p>
+                        <Spinner animation="border" role="status">
+                            <span className="sr-only">Loading...</span>
+                        </Spinner>
+                    </div>
+                    :
+                    <Container className="mt-5">
+                        <Row className="justify-content-center">
+                            <Col md={10} lg={8}>
+                                <Card className="border-0 shadow">
+                                    <Card.Body className="text-center p-5">
+                                        <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
+                                        <h3 className="display-4 mb-4">Your Participant ID is {participantID?.slice(-3)}</h3>
+                                        {moderatorExists ?
+                                            <>
+                                                <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
+                                                <Card bg="light" className="p-4">
+                                                    <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
+                                                        Participant should complete the following scenarios in VR:
+                                                    </Card.Title>
+                                                    <Card.Subtitle className="mb-3 text-muted">
+                                                        Please complete the scenarios in the order listed below:
+                                                    </Card.Subtitle>
+                                                    <ListGroup variant="flush" className="border rounded">
+                                                        {allScenarios.map((scenario, index) => (
+                                                            <ListGroup.Item
+                                                                key={index}
+                                                                className="py-3 d-flex align-items-center"
+                                                            >
+                                                                <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
+                                                                <span className="fs-5">{scenario}</span>
+                                                            </ListGroup.Item>
+                                                        ))}
+                                                    </ListGroup>
+                                                </Card>
+                                                <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
+                                            </> : <><p className="mb-4">You may now close the browser</p>
+                                                <Button
+                                                    variant="primary"
+                                                    size="lg"
+                                                    onClick={handleReturnToLogin}
+                                                    style={{ backgroundColor: customColor, borderColor: customColor }}
+                                                >
+                                                    Return to Login
+                                                </Button></>
+                                        }
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </Container>}
         </>
     );
 };
