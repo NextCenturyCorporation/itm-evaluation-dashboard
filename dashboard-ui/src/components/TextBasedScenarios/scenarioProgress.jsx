@@ -2,7 +2,7 @@ import React from 'react';
 import '../../css/scenario-progress.css';
 
 const ScenarioProgress = ({ current, total }) => {
-  const percentage = ((current / total) * 100).toFixed(0);
+  const percentage = (((current - 1) / total) * 100).toFixed(0);
   
   return (
     <div className="scenario-progress-compact">
