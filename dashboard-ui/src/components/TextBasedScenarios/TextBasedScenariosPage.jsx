@@ -467,7 +467,6 @@ class TextBasedScenariosPage extends Component {
             const evalNum = evalNameToNumber[this.props.currentTextEval]
             // ps-af needs its own individual session
             const needsIsolatedSession = evalNum === 10 && isPSAF;
-
             const isEval13 = evalNum === 13;
 
             if (needsIsolatedSession) {
@@ -559,23 +558,26 @@ class TextBasedScenariosPage extends Component {
                 scenario.mostLeastAligned = individualMostLeastAligned;
                 scenario.kdmas = individualKdmas;
             }
-
-            //add to attr group
-            const updatedGroup = [...this.state.eval13Groups[groupPrefix], scenario];
-            const updatedGroups = {
-                ...this.state.eval13Groups,
-                [groupPrefix]: updatedGroup
-            };
-
-            this.setState({ eval13Groups: updatedGroups });
-
-            if (updatedGroup.length === 3) {
-                // attr group done
-                await this.processEval13GroupCompletion(groupPrefix, updatedGroup);
-            }
-
         } catch (e) {
             console.error('Error processing eval 13 scenario:', e);
+            scenario.sessionId = null;
+            scenario.mostLeastAligned = null;
+            scenario.kdmas = null;
+            scenario.scoringError = e.message;
+        }
+
+        //add to attr group
+        const updatedGroup = [...this.state.eval13Groups[groupPrefix], scenario];
+        const updatedGroups = {
+            ...this.state.eval13Groups,
+            [groupPrefix]: updatedGroup
+        };
+
+        this.setState({ eval13Groups: updatedGroups });
+
+        if (updatedGroup.length === 3) {
+            // attr group done
+            await this.processEval13GroupCompletion(groupPrefix, updatedGroup);
         }
     }
 
@@ -612,6 +614,14 @@ class TextBasedScenariosPage extends Component {
             }
         } catch (e) {
             console.error(e);
+            for (const scenario of groupScenarios) {
+                scenario.combinedSessionId = null;
+                scenario.combinedMostLeastAligned = null;
+                scenario.combinedKdmas = null;
+                scenario.combinedScoringError = e.message || 'Failed to communicate with ADEPT server for combined scoring';
+
+                await this.uploadSingleScenario(scenario);
+            }
         }
     }
 
