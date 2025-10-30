@@ -549,7 +549,13 @@ const resolvers = {
 
     getTextBasedConfigByEval: async (obj, args, context, inflow) => {
       return await context.db.collection('textBasedConfig')
-        .find({ "eval": args.evalName })
+        .find({
+          $or: [
+            { "eval": args.evalName },
+            // we need this demographics page loaded in either way
+            { "name": "Post-Scenario Measures Phase 2" }
+          ]
+        })
         .toArray()
         .then(result => { return result; });
     }

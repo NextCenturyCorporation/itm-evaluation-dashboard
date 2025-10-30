@@ -25,7 +25,8 @@ const EVAL_MAP = {
     5: { 'value': '5', 'label': '5 - PH1' },
     6: { 'value': '6', 'label': '6 - JAN25' },
     8: { 'value': '8', 'label': '8 - PH2 June' },
-    9: { 'value': '9', 'label': '9 - PH2 July' }
+    9: { 'value': '9', 'label': '9 - PH2 July' },
+    10: { 'value': '10', 'label': '10 - PH2 September' }
 };
 
 
@@ -37,7 +38,7 @@ export function BlockedTable({ evalNum }) {
     const [includeJAN, setIncludeJAN] = React.useState(false);
     const [includeJune, setIncludeJune] = React.useState(false);
     const [includeJuly, setIncludeJuly] = React.useState(false);
-    const [evalNumbers, setEvalNumbers] = React.useState([EVAL_MAP[evalNum]])
+    const [evalNumbers, setEvalNumbers] = React.useState(EVAL_MAP[evalNum] ? [EVAL_MAP[evalNum]] : [])
 
     const updateDREStatus = (event) => {
         setIncludeDRE(event.target.checked);
@@ -56,18 +57,18 @@ export function BlockedTable({ evalNum }) {
     };
 
     const updateEvalNums = (includeEval, evalObj) => {
-        if (evalObj["value"].toString() === evalNum.toString())
-            return;
+        if (!evalObj) return;
+        if (evalObj.value?.toString() === evalNum.toString()) return;
         if (includeEval) {
-            const newEvalNumbers = structuredClone(evalNumbers);
+            const newEvalNumbers = structuredClone(evalNumbers).filter(Boolean);
             newEvalNumbers.push(evalObj);
             setEvalNumbers(newEvalNumbers);
         }
         else {
-            const newEvalNumbers = structuredClone(evalNumbers);
+            const newEvalNumbers = structuredClone(evalNumbers).filter(Boolean);
             let index = -1;
             for (let i = 0; i < newEvalNumbers.length; i++) {
-                if (newEvalNumbers[i]['value'] === String(evalObj["value"])) {
+                if (newEvalNumbers[i]?.value === String(evalObj.value)) {
                     index = i;
                     break;
                 }
@@ -75,7 +76,7 @@ export function BlockedTable({ evalNum }) {
             if (index > -1) {
                 newEvalNumbers.splice(index, 1);
             }
-            setEvalNumbers(newEvalNumbers);
+            setEvalNumbers(EVAL_MAP[evalNum] ? [EVAL_MAP[evalNum]] : []);
         }
     };
 
@@ -85,7 +86,7 @@ export function BlockedTable({ evalNum }) {
         setIncludeJAN(false);
         setIncludeJune(false);
         setIncludeJuly(false);
-        setEvalNumbers([EVAL_MAP[evalNum]]);
+        setEvalNumbers(EVAL_MAP[evalNum] ? [EVAL_MAP[evalNum]] : []);
     }, [evalNum]);
 
     React.useEffect(() => {
@@ -132,7 +133,7 @@ export function BlockedTable({ evalNum }) {
             {surveyData?.getAllSurveyResults && pLogData?.getParticipantLog && comparisonData?.getHumanToADMComparison &&
                 <ResultsTable data={surveyData?.getAllSurveyResults} pLog={pLogData?.getParticipantLog}
                     exploratory={true} comparisonData={comparisonData?.getHumanToADMComparison}
-                    evalNumbers={evalNumbers} />}
+                    evalNumbers={evalNumbers && evalNumbers.length ? evalNumbers : undefined} />}
         </>
     )
 }

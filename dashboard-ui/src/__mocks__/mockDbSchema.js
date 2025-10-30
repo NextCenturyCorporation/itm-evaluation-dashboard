@@ -110,5 +110,12 @@ const SessionConfig = createSchema("sessions", {
     valid: { type: Boolean, required: true },
 });
 
+const EvalData = createSchema("evalData", {
+    _id: { type: ObjectId, required: true },
+    evalNumber: { type: Number, required: true },
+    evalName: { type: String, required: true },
+    pages: {type: Object, required: true}
+})
 
-export { SurveyConfig, SurveyResults, SurveyVersion, UiStyle, ParticipantLog, AdmLog, UserScenarioResults, User, TextBasedConfig, SessionConfig };
+
+export { SurveyConfig, SurveyResults, SurveyVersion, UiStyle, ParticipantLog, AdmLog, UserScenarioResults, User, TextBasedConfig, SessionConfig, EvalData };

@@ -18821,3 +18821,22 @@ export const admMocks = [
         }
     }
 ];
+export const evalDataMock = {
+  "_id": "67991d239acd0b5980ffbf6a",
+  "evalNumber": 5,
+  "evalName": "Phase 1 Evaluation",
+  "pages": {
+    "rq1": true,
+    "rq2": true,
+    "rq3": true,
+    "exploratoryAnalysis": true,
+    "admProbeResponses": true,
+    "admAlignment": true,
+    "admResults": true,
+    "humanSimPlayByPlay": true,
+    "humanSimProbes": true,
+    "participantLevelData": true,
+    "textResults": true,
+    "programQuestions": true
+  }
+}

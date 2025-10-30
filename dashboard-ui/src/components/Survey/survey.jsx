@@ -534,7 +534,7 @@ class SurveyPage extends Component {
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
-            console.log(participantTextResults)
+           
 
             const allBlocks = [];
             const scenarioTypes = ['MJ', 'IO', 'VOL']
