@@ -302,7 +302,6 @@ class TextBasedScenariosPage extends Component {
         const { scenarios, currentScenarioIndex } = this.state;
         if (currentScenarioIndex < scenarios.length) {
             const currentScenario = scenarios[currentScenarioIndex];
-            console.log(currentScenario)
             this.loadSurveyConfig([currentScenario], currentScenario.title);
 
             this.props.getServerTimestamp().then(newStartTime => {
