@@ -190,12 +190,12 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
         ]
     } else if (num === 13) {
         const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
-        scenarios = scenarioTypes.flatMap(type =>
-            [1, 2, 3].map(num => `July2025-${type}${num}-eval`)
+        scenarios = [1, 2, 3].flatMap(num =>
+            scenarioTypes.map(type => `July2025-${type}${num}-eval`)
         );
     }
 
-    if (num >= 8) {
+    if (num >= 8 && num !== 13) {
         for (let i = scenarios.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];

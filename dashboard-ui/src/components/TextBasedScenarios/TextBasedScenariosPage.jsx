@@ -283,9 +283,18 @@ class TextBasedScenariosPage extends Component {
 
     scenariosFromLog = (participantLog) => {
         const scenarioIds = scenarioIdsFromLog(participantLog, this.props.currentTextEval)
-        const scenarios = Object.values(this.props.textBasedConfigs).filter(config =>
-            config.scenario_id && scenarioIds.includes(config.scenario_id)
-        );
+        const configMap = {};
+        Object.values(this.props.textBasedConfigs).forEach(config => {
+            if (config.scenario_id) {
+                configMap[config.scenario_id] = config;
+            }
+        });
+
+        // Preserve the order from scenarioIds by mapping in sequence
+        const scenarios = scenarioIds
+            .map(id => configMap[id])
+            .filter(config => config !== undefined);
+
         return scenarios;
     }
 
