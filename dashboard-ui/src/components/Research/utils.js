@@ -563,7 +563,12 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             alignmentComparison = '-';
                         }
                     } else {
-                        alignmentComparison = evalNum === 12 ? comparison_entry?.distance_based_score : comparison_entry?.score ?? '-';
+                        if (evalNum === 12 && entryObj['Attribute'] === 'VOL') {
+                            console.log(comparison_entry)
+                            alignmentComparison = comparison_entry?.calibration_scores['PerceivedQuantityOfLivesSaved']
+                        } else {
+                            alignmentComparison = evalNum === 12 ? comparison_entry?.distance_based_score : comparison_entry?.score ?? '-';
+                        }
                     }
 
                     entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
