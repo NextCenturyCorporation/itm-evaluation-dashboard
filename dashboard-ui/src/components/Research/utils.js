@@ -365,6 +365,18 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         return ta2Matches && scenarioMatches && alignMatches;
                     }
 
+                    if (evalNum === 12) {
+                        const scenarioMap = {
+                            'MJ': 'DryRunEval-MJ2-eval',
+                            'IO': 'DryRunEval-IO2-eval',
+                            'VOL': 'vol-ph1-eval-3'
+                        };
+                        scenario = scenarioMap[entry['Attribute']];
+                        const scenarioMatches = obj['scenarioIndex'] === scenario;
+
+                        return alignMatches && ta2Matches && scenarioMatches;
+                    }
+
                     if (entry['TA1'] === 'Adept') {
                         scenario = entry['Attribute'] === 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
                     }
@@ -441,7 +453,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
 
                     const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
                     const distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
-                    
+
                     // for eval 12 (uk) we want distance based score for ADEPT, regular for ST
                     const admTargetScore = (evalNum === 12 && ['IO', 'MJ'].includes(entryObj['Attribute']))
                         ? distance_alignment
