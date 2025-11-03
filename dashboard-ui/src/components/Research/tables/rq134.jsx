@@ -54,7 +54,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum) }
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
     });
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }

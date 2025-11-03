@@ -87,8 +87,8 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                             }
                         };
                     }
-                    if ((headerName === 'Delegation' && val >= delThreshold) || 
-                        (headerName === 'Text' && val >= textThreshold) || 
+                    if ((headerName === 'Delegation' && val >= delThreshold) ||
+                        (headerName === 'Text' && val >= textThreshold) ||
                         (headerName === 'Sim Count' && (val === 4 || ((isPhase2 || isUKPhase1) && val === 2)))) {
                         cell.s = {
                             fill: {
@@ -255,7 +255,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     }
 
     // find participants that have completed the delegation survey
-    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10, 12].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const wrong_del_materials = evalNum === 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
@@ -270,6 +270,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         );
         const textCount = textResults.filter((x) => x.participantID === pid).length;
         if (!logData || textCount < TEXT_COUNT_NEEDED) {
+            console.log('skipping ' + pid)
             continue;
         }
         if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < TEXT_COUNT_NEEDED || logData.simEntryCount < SIM_ENTRY_COUNT_NEEDED)) {
@@ -278,6 +279,9 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
         if (isPhase2) {
             logData['ADMOrder'] = evalNum == 10 ? 6 : 5;
+        }
+        if (evalNum === 12) {
+            logData['ADMOrder'] = 7
         }
         // set up object to store participant data
         const admOrder = pid === '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
@@ -383,7 +387,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     const entryObj = {};
                     entryObj['Delegator ID'] = pid;
                     entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
-                    entryObj['Datasource'] = evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : evalNum == 10 ? "P2E_Sept_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
+                    entryObj['Datasource'] = evalNum === 12 ? "UK_2025" : evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : evalNum == 10 ? "P2E_Sept_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
                     entryObj['Delegator_grp'] = logData['Type'] === 'Civ' ? 'Civilian' : logData['Type'] === 'Mil' ? 'Military' : logData['Type'];
                     const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
                     const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
@@ -410,7 +414,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     entryObj['TA2_Name'] = entry['TA2'];
                     allTA2s.push(entry['TA2']);
                     entryObj['ADM_Type'] = t === 'comparison' ? 'comparison' : evalNum === 10 ? 'aligned' : ['misaligned', 'aligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group'].includes(t) ? 'aligned' : 'baseline';
-                    entryObj['Target'] = (evalNum >= 8 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
+                    entryObj['Target'] = (evalNum >= 8 && evalNum != 12 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
                     if (entryObj['Target'] !== '-') {
                         allTargets.push(entryObj['Target']);
                     }
@@ -419,15 +423,31 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     if (evalNum < 8) {
                         foundADM = admData.find((adm) => adm.history?.[0].parameters.adm_name === page['admName'] && (adm.history?.[0].response?.id ?? adm.history?.[1].response?.id) === page['scenarioIndex'].replace('IO', 'MJ') &&
                             adm.history?.[adm.history.length - 1].parameters.target_id === page['admTarget']);
-                    } else {
+                    } else if (evalNum === 12) {
+                        const scenario = page['scenarioIndex']?.includes('IO')
+                            ? page['scenarioIndex'].replace('IO', 'MJ')
+                            : page['scenarioIndex'];
+
+                        foundADM = admData.find((adm) =>
+                            adm.adm_name === page['admName'] &&
+                            adm.alignment_target === page['admTarget'] &&
+                            adm.scenario === scenario
+                        )
+                    }
+                    else {
                         foundADM = admData.find((adm) => adm.evaluation.adm_name.includes(page['admName']) && adm.evaluation.scenario_id === page['scenarioIndex'] &&
                             adm.evaluation.alignment_target_id === page['admTarget']);
                     }
 
                     const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
                     const distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
+                    
+                    // for eval 12 (uk) we want distance based score for ADEPT, regular for ST
+                    const admTargetScore = (evalNum === 12 && ['IO', 'MJ'].includes(entryObj['Attribute']))
+                        ? distance_alignment
+                        : alignment;
 
-                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (ADM|target)'] = alignment;
+                    entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (ADM|target)'] = admTargetScore;
                     if (evalNum === 5 || evalNum === 6)
                         entryObj['DRE/Distance Alignment score (ADM|target)'] = entry['TA1'] === 'Adept' ? distance_alignment : alignment;
 
@@ -477,7 +497,20 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     let comparison_entry;
                     if (evalNum < 8) {
                         comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] === t && x['pid'] === pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] === 'Parallax' && x['adm_author'] === 'TAD') || (entry['TA2'] === 'Kitware' && x['adm_author'] === 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
-                    } else {
+                    } else if (evalNum === 12) {
+
+                        const scenarioForComparison = page['scenarioIndex']?.includes('IO')
+                            ? page['scenarioIndex'].replace('IO', 'MJ')
+                            : page['scenarioIndex'];
+
+                        comparison_entry = comparisons?.find((x) =>
+                            x['pid'] === pid &&
+                            x['adm_type'] === t &&
+                            x['adm_alignment_target'] === page['admTarget'] &&
+                            x['adm_scenario'] === scenarioForComparison
+                        );
+                    }
+                    else {
                         // added in ternary to make sure single attribute and multi attribute comparisons are properly grabbed (eval 10) 
                         comparison_entry = comparisons?.find((x) =>
                             (evalNum === 10 || x['adm_type'] === t) &&
@@ -518,7 +551,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             alignmentComparison = '-';
                         }
                     } else {
-                        alignmentComparison = comparison_entry?.score ?? '-';
+                        alignmentComparison = evalNum === 12 ? comparison_entry?.distance_based_score : comparison_entry?.score ?? '-';
                     }
 
                     entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
@@ -535,8 +568,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     }
 
                     if (evalNum >= 8) {
-                        entryObj['Alignment score (ADM|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
-                        entryObj['Alignment score (Delegator|target)'] = (t === 'baseline') ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
+                        entryObj['Alignment score (ADM|target)'] = (t === 'baseline' && evalNum !== 12) ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
+                        entryObj['Alignment score (Delegator|target)'] = (t === 'baseline' && evalNum !== 12) ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
                         entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
 
                         let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
@@ -586,7 +619,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                                 entryObj['Attribute'] = "AF-MF";
                                 break;
                             default:
-                                console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name, scenario)
+                            //console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name, scenario)
                         }
 
                         // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
@@ -677,6 +710,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
     return { allObjs, allTA1s, allTA2s, allScenarios, allTargets, allAttributes, allProbeSetAssessment, allProbeSetObservation };
 }
 
+
 function handlePSAFPreferences(survey, page, entryObj, allObjs) {
     const adms = page['pageName'].split(' vs ');
     const admTargetMap = {};
@@ -761,8 +795,6 @@ function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
         }
     }
 }
-
-
 
 export function determineChoiceProcessJune2025(textResults, page, t) {
     const target = page['admTarget']
