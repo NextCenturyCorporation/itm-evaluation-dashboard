@@ -204,14 +204,32 @@ export function RQ134({ evalNum, tableTitle }) {
                 Delegator_mil: 'yes'
             }));
         }
-        console.log(addedData)
+
         if (evalNum === 12 && [4, 5, 6].includes(evalToAdd)) {
-            addedData.allObjs = addedData.allObjs.map(obj => ({
-                ...obj,
-                'Alignment score (ADM|target)': obj['DRE/Distance Alignment score (ADM|target)'],
-                'Alignment score (Delegator|target)': obj['DRE/Distance Alignment score (Delegator|target)'],
-                'Alignment score (Delegator|Observed_ADM (target))': obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))']
-            }));
+            addedData.allObjs = addedData.allObjs.map(obj => {
+                const updatedObj = {
+                    ...obj,
+                    'Alignment score (ADM|target)': obj['P1E/Population Alignment score (ADM|target)'] || obj['DRE/Distance Alignment score (ADM|target)'],
+                    'Alignment score (Delegator|target)': obj['P1E/Population Alignment score (Delegator|target)'] || obj['DRE/Distance Alignment score (Delegator|target)']
+                };
+
+                if (obj['Attribute'] === 'VOL' || obj['Attribute'] === 'QOL') {
+                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                        x['pid'] === obj['Delegator ID'] &&
+                        x['adm_alignment_target'] === obj['Target'] &&
+                        x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
+                    );
+
+                    const scores = comparison?.calibration_scores;
+                    updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = scores
+                        ? `VOL: ${scores['PerceivedQuantityOfLivesSaved']}\nQOL: ${scores['QualityOfLife']}`
+                        : obj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] || obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'];
+                } else {
+                    updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'];
+                }
+
+                return updatedObj;
+            });
         }
 
         data.allObjs.push(...addedData.allObjs);
