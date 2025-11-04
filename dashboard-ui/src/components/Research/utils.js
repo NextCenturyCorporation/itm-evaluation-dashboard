@@ -469,14 +469,27 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         entryObj['P1E/Population Alignment score (ADM|target)'] = entry['TA1'] === 'Adept' ? page.ph1AdmAlignment : entryObj['P1E/Population Alignment score (ADM|target)']
                     }
 
-                    const simEntry = simData.find((x) => x.evalNumber === evalNum && x.pid === pid &&
-                        (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 === 'st' : x.ta1 === 'ad') &&
-                        x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
-                    const alignmentData = simEntry?.data?.alignment?.adms_vs_text;
-                    entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (x['adm_author'] === (entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD')) &&
-                        x['adm_alignment'].includes(entryObj['ADM_Type']) && x['adm_target'] === page['admTarget'])?.score ?? '-';
+                    if (evalNum === 12) {
+                        const simComp = comparisons.find(x => 
+                            x['sim_scenario'] === "DryRunEval-MJ4-eval" &&
+                            x['pid'] === pid &&
+                            x['adm_alignment_target'] === page['admTarget'] &&
+                            x['adm_scenario'] === 'DryRunEval-MJ2-eval'
+                        )
+                        console.log(simComp)
+                        entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = simComp?.distance_based_score ?? '-'
+                    } else {
+                        const simEntry = simData.find((x) => x.evalNumber === evalNum && x.pid === pid &&
+                            (['QOL', 'VOL'].includes(entryObj['Attribute']) ? x.ta1 === 'st' : x.ta1 === 'ad') &&
+                            x.scenario_id.toUpperCase().includes(entryObj['Attribute'].replace('IO', 'MJ')));
+
+                        const alignmentData = simEntry?.data?.alignment?.adms_vs_text;
+                        entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = alignmentData?.find((x) => (evalNum === 12 || (x['adm_author'] === (entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD'))) &&
+                            x['adm_alignment']?.includes(entryObj['ADM_Type']) && x['adm_target'] === page['admTarget'])?.score ?? '-';
+                    }
 
                     entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target === page['admTarget']?.replaceAll('.', '') || a.target === page['admTarget'])?.score ?? '-';
+
                     const txt_distance = distanceAlignments.find((a) => a.target === page['admTarget'] || ((evalNum === 5 || evalNum === 6) && a.target === page['admTarget']?.replace('.', '')))?.score ?? '-';
                     if (evalNum === 5 || evalNum === 6)
                         entryObj['DRE/Distance Alignment score (Delegator|target)'] = entry['TA1'] === 'Adept' ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
@@ -564,7 +577,6 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         }
                     } else {
                         if (evalNum === 12 && entryObj['Attribute'] === 'VOL') {
-                            console.log(comparison_entry)
                             const scores = comparison_entry?.calibration_scores;
                             alignmentComparison = scores
                                 ? `VOL: ${scores['PerceivedQuantityOfLivesSaved']}\nQOL: ${scores['QualityOfLife']}`
