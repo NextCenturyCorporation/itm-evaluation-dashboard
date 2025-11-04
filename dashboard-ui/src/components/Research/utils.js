@@ -476,7 +476,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             x['adm_alignment_target'] === page['admTarget'] &&
                             x['adm_scenario'] === 'DryRunEval-MJ2-eval'
                         )
-                        console.log(simComp)
+                        
                         entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = simComp?.distance_based_score ?? '-'
                     } else {
                         const simEntry = simData.find((x) => x.evalNumber === evalNum && x.pid === pid &&
