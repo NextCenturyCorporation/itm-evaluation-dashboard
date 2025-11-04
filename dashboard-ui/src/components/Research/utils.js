@@ -565,7 +565,10 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     } else {
                         if (evalNum === 12 && entryObj['Attribute'] === 'VOL') {
                             console.log(comparison_entry)
-                            alignmentComparison = comparison_entry?.calibration_scores['PerceivedQuantityOfLivesSaved']
+                            const scores = comparison_entry?.calibration_scores;
+                            alignmentComparison = scores
+                                ? `VOL: ${scores['PerceivedQuantityOfLivesSaved']}\nQOL: ${scores['QualityOfLife']}`
+                                : '-';
                         } else {
                             alignmentComparison = evalNum === 12 ? comparison_entry?.distance_based_score : comparison_entry?.score ?? '-';
                         }
