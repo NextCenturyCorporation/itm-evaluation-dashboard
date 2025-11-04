@@ -100,6 +100,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const [includeJAN, setIncludeJAN] = React.useState(false);
     const [includeJune, setIncludeJune] = React.useState(false);
     const [includeJuly, setIncludeJuly] = React.useState(false);
+    const [includeUSEvals, setIncludeUSEvals] = React.useState(false);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
     // hiding columns
@@ -124,6 +125,7 @@ export function RQ134({ evalNum, tableTitle }) {
         setIncludeJAN(false);
         setIncludeJune(false);
         setIncludeJuly(false);
+        setIncludeUSEvals(false);
         clearFilters();
     }, [evalNum]);
 
@@ -168,6 +170,12 @@ export function RQ134({ evalNum, tableTitle }) {
             if (includeJuly) {
                 includeExtraData(data, 9, julySim, julyAdms);
             }
+
+            if (includeUSEvals) {
+                includeExtraData(data, 4, dreSim, dreAdms);
+                includeExtraData(data, 5, dataSim, dataADMs);
+                includeExtraData(data, 6, janSim, dataADMs);
+            }
             data.allObjs.sort((a, b) => {
                 // Compare PID
                 if (Number(a['Delegator ID']) < Number(b['Delegator ID'])) return -1;
@@ -186,7 +194,7 @@ export function RQ134({ evalNum, tableTitle }) {
             setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, includeUSEvals, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
         const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
@@ -196,6 +204,16 @@ export function RQ134({ evalNum, tableTitle }) {
                 Delegator_mil: 'yes'
             }));
         }
+        console.log(addedData)
+        if (evalNum === 12 && [4, 5, 6].includes(evalToAdd)) {
+            addedData.allObjs = addedData.allObjs.map(obj => ({
+                ...obj,
+                'Alignment score (ADM|target)': obj['DRE/Distance Alignment score (ADM|target)'],
+                'Alignment score (Delegator|target)': obj['DRE/Distance Alignment score (Delegator|target)'],
+                'Alignment score (Delegator|Observed_ADM (target))': obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))']
+            }));
+        }
+
         data.allObjs.push(...addedData.allObjs);
         data.allTA1s.push(...addedData.allTA1s);
         data.allTA2s.push(...addedData.allTA2s);
@@ -218,6 +236,10 @@ export function RQ134({ evalNum, tableTitle }) {
 
     const updateJulyStatus = (event) => {
         setIncludeJuly(event.target.checked);
+    };
+
+    const updateUSEvalsStatus = (event) => {
+        setIncludeUSEvals(event.target.checked);
     };
 
     const hideColumn = (val) => {
@@ -300,6 +322,10 @@ export function RQ134({ evalNum, tableTitle }) {
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
                 </div>}
+            {evalNum === 12 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeUSEvals} onChange={updateUSEvalsStatus} />} label="Include US Evals (Evals 4, 5, 6)" />
+                </div>}
         </h2>
 
         {filteredData.length < formattedData.length &&
@@ -359,7 +385,7 @@ export function RQ134({ evalNum, tableTitle }) {
                             />
                         </>
                     )}
-                    {evalNum >= 8 && (
+                    {evalNum >= 8 && evalNum !== 12 && (
                         <>
                             <Autocomplete
                                 multiple
