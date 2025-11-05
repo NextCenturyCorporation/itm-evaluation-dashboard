@@ -223,7 +223,7 @@ export function RQ134({ evalNum, tableTitle }) {
                     const scores = comparison?.calibration_scores;
                     updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = scores
                         ? `VOL: ${scores['PerceivedQuantityOfLivesSaved']}\nQOL: ${scores['QualityOfLife']}`
-                        : obj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] || obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'];
+                        : '-';
                 } else {
                     updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'];
                 }
