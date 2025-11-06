@@ -117,7 +117,7 @@ export function getAlignments(evalNum, textResults, pid) {
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
         // adept
-        if (Object.keys(textRes).includes('combinedAlignmentData') || !Object.keys(textRes).includes("alignmentData")) {
+        if (Object.keys(textRes).includes('combinedSessionId')) {
             if (!addedMJ) {
                 if (textRes['mostLeastAligned']) {
                     const atts = [];
@@ -146,7 +146,11 @@ export function getAlignments(evalNum, textResults, pid) {
         }
         else {
             // st
-            alignments.push(...textRes['alignmentData'])
+            if (textRes['alignmentData']) {
+                alignments.push(...textRes['alignmentData'])
+            } else {
+                alignments.push(...textRes['mostLeastAligned'])
+            }
         }
     }
     return { textResultsForPID, alignments, distanceAlignments };
@@ -469,13 +473,13 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     }
 
                     if (evalNum === 12) {
-                        const simComp = comparisons.find(x => 
+                        const simComp = comparisons.find(x =>
                             x['sim_scenario'] === "DryRunEval-MJ4-eval" &&
                             x['pid'] === pid &&
                             x['adm_alignment_target'] === page['admTarget'] &&
                             x['adm_scenario'] === 'DryRunEval-MJ2-eval'
                         )
-                        
+
                         entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = simComp?.distance_based_score ?? '-'
                     } else {
                         const simEntry = simData.find((x) => x.evalNumber === evalNum && x.pid === pid &&
