@@ -450,7 +450,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                         )
                     }
                     else {
-                        foundADM = admData.find((adm) => adm.evaluation.adm_name.includes(page['admName']) && adm.evaluation.scenario_id === page['scenarioIndex'] &&
+                        foundADM = admData.find((adm) => adm.evaluation?.adm_name?.includes(page['admName']) && adm.evaluation.scenario_id === page['scenarioIndex'] &&
                             adm.evaluation.alignment_target_id === page['admTarget']);
                     }
 
