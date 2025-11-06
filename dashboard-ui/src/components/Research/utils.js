@@ -270,7 +270,6 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         );
         const textCount = textResults.filter((x) => x.participantID === pid).length;
         if (!logData || textCount < TEXT_COUNT_NEEDED) {
-            console.log('skipping ' + pid)
             continue;
         }
         if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < TEXT_COUNT_NEEDED || logData.simEntryCount < SIM_ENTRY_COUNT_NEEDED)) {
