@@ -579,14 +579,7 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                             alignmentComparison = '-';
                         }
                     } else {
-                        if (evalNum === 12 && entryObj['Attribute'] === 'VOL') {
-                            const scores = comparison_entry?.calibration_scores;
-                            alignmentComparison = scores
-                                ? `VOL: ${scores['PerceivedQuantityOfLivesSaved']}\nQOL: ${scores['QualityOfLife']}`
-                                : '-';
-                        } else {
-                            alignmentComparison = evalNum === 12 ? comparison_entry?.distance_based_score : comparison_entry?.score ?? '-';
-                        }
+                        alignmentComparison = evalNum === 12 ? comparison_entry?.distance_based_score : comparison_entry?.score ?? '-';
                     }
 
                     entryObj[(populationHeader ? 'P1E/Population ' : '') + 'Alignment score (Delegator|Observed_ADM (target))'] = alignmentComparison;
@@ -737,6 +730,28 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     }
                     entryObj['SRAlign_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': The way this medic makes medical decisions is how I make decisions']?.['response'] ?? '-' : '-'];
                     allObjs.push(entryObj);
+                    // duplicate row for QOL calibration score
+                    if (evalNum === 12 && entryObj['Attribute'] === 'VOL' && t !== 'comparison') {
+                        const comparison = comparisons?.find((x) =>
+                            x['pid'] === pid &&
+                            x['adm_type'] === t &&
+                            x['adm_alignment_target'] === page['admTarget'] &&
+                            x['adm_scenario'] === (page['scenarioIndex']?.includes('IO') ? page['scenarioIndex'].replace('IO', 'MJ') : page['scenarioIndex'])
+                        );
+
+                        const scores = comparison?.calibration_scores;
+
+                        // Update the row that was just pushed
+                        allObjs[allObjs.length - 1]['Alignment score (Delegator|Observed_ADM (target))'] = scores?.['PerceivedQuantityOfLivesSaved'] ?? '-';
+
+                        const qolRow = {
+                            ...entryObj,
+                            'Attribute': 'QOL',
+                            'Alignment score (Delegator|Observed_ADM (target))': scores?.['QualityOfLife'] ?? '-'
+                        };
+                        allObjs.push(qolRow);
+                        allAttributes.push('QOL');
+                    }
                 }
             }
         }

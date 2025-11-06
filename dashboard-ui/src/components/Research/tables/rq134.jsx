@@ -206,14 +206,16 @@ export function RQ134({ evalNum, tableTitle }) {
         }
 
         if (evalNum === 12 && [4, 5, 6].includes(evalToAdd)) {
-            addedData.allObjs = addedData.allObjs.map(obj => {
+            const processedObjs = [];
+
+            addedData.allObjs.forEach(obj => {
                 const updatedObj = {
                     ...obj,
                     'Alignment score (ADM|target)': obj['P1E/Population Alignment score (ADM|target)'] || obj['DRE/Distance Alignment score (ADM|target)'],
                     'Alignment score (Delegator|target)': obj['P1E/Population Alignment score (Delegator|target)'] || obj['DRE/Distance Alignment score (Delegator|target)']
                 };
 
-                if (obj['Attribute'] === 'VOL' || obj['Attribute'] === 'QOL') {
+                if (obj['Attribute'] === 'VOL') {
                     const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
                         x['pid'] === obj['Delegator ID'] &&
                         x['adm_alignment_target'] === obj['Target'] &&
@@ -221,15 +223,39 @@ export function RQ134({ evalNum, tableTitle }) {
                     );
 
                     const scores = comparison?.calibration_scores;
-                    updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = scores
-                        ? `VOL: ${scores['PerceivedQuantityOfLivesSaved']}\nQOL: ${scores['QualityOfLife']}`
-                        : '-';
+
+                    const volRow = {
+                        ...updatedObj,
+                        'Alignment score (Delegator|Observed_ADM (target))': scores?.['PerceivedQuantityOfLivesSaved'] ?? '-'
+                    };
+                    processedObjs.push(volRow);
+
+                    // duplicate with QOL attribute and score
+                    const qolRow = {
+                        ...updatedObj,
+                        'Attribute': 'QOL',
+                        'Alignment score (Delegator|Observed_ADM (target))': scores?.['QualityOfLife'] ?? '-'
+                    };
+                    processedObjs.push(qolRow);
+
+                    data.allAttributes.push('QOL');
+                } else if (obj['Attribute'] === 'QOL') {
+                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                        x['pid'] === obj['Delegator ID'] &&
+                        x['adm_alignment_target'] === obj['Target'] &&
+                        x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
+                    );
+
+                    const scores = comparison?.calibration_scores;
+                    updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = scores?.['QualityOfLife'] ?? '-';
+                    processedObjs.push(updatedObj);
                 } else {
                     updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'];
+                    processedObjs.push(updatedObj);
                 }
-
-                return updatedObj;
             });
+
+            addedData.allObjs = processedObjs;
         }
 
         data.allObjs.push(...addedData.allObjs);
