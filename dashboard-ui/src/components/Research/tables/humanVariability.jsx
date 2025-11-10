@@ -3,7 +3,10 @@ import '../../SurveyResults/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "./download-buttons";
-
+import CloseIcon from '@material-ui/icons/Close';
+import { Modal } from "@mui/material";
+import { RQDefinitionTable } from "../variables/rq-variables";
+import defs from '../variables/HumanVariability.xlsx';
 const headers = [
     "PID",
     "AF_KDMA",
@@ -59,6 +62,10 @@ export function HumanVariability({ evalNum }) {
     });
 
     const [formattedData, setFormattedData] = React.useState([]);
+    const [showDefinitions, setShowDefinitions] = React.useState(false);
+
+    const openModal = () => setShowDefinitions(true);
+    const closeModal = () => setShowDefinitions(false);
 
     React.useEffect(() => {
         if (data?.getAllScenarioResultsByEval) {
@@ -160,6 +167,15 @@ export function HumanVariability({ evalNum }) {
                     </tbody>
                 </table>
             </div>
+            <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
+                <div className='modal-body'>
+                    <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
+                    <RQDefinitionTable
+                        downloadName={`Definitions_Human_Variability.xlsx`}
+                        xlFile={defs}
+                    />
+                </div>
+            </Modal>
         </>
     );
 }
