@@ -136,6 +136,7 @@ export function HumanVariability({ evalNum }) {
                     filteredData={formattedData}
                     HEADERS={headers}
                     fileName={'Human_Variability_data'}
+                    extraAction={openModal}
                 />
             </section>
 
