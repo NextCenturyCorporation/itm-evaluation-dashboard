@@ -267,7 +267,7 @@ export default function AggregateResults({ type }) {
                         <table className='itm-table'>
                             <thead>
                                 <tr>
-                                    {HEADER[selectedEval === 6 || selectedEval === 12 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
+                                    {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
                                         return (<th key={'header-' + index}>
                                             {val}
                                         </th>);
@@ -277,7 +277,7 @@ export default function AggregateResults({ type }) {
                             <tbody>
                                 {fullData.map((dataSet, index) => {
                                     return (<tr key={dataSet['ParticipantID'] + '-' + index}>
-                                        {HEADER[selectedEval === 6 || selectedEval === 12 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val) => {
+                                        {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
                                             return (<td key={dataSet['ParticipantID'] + '-' + val}>
                                                 {formatData(dataSet, val)}
                                             </td>);
