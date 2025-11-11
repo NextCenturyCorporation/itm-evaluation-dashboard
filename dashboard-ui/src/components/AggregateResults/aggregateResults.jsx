@@ -79,18 +79,25 @@ export default function AggregateResults({ type }) {
     }, [data, error, loading, selectedEval]);
 
     const exportToExcel = async () => {
+        const headersToInclude = HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval];
         const dataCopy = structuredClone(fullData);
-        for (let pid of Object.keys(dataCopy)) {
-            for (let k of Object.keys(dataCopy[pid])) {
-                if (typeof dataCopy[pid][k] === 'string' && dataCopy[pid][k].includes('link:')) {
-                    dataCopy[pid][k] = dataCopy[pid][k].split('link:')[1];
+        const filteredData = dataCopy.map(row => {
+            const filteredRow = {};
+            headersToInclude.forEach(header => {
+                if (header in row) {
+                    let value = row[header];
+                    if (typeof value === 'string' && value.includes('link:')) {
+                        value = value.split('link:')[1];
+                    }
+                    if (String(value) === '-') {
+                        value = '';
+                    }
+                    filteredRow[header] = value;
                 }
-                if (String(dataCopy[pid][k]) === '-') {
-                    dataCopy[pid][k] = '';
-                }
-            }
-        }
-        const ws = XLSX.utils.json_to_sheet(dataCopy);
+            });
+            return filteredRow;
+        });
+        const ws = XLSX.utils.json_to_sheet(filteredData);
         const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: fileType });
@@ -237,9 +244,9 @@ export default function AggregateResults({ type }) {
                             <span className='close-icon' onClick={closeIframe}><CloseIcon /></span>
                             <div className='graph-popup'>
                                 <h3>{iframeTitle ?? 'KDMA Graph'}</h3>
-                                <iframe 
-                                src={iframeLink}
-                                title={iframeTitle ?? 'KDMA Graph'}
+                                <iframe
+                                    src={iframeLink}
+                                    title={iframeTitle ?? 'KDMA Graph'}
                                 />
                             </div>
                         </div>
