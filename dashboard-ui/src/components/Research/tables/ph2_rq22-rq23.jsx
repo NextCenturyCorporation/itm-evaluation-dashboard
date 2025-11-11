@@ -19,7 +19,7 @@ const PH2_HEADERS = [
     'Attribute',
     'Target',
     'Set',
-    'Probe IDs', 
+    'Probe IDs',
     'Target_Type (Group/Individual)',
     'Aligned Server Session ID',
     'Aligned ADM Alignment score (ADM|target)',
@@ -43,7 +43,7 @@ export function PH2RQ2223({ evalNum }) {
     const [attributes, setAttributes] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [sets, setSets] = React.useState([]);
-    const [targetType, ] = React.useState(['Group', 'Individual']);
+    const [targetType,] = React.useState(['Group', 'Individual']);
 
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
@@ -107,7 +107,7 @@ export function PH2RQ2223({ evalNum }) {
 
             // First, collect all entries grouped by attribute and set
             const groupedEntries = {};
-            
+
             for (const scenario of Object.keys(organized_adms)) {
                 const scenarioName = organized_adms[scenario].scenarioName;
                 const targets = organized_adms[scenario].targets;
@@ -115,8 +115,10 @@ export function PH2RQ2223({ evalNum }) {
                 const isRandom = scenarioName.includes('Random');
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
                 // exclude full runs (not sets)
-                if (!setMatch) { continue; }
-                const scenarioSet = isRandom
+                if (evalNum !== 14 && !setMatch) { continue; }
+                const scenarioSet = evalNum === 14
+                    ? scenarioName
+                    : isRandom
                         ? `P2${evalToName[evalNum]} Dynamic Set ${setMatch[1]}`
                         : `P2${evalToName[evalNum]} Observation Set ${setMatch[1]}`;
 
@@ -145,7 +147,7 @@ export function PH2RQ2223({ evalNum }) {
 
                     let aligned = null;
                     for (const admName of Object.keys(targets[target])) {
-                        if (admName.includes('aligned') || admName.includes('ComparativeRegression')) {
+                        if (admName.includes('aligned') || admName.includes('ComparativeRegression') || admName.includes('DirectRegression')) {
                             aligned = targets[target][admName];
                             break;
                         }
@@ -173,22 +175,22 @@ export function PH2RQ2223({ evalNum }) {
 
                             const parts = prefix.split('-');
                             if (parts.length >= 2) attr = parts[1];
-                            }
-                            else {
-                                const m = raw.match(/Probe\s*(\d+)/);
-                                number = m ? parseInt(m[1]) : NaN;
-                            }
+                        }
+                        else {
+                            const m = raw.match(/Probe\s*(\d+)/);
+                            number = m ? parseInt(m[1]) : NaN;
+                        }
 
                         return { attr, number };
                     })
-                    .filter(x => !isNaN(x.number))
-                    .sort((a, b) => {
-                        const cmp = a.attr.localeCompare(b.attr);
-                        if (cmp !== 0) return cmp;
-                        return a.number - b.number;
-                    })
-                    .map(x => `Probe-${x.attr}-${x.number}`)
-                    .join(', ');
+                        .filter(x => !isNaN(x.number))
+                        .sort((a, b) => {
+                            const cmp = a.attr.localeCompare(b.attr);
+                            if (cmp !== 0) return cmp;
+                            return a.number - b.number;
+                        })
+                        .map(x => `Probe-${x.attr}-${x.number}`)
+                        .join(', ');
 
                     entryObj['Probe IDs'] = formatted;
 
@@ -219,23 +221,23 @@ export function PH2RQ2223({ evalNum }) {
 
             for (const groupKey of Object.keys(groupedEntries)) {
                 const entries = groupedEntries[groupKey];
-                
+
                 entries.sort((a, b) => {
                     const getNumericTarget = (target) => {
                         const match = target.match(/(\d+)/);
                         return match ? parseInt(match[1]) : 0;
                     };
-                    
+
                     const aNum = getNumericTarget(a.Target);
                     const bNum = getNumericTarget(b.Target);
-                    
+
                     if (aNum !== bNum) {
                         return aNum - bNum;
                     }
 
                     return a.Target.localeCompare(b.Target);
                 });
-                
+
                 entries.forEach((entry, index) => {
                     entry['Trial_ID'] = index + 1;
                     allObjs.push(entry);
@@ -243,22 +245,22 @@ export function PH2RQ2223({ evalNum }) {
             }
 
             const extractSetNum = s => {
-               const m = /Set\s+(\d+)$/.exec(s);
-               return m ? parseInt(m[1]) : Number.POSITIVE_INFINITY;
+                const m = /Set\s+(\d+)$/.exec(s);
+                return m ? parseInt(m[1]) : Number.POSITIVE_INFINITY;
             };
-            
+
             allObjs.sort((a, b) => {
-               if (a.Attribute < b.Attribute) return -1;
-               if (a.Attribute > b.Attribute) return 1;
-        
-               const aNum = extractSetNum(a.Set);
-               const bNum = extractSetNum(b.Set);
-               if (aNum !== bNum) return aNum - bNum;
+                if (a.Attribute < b.Attribute) return -1;
+                if (a.Attribute > b.Attribute) return 1;
 
-               if (a.Set < b.Set) return -1;
-               if (a.Set > b.Set) return 1;
+                const aNum = extractSetNum(a.Set);
+                const bNum = extractSetNum(b.Set);
+                if (aNum !== bNum) return aNum - bNum;
 
-               return a.Trial_ID - b.Trial_ID;
+                if (a.Set < b.Set) return -1;
+                if (a.Set > b.Set) return 1;
+
+                return a.Trial_ID - b.Trial_ID;
             });
 
             if (allObjs.length > 0) {
@@ -369,20 +371,20 @@ export function PH2RQ2223({ evalNum }) {
                     <tbody>
                         {filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
-                            {PH2_HEADERS.map((val) => {
-                                if (val === 'Probe IDs') {
-                                return (
-                                    <td key={`cell-${index}-probe`}>
-                                        {dataSet['Probe IDs'] ?? '-'}
-                                    </td>
-                                );
-                                }
-                                return (
-                                <td key={`cell-${index}-${val}`}>
-                                    {dataSet[val] ?? '-'}
-                                </td>
-                                );
-                            })}
+                                {PH2_HEADERS.map((val) => {
+                                    if (val === 'Probe IDs') {
+                                        return (
+                                            <td key={`cell-${index}-probe`}>
+                                                {dataSet['Probe IDs'] ?? '-'}
+                                            </td>
+                                        );
+                                    }
+                                    return (
+                                        <td key={`cell-${index}-${val}`}>
+                                            {dataSet[val] ?? '-'}
+                                        </td>
+                                    );
+                                })}
                             </tr>
                         ))}
                     </tbody>
