@@ -7,6 +7,7 @@ import { PH2RQ8 } from "./tables/ph2_rq8";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
+import { HumanVariability } from './tables/humanVariability';
 import { BlockedTable } from './tables/BlockedTable';
 import { CalibrationData } from './tables/CalibrationData';
 import { PAGES, getEvalOptionsForPage } from './utils';
@@ -32,6 +33,11 @@ export function ExploratoryAnalysis() {
                 }}
             />
         </div>
+        {selectedEval === 13 &&
+            <div className="section-container">
+                <HumanVariability evalNum={selectedEval} />
+            </div>
+        }
         <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
             <p className='indented'>
