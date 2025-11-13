@@ -855,7 +855,7 @@ function populateDataSet(data) {
                 tmpSet['QOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
                 tmpSet['VOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.scenario_id] ?? '-';
 
-                const adept_sim_kdmas = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] === pid && x?.scenario_id?.includes('DryRun'))?.data?.alignment?.kdmas;
+                const adept_sim_kdmas = data.getAllSimAlignmentByEval.find((x) => x?.pid === pid && x?.scenario_id?.includes('DryRun'))?.data?.alignment?.kdmas;
                 tmpSet['MJ_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma === 'Moral judgement')?.value;
                 tmpSet['IO_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma === 'Ingroup Bias')?.value;
 
