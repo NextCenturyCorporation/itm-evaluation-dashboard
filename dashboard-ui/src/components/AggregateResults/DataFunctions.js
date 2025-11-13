@@ -790,9 +790,10 @@ function populateDataSet(data) {
             tmpSet['Date'] = new Date(safeGet(res, ['results', 'startTime'], ['results', 'timeComplete'])).toLocaleDateString();
 
             // get med role. if more than one, choose other. Ignore military experience (also becomes "other"=6)
-            const medRoles = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role (choose all that apply):', 'response']);
+            let medRoles = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role (choose all that apply):', 'response']);
             if (!medRoles) {
-                tmpSet['MedRole'] = null;
+                let medRoles = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role', 'response']);
+                tmpSet['MedRole'] = medRoles;
             }
             else if (medRoles.length > 1) {
                 tmpSet['MedRole'] = 6;
@@ -801,16 +802,24 @@ function populateDataSet(data) {
             }
 
             // get seasoned first responder. use not sure as default
-            const medExp = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'I consider myself a seasoned first responder', 'response']);
+            let medExp = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'I consider myself a seasoned first responder', 'response']);
             tmpSet['MedExp'] = isDefined(medExp) ? isDefined(MED_EXP_MAP[medExp]) ? MED_EXP_MAP[medExp] : 1 : null;
+            if (!medExp) { 
+                tmpSet['MedExp'] = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '');
+            }
 
             // get military experience. If any is provided, 1. else 0 // TODO: should we be using military medical training or branch and status?? OR military background from "what is your current role"
             const milExp = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'Military Medical Training', 'response']);
             tmpSet['MilitaryExp'] = milExp ? 1 : 0;
+            if (!milExp) {
+                tmpSet['MilitaryExp'] = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'Served in Military', 'response'], '');
+            }
 
             // get years military experience.
             tmpSet['YrsMilExp'] = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'Years experience in military medical role', 'response']);
-
+            if (!tmpSet['YrsMilExp']) {
+                tmpSet['YrsMilExp'] = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'How many years of experience do you have serving in a medical role in the military', 'response'], '');
+            }
             // get trust measures; average
             const trust1 = TRUST_MAP[safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'I feel that people are generally reliable', 'response'])] ?? 0;
             const trust2 = TRUST_MAP[safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'I usually trust people until they give me a reason not to trust them', 'response'])] ?? 0;
@@ -844,7 +853,7 @@ function populateDataSet(data) {
                 const text_scenarios = data.getAllScenarioResultsByEval.filter((x) => x.participantID === pid);
                 tmpSet['AD_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('DryRunEval-MJ') || x?.scenario_id?.includes('phase1-adept-eval-MJ'))?.scenario_id] ?? '-';
                 tmpSet['QOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
-                tmpSet['VOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('qol'))?.scenario_id] ?? '-';
+                tmpSet['VOL_Scenario_Text'] = TEXT_BASED_MAP[text_scenarios.find((x) => x?.scenario_id?.includes('vol'))?.scenario_id] ?? '-';
 
                 const adept_sim_kdmas = data.getAllSimAlignmentByEval.find((x) => x?._id?.split('_')[0] === pid && x?.scenario_id?.includes('DryRun'))?.data?.alignment?.kdmas;
                 tmpSet['MJ_KDMA_Sim'] = adept_sim_kdmas?.find((x) => x.kdma === 'Moral judgement')?.value;
