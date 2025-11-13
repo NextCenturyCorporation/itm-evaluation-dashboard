@@ -49,7 +49,12 @@ export const admOrderMapping = {
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
-    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-AF" }]
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-AF" }],
+    // UK Expierment
+    7: [{"TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ"},
+        {"TA2": "Kitware", "TA1": "Adept", "Attribute": "IO"},
+        {"TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" }
+    ]
 }
 
 export const getKitwareBaselineMapping = (sv) => {
