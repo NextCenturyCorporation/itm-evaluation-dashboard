@@ -8,6 +8,7 @@ import { Autocomplete, Modal, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ134_DRE.xlsx';
 import ph1DefinitionXLFile from '../variables/Variable Definitions RQ134_PH1.xlsx';
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2.xlsx';
+import ukDefinitionXLFile from '../variables/Variable Definitions RQ134_UK.xlsx'
 import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
@@ -54,7 +55,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum) }
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
     });
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": 4 }
@@ -100,6 +101,7 @@ export function RQ134({ evalNum, tableTitle }) {
     const [includeJAN, setIncludeJAN] = React.useState(false);
     const [includeJune, setIncludeJune] = React.useState(false);
     const [includeJuly, setIncludeJuly] = React.useState(false);
+    const [includeUSEvals, setIncludeUSEvals] = React.useState(false);
     // data with filters applied
     const [filteredData, setFilteredData] = React.useState([]);
     // hiding columns
@@ -124,6 +126,7 @@ export function RQ134({ evalNum, tableTitle }) {
         setIncludeJAN(false);
         setIncludeJune(false);
         setIncludeJuly(false);
+        setIncludeUSEvals(false);
         clearFilters();
     }, [evalNum]);
 
@@ -168,6 +171,12 @@ export function RQ134({ evalNum, tableTitle }) {
             if (includeJuly) {
                 includeExtraData(data, 9, julySim, julyAdms);
             }
+
+            if (includeUSEvals) {
+                includeExtraData(data, 4, dreSim, dreAdms);
+                includeExtraData(data, 5, dataSim, dataADMs);
+                includeExtraData(data, 6, janSim, dataADMs);
+            }
             data.allObjs.sort((a, b) => {
                 // Compare PID
                 if (Number(a['Delegator ID']) < Number(b['Delegator ID'])) return -1;
@@ -186,7 +195,7 @@ export function RQ134({ evalNum, tableTitle }) {
             setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
+    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, includeUSEvals, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
         const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
@@ -196,6 +205,60 @@ export function RQ134({ evalNum, tableTitle }) {
                 Delegator_mil: 'yes'
             }));
         }
+
+        if (evalNum === 12 && [4, 5, 6].includes(evalToAdd)) {
+            const processedObjs = [];
+
+            addedData.allObjs.forEach(obj => {
+                const updatedObj = {
+                    ...obj,
+                    'Alignment score (ADM|target)': obj['P1E/Population Alignment score (ADM|target)'] || obj['DRE/Distance Alignment score (ADM|target)'],
+                    'Alignment score (Delegator|target)': obj['P1E/Population Alignment score (Delegator|target)'] || obj['DRE/Distance Alignment score (Delegator|target)']
+                };
+
+                if (obj['Attribute'] === 'VOL') {
+                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                        x['pid'] === obj['Delegator ID'] &&
+                        x['adm_alignment_target'] === obj['Target'] &&
+                        x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
+                    );
+
+                    const scores = comparison?.calibration_scores;
+
+                    const volRow = {
+                        ...updatedObj,
+                        'Alignment score (Delegator|Observed_ADM (target))': scores?.['PerceivedQuantityOfLivesSaved'] ?? '-'
+                    };
+                    processedObjs.push(volRow);
+
+                    // duplicate with QOL attribute and score
+                    const qolRow = {
+                        ...updatedObj,
+                        'Attribute': 'QOL',
+                        'Alignment score (Delegator|Observed_ADM (target))': scores?.['QualityOfLife'] ?? '-'
+                    };
+                    processedObjs.push(qolRow);
+
+                    data.allAttributes.push('QOL');
+                } else if (obj['Attribute'] === 'QOL') {
+                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                        x['pid'] === obj['Delegator ID'] &&
+                        x['adm_alignment_target'] === obj['Target'] &&
+                        x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
+                    );
+
+                    const scores = comparison?.calibration_scores;
+                    updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = scores?.['QualityOfLife'] ?? '-';
+                    processedObjs.push(updatedObj);
+                } else {
+                    updatedObj['Alignment score (Delegator|Observed_ADM (target))'] = obj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'];
+                    processedObjs.push(updatedObj);
+                }
+            });
+
+            addedData.allObjs = processedObjs;
+        }
+
         data.allObjs.push(...addedData.allObjs);
         data.allTA1s.push(...addedData.allTA1s);
         data.allTA2s.push(...addedData.allTA2s);
@@ -218,6 +281,10 @@ export function RQ134({ evalNum, tableTitle }) {
 
     const updateJulyStatus = (event) => {
         setIncludeJuly(event.target.checked);
+    };
+
+    const updateUSEvalsStatus = (event) => {
+        setIncludeUSEvals(event.target.checked);
     };
 
     const hideColumn = (val) => {
@@ -300,6 +367,10 @@ export function RQ134({ evalNum, tableTitle }) {
                 <div className='stacked-checkboxes'>
                     <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
                 </div>}
+            {evalNum === 12 &&
+                <div className='stacked-checkboxes'>
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeUSEvals} onChange={updateUSEvalsStatus} />} label="Include US Evals (Evals 4, 5, 6)" />
+                </div>}
         </h2>
 
         {filteredData.length < formattedData.length &&
@@ -359,7 +430,7 @@ export function RQ134({ evalNum, tableTitle }) {
                             />
                         </>
                     )}
-                    {evalNum >= 8 && (
+                    {evalNum >= 8 && evalNum !== 12 && (
                         <>
                             <Autocomplete
                                 multiple
@@ -528,7 +599,7 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum === 10 ? septemberDefinitionXLFile : evalNum >= 8 ? ph2DefinitionXLFile : (evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum === 12 ? ukDefinitionXLFile : evalNum === 10 ? septemberDefinitionXLFile : evalNum >= 8 ? ph2DefinitionXLFile : (evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);
