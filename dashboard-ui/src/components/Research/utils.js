@@ -291,7 +291,8 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
         let trial_num = 1;
         const st_scenario = pid === '202411327' ? 'ST-2' : (wrong_del_materials.includes(pid) ? 'ST-3' : (logData['Del-1']?.includes('ST') ? logData['Del-1'] : logData['Del-2']));
         const ad_scenario = pid === '202411327' ? 'AD-2' : (wrong_del_materials.includes(pid) ? 'AD-1' : (logData['Del-1']?.includes('AD') ? logData['Del-1'] : logData['Del-2']));
-
+        // for duplication eval 12
+        const volRowsToProcess = []
         for (const entry of admOrder) {
             const types = evalNum !== 10 ? ['baseline', 'aligned', 'misaligned', 'low-affiliation-high-merit', 'high-affiliation-high-merit', 'low-affiliation-low-merit', 'high-affiliation-low-merit', 'most aligned group', 'comparison'] : ['PS-AF-1', 'PS-AF-2', 'PS-AF-3', 'PS-AF-4', 'low', 'high', 'PS-high_AF-low', 'PS-high_AF-high', 'PS-low_AF-low', 'PS-low_AF-high', 'comparison'];
             for (const t of types) {
@@ -732,28 +733,36 @@ export function getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dat
                     allObjs.push(entryObj);
                     // duplicate row for QOL calibration score
                     if (evalNum === 12 && entryObj['Attribute'] === 'VOL' && t !== 'comparison') {
-                        const comparison = comparisons?.find((x) =>
-                            x['pid'] === pid &&
-                            x['adm_type'] === t &&
-                            x['adm_alignment_target'] === page['admTarget'] &&
-                            x['adm_scenario'] === (page['scenarioIndex']?.includes('IO') ? page['scenarioIndex'].replace('IO', 'MJ') : page['scenarioIndex'])
-                        );
-
-                        const scores = comparison?.calibration_scores;
-
-                        // Update the row that was just pushed
-                        allObjs[allObjs.length - 1]['Alignment score (Delegator|Observed_ADM (target))'] = scores?.['PerceivedQuantityOfLivesSaved'] ?? '-';
-
-                        const qolRow = {
-                            ...entryObj,
-                            'Attribute': 'QOL',
-                            'Alignment score (Delegator|Observed_ADM (target))': scores?.['QualityOfLife'] ?? '-'
-                        };
-                        allObjs.push(qolRow);
-                        allAttributes.push('QOL');
+                        volRowsToProcess.push(allObjs.length - 1);
                     }
                 }
             }
+        }
+        // duplicate rows for uk exp
+        if (evalNum === 12) {
+            for (const volIndex of volRowsToProcess) {
+                const volRow = allObjs[volIndex];
+                const comparison = comparisons?.find((x) =>
+                    x['pid'] === volRow['Delegator ID'] &&
+                    x['adm_type'] === volRow['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] &&
+                    x['adm_alignment_target'] === volRow['Target'] &&
+                    x['adm_scenario'] === 'vol-ph1-eval-3'
+                );
+
+                const scores = comparison?.calibration_scores;
+
+                volRow['Alignment score (Delegator|Observed_ADM (target))'] =
+                    scores?.['PerceivedQuantityOfLivesSaved'] ?? '-';
+
+                const qolRow = {
+                    ...volRow,
+                    'Attribute': 'QOL',
+                    'Alignment score (Delegator|Observed_ADM (target))': scores?.['QualityOfLife'] ?? '-'
+                };
+                allObjs.push(qolRow);
+            }
+
+            allAttributes.push('QOL');
         }
     }
 
