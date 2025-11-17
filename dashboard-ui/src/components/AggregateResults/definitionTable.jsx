@@ -5,10 +5,11 @@ import mreXlFile from './Variable Definitions/MRE_Variables.xlsx';
 import dreXlFile from './Variable Definitions/DRE_Variables.xlsx';
 import ph1XlFile from './Variable Definitions/PH1_Variables.xlsx'
 import ph2XlFile from './Variable Definitions/PH2_Variables.xlsx'
-
+import ukXlFile from './Variable Definitions/UK_Variables.xlsx'
 const getDefinitionFile = (evalNumber) => {
     if (evalNumber === 4) return { file: dreXlFile, prefix: 'dre_' };
-    if (evalNumber === 5 || evalNumber === 12) return { file: ph1XlFile, prefix: 'ph1_' };
+    if (evalNumber === 5) return { file: ph1XlFile, prefix: 'ph1_' };
+    if (evalNumber === 12) return { file: ukXlFile, prefix: 'uk_'}
     if (evalNumber >= 8) return { file: ph2XlFile, prefix: 'ph2_' };
     return { file: mreXlFile, prefix: 'mre_' };
 };
