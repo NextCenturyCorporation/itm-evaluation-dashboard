@@ -436,8 +436,18 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             }
             const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
             const isUK = selectedPhase === 'UK Phase 1';
+            const isEval13 = dataSet['_evalNumber'] === 13;
+
             // phase dependent
-            const textThreshold = isPH2OrUK ? 4 : 5;
+            let textThreshold;
+            if (isEval13) {
+                textThreshold = 12;
+            } else if (isPH2OrUK) {
+                textThreshold = 4;
+            } else {
+                textThreshold = 5;
+            }
+
             const delThreshold = isUK ? 3 : (isPH2OrUK && dataSet['_evalNumber'] !== 10) ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val >= textThreshold) ||
