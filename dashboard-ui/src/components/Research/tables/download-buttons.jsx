@@ -4,11 +4,10 @@ import '../../SurveyResults/resultsTable.css';
 
 export function DownloadButtons({ formattedData, filteredData, HEADERS, fileName, extraAction, isParticipantData = false, extraActionText = 'View Variable Definitions', selectedPhase= null}) {
     const filterDataByHeaders = (data, headers) =>
-        data.map(row =>
-            Object.fromEntries(
-                headers.map(h => [h, row[h]])
-            )
-        );
+    data.map(row => ({
+        ...Object.fromEntries(headers.map(h => [h, row[h]])),
+        _evalNumber: row._evalNumber // need for formatting
+    }));
 
     const filteredFormattedData = filterDataByHeaders(formattedData, HEADERS);
     const filteredFilteredData = filterDataByHeaders(filteredData, HEADERS);

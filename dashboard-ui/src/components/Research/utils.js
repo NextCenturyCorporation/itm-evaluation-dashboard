@@ -54,6 +54,9 @@ export const exportToExcel = async (filename, formattedData, headers, participan
     // keys as fallback if headers not provided
     const columnHeaders = headers || Object.keys(dataCopy[Object.keys(dataCopy)[0]] || {});
 
+    const evalNumbers = dataCopy.map(row => row._evalNumber);
+    dataCopy.forEach(row => delete row._evalNumber);
+
     // maintain column order by using headers if provided
     const ws = headers ?
         XLSX.utils.json_to_sheet(dataCopy, { header: headers }) :
@@ -68,10 +71,22 @@ export const exportToExcel = async (filename, formattedData, headers, participan
         const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
         const isPhase2 = selectedPhase === 'Phase 2';
         const isUKPhase1 = selectedPhase === 'UK Phase 1';
-        const textThreshold = (isPhase2 || isUKPhase1) ? 4 : 5;
-        const delThreshold = isUKPhase1 ? 3 : (isPhase2 ? 5 : 4);
 
         for (let row = 1; row <= dataCopy.length; row++) {
+            const rowEvalNumber = evalNumbers[row - 1];
+            
+            // Determine text threshold based on eval number for this specific row
+            let textThreshold;
+            if (rowEvalNumber === 13) {
+                textThreshold = 12;
+            } else if (isPhase2 || isUKPhase1) {
+                textThreshold = 4;
+            } else {
+                textThreshold = 5;
+            }
+            
+            const delThreshold = isUKPhase1 ? 3 : (isPhase2 ? 5 : 4);
+
             for (let col = 0; col < columnHeaders.length; col++) {
                 const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
                 const cell = ws[cellRef];

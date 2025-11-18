@@ -572,9 +572,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 delete x[h];
             }
             delete x['_phase'];
-            delete x['_evalNumber'];
             // remove fields that aren't in the current phase's headers
-            const keysToDelete = Object.keys(x).filter(key => !currentHeaders.includes(key));
+            const keysToDelete = Object.keys(x).filter(key =>
+                !currentHeaders.includes(key) && key !== '_evalNumber'
+            );
             for (const key of keysToDelete) {
                 delete x[key];
             }
