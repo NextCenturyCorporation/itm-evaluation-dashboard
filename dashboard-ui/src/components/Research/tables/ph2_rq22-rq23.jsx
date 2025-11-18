@@ -31,10 +31,12 @@ export function PH2RQ2223({ evalNum }) {
     const [attributes, setAttributes] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [sets, setSets] = React.useState([]);
+    const [setConstructions, setSetConstructions] = React.useState([]);
 
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [setFilters, setSetFilters] = React.useState([]);
+    const [setConstructionFilters, setSetConstructionFilters] = React.useState([]);
     const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
 
     const [filteredData, setFilteredData] = React.useState([]);
@@ -68,6 +70,7 @@ export function PH2RQ2223({ evalNum }) {
 
     // reset all filters when eval num changes
     React.useEffect(() => {
+        setSetConstructionFilters([])
         setAttributeFilters([])
         setTargetFilters([])
         setSetFilters([])
@@ -82,6 +85,7 @@ export function PH2RQ2223({ evalNum }) {
             const allAttributes = [];
             const allTargets = [];
             const allSets = [];
+            const allSetConstructions = []
             const probeMap = {};
 
             for (const adm of admData) {
@@ -169,6 +173,7 @@ export function PH2RQ2223({ evalNum }) {
                     // only applicable for eval 14
                     if (evalNum === 14) {
                         entryObj['Set Construction'] = setConstruction || '-';
+                        allSetConstructions.push(setConstruction)
                     }
 
                     let aligned = null;
@@ -309,6 +314,7 @@ export function PH2RQ2223({ evalNum }) {
             setAttributes(Array.from(new Set(allAttributes)));
             setTargets(Array.from(new Set(allTargets)));
             setSets(Array.from(new Set(allSets)));
+            setSetConstructions(Array.from(new Set(allSetConstructions)))
         }
     }, [data, evalNum]);
 
@@ -358,6 +364,19 @@ export function PH2RQ2223({ evalNum }) {
                         )}
                         onChange={(_, newVal) => setTargetFilters(newVal)}
                     />
+                    {evalNum === 14 && 
+                        <Autocomplete
+                        multiple
+                        options={setConstructions}
+                        value={setConstructionFilters}
+                        filterSelectedOptions
+                        size="small"
+                        renderInput={(params) => (
+                            <TextField {...params} label="Set Construction" />
+                        )}
+                        onChange={(_, newVal) => setSetConstructionFilters(newVal)}
+                    />
+                    }
 
                     <Autocomplete
                         multiple
