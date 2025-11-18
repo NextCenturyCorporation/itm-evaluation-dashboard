@@ -450,7 +450,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
             const delThreshold = isUK ? 3 : (isPH2OrUK && dataSet['_evalNumber'] !== 10) ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
-                (header === 'Text' && val >= textThreshold) ||
+                (header === 'Text' && val == textThreshold) ||
                 (header === 'Sim Count' && (val === 4 || (isPH2OrUK && val === 2)))) {
                 return 'dk-green-cell';
             }
