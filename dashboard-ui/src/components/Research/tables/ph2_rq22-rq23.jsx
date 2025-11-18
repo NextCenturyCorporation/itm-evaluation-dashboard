@@ -323,10 +323,11 @@ export function PH2RQ2223({ evalNum }) {
             setFilteredData(formattedData.filter(x =>
                 (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
                 (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
-                (setFilters.length === 0 || setFilters.includes(x['Set']))
+                (setFilters.length === 0 || setFilters.includes(x['Set'])) &&
+                (setConstructionFilters.length === 0 || setConstructionFilters.includes(x['Set Construction']))
             ));
         }
-    }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters]);
+    }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters, setConstructionFilters]);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
