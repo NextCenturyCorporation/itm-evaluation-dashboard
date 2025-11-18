@@ -6,6 +6,7 @@ import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_PH2.xlsx';
+import eval14Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval14.xlsx';
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 
@@ -438,7 +439,7 @@ export function PH2RQ2223({ evalNum }) {
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                     <RQDefinitionTable
                         downloadName={`Definitions_RQ22_23_PH2.xlsx`}
-                        xlFile={ph2DefinitionXLFile}
+                        xlFile={evalNum === 14 ? eval14Defs : ph2DefinitionXLFile}
                     />
                 </div>
             </Modal>
