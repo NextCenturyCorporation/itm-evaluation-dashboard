@@ -93,7 +93,7 @@ export function PH2RQ2223({ evalNum }) {
                 const setConstruction = adm.evaluation.set_construction || '';
 
                 /*
-                Eval 14 has multiple adligned adms for scenario_target combos because of the different 
+                Eval 14 has multiple aligned ADMs for scenario_target combos because of the different 
                 set constructions. So I needed to conditionally add more to the key for this eval
                 */
                 const scenarioKey = evalNum === 14 ? `${scenario}_${setConstruction}` : scenario;
