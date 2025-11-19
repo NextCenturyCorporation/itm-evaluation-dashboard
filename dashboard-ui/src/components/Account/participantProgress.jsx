@@ -147,7 +147,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     }
 
     const activateDelete = async () => {
-        if (!isData24HoursOld(rowToDelete)) {
+        if (!canDeleteData(rowToDelete)) {
             setDeleteResultMessage(`${rowToDelete['Participant ID']}'s data was not deleted. Data is not old enough.`);
             setDeleteConfirmationOpen(false);
             setDeleteInput('');
@@ -182,7 +182,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         await refreshData();
     };
 
-    const isData24HoursOld = (row) => {
+    const canDeleteData = (row) => {
+        // Allow immediate deletion for Test data
+        if (row['Participant Type'] === 'Test') {
+            return true;
+        }
+
         const oldEnough = (milliseconds) => {
             // del or text end time does not exist and had not been started, so we ignore
             if (isNaN(milliseconds)) {
@@ -400,7 +405,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     const formatCell = (header, dataSet) => {
         if (header === 'Delete') {
-            if (isData24HoursOld(dataSet)) {
+            if (canDeleteData(dataSet)) {
                 return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
                     <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
                         <DeleteIcon />
