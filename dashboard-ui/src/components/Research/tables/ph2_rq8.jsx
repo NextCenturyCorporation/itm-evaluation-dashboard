@@ -62,8 +62,72 @@ export function PH2RQ8({ evalNum }) {
                 setVariableFields([]);
                 return;
             }
-            const variableFields = variablesRow.slice(startColIdx).filter(Boolean);
-            setVariableFields(variableFields);
+
+            // handle {N} in var defs
+            const rawVariableFields = variablesRow.slice(startColIdx).filter(Boolean);
+
+            // Extract suffix order from the raw fields
+            const suffixOrder = [];
+            for (const field of rawVariableFields) {
+                if (field.includes('{N}')) {
+                    const match = field.match(/_(\w+)$/);
+                    if (match && !suffixOrder.includes(match[1])) {
+                        suffixOrder.push(match[1]);
+                    }
+                }
+            }
+
+            const expandedFields = [];
+            for (const field of rawVariableFields) {
+                if (field.includes('{N}')) {
+                    const isDesert = field.includes('Desert');
+                    const maxN = isDesert ? 9 : 8;
+                    for (let n = 1; n <= maxN; n++) {
+                        expandedFields.push(field.replace('{N}', n));
+                    }
+                } else {
+                    expandedFields.push(field);
+                }
+            }
+            
+            const sortedFields = expandedFields.sort((a, b) => {
+                const getFieldParts = (field) => {
+                    const match = field.match(/(Desert|Urban) Patient(\d+)_(\w+)/);
+                    if (match) {
+                        return {
+                            scenario: match[1],
+                            patient: parseInt(match[2]),
+                            suffix: match[3],
+                            isPatient: true
+                        };
+                    }
+                    return { isPatient: false, field };
+                };
+                
+                const partsA = getFieldParts(a);
+                const partsB = getFieldParts(b);
+                
+                // not patient, maitain order
+                if (!partsA.isPatient || !partsB.isPatient) {
+                    return 0;
+                }
+                
+                // desert before urban
+                if (partsA.scenario !== partsB.scenario) {
+                    return partsA.scenario === 'Desert' ? -1 : 1;
+                }
+                
+                // patient num
+                if (partsA.patient !== partsB.patient) {
+                    return partsA.patient - partsB.patient;
+                }
+                
+                const indexA = suffixOrder.indexOf(partsA.suffix);
+                const indexB = suffixOrder.indexOf(partsB.suffix);
+                return indexA - indexB;
+            });
+            
+            setVariableFields(sortedFields);
         }
         fetchVariableFields();
     }, []);
