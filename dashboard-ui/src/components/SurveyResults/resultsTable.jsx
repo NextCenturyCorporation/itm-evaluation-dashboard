@@ -23,7 +23,8 @@ const EVAL_MAP = {
     6: 'JAN25',
     8: 'PH2 June',
     9: 'PH2 July',
-    10: 'PH2 September'
+    10: 'PH2 September',
+    12: "UK PH1"
 }
 
 const TRUST_MAP = {
@@ -138,7 +139,7 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, {'value': '12', 'label': '12 - UK PH1'}] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -259,7 +260,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             // ignore invalid versions
             const version = entry.surveyVersion;
             // temp filter version 9 data
-            if (!version || version === 9 || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
+            if (!version || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
                 continue;
             }
 
@@ -545,6 +546,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
             allObjs.push(obj);
         }
+        console.log(allEvals)
         // prep filters and data (sort by pid)
         allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
         setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
