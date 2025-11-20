@@ -6,6 +6,7 @@ import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_PH2.xlsx';
+import eval14Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval14.xlsx';
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 
@@ -14,18 +15,6 @@ const getAdmData = gql`
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
 
-const PH2_HEADERS = [
-    'Trial_ID',
-    'Attribute',
-    'Target',
-    'Set',
-    'Probe IDs', 
-    'Target_Type (Group/Individual)',
-    'Aligned Server Session ID',
-    'Aligned ADM Alignment score (ADM|target)',
-    'Baseline ADM Alignment score (ADM|target)',
-    'Baseline Server Session ID'
-];
 
 const evalToName = {
     8: 'June',
@@ -43,11 +32,12 @@ export function PH2RQ2223({ evalNum }) {
     const [attributes, setAttributes] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [sets, setSets] = React.useState([]);
-    const [targetType, ] = React.useState(['Group', 'Individual']);
+    const [setConstructions, setSetConstructions] = React.useState([]);
 
     const [attributeFilters, setAttributeFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [setFilters, setSetFilters] = React.useState([]);
+    const [setConstructionFilters, setSetConstructionFilters] = React.useState([]);
     const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
 
     const [filteredData, setFilteredData] = React.useState([]);
@@ -55,8 +45,33 @@ export function PH2RQ2223({ evalNum }) {
     const openModal = () => setShowDefinitions(true);
     const closeModal = () => setShowDefinitions(false);
 
+    // only eval 14 needs the set construction header
+    const PH2_HEADERS = React.useMemo(() => {
+        const baseHeaders = [
+            'Trial_ID',
+            'Attribute',
+            'Target',
+        ];
+
+        if (evalNum === 14) {
+            baseHeaders.push('Set Construction');
+        }
+
+        baseHeaders.push(
+            'Set',
+            'Probe IDs',
+            'Aligned Server Session ID',
+            'Aligned ADM Alignment score (ADM|target)',
+            'Baseline ADM Alignment score (ADM|target)',
+            'Baseline Server Session ID'
+        );
+
+        return baseHeaders;
+    }, [evalNum]);
+
     // reset all filters when eval num changes
     React.useEffect(() => {
+        setSetConstructionFilters([])
         setAttributeFilters([])
         setTargetFilters([])
         setSetFilters([])
@@ -71,7 +86,7 @@ export function PH2RQ2223({ evalNum }) {
             const allAttributes = [];
             const allTargets = [];
             const allSets = [];
-            const syntheticMap = {};
+            const allSetConstructions = []
             const probeMap = {};
 
             for (const adm of admData) {
@@ -80,26 +95,34 @@ export function PH2RQ2223({ evalNum }) {
                 const scenarioName = adm.evaluation.scenario_name;
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results.alignment_score;
+                const setConstruction = adm.evaluation.set_construction || '';
 
-                const mapKey = scenario + "_" + target + "_" + alignment;
+                /*
+                Eval 14 has multiple aligned ADMs for scenario_target combos because of the different 
+                set constructions. So I needed to conditionally add more to the key for this eval
+                */
+                const scenarioKey = evalNum === 14 ? `${scenario}_${setConstruction}` : scenario;
+                const mapKey = evalNum === 14 
+                    ? `${scenario}_${setConstruction}_${target}_${alignment}`
+                    : `${scenario}_${target}_${alignment}`;
 
-                syntheticMap[mapKey] = adm.synthetic;
                 probeMap[mapKey] = adm.probe_ids || [];
 
                 if (!isDefined(alignment)) continue;
 
-                if (!organized_adms[scenario]) {
-                    organized_adms[scenario] = {
+                if (!organized_adms[scenarioKey]) {
+                    organized_adms[scenarioKey] = {
                         scenarioName,
+                        setConstruction,
                         targets: {}
                     };
                 }
 
-                if (!organized_adms[scenario].targets[target]) {
-                    organized_adms[scenario].targets[target] = {};
+                if (!organized_adms[scenarioKey].targets[target]) {
+                    organized_adms[scenarioKey].targets[target] = {};
                 }
 
-                organized_adms[scenario].targets[target][admName] = {
+                organized_adms[scenarioKey].targets[target][admName] = {
                     alignment,
                     adm
                 };
@@ -107,27 +130,35 @@ export function PH2RQ2223({ evalNum }) {
 
             // First, collect all entries grouped by attribute and set
             const groupedEntries = {};
-            
-            for (const scenario of Object.keys(organized_adms)) {
-                const scenarioName = organized_adms[scenario].scenarioName;
-                const targets = organized_adms[scenario].targets;
+
+            for (const scenarioKey of Object.keys(organized_adms)) {
+                const scenarioName = organized_adms[scenarioKey].scenarioName;
+                const setConstruction = organized_adms[scenarioKey].setConstruction;
+                const targets = organized_adms[scenarioKey].targets;
 
                 const isRandom = scenarioName.includes('Random');
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
                 // exclude full runs (not sets)
                 if (!setMatch) { continue; }
-                const scenarioSet = isRandom
+                if (evalNum === 14 && !isRandom) { continue; }
+                const scenarioSet = evalNum === 14
+                    ? scenarioName
+                    : isRandom
                         ? `P2${evalToName[evalNum]} Dynamic Set ${setMatch[1]}`
                         : `P2${evalToName[evalNum]} Observation Set ${setMatch[1]}`;
+
+                const actualScenario = evalNum === 14 && scenarioKey.includes('_') 
+                    ? scenarioKey.substring(0, scenarioKey.lastIndexOf('_'))
+                    : scenarioKey;
 
 
                 for (const target of Object.keys(targets)) {
                     const entryObj = {};
 
-                    const attribute = scenario.includes('MF') && scenario.includes('AF') ? 'AF-MF' :
-                        scenario.includes('MF') ? 'MF' :
-                            scenario.includes('AF') ? 'AF' :
-                                scenario.includes('SS') ? 'SS' : 'PS';
+                    const attribute = actualScenario.includes('MF') && actualScenario.includes('AF') ? 'AF-MF' :
+                        actualScenario.includes('MF') ? 'MF' :
+                            actualScenario.includes('AF') ? 'AF' :
+                                actualScenario.includes('SS') ? 'SS' : 'PS';
 
                     entryObj['Attribute'] = attribute;
                     allAttributes.push(attribute);
@@ -140,12 +171,15 @@ export function PH2RQ2223({ evalNum }) {
                     entryObj['Set'] = scenarioSet;
                     allSets.push(scenarioSet);
 
-                    entryObj['Target_Type (Group/Individual)'] =
-                        target.toLowerCase().includes('-group') ? 'Group' : 'Individual';
+                    // only applicable for eval 14
+                    if (evalNum === 14) {
+                        entryObj['Set Construction'] = setConstruction || '-';
+                        allSetConstructions.push(setConstruction)
+                    }
 
                     let aligned = null;
                     for (const admName of Object.keys(targets[target])) {
-                        if (admName.includes('aligned') || admName.includes('ComparativeRegression')) {
+                        if (admName.includes('aligned') || admName.includes('ComparativeRegression') || admName.includes('DirectRegression')) {
                             aligned = targets[target][admName];
                             break;
                         }
@@ -159,9 +193,11 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Aligned Server Session ID'] = '-';
                     }
 
-                    const mapKey = scenario + "_" + target + "_" + aligned?.alignment;
-
+                    const mapKey = evalNum === 14 
+                        ? `${actualScenario}_${setConstruction}_${target}_${aligned?.alignment}`
+                        : `${actualScenario}_${target}_${aligned?.alignment}`;
                     const rawProbes = probeMap[mapKey] || [];
+                    
 
                     const formatted = rawProbes.map(raw => {
                         let attr = entryObj['Attribute'];
@@ -173,22 +209,22 @@ export function PH2RQ2223({ evalNum }) {
 
                             const parts = prefix.split('-');
                             if (parts.length >= 2) attr = parts[1];
-                            }
-                            else {
-                                const m = raw.match(/Probe\s*(\d+)/);
-                                number = m ? parseInt(m[1]) : NaN;
-                            }
+                        }
+                        else {
+                            const m = raw.match(/Probe\s*(\d+)/);
+                            number = m ? parseInt(m[1]) : NaN;
+                        }
 
                         return { attr, number };
                     })
-                    .filter(x => !isNaN(x.number))
-                    .sort((a, b) => {
-                        const cmp = a.attr.localeCompare(b.attr);
-                        if (cmp !== 0) return cmp;
-                        return a.number - b.number;
-                    })
-                    .map(x => `Probe-${x.attr}-${x.number}`)
-                    .join(', ');
+                        .filter(x => !isNaN(x.number))
+                        .sort((a, b) => {
+                            const cmp = a.attr.localeCompare(b.attr);
+                            if (cmp !== 0) return cmp;
+                            return a.number - b.number;
+                        })
+                        .map(x => `Probe-${x.attr}-${x.number}`)
+                        .join(', ');
 
                     entryObj['Probe IDs'] = formatted;
 
@@ -209,7 +245,9 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Baseline Server Session ID'] = '-';
                     }
 
-                    const groupKey = `${attribute}_${scenarioSet}`;
+                    const groupKey = evalNum === 14 
+                        ? `${attribute}_${setConstruction}_${scenarioSet}`
+                        : `${attribute}_${scenarioSet}`;
                     if (!groupedEntries[groupKey]) {
                         groupedEntries[groupKey] = [];
                     }
@@ -219,23 +257,23 @@ export function PH2RQ2223({ evalNum }) {
 
             for (const groupKey of Object.keys(groupedEntries)) {
                 const entries = groupedEntries[groupKey];
-                
+
                 entries.sort((a, b) => {
                     const getNumericTarget = (target) => {
                         const match = target.match(/(\d+)/);
                         return match ? parseInt(match[1]) : 0;
                     };
-                    
+
                     const aNum = getNumericTarget(a.Target);
                     const bNum = getNumericTarget(b.Target);
-                    
+
                     if (aNum !== bNum) {
                         return aNum - bNum;
                     }
 
                     return a.Target.localeCompare(b.Target);
                 });
-                
+
                 entries.forEach((entry, index) => {
                     entry['Trial_ID'] = index + 1;
                     allObjs.push(entry);
@@ -243,22 +281,27 @@ export function PH2RQ2223({ evalNum }) {
             }
 
             const extractSetNum = s => {
-               const m = /Set\s+(\d+)$/.exec(s);
-               return m ? parseInt(m[1]) : Number.POSITIVE_INFINITY;
+                const m = /Set\s+(\d+)$/.exec(s);
+                return m ? parseInt(m[1]) : Number.POSITIVE_INFINITY;
             };
-            
+
             allObjs.sort((a, b) => {
-               if (a.Attribute < b.Attribute) return -1;
-               if (a.Attribute > b.Attribute) return 1;
-        
-               const aNum = extractSetNum(a.Set);
-               const bNum = extractSetNum(b.Set);
-               if (aNum !== bNum) return aNum - bNum;
+                if (a.Attribute < b.Attribute) return -1;
+                if (a.Attribute > b.Attribute) return 1;
+                if (evalNum === 14) {
+                    const aSetConst = a['Set Construction'] || '';
+                    const bSetConst = b['Set Construction'] || '';
+                    if (aSetConst < bSetConst) return -1;
+                    if (aSetConst > bSetConst) return 1;
+                }
 
-               if (a.Set < b.Set) return -1;
-               if (a.Set > b.Set) return 1;
+                const aNum = extractSetNum(a.Set);
+                const bNum = extractSetNum(b.Set);
+                if (aNum !== bNum) return aNum - bNum;
+                if (a.Set < b.Set) return -1;
+                if (a.Set > b.Set) return 1;
 
-               return a.Trial_ID - b.Trial_ID;
+                return a.Trial_ID - b.Trial_ID;
             });
 
             if (allObjs.length > 0) {
@@ -272,6 +315,7 @@ export function PH2RQ2223({ evalNum }) {
             setAttributes(Array.from(new Set(allAttributes)));
             setTargets(Array.from(new Set(allTargets)));
             setSets(Array.from(new Set(allSets)));
+            setSetConstructions(Array.from(new Set(allSetConstructions)))
         }
     }, [data, evalNum]);
 
@@ -281,10 +325,10 @@ export function PH2RQ2223({ evalNum }) {
                 (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
                 (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
                 (setFilters.length === 0 || setFilters.includes(x['Set'])) &&
-                (targetTypeFilters.length === 0 || targetTypeFilters.includes(x['Target_Type (Group/Individual)']))
+                (setConstructionFilters.length === 0 || setConstructionFilters.includes(x['Set Construction']))
             ));
         }
-    }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters]);
+    }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters, setConstructionFilters]);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
@@ -322,6 +366,19 @@ export function PH2RQ2223({ evalNum }) {
                         )}
                         onChange={(_, newVal) => setTargetFilters(newVal)}
                     />
+                    {evalNum === 14 && 
+                        <Autocomplete
+                        multiple
+                        options={setConstructions}
+                        value={setConstructionFilters}
+                        filterSelectedOptions
+                        size="small"
+                        renderInput={(params) => (
+                            <TextField {...params} label="Set Construction" />
+                        )}
+                        onChange={(_, newVal) => setSetConstructionFilters(newVal)}
+                    />
+                    }
 
                     <Autocomplete
                         multiple
@@ -333,18 +390,6 @@ export function PH2RQ2223({ evalNum }) {
                             <TextField {...params} label="Set" />
                         )}
                         onChange={(_, newVal) => setSetFilters(newVal)}
-                    />
-
-                    <Autocomplete
-                        multiple
-                        options={targetType}
-                        value={targetTypeFilters}
-                        filterSelectedOptions
-                        size="small"
-                        renderInput={(params) => (
-                            <TextField {...params} label="Target Type" />
-                        )}
-                        onChange={(_, newVal) => setTargetTypeFilters(newVal)}
                     />
                 </div>
 
@@ -369,20 +414,20 @@ export function PH2RQ2223({ evalNum }) {
                     <tbody>
                         {filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
-                            {PH2_HEADERS.map((val) => {
-                                if (val === 'Probe IDs') {
-                                return (
-                                    <td key={`cell-${index}-probe`}>
-                                        {dataSet['Probe IDs'] ?? '-'}
-                                    </td>
-                                );
-                                }
-                                return (
-                                <td key={`cell-${index}-${val}`}>
-                                    {dataSet[val] ?? '-'}
-                                </td>
-                                );
-                            })}
+                                {PH2_HEADERS.map((val) => {
+                                    if (val === 'Probe IDs') {
+                                        return (
+                                            <td key={`cell-${index}-probe`}>
+                                                {dataSet['Probe IDs'] ?? '-'}
+                                            </td>
+                                        );
+                                    }
+                                    return (
+                                        <td key={`cell-${index}-${val}`}>
+                                            {dataSet[val] ?? '-'}
+                                        </td>
+                                    );
+                                })}
                             </tr>
                         ))}
                     </tbody>
@@ -394,7 +439,7 @@ export function PH2RQ2223({ evalNum }) {
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                     <RQDefinitionTable
                         downloadName={`Definitions_RQ22_23_PH2.xlsx`}
-                        xlFile={ph2DefinitionXLFile}
+                        xlFile={evalNum === 14 ? eval14Defs : ph2DefinitionXLFile}
                     />
                 </div>
             </Modal>

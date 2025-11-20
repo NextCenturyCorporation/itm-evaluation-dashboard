@@ -62,8 +62,72 @@ export function PH2RQ8({ evalNum }) {
                 setVariableFields([]);
                 return;
             }
-            const variableFields = variablesRow.slice(startColIdx).filter(Boolean);
-            setVariableFields(variableFields);
+
+            // handle {N} in var defs
+            const rawVariableFields = variablesRow.slice(startColIdx).filter(Boolean);
+
+            // Extract suffix order from the raw fields
+            const suffixOrder = [];
+            for (const field of rawVariableFields) {
+                if (field.includes('{N}')) {
+                    const match = field.match(/_(\w+)$/);
+                    if (match && !suffixOrder.includes(match[1])) {
+                        suffixOrder.push(match[1]);
+                    }
+                }
+            }
+
+            const expandedFields = [];
+            for (const field of rawVariableFields) {
+                if (field.includes('{N}')) {
+                    const isDesert = field.includes('Desert');
+                    const maxN = isDesert ? 9 : 8;
+                    for (let n = 1; n <= maxN; n++) {
+                        expandedFields.push(field.replace('{N}', n));
+                    }
+                } else {
+                    expandedFields.push(field);
+                }
+            }
+            
+            const sortedFields = expandedFields.sort((a, b) => {
+                const getFieldParts = (field) => {
+                    const match = field.match(/(Desert|Urban) Patient(\d+)_(\w+)/);
+                    if (match) {
+                        return {
+                            scenario: match[1],
+                            patient: parseInt(match[2]),
+                            suffix: match[3],
+                            isPatient: true
+                        };
+                    }
+                    return { isPatient: false, field };
+                };
+                
+                const partsA = getFieldParts(a);
+                const partsB = getFieldParts(b);
+                
+                // not patient, maitain order
+                if (!partsA.isPatient || !partsB.isPatient) {
+                    return 0;
+                }
+                
+                // desert before urban
+                if (partsA.scenario !== partsB.scenario) {
+                    return partsA.scenario === 'Desert' ? -1 : 1;
+                }
+                
+                // patient num
+                if (partsA.patient !== partsB.patient) {
+                    return partsA.patient - partsB.patient;
+                }
+                
+                const indexA = suffixOrder.indexOf(partsA.suffix);
+                const indexB = suffixOrder.indexOf(partsB.suffix);
+                return indexA - indexB;
+            });
+            
+            setVariableFields(sortedFields);
         }
         fetchVariableFields();
     }, []);
@@ -75,7 +139,7 @@ export function PH2RQ8({ evalNum }) {
             const allAttributes = [];
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
-            const evals = evalNum >= 8 ? [8, 9, 10] : [evalNum];
+            const evals = evalNum !== 12 ? [8, 9, 10] : [evalNum]
 
             for (let evalNum of evals) {
                 const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
@@ -205,15 +269,25 @@ export function PH2RQ8({ evalNum }) {
                 return 0;
             });
 
+            // if a pid has no fields populated, filter from table
+            const filteredObjs = allObjs.filter(row => {
+                return Object.entries(row).some(([key, value]) => {
+                    if (key === 'Participant_ID' || key === 'Probe Set Assessment') {
+                        return false;
+                    }
+                    return value !== undefined && value !== null && value !== '';
+                });
+            });
+
             // if none of the rows have a value for a key, don't include it in the headers
-            const allKeys = Object.keys(allObjs[0] || {});
+            const allKeys = Object.keys(filteredObjs[0] || {});
             const filteredHeaders = allKeys.filter(key =>
-                allObjs.some(row => row[key] !== undefined && row[key] !== null && row[key] !== '')
+                filteredObjs.some(row => row[key] !== undefined && row[key] !== null && row[key] !== '')
             );
 
             setHeaders(filteredHeaders);
-            setFormattedData(allObjs);
-            setFilteredData(allObjs);
+            setFormattedData(filteredObjs);
+            setFilteredData(filteredObjs);
             setAttributes(Array.from(new Set(allAttributes)));
         }
     }, [dataSim, dataTextResults, dataParticipantLog, evalNum, variableFields]);
@@ -229,7 +303,7 @@ export function PH2RQ8({ evalNum }) {
 
     React.useEffect(() => {
         setFilteredData(formattedData)
-    }, [ formattedData]);
+    }, [formattedData]);
 
     if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;

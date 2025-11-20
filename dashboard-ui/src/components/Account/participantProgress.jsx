@@ -147,7 +147,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     }
 
     const activateDelete = async () => {
-        if (!isData24HoursOld(rowToDelete)) {
+        if (!canDeleteData(rowToDelete)) {
             setDeleteResultMessage(`${rowToDelete['Participant ID']}'s data was not deleted. Data is not old enough.`);
             setDeleteConfirmationOpen(false);
             setDeleteInput('');
@@ -182,7 +182,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         await refreshData();
     };
 
-    const isData24HoursOld = (row) => {
+    const canDeleteData = (row) => {
+        // Allow immediate deletion for Test data
+        if (row['Participant Type'] === 'Test') {
+            return true;
+        }
+
         const oldEnough = (milliseconds) => {
             // del or text end time does not exist and had not been started, so we ignore
             if (isNaN(milliseconds)) {
@@ -400,7 +405,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     const formatCell = (header, dataSet) => {
         if (header === 'Delete') {
-            if (isData24HoursOld(dataSet)) {
+            if (canDeleteData(dataSet)) {
                 return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
                     <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
                         <DeleteIcon />
@@ -436,11 +441,21 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             }
             const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
             const isUK = selectedPhase === 'UK Phase 1';
+            const isEval13 = dataSet['_evalNumber'] === 13;
+
             // phase dependent
-            const textThreshold = isPH2OrUK ? 4 : 5;
+            let textThreshold;
+            if (isEval13) {
+                textThreshold = 12;
+            } else if (isPH2OrUK) {
+                textThreshold = 4;
+            } else {
+                textThreshold = 5;
+            }
+
             const delThreshold = isUK ? 3 : (isPH2OrUK && dataSet['_evalNumber'] !== 10) ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
-                (header === 'Text' && val >= textThreshold) ||
+                (header === 'Text' && val == textThreshold) ||
                 (header === 'Sim Count' && (val === 4 || (isPH2OrUK && val === 2)))) {
                 return 'dk-green-cell';
             }
@@ -562,9 +577,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 delete x[h];
             }
             delete x['_phase'];
-            delete x['_evalNumber'];
             // remove fields that aren't in the current phase's headers
-            const keysToDelete = Object.keys(x).filter(key => !currentHeaders.includes(key));
+            const keysToDelete = Object.keys(x).filter(key =>
+                !currentHeaders.includes(key) && key !== '_evalNumber'
+            );
             for (const key of keysToDelete) {
                 delete x[key];
             }
