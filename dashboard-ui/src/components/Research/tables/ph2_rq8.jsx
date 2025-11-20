@@ -205,15 +205,25 @@ export function PH2RQ8({ evalNum }) {
                 return 0;
             });
 
+            // if a pid has no fields populated, filter from table
+            const filteredObjs = allObjs.filter(row => {
+                return Object.entries(row).some(([key, value]) => {
+                    if (key === 'Participant_ID' || key === 'Probe Set Assessment') {
+                        return false;
+                    }
+                    return value !== undefined && value !== null && value !== '';
+                });
+            });
+
             // if none of the rows have a value for a key, don't include it in the headers
-            const allKeys = Object.keys(allObjs[0] || {});
+            const allKeys = Object.keys(filteredObjs[0] || {});
             const filteredHeaders = allKeys.filter(key =>
-                allObjs.some(row => row[key] !== undefined && row[key] !== null && row[key] !== '')
+                filteredObjs.some(row => row[key] !== undefined && row[key] !== null && row[key] !== '')
             );
 
             setHeaders(filteredHeaders);
-            setFormattedData(allObjs);
-            setFilteredData(allObjs);
+            setFormattedData(filteredObjs);
+            setFilteredData(filteredObjs);
             setAttributes(Array.from(new Set(allAttributes)));
         }
     }, [dataSim, dataTextResults, dataParticipantLog, evalNum, variableFields]);
@@ -229,7 +239,7 @@ export function PH2RQ8({ evalNum }) {
 
     React.useEffect(() => {
         setFilteredData(formattedData)
-    }, [ formattedData]);
+    }, [formattedData]);
 
     if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
