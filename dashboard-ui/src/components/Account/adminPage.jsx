@@ -142,6 +142,12 @@ const GET_SPECIFIC_CONFIGS = gql`
     }
 `;
 
+export const GET_ALL_SURVEY_VERSIONS = gql`
+  query GetAllSurveyVersions {
+    getAllSurveyVersions
+  }
+`;
+
 function AdminConfirmationModal({ show, onCancel, onConfirm, pendingChanges, options }) {
     return (
         <Modal show={show} onHide={onCancel} centered>
@@ -689,21 +695,24 @@ function AdminPage({ currentUser, updateUserHandler }) {
         }
     });
 
+    const { loading: allVersionsLoading, error: allVersionsError, data: allVersionsData} = useQuery(
+        GET_ALL_SURVEY_VERSIONS, {fetchPolicy: 'no-cache'}
+    );
+
     useEffect(() => {
         if (surveyVersionData && surveyVersionData.getCurrentSurveyVersion) {
             setLocalSurveyVersion(surveyVersionData.getCurrentSurveyVersion);
         }
     }, [surveyVersionData]);
 
+    // Sets surveyVersions to be all surveys
     useEffect(() => {
-        if (surveyConfigs) {
-            const versions = Object.values(surveyConfigs).map(config => config.version);
-            const uniqueVersions = [...new Set(versions)]
-                .sort((a, b) => a - b)
-                .filter(version => version !== surveyVersion);
-            setSurveyVersions(uniqueVersions);
-        }
-    }, [surveyConfigs, surveyVersion]);
+    if (!allVersionsData || !allVersionsData.getAllSurveyVersions) return;
+
+    const versions = allVersionsData.getAllSurveyVersions;
+
+    setSurveyVersions(versions);
+    }, [allVersionsData, surveyVersion]);
 
     const handleSurveyVersionChange = (event) => {
         event.preventDefault();
