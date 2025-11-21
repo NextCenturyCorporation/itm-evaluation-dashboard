@@ -162,9 +162,7 @@ export const ADMProbeResponses = (props) => {
 
     useEffect(() => {
         if (alignmentData?.getAlignmentTargetsPerScenario) {
-            console.log('Raw alignment data:', alignmentData.getAlignmentTargetsPerScenario);
             const sortedTargets = [...alignmentData.getAlignmentTargetsPerScenario].sort(multiSort);
-            console.log('Sorted alignment targets:', sortedTargets);
             setAlignmentTargets(sortedTargets);
         }
     }, [alignmentData]);
@@ -276,11 +274,9 @@ export const ADMProbeResponses = (props) => {
         }
     };
 
-    const sortedScenarios = scenarioData?.getScenarioNamesByEval?.sort((a, b) => {
-        const aString = formatScenarioString(a._id.id);
-        const bString = formatScenarioString(b._id.id);
-        return aString.localeCompare(bString);
-    });
+    const sortedScenarios = scenarioData?.getScenarioNamesByEval
+        ?.filter(s => currentEval !== 14 || !s._id.id.toLowerCase().includes('af-mf'))
+        ?.sort((a, b) => formatScenarioString(a._id.id).localeCompare(formatScenarioString(b._id.id)));
 
     const getCurrentScenarioName = () => {
         const currentScenarioObj = sortedScenarios?.find(s => s._id.id === currentScenario);
@@ -500,21 +496,8 @@ export const ADMProbeResponses = (props) => {
                                         {({ loading, error, data }) => {
                                             if (loading) return <div>Loading...</div>;
                                             if (error) return <div>Error loading test data</div>;
-                                            console.log('Raw query response for ADM:', adm, data);
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
-
-                                            console.log('testDataArray:', testDataArray);
-                                            console.log('testDataArray length:', testDataArray.length);
-
-                                            if (testDataArray.length > 0) {
-                                                console.log('First item structure:', testDataArray[0]);
-                                                console.log('First item keys:', Object.keys(testDataArray[0]));
-                                                console.log('First item probe_ids:', testDataArray[0].probe_ids);
-                                                console.log('First item probe_responses:', testDataArray[0].probe_responses);
-                                                console.log('First item data:', testDataArray[0].data);
-                                                console.log('First item alignmentTarget:', testDataArray[0].alignmentTarget);
-                                            }
 
                                             if (testDataArray.length === 0) return <div>No data available</div>;
 
