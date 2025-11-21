@@ -352,7 +352,7 @@ export const ADMProbeResponses = (props) => {
 
             sortedProbeColumns.forEach(probeId => {
                 row[probeId] = currentEval === 14
-                    ? getChoiceForProbe(null, probeId, probe_responses)
+                    ? getChoiceForProbe(data.history, probeId, probe_responses)
                     : getChoiceForProbe(data.history, probeId) || '-';
             });
 
@@ -566,7 +566,7 @@ export const ADMProbeResponses = (props) => {
                                                                     {sortedProbeColumns.map(probeId => (
                                                                         <td key={`${alignmentTarget}-${probeId}`}>
                                                                             {currentEval === 14
-                                                                                ? getChoiceForProbe(null, probeId, probe_responses)
+                                                                                ? getChoiceForProbe(data.history, probeId, probe_responses)
                                                                                 : getChoiceForProbe(data.history, probeId) || '-'}
                                                                         </td>
                                                                     ))}
