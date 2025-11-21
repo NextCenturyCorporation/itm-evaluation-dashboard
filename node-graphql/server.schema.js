@@ -314,6 +314,29 @@ const resolvers = {
 
       for (const target of args.alignmentTargets) {
         let queryObj = {
+          scenario: args.scenarioID,
+          adm_name: args.admName,
+          alignment_target: target
+        };
+
+        if (args.evalNumber) {
+          queryObj.evalNumber = args.evalNumber;
+        }
+
+        let result = await context.db.collection('admTargetRuns').findOne(queryObj);
+
+        if (result) {
+          results.push({
+            alignmentTarget: target,
+            data: result,
+            probe_ids: result.probe_ids,
+            probe_responses: result.probe_responses
+          });
+          continue;
+        }
+
+        // fallback
+        queryObj = {
           $and: [
             { "history.response.id": args.scenarioID }
           ]
@@ -329,9 +352,7 @@ const resolvers = {
 
         queryObj[args.admQueryStr] = args.admName;
 
-        const result = await context.db.collection('admTargetRuns')
-          .findOne(queryObj)
-          .then(result => result);
+        result = await context.db.collection('admTargetRuns').findOne(queryObj);
 
         if (result) {
           results.push({
