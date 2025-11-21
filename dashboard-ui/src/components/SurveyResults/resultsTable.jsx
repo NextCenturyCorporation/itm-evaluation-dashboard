@@ -24,7 +24,8 @@ const EVAL_MAP = {
     8: 'PH2 June',
     9: 'PH2 July',
     10: 'PH2 September',
-    12: "UK PH1"
+    12: "UK PH1",
+    13: 'PH2 October'
 }
 
 const TRUST_MAP = {
@@ -139,7 +140,7 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, {'value': '12', 'label': '12 - UK PH1'}] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -260,7 +261,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             // ignore invalid versions
             const version = entry.surveyVersion;
             // temp filter version 9 data
-            if (!version || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
+            if ((!version && obj['eval'] !== 13) || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
                 continue;
             }
 
@@ -281,7 +282,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 continue;
             }
 
-            const lastPage = entry['Post-Scenario Measures'];
+            let lastPage = entry['Post-Scenario Measures'];
             if (showLegacy && !lastPage) {
                 // don't ignore those without last page in versions 4 & 5 bc of 12/10 collection problem
                 continue;
@@ -304,20 +305,25 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             obj['Start Time'] = entry.startTime ? new Date(entry.startTime)?.toLocaleString() : null;
             obj['End Time'] = new Date(entry.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
-            obj['Total Time (Minutes)'] = entry.startTime ? formatTimeMinutes(timeDifSeconds) : null;
-            obj['Total Time (mm:ss)'] = entry.startTime ? formatTimeMMSS(timeDifSeconds) : null;
+            if (lastPage?.questions) {
+                obj['Total Time (Minutes)'] = entry.startTime ? formatTimeMinutes(timeDifSeconds) : null;
+                obj['Total Time (mm:ss)'] = entry.startTime ? formatTimeMMSS(timeDifSeconds) : null;
+            }
             if (lastPage) {
                 obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
-                for (const q of Object.keys(lastPage.questions)) {
+                console.log(lastPage)
+                for (const q of Object.keys(lastPage.questions ?? lastPage)) {
+                    // different format for demographic quesitons only
+                    const response = lastPage.questions?.[q]?.response ?? lastPage[q]
                     if (q == 'question7') {
-                        obj['Specify specialty, level, year or other specific information about your role'] = lastPage.questions[q].response?.toString();
+                        obj['Specify specialty, level, year or other specific information about your role'] = response?.toString();
                     }
                     else if (!q.includes('What is your current role')) {
-                        obj[q] = lastPage.questions[q].response?.toString();
+                        obj[q] = response?.toString();
                     }
                     else {
-                        const roles = lastPage.questions[q].response?.toString();
+                        const roles = response?.toString();
                         allRoles = [...allRoles, ...roles.split(',')];
                         obj[q] = roles.replaceAll(',', '; ');
                     }
@@ -518,7 +524,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                     const explanation = page.questions[`${pageName}: Explain your response to the delegation preference question`]?.response;
                                     const percentDelegation = page.questions[`${pageName}: Percent Delegation`]?.response;
 
-                                    const medicNames = pageName.split(' vs ').map(name => name.trim()); 
+                                    const medicNames = pageName.split(' vs ').map(name => name.trim());
                                     const alignments = medicNames.map(name => {
                                         const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
                                         return MULTI_KDMA_MAP[alignment] || alignment;
