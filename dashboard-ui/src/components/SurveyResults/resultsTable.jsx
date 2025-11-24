@@ -14,7 +14,7 @@ import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf'
 import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
 import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
-import { getEval89Attributes } from "../Research/utils";
+import { getEval89Attributes, getEval12Attributes } from "../Research/utils";
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -393,11 +393,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
                         if (showPh2) {
-                            const att = getEval89Attributes(page.admTarget, page.scenarioIndex);
+                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget): getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
                             if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
-                                target = page.admTarget.split("-").slice(-1)[0];
+                                target = att !== 'VOL' ? page.admTarget.split("-").slice(-1)[0] : page.admTarget;
                             }
                             else {
                                 target = MULTI_KDMA_MAP[att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1)];
