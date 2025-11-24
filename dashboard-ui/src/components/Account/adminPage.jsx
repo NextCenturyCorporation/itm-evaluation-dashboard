@@ -583,8 +583,14 @@ function AdminPage({ currentUser, updateUserHandler }) {
         fetchPolicy: 'no-cache',
         onCompleted: (data) => {
             if (data && data.getTextEvalOptions) {
-                const includedOptions = data.getTextEvalOptions.filter((entry) => evalNameToNumber[entry])
-                setTextEvalOptions(includedOptions);
+                const options = data.getTextEvalOptions
+                    .filter((name) => evalNameToNumber[name])
+                    .map((name) => ({
+                        evalName: name,
+                        evalNumber: evalNameToNumber[name]
+                    }));
+
+                setTextEvalOptions(options);
             }
         }
     });
@@ -910,9 +916,11 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                             onChange={handleTextEvalChange}
                                         >
                                             <option value="" disabled>Select evaluation</option>
-                                            {textEvalOptions.map((evalOption) => (
-                                                <option key={evalOption} value={evalOption}>
-                                                    {evalOption}
+                                            {textEvalOptions
+                                            .sort((a, b) => a.evalNumber - b.evalNumber)
+                                            .map((evalOption) => (
+                                                <option key={evalOption.evalName} value={evalOption.evalName}>
+                                                    {evalOption.evalNumber}: {evalOption.evalName}
                                                 </option>
                                             ))}
                                         </Form.Select>
