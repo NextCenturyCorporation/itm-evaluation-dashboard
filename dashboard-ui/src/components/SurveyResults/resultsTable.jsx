@@ -308,10 +308,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             if (lastPage?.questions) {
                 obj['Total Time (Minutes)'] = entry.startTime ? formatTimeMinutes(timeDifSeconds) : null;
                 obj['Total Time (mm:ss)'] = entry.startTime ? formatTimeMMSS(timeDifSeconds) : null;
-            }
-            if (lastPage) {
                 obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
+            }
+            if (lastPage) {
                 for (const q of Object.keys(lastPage.questions ?? lastPage)) {
                     // different format for demographic quesitons only
                     const response = lastPage.questions?.[q]?.response ?? lastPage[q]
