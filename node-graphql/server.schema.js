@@ -54,6 +54,7 @@ const typeDefs = gql`
     getEvalIdsForHumanResults: [JSON] @complexity(value: 20)
     getAllRawSimData: [JSON] @complexity(value: 180)
     getAllSurveyConfigs: [JSON] @complexity(value: 200)
+    getAllSurveyVersions: [Float] @complexity(value: 10)
     getAllTextBasedConfigs: [JSON] @complexity(value: 150)
     getAllImageUrls: [JSON] @complexity(value: 150)
     getAllTextBasedImages: [JSON] @complexity(value: 200)
@@ -490,6 +491,21 @@ const resolvers = {
     },
     getAllSurveyConfigs: async (obj, args, context, inflow) => {
       return await context.db.collection('delegationConfig').find().toArray().then(result => { return result; });
+    },
+    getAllSurveyVersions: async (obj, args, context, info) => {
+      // Get each unique survey version from the delegationConfig collection
+      const versions = await context.db
+        .collection("delegationConfig")
+        .distinct("survey.version");
+
+      // Ensure they are numbers and sort them
+      const numericVersions = versions
+        .map((v) => Number(v))
+        .filter((v) => !Number.isNaN(v));
+
+      numericVersions.sort((a, b) => a - b);
+
+      return numericVersions;
     },
     getAllImageUrls: async (obj, args, context, inflow) => {
       return await context.db.collection('delegationMedia').find().toArray().then(result => { return result; });
