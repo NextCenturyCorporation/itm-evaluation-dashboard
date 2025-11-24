@@ -14,9 +14,150 @@ const httpLink = createHttpLink({
   uri: API_URL
 });
 
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        getAllSurveyResultsByEval: {
+          keyArgs: ['evalNumber'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllScenarioResultsByEval: {
+          keyArgs: ['evalNumber'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllSimAlignmentByEval: {
+          keyArgs: ['evalNumber'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllHistoryByEvalNumber: {
+          keyArgs: ['evalNumber', 'showMainPage'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getGroupAdmAlignmentByEval: {
+          keyArgs: ['evalNumber'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getPerformerADMsForScenario: {
+          keyArgs: ['scenarioID', 'evalNumber', 'admQueryStr'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAlignmentTargetsPerScenario: {
+          keyArgs: ['scenarioID', 'evalNumber', 'admName'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getTestByADMandScenario: {
+          keyArgs: ['admQueryStr', 'scenarioID', 'admName', 'alignmentTarget', 'evalNumber'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllTestDataForADM: {
+          keyArgs: ['admQueryStr', 'scenarioID', 'admName', 'alignmentTargets', 'evalNumber'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getSurveyConfigByVersion: {
+          keyArgs: ['version'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getTextBasedConfigByEval: {
+          keyArgs: ['evalName'],
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllSurveyResults: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllScenarioResults: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllSimAlignment: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getParticipantLog: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getHumanToADMComparison: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getADMTextProbeMatches: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getMultiKdmaAnalysisData: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllSurveyConfigs: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllTextBasedConfigs: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllImageUrls: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+        getAllTextBasedImages: {
+          keyArgs: false,
+          merge(existing, incoming) {
+            return incoming;
+          },
+        },
+      },
+    },
+  },
+});
+
 const apolloClient = new ApolloClient({
   link: httpLink,
-  cache: new InMemoryCache()
+  cache,
 });
 
 const accountsGraphQL = new GraphQLClient({
