@@ -278,7 +278,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const logData = pLog.find(
                 log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((version >= 6) && !logData) {
+            if ((version >= 6 || !version) && !logData) {
                 continue;
             }
 
@@ -312,7 +312,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             if (lastPage) {
                 obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
-                console.log(lastPage)
                 for (const q of Object.keys(lastPage.questions ?? lastPage)) {
                     // different format for demographic quesitons only
                     const response = lastPage.questions?.[q]?.response ?? lastPage[q]
@@ -552,7 +551,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
             allObjs.push(obj);
         }
-        console.log(allEvals)
         // prep filters and data (sort by pid)
         allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
         setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
