@@ -14,7 +14,7 @@ import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf'
 import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
 import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
-import { getEval89Attributes } from "../Research/utils";
+import { getEval89Attributes, getEval12Attributes } from "../Research/utils";
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -23,7 +23,9 @@ const EVAL_MAP = {
     6: 'JAN25',
     8: 'PH2 June',
     9: 'PH2 July',
-    10: 'PH2 September'
+    10: 'PH2 September',
+    12: "UK PH1",
+    13: 'PH2 October'
 }
 
 const TRUST_MAP = {
@@ -138,7 +140,7 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -259,7 +261,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             // ignore invalid versions
             const version = entry.surveyVersion;
             // temp filter version 9 data
-            if (!version || version === 9 || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
+            if ((!version && obj['eval'] !== 13) || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
                 continue;
             }
 
@@ -276,11 +278,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const logData = pLog.find(
                 log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((version >= 6) && !logData) {
+            if ((version >= 6 || !version) && !logData) {
                 continue;
             }
 
-            const lastPage = entry['Post-Scenario Measures'];
+            let lastPage = entry['Post-Scenario Measures'];
             if (showLegacy && !lastPage) {
                 // don't ignore those without last page in versions 4 & 5 bc of 12/10 collection problem
                 continue;
@@ -303,20 +305,24 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             obj['Start Time'] = entry.startTime ? new Date(entry.startTime)?.toLocaleString() : null;
             obj['End Time'] = new Date(entry.timeComplete)?.toLocaleString();
             const timeDifSeconds = (new Date(entry.timeComplete).getTime() - new Date(entry.startTime).getTime()) / 1000;
-            obj['Total Time (Minutes)'] = entry.startTime ? formatTimeMinutes(timeDifSeconds) : null;
-            obj['Total Time (mm:ss)'] = entry.startTime ? formatTimeMMSS(timeDifSeconds) : null;
-            if (lastPage) {
+            if (lastPage?.questions) {
+                obj['Total Time (Minutes)'] = entry.startTime ? formatTimeMinutes(timeDifSeconds) : null;
+                obj['Total Time (mm:ss)'] = entry.startTime ? formatTimeMMSS(timeDifSeconds) : null;
                 obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
-                for (const q of Object.keys(lastPage.questions)) {
+            }
+            if (lastPage) {
+                for (const q of Object.keys(lastPage.questions ?? lastPage)) {
+                    // different format for demographic quesitons only
+                    const response = lastPage.questions?.[q]?.response ?? lastPage[q]
                     if (q == 'question7') {
-                        obj['Specify specialty, level, year or other specific information about your role'] = lastPage.questions[q].response?.toString();
+                        obj['Specify specialty, level, year or other specific information about your role'] = response?.toString();
                     }
                     else if (!q.includes('What is your current role')) {
-                        obj[q] = lastPage.questions[q].response?.toString();
+                        obj[q] = response?.toString();
                     }
                     else {
-                        const roles = lastPage.questions[q].response?.toString();
+                        const roles = response?.toString();
                         allRoles = [...allRoles, ...roles.split(',')];
                         obj[q] = roles.replaceAll(',', '; ');
                     }
@@ -386,11 +392,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
                         if (showPh2) {
-                            const att = getEval89Attributes(page.admTarget, page.scenarioIndex);
+                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget): getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
                             if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
-                                target = page.admTarget.split("-").slice(-1)[0];
+                                target = att !== 'VOL' ? page.admTarget.split("-").slice(-1)[0] : page.admTarget;
                             }
                             else {
                                 target = MULTI_KDMA_MAP[att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1)];
@@ -517,7 +523,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                     const explanation = page.questions[`${pageName}: Explain your response to the delegation preference question`]?.response;
                                     const percentDelegation = page.questions[`${pageName}: Percent Delegation`]?.response;
 
-                                    const medicNames = pageName.split(' vs ').map(name => name.trim()); 
+                                    const medicNames = pageName.split(' vs ').map(name => name.trim());
                                     const alignments = medicNames.map(name => {
                                         const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
                                         return MULTI_KDMA_MAP[alignment] || alignment;
