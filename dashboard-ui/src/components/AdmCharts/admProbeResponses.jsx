@@ -10,12 +10,6 @@ import '../../css/aggregateResults.css';
 import { multiSort } from '../Results/utils';
 import { PAGES, getEvalOptionsForPage } from '../Research/utils';
 
-const get_eval_name_numbers = gql`
-    query getEvalNameNumbers {
-        getEvalNameNumbers
-    }
-`;
-
 const scenario_names_aggregation = gql`
     query getScenarioNamesByEval($evalNumber: Float!) {
         getScenarioNamesByEval(evalNumber: $evalNumber)
@@ -150,9 +144,8 @@ export const ADMProbeResponses = (props) => {
     const [allTableData, setAllTableData] = useState({});
     const processedDataRef = useRef({});
 
-    const { loading: evalNameLoading, error: evalNameError, data: evalNameData } = useQuery(get_eval_name_numbers);
     const { loading: scenarioLoading, error: scenarioError, data: scenarioData } = useQuery(scenario_names_aggregation, {
-        variables: { evalNumber: currentEval },
+        variables: { evalNumber: currentEval === 14 ? 9 : currentEval },
         skip: !currentEval
     });
 
@@ -160,6 +153,7 @@ export const ADMProbeResponses = (props) => {
         variables: { evalNumber: currentEval, scenarioID: currentScenario },
         skip: !currentScenario
     });
+
     const { loading: admLoading, error: admError, data: admData } = useQuery(performer_adm_by_scenario, {
         variables: { admQueryStr: queryString, scenarioID: currentScenario, evalNumber: currentEval },
         skip: !currentScenario,
@@ -200,25 +194,31 @@ export const ADMProbeResponses = (props) => {
         processedDataRef.current = {};
     }, [currentEval]);
 
-    const getChoiceForProbe = (history, probeId) => {
-        const probeResponses = history
+    const getChoiceForProbe = (history, probeId, probeResponses = null) => {
+
+        if (probeResponses) {
+            const probeResponse = probeResponses.find(pr => pr[probeId] !== undefined);
+            return probeResponse?.[probeId] || '-';
+        }
+
+        const probeResponsesHistory = history
             .filter(entry => entry.command === 'Respond to TA1 Probe')
             .filter(entry => entry.parameters?.probe_id === probeId);
 
         // no response found
-        if (probeResponses.length === 0) {
+        if (probeResponsesHistory.length === 0) {
             return '-';
         }
 
         // more than response, include all of them
-        if (probeResponses.length > 1) {
-            return probeResponses
+        if (probeResponsesHistory.length > 1) {
+            return probeResponsesHistory
                 .map(response => response.parameters?.choice || '-')
                 .join(', ');
         }
 
         // normal case, one response
-        return probeResponses[0].parameters?.choice || '-';
+        return probeResponsesHistory[0].parameters?.choice || '-';
     };
 
     const getKdma = (data, alignmentTarget) => {
@@ -241,8 +241,6 @@ export const ADMProbeResponses = (props) => {
         return data.history.find(entry => entry.command === 'TA1 Session Alignment')?.response?.kdma_values?.find((kdma) => kdma.kdma === attribute)?.value;
     }
 
-    if (evalNameLoading) return <div>Loading...</div>;
-    if (evalNameError) return <div>Error loading evals</div>;
 
     const setEval = (target) => {
         setCurrentEval(target);
@@ -276,19 +274,21 @@ export const ADMProbeResponses = (props) => {
         }
     };
 
-    const sortedScenarios = scenarioData?.getScenarioNamesByEval?.sort((a, b) => {
-        const aString = formatScenarioString(a._id.id);
-        const bString = formatScenarioString(b._id.id);
-        return aString.localeCompare(bString);
-    });
+    const sortedScenarios = scenarioData?.getScenarioNamesByEval
+        ?.filter(s => currentEval !== 14 || !s._id.id.toLowerCase().includes('af-mf'))
+        ?.sort((a, b) => formatScenarioString(a._id.id).localeCompare(formatScenarioString(b._id.id)));
 
     const getCurrentScenarioName = () => {
         const currentScenarioObj = sortedScenarios?.find(s => s._id.id === currentScenario);
         return currentScenarioObj ? formatScenarioString(currentScenarioObj._id.id) : '';
     };
 
-    const getSessionId = (history) => {
-        const sessionEntry = history.find(entry => entry.command === 'TA1 Session ID');
+    const getSessionId = (data) => {
+        if (data?.results?.ta1_session_id) {
+            return data.results.ta1_session_id;
+        }
+
+        const sessionEntry = data?.history?.find(entry => entry.command === 'TA1 Session ID');
         return sessionEntry?.response || '-';
     };
 
@@ -311,27 +311,12 @@ export const ADMProbeResponses = (props) => {
     };
 
     const formatTableData = (testDataArray, adm = null) => {
-        return testDataArray.map(({ alignmentTarget, data }) => {
-            const row = adm ?
-                {
-                    'ADM': formatADMString(adm),
-                    'Alignment Target': alignmentTarget,
-                    'TA1 Session ID': getSessionId(data.history)
-                } :
-                {
-                    'Alignment Target': alignmentTarget,
-                    'TA1 Session ID': getSessionId(data.history)
-                };
-            if (currentEval === 7) {
-                const kdmaValues = getKdmaTargets(data);
-                row['MJ KDMA'] = kdmaValues.mj;
-                row['IO KDMA'] = kdmaValues.io;
-            } else if (getCurrentScenarioName().includes('Adept')) {
-                row['KDMA'] = getKdma(data, alignmentTarget);
-            }
-
-            const probeColumns = new Set();
-            testDataArray.forEach(({ data }) => {
+        // First, collect all probe columns from the entire array
+        const probeColumns = new Set();
+        testDataArray.forEach(({ data, probe_ids }) => {
+            if (currentEval === 14 && probe_ids) {
+                probe_ids.forEach(probeId => probeColumns.add(probeId));
+            } else {
                 const history = data?.history || [];
                 const probeResponses = history.filter(entry =>
                     entry.command === 'Respond to TA1 Probe' &&
@@ -342,12 +327,33 @@ export const ADMProbeResponses = (props) => {
                         probeColumns.add(response.parameters.probe_id);
                     }
                 });
-            });
+            }
+        });
+        const sortedProbeColumns = Array.from(probeColumns).sort(compareProbeIds);
 
-            const sortedProbeColumns = Array.from(probeColumns).sort(compareProbeIds);
+        return testDataArray.map(({ alignmentTarget, data, probe_responses }) => {
+            const row = adm ?
+                {
+                    'ADM': formatADMString(adm),
+                    'Alignment Target': alignmentTarget,
+                    'TA1 Session ID': getSessionId(data)
+                } :
+                {
+                    'Alignment Target': alignmentTarget,
+                    'TA1 Session ID': getSessionId(data)
+                };
+            if (currentEval === 7) {
+                const kdmaValues = getKdmaTargets(data);
+                row['MJ KDMA'] = kdmaValues.mj;
+                row['IO KDMA'] = kdmaValues.io;
+            } else if (getCurrentScenarioName().includes('Adept')) {
+                row['KDMA'] = getKdma(data, alignmentTarget);
+            }
 
             sortedProbeColumns.forEach(probeId => {
-                row[probeId] = getChoiceForProbe(data.history, probeId) || '-';
+                row[probeId] = currentEval === 14
+                    ? getChoiceForProbe(data.history, probeId, probe_responses)
+                    : getChoiceForProbe(data.history, probeId) || '-';
             });
 
             return row;
@@ -496,17 +502,21 @@ export const ADMProbeResponses = (props) => {
                                             if (testDataArray.length === 0) return <div>No data available</div>;
 
                                             const probeColumns = new Set();
-                                            testDataArray.forEach(({ data }) => {
-                                                const history = data?.history || [];
-                                                const probeResponses = history.filter(entry =>
-                                                    entry.command === 'Respond to TA1 Probe' &&
-                                                    entry.parameters?.probe_id !== 'n/a'
-                                                );
-                                                probeResponses.forEach(response => {
-                                                    if (response.parameters?.probe_id) {
-                                                        probeColumns.add(response.parameters.probe_id);
-                                                    }
-                                                });
+                                            testDataArray.forEach(({ data, probe_ids }) => {
+                                                if (currentEval === 14 && probe_ids) {
+                                                    probe_ids.forEach(probeId => probeColumns.add(probeId));
+                                                } else {
+                                                    const history = data?.history || [];
+                                                    const probeResponses = history.filter(entry =>
+                                                        entry.command === 'Respond to TA1 Probe' &&
+                                                        entry.parameters?.probe_id !== 'n/a'
+                                                    );
+                                                    probeResponses.forEach(response => {
+                                                        if (response.parameters?.probe_id) {
+                                                            probeColumns.add(response.parameters.probe_id);
+                                                        }
+                                                    });
+                                                }
                                             });
 
                                             const sortedProbeColumns = Array.from(probeColumns).sort(compareProbeIds);
@@ -536,7 +546,7 @@ export const ADMProbeResponses = (props) => {
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {testDataArray.map(({ alignmentTarget, data }) => (
+                                                            {testDataArray.map(({ alignmentTarget, data, probe_responses }) => (
                                                                 <tr key={`${adm}-${alignmentTarget || 'default'}`}>
                                                                     {currentEval >= 3 && (
                                                                         <>
@@ -550,12 +560,14 @@ export const ADMProbeResponses = (props) => {
                                                                                 getCurrentScenarioName().includes('Adept') &&
                                                                                 <td>{getKdma(data, alignmentTarget)}</td>
                                                                             )}
-                                                                            <td>{getSessionId(data.history)}</td>
+                                                                            <td>{getSessionId(data)}</td>
                                                                         </>
                                                                     )}
                                                                     {sortedProbeColumns.map(probeId => (
                                                                         <td key={`${alignmentTarget}-${probeId}`}>
-                                                                            {getChoiceForProbe(data.history, probeId) || '-'}
+                                                                            {currentEval === 14
+                                                                                ? getChoiceForProbe(data.history, probeId, probe_responses)
+                                                                                : getChoiceForProbe(data.history, probeId) || '-'}
                                                                         </td>
                                                                     ))}
                                                                 </tr>
