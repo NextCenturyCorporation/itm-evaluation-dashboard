@@ -118,7 +118,7 @@ export function RQ2() {
                 {selectedEval !== 7 && <h2>RQ2.2 & 2.3 Data</h2>}
                 
                 {/* Render appropriate component based on selectedEval */}
-                {selectedEval === 7 ? (
+                {[7, 11].includes(selectedEval) ? (
                     <MultiKdmaRq23 />
                 ) : shouldUsePH2Component() ? (
                     <PH2RQ2223 evalNum={selectedEval} />
