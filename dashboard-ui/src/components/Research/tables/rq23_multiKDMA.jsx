@@ -6,7 +6,7 @@ import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.3_MultiKDMA.xlsx';
-import eval11DefinitionXLFile from '../variables/Definitions_RQ23_eval11.xlsx';
+import eval11DefinitionXLFile from '../variables/Variable Definitions_RQ23_eval11.xlsx';
 import { DownloadButtons } from "./download-buttons";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -36,12 +36,12 @@ const GET_TEXT_RESULTS = gql`
         getAllScenarioResults
     }`;
 
-// Headers for eval 7 (original)
+// eval 7 multi kdma
 const HEADERS_EVAL7 = ['ADM Name', 'PID', 'Human Scenario', 'Target Type', 'MJ Alignment Target', 'IO Alignment Target', 'MJ KDMA_Aligned - MJ2', 'MJ KDMA_Aligned - MJ4', 'MJ KDMA_Aligned - MJ5', 'MJ KDMA_Aligned - AVE', 'IO KDMA_Aligned - MJ2', 'IO KDMA_Aligned - MJ4', 'IO KDMA_Aligned - MJ5', 'IO KDMA_Aligned - AVE', 'Alignment (Target|ADM_MJ2)_Aligned', 'Alignment (Target|ADM_MJ4)_Aligned', 'Alignment (Target|ADM_MJ5)_Aligned', 'Alignment Average (Target|ADM)_Aligned', 'MJ KDMA_Baseline - MJ2', 'MJ KDMA_Baseline - MJ4', 'MJ KDMA_Baseline - MJ5', 'MJ KDMA_Baseline - AVE', 'IO KDMA_Baseline - MJ2', 'IO KDMA_Baseline - MJ4', 'IO KDMA_Baseline - MJ5', 'IO KDMA_Baseline - AVE', 'Alignment (Target|ADM_MJ2)_Baseline', 'Alignment (Target|ADM_MJ4)_Baseline', 'Alignment (Target|ADM_MJ5)_Baseline', 'Alignment Average (Target|ADM)_Baseline'];
 
-// Headers for eval 11 (4D multi-KDMA)
+// 4d exp
 const HEADERS_EVAL11 = [
-    'ADM Name', 'PID', 'Human Scenario',
+    'ADM Name', 'PID', 'Human Set',
     'MF Alignment Target', 'AF Alignment Target', 'PS Alignment Target', 'SS Alignment Target',
     'MF KDMA_Aligned - set1', 'MF KDMA_Aligned - set2', 'MF KDMA_Aligned - set3', 'MF KDMA_Aligned - AVE',
     'AF KDMA_Aligned - set1', 'AF KDMA_Aligned - set2', 'AF KDMA_Aligned - set3', 'AF KDMA_Aligned - AVE',
@@ -52,28 +52,20 @@ const HEADERS_EVAL11 = [
     'AF KDMA_Baseline - set1', 'AF KDMA_Baseline - set2', 'AF KDMA_Baseline - set3', 'AF KDMA_Baseline - AVE',
     'PS KDMA_Baseline - set1', 'PS KDMA_Baseline - set2', 'PS KDMA_Baseline - set3', 'PS KDMA_Baseline - AVE',
     'SS KDMA_Baseline - set1', 'SS KDMA_Baseline - set2', 'SS KDMA_Baseline - set3', 'SS KDMA_Baseline - AVE',
-    '4D Alignment (Target|ADM_set1)_Baseline', '4D Alignment (Target|ADM_set2)_Baseline', '4D Alignment (Target|ADM_set3)_Baseline', '4D Alignment Average (Target|ADM)_Baseline',
-    '4D Alignment_Aligned_30randomSets', '4D Alignment_Baseline_30randomSets'
+    '4D Alignment (Target|ADM_set1)_Baseline', '4D Alignment (Target|ADM_set2)_Baseline', '4D Alignment (Target|ADM_set3)_Baseline', '4D Alignment Average (Target|ADM)_Baseline'
 ];
 
-const EVAL_OPTIONS = [
-    { label: 'Eval 7', value: 7 },
-    { label: 'Eval 11', value: 11 }
-];
-
-export function MultiKDMA_RQ23() {
-    const { loading, error, data } = useQuery(getAnalysisData);
-    const { loading: loadingEval11, error: errorEval11, data: dataEval11 } = useQuery(getAnalysisDataEval11);
+export function MultiKDMA_RQ23({ evalNum = 7 }) {
+    const { loading, error, data } = useQuery(getAnalysisData, { skip: evalNum !== 7 });
+    const { loading: loadingEval11, error: errorEval11, data: dataEval11 } = useQuery(getAnalysisDataEval11, { skip: evalNum !== 11 });
     const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    // eval selection
-    const [selectedEval, setSelectedEval] = React.useState(7);
     // all options for filters
     const [admNames, setAdmNames] = React.useState([]);
-    const scenarios = selectedEval === 7 ? ['MJ2', 'MJ4', 'MJ5'] : ['set1', 'set2', 'set3'];
+    const scenarios = evalNum === 7 ? ['MJ2', 'MJ4', 'MJ5'] : ['1', '2', '3'];
     const targetTypes = ['Overall', 'Narr', 'Train'];
     // filter options that have been chosen
     const [admNameFilters, setAdmNameFilters] = React.useState([]);
@@ -85,8 +77,8 @@ export function MultiKDMA_RQ23() {
     const [onlyShowCompletedSurveys, setOnlyShowCompletedSurveys] = React.useState(false);
     const [pidsWithCompleteSurveys, setPidsWithCompleteSurveys] = React.useState([]);
 
-    // Get the appropriate headers based on selected eval
-    const HEADERS = selectedEval === 7 ? HEADERS_EVAL7 : HEADERS_EVAL11;
+    // Get the appropriate headers based on evalNum prop
+    const HEADERS = evalNum === 7 ? HEADERS_EVAL7 : HEADERS_EVAL11;
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -100,19 +92,18 @@ export function MultiKDMA_RQ23() {
         setOnlyShowCompletedSurveys(event.target.checked);
     };
 
-    const handleEvalChange = (_, newVal) => {
-        if (newVal) {
-            setSelectedEval(newVal.value);
-            // Reset filters when changing eval
-            setAdmNameFilters([]);
-            setScenarioFilters([]);
-            setTargetTypeFilters([]);
-        }
-    };
+    // Reset filters when evalNum changes
+    React.useEffect(() => {
+        setAdmNameFilters([]);
+        setScenarioFilters([]);
+        setTargetTypeFilters([]);
+        setFormattedData([]);
+        setFilteredData([]);
+    }, [evalNum]);
 
     // Process eval 7 data
     React.useEffect(() => {
-        if (selectedEval !== 7) return;
+        if (evalNum !== 7) return;
         if (data?.getMultiKdmaAnalysisData && dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults) {
             const analysisData = data.getMultiKdmaAnalysisData;
 
@@ -214,11 +205,11 @@ export function MultiKDMA_RQ23() {
             }
             setAdmNames(Array.from(new Set(allAdmNames)));
         }
-    }, [data, dataSurveyResults, dataParticipantLog, dataTextResults, selectedEval]);
+    }, [data, dataSurveyResults, dataParticipantLog, dataTextResults, evalNum]);
 
     // Process eval 11 data
     React.useEffect(() => {
-        if (selectedEval !== 11) return;
+        if (evalNum !== 11) return;
         if (dataEval11?.getMultiKdmaAnalysisDataEval11 && dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults) {
             const analysisData = dataEval11.getMultiKdmaAnalysisDataEval11;
 
@@ -247,90 +238,82 @@ export function MultiKDMA_RQ23() {
             const allObjs = [];
             const allAdmNames = [];
 
-            for (const admGroup of analysisData) {
+            for (const doc of analysisData) {
                 const entryObj = {};
-                const admName = admGroup.admName;
-                if (admName.toLowerCase().includes('baseline'))
-                    continue;
+                const admName = doc.admName;
+                
                 entryObj['ADM Name'] = admName;
                 allAdmNames.push(admName);
-                entryObj['PID'] = admGroup['pid'];
-                entryObj['Human Scenario'] = admGroup['humanScenario'];
+                entryObj['PID'] = doc['pid'];
+                entryObj['Human Set'] = doc['human_set'];
                 
                 // 4D alignment targets
-                entryObj['MF Alignment Target'] = admGroup['mfTarget'];
-                entryObj['AF Alignment Target'] = admGroup['afTarget'];
-                entryObj['PS Alignment Target'] = admGroup['psTarget'];
-                entryObj['SS Alignment Target'] = admGroup['ssTarget'];
+                entryObj['MF Alignment Target'] = doc['mfTarget'];
+                entryObj['AF Alignment Target'] = doc['afTarget'];
+                entryObj['PS Alignment Target'] = doc['psTarget'];
+                entryObj['SS Alignment Target'] = doc['ssTarget'];
                 
                 // MF KDMA Aligned
-                entryObj['MF KDMA_Aligned - set1'] = admGroup['mfSet1_kdma'];
-                entryObj['MF KDMA_Aligned - set2'] = admGroup['mfSet2_kdma'];
-                entryObj['MF KDMA_Aligned - set3'] = admGroup['mfSet3_kdma'];
-                entryObj['MF KDMA_Aligned - AVE'] = admGroup['mfAve_kdma'];
+                entryObj['MF KDMA_Aligned - set1'] = doc['mf_kdma_aligned_set1'];
+                entryObj['MF KDMA_Aligned - set2'] = doc['mf_kdma_aligned_set2'];
+                entryObj['MF KDMA_Aligned - set3'] = doc['mf_kdma_aligned_set3'];
+                entryObj['MF KDMA_Aligned - AVE'] = doc['mf_kdma_aligned_avg'];
                 
                 // AF KDMA Aligned
-                entryObj['AF KDMA_Aligned - set1'] = admGroup['afSet1_kdma'];
-                entryObj['AF KDMA_Aligned - set2'] = admGroup['afSet2_kdma'];
-                entryObj['AF KDMA_Aligned - set3'] = admGroup['afSet3_kdma'];
-                entryObj['AF KDMA_Aligned - AVE'] = admGroup['afAve_kdma'];
+                entryObj['AF KDMA_Aligned - set1'] = doc['af_kdma_aligned_set1'];
+                entryObj['AF KDMA_Aligned - set2'] = doc['af_kdma_aligned_set2'];
+                entryObj['AF KDMA_Aligned - set3'] = doc['af_kdma_aligned_set3'];
+                entryObj['AF KDMA_Aligned - AVE'] = doc['af_kdma_aligned_avg'];
                 
                 // PS KDMA Aligned
-                entryObj['PS KDMA_Aligned - set1'] = admGroup['psSet1_kdma'];
-                entryObj['PS KDMA_Aligned - set2'] = admGroup['psSet2_kdma'];
-                entryObj['PS KDMA_Aligned - set3'] = admGroup['psSet3_kdma'];
-                entryObj['PS KDMA_Aligned - AVE'] = admGroup['psAve_kdma'];
+                entryObj['PS KDMA_Aligned - set1'] = doc['ps_kdma_aligned_set1'];
+                entryObj['PS KDMA_Aligned - set2'] = doc['ps_kdma_aligned_set2'];
+                entryObj['PS KDMA_Aligned - set3'] = doc['ps_kdma_aligned_set3'];
+                entryObj['PS KDMA_Aligned - AVE'] = doc['ps_kdma_aligned_avg'];
                 
                 // SS KDMA Aligned
-                entryObj['SS KDMA_Aligned - set1'] = admGroup['ssSet1_kdma'];
-                entryObj['SS KDMA_Aligned - set2'] = admGroup['ssSet2_kdma'];
-                entryObj['SS KDMA_Aligned - set3'] = admGroup['ssSet3_kdma'];
-                entryObj['SS KDMA_Aligned - AVE'] = admGroup['ssAve_kdma'];
+                entryObj['SS KDMA_Aligned - set1'] = doc['ss_kdma_aligned_set1'];
+                entryObj['SS KDMA_Aligned - set2'] = doc['ss_kdma_aligned_set2'];
+                entryObj['SS KDMA_Aligned - set3'] = doc['ss_kdma_aligned_set3'];
+                entryObj['SS KDMA_Aligned - AVE'] = doc['ss_kdma_aligned_avg'];
                 
                 // 4D Alignment Aligned
-                entryObj['4D Alignment (Target|ADM_set1)_Aligned'] = admGroup['set1_align'];
-                entryObj['4D Alignment (Target|ADM_set2)_Aligned'] = admGroup['set2_align'];
-                entryObj['4D Alignment (Target|ADM_set3)_Aligned'] = admGroup['set3_align'];
-                entryObj['4D Alignment Average (Target|ADM)_Aligned'] = admGroup['ave_align'];
+                entryObj['4D Alignment (Target|ADM_set1)_Aligned'] = doc['set1_aligned_alignment'];
+                entryObj['4D Alignment (Target|ADM_set2)_Aligned'] = doc['set2_aligned_alignment'];
+                entryObj['4D Alignment (Target|ADM_set3)_Aligned'] = doc['set3_aligned_alignment'];
+                entryObj['4D Alignment Average (Target|ADM)_Aligned'] = doc['avg_aligned_alignment'];
 
-                // Find baseline data
-                const baseline = analysisData.find((x) => x['pid'] === admGroup['pid'] && x['admName'].toLowerCase().includes('baseline'));
-                if (baseline) {
-                    // MF KDMA Baseline
-                    entryObj['MF KDMA_Baseline - set1'] = baseline['mfSet1_kdma'];
-                    entryObj['MF KDMA_Baseline - set2'] = baseline['mfSet2_kdma'];
-                    entryObj['MF KDMA_Baseline - set3'] = baseline['mfSet3_kdma'];
-                    entryObj['MF KDMA_Baseline - AVE'] = baseline['mfAve_kdma'];
-                    
-                    // AF KDMA Baseline
-                    entryObj['AF KDMA_Baseline - set1'] = baseline['afSet1_kdma'];
-                    entryObj['AF KDMA_Baseline - set2'] = baseline['afSet2_kdma'];
-                    entryObj['AF KDMA_Baseline - set3'] = baseline['afSet3_kdma'];
-                    entryObj['AF KDMA_Baseline - AVE'] = baseline['afAve_kdma'];
-                    
-                    // PS KDMA Baseline
-                    entryObj['PS KDMA_Baseline - set1'] = baseline['psSet1_kdma'];
-                    entryObj['PS KDMA_Baseline - set2'] = baseline['psSet2_kdma'];
-                    entryObj['PS KDMA_Baseline - set3'] = baseline['psSet3_kdma'];
-                    entryObj['PS KDMA_Baseline - AVE'] = baseline['psAve_kdma'];
-                    
-                    // SS KDMA Baseline
-                    entryObj['SS KDMA_Baseline - set1'] = baseline['ssSet1_kdma'];
-                    entryObj['SS KDMA_Baseline - set2'] = baseline['ssSet2_kdma'];
-                    entryObj['SS KDMA_Baseline - set3'] = baseline['ssSet3_kdma'];
-                    entryObj['SS KDMA_Baseline - AVE'] = baseline['ssAve_kdma'];
-                    
-                    // 4D Alignment Baseline
-                    entryObj['4D Alignment (Target|ADM_set1)_Baseline'] = baseline['set1_align'];
-                    entryObj['4D Alignment (Target|ADM_set2)_Baseline'] = baseline['set2_align'];
-                    entryObj['4D Alignment (Target|ADM_set3)_Baseline'] = baseline['set3_align'];
-                    entryObj['4D Alignment Average (Target|ADM)_Baseline'] = baseline['ave_align'];
-                }
+                // MF KDMA Baseline
+                entryObj['MF KDMA_Baseline - set1'] = doc['mf_kdma_baseline_set1'];
+                entryObj['MF KDMA_Baseline - set2'] = doc['mf_kdma_baseline_set2'];
+                entryObj['MF KDMA_Baseline - set3'] = doc['mf_kdma_baseline_set3'];
+                entryObj['MF KDMA_Baseline - AVE'] = doc['mf_kdma_baseline_avg'];
                 
-                // 30 random sets alignment
-                entryObj['4D Alignment_Aligned_30randomSets'] = admGroup['aligned_30randomSets'];
-                entryObj['4D Alignment_Baseline_30randomSets'] = baseline ? baseline['baseline_30randomSets'] : admGroup['baseline_30randomSets'];
+                // AF KDMA Baseline
+                entryObj['AF KDMA_Baseline - set1'] = doc['af_kdma_baseline_set1'];
+                entryObj['AF KDMA_Baseline - set2'] = doc['af_kdma_baseline_set2'];
+                entryObj['AF KDMA_Baseline - set3'] = doc['af_kdma_baseline_set3'];
+                entryObj['AF KDMA_Baseline - AVE'] = doc['af_kdma_baseline_avg'];
+                
+                // PS KDMA Baseline
+                entryObj['PS KDMA_Baseline - set1'] = doc['ps_kdma_baseline_set1'];
+                entryObj['PS KDMA_Baseline - set2'] = doc['ps_kdma_baseline_set2'];
+                entryObj['PS KDMA_Baseline - set3'] = doc['ps_kdma_baseline_set3'];
+                entryObj['PS KDMA_Baseline - AVE'] = doc['ps_kdma_baseline_avg'];
+                
+                // SS KDMA Baseline
+                entryObj['SS KDMA_Baseline - set1'] = doc['ss_kdma_baseline_set1'];
+                entryObj['SS KDMA_Baseline - set2'] = doc['ss_kdma_baseline_set2'];
+                entryObj['SS KDMA_Baseline - set3'] = doc['ss_kdma_baseline_set3'];
+                entryObj['SS KDMA_Baseline - AVE'] = doc['ss_kdma_baseline_avg'];
+                
+                // 4D Alignment Baseline
+                entryObj['4D Alignment (Target|ADM_set1)_Baseline'] = doc['set1_baseline_alignment'];
+                entryObj['4D Alignment (Target|ADM_set2)_Baseline'] = doc['set2_baseline_alignment'];
+                entryObj['4D Alignment (Target|ADM_set3)_Baseline'] = doc['set3_baseline_alignment'];
+                entryObj['4D Alignment Average (Target|ADM)_Baseline'] = doc['avg_baseline_alignment'];
 
+                // Replace -1 values with '-'
                 for (const key of Array.from(Object.keys(entryObj))) {
                     if (entryObj[key] === -1) {
                         entryObj[key] = '-';
@@ -342,6 +325,9 @@ export function MultiKDMA_RQ23() {
             allObjs.sort((a, b) => {
                 if (a['ADM Name'] < b['ADM Name']) return -1;
                 if (a['ADM Name'] > b['ADM Name']) return 1;
+                // If ADM Name is equal, compare by PID
+                if (a['PID'] < b['PID']) return -1;
+                if (a['PID'] > b['PID']) return 1;
                 return 0;
             });
 
@@ -355,22 +341,26 @@ export function MultiKDMA_RQ23() {
             }
             setAdmNames(Array.from(new Set(allAdmNames)));
         }
-    }, [dataEval11, dataSurveyResults, dataParticipantLog, dataTextResults, selectedEval]);
+    }, [dataEval11, dataSurveyResults, dataParticipantLog, dataTextResults, evalNum]);
 
     // Apply filters
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter((x) => {
                 const admNameMatch = admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name']);
-                const scenarioMatch = scenarioFilters.length === 0 || scenarioFilters.filter((sf) => x['Human Scenario']?.includes(sf)).length > 0;
+                // For eval 11, filter by Human Set; for eval 7, filter by Human Scenario
+                const scenarioMatch = scenarioFilters.length === 0 || 
+                    (evalNum === 7 
+                        ? scenarioFilters.filter((sf) => x['Human Scenario']?.includes(sf)).length > 0
+                        : scenarioFilters.includes(String(x['Human Set'])));
                 // Target Type filter only applies to eval 7
-                const targetTypeMatch = selectedEval !== 7 || targetTypeFilters.length === 0 || targetTypeFilters.includes(x['Target Type']);
+                const targetTypeMatch = evalNum !== 7 || targetTypeFilters.length === 0 || targetTypeFilters.includes(x['Target Type']);
                 const completeSurveyMatch = !onlyShowCompletedSurveys || pidsWithCompleteSurveys.length === 0 || pidsWithCompleteSurveys.includes(x['PID']);
                 
                 return admNameMatch && scenarioMatch && targetTypeMatch && completeSurveyMatch;
             }));
         }
-    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters, onlyShowCompletedSurveys, pidsWithCompleteSurveys, selectedEval]);
+    }, [formattedData, admNameFilters, scenarioFilters, targetTypeFilters, onlyShowCompletedSurveys, pidsWithCompleteSurveys, evalNum]);
 
     const capitalizeFirstLetter = (str) => {
         if (!isDefined(str) || str.length < 2)
@@ -378,8 +368,8 @@ export function MultiKDMA_RQ23() {
         return str[0].toUpperCase() + str.slice(1);
     };
 
-    const isLoading = loading || loadingEval11 || loadingParticipantLog || loadingSurveyResults || loadingTextResults;
-    const hasError = error || errorEval11 || errorParticipantLog || errorSurveyResults || errorTextResults;
+    const isLoading = (evalNum === 7 && loading) || (evalNum === 11 && loadingEval11) || loadingParticipantLog || loadingSurveyResults || loadingTextResults;
+    const hasError = (evalNum === 7 && error) || (evalNum === 11 && errorEval11) || errorParticipantLog || errorSurveyResults || errorTextResults;
 
     if (isLoading) return <p>Loading...</p>;
     if (hasError) return <p>Error :</p>;
@@ -393,22 +383,6 @@ export function MultiKDMA_RQ23() {
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
         <section className='tableHeader'>
             <div className="filters">
-                <Autocomplete
-                    style={{ 'minWidth': '150px' }}
-                    options={EVAL_OPTIONS}
-                    getOptionLabel={(option) => option.label}
-                    value={EVAL_OPTIONS.find(opt => opt.value === selectedEval)}
-                    size="small"
-                    disableClearable
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Eval"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={handleEvalChange}
-                />
                 <Autocomplete
                     style={{ 'minWidth': '300px' }}
                     multiple
@@ -433,14 +407,14 @@ export function MultiKDMA_RQ23() {
                     renderInput={(params) => (
                         <TextField
                             {...params}
-                            label="Scenarios"
+                            label={evalNum === 7 ? "Scenarios" : "Human Set"}
                             placeholder=""
                         />
                     )}
                     onChange={(_, newVal) => setScenarioFilters(newVal)}
                     value={scenarioFilters}
                 />
-                {selectedEval === 7 && (
+                {evalNum === 7 && (
                     <Autocomplete
                         multiple
                         options={targetTypes}
@@ -458,7 +432,7 @@ export function MultiKDMA_RQ23() {
                     />
                 )}
             </div>
-            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={`RQ-23 data eval${selectedEval}`} extraAction={openModal} />
+            <DownloadButtons formattedData={formattedData} filteredData={filteredData} HEADERS={HEADERS} fileName={`RQ-23 data eval${evalNum}`} extraAction={openModal} />
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
@@ -473,9 +447,9 @@ export function MultiKDMA_RQ23() {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['ADM Name'] + '-' + dataSet['Alignment Target'] + '-' + index}>
+                        return (<tr key={dataSet['ADM Name'] + '-' + dataSet['PID'] + '-' + index}>
                             {HEADERS.map((val) => {
-                                return (<td key={dataSet['ADM Name'] + '-' + dataSet['Alignment Target'] + '-' + val}>
+                                return (<td key={dataSet['ADM Name'] + '-' + dataSet['PID'] + '-' + val}>
                                     {dataSet[val] ?? '-'}
                                 </td>);
                             })}
@@ -488,8 +462,8 @@ export function MultiKDMA_RQ23() {
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                 <RQDefinitionTable 
-                    downloadName={selectedEval === 7 ? `Definitions_RQ23_eval7.xlsx` : `Definitions_RQ23_eval11.xlsx`} 
-                    xlFile={selectedEval === 7 ? ph2DefinitionXLFile : eval11DefinitionXLFile} 
+                    downloadName={evalNum === 7 ? `Definitions_RQ23_eval7.xlsx` : `Definitions_RQ23_eval11.xlsx`} 
+                    xlFile={evalNum === 7 ? ph2DefinitionXLFile : eval11DefinitionXLFile} 
                 />
             </div>
         </Modal>
