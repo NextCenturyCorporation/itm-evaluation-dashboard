@@ -236,7 +236,7 @@ export function SurveyResults() {
                         <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />
                     }
                 </Tab>
-                <Tab eventKey={1} title="Graph View">
+                {/*<Tab eventKey={1} title="Graph View">
                     <div className="delegation-results">
                     <div className="delegation-results-nav">
                         <div className="selection-section">
@@ -289,7 +289,7 @@ export function SurveyResults() {
                                 <h2>Please select a survey version and scenario to view graphical results</h2>
                             </div>}
                     </div>
-                </Tab>
+                </Tab>*/}
             </Tabs>
             {showScrollButton && (
                 <IconButton onClick={(e) => {

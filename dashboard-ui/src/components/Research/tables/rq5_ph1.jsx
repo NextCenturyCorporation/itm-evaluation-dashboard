@@ -16,14 +16,14 @@ const GET_PARTICIPANT_LOG = gql`
     }`;
 
 const GET_TEXT_RESULTS = gql`
-    query GetAllResults {
-        getAllScenarioResults
+    query GetAllScenarioResultsByEval($evalNumber: Float!) {
+        getAllScenarioResultsByEval(evalNumber: $evalNumber)
     }`;
 
 const GET_COMPARISON_DATA = gql`
-    query getHumanToADMComparison {
-        getHumanToADMComparison,
-        getADMTextProbeMatches
+    query getHumanToADMComparisonByEval($evalNumber: Float!) {
+        getHumanToADMComparisonByEval(evalNumber: $evalNumber),
+        getADMTextProbeMatchesByEval(evalNumber: $evalNumber)
     }`;
 
 const SCENARIO_MAP = {

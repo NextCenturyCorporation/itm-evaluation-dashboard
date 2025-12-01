@@ -222,6 +222,12 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
+export function getEval12Attributes(target) {
+    if (target.includes('vol')) return 'VOL'
+    else if (target.includes('Moral')) return 'MJ'
+    else return 'IO'
+}
+
 export function getEval89Attributes(target, scenarioIndex) {
     const scenario = scenarioIndex.toLowerCase();
 
@@ -246,7 +252,7 @@ export function getEval89Attributes(target, scenarioIndex) {
     else if (scenario.includes("mf")) {
         return "MF";
     }
-
+    
     return target;
 }
 
