@@ -17,9 +17,9 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const GET_TEXT_RESULTS = gql`
-    query GetAllResults {
-        getAllScenarioResults
+const GET_TEXT_RESULTS_BY_EVAL = gql`
+    query GetAllScenarioResultsByEval($evalNumber: Float!) {
+        getAllScenarioResultsByEval(evalNumber: $evalNumber)
     }`;
 
 const GET_COMPARISON_DATA = gql`
@@ -39,9 +39,12 @@ const HEADERS = ['Participant_ID', 'TA1_Name', 'Attribute', 'Scenario', 'Most al
 
 export function RQ5({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
-        fetchPolicy: 'no-cache'
+    const { loading: loadingTextByEval, error: errorTextByEval, data: dataTextByEval } = useQuery(GET_TEXT_RESULTS_BY_EVAL, {
+        variables: { evalNumber: evalNum }
     });
+    const { data: dreTextByEval } = useQuery(GET_TEXT_RESULTS_BY_EVAL, { variables: { evalNumber: 4 } });
+    const { data: janTextByEval } = useQuery(GET_TEXT_RESULTS_BY_EVAL, { variables: { evalNumber: 6 } });
+
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
 
     const [formattedData, setFormattedData] = React.useState([]);
@@ -67,7 +70,7 @@ export function RQ5({ evalNum }) {
     }, [evalNum]);
 
     React.useEffect(() => {
-        if (dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
+        if (dataParticipantLog?.getParticipantLog && (dataTextByEval?.getAllScenarioResultsByEval || dreTextByEval?.getAllScenarioResultsByEval || janTextByEval?.getAllScenarioResultsByEval) && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
             const allObjs = [];
             const allTA1s = [];
             const allTA2s = [];
@@ -86,7 +89,13 @@ export function RQ5({ evalNum }) {
 
             for (let evalNum of evals) {
                 const evalNumInteger = evalNum;
-                const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNumInteger);
+
+                const textResults = evalNumInteger === 4
+                    ? (dreTextByEval?.getAllScenarioResultsByEval ?? [])
+                    : evalNumInteger === 6
+                        ? (janTextByEval?.getAllScenarioResultsByEval ?? [])
+                        : (dataTextByEval?.getAllScenarioResultsByEval ?? []);
+
                 const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber === evalNumInteger);
                 const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber === evalNumInteger);
 
@@ -206,7 +215,7 @@ export function RQ5({ evalNum }) {
             setScenarios(Array.from(new Set(allScenarios)));
             setGroupTargets(Array.from(new Set(allGroupTargets)));
         }
-    }, [dataParticipantLog, dataTextResults, comparisonData, evalNum, includeDRE, includeJAN]);
+    }, [dataParticipantLog, dataTextByEval, dreTextByEval, janTextByEval, comparisonData, evalNum, includeDRE, includeJAN]);
 
     const admAuthorMatch = (ta2, entry2) => {
         return ((ta2 === 'Parallax' && entry2['adm_author'] === 'TAD') || (ta2 === 'Kitware' && entry2['adm_author'] === 'kitware'));
@@ -278,8 +287,8 @@ export function RQ5({ evalNum }) {
         }
     }
 
-    if (loadingParticipantLog || loadingTextResults || loadingComparisonData) return <p>Loading...</p>;
-    if (errorParticipantLog || errorTextResults || errorComparisonData) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingTextByEval || loadingComparisonData) return <p>Loading...</p>;
+    if (errorParticipantLog || errorTextByEval || errorComparisonData) return <p>Error :</p>;
 
     return (<>
         <h2 className='rq134-header'>RQ5 Data

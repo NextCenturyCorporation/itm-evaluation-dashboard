@@ -15,15 +15,15 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const GET_TEXT_RESULTS = gql`
+const GET_TEXT_RESULTS_BY_EVAL = gql`
     query GetAllScenarioResultsByEval($evalNumber: Float!) {
         getAllScenarioResultsByEval(evalNumber: $evalNumber)
     }`;
 
 const GET_COMPARISON_DATA = gql`
-    query getHumanToADMComparisonByEval($evalNumber: Float!) {
-        getHumanToADMComparisonByEval(evalNumber: $evalNumber),
-        getADMTextProbeMatchesByEval(evalNumber: $evalNumber)
+    query getHumanToADMComparison {
+        getHumanToADMComparison,
+        getADMTextProbeMatches
     }`;
 
 const SCENARIO_MAP = {
@@ -46,8 +46,8 @@ const ADMs = ['ALIGN-ADM-OutlinesBaseline', 'ALIGN-ADM-ComparativeRegression-ICL
 
 export function RQ5_PH1({ evalNum }) {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
-        fetchPolicy: 'no-cache'
+    const { loading: loadingTextByEval, error: errorTextByEval, data: dataTextByEval } = useQuery(GET_TEXT_RESULTS_BY_EVAL, {
+        variables: { evalNumber: evalNum }
     });
     const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA);
 
@@ -64,7 +64,7 @@ export function RQ5_PH1({ evalNum }) {
     const [filteredData, setFilteredData] = React.useState([]);
 
     React.useEffect(() => {
-        if (dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
+        if (dataParticipantLog?.getParticipantLog && dataTextByEval?.getAllScenarioResultsByEval && comparisonData?.getHumanToADMComparison && comparisonData?.getADMTextProbeMatches) {
             const allObjs = [];
             const allTA1s = [];
             const allScenarios = [];
@@ -72,7 +72,7 @@ export function RQ5_PH1({ evalNum }) {
             const allTargets = [];
             const participantLog = dataParticipantLog.getParticipantLog;
 
-            const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
+            const textResults = dataTextByEval.getAllScenarioResultsByEval;
             const comparisons = comparisonData.getHumanToADMComparison.filter((x) => x.evalNumber === evalNum);
             const matches = comparisonData.getADMTextProbeMatches.filter((x) => x.evalNumber ===evalNum);
 
@@ -232,7 +232,7 @@ export function RQ5_PH1({ evalNum }) {
             setScenarios(Array.from(new Set(allScenarios)));
             setTargets(Array.from(new Set(allTargets)));
         }
-    }, [dataParticipantLog, dataTextResults, comparisonData, evalNum]);
+    }, [dataParticipantLog, dataTextByEval, comparisonData, evalNum]);
 
     const openModal = () => {
         setShowDefinitions(true);
@@ -269,8 +269,8 @@ export function RQ5_PH1({ evalNum }) {
         }
     }
 
-    if (loadingParticipantLog || loadingTextResults || loadingComparisonData) return <p>Loading...</p>;
-    if (errorParticipantLog || errorTextResults || errorComparisonData) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingTextByEval || loadingComparisonData) return <p>Loading...</p>;
+    if (errorParticipantLog || errorTextByEval || errorComparisonData) return <p>Error :</p>;
 
     return (<>
         <h2 className='rq134-header'>RQ5 Data</h2>
