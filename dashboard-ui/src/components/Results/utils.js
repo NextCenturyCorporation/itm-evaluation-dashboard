@@ -1,11 +1,24 @@
 export const multiSort = (a, b) => {
-  const aMatch = a.match(/^([a-zA-Z]+)(\d+)$/);
-  const bMatch = b.match(/^([a-zA-Z]+)(\d+)$/);
+  console.log(a)
+  console.log(b)
+  
+  // Convert to strings if they're numbers
+  const aStr = String(a);
+  const bStr = String(b);
+  
+  const aMatch = aStr.match(/^([a-zA-Z]+)(\d+)$/);
+  const bMatch = bStr.match(/^([a-zA-Z]+)(\d+)$/);
 
   if (aMatch && bMatch && aMatch[1] === bMatch[1]) {
     return parseInt(aMatch[2], 10) - parseInt(bMatch[2], 10);
   }
-  return a.localeCompare(b);
+  
+  // If both are pure numbers, compare numerically
+  if (!isNaN(a) && !isNaN(b)) {
+    return Number(a) - Number(b);
+  }
+  
+  return aStr.localeCompare(bStr);
 };
 
 export const isObject = (item) =>
