@@ -45,7 +45,9 @@ const EVAL11_FIELD_MAP = [
         [`${k.toUpperCase()} KDMA_Baseline - set3`, `${k}_kdma_baseline_set3`], [`${k.toUpperCase()} KDMA_Baseline - AVE`, `${k}_kdma_baseline_avg`]
     ]),
     ['4D Alignment (Target|ADM_set1)_Baseline', 'set1_baseline_alignment'], ['4D Alignment (Target|ADM_set2)_Baseline', 'set2_baseline_alignment'],
-    ['4D Alignment (Target|ADM_set3)_Baseline', 'set3_baseline_alignment'], ['4D Alignment Average (Target|ADM)_Baseline', 'avg_baseline_alignment']
+    ['4D Alignment (Target|ADM_set3)_Baseline', 'set3_baseline_alignment'], ['4D Alignment Average (Target|ADM)_Baseline', 'avg_baseline_alignment'],
+    ['4D Alignment Aligned 30 Random Sets', '4D_Alignment_Aligned_30_Random_Sets'],
+    ['4D Alignment Baseline 30 Random Sets', '4D_Alignment_Baseline_30_Random_Sets']
 ];
 
 const EVAL_CONFIG = {
