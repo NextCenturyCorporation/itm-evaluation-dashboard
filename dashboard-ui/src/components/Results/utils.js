@@ -1,6 +1,4 @@
 export const multiSort = (a, b) => {
-  console.log(a)
-  console.log(b)
   
   // Convert to strings if they're numbers
   const aStr = String(a);
