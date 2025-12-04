@@ -125,8 +125,8 @@ export function App() {
     const currentEvalNumber = currentTextEvalName
         ? evalNameToNumber[currentTextEvalName]
         : undefined;
-    // Only fetch images if evalNumber === 12
-    const shouldFetchTextImages = currentEvalNumber === 12;
+    // Only fetch images if evalNumber is 5 or 12
+    const shouldFetchTextImages = [5, 12].includes(currentEvalNumber);
     const { data: textImagesData } = useQuery(GET_ALL_TEXT_BASED_IMAGES, {
         fetchPolicy: 'cache-first',
         skip: !shouldFetchTextImages,  // conditional fetch
