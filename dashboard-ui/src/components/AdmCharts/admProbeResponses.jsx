@@ -284,6 +284,11 @@ export const ADMProbeResponses = (props) => {
     };
 
     const getSessionId = (data) => {
+
+        if (currentEval === 11 && data?.pid) {
+            return data.pid;
+        }
+
         if (data?.results?.ta1_session_id) {
             return data.results.ta1_session_id;
         }
