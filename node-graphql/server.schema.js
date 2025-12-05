@@ -66,6 +66,7 @@ const typeDefs = gql`
     getCurrentStyle: String @complexity(value: 5)
     getADMTextProbeMatches: [JSON] @complexity(value: 250)
     getMultiKdmaAnalysisData: [JSON] @complexity(value: 200)
+    getMultiKdmaAnalysisDataEval11: [JSON] @complexity(value: 200)
     getCurrentTextEval: String @complexity(value: 5)
     getTextEvalOptions: [String] @complexity(value: 10)
     getPidBounds: JSON @complexity(value: 5)
@@ -557,6 +558,9 @@ const resolvers = {
     },
     getMultiKdmaAnalysisData: async (obj, args, context, info) => {
       return await context.db.collection('multiKdmaData').find().toArray().then(result => { return result });
+    },
+    getMultiKdmaAnalysisDataEval11: async (obj, args, context, info) => {
+      return await context.db.collection('multiKdmaData4Dtake2').find().toArray().then(result => { return result });
     },
     getCurrentTextEval: async (obj, args, context, info) => {
       const result = await context.db.collection('surveyVersion').findOne();

@@ -34,9 +34,9 @@ export function RQ2() {
 
     const getRQ21Code = () => selectedEval === 4 ? rq21CodeDre : rq21CodePh1;
     const getRQ2Code = () => selectedEval === 4 ? rq2CodeDre : rq2CodePh1;
-    const showRQ21Section = () => selectedEval !== 7 && selectedEval < 8;
-    const showRCodeButtons = () => selectedEval !== 7 && selectedEval < 8;
-    const shouldUsePH2Component = () => selectedEval >= 8;
+    const showRQ21Section = () => selectedEval !== 7 && selectedEval !== 11 && selectedEval < 8;
+    const showRCodeButtons = () => selectedEval !== 7 && selectedEval !== 11 && selectedEval < 8;
+    const shouldUsePH2Component = () => selectedEval >= 8 && selectedEval !== 11;
 
     return (
         <div className="researchQuestion">
@@ -108,18 +108,18 @@ export function RQ2() {
                 </>
             )}
 
-            {selectedEval === 7 ? (
+            {[7, 11].includes(selectedEval) ? (
                 <h3>RQ2 Analysis 2.3: T-tests on Individual Targets - Alignable ADM tuned to Human Multi-KDMA Targets</h3>
             ) : (
                 <h3>RQ2 Analysis 2.3: T-tests comparing Alignable ADM versus Baseline ADM on individual-aligned targets</h3>
             )}
 
             <div className="section-container">
-                {selectedEval !== 7 && <h2>RQ2.2 & 2.3 Data</h2>}
+                {![7, 11].includes(selectedEval) && <h2>RQ2.2 & 2.3 Data</h2>}
                 
                 {/* Render appropriate component based on selectedEval */}
-                {selectedEval === 7 ? (
-                    <MultiKdmaRq23 />
+                {[7, 11].includes(selectedEval) ? (
+                    <MultiKdmaRq23 evalNum={selectedEval} />
                 ) : shouldUsePH2Component() ? (
                     <PH2RQ2223 evalNum={selectedEval} />
                 ) : (

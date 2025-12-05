@@ -33,6 +33,7 @@ import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
 import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData } from '../OnlineOnly/config';
+import { useSelector } from 'react-redux';
 
 // CSS and Image Stuff 
 import '../../css/app.css';
@@ -118,9 +119,17 @@ export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
-
+    // Get current text eval name from Redux
+    const currentTextEvalName = useSelector((state) => state.configs.currentTextEval);
+    // Map evalName → evalNumber using existing mapping
+    const currentEvalNumber = currentTextEvalName
+        ? evalNameToNumber[currentTextEvalName]
+        : undefined;
+    // Only fetch images if evalNumber is 5 or 12
+    const shouldFetchTextImages = [5, 12].includes(currentEvalNumber);
     const { data: textImagesData } = useQuery(GET_ALL_TEXT_BASED_IMAGES, {
-        fetchPolicy: 'cache-first'
+        fetchPolicy: 'cache-first',
+        skip: !shouldFetchTextImages,  // conditional fetch
     });
     const { data: textEvalData } = useQuery(GET_TEXT_EVAL, { fetchPolicy: 'no-cache' });
     const { data: styleData } = useQuery(GET_CURRENT_STYLE, { fetchPolicy: 'no-cache' });
@@ -201,10 +210,10 @@ export function App() {
     );
 
     React.useEffect(() => {
-        if (surveyConfigData?.getSurveyConfigByVersion && textImagesData?.getAllTextBasedImages) {
+        if (surveyConfigData?.getSurveyConfigByVersion) {
             const configDataToProcess = {
                 getAllSurveyConfigs: surveyConfigData.getSurveyConfigByVersion,
-                getAllTextBasedImages: textImagesData.getAllTextBasedImages
+                getAllTextBasedImages: textImagesData?.getAllTextBasedImages ?? []
             };
             setupConfigWithImages(configDataToProcess);
             setSurveyConfigsLoaded(true);
@@ -213,10 +222,10 @@ export function App() {
 
 
     React.useEffect(() => {
-        if (textConfigData?.getTextBasedConfigByEval && textImagesData?.getAllTextBasedImages) {
+        if (textConfigData?.getTextBasedConfigByEval) {
             const configDataToProcess = {
                 getAllTextBasedConfigs: textConfigData.getTextBasedConfigByEval,
-                getAllTextBasedImages: textImagesData.getAllTextBasedImages
+                getAllTextBasedImages: textImagesData?.getAllTextBasedImages ?? []
             };
             setupTextBasedConfig(configDataToProcess);
             setTextConfigsLoaded(true);
