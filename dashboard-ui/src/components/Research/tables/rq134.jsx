@@ -51,28 +51,7 @@ const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'D
 const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Server Session ID (Delegator)', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation Preference (PSAF-1/PSAF-2)', 'Delegation Preference (PSAF-1/PSAF-3)', 'Delegation Preference (PSAF-1/PSAF-4)', 'Delegation Preference (PSAF-2/PSAF-3)', 'Delegation Preference (PSAF-2/PSAF-4)', 'Delegation Preference (PSAF-3/PSAF-4)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 export function RQ134({ evalNum, tableTitle }) {
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
-    });
-    const { data: dreAdms } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 4 }
-    });
-    const { data: juneAdms } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 8 }
-    });
-    const { data: julyAdms } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 9 }
-    });
-    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
-    const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
-    const { data: janSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 6 } });
-    const { data: juneSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 8 } });
-    const { data: julySim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 9 } });
-
+    // -------------------------- State: filters, toggles, and table data --------------------------
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     // all options for filters
@@ -110,6 +89,46 @@ export function RQ134({ evalNum, tableTitle }) {
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
 
+    // ------------------------------------ GraphQL query hooks ------------------------------------
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
+    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
+    });
+    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
+
+    // Optional eval queries (conditionally fetched)
+    const { data: dreAdms } = useQuery(GET_ADM_DATA, {
+        variables: { evalNumber: 4 },
+        skip: !includeDRE && !includeUSEvals
+    });
+    const { data: juneAdms } = useQuery(GET_ADM_DATA, {
+        variables: { evalNumber: 8 },
+        skip: !includeJune && !includeUSEvals
+    });
+    const { data: julyAdms } = useQuery(GET_ADM_DATA, {
+        variables: { evalNumber: 9 },
+        skip: !includeJuly
+    });
+    const { data: dreSim } = useQuery(GET_SIM_DATA, {
+        variables: { evalNumber: 4 },
+        skip: !includeDRE && !includeUSEvals
+    });
+    const { data: janSim } = useQuery(GET_SIM_DATA, {
+        variables: { evalNumber: 6 },
+        skip: !includeJAN && !includeUSEvals
+    });
+    const { data: juneSim } = useQuery(GET_SIM_DATA, {
+        variables: { evalNumber: 8 },
+        skip: !includeJune && !includeUSEvals
+    });
+    const { data: julySim } = useQuery(GET_SIM_DATA, {
+        variables: { evalNumber: 9 },
+        skip: !includeJuly
+    });
+
     const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
     const openModal = () => {
@@ -119,6 +138,20 @@ export function RQ134({ evalNum, tableTitle }) {
     const closeModal = () => {
         setShowDefinitions(false);
     }
+
+    const clearFilters = () => {
+        setTA1Filters([]);
+        setTA2Filters([]);
+        setScenarioFilters([]);
+        setTargetFilters([]);
+        setAttributeFilters([]);
+        setAdmTypeFilters([]);
+        setDelGrpFilters([]);
+        setDelMilFilters([]);
+        setSearchPid('');
+        setProbeSetAssessmentFilters([]);
+        setProbeSetObservationFilters([]);
+    };
 
     React.useEffect(() => {
         // reset toggles on render
@@ -145,10 +178,24 @@ export function RQ134({ evalNum, tableTitle }) {
         setHeaders(currentHeaders);
     }, [evalNum, includeJAN]);
 
+    const needsDre = includeDRE || includeUSEvals;
+    const needsJan = includeJAN || includeUSEvals;
+    const needsJune = includeJune || includeUSEvals;
+    const needsJuly = includeJuly;
+
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
-            dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
-            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
+        if (
+            dataSurveyResults?.getAllSurveyResults &&
+            dataParticipantLog?.getParticipantLog &&
+            dataTextResults?.getAllScenarioResults &&
+            dataADMs?.getAllHistoryByEvalNumber &&
+            comparisonData?.getHumanToADMComparison &&
+            dataSim?.getAllSimAlignmentByEval &&
+            (!needsDre || (dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval)) &&
+            (!needsJan || janSim?.getAllSimAlignmentByEval) &&
+            (!needsJune || (juneAdms?.getAllHistoryByEvalNumber && juneSim?.getAllSimAlignmentByEval)) &&
+            (!needsJuly || (julyAdms?.getAllHistoryByEvalNumber && julySim?.getAllSimAlignmentByEval))
+        ) {
             const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
 
             if (evalNum === 6) {
@@ -158,24 +205,22 @@ export function RQ134({ evalNum, tableTitle }) {
                 }));
             }
 
-            if (includeDRE) {
-                // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
+            if (includeDRE && dreAdms && dreSim) {
                 includeExtraData(data, 4, dreSim, dreAdms);
             }
-            if (includeJAN) {
+            if (includeJAN && janSim) {
                 includeExtraData(data, 6, janSim, dataADMs);
             }
-            if (includeJune) {
+            if (includeJune && juneAdms && juneSim) {
                 includeExtraData(data, 8, juneSim, juneAdms);
             }
-            if (includeJuly) {
+            if (includeJuly && julyAdms && julySim) {
                 includeExtraData(data, 9, julySim, julyAdms);
             }
-
             if (includeUSEvals) {
-                includeExtraData(data, 4, dreSim, dreAdms);
+                if (dreAdms && dreSim) includeExtraData(data, 4, dreSim, dreAdms);
                 includeExtraData(data, 5, dataSim, dataADMs);
-                includeExtraData(data, 6, janSim, dataADMs);
+                if (janSim) includeExtraData(data, 6, janSim, dataADMs);
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -195,7 +240,31 @@ export function RQ134({ evalNum, tableTitle }) {
             setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, includeUSEvals, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
+    }, [
+        dataParticipantLog,
+        dataSurveyResults,
+        dataTextResults,
+        dataADMs,
+        comparisonData,
+        dataSim,
+        dreAdms,
+        dreSim,
+        janSim,
+        juneAdms,
+        juneSim,
+        julyAdms,
+        julySim,
+        evalNum,
+        includeDRE,
+        includeJAN,
+        includeJune,
+        includeJuly,
+        includeUSEvals,
+        needsDre,
+        needsJan,
+        needsJune,
+        needsJuly
+    ]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
         const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
@@ -293,20 +362,6 @@ export function RQ134({ evalNum, tableTitle }) {
 
     const updatePidSearch = (event) => {
         setSearchPid(event.target.value);
-    };
-
-    const clearFilters = () => {
-        setTA1Filters([]);
-        setTA2Filters([]);
-        setScenarioFilters([]);
-        setTargetFilters([]);
-        setAttributeFilters([]);
-        setAdmTypeFilters([]);
-        setDelGrpFilters([]);
-        setDelMilFilters([]);
-        setSearchPid('');
-        setProbeSetAssessmentFilters([]);
-        setProbeSetObservationFilters([]);
     };
 
     const refineData = (origData) => {
