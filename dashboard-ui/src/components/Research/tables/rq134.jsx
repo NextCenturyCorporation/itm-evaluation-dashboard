@@ -91,7 +91,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
     // Set evals to be rendered by number
     const evalNumbers = React.useMemo(() => {
-      const evalNumbers = [];
+      const evalNumbers = [evalNum];
 
       if (includeDRE || includeUSEvals) evalNumbers.push(4);
       if (includeJAN || includeUSEvals) evalNumbers.push(6);
