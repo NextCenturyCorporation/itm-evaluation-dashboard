@@ -20,10 +20,10 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const GET_SURVEY_RESULTS = gql`
-    query GetAllResults {
-        getAllSurveyResults
-    }`;
+const GET_SURVEY_RESULTS_BY_EVAL_ARRAY = gql`
+  query GetSurveyResultsByEvalArray($evalNumbers: [Float!]!) {
+    getSurveyResultsByEvalArray(evalNumbers: $evalNumbers)
+  }`;
 
 const GET_TEXT_RESULTS = gql`
     query GetAllResults {
@@ -89,9 +89,29 @@ export function RQ134({ evalNum, tableTitle }) {
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
 
+    // Set evals to be rendered by number
+    const evalNumbers = React.useMemo(() => {
+      const evalNumbers = [];
+
+      if (includeDRE || includeUSEvals) evalNumbers.push(4);
+      if (includeJAN || includeUSEvals) evalNumbers.push(6);
+      if (includeJune || includeUSEvals) evalNumbers.push(8);
+      if (includeJuly) evalNumbers.push(9);
+
+      return evalNumbers;
+    }, [
+      evalNum,
+      includeDRE,
+      includeJAN,
+      includeJune,
+      includeJuly,
+      includeUSEvals
+    ]);
+
+    console.log ("Eval Numbers", evalNumbers);
+
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
@@ -100,9 +120,25 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
 
     // Optional eval queries (conditionally fetched)
+    const {
+      data: dataSurveyResults,
+      loading: loadingSurveyResults,
+      error: errorSurveyResults
+    } = useQuery(GET_SURVEY_RESULTS_BY_EVAL_ARRAY, {
+      variables: { evalNumbers },
+      skip: evalNumbers.length === 0
+    });
+
+    React.useEffect(() => {
+      console.log("SurveyResults Query Fired:");
+      console.log("Loading:", loadingSurveyResults);
+      console.log("Error:", errorSurveyResults);
+      console.log("Data:", dataSurveyResults);
+    }, [loadingSurveyResults, errorSurveyResults, dataSurveyResults]);
+
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
-        variables: { evalNumber: 4 },
-        skip: !includeDRE && !includeUSEvals
+      variables: { evalNumber: 4 },
+      skip: !includeDRE && !includeUSEvals
     });
     const { data: juneAdms } = useQuery(GET_ADM_DATA, {
         variables: { evalNumber: 8 },

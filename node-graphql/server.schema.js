@@ -43,6 +43,7 @@ const typeDefs = gql`
     getAllImages: [JSON] @complexity(value: 20)
     getAllSurveyResults: [JSON] @complexity(value: 100)
     getAllSurveyResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getSurveyResultsByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 100)
     getAllScenarioResults: [JSON] @complexity(value: 100)
     getAllScenarioResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
     getAllTextScenariosDRE: [JSON] @complexity(value: 30)
@@ -441,6 +442,56 @@ const resolvers = {
         "results.user": 0,
         "user": 0
       }).toArray().then(result => { return result; });
+    },
+    getSurveyResultsByEvalArray: async (obj, args, context, inflow) => {
+      const { evalNumbers } = args;
+
+      // If nothing passed in, just return an empty array
+      if (!evalNumbers || evalNumbers.length === 0) {
+        return [];
+      }
+
+      // return all survey results except for those containing "test" in participant ID
+      const excludeTestID = {
+        "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
+      };
+
+      // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
+      const surveyVersionFilter = {
+        $or: [
+          { "results.surveyVersion": { $ne: 2 } },
+          {
+            $and: [
+              { "results.surveyVersion": 2 },
+              { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
+            ]
+          }
+        ]
+      };
+
+      // Match ANY evalNumber in the evalNumbers array
+      return context.db.collection("surveyResults")
+        .find({
+          $and: [
+            excludeTestID,
+            surveyVersionFilter,
+            {
+              $or: [
+                { evalNumber: { $in: evalNumbers } },
+                { "results.evalNumber": { $in: evalNumbers } }
+              ]
+            }
+          ]
+        })
+        .project({
+          // don't return user field
+          "results.user": 0,
+          user: 0
+        })
+        .toArray();
     },
     getAllScenarioResults: async (obj, args, context, inflow) => {
       return await context.db.collection('userScenarioResults').find({
