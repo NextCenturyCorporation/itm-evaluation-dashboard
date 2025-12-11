@@ -54,6 +54,10 @@ export function RQ134({ evalNum, tableTitle }) {
     // -------------------------- State: filters, toggles, and table data --------------------------
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    // Hooks for storing table data
+    const [surveyData, setSurveyData] = React.useState([]);
+    // Hook for storing eval numbers that are already fetched
+    const [fetchedEvals, setFetchedEvals] = React.useState([]);
     // all options for filters
     const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
@@ -108,7 +112,13 @@ export function RQ134({ evalNum, tableTitle }) {
       includeUSEvals
     ]);
 
-    console.log ("Eval Numbers", evalNumbers);
+    const evalNumbersToFetch = React.useMemo(
+      () => evalNumbers.filter((num) => !fetchedEvals.includes(num)),
+      [evalNumbers, fetchedEvals]
+    );
+
+    console.log ("Eval Numbers:", evalNumbers);
+    console.log ("Eval Numbers To Fetch:", evalNumbersToFetch);
 
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
@@ -125,16 +135,15 @@ export function RQ134({ evalNum, tableTitle }) {
       loading: loadingSurveyResults,
       error: errorSurveyResults
     } = useQuery(GET_SURVEY_RESULTS_BY_EVAL_ARRAY, {
-      variables: { evalNumbers },
-      skip: evalNumbers.length === 0
+      variables: { evalNumbers: evalNumbersToFetch },
+      skip: evalNumbersToFetch.length === 0,
+      onCompleted: (data) => {
+        const newRows = data?.getSurveyResultsByEvalArray ?? [];
+        setSurveyData((prev) => [...prev, ...newRows]); // append new rows to surveyData
+        // mark evals as fetched so we don't refetch them
+        setFetchedEvals((prev) => [...prev, ...evalNumbersToFetch]);
+      }
     });
-
-    React.useEffect(() => {
-      console.log("SurveyResults Query Fired:");
-      console.log("Loading:", loadingSurveyResults);
-      console.log("Error:", errorSurveyResults);
-      console.log("Data:", dataSurveyResults);
-    }, [loadingSurveyResults, errorSurveyResults, dataSurveyResults]);
 
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
       variables: { evalNumber: 4 },
@@ -221,7 +230,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         if (
-            dataSurveyResults?.getAllSurveyResults &&
+            surveyData.length > 0 &&
             dataParticipantLog?.getParticipantLog &&
             dataTextResults?.getAllScenarioResults &&
             dataADMs?.getAllHistoryByEvalNumber &&
@@ -232,7 +241,7 @@ export function RQ134({ evalNum, tableTitle }) {
             (!needsJune || (juneAdms?.getAllHistoryByEvalNumber && juneSim?.getAllSimAlignmentByEval)) &&
             (!needsJuly || (julyAdms?.getAllHistoryByEvalNumber && julySim?.getAllSimAlignmentByEval))
         ) {
-            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
 
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -278,7 +287,7 @@ export function RQ134({ evalNum, tableTitle }) {
         }
     }, [
         dataParticipantLog,
-        dataSurveyResults,
+        surveyData,
         dataTextResults,
         dataADMs,
         comparisonData,
@@ -303,7 +312,7 @@ export function RQ134({ evalNum, tableTitle }) {
     ]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
-        const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
+        const addedData = getRQ134Data(evalToAdd, surveyData, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
         if (evalToAdd == 6) {
             addedData.allObjs = addedData.allObjs.map(obj => ({
                 ...obj,
@@ -447,20 +456,20 @@ export function RQ134({ evalNum, tableTitle }) {
         <h2 className='rq134-header'>{tableTitle}
             {evalNum === 5 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
-                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox checked={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox checked={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
                 </div>}
             {evalNum === 8 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJuly} onChange={updateJulyStatus} />} label="Include July 2025 Eval Data" />
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox checked={includeJuly} onChange={updateJulyStatus} />} label="Include July 2025 Eval Data" />
                 </div>}
             {evalNum === 9 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox checked={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
                 </div>}
             {evalNum === 12 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeUSEvals} onChange={updateUSEvalsStatus} />} label="Include US Evals (Evals 4, 5, 6)" />
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox checked={includeUSEvals} onChange={updateUSEvalsStatus} />} label="Include US Evals (Evals 4, 5, 6)" />
                 </div>}
         </h2>
 
