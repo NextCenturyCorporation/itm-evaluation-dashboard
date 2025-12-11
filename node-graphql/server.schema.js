@@ -46,6 +46,7 @@ const typeDefs = gql`
     getSurveyResultsByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 100)
     getAllScenarioResults: [JSON] @complexity(value: 100)
     getAllScenarioResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getScenarioResultsByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 100)
     getAllTextScenariosDRE: [JSON] @complexity(value: 30)
     getEvalIdsForAllScenarioResults: [JSON] @complexity(value: 25)
     getAllSimAlignment: [JSON] @complexity(value: 90)
@@ -503,6 +504,25 @@ const resolvers = {
         "participantID": { $not: /test/i },
         "evalNumber": args["evalNumber"]
       }).toArray().then(result => { return result; });
+    },
+    getScenarioResultsByEvalArray: async (obj, args, context, inflow) => {
+      const { evalNumbers } = args;
+
+      // If no eval numbers provided, return empty array
+      if (!evalNumbers || evalNumbers.length === 0) {
+        return [];
+      }
+
+      // Query userScenarioResults for any of the evalNumbers, excluding test participants
+      const results = await context.db
+        .collection('userScenarioResults')
+        .find({
+          participantID: { $not: /test/i },
+          evalNumber: { $in: evalNumbers }
+        })
+        .toArray();
+
+      return results;
     },
     getAllTextScenariosDRE: async (obj, args, context, inflow) => {
       return await context.db.collection('userScenarioResults').distinct(

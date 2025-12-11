@@ -256,11 +256,11 @@ export function getEval89Attributes(target, scenarioIndex) {
     return target;
 }
 
-export function getRQ134Data(evalNum, surveyData, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
+export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
     const isPhase2 = [8, 9, 10].includes(evalNum);
     const surveyResults = surveyData;
     const participantLog = dataParticipantLog.getParticipantLog;
-    const textResults = dataTextResults.getAllScenarioResults;
+    const textResults = textResultsData;
     const admData = dataADMs.getAllHistoryByEvalNumber;
     const comparisons = comparisonData.getHumanToADMComparison;
     const simData = dataSim.getAllSimAlignmentByEval;

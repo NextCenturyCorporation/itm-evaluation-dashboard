@@ -25,10 +25,10 @@ const GET_SURVEY_RESULTS_BY_EVAL_ARRAY = gql`
     getSurveyResultsByEvalArray(evalNumbers: $evalNumbers)
   }`;
 
-const GET_TEXT_RESULTS = gql`
-    query GetAllResults {
-        getAllScenarioResults
-    }`;
+const GET_SCENARIO_RESULTS_BY_EVAL_ARRAY = gql`
+    query GetScenarioResultsByEvalArray($evalNumbers: [Float!]!) {
+    getScenarioResultsByEvalArray(evalNumbers: $evalNumbers)
+  }`;
 
 const GET_ADM_DATA = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
@@ -56,8 +56,10 @@ export function RQ134({ evalNum, tableTitle }) {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     // Hooks for storing table data
     const [surveyData, setSurveyData] = React.useState([]);
-    // Hook for storing eval numbers that are already fetched
-    const [fetchedEvals, setFetchedEvals] = React.useState([]);
+    const [textResultsData, setTextResultsData] = React.useState([]);
+    // Hooks for storing eval numbers that are already fetched
+    const [fetchedSurveyEvals, setFetchedSurveyEvals] = React.useState([]);
+    const [fetchedScenarioEvals, setFetchedScenarioEvals] = React.useState([]);
     // all options for filters
     const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
@@ -112,17 +114,18 @@ export function RQ134({ evalNum, tableTitle }) {
       includeUSEvals
     ]);
 
-    const evalNumbersToFetch = React.useMemo(
-      () => evalNumbers.filter((num) => !fetchedEvals.includes(num)),
-      [evalNumbers, fetchedEvals]
+    const evalNumbersToFetchSurveys = React.useMemo(
+      () => evalNumbers.filter((num) => !fetchedSurveyEvals.includes(num)),
+      [evalNumbers, fetchedSurveyEvals]
     );
 
-    console.log ("Eval Numbers:", evalNumbers);
-    console.log ("Eval Numbers To Fetch:", evalNumbersToFetch);
+    const evalNumbersToFetchScenarios = React.useMemo(
+      () => evalNumbers.filter((num) => !fetchedScenarioEvals.includes(num)),
+      [evalNumbers, fetchedScenarioEvals]
+    );
 
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
     });
@@ -131,19 +134,39 @@ export function RQ134({ evalNum, tableTitle }) {
 
     // Optional eval queries (conditionally fetched)
     const {
-      data: dataSurveyResults,
       loading: loadingSurveyResults,
       error: errorSurveyResults
     } = useQuery(GET_SURVEY_RESULTS_BY_EVAL_ARRAY, {
-      variables: { evalNumbers: evalNumbersToFetch },
-      skip: evalNumbersToFetch.length === 0,
+      variables: { evalNumbers: evalNumbersToFetchSurveys },
+      skip: evalNumbersToFetchSurveys.length === 0,
       onCompleted: (data) => {
         const newRows = data?.getSurveyResultsByEvalArray ?? [];
         setSurveyData((prev) => [...prev, ...newRows]); // append new rows to surveyData
         // mark evals as fetched so we don't refetch them
-        setFetchedEvals((prev) => [...prev, ...evalNumbersToFetch]);
+        setFetchedSurveyEvals((prev) => [...prev, ...evalNumbersToFetchSurveys]);
       }
     });
+
+    const {
+      loading: loadingTextResults,
+      error: errorTextResults
+    } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL_ARRAY, {
+      variables: { evalNumbers: evalNumbersToFetchScenarios },
+      skip: evalNumbersToFetchScenarios.length === 0,
+      onCompleted: (data) => {
+        const newRows = data?.getScenarioResultsByEvalArray ?? [];
+        setTextResultsData((prev) => [...prev, ...newRows]); // append new rows to surveyData
+        // mark evals as fetched so we don't refetch them
+        setFetchedScenarioEvals((prev) => [...prev, ...evalNumbersToFetchScenarios]);
+      }
+    });
+
+    React.useEffect(() => {
+      console.log("TextResults Query Fired:");
+      console.log("Loading:", loadingTextResults);
+      console.log("Error:", errorTextResults);
+      console.log("Data:", textResultsData);
+    }, [loadingTextResults, errorTextResults, textResultsData]);
 
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
       variables: { evalNumber: 4 },
@@ -232,7 +255,7 @@ export function RQ134({ evalNum, tableTitle }) {
         if (
             surveyData.length > 0 &&
             dataParticipantLog?.getParticipantLog &&
-            dataTextResults?.getAllScenarioResults &&
+            textResultsData.length > 0 &&
             dataADMs?.getAllHistoryByEvalNumber &&
             comparisonData?.getHumanToADMComparison &&
             dataSim?.getAllSimAlignmentByEval &&
@@ -241,7 +264,7 @@ export function RQ134({ evalNum, tableTitle }) {
             (!needsJune || (juneAdms?.getAllHistoryByEvalNumber && juneSim?.getAllSimAlignmentByEval)) &&
             (!needsJuly || (julyAdms?.getAllHistoryByEvalNumber && julySim?.getAllSimAlignmentByEval))
         ) {
-            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim);
 
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -288,7 +311,7 @@ export function RQ134({ evalNum, tableTitle }) {
     }, [
         dataParticipantLog,
         surveyData,
-        dataTextResults,
+        textResultsData,
         dataADMs,
         comparisonData,
         dataSim,
@@ -312,7 +335,7 @@ export function RQ134({ evalNum, tableTitle }) {
     ]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
-        const addedData = getRQ134Data(evalToAdd, surveyData, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
+        const addedData = getRQ134Data(evalToAdd, surveyData, dataParticipantLog, textResultsData, admsToUse, comparisonData, simData, evalToAdd == 4);
         if (evalToAdd == 6) {
             addedData.allObjs = addedData.allObjs.map(obj => ({
                 ...obj,
