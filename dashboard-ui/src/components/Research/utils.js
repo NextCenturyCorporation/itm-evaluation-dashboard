@@ -262,7 +262,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = textResultsData;
     const admData = dataADMs.getAllHistoryByEvalNumber;
-    const comparisons = comparisonData.getHumanToADMComparison;
+    const comparisons = comparisonData;
     const simData = dataSim.getAllSimAlignmentByEval;
     const allObjs = [];
     const allTA1s = [];

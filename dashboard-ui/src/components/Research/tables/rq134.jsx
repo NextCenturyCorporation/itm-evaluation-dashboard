@@ -27,7 +27,7 @@ const GET_SURVEY_RESULTS_BY_EVAL_ARRAY = gql`
 
 const GET_SCENARIO_RESULTS_BY_EVAL_ARRAY = gql`
     query GetScenarioResultsByEvalArray($evalNumbers: [Float!]!) {
-    getScenarioResultsByEvalArray(evalNumbers: $evalNumbers)
+        getScenarioResultsByEvalArray(evalNumbers: $evalNumbers)
   }`;
 
 const GET_ADM_DATA = gql`
@@ -35,9 +35,9 @@ const GET_ADM_DATA = gql`
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
 
-const GET_COMPARISON_DATA = gql`
-    query getHumanToADMComparison {
-        getHumanToADMComparison
+const GET_COMPARISON_DATA_BY_EVAL_ARRAY = gql`
+    query getHumanToADMComparisonByEvalArray($evalNumbers: [Float!]!) {
+        getHumanToADMComparisonByEvalArray(evalNumbers: $evalNumbers)
     }`;
 
 const GET_SIM_DATA = gql`
@@ -57,9 +57,11 @@ export function RQ134({ evalNum, tableTitle }) {
     // Hooks for storing table data
     const [surveyData, setSurveyData] = React.useState([]);
     const [textResultsData, setTextResultsData] = React.useState([]);
+    const [comparisonData, setComparisonData] = React.useState([]);
     // Hooks for storing eval numbers that are already fetched
     const [fetchedSurveyEvals, setFetchedSurveyEvals] = React.useState([]);
     const [fetchedScenarioEvals, setFetchedScenarioEvals] = React.useState([]);
+    const [fetchedComparisonEvals, setFetchedComparisonEvals] = React.useState([]);
     // all options for filters
     const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
@@ -118,21 +120,25 @@ export function RQ134({ evalNum, tableTitle }) {
       () => evalNumbers.filter((num) => !fetchedSurveyEvals.includes(num)),
       [evalNumbers, fetchedSurveyEvals]
     );
-
     const evalNumbersToFetchScenarios = React.useMemo(
       () => evalNumbers.filter((num) => !fetchedScenarioEvals.includes(num)),
       [evalNumbers, fetchedScenarioEvals]
     );
+    const evalNumbersToFetchComparison = React.useMemo(
+      () => evalNumbers.filter((num) => !fetchedComparisonEvals.includes(num)),
+      [evalNumbers, fetchedComparisonEvals]
+    );
+
+    console.log("evalNumbers: ", evalNumbers);
+    console.log("evalNumbersToFetchComparison: ", evalNumbersToFetchComparison);
 
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
     });
-    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
-
-    // Optional eval queries (conditionally fetched)
+    // Queries fetched by eval number
     const {
       loading: loadingSurveyResults,
       error: errorSurveyResults
@@ -146,7 +152,6 @@ export function RQ134({ evalNum, tableTitle }) {
         setFetchedSurveyEvals((prev) => [...prev, ...evalNumbersToFetchSurveys]);
       }
     });
-
     const {
       loading: loadingTextResults,
       error: errorTextResults
@@ -155,18 +160,31 @@ export function RQ134({ evalNum, tableTitle }) {
       skip: evalNumbersToFetchScenarios.length === 0,
       onCompleted: (data) => {
         const newRows = data?.getScenarioResultsByEvalArray ?? [];
-        setTextResultsData((prev) => [...prev, ...newRows]); // append new rows to surveyData
+        setTextResultsData((prev) => [...prev, ...newRows]); // append new rows to textResultsData
         // mark evals as fetched so we don't refetch them
         setFetchedScenarioEvals((prev) => [...prev, ...evalNumbersToFetchScenarios]);
       }
     });
+    const {
+      loading: loadingComparisonData,
+      error: errorComparisonData,
+    } = useQuery(GET_COMPARISON_DATA_BY_EVAL_ARRAY, {
+      variables: { evalNumbers: evalNumbersToFetchComparison },
+      skip: evalNumbersToFetchComparison.length === 0,
+      onCompleted: (data) => {
+        const newRows = data?.getHumanToADMComparisonByEvalArray ?? [];
+        setComparisonData((prev) => [...prev, ...newRows]); // append new rows to comparisonData
+        // mark evals as fetched so we don't refetch them
+        setFetchedComparisonEvals((prev) => [...prev, ...evalNumbersToFetchComparison]);
+      }
+    });
 
     React.useEffect(() => {
-      console.log("TextResults Query Fired:");
-      console.log("Loading:", loadingTextResults);
-      console.log("Error:", errorTextResults);
-      console.log("Data:", textResultsData);
-    }, [loadingTextResults, errorTextResults, textResultsData]);
+      console.log("ComparisonData Query Fired:");
+      console.log("Loading:", loadingComparisonData);
+      console.log("Error:", errorComparisonData);
+      console.log("Data:", comparisonData);
+    }, [loadingComparisonData, errorComparisonData, comparisonData]);
 
     const { data: dreAdms } = useQuery(GET_ADM_DATA, {
       variables: { evalNumber: 4 },
@@ -257,7 +275,7 @@ export function RQ134({ evalNum, tableTitle }) {
             dataParticipantLog?.getParticipantLog &&
             textResultsData.length > 0 &&
             dataADMs?.getAllHistoryByEvalNumber &&
-            comparisonData?.getHumanToADMComparison &&
+            comparisonData.length > 0 &&
             dataSim?.getAllSimAlignmentByEval &&
             (!needsDre || (dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval)) &&
             (!needsJan || janSim?.getAllSimAlignmentByEval) &&
@@ -354,7 +372,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 };
 
                 if (obj['Attribute'] === 'VOL') {
-                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                    const comparison = comparisonData.find(x =>
                         x['pid'] === obj['Delegator ID'] &&
                         x['adm_alignment_target'] === obj['Target'] &&
                         x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
@@ -378,7 +396,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
                     data.allAttributes.push('QOL');
                 } else if (obj['Attribute'] === 'QOL') {
-                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                    const comparison = comparisonData.find(x =>
                         x['pid'] === obj['Delegator ID'] &&
                         x['adm_alignment_target'] === obj['Target'] &&
                         x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']

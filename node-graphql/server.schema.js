@@ -64,6 +64,7 @@ const typeDefs = gql`
     countAIGroupFirst: Int @complexity(value: 10)
     getParticipantLog: [JSON] @complexity(value: 50)
     getHumanToADMComparison: [JSON] @complexity(value: 250)
+    getHumanToADMComparisonByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 250)
     getCurrentSurveyVersion: String @complexity(value: 5)
     getCurrentStyle: String @complexity(value: 5)
     getADMTextProbeMatches: [JSON] @complexity(value: 250)
@@ -617,6 +618,22 @@ const resolvers = {
     },
     getHumanToADMComparison: async (obj, args, context, info) => {
       return await context.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
+    },
+    getHumanToADMComparisonByEvalArray: async (obj, args, context, inflow) => {
+      const { evalNumbers } = args;
+
+      // If no eval numbers provided, return empty array
+      if (!evalNumbers || evalNumbers.length === 0) {
+        return [];
+      }
+
+      // Query humanToADMComparison for any of the evalNumbers
+      const results = await context.db
+        .collection('humanToADMComparison')
+        .find({evalNumber: { $in: evalNumbers }})
+        .toArray();
+
+      return results;
     },
     getCurrentSurveyVersion: async (obj, args, context, info) => {
       return await context.db.collection('surveyVersion').findOne().then(result => { return result.version });
