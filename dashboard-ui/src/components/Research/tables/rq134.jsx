@@ -30,7 +30,7 @@ const GET_SCENARIO_RESULTS_BY_EVAL_ARRAY = gql`
         getScenarioResultsByEvalArray(evalNumbers: $evalNumbers)
   }`;
 
-const GET_ADM_DATA = gql`
+const GET_ADM_DATA_BY_EVAL = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
@@ -40,7 +40,7 @@ const GET_COMPARISON_DATA_BY_EVAL_ARRAY = gql`
         getHumanToADMComparisonByEvalArray(evalNumbers: $evalNumbers)
     }`;
 
-const GET_SIM_DATA = gql`
+const GET_SIM_DATA_BY_EVAL = gql`
     query GetSimAlignment($evalNumber: Float!){
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
@@ -129,15 +129,12 @@ export function RQ134({ evalNum, tableTitle }) {
       [evalNumbers, fetchedComparisonEvals]
     );
 
-    console.log("evalNumbers: ", evalNumbers);
-    console.log("evalNumbersToFetchComparison: ", evalNumbersToFetchComparison);
-
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
+    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA_BY_EVAL, {
         variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
     });
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA_BY_EVAL, { variables: { "evalNumber": evalNum } });
     // Queries fetched by eval number
     const {
       loading: loadingSurveyResults,
@@ -178,39 +175,32 @@ export function RQ134({ evalNum, tableTitle }) {
         setFetchedComparisonEvals((prev) => [...prev, ...evalNumbersToFetchComparison]);
       }
     });
-
-    React.useEffect(() => {
-      console.log("ComparisonData Query Fired:");
-      console.log("Loading:", loadingComparisonData);
-      console.log("Error:", errorComparisonData);
-      console.log("Data:", comparisonData);
-    }, [loadingComparisonData, errorComparisonData, comparisonData]);
-
-    const { data: dreAdms } = useQuery(GET_ADM_DATA, {
+    // Sim and ADM queries
+    const { data: dreAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
       variables: { evalNumber: 4 },
       skip: !includeDRE && !includeUSEvals
     });
-    const { data: juneAdms } = useQuery(GET_ADM_DATA, {
+    const { data: juneAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
         variables: { evalNumber: 8 },
         skip: !includeJune && !includeUSEvals
     });
-    const { data: julyAdms } = useQuery(GET_ADM_DATA, {
+    const { data: julyAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
         variables: { evalNumber: 9 },
         skip: !includeJuly
     });
-    const { data: dreSim } = useQuery(GET_SIM_DATA, {
+    const { data: dreSim } = useQuery(GET_SIM_DATA_BY_EVAL, {
         variables: { evalNumber: 4 },
         skip: !includeDRE && !includeUSEvals
     });
-    const { data: janSim } = useQuery(GET_SIM_DATA, {
+    const { data: janSim } = useQuery(GET_SIM_DATA_BY_EVAL, {
         variables: { evalNumber: 6 },
         skip: !includeJAN && !includeUSEvals
     });
-    const { data: juneSim } = useQuery(GET_SIM_DATA, {
+    const { data: juneSim } = useQuery(GET_SIM_DATA_BY_EVAL, {
         variables: { evalNumber: 8 },
         skip: !includeJune && !includeUSEvals
     });
-    const { data: julySim } = useQuery(GET_SIM_DATA, {
+    const { data: julySim } = useQuery(GET_SIM_DATA_BY_EVAL, {
         variables: { evalNumber: 9 },
         skip: !includeJuly
     });
