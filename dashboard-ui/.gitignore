@@ -1,3 +1,4 @@
 /node_modules
 /package-lock.json
 /build
+ca-bundle.crt
