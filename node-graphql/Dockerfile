@@ -11,9 +11,7 @@ ENV PORT=$PORT_ARG
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
 COPY package*.json ./
-COPY ca-bundle.crt ./
 
-RUN npm config set cafile ca-bundle.crt
 RUN npm install
 # If you are building your code for production
 # RUN npm ci --only=production
