@@ -20,27 +20,27 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-const GET_SURVEY_RESULTS = gql`
-    query GetAllResults {
-        getAllSurveyResults
-    }`;
+const GET_SURVEY_RESULTS_BY_EVAL_ARRAY = gql`
+  query GetSurveyResultsByEvalArray($evalNumbers: [Float!]!) {
+    getSurveyResultsByEvalArray(evalNumbers: $evalNumbers)
+  }`;
 
-const GET_TEXT_RESULTS = gql`
-    query GetAllResults {
-        getAllScenarioResults
-    }`;
+const GET_SCENARIO_RESULTS_BY_EVAL_ARRAY = gql`
+    query GetScenarioResultsByEvalArray($evalNumbers: [Float!]!) {
+        getScenarioResultsByEvalArray(evalNumbers: $evalNumbers)
+  }`;
 
-const GET_ADM_DATA = gql`
+const GET_ADM_DATA_BY_EVAL = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
 
-const GET_COMPARISON_DATA = gql`
-    query getHumanToADMComparison {
-        getHumanToADMComparison
+const GET_COMPARISON_DATA_BY_EVAL_ARRAY = gql`
+    query getHumanToADMComparisonByEvalArray($evalNumbers: [Float!]!) {
+        getHumanToADMComparisonByEvalArray(evalNumbers: $evalNumbers)
     }`;
 
-const GET_SIM_DATA = gql`
+const GET_SIM_DATA_BY_EVAL = gql`
     query GetSimAlignment($evalNumber: Float!){
         getAllSimAlignmentByEval(evalNumber: $evalNumber)
     }`;
@@ -51,30 +51,17 @@ const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'D
 const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Server Session ID (Delegator)', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation Preference (PSAF-1/PSAF-2)', 'Delegation Preference (PSAF-1/PSAF-3)', 'Delegation Preference (PSAF-1/PSAF-4)', 'Delegation Preference (PSAF-2/PSAF-3)', 'Delegation Preference (PSAF-2/PSAF-4)', 'Delegation Preference (PSAF-3/PSAF-4)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 export function RQ134({ evalNum, tableTitle }) {
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
-    });
-    const { data: dreAdms } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 4 }
-    });
-    const { data: juneAdms } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 8 }
-    });
-    const { data: julyAdms } = useQuery(GET_ADM_DATA, {
-        variables: { "evalNumber": 9 }
-    });
-    const { loading: loadingComparisonData, error: errorComparisonData, data: comparisonData } = useQuery(GET_COMPARISON_DATA, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": evalNum } });
-    const { data: dreSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 4 } });
-    const { data: janSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 6 } });
-    const { data: juneSim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 8 } });
-    const { data: julySim } = useQuery(GET_SIM_DATA, { variables: { "evalNumber": 9 } });
-
+    // -------------------------- State: filters, toggles, and table data --------------------------
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    // Hooks for storing table data
+    const [surveyData, setSurveyData] = React.useState([]);
+    const [textResultsData, setTextResultsData] = React.useState([]);
+    const [comparisonData, setComparisonData] = React.useState([]);
+    // Hooks for storing eval numbers that are already fetched
+    const [fetchedSurveyEvals, setFetchedSurveyEvals] = React.useState([]);
+    const [fetchedScenarioEvals, setFetchedScenarioEvals] = React.useState([]);
+    const [fetchedComparisonEvals, setFetchedComparisonEvals] = React.useState([]);
     // all options for filters
     const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
@@ -110,6 +97,114 @@ export function RQ134({ evalNum, tableTitle }) {
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
 
+    // Set evals to be rendered by number
+    const evalNumbers = React.useMemo(() => {
+      const evalNumbers = [evalNum];
+
+      if (includeDRE || includeUSEvals) evalNumbers.push(4);
+      if (includeJAN || includeUSEvals) evalNumbers.push(6);
+      if (includeJune || includeUSEvals) evalNumbers.push(8);
+      if (includeJuly) evalNumbers.push(9);
+
+      return evalNumbers;
+    }, [
+      evalNum,
+      includeDRE,
+      includeJAN,
+      includeJune,
+      includeJuly,
+      includeUSEvals
+    ]);
+
+    const evalNumbersToFetchSurveys = React.useMemo(
+      () => evalNumbers.filter((num) => !fetchedSurveyEvals.includes(num)),
+      [evalNumbers, fetchedSurveyEvals]
+    );
+    const evalNumbersToFetchScenarios = React.useMemo(
+      () => evalNumbers.filter((num) => !fetchedScenarioEvals.includes(num)),
+      [evalNumbers, fetchedScenarioEvals]
+    );
+    const evalNumbersToFetchComparison = React.useMemo(
+      () => evalNumbers.filter((num) => !fetchedComparisonEvals.includes(num)),
+      [evalNumbers, fetchedComparisonEvals]
+    );
+
+    // ------------------------------------ GraphQL query hooks ------------------------------------
+    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA_BY_EVAL, {
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
+    });
+    const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA_BY_EVAL, { variables: { "evalNumber": evalNum } });
+    // Queries fetched by eval number
+    const {
+      loading: loadingSurveyResults,
+      error: errorSurveyResults
+    } = useQuery(GET_SURVEY_RESULTS_BY_EVAL_ARRAY, {
+      variables: { evalNumbers: evalNumbersToFetchSurveys },
+      skip: evalNumbersToFetchSurveys.length === 0,
+      onCompleted: (data) => {
+        const newRows = data?.getSurveyResultsByEvalArray ?? [];
+        setSurveyData((prev) => [...prev, ...newRows]); // append new rows to surveyData
+        // mark evals as fetched so we don't refetch them
+        setFetchedSurveyEvals((prev) => [...prev, ...evalNumbersToFetchSurveys]);
+      }
+    });
+    const {
+      loading: loadingTextResults,
+      error: errorTextResults
+    } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL_ARRAY, {
+      variables: { evalNumbers: evalNumbersToFetchScenarios },
+      skip: evalNumbersToFetchScenarios.length === 0,
+      onCompleted: (data) => {
+        const newRows = data?.getScenarioResultsByEvalArray ?? [];
+        setTextResultsData((prev) => [...prev, ...newRows]); // append new rows to textResultsData
+        // mark evals as fetched so we don't refetch them
+        setFetchedScenarioEvals((prev) => [...prev, ...evalNumbersToFetchScenarios]);
+      }
+    });
+    const {
+      loading: loadingComparisonData,
+      error: errorComparisonData,
+    } = useQuery(GET_COMPARISON_DATA_BY_EVAL_ARRAY, {
+      variables: { evalNumbers: evalNumbersToFetchComparison },
+      skip: evalNumbersToFetchComparison.length === 0,
+      onCompleted: (data) => {
+        const newRows = data?.getHumanToADMComparisonByEvalArray ?? [];
+        setComparisonData((prev) => [...prev, ...newRows]); // append new rows to comparisonData
+        // mark evals as fetched so we don't refetch them
+        setFetchedComparisonEvals((prev) => [...prev, ...evalNumbersToFetchComparison]);
+      }
+    });
+    // Sim and ADM queries
+    const { data: dreAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
+      variables: { evalNumber: 4 },
+      skip: !includeDRE && !includeUSEvals
+    });
+    const { data: juneAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
+        variables: { evalNumber: 8 },
+        skip: !includeJune && !includeUSEvals
+    });
+    const { data: julyAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
+        variables: { evalNumber: 9 },
+        skip: !includeJuly
+    });
+    const { data: dreSim } = useQuery(GET_SIM_DATA_BY_EVAL, {
+        variables: { evalNumber: 4 },
+        skip: !includeDRE && !includeUSEvals
+    });
+    const { data: janSim } = useQuery(GET_SIM_DATA_BY_EVAL, {
+        variables: { evalNumber: 6 },
+        skip: !includeJAN && !includeUSEvals
+    });
+    const { data: juneSim } = useQuery(GET_SIM_DATA_BY_EVAL, {
+        variables: { evalNumber: 8 },
+        skip: !includeJune && !includeUSEvals
+    });
+    const { data: julySim } = useQuery(GET_SIM_DATA_BY_EVAL, {
+        variables: { evalNumber: 9 },
+        skip: !includeJuly
+    });
+
     const shouldShowTruncationError = evalNum === 6 || (evalNum === 5 && includeJAN);
 
     const openModal = () => {
@@ -119,6 +214,20 @@ export function RQ134({ evalNum, tableTitle }) {
     const closeModal = () => {
         setShowDefinitions(false);
     }
+
+    const clearFilters = () => {
+        setTA1Filters([]);
+        setTA2Filters([]);
+        setScenarioFilters([]);
+        setTargetFilters([]);
+        setAttributeFilters([]);
+        setAdmTypeFilters([]);
+        setDelGrpFilters([]);
+        setDelMilFilters([]);
+        setSearchPid('');
+        setProbeSetAssessmentFilters([]);
+        setProbeSetObservationFilters([]);
+    };
 
     React.useEffect(() => {
         // reset toggles on render
@@ -145,11 +254,25 @@ export function RQ134({ evalNum, tableTitle }) {
         setHeaders(currentHeaders);
     }, [evalNum, includeJAN]);
 
+    const needsDre = includeDRE || includeUSEvals;
+    const needsJan = includeJAN || includeUSEvals;
+    const needsJune = includeJune || includeUSEvals;
+    const needsJuly = includeJuly;
+
     React.useEffect(() => {
-        if (dataSurveyResults?.getAllSurveyResults && dataParticipantLog?.getParticipantLog && dataTextResults?.getAllScenarioResults &&
-            dataADMs?.getAllHistoryByEvalNumber && comparisonData?.getHumanToADMComparison && dataSim?.getAllSimAlignmentByEval &&
-            dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval && janSim?.getAllSimAlignmentByEval) {
-            const data = getRQ134Data(evalNum, dataSurveyResults, dataParticipantLog, dataTextResults, dataADMs, comparisonData, dataSim);
+        if (
+            surveyData.length > 0 &&
+            dataParticipantLog?.getParticipantLog &&
+            textResultsData.length > 0 &&
+            dataADMs?.getAllHistoryByEvalNumber &&
+            comparisonData.length > 0 &&
+            dataSim?.getAllSimAlignmentByEval &&
+            (!needsDre || (dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval)) &&
+            (!needsJan || janSim?.getAllSimAlignmentByEval) &&
+            (!needsJune || (juneAdms?.getAllHistoryByEvalNumber && juneSim?.getAllSimAlignmentByEval)) &&
+            (!needsJuly || (julyAdms?.getAllHistoryByEvalNumber && julySim?.getAllSimAlignmentByEval))
+        ) {
+            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim);
 
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -158,24 +281,22 @@ export function RQ134({ evalNum, tableTitle }) {
                 }));
             }
 
-            if (includeDRE) {
-                // for ph1, offer option to include dre data, but ONLY THE 25 FULL SETS!
+            if (includeDRE && dreAdms && dreSim) {
                 includeExtraData(data, 4, dreSim, dreAdms);
             }
-            if (includeJAN) {
+            if (includeJAN && janSim) {
                 includeExtraData(data, 6, janSim, dataADMs);
             }
-            if (includeJune) {
+            if (includeJune && juneAdms && juneSim) {
                 includeExtraData(data, 8, juneSim, juneAdms);
             }
-            if (includeJuly) {
+            if (includeJuly && julyAdms && julySim) {
                 includeExtraData(data, 9, julySim, julyAdms);
             }
-
             if (includeUSEvals) {
-                includeExtraData(data, 4, dreSim, dreAdms);
+                if (dreAdms && dreSim) includeExtraData(data, 4, dreSim, dreAdms);
                 includeExtraData(data, 5, dataSim, dataADMs);
-                includeExtraData(data, 6, janSim, dataADMs);
+                if (janSim) includeExtraData(data, 6, janSim, dataADMs);
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -195,10 +316,34 @@ export function RQ134({ evalNum, tableTitle }) {
             setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
         }
-    }, [dataParticipantLog, dataSurveyResults, dataTextResults, dataADMs, comparisonData, evalNum, includeDRE, includeJAN, includeJune, includeJuly, includeUSEvals, dreAdms, juneAdms, julyAdms, dreSim, janSim, juneSim, julySim, dataSim]);
+    }, [
+        dataParticipantLog,
+        surveyData,
+        textResultsData,
+        dataADMs,
+        comparisonData,
+        dataSim,
+        dreAdms,
+        dreSim,
+        janSim,
+        juneAdms,
+        juneSim,
+        julyAdms,
+        julySim,
+        evalNum,
+        includeDRE,
+        includeJAN,
+        includeJune,
+        includeJuly,
+        includeUSEvals,
+        needsDre,
+        needsJan,
+        needsJune,
+        needsJuly
+    ]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
-        const addedData = getRQ134Data(evalToAdd, dataSurveyResults, dataParticipantLog, dataTextResults, admsToUse, comparisonData, simData, evalToAdd == 4);
+        const addedData = getRQ134Data(evalToAdd, surveyData, dataParticipantLog, textResultsData, admsToUse, comparisonData, simData, evalToAdd == 4);
         if (evalToAdd == 6) {
             addedData.allObjs = addedData.allObjs.map(obj => ({
                 ...obj,
@@ -217,7 +362,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 };
 
                 if (obj['Attribute'] === 'VOL') {
-                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                    const comparison = comparisonData.find(x =>
                         x['pid'] === obj['Delegator ID'] &&
                         x['adm_alignment_target'] === obj['Target'] &&
                         x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
@@ -241,7 +386,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
                     data.allAttributes.push('QOL');
                 } else if (obj['Attribute'] === 'QOL') {
-                    const comparison = comparisonData?.getHumanToADMComparison?.find(x =>
+                    const comparison = comparisonData.find(x =>
                         x['pid'] === obj['Delegator ID'] &&
                         x['adm_alignment_target'] === obj['Target'] &&
                         x['adm_type'] === obj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']
@@ -295,20 +440,6 @@ export function RQ134({ evalNum, tableTitle }) {
         setSearchPid(event.target.value);
     };
 
-    const clearFilters = () => {
-        setTA1Filters([]);
-        setTA2Filters([]);
-        setScenarioFilters([]);
-        setTargetFilters([]);
-        setAttributeFilters([]);
-        setAdmTypeFilters([]);
-        setDelGrpFilters([]);
-        setDelMilFilters([]);
-        setSearchPid('');
-        setProbeSetAssessmentFilters([]);
-        setProbeSetObservationFilters([]);
-    };
-
     const refineData = (origData) => {
         // remove unwanted headers from download
         const updatedData = structuredClone(origData);
@@ -356,20 +487,20 @@ export function RQ134({ evalNum, tableTitle }) {
         <h2 className='rq134-header'>{tableTitle}
             {evalNum === 5 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
-                    <FormControlLabel className='floating-toggle' control={<Checkbox value={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox checked={includeDRE} onChange={updateDREStatus} />} label="Include DRE Data" />
+                    <FormControlLabel className='floating-toggle' control={<Checkbox checked={includeJAN} onChange={updateJANStatus} />} label="Include Jan 2025 Eval Data" />
                 </div>}
             {evalNum === 8 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJuly} onChange={updateJulyStatus} />} label="Include July 2025 Eval Data" />
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox checked={includeJuly} onChange={updateJulyStatus} />} label="Include July 2025 Eval Data" />
                 </div>}
             {evalNum === 9 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox checked={includeJune} onChange={updateJuneStatus} />} label="Include June 2025 Eval Data" />
                 </div>}
             {evalNum === 12 &&
                 <div className='stacked-checkboxes'>
-                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox value={includeUSEvals} onChange={updateUSEvalsStatus} />} label="Include US Evals (Evals 4, 5, 6)" />
+                    <FormControlLabel className='floating-toggle centered-toggle' control={<Checkbox checked={includeUSEvals} onChange={updateUSEvalsStatus} />} label="Include US Evals (Evals 4, 5, 6)" />
                 </div>}
         </h2>
 

@@ -43,8 +43,10 @@ const typeDefs = gql`
     getAllImages: [JSON] @complexity(value: 20)
     getAllSurveyResults: [JSON] @complexity(value: 100)
     getAllSurveyResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getSurveyResultsByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 100)
     getAllScenarioResults: [JSON] @complexity(value: 100)
     getAllScenarioResultsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
+    getScenarioResultsByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 100)
     getAllTextScenariosDRE: [JSON] @complexity(value: 30)
     getEvalIdsForAllScenarioResults: [JSON] @complexity(value: 25)
     getAllSimAlignment: [JSON] @complexity(value: 90)
@@ -62,6 +64,7 @@ const typeDefs = gql`
     countAIGroupFirst: Int @complexity(value: 10)
     getParticipantLog: [JSON] @complexity(value: 50)
     getHumanToADMComparison: [JSON] @complexity(value: 250)
+    getHumanToADMComparisonByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 250)
     getCurrentSurveyVersion: String @complexity(value: 5)
     getCurrentStyle: String @complexity(value: 5)
     getADMTextProbeMatches: [JSON] @complexity(value: 250)
@@ -442,6 +445,56 @@ const resolvers = {
         "user": 0
       }).toArray().then(result => { return result; });
     },
+    getSurveyResultsByEvalArray: async (obj, args, context, inflow) => {
+      const { evalNumbers } = args;
+
+      // If nothing passed in, just return an empty array
+      if (!evalNumbers || evalNumbers.length === 0) {
+        return [];
+      }
+
+      // return all survey results except for those containing "test" in participant ID
+      const excludeTestID = {
+        "results.Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "results.Participant ID Page.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID.questions.Participant ID.response": { $not: /test/i },
+        "Participant ID Page.questions.Participant ID.response": { $not: /test/i }
+      };
+
+      // Filter based on surveyVersion and participant ID starting with "2024" (only for version 2)
+      const surveyVersionFilter = {
+        $or: [
+          { "results.surveyVersion": { $ne: 2 } },
+          {
+            $and: [
+              { "results.surveyVersion": 2 },
+              { "results.Participant ID Page.questions.Participant ID.response": { $regex: /^2024/ } }
+            ]
+          }
+        ]
+      };
+
+      // Match ANY evalNumber in the evalNumbers array
+      return context.db.collection("surveyResults")
+        .find({
+          $and: [
+            excludeTestID,
+            surveyVersionFilter,
+            {
+              $or: [
+                { evalNumber: { $in: evalNumbers } },
+                { "results.evalNumber": { $in: evalNumbers } }
+              ]
+            }
+          ]
+        })
+        .project({
+          // don't return user field
+          "results.user": 0,
+          user: 0
+        })
+        .toArray();
+    },
     getAllScenarioResults: async (obj, args, context, inflow) => {
       return await context.db.collection('userScenarioResults').find({
         "participantID": { $not: /test/i }
@@ -452,6 +505,25 @@ const resolvers = {
         "participantID": { $not: /test/i },
         "evalNumber": args["evalNumber"]
       }).toArray().then(result => { return result; });
+    },
+    getScenarioResultsByEvalArray: async (obj, args, context, inflow) => {
+      const { evalNumbers } = args;
+
+      // If no eval numbers provided, return empty array
+      if (!evalNumbers || evalNumbers.length === 0) {
+        return [];
+      }
+
+      // Query userScenarioResults for any of the evalNumbers, excluding test participants
+      const results = await context.db
+        .collection('userScenarioResults')
+        .find({
+          participantID: { $not: /test/i },
+          evalNumber: { $in: evalNumbers }
+        })
+        .toArray();
+
+      return results;
     },
     getAllTextScenariosDRE: async (obj, args, context, inflow) => {
       return await context.db.collection('userScenarioResults').distinct(
@@ -546,6 +618,22 @@ const resolvers = {
     },
     getHumanToADMComparison: async (obj, args, context, info) => {
       return await context.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
+    },
+    getHumanToADMComparisonByEvalArray: async (obj, args, context, inflow) => {
+      const { evalNumbers } = args;
+
+      // If no eval numbers provided, return empty array
+      if (!evalNumbers || evalNumbers.length === 0) {
+        return [];
+      }
+
+      // Query humanToADMComparison for any of the evalNumbers
+      const results = await context.db
+        .collection('humanToADMComparison')
+        .find({evalNumber: { $in: evalNumbers }})
+        .toArray();
+
+      return results;
     },
     getCurrentSurveyVersion: async (obj, args, context, info) => {
       return await context.db.collection('surveyVersion').findOne().then(result => { return result.version });
