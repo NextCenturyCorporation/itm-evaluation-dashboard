@@ -226,15 +226,17 @@ export const ADMProbeResponses = (props) => {
             const kdmas = data?.results?.kdmas;
             if (!kdmas || kdmas.length === 0) return '-';
 
-            if (kdmas.length === 1) {
-                return kdmas[0].value || '-';
+            if (alignmentTarget.includes('affiliation_merit')) {
+                // label multi kdma
+                return kdmas.map(kdma => {
+                    const capitalizedKdma = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
+                    return `${capitalizedKdma}: ${kdma.value || '-'}`;
+                }).join(', ');
             }
 
-            // label multi kdma
-            return kdmas.map(kdma => {
-                const capitalizedKdma = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
-                return `${capitalizedKdma}: ${kdma.value || '-'}`;
-            }).join(', ');
+            const matchingKdma = kdmas.find(kdma => alignmentTarget.includes(kdma.kdma));
+            return matchingKdma?.value || '-';
+
         }
 
         const attribute = alignmentTarget.includes('Moral') ? 'Moral judgement' : 'Ingroup Bias';
