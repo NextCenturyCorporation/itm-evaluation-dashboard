@@ -256,25 +256,29 @@ export const HEADER = {
         "AF_Multi_KDMA_Text"
     ],
     12: [
-    "ParticipantID",
-    "Date",
-    "MedRole",
-    "MedExp",
-    "MilitaryExp",
-    "YrsMilExp",
-    "PropTrust",
-    "Delegation",
-    "Trust",
-    "PostVRstate",
-    "AD_Scenario_Text",
-    "AD_Scenario_Sim",
-    "VOL_Scenario_Text",
-    "VOL_KDMA_Text",
-    "MJ_KDMA_Text",
-    "MJ_KDMA_Sim",
-    "IO_KDMA_Text",
-    "IO_KDMA_Sim"
-]
+        "ParticipantID",
+        "Date",
+        "MedRole",
+        "MedExp",
+        "MilitaryExp",
+        "YrsMilExp",
+        "PropTrust",
+        "Delegation",
+        "Trust",
+        "PostVRstate",
+        "AD_Scenario_Text",
+        "AD_Scenario_Sim",
+        "VOL_Scenario_Text",
+        "VOL_KDMA_Text",
+        "MJ_KDMA_Text",
+        "MJ_KDMA_Text_Narr",
+        "MJ_KDMA_Text_NonNarr",
+        "MJ_KDMA_Sim",
+        "IO_KDMA_Text",
+        "IO_KDMA_Text_Narr",
+        "IO_KDMA_Text_NonNarr",
+        "IO_KDMA_Sim"
+    ]
 };
 
 export const ADEPT_HEADERS_DRE = {
