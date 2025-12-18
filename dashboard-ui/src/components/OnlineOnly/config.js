@@ -3,7 +3,6 @@ import store from "../../store/store";
 import bcrypt from 'bcryptjs';
 
 export const evalNameToNumber = {
-    'Phase 2 February 2026 Evaluation': 15,
     'Phase 2 October 2025 Collaboration': 13,
     'Eval 12 UK Phase 1': 12,
     'Phase 2 September 2025 Collaboration': 10,
@@ -159,45 +158,23 @@ export const octoberParticipantData = (currentSearchParams, hashedEmail, newPid,
     };
 };
 
-export const febParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
-    const scenarioSet = Math.floor(Math.random() * 2) + 1;
-    const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
-    const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
-    const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
-
-    return {
-        "ParticipantID": newPid,
-        "Type": type,
-        "prolificId": prolificId,
-        "contactId": contactId,
-        "claimed": true,
-        "simEntryCount": 0,
-        "surveyEntryCount": 0,
-        "textEntryCount": 0,
-        "hashedEmail": email,
-        'evalNum': evalNum,
-        "AF-text-scenario": scenarioSet,
-        "MF-text-scenario": scenarioSet,
-        "PS-text-scenario": scenarioSet,
-        "SS-text-scenario": scenarioSet,
-    };
-};
-
 export const scenarioIdsFromLog = (participantLog, currentEval) => {
     const num = evalNameToNumber[currentEval]
     let scenarios = [];
 
-    const standardEvalConfigs = {
-        10: { prefix: 'Sept2025', types: ['AF', 'MF', 'PS', 'PS-AF'], suffix: 'eval' },
-        15: { prefix: 'Feb2026', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'assess' },
-        8: { prefix: 'June2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' },
-        9: { prefix: 'July2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' }
-    };
+    if (num === 10) {
+        const month = 'Sept2025'
+        const scenarioTypes = ['AF', 'MF', 'PS', 'PS-AF']
 
-    if (standardEvalConfigs[num]) {
-        const { prefix, types, suffix } = standardEvalConfigs[num];
-        scenarios = types.map(type =>
-            `${prefix}-${type}${participantLog[`${type}-text-scenario`]}-${suffix}`
+        scenarios = scenarioTypes.map(type =>
+            `${month}-${type}${participantLog[`${type}-text-scenario`]}-eval`
+        )
+    } else if (num === 8 || num === 9) {
+        const monthPrefix = num === 9 ? 'July2025' : 'June2025';
+        const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
+
+        scenarios = scenarioTypes.map(type =>
+            `${monthPrefix}-${type}${participantLog[`${type}-text-scenario`]}-eval`
         );
     } else if (num === 5) {
         scenarios = [
@@ -210,7 +187,7 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
             'vol-ph1-eval-2',
             'DryRunEval.IO1',
             'DryRunEval.MJ1'
-        ];
+        ]
     } else if (num === 13) {
         const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
         scenarios = [1, 2, 3].flatMap(num =>
@@ -225,5 +202,5 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
         }
     }
 
-    return scenarios;
+    return scenarios
 }
