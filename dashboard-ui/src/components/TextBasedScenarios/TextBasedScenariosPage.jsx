@@ -471,7 +471,7 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025') || scenario.scenario_id.includes('DryRun')) {
+        if (scenario.author === 'ADEPT' || scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025') || scenario.scenario_id.includes('DryRun')) {
             const isPSAF = scenario.scenario_id.includes('PS-AF');
             const evalNum = evalNameToNumber[this.props.currentTextEval]
             // ps-af needs its own individual session
@@ -497,12 +497,12 @@ class TextBasedScenariosPage extends Component {
                 }), async () => {
                     /*
                     Phase 1/Jan/Dre 3 adept scenarios
-                    June/July 4
+                    June/July/Feb 4
                     September 3 (because PS-AF scored separately)
                     UK 3 (MJ5, IO2, MJ2)
                     */
                     const expectedScenarios = evalNameToNumber[this.props.currentTextEval] >= 8 ?
-                        (evalNum >= 10 ? 3 : 4) : 3;
+                        ([10, 12].includes(evalNum) ? 3 : 4) : 3;
 
                     if (this.state.adeptSessionsCompleted === expectedScenarios) {
                         await this.uploadAdeptScenarios(updatedAdeptScenarios);
