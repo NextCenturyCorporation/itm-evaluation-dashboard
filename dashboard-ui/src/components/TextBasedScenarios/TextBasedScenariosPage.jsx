@@ -417,6 +417,7 @@ class TextBasedScenariosPage extends Component {
         const endStamp = await this.props.getServerTimestamp();
         let scenarioData = {
             scenario_id: currentScenario.scenario_id,
+            author: currentScenario.author,
             participantID: this.state.participantID,
             vrEnvCompleted: this.state.vrEnvCompleted,
             title: currentScenario.title,
