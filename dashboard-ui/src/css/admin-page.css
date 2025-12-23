@@ -62,3 +62,13 @@
   .dual-listbox .dual-listbox__button {
     margin: 5px 0;
   }
+
+  .eval-name:hover {
+    color: #1a609c;
+    cursor: pointer;
+  }
+
+  .eval-modal-table {
+    border-collapse: separate;
+    border-spacing: 5px;
+  }

@@ -885,7 +885,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                 <>
                     <Row className="mb-4">
                         {unapproved.length > 0 && <ApprovalTable unapproved={unapproved} updateUnapproved={setUnapproved} caller={{ username: currentUser.username, sessionId }} />}
-
+                        <EditEvals caller={{ username: currentUser.username, sessionId }} />
                         <Col md={4}>
                             <Card>
                                 <Card.Header as="h5">Survey Version</Card.Header>
@@ -1080,8 +1080,6 @@ function AdminPage({ currentUser, updateUserHandler }) {
                             );
                         }}
                     </Query>
-
-                    <EditEvals caller={{ username: currentUser.username, sessionId }} />
                 </>}
         </Container>
     );
