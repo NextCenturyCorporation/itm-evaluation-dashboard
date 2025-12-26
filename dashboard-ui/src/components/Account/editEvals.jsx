@@ -45,11 +45,13 @@ export function EditEvals({ caller }) {
     const [addNewEval] = useMutation(ADD_NEW_EVAL);
     const [deleteEval] = useMutation(DELETE_EVAL);
     const [showNewEvalForm, setShowNewEvalForm] = React.useState(false);
+    const [showEvalModal, setShowEvalModal] = React.useState(false);
     const [evalName, setEvalName] = React.useState('');
     const [evalNumber, setEvalNumber] = React.useState('');
     const [selectedPages, setSelectedPages] = React.useState([]);
     const [showDeleteConfirmation, setShowDeleteConfirmation] = React.useState(false);
     const [evalToDelete, setEvalToDelete] = React.useState(null);
+    const [modalEval, setModalEval] = React.useState([]);
 
 
     React.useEffect(() => {
@@ -113,6 +115,8 @@ export function EditEvals({ caller }) {
     /* DELETE FUNCTIONS */
 
     const startDeleteProcess = (evalToDeleteData) => {
+        setShowEvalModal(false)
+        setModalEval([])
         setShowDeleteConfirmation(true);
         setEvalToDelete(evalToDeleteData);
     };
@@ -127,6 +131,12 @@ export function EditEvals({ caller }) {
             const res = await deleteEval({ variables: { caller, evalId: evalToDelete._id } });
             if (res.data.deleteEval.ok) {
                 setShowDeleteConfirmation(false);
+
+                if (showEvalModal) {
+                    setShowEvalModal(false);
+                    setModalEval([]);
+                }
+                
                 const refetchedData = await fetchEvalData();
                 updateLocalEvalData(refetchedData.data);
             }
@@ -184,6 +194,18 @@ export function EditEvals({ caller }) {
         setEvalNumber('');
         setSelectedPages([]);
     };
+
+    /* EVAL MODAL FUNCTIONS */
+
+    const evalModalToggle = (ev) => {
+        setShowEvalModal(true)
+        setModalEval(ev)
+    }
+
+    const onCancelSettings = () => {
+        setShowEvalModal(false)
+        setModalEval([])
+    }
 
 
 
@@ -246,7 +268,7 @@ export function EditEvals({ caller }) {
                             {evals.map((evaluation) => {
                                 return (
                                     <tr key={evaluation._id}>
-                                        <td>{evaluation.evalName}</td>
+                                        <td className='eval-name'onClick={() => evalModalToggle(evaluation)}>{evaluation.evalName}</td>
                                         <td>{evaluation.evalNumber}</td>
                                         <td><Switch color='primary' checked={evaluation.pages.programQuestions} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'programQuestions', e)} /></td>
                                         <td><Switch color='primary' checked={evaluation.pages.textResults} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'textResults', e)} /></td>
@@ -269,6 +291,112 @@ export function EditEvals({ caller }) {
                 <Button onClick={() => setShowNewEvalForm(true)}>Add New Eval</Button>
             </Card.Body>
         </Card>
+
+        <Modal show={showEvalModal} onHide={onCancelSettings} centered>
+            <Modal.Header closeButton className="bg-light">
+                <Modal.Title>
+                    <strong>{modalEval.evalName}</strong>
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="px-4">
+                <strong>Eval Number: {modalEval.evalNumber}</strong>
+
+                <div className="table-container">
+                    <table className="eval-modal-table">
+                        <tbody>
+                            <tr>
+                                <td className="table-label">
+                                    /
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.programQuestions} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'programQuestions', e)} />
+                                </td>
+                                <td className="table-label">
+                                    /text-based-results
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.textResults} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'textResults', e)} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="table-label">
+                                    /humanSimParticipant
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.participantLevelData} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'participantLevelData', e)} />
+                                </td>
+                                <td className="table-label">
+                                    /humanProbeData
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.humanSimProbes} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'humanSimProbes', e)} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="table-label">
+                                    /human-results
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.humanSimPlayByPlay} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'humanSimPlayByPlay', e)} />
+                                </td>
+                                <td className="table-label">
+                                    /results
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.admResults} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'admResults', e)} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="table-label">
+                                    /adm-results
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.admAlignment} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'admAlignment', e)} />
+                                </td>
+                                <td className="table-label">
+                                    /adm-probe-responses
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.admProbeResponses} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'admProbeResponses', e)} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="table-label">
+                                    /rq1
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.rq1} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'rq1', e)} />
+                                </td>
+                                <td className="table-label">
+                                    /rq2
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.rq2} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'rq2', e)} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="table-label">
+                                    /rq3
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.rq3} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'rq3', e)} />
+                                </td>
+                                <td className="table-label">
+                                    /exploratory-analysis
+                                </td>
+                                <td className="table-value">
+                                    <Switch color='primary' checked={modalEval.pages?.exploratoryAnalysis} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'exploratoryAnalysis', e)} />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="text-center mt-4">
+                    <IconButton title='Delete' onClick={() => startDeleteProcess(modalEval)} children={<DeleteIcon className='delete-eval-btn' />} />
+                </div>
+            </Modal.Body>
+        </Modal>
 
         <Modal show={showNewEvalForm} onHide={onCancelCreate} centered>
             <Modal.Header closeButton className="bg-light">
