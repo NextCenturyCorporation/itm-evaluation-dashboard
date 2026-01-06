@@ -34,15 +34,28 @@ const GET_ALL_TEXT_BASED_CONFIGS = gql`
 
 const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAlignmentData'];
 
-const cleanTitle = (title, scenario) => {
+const cleanTitle = (title, scenario, questionMapping = null) => {
     const foundAttr = p2Attributes.find(attr => scenario && scenario.includes(attr));
     const attrOrScenario = foundAttr || '';
-    const probeMatch = title.match(/Probe\s*(\d+)/i);
-    let number;
 
-    if (probeMatch) {
-        number = probeMatch[1];
+    let number;
+    if (questionMapping) {
+        const firstChoice = Object.values(questionMapping)[0];
+        if (firstChoice?.probe_id) {
+            const probeMatch = firstChoice.probe_id.match(/Probe\s*(\d+)/i);
+            if (probeMatch) {
+                number = probeMatch[1];
+            }
+        }
     }
+
+    if (!number) {
+        const probeMatch = title.match(/Probe\s*(\d+)/i);
+        if (probeMatch) {
+            number = probeMatch[1];
+        }
+    }
+
     return `Probe-${attrOrScenario}-${number}`;
 };
 
@@ -64,7 +77,7 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
 
             const filteredData = Object.fromEntries(
                 Object.entries(data).filter(([key]) =>
-                    !['originalKey', 'total', 'question', 'undefined'].includes(key)
+                    !['originalKey', 'total', 'question', 'questionMapping', 'undefined'].includes(key)
                 )
             );
 
@@ -124,15 +137,15 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
 
     return (
         <div className='graph-section'>
-            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(pageName) : cleanTitle(pageName, scenario))} (N={data['total']})</h3>            <div id={"viz_" + pageName} className='full-width-graph' />
+            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(pageName) : cleanTitle(pageName, scenario, data.questionMapping))} (N={data['total']})</h3>            <div id={"viz_" + pageName} className='full-width-graph' />
         </div>
     );
 }
 
-function getQuestionText(qkey, scenario) {
+function getQuestionText(qkey, scenario, questionMapping = null) {
     if (qkey === 'Participant ID') { return qkey; }
     const isTime = qkey.toLowerCase().includes('time (s)');
-    const base = cleanTitle(qkey, scenario);
+    const base = cleanTitle(qkey, scenario, questionMapping);
     return `${base}${isTime ? '-Time' : '-Resp'}`;
 }
 
@@ -154,11 +167,13 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
     const [organizedData, setOrganizedData] = React.useState(null);
     const [, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
+    const [questionMappings, setQuestionMappings] = React.useState({});
 
     React.useEffect(() => {
         const formatted = {};
         const headers = ['Participant ID'];
         const excel = [];
+        const mappings = {};
 
         for (const entry of data) {
             const obj = {
@@ -197,8 +212,18 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                                     if (!headers.includes(q)) {
                                         headers.push(q);
                                     }
+                                    // Store question mapping if it exists
+                                    if (entry[key].questions[q].question_mapping) {
+                                        if (!mappings[q]) {
+                                            mappings[q] = entry[key].questions[q].question_mapping;
+                                        }
+                                        // ALSO store it for the time_key using the page name (key)
+                                        if (!mappings[time_key]) {
+                                            mappings[time_key] = entry[key].questions[q].question_mapping;
+                                        }
+                                    }
                                     formatted[entry['_id']][q] = entry[key].questions[q].response;
-                                    const objKey = shouldUseLegacy(entry['evalNumber']) ? getQuestionTextLegacy(q, scenarioName, textBasedConfigs) : getQuestionText(q, scenarioName)
+                                    const objKey = shouldUseLegacy(entry['evalNumber']) ? getQuestionTextLegacy(q, scenarioName, textBasedConfigs) : getQuestionText(q, scenarioName, mappings[q])
                                     obj[objKey] = entry[key].questions[q].response;
                                 }
                             });
@@ -218,6 +243,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         setOrganizedData(formatted);
         setHeaders(headers);
         setExcelData(excel);
+        setQuestionMappings(mappings);
     }, [data, scenarioName, textBasedConfigs]);
 
     const exportToExcel = async (allScenarios = false, attribute = null, singleScenario = null) => {
@@ -235,9 +261,19 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             const probeData = entry[pageName];
             if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
 
+            let pageQuestionMapping = null;
+            if (probeData.questions) {
+                for (const qData of Object.values(probeData.questions)) {
+                    if (qData?.response && qData?.question_mapping && Object.keys(qData.question_mapping).length > 0) {
+                        pageQuestionMapping = qData.question_mapping;
+                        break;
+                    }
+                }
+            }
+
             const time_key = shouldUseLegacy(entry.evalNumber)
                 ? getQuestionTextLegacy(pageName + ' time (s)', scenario, textBasedConfigs)
-                : getQuestionText(pageName + ' time (s)', scenario);
+                : getQuestionText(pageName + ' time (s)', scenario, pageQuestionMapping);
 
             if (!headerMap.has(time_key)) {
                 headerMap.set(time_key, dynamicHeaders.length);
@@ -248,9 +284,10 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             if (probeData.questions) {
                 Object.entries(probeData.questions).forEach(([q, qData]) => {
                     if (qData?.response !== undefined) {
+                        const questionMapping = qData?.question_mapping;
                         const questionHeader = shouldUseLegacy(entry.evalNumber)
                             ? getQuestionTextLegacy(q, scenario, textBasedConfigs)
-                            : getQuestionText(q, scenario);
+                            : getQuestionText(q, scenario, questionMapping);
 
                         if (!headerMap.has(questionHeader)) {
                             headerMap.set(questionHeader, dynamicHeaders.length);
@@ -377,7 +414,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                         {orderedHeaders.map((key) => {
                             const header = shouldUseLegacy(selectedEval)
                                 ? getQuestionTextLegacy(key, scenarioName, textBasedConfigs)
-                                : getQuestionText(key, scenarioName);
+                                : getQuestionText(key, scenarioName, questionMappings[key]);
                             return <th key={scenarioName + "_" + key}>{header}</th>;
                         })}
                     </tr>
@@ -492,7 +529,7 @@ export default function TextBasedResultsPage() {
                     if (scenario) {
                         uniqueScenarios.add(scenario);
                     }
-                    
+
                     if (scenario && filteredTextBasedConfigs[scenario]) {
                         if (!participants[scenario]) {
                             participants[scenario] = [];
@@ -510,11 +547,14 @@ export default function TextBasedResultsPage() {
                             );
 
                             if (hasProbeQuestion && !tmpResponses[scenario][k]) {
+                                const probeQuestionKey = Object.keys(result[k].questions).find(q => q.startsWith('probe '));
+                                const questionMapping = result[k].questions[probeQuestionKey]?.question_mapping;
                                 // This is a probe question not in the config, add it
                                 tmpResponses[scenario][k] = {
                                     question: `${k} - What action would you take?`,
                                     total: 0,
-                                    originalKey: k
+                                    originalKey: k,
+                                    questionMapping: questionMapping
                                 };
                             }
 
@@ -560,7 +600,7 @@ export default function TextBasedResultsPage() {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
                 const hasData = Object.keys(responsesByScenario[scenarioChosen][k])
-                    .filter(key => !['question', 'total', 'originalKey'].includes(key))
+                    .filter(key => !['question', 'total', 'questionMapping', 'originalKey'].includes(key))
                     .length > 0;
 
                 if (hasData && responsesByScenario[scenarioChosen][k].total > 0) {
@@ -593,7 +633,7 @@ export default function TextBasedResultsPage() {
                     .map((qkey, ind) => {
                         const displayKey = questionAnswerSets[qkey].originalKey || qkey;
                         return (<div className='result-section' key={displayKey + '_' + ind}>
-                            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(displayKey) : cleanTitle(displayKey, scenarioChosen))} (N={questionAnswerSets[qkey]['total']})</h3>
+                            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(displayKey) : cleanTitle(displayKey, scenarioChosen, questionAnswerSets[qkey].questionMapping))} (N={questionAnswerSets[qkey]['total']})</h3>
                             <p>{questionAnswerSets[qkey]['question']}</p>
                             <table className="itm-table text-result-table">
                                 <thead>
@@ -605,7 +645,7 @@ export default function TextBasedResultsPage() {
                                 </thead>
                                 <tbody>
                                     {Object.keys(questionAnswerSets[qkey])
-                                        .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined' && answer !== 'originalKey')
+                                        .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined' && answer !== 'questionMapping' && answer !== 'originalKey')
                                         .map((answer) => (
                                             <tr key={displayKey + '_' + answer}>
                                                 <td className="answer-column">{shortenAnswer(answer)}</td>
