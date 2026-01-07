@@ -413,7 +413,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         )}
         {shouldUseLegacy(selectedEval) && (
             <div className="mb-2">
-                <button onClick={exportToExcel}>Download Scenario Results</button>
+                <button onClick={() => exportToExcel(false, null, scenarioName)}>Download Scenario Results</button>
             </div>
         )}
         <div className="table-container">
@@ -528,7 +528,7 @@ export default function TextBasedResultsPage() {
                 const logData = participantLog.getParticipantLog.find(
                     log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                 );
-                if ((selectedEval === 4 || selectedEval === 5) && !logData) {
+                if ((selectedEval >= 4) && !logData) {
                     continue;
                 }
                 try {
