@@ -528,7 +528,7 @@ export default function TextBasedResultsPage() {
                 const logData = participantLog.getParticipantLog.find(
                     log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
                 );
-                if ((selectedEval === 4 || selectedEval === 5) && !logData) {
+                if ((selectedEval >= 4) && !logData) {
                     continue;
                 }
                 try {
