@@ -64,7 +64,7 @@
         "stop:test": "kill $(lsof -t -i:3001) $(lsof -t -i:4000) > /dev/null 2>&1",
         "stop:test-win": "npx kill-port 3001 & npx kill-port 4000",
         "build": "react-scripts build",
-        "test": "cross-env REACT_APP_TESTING=true jest --no-cache --verbose --runInBand",
+        "test": "cross-env REACT_APP_TESTING=true jest --no-cache --verbose --runInBand --listTests",
         "test-and-watch": "cross-env REACT_APP_TESTING=true jest --watchAll --runInBand",
         "eject": "react-scripts eject",
         "clean": "npx rimraf node_modules package-lock.json"
