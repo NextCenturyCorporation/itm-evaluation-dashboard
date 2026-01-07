@@ -417,6 +417,7 @@ class TextBasedScenariosPage extends Component {
         const endStamp = await this.props.getServerTimestamp();
         let scenarioData = {
             scenario_id: currentScenario.scenario_id,
+            author: currentScenario.author,
             participantID: this.state.participantID,
             vrEnvCompleted: this.state.vrEnvCompleted,
             title: currentScenario.title,
@@ -459,7 +460,7 @@ class TextBasedScenariosPage extends Component {
             sanitizedData,
             isUploadButtonEnabled: true
         }, () => {
-            if (this.uploadButtonRef.current && !scenarioId.includes('adept') && !scenarioId.includes('2025') && !scenarioId.includes('DryRun')) {
+            if (this.uploadButtonRef.current && currentScenario.author !== 'ADEPT' && !adeptList.some(term => scenarioId.includes(term))) {
                 this.uploadButtonRef.current.click();
             }
         });
@@ -471,11 +472,11 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.scenario_id.includes('adept') || scenario.scenario_id.includes('2025') || scenario.scenario_id.includes('DryRun')) {
+        if (scenario.author === 'ADEPT' || adeptList.some(term => scenario.scenario_id.includes(term))) {
             const isPSAF = scenario.scenario_id.includes('PS-AF');
             const evalNum = evalNameToNumber[this.props.currentTextEval]
             // ps-af needs its own individual session
-            const needsIsolatedSession = evalNum === 10 && isPSAF;
+            const needsIsolatedSession = evalNum === 15 || (evalNum === 10 && isPSAF);
             const isEval13 = evalNum === 13;
 
             if (needsIsolatedSession) {
@@ -497,12 +498,12 @@ class TextBasedScenariosPage extends Component {
                 }), async () => {
                     /*
                     Phase 1/Jan/Dre 3 adept scenarios
-                    June/July 4
+                    June/July/Feb 4
                     September 3 (because PS-AF scored separately)
                     UK 3 (MJ5, IO2, MJ2)
                     */
                     const expectedScenarios = evalNameToNumber[this.props.currentTextEval] >= 8 ?
-                        (evalNum >= 10 ? 3 : 4) : 3;
+                        ([10, 12].includes(evalNum) ? 3 : 4) : 3;
 
                     if (this.state.adeptSessionsCompleted === expectedScenarios) {
                         await this.uploadAdeptScenarios(updatedAdeptScenarios);
@@ -525,12 +526,11 @@ class TextBasedScenariosPage extends Component {
                 const sessionId = session.data;
 
                 await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
-                const mostLeastAligned = await this.mostLeastAligned(sessionId, 'adept', url, null);
+                const mostLeastAligned = await this.mostLeastAligned(sessionId, 'adept', url, scenario);
 
                 scenario.combinedSessionId = sessionId;
                 scenario.mostLeastAligned = mostLeastAligned;
                 scenario.kdmas = await this.attachKdmaValue(sessionId, url);
-
                 // can upload without waiting for the others
                 await this.uploadSingleScenario(scenario);
             }
@@ -722,7 +722,7 @@ class TextBasedScenariosPage extends Component {
         } else {
             const evalNumber = evalNameToNumber[this.props.currentTextEval];
             // only one target for individual or group eval 13
-            if (evalNumber === 13 && scenario) {
+            if ([15, 13].includes(evalNumber) && scenario) {
                 if (scenario.scenario_id.includes('AF')) {
                     targets = ['affiliation'];
                 } else if (scenario.scenario_id.includes('MF')) {
@@ -1184,3 +1184,6 @@ const adeptScenarioIdMap = {
     'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
     'phase1-adept-train-IO1': 'DryRunEval.IO1'
 }
+
+// used to stop premature uploads/duplicate uploads
+const adeptList = ['adept', '2025', 'DryRun'];

@@ -26,23 +26,54 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
-
 const GET_ALL_TEXT_BASED_CONFIGS = gql`
     query GetAllTextBasedConfigs {
         getAllTextBasedConfigs
     }`;
 
 const KEYS_WITHOUT_TIME = ['kdmas', 'group_targets', 'lowAlignmentData', 'highAlignmentData'];
+const METADATA_KEYS = ['question', 'total', 'questionMapping', 'originalKey', 'undefined'];
+const QUESTION_PREFIX = {
+    PROBE: 'probe ',
+    TEMPLATE: 'template '
+};
 
-const cleanTitle = (title, scenario) => {
+const sortByProbeNumber = (a, b) => {
+    const aMatch = a.match(/Probe (\d+)/);
+    const bMatch = b.match(/Probe (\d+)/);
+    if (aMatch && bMatch) {
+        return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+    }
+    return a.localeCompare(b);
+};
+
+const getScenarioAttribute = (scenarioName) => {
+    const match = scenarioName.match(/-(PS-AF|AF|MF|PS|SS)\d*-eval/i);
+    return match ? match[1] : null;
+};
+
+const cleanTitle = (title, scenario, questionMapping = null) => {
     const foundAttr = p2Attributes.find(attr => scenario && scenario.includes(attr));
     const attrOrScenario = foundAttr || '';
-    const probeMatch = title.match(/Probe\s*(\d+)/i);
-    let number;
 
-    if (probeMatch) {
-        number = probeMatch[1];
+    let number;
+    if (questionMapping) {
+        const firstChoice = Object.values(questionMapping)[0];
+        if (firstChoice?.probe_id) {
+            const probeMatch = firstChoice.probe_id.match(/Probe\s*(\d+)/i);
+            if (probeMatch) {
+                number = probeMatch[1];
+            }
+        }
     }
+
+    if (!number) {
+        const probeMatch = title.match(/Probe\s*(\d+)/i);
+        if (probeMatch) {
+            number = probeMatch[1];
+        }
+    }
+
     return `Probe-${attrOrScenario}-${number}`;
 };
 
@@ -61,11 +92,8 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
 
     React.useEffect(() => {
         if (data) {
-
             const filteredData = Object.fromEntries(
-                Object.entries(data).filter(([key]) =>
-                    !['originalKey', 'total', 'question', 'undefined'].includes(key)
-                )
+                Object.entries(data).filter(([key]) => !METADATA_KEYS.includes(key))
             );
 
             // set survey question for graph
@@ -121,18 +149,20 @@ function SingleGraph({ data, pageName, scenario, selectedEval }) {
         }
     }, [vizPanel, pageName]);
 
-
     return (
         <div className='graph-section'>
-            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(pageName) : cleanTitle(pageName, scenario))} (N={data['total']})</h3>            <div id={"viz_" + pageName} className='full-width-graph' />
+            <h3 className='question-header'>
+                {(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(pageName) : cleanTitle(pageName, scenario, data.questionMapping))} (N={data['total']})
+            </h3>
+            <div id={"viz_" + pageName} className='full-width-graph' />
         </div>
     );
 }
 
-function getQuestionText(qkey, scenario) {
+function getQuestionText(qkey, scenario, questionMapping = null) {
     if (qkey === 'Participant ID') { return qkey; }
     const isTime = qkey.toLowerCase().includes('time (s)');
-    const base = cleanTitle(qkey, scenario);
+    const base = cleanTitle(qkey, scenario, questionMapping);
     return `${base}${isTime ? '-Time' : '-Resp'}`;
 }
 
@@ -149,16 +179,17 @@ function getQuestionTextLegacy(qkey, scenario, textBasedConfigs) {
     return cleanTitleLegacy(qkey);
 }
 
-
 function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, participantBased, scenarioOptions, participantLog }) {
     const [organizedData, setOrganizedData] = React.useState(null);
     const [, setExcelData] = React.useState(null);
     const [orderedHeaders, setHeaders] = React.useState([]);
+    const [questionMappings, setQuestionMappings] = React.useState({});
 
     React.useEffect(() => {
         const formatted = {};
         const headers = ['Participant ID'];
         const excel = [];
+        const mappings = {};
 
         for (const entry of data) {
             const obj = {
@@ -191,14 +222,25 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                         formatted[entry['_id']][time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
                         obj[time_key] = Math.round(entry[key]?.['timeSpentOnPage'] * 100) / 100;
 
-                        if (entry[key] && entry[key].questions) {
+                        if (entry[key]?.questions) {
                             Object.keys(entry[key].questions).forEach(q => {
-                                if (entry[key].questions[q] && entry[key].questions[q].response !== undefined) {
+                                if (entry[key].questions[q]?.response !== undefined) {
                                     if (!headers.includes(q)) {
                                         headers.push(q);
                                     }
+                                    // Store question mapping if it exists and has content
+                                    const qMapping = entry[key].questions[q].question_mapping;
+                                    if (qMapping && Object.keys(qMapping).length > 0) {
+                                        if (!mappings[q]) {
+                                            mappings[q] = qMapping;
+                                        }
+                                        // ALSO store it for the time_key using the page name (key)
+                                        if (!mappings[time_key]) {
+                                            mappings[time_key] = qMapping;
+                                        }
+                                    }
                                     formatted[entry['_id']][q] = entry[key].questions[q].response;
-                                    const objKey = shouldUseLegacy(entry['evalNumber']) ? getQuestionTextLegacy(q, scenarioName, textBasedConfigs) : getQuestionText(q, scenarioName)
+                                    const objKey = shouldUseLegacy(entry['evalNumber']) ? getQuestionTextLegacy(q, scenarioName, textBasedConfigs) : getQuestionText(q, scenarioName, mappings[q])
                                     obj[objKey] = entry[key].questions[q].response;
                                 }
                             });
@@ -218,6 +260,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         setOrganizedData(formatted);
         setHeaders(headers);
         setExcelData(excel);
+        setQuestionMappings(mappings);
     }, [data, scenarioName, textBasedConfigs]);
 
     const exportToExcel = async (allScenarios = false, attribute = null, singleScenario = null) => {
@@ -235,9 +278,20 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             const probeData = entry[pageName];
             if (!probeData || typeof probeData !== 'object' || Array.isArray(probeData)) return;
 
+            // Find the question that has a response and populated question_mapping
+            let pageQuestionMapping = null;
+            if (probeData.questions) {
+                for (const qData of Object.values(probeData.questions)) {
+                    if (qData?.response && qData?.question_mapping && Object.keys(qData.question_mapping).length > 0) {
+                        pageQuestionMapping = qData.question_mapping;
+                        break;
+                    }
+                }
+            }
+
             const time_key = shouldUseLegacy(entry.evalNumber)
                 ? getQuestionTextLegacy(pageName + ' time (s)', scenario, textBasedConfigs)
-                : getQuestionText(pageName + ' time (s)', scenario);
+                : getQuestionText(pageName + ' time (s)', scenario, pageQuestionMapping);
 
             if (!headerMap.has(time_key)) {
                 headerMap.set(time_key, dynamicHeaders.length);
@@ -248,9 +302,10 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             if (probeData.questions) {
                 Object.entries(probeData.questions).forEach(([q, qData]) => {
                     if (qData?.response !== undefined) {
+                        const questionMapping = qData?.question_mapping;
                         const questionHeader = shouldUseLegacy(entry.evalNumber)
                             ? getQuestionTextLegacy(q, scenario, textBasedConfigs)
-                            : getQuestionText(q, scenario);
+                            : getQuestionText(q, scenario, questionMapping);
 
                         if (!headerMap.has(questionHeader)) {
                             headerMap.set(questionHeader, dynamicHeaders.length);
@@ -264,11 +319,14 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
 
         const processEntry = (entry, scenario) => {
             const participantId = entry.participantID;
-            const participantRow = participantDataMap.get(participantId) ||
+            
+            if (!participantDataMap.has(participantId)) {
                 participantDataMap.set(participantId, {
                     'Participant ID': participantId,
                     ...(allScenarios && { 'Eval Number': entry.evalNumber })
-                }).get(participantId);
+                });
+            }
+            const participantRow = participantDataMap.get(participantId);
 
             const pageOrder = textBasedConfigs[scenario]?.pages?.map(page => page.name) || [];
 
@@ -290,7 +348,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                     const attributeSetValue = logEntry?.[`${attribute}-text-scenario`];
                     participantRow['Set'] = attributeSetValue || '';
                 } else {
-                    // ownloading all results, check all attributes
+                    // downloading all results, check all attributes
                     const setValues = ['PS-AF', 'AF', 'MF', 'PS', 'SS']
                         .map(attr => logEntry?.[`${attr}-text-scenario`])
                         .filter(Boolean);
@@ -304,9 +362,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
             ? scenarioOptions.filter(scenario => {
                 if (!attribute) return true;
 
-                const match = scenario.match(/-(PS-AF|AF|MF|PS|SS)\d*-eval/i);
-                const scenarioAttr = match ? match[1] : null;
-
+                const scenarioAttr = getScenarioAttribute(scenario);
                 return scenarioAttr && scenarioAttr.toUpperCase() === attribute.toUpperCase();
             })
             : [singleScenario];
@@ -337,27 +393,17 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         FileSaver.saveAs(data, filename);
     };
 
-    const getScenarioAttribute = scenarioName => {
-        // PS-AF first (before checking PS or AF individually)
-        const match = scenarioName.match(/-(PS-AF|AF|MF|PS|SS)\d*-eval/i);
-        return match ? match[1] : null;
-    };
+    const attr = getScenarioAttribute(scenarioName);
 
     return (<div className="participant-text-results">
         {!shouldUseLegacy(selectedEval) && (
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    {(() => {
-                        const attr = getScenarioAttribute(scenarioName);
-                        if (attr) {
-                            return (
-                                <button onClick={() => exportToExcel(true, attr)} className="me-2 mb-2">
-                                    {`Download All ${attr} Results`}
-                                </button>
-                            );
-                        }
-                        return null;
-                    })()}
+                    {attr && (
+                        <button onClick={() => exportToExcel(true, attr)} className="me-2 mb-2">
+                            {`Download All ${attr} Results`}
+                        </button>
+                    )}
                     <button onClick={() => exportToExcel(false, null, scenarioName)} className="mb-2">Download Scenario Results</button>
                 </div>
                 <div>
@@ -377,7 +423,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
                         {orderedHeaders.map((key) => {
                             const header = shouldUseLegacy(selectedEval)
                                 ? getQuestionTextLegacy(key, scenarioName, textBasedConfigs)
-                                : getQuestionText(key, scenarioName);
+                                : getQuestionText(key, scenarioName, questionMappings[key]);
                             return <th key={scenarioName + "_" + key}>{header}</th>;
                         })}
                     </tr>
@@ -446,7 +492,6 @@ export default function TextBasedResultsPage() {
         skip: !selectedEval
     });
 
-
     React.useEffect(() => {
         const tmpResponses = {};
         const participants = {};
@@ -478,7 +523,6 @@ export default function TextBasedResultsPage() {
                 });
             });
 
-
             for (const result of data.getAllScenarioResultsByEval) {
                 const pid = result['participantID'];
                 const logData = participantLog.getParticipantLog.find(
@@ -492,7 +536,7 @@ export default function TextBasedResultsPage() {
                     if (scenario) {
                         uniqueScenarios.add(scenario);
                     }
-                    
+
                     if (scenario && filteredTextBasedConfigs[scenario]) {
                         if (!participants[scenario]) {
                             participants[scenario] = [];
@@ -506,15 +550,18 @@ export default function TextBasedResultsPage() {
 
                             // Check if this is a probe question that's not in the config
                             const hasProbeQuestion = Object.keys(result[k].questions).some(q =>
-                                q.startsWith('probe ') && result[k].questions[q].response
+                                q.startsWith(QUESTION_PREFIX.PROBE) && result[k].questions[q].response
                             );
 
                             if (hasProbeQuestion && !tmpResponses[scenario][k]) {
+                                const probeQuestionKey = Object.keys(result[k].questions).find(q => q.startsWith(QUESTION_PREFIX.PROBE));
+                                const questionMapping = result[k].questions[probeQuestionKey]?.question_mapping;
                                 // This is a probe question not in the config, add it
                                 tmpResponses[scenario][k] = {
                                     question: `${k} - What action would you take?`,
                                     total: 0,
-                                    originalKey: k
+                                    originalKey: k,
+                                    questionMapping: questionMapping
                                 };
                             }
 
@@ -525,7 +572,7 @@ export default function TextBasedResultsPage() {
                                         : result[k].questions[q].response;
 
                                     // For probe questions, use the page name as the key
-                                    const questionKey = q.startsWith('probe ') ? k : q;
+                                    const questionKey = q.startsWith(QUESTION_PREFIX.PROBE) ? k : q;
 
                                     if (tmpResponses[scenario][questionKey]) {
                                         if (tmpResponses[scenario][questionKey][answer] !== undefined) {
@@ -560,7 +607,7 @@ export default function TextBasedResultsPage() {
             let found = false;
             for (const k of Object.keys(responsesByScenario[scenarioChosen])) {
                 const hasData = Object.keys(responsesByScenario[scenarioChosen][k])
-                    .filter(key => !['question', 'total', 'originalKey'].includes(key))
+                    .filter(key => !METADATA_KEYS.includes(key))
                     .length > 0;
 
                 if (hasData && responsesByScenario[scenarioChosen][k].total > 0) {
@@ -582,18 +629,11 @@ export default function TextBasedResultsPage() {
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets)
                     .filter(qkey => questionAnswerSets[qkey].total > 0)
-                    .sort((a, b) => {
-                        const aMatch = a.match(/Probe (\d+)/);
-                        const bMatch = b.match(/Probe (\d+)/);
-                        if (aMatch && bMatch) {
-                            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
-                        }
-                        return a.localeCompare(b);
-                    })
+                    .sort(sortByProbeNumber)
                     .map((qkey, ind) => {
                         const displayKey = questionAnswerSets[qkey].originalKey || qkey;
                         return (<div className='result-section' key={displayKey + '_' + ind}>
-                            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(displayKey) : cleanTitle(displayKey, scenarioChosen))} (N={questionAnswerSets[qkey]['total']})</h3>
+                            <h3 className='question-header'>{(shouldUseLegacy(selectedEval) ? cleanTitleLegacy(displayKey) : cleanTitle(displayKey, scenarioChosen, questionAnswerSets[qkey].questionMapping))} (N={questionAnswerSets[qkey]['total']})</h3>
                             <p>{questionAnswerSets[qkey]['question']}</p>
                             <table className="itm-table text-result-table">
                                 <thead>
@@ -605,7 +645,7 @@ export default function TextBasedResultsPage() {
                                 </thead>
                                 <tbody>
                                     {Object.keys(questionAnswerSets[qkey])
-                                        .filter(answer => answer !== 'total' && answer !== 'question' && answer !== 'undefined' && answer !== 'originalKey')
+                                        .filter(answer => !METADATA_KEYS.includes(answer))
                                         .map((answer) => (
                                             <tr key={displayKey + '_' + answer}>
                                                 <td className="answer-column">{shortenAnswer(answer)}</td>
@@ -633,14 +673,7 @@ export default function TextBasedResultsPage() {
             {questionAnswerSets ?
                 Object.keys(questionAnswerSets)
                     .filter(qkey => questionAnswerSets[qkey].total > 0)
-                    .sort((a, b) => {
-                        const aMatch = a.match(/Probe (\d+)/);
-                        const bMatch = b.match(/Probe (\d+)/);
-                        if (aMatch && bMatch) {
-                            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
-                        }
-                        return a.localeCompare(b);
-                    })
+                    .sort(sortByProbeNumber)
                     .map((qkey) => {
                         return (<SingleGraph key={qkey} data={questionAnswerSets[qkey]} pageName={qkey} scenario={scenarioChosen} selectedEval={selectedEval} />);
                     })

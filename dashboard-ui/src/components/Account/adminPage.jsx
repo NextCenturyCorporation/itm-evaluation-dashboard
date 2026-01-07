@@ -885,7 +885,6 @@ function AdminPage({ currentUser, updateUserHandler }) {
                 <>
                     <Row className="mb-4">
                         {unapproved.length > 0 && <ApprovalTable unapproved={unapproved} updateUnapproved={setUnapproved} caller={{ username: currentUser.username, sessionId }} />}
-
                         <Col md={4}>
                             <Card>
                                 <Card.Header as="h5">Survey Version</Card.Header>
@@ -1030,7 +1029,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         onCancel={cancelDemographicsChange}
                         message={`Are you sure you want to ${pendingDemographicsValue ? 'show' : 'hide'} demographics questions? This will affect the text-based scenarios survey.`}
                     />
-
+                    <EditEvals caller={{ username: currentUser.username, sessionId }} />
                     <Query
                         query={GET_USERS}
                         variables={{ caller: { username: currentUser.username, sessionId } }}
@@ -1080,8 +1079,6 @@ function AdminPage({ currentUser, updateUserHandler }) {
                             );
                         }}
                     </Query>
-
-                    <EditEvals caller={{ username: currentUser.username, sessionId }} />
                 </>}
         </Container>
     );
