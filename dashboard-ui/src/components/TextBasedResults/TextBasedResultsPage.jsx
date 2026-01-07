@@ -413,7 +413,7 @@ function ParticipantView({ data, scenarioName, textBasedConfigs, selectedEval, p
         )}
         {shouldUseLegacy(selectedEval) && (
             <div className="mb-2">
-                <button onClick={exportToExcel}>Download Scenario Results</button>
+                <button onClick={() => exportToExcel(false, null, scenarioName)}>Download Scenario Results</button>
             </div>
         )}
         <div className="table-container">
