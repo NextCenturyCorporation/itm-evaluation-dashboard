@@ -42,12 +42,6 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`;
 
-const GET_ALL_SCENARIO_RESULTS = gql`
-    query GetAllScenarioResults {
-        getAllScenarioResults
-    }`;
-
-
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -65,20 +59,18 @@ export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
-    const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
 
     // server side time stamps
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
-    if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
-    if (participantLogError || scenarioResultsError) return <p>Error</p>;
+    if (participantLogLoading) return <p>Loading...</p>;
+    if (participantLogError) return <p>Error</p>;
 
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
         currentTextEval={currentTextEval}
         participantLogs={participantLogData}
-        scenarioResults={scenarioResultsData.getAllScenarioResults}
         getServerTimestamp={getServerTimestamp}
         showDemographics={showDemographics}
     />;
@@ -151,10 +143,10 @@ class TextBasedScenariosPage extends Component {
     }
 
     duplicatePid = (pid) => {
-        if (!this.props.scenarioResults || !Array.isArray(this.props.scenarioResults)) {
+        if (!this.props.participantLogs || !Array.isArray(this.props.participantLogs.getParticipantLog)) {
             return false;
         }
-        return this.props.scenarioResults.some(result => result.participantID === pid);
+        return this.props.participantLogs.getParticipantLog.some(result => String(result.ParticipantID) === pid);
     }
 
     introSurveyComplete = (survey) => {
