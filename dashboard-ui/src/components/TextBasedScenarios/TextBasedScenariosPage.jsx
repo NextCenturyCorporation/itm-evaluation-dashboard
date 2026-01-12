@@ -142,18 +142,8 @@ class TextBasedScenariosPage extends Component {
         return evalNum === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL
     }
 
-    duplicatePid = (pid) => {
-        if (!this.props.participantLogs || !Array.isArray(this.props.participantLogs.getParticipantLog)) {
-            return false;
-        }
-        return this.props.participantLogs.getParticipantLog.some(result => String(result.ParticipantID) === pid);
-    }
-
     introSurveyComplete = (survey) => {
         const enteredParticipantID = survey.data["Participant ID"];
-
-        // Check for duplicate participant ID
-        const isDuplicate = this.duplicatePid(enteredParticipantID);
 
         // match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
@@ -170,11 +160,8 @@ class TextBasedScenariosPage extends Component {
             });
         }
 
-        if (!matchedLog || isDuplicate) {
+        if (!matchedLog) {
             let message = "No matching participant ID was found.";
-            if (isDuplicate) {
-                message = `This ${this.state.moderated ? "participant ID" : "email"} has already been used.`;
-            }
             message += " Would you like to continue anyway?\n\n" +
                 `Click 'OK' to continue with the current ${this.state.moderated ? "ID" : "email"}.\n` +
                 `Click 'Cancel' to re-enter the ${this.state.moderated ? "participant ID" : "email"}.`;
@@ -194,8 +181,8 @@ class TextBasedScenariosPage extends Component {
                 }
                 return;
             } else {
-                // if you want to go through with a non-matched or duplicate PID, giving default experience
-                if (!matchedLog && !isDuplicate) {
+                // if you want to go through with a non-matched PID, giving default experience
+                if (!matchedLog) {
 
                     const scenarioSet = Math.floor(Math.random() * 3) + 1;
 
