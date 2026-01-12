@@ -182,17 +182,15 @@ class TextBasedScenariosPage extends Component {
                 return;
             } else {
                 // if you want to go through with a non-matched PID, giving default experience
-                if (!matchedLog) {
+                const scenarioSet = Math.floor(Math.random() * 2) + 1;
 
-                    const scenarioSet = Math.floor(Math.random() * 3) + 1;
+                matchedLog = {
+                    'AF-text-scenario': scenarioSet,
+                    'MF-text-scenario': scenarioSet,
+                    'PS-text-scenario': scenarioSet,
+                    'SS-text-scenario': scenarioSet
+                };
 
-                    matchedLog = {
-                        'AF-text-scenario': scenarioSet,
-                        'MF-text-scenario': scenarioSet,
-                        'PS-text-scenario': scenarioSet,
-                        'SS-text-scenario': scenarioSet
-                    };
-                }
             }
         }
 
