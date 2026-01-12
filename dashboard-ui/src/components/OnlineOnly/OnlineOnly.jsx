@@ -7,7 +7,7 @@ import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedSc
 import { useHistory, useLocation } from 'react-router-dom';
 import { useSelector } from "react-redux";
 import '../../css/scenario-page.css';
-import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData } from "./config";
+import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData } from "./config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -71,6 +71,7 @@ export default function StartOnline() {
         // get correct plog data
         const currentSearchParams = new URLSearchParams(location.search);
         const participantDataFunctions = {
+            15: febParticipantData,
             13: octoberParticipantData,
             12: ukParticipantData,
             10: septemberParticipantData,
