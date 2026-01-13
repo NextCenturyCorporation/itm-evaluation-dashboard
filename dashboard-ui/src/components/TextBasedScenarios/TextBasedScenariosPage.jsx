@@ -42,12 +42,6 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`;
 
-const GET_ALL_SCENARIO_RESULTS = gql`
-    query GetAllScenarioResults {
-        getAllScenarioResults
-    }`;
-
-
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
         getParticipantLog
@@ -65,20 +59,18 @@ export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
-    const { loading: scenarioResultsLoading, error: scenarioResultsError, data: scenarioResultsData } = useQuery(GET_ALL_SCENARIO_RESULTS);
 
     // server side time stamps
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
-    if (participantLogLoading || scenarioResultsLoading) return <p>Loading...</p>;
-    if (participantLogError || scenarioResultsError) return <p>Error</p>;
+    if (participantLogLoading) return <p>Loading...</p>;
+    if (participantLogError) return <p>Error</p>;
 
     return <TextBasedScenariosPage
         {...props}
         textBasedConfigs={textBasedConfigs}
         currentTextEval={currentTextEval}
         participantLogs={participantLogData}
-        scenarioResults={scenarioResultsData.getAllScenarioResults}
         getServerTimestamp={getServerTimestamp}
         showDemographics={showDemographics}
     />;
@@ -150,18 +142,8 @@ class TextBasedScenariosPage extends Component {
         return evalNum === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL
     }
 
-    duplicatePid = (pid) => {
-        if (!this.props.scenarioResults || !Array.isArray(this.props.scenarioResults)) {
-            return false;
-        }
-        return this.props.scenarioResults.some(result => result.participantID === pid);
-    }
-
     introSurveyComplete = (survey) => {
         const enteredParticipantID = survey.data["Participant ID"];
-
-        // Check for duplicate participant ID
-        const isDuplicate = this.duplicatePid(enteredParticipantID);
 
         // match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
@@ -178,11 +160,8 @@ class TextBasedScenariosPage extends Component {
             });
         }
 
-        if (!matchedLog || isDuplicate) {
+        if (!matchedLog) {
             let message = "No matching participant ID was found.";
-            if (isDuplicate) {
-                message = `This ${this.state.moderated ? "participant ID" : "email"} has already been used.`;
-            }
             message += " Would you like to continue anyway?\n\n" +
                 `Click 'OK' to continue with the current ${this.state.moderated ? "ID" : "email"}.\n` +
                 `Click 'Cancel' to re-enter the ${this.state.moderated ? "participant ID" : "email"}.`;
@@ -202,18 +181,16 @@ class TextBasedScenariosPage extends Component {
                 }
                 return;
             } else {
-                // if you want to go through with a non-matched or duplicate PID, giving default experience
-                if (!matchedLog && !isDuplicate) {
+                // if you want to go through with a non-matched PID, giving default experience
+                const scenarioSet = Math.floor(Math.random() * 2) + 1;
 
-                    const scenarioSet = Math.floor(Math.random() * 3) + 1;
+                matchedLog = {
+                    'AF-text-scenario': scenarioSet,
+                    'MF-text-scenario': scenarioSet,
+                    'PS-text-scenario': scenarioSet,
+                    'SS-text-scenario': scenarioSet
+                };
 
-                    matchedLog = {
-                        'AF-text-scenario': scenarioSet,
-                        'MF-text-scenario': scenarioSet,
-                        'PS-text-scenario': scenarioSet,
-                        'SS-text-scenario': scenarioSet
-                    };
-                }
             }
         }
 
