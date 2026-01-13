@@ -133,6 +133,17 @@ const getKdmaTargets = (doc) => {
     return { mj, io };
 }
 
+const getKdmaParameter = (data, kdmaName, parameterName) => {
+    const kdmas = data?.results?.kdmas;
+    if (!kdmas || kdmas.length === 0) return '-';
+    
+    const matchingKdma = kdmas.find(kdma => kdma.kdma.toLowerCase() === kdmaName.toLowerCase());
+    if (!matchingKdma?.parameters) return '-';
+    
+    const param = matchingKdma.parameters.find(p => p.name === parameterName);
+    return param?.value ?? '-';
+};
+
 export const ADMProbeResponses = (props) => {
     const evalOptions = getEvalOptionsForPage(PAGES.ADM_PROBE_RESPONSES);
 
@@ -350,10 +361,20 @@ export const ADMProbeResponses = (props) => {
                     'Alignment Target': alignmentTarget,
                     [sessionIdLabel]: getSessionId(data)
                 };
+            
             if (currentEval === 7) {
                 const kdmaValues = getKdmaTargets(data);
                 row['MJ KDMA'] = kdmaValues.mj;
                 row['IO KDMA'] = kdmaValues.io;
+            } else if (currentEval === 15) {
+                // Handle eval 15 parameters format
+                const kdmas = data?.results?.kdmas || [];
+                kdmas.forEach(kdma => {
+                    const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
+                    row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                    row[`${kdmaName}-Attr`] = getKdmaParameter(data, kdma.kdma, 'attr_weight');
+                    row[`${kdmaName}-Medical`] = getKdmaParameter(data, kdma.kdma, 'medical_weight');
+                });
             } else if (getCurrentScenarioName().includes('Adept')) {
                 row['KDMA'] = getKdma(data, alignmentTarget);
             }
@@ -542,6 +563,20 @@ export const ADMProbeResponses = (props) => {
                                                                                 <th>MJ KDMA Target</th>
                                                                                 <th>IO KDMA Target</th>
                                                                             </>
+                                                                        ) : currentEval === 15 ? (
+                                                                            // Get KDMA names from first row to build headers dynamically
+                                                                            (() => {
+                                                                                const firstData = testDataArray[0]?.data;
+                                                                                const kdmas = firstData?.results?.kdmas || [];
+                                                                                return kdmas.flatMap(kdma => {
+                                                                                    const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
+                                                                                    return [
+                                                                                        <th key={`${kdmaName}-Intercept`}>{kdmaName}-Intercept</th>,
+                                                                                        <th key={`${kdmaName}-Attr`}>{kdmaName}-Attr</th>,
+                                                                                        <th key={`${kdmaName}-Medical`}>{kdmaName}-Medical</th>
+                                                                                    ];
+                                                                                });
+                                                                            })()
                                                                         ) : (
                                                                             getCurrentScenarioName().includes('Adept') && <th>KDMA</th>
                                                                         )}
@@ -564,6 +599,15 @@ export const ADMProbeResponses = (props) => {
                                                                                     <td>{getKdmaTargets(data).mj}</td>
                                                                                     <td>{getKdmaTargets(data).io}</td>
                                                                                 </>
+                                                                            ) : currentEval === 15 ? (
+                                                                                (() => {
+                                                                                    const kdmas = data?.results?.kdmas || [];
+                                                                                    return kdmas.flatMap(kdma => [
+                                                                                        <td key={`${kdma.kdma}-intercept`}>{getKdmaParameter(data, kdma.kdma, 'intercept')}</td>,
+                                                                                        <td key={`${kdma.kdma}-attr`}>{getKdmaParameter(data, kdma.kdma, 'attr_weight')}</td>,
+                                                                                        <td key={`${kdma.kdma}-medical`}>{getKdmaParameter(data, kdma.kdma, 'medical_weight')}</td>
+                                                                                    ]);
+                                                                                })()
                                                                             ) : (
                                                                                 getCurrentScenarioName().includes('Adept') &&
                                                                                 <td>{getKdma(data, alignmentTarget)}</td>
