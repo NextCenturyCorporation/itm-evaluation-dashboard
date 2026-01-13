@@ -278,29 +278,6 @@ export const HEADER = {
         "IO_KDMA_Text_Narr",
         "IO_KDMA_Text_NonNarr",
         "IO_KDMA_Sim"
-    ],
-    15: [
-        "Participant ID",
-        "Date",
-        "MedRole",
-        "MedExp",
-        "MilitaryExp",
-        "YrsMilExp",
-        "PropTrust",
-        "Trust",
-        "Probe Set",
-        "AF_intercept",
-        "AF_medical",
-        "AF_attribute",
-        "MF_intercept",
-        "MF_medical",
-        "MF_attribute",
-        "PS_intercept",
-        "PS_medical",
-        "PS_attribute",
-        "SS_intercept",
-        "SS_medical",
-        "SS_attribute",
     ]
 };
 
