@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/react-hooks';
 import { Query } from 'react-apollo';
 import gql from "graphql-tag";
@@ -153,7 +153,8 @@ export const ADMProbeResponses = (props) => {
     const [queryData, setQueryData] = useState({});
     const [alignmentTargets, setAlignmentTargets] = useState([]);
     const [allTableData, setAllTableData] = useState({});
-    const processedDataRef = useRef({});
+    const [loadingStates, setLoadingStates] = useState({});
+    const [queryKey, setQueryKey] = useState(0);
 
     const { loading: scenarioLoading, error: scenarioError, data: scenarioData } = useQuery(scenario_names_aggregation, {
         variables: { evalNumber: [14, 11].includes(currentEval) ? 9 : currentEval },
@@ -179,20 +180,22 @@ export const ADMProbeResponses = (props) => {
     }, [alignmentData]);
 
     useEffect(() => {
-
         if (admData?.getPerformerADMsForScenario && currentScenario) {
             const newQueryData = {};
+            const newLoadingStates = {};
 
             admData.getPerformerADMsForScenario.forEach(adm => {
                 newQueryData[adm] = {
                     alignmentTargets: alignmentTargets,
                     data: {}
                 };
+                newLoadingStates[adm] = true;
             });
 
             setQueryData(newQueryData);
             setAllTableData({});
-            processedDataRef.current = {};
+            setLoadingStates(newLoadingStates);
+            setQueryKey(prev => prev + 1); // force refresh
         }
     }, [admData, currentScenario, currentEval, alignmentTargets]);
 
@@ -202,7 +205,8 @@ export const ADMProbeResponses = (props) => {
         setQueryData({});
         setAlignmentTargets([]);
         setAllTableData({});
-        processedDataRef.current = {};
+        setLoadingStates({});
+        setQueryKey(0);
     }, [currentEval]);
 
     const getChoiceForProbe = (history, probeId, probeResponses = null) => {
@@ -432,25 +436,27 @@ export const ADMProbeResponses = (props) => {
         });
     };
 
-    // helper to avoid infinite loop by updating unnecessarily inside query 
     const handleDataUpdate = (data, adm) => {
         if (!data?.getAllTestDataForADM) return;
 
-        const dataKey = `${currentScenario}_${adm}_${currentEval}`;
-        const dataString = JSON.stringify(data.getAllTestDataForADM);
-        if (processedDataRef.current[dataKey] !== dataString) {
-            processedDataRef.current[dataKey] = dataString;
-            const formattedData = formatTableData(data.getAllTestDataForADM, adm);
-            setAllTableData(prev => ({
-                ...prev,
-                [adm]: currentEval === 15 ? {
-                    formattedData: formattedData,
-                    originalData: data.getAllTestDataForADM,
-                    adm: adm
-                } : formattedData
-            }));
-        }
+        const formattedData = formatTableData(data.getAllTestDataForADM, adm);
+        setAllTableData(prev => ({
+            ...prev,
+            [adm]: currentEval === 15 ? {
+                formattedData: formattedData,
+                originalData: data.getAllTestDataForADM,
+                adm: adm
+            } : formattedData
+        }));
+        setLoadingStates(prev => ({
+            ...prev,
+            [adm]: false
+        }));
     };
+
+    // Check if all tables have finished loading
+    const allTablesLoaded = Object.keys(loadingStates).length > 0 && 
+        Object.values(loadingStates).every(loading => !loading);
 
     return (
         <div className="layout">
@@ -515,34 +521,34 @@ export const ADMProbeResponses = (props) => {
                 )}
                 {currentScenario && (
                     <div className="test-overview-area">
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
-                            <button
-                                className='aggregateDownloadBtn'
-                                onClick={() => downloadAsExcel(
-                                    currentEval === 15 
-                                        ? Object.fromEntries(
-                                            Object.entries(allTableData).map(([key, val]) => [key, val.formattedData || val])
-                                        )
-                                        : allTableData, 
-                                    null, 
-                                    true
-                                )}
-                                disabled={Object.keys(allTableData).length === 0}
-                            >
-                                Download All
-                            </button>
-                            {currentEval === 15 && (
+                        {allTablesLoaded && (
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
                                 <button
                                     className='aggregateDownloadBtn'
-                                    onClick={() => downloadKdmaOnly(allTableData, null, true)}
-                                    disabled={Object.keys(allTableData).length === 0}
+                                    onClick={() => downloadAsExcel(
+                                        currentEval === 15 
+                                            ? Object.fromEntries(
+                                                Object.entries(allTableData).map(([key, val]) => [key, val.formattedData || val])
+                                            )
+                                            : allTableData, 
+                                        null, 
+                                        true
+                                    )}
                                 >
-                                    Download All KDMA Scores
+                                    Download All
                                 </button>
-                            )}
-                        </div>
+                                {currentEval === 15 && (
+                                    <button
+                                        className='aggregateDownloadBtn'
+                                        onClick={() => downloadKdmaOnly(allTableData, null, true)}
+                                    >
+                                        Download All KDMA Scores
+                                    </button>
+                                )}
+                            </div>
+                        )}
                         {!admLoading && !admError && admData?.getPerformerADMsForScenario?.map((adm, index) => (
-                            <div className='chart-home-container' key={index}>
+                            <div className='chart-home-container' key={`${index}-${queryKey}`}>
                                 <div className='probe-chart-header'>
                                     <div className='chart-header-label'>
                                         <h4>
@@ -551,6 +557,7 @@ export const ADMProbeResponses = (props) => {
                                     </div>
                                     <div className='chart-header-download'>
                                         <Query
+                                            key={`header-${adm}-${queryKey}`}
                                             query={get_all_test_data}
                                             variables={{
                                                 admQueryStr: queryString,
@@ -559,6 +566,7 @@ export const ADMProbeResponses = (props) => {
                                                 alignmentTargets: queryData[adm]?.alignmentTargets || [],
                                                 evalNumber: currentEval
                                             }}
+                                            fetchPolicy="network-only"
                                             onCompleted={(data) => handleDataUpdate(data, adm)}
                                         >
                                             {({ loading, error, data }) => {
@@ -587,6 +595,7 @@ export const ADMProbeResponses = (props) => {
                                 </div>
                                 <div className='resultTableSection result-table-section-override'>
                                     <Query
+                                        key={`table-${adm}-${queryKey}`}
                                         query={get_all_test_data}
                                         variables={{
                                             admQueryStr: queryString,
@@ -595,6 +604,7 @@ export const ADMProbeResponses = (props) => {
                                             alignmentTargets: queryData[adm]?.alignmentTargets || [],
                                             evalNumber: currentEval
                                         }}
+                                        fetchPolicy="network-only"
                                     >
                                         {({ loading, error, data }) => {
                                             if (loading) return <div>Loading...</div>;
@@ -638,7 +648,6 @@ export const ADMProbeResponses = (props) => {
                                                                                 <th>IO KDMA Target</th>
                                                                             </>
                                                                         ) : currentEval === 15 ? (
-                                                                            // Get KDMA names from first row to build headers dynamically
                                                                             <>
                                                                                 <th>Alignment Score</th>
                                                                                 {(() => {
