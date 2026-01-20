@@ -5,62 +5,9 @@ import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey } from "survey-react-ui";
 import { Accordion, Alert, Button, Card, Container, Row, Col } from 'react-bootstrap';
+import '../../css/review-del.css';
 
 const HEADER_COLOR = '#602414';
-const SUBHEADER_COLOR = '#8B4513';
-const TEXT_COLOR = '#602414';
-
-const customStyles = `
-  .custom-btn {
-    color: ${TEXT_COLOR};
-    border-color: ${TEXT_COLOR};
-    background-color: white;
-    margin-left: 24px;
-    margin-right: 32px;
-    width: 80%;
-  }
-  .back-btn {
-    color: ${TEXT_COLOR};
-    border-color: ${TEXT_COLOR};
-    background-color: white;
-  }
-  .custom-btn:hover, .custom-btn:focus, .custom-btn:active {
-    background-color: ${TEXT_COLOR} !important;
-    color: white !important;
-    border-color: ${TEXT_COLOR} !important;
-  }
-  .subheader {
-    background-color: ${SUBHEADER_COLOR};
-    color: white;
-    padding: 10px 15px;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-  }
-  .scenarioName {
-    font-size: 20px;
-  }
-  .miniheader {
-    background-color: white;
-    color: ${SUBHEADER_COLOR};
-    border: 1px solid ${SUBHEADER_COLOR};
-    padding: 10px 15px;
-    margin-top: 48px;
-    margin-bottom: -8px;
-    margin-left: 24px;
-    border-radius: 4px;
-    width: 95%;
-  }
-  .sd-body.sd-body--static {
-    max-width: none;
-  }
-  .accordion {
-    margin-bottom: 8px;
-  }
-  .action-item {
-    font-size: 14px;
-  }
-`;
 
 const PH1_NAME_MAP = {
     'DryRunEval-MJ2-eval': 'phase1-adept-eval-MJ2',
@@ -216,8 +163,7 @@ export function ReviewDelegationPage() {
     };
 
     return (
-        <div className={`min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
-            <style>{customStyles}</style>
+        <div className={`review-delegation-page min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
             {!selectedConfig && (
                 <Container className="py-4">
                     <Alert variant="warning" dismissible>
