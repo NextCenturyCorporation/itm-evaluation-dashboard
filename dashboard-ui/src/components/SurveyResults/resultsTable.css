@@ -67,6 +67,8 @@
     background-color: rgb(212, 212, 212);
     border: 1px solid black;
     color: black;
+    height: 40px;
+    font-size: 12px;
 }
 
 .rCodeModal .modal-dialog {
@@ -110,6 +112,7 @@
     flex-direction: row;
     justify-content: flex-end;
     gap: 8px;
+    padding-left: 10px;
 }
 
 .adjusted-margin {
@@ -396,4 +399,8 @@
     cursor: not-allowed;
     transform: none;
     pointer-events: none;
+}
+
+.participant:hover {
+    cursor: pointer;
 }

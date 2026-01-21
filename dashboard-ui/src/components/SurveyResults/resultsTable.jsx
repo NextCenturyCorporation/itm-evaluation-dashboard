@@ -15,6 +15,7 @@ import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
 import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
 import { getEval89Attributes, getEval12Attributes } from "../Research/utils";
+import { ToggleButton, ToggleButtonGroup } from "react-bootstrap";
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -732,7 +733,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     )}
                     onChange={(_, newVal) => setRoleFilters(newVal)}
                 />
-                <Autocomplete
+                {/* <Autocomplete
                     options={militaryStatus}
                     filterSelectedOptions
                     size="small"
@@ -745,7 +746,21 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         />
                     )}
                     onChange={(_, newVal) => setMilFilters(newVal)}
-                />
+                /> */}
+                <ToggleButtonGroup
+                    value={milFilters}
+                    exclusive
+                    size="small"
+                    onChange={(_, newVal) => setMilFilters(newVal)}
+                    name="military"
+                >
+                    <ToggleButton value="Yes">
+                        Military
+                    </ToggleButton>
+                    <ToggleButton value="No">
+                        Civilian
+                    </ToggleButton>
+                </ToggleButtonGroup>
                 <Autocomplete
                     options={surveyStatus}
                     filterSelectedOptions
@@ -784,7 +799,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     {filteredData.map((dataSet, index) => {
                         return (<tr key={dataSet['Participant ID'] + '-' + index}>
                             {headers.map((val) => {
-                                return (<td key={dataSet['Participant ID'] + '-' + val + '-' + index}>
+                                return (<td key={dataSet['Participant ID'] + '-' + val + '-' + index} className='participant'>
                                     {dataSet[val] ?? '-'}
                                 </td>);
                             })}
@@ -793,6 +808,14 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 </tbody>
             </table>
         </div>
+
+        <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
+            <div className='modal-body'>
+                <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
+                {makeDownloadButton()}
+            </div>
+        </Modal>
+
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>

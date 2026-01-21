@@ -231,65 +231,11 @@ export function SurveyResults() {
             {loading && <p>Loading</p>}
             {error && <p>Error</p>}
             <Tabs defaultActiveKey={0} className='p-1'>
-                <Tab eventKey={0} title="Table View">
+                <Tab eventKey={0}>
                     {data?.getAllSurveyResults && dataParticipantLog?.getParticipantLog &&
                         <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />
                     }
                 </Tab>
-                {/*<Tab eventKey={1} title="Graph View">
-                    <div className="delegation-results">
-                    <div className="delegation-results-nav">
-                        <div className="selection-section">
-                            <div className="nav-header">
-                                <span className="nav-header-text">Survey Version</span>
-                            </div>
-                            <List component="nav" className="nav-list version-select" aria-label="secondary mailbox folder">
-                                {versions.map((item) =>
-                                    <ListItem id={"version_" + item} key={"version_" + item}
-                                        button
-                                        selected={filterBySurveyVersion === item}
-                                        onClick={() => { setVersionOption(item); setSelectedScenario(""); }}>
-                                        <ListItemText primary={item + '.x'} />
-                                    </ListItem>
-                                )}
-                            </List>
-                        </div>
-                        {scenarioIndices && Object.keys(scenarioIndices).length > 0 &&
-                            <div className="selection-section">
-                                <div className="nav-header">
-                                    <span className="nav-header-text">Scenario</span>
-                                </div>
-                                <List component="nav" className="nav-list scenario-list" aria-label="secondary mailbox folder">
-                                    {Object.entries(scenarioIndices).map(([index, name]) =>
-                                        <ListItem id={"scenario_" + index} key={"scenario_" + index}
-                                            button
-                                            selected={String(selectedScenario) === String(index)}
-                                            onClick={() => {
-                                                setSelectedScenario(String(index));
-                                            }}>
-                                            <ListItemText primary={name} />
-                                        </ListItem>
-                                    )}
-                                </List>
-                            </div>}
-                    </div>
-                        {filterBySurveyVersion && selectedScenario !== "" ?
-                            <div className="graph-section">
-                                <div className="options">
-                                    {[4, 5].includes(filterBySurveyVersion) &&
-                                        <FormControlLabel className='prettyToggle' labelPlacement='start' control={<RadioGroup row defaultValue="Alignment" onChange={toggleGeneralizability}>
-                                            <FormControlLabel value="Alignment" control={<Radio />} label="Alignment" />
-                                            <FormControlLabel value="Medic" control={<Radio />} label="Medic" />
-                                        </RadioGroup>} label="View By:" />}
-                                </div>
-                                <ScenarioGroup scenario={selectedScenario} scenarioIndices={scenarioIndices} data={resultData} version={filterBySurveyVersion} />
-                            </div>
-                            :
-                            <div className="graph-section">
-                                <h2>Please select a survey version and scenario to view graphical results</h2>
-                            </div>}
-                    </div>
-                </Tab>*/}
             </Tabs>
             {showScrollButton && (
                 <IconButton onClick={(e) => {
