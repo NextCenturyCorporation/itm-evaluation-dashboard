@@ -44,8 +44,10 @@ import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
 import store from '../../store/store';
 
-
-const history = createBrowserHistory();
+// Create and set a basename for the routes if the user is accesing with /dev/.
+const basename = window.location.pathname.startsWith("/dev") ? "/dev" : "";
+// Add the basename as a prefix to the routes
+const history = createBrowserHistory({ basename });
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {
