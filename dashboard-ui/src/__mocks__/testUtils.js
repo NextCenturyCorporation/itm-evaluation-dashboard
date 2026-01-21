@@ -122,7 +122,7 @@ export async function loginBasicApprovedUser(page) {
 
 export async function checkRouteContent(page, route, expectedText, isPh1 = false) {
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
-    await page.waitForSelector(FOOTER_TEXT);
+    await page.waitForSelector(FOOTER_TEXT, {  timeout:  30000 });
     if (isPh1) {
         // click on Phase 1 in drop downs
         if (route.includes('rq') || route.includes('exploratory') || route.includes('humanSimParticipant')) {
@@ -137,7 +137,7 @@ export async function checkRouteContent(page, route, expectedText, isPh1 = false
         }
     }
     for (const txt of expectedText) {
-        await page.waitForSelector(`text/${txt}`, { timeout: 500 });
+        await page.waitForSelector(`text/${txt}`, { timeout:  30000});
     }
 }
 

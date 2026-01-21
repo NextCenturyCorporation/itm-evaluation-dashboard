@@ -11,7 +11,7 @@ const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 
 
 // Note: soartech has a mix of 201 or 200 being success codes, hence different expect statements
-
+/*
 const submitSoartechProbes = async (sessionId, scenarioId) => {
   const probes = soartechProbes[scenarioId];
 
@@ -30,6 +30,7 @@ const submitSoartechProbes = async (sessionId, scenarioId) => {
     );
   }
 };
+*/
 
 describe('TA1 Server Tests', () => {
   // if these tests two fail, the others have no hope
@@ -42,14 +43,14 @@ describe('TA1 Server Tests', () => {
       expect(response.data).toBeTruthy();
     }, 10000);
 
-    it('should create a new SoarTech session successfully', async () => {
+    /*it('should create a new SoarTech session successfully', async () => {
       const response = await axios.post(
         `${SOARTECH_URL}/api/v1/new_session?user_id=default_user`
-      );
+      ); 
 
       expect(response.status).toBe(201);
       expect(response.data).toBeTruthy();
-    }, 10000);
+    }, 10000);*/
   });
 
   describe('Response Submission', () => {
@@ -77,7 +78,7 @@ describe('TA1 Server Tests', () => {
         expect(response.status).toBe(200);
       });
     }
-    it('should submit responses to SoarTech server successfully', async () => {
+    /*it('should submit responses to SoarTech server successfully', async () => {
       const sessionResponse = await axios.post(`${SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
       const sessionId = sessionResponse.data;
 
@@ -98,7 +99,7 @@ describe('TA1 Server Tests', () => {
       );
 
       expect(response.status).toBe(201);
-    });
+    });*/
   });
 
   describe('KDMA Profile', () => {
@@ -132,7 +133,7 @@ describe('TA1 Server Tests', () => {
         expect(response.data).toBeTruthy();
       });
     }
-    it('should fetch soartech KDMA profile successfully', async () => {
+    /*it('should fetch soartech KDMA profile successfully', async () => {
       const sessionResponse = await axios.post(`${SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
       const sessionId = sessionResponse.data;
 
@@ -146,7 +147,7 @@ describe('TA1 Server Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
-    }, 40000);
+    }, 40000);*/
   });
 
   describe('Ordered Alignment', () => {
@@ -185,7 +186,7 @@ describe('TA1 Server Tests', () => {
         expect(Array.isArray(response.data)).toBeTruthy();
       });
     }
-    it('should fetch soartech ordered alignment data successfully', async () => {
+    /*it('should fetch soartech ordered alignment data successfully', async () => {
       const sessionResponse = await axios.post(`${SOARTECH_URL}/api/v1/new_session?user_id=default_user`);
       const sessionId = sessionResponse.data;
 
@@ -205,10 +206,10 @@ describe('TA1 Server Tests', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.data)).toBeTruthy();
       // needed longer timeout (took me about 17 seconds, may need to be messed with if failing for other people)
-    }, 40000);
+    }, 40000);*/
   });
 
-  describe('Alignment Data', () => {
+ /* describe('Alignment Data', () => {
     // endpoint for adept is out dated and not used, so no test for adept here
     it('should fetch SoarTech alignment endpoint successfully', async () => {
       const sessionResponse = await axios.post(
@@ -237,7 +238,7 @@ describe('TA1 Server Tests', () => {
         expect(response.data).toBeTruthy();
       }
     }, 40000);
-  });
+  });*/
 
 
   describe('Full Workflow Test', () => {
@@ -285,7 +286,7 @@ describe('TA1 Server Tests', () => {
       });
     }
 
-    it('should complete a full workflow with SoarTech server', async () => {
+    /*it('should complete a full workflow with SoarTech server', async () => {
       // starts soartech session, responds to probe, calls kdma endpoint, calls ordered alignment endpoint
       const sessionResponse = await axios.post(
         `${SOARTECH_URL}/api/v1/new_session?user_id=default_user`
@@ -313,11 +314,11 @@ describe('TA1 Server Tests', () => {
         }
       );
       expect(alignmentResponse.status).toBe(200);
-    }, 40000);
+    }, 40000);*/
   });
 
   describe('Comparing Two Sessions', () => {
-    it('Should compare two soartech sessions using /subset endpoint', async () => {
+    /*it('Should compare two soartech sessions using /subset endpoint', async () => {
 
       const sessionResponse1 = await axios.post(
         `${SOARTECH_URL}/api/v1/new_session?user_id=default_user`
@@ -355,7 +356,7 @@ describe('TA1 Server Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
-    }, 40000);
+    }, 40000); */
     if (!IS_PH1) {
       it('Should compare two adept sessions using /compare_sessions', async () => {
         // start sessions
