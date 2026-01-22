@@ -137,7 +137,7 @@ export async function checkRouteContent(page, route, expectedText, isPh1 = false
         }
     }
     for (const txt of expectedText) {
-        await page.waitForSelector(`text/${txt}`, { timeout:  500});
+        await page.waitForSelector(`text/${txt}`, { timeout: 500});
     }
 }
 

@@ -14,7 +14,6 @@ global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
 
 let mongoServer;
 let graphqlServer;
-jest.setTimeout(60000); // debug
 
 beforeAll(async () => {
     try {
