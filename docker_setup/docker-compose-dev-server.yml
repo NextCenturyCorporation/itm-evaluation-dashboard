@@ -27,7 +27,7 @@ services:
     image: dashboard-ui
     container_name: dashboard-ui
     restart: always
-    expose:
+    ports:
       - "3000:3000"
     networks:
       - dashboard-net
