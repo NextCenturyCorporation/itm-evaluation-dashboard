@@ -27,8 +27,8 @@ services:
     image: dashboard-ui
     container_name: dashboard-ui
     restart: always
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     networks:
       - dashboard-net
 
@@ -39,8 +39,8 @@ services:
     volumes:
       - ../dashboard-ui/public/configs/dev-server/graphql-config.js:/usr/src/app/config.js
       - $HOME/.aws/:/root/.aws/:ro
-    ports:
-      - "9100:9100"
+    expose:
+      - "9100"
     networks:
       - dashboard-net
     depends_on:
