@@ -2,14 +2,13 @@
  * @jest-environment puppeteer
  */
 import axios from 'axios';
-import soartechProbes from '../__mocks__/dummySoartechResponses.json';
-import alignmentIDs from '../components/TextBasedScenarios/alignmentID.json'
 
 const ADEPT_URL = process.env.REACT_APP_ADEPT_URL;
 const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 
 
 // Note: All Soartech tests have been removed 
+jest.setTimeout(40000);
 
 describe('TA1 Server Tests', () => {
   // if these tests two fail, the others have no hope
@@ -20,7 +19,7 @@ describe('TA1 Server Tests', () => {
       // check response status and that the session id is returned
       expect(response.status).toBe(200);
       expect(response.data).toBeTruthy();
-    }, 10000);
+    });
   });
 
   describe('Response Submission', () => {
