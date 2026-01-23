@@ -1,4 +1,4 @@
-const RESET_PASSWORD_URL = "https://darpaitm.caci.com/dev/reset-password";
+const RESET_PASSWORD_URL = "/dev/reset-password";
 const GRAPHQL_PORT = 9100;
 const MONGO_DB = 'dashboard';
 
