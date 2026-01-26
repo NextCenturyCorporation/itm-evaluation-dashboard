@@ -10,7 +10,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup, Spinner, Button } from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner, Button, Modal } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
@@ -19,6 +19,7 @@ import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
+import consentPdf from '../OnlineOnly/consentForm2025.pdf';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
@@ -120,7 +121,9 @@ class TextBasedScenariosPage extends Component {
                 MF: null,
                 PS: null,
                 SS: null
-            }
+            },
+            showConsentForm: false,
+            consentGiven: false,
         };
 
         this.surveyData = {};
@@ -135,6 +138,37 @@ class TextBasedScenariosPage extends Component {
         this.uploadButtonRefPLog = React.createRef();
         this.shouldBlockNavigation = true
     }
+
+    handleConsentResponse = (agree) => {
+        if (!agree) {
+            // Redirect based on entry point
+            if (this.state.onlineOnly) {
+                const queryParams = new URLSearchParams(window.location.search);
+                const caciProlific = queryParams.get('caciProlific');
+                if (caciProlific === 'true') {
+                    window.location.href = 'https://app.prolific.com/submissions/complete?cc=C155IMPM';
+                } else {
+                    history.push('/participantText');
+                }
+            } else {
+                history.push('/login');
+            }
+        } else {
+            this.setState({
+                showConsentForm: false,
+                consentGiven: true
+            }, () => {
+                // After consent is given, trigger the intro survey completion for online participants
+                if (this.state.onlineOnly && !this.state.skipText) {
+                    this.setState({ startSurvey: true }, () => {
+                        this.introSurveyComplete(this.introSurvey);
+                    });
+                } else if (!this.state.onlineOnly) {
+                    this.setState({ startSurvey: false });
+                }
+            });
+        }
+    };
 
     getAdeptUrl = () => {
         // for eval 12 (uk collection) we need to use the old adept server, not the current phase 2 one
@@ -311,67 +345,31 @@ class TextBasedScenariosPage extends Component {
         const pid = queryParams.get('pid');
         const classification = queryParams.get('class');
         const adeptQualtrix = queryParams.get('adeptQualtrix');
-        const caciProlific = queryParams.get('caciProlific')
+        const caciProlific = queryParams.get('caciProlific');
         const startSurvey = queryParams.get('startSurvey');
+
         if (isDefined(pid)) {
             this.introSurvey.data = {
                 "Participant ID": pid,
                 "Military or Civilian background": classification === 'Online' ? 'Online' : classification,
                 "vrEnvironmentsCompleted": ['none']
             };
+
+            // Show consent form first
+            this.setState({ showConsentForm: true });
+
             if (isDefined(adeptQualtrix) || isDefined(caciProlific)) {
                 if (startSurvey === 'true') {
                     this.setState({ moderated: false, onlineOnly: true, skipText: true });
+                } else {
+                    this.setState({ moderated: false, onlineOnly: true });
                 }
-                else {
-                    this.setState({ moderated: false, startSurvey: true, onlineOnly: true }, () => {
-                        this.introSurveyComplete(this.introSurvey);
-                    });
-                }
+            } else {
+                this.setState({ moderated: false });
             }
-            else {
-                this.setState({ moderated: false, startSurvey: false }, () => {
-                    this.introSurveyComplete(this.introSurvey);
-                });
-            }
-
-        }
-        else {
+        } else {
             history.push('/');
         }
-    }
-
-    resetState() {
-        this.setState({
-            currentConfig: null,
-            uploadData: false,
-            participantID: "",
-            vrEnvCompleted: [],
-            startTime: null,
-            scenarios: [],
-            currentScenarioIndex: 0,
-            sanitizedData: null,
-            matchedParticipantLog: null,
-            allScenariosCompleted: false,
-            sim1: null,
-            sim2: null,
-            isUploadButtonEnabled: false,
-            adeptSessionsCompleted: 0,
-            combinedSessionId: '',
-            adeptScenarios: [],
-            uploadedScenarios: 0,
-            startSurvey: true,
-            updatePLog: false
-        });
-
-        this.surveyData = {};
-        this.surveyDataByScenario = [];
-        this.survey = null;
-        this.introSurvey = new Model(introConfig);
-        this.introSurvey.onComplete.add(this.introSurveyComplete);
-        this.introSurvey.applyTheme(surveyTheme);
-        this.pageStartTimes = {};
-        this.shouldBlockNavigation = true;
     }
 
     sanitizeKeys = (obj) => {
@@ -909,138 +907,169 @@ class TextBasedScenariosPage extends Component {
     };
 
     render() {
+        const ConsentForm = ({ show, onAgree, onDisagree }) => (
+            <Modal show={show} backdrop="static" keyboard={false} size="lg" centered>
+                <Modal.Header>
+                    <Modal.Title>Consent Form</Modal.Title>
+                </Modal.Header>
+                <Modal.Body style={{ height: '70vh', padding: 0 }}>
+                    <iframe
+                        src={consentPdf}
+                        title="Consent Form PDF"
+                        width="100%"
+                        height="100%"
+                        style={{ border: 'none' }}
+                    />
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={onDisagree}>I Do Not Agree</Button>
+                    <Button variant="primary" onClick={onAgree}>I Agree</Button>
+                </Modal.Footer>
+            </Modal>
+        );
         return (
             <>
-                {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
-                    <ScenarioProgress
-                        current={this.state.currentScenarioIndex + 1}
-                        total={this.state.scenarios.length}
+                {this.state.showConsentForm && !this.state.consentGiven && (
+                    <ConsentForm
+                        show={this.state.showConsentForm}
+                        onAgree={() => this.handleConsentResponse(true)}
+                        onDisagree={() => this.handleConsentResponse(false)}
                     />
                 )}
-                <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
-                {!this.state.skipText && !this.state.currentConfig && (
-                    <Survey model={this.introSurvey} />
-                )}
-                {!this.state.skipText && !this.state.moderated && !this.state.startSurvey && (
-                    <div className="text-instructions">
-                        <h2>Instructions</h2>
-                        <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
-                            <br />
-                            During this portion of the experiment, you will be presented with several medical triage scenarios. You will be given action options from which to choose. Please consider
-                            how you would act if you were placed in this scenario.
-                        </p>
-                        <h4>Guidelines:</h4>
-                        <ul>
-                            <li>Please complete the experiment in one sitting.</li>
-                            <li>Choose the option that best matches how you would triage the scenario.</li>
-                            <li>Read all details to clearly understand each question before responding.</li>
-                            <li>Do not close the browser until you reach the "Thank You" page at the end.</li>
-                            <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
-                        </ul>
-                        <p className='center-text'>Press "Start" to begin.</p>
-                        <button onClick={() => this.setState({ startSurvey: true })}>Start</button>
-                    </div>
-                )
-
-                }
-                {!this.state.skipText && this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                {this.state.consentGiven && (
                     <>
-                        <Survey model={this.survey} />
-                    </>
-                )}
-                {!this.state.skipText && this.state.demographicsUploadData && (
-                    <Mutation
-                        mutation={UPLOAD_SURVEY_RESULTS}
-                        onCompleted={() => {
-                            this.setState({
-                                demographicsCompleted: true,
-                                demographicsUploadData: null
-                            });
-                        }}
-                    >
-                        {(uploadSurveyResults, { data }) => (
-                            <div style={{ display: 'none' }}>
-                                <button ref={this.uploadButtonRefDemographics} disabled={!this.state.isDemographicsUploadEnabled} onClick={(e) => {
-                                    e.preventDefault();
-                                    if (this.state.isDemographicsUploadEnabled) {
-                                        uploadSurveyResults({
-                                            variables: {
-                                                surveyId: this.state.participantID,
-                                                results: this.state.demographicsUploadData
+                        {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                            <ScenarioProgress
+                                current={this.state.currentScenarioIndex + 1}
+                                total={this.state.scenarios.length}
+                            />
+                        )}
+                        <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
+                        {!this.state.skipText && !this.state.currentConfig && (
+                            <Survey model={this.introSurvey} />
+                        )}
+                        {!this.state.skipText && !this.state.moderated && !this.state.startSurvey && (
+                            <div className="text-instructions">
+                                <h2>Instructions</h2>
+                                <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
+                                    <br />
+                                    During this portion of the experiment, you will be presented with several medical triage scenarios. You will be given action options from which to choose. Please consider
+                                    how you would act if you were placed in this scenario.
+                                </p>
+                                <h4>Guidelines:</h4>
+                                <ul>
+                                    <li>Please complete the experiment in one sitting.</li>
+                                    <li>Choose the option that best matches how you would triage the scenario.</li>
+                                    <li>Read all details to clearly understand each question before responding.</li>
+                                    <li>Do not close the browser until you reach the "Thank You" page at the end.</li>
+                                    <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
+                                </ul>
+                                <p className='center-text'>Press "Start" to begin.</p>
+                                <button onClick={() => this.setState({ startSurvey: true })}>Start</button>
+                            </div>
+                        )
+
+                        }
+                        {!this.state.skipText && this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                            <>
+                                <Survey model={this.survey} />
+                            </>
+                        )}
+                        {!this.state.skipText && this.state.demographicsUploadData && (
+                            <Mutation
+                                mutation={UPLOAD_SURVEY_RESULTS}
+                                onCompleted={() => {
+                                    this.setState({
+                                        demographicsCompleted: true,
+                                        demographicsUploadData: null
+                                    });
+                                }}
+                            >
+                                {(uploadSurveyResults, { data }) => (
+                                    <div style={{ display: 'none' }}>
+                                        <button ref={this.uploadButtonRefDemographics} disabled={!this.state.isDemographicsUploadEnabled} onClick={(e) => {
+                                            e.preventDefault();
+                                            if (this.state.isDemographicsUploadEnabled) {
+                                                uploadSurveyResults({
+                                                    variables: {
+                                                        surveyId: this.state.participantID,
+                                                        results: this.state.demographicsUploadData
+                                                    }
+                                                });
+                                            }
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
+                        {!this.state.skipText && this.state.uploadData && (
+                            <Mutation
+                                mutation={UPLOAD_SCENARIO_RESULTS}
+                                onCompleted={() => {
+                                    this.setState(prevState => ({
+                                        uploadedScenarios: prevState.uploadedScenarios + 1,
+                                    }), () => {
+                                        this.setState({ updatePLog: true }, () => {
+                                            if (this.uploadButtonRefPLog.current) {
+                                                this.uploadButtonRefPLog.current.click();
                                             }
                                         });
-                                    }
-                                }}></button>
-                            </div>
-                        )}
-                    </Mutation>
-                )}
-                {!this.state.skipText && this.state.uploadData && (
-                    <Mutation
-                        mutation={UPLOAD_SCENARIO_RESULTS}
-                        onCompleted={() => {
-                            this.setState(prevState => ({
-                                uploadedScenarios: prevState.uploadedScenarios + 1,
-                            }), () => {
-                                this.setState({ updatePLog: true }, () => {
-                                    if (this.uploadButtonRefPLog.current) {
-                                        this.uploadButtonRefPLog.current.click();
-                                    }
-                                });
-                            });
-                        }}
-                    >
-                        {(uploadSurveyResults, { data }) => (
-                            <div style={{ display: 'none' }}>
-                                <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
-                                    e.preventDefault();
-                                    if (this.state.isUploadButtonEnabled) {
-                                        uploadSurveyResults({
-                                            variables: { results: this.state.sanitizedData }
-                                        })
-                                    }
-                                }}></button>
-                            </div>
-                        )}
-                    </Mutation>
-                )}
-                {!this.state.skipText && this.state.updatePLog && (
-                    <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
-                        {(updateParticipantLog) => (
-                            <div>
-                                <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
-                                    e.preventDefault();
-                                    updateParticipantLog({
-                                        variables: { pid: this.state.participantID, updates: { claimed: true, textEntryCount: this.state.startCount + this.state.uploadedScenarios } }
                                     });
-                                    this.setState({ updatePLog: false });
-                                }}></button>
+                                }}
+                            >
+                                {(uploadSurveyResults, { data }) => (
+                                    <div style={{ display: 'none' }}>
+                                        <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
+                                            e.preventDefault();
+                                            if (this.state.isUploadButtonEnabled) {
+                                                uploadSurveyResults({
+                                                    variables: { results: this.state.sanitizedData }
+                                                })
+                                            }
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
+                        {!this.state.skipText && this.state.updatePLog && (
+                            <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                                {(updateParticipantLog) => (
+                                    <div>
+                                        <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
+                                            e.preventDefault();
+                                            updateParticipantLog({
+                                                variables: { pid: this.state.participantID, updates: { claimed: true, textEntryCount: this.state.startCount + this.state.uploadedScenarios } }
+                                            });
+                                            this.setState({ updatePLog: false });
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
+                        {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (
+                            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                                <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+                                    <Spinner animation="border" role="status">
+                                        <span className="sr-only">Loading...</span>
+                                    </Spinner>
+                                    <p style={{ marginTop: '10px' }}>{this.state.onlineOnly ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily" : "Uploading documents, please wait..."}</p>
+                                </div>
                             </div>
                         )}
-                    </Mutation>
-                )}
-                {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (
-                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-                        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
-                            <Spinner animation="border" role="status">
-                                <span className="sr-only">Loading...</span>
-                            </Spinner>
-                            <p style={{ marginTop: '10px' }}>{this.state.onlineOnly ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily" : "Uploading documents, please wait..."}</p>
-                        </div>
-                    </div>
-                )}
-                {!this.state.skipText && this.state.allScenariosCompleted && this.state.showDemographics && !this.state.demographicsCompleted && this.state.showDemographicsSurvey && (
-                    <Survey model={this.state.demographicsConfig} />
-                )}
-                {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length && (!this.state.showDemographics || this.state.demographicsCompleted))) && (
-                    <ScenarioCompletionScreen
-                        sim1={this.state.sim1}
-                        sim2={this.state.sim2}
-                        moderatorExists={this.state.moderated}
-                        toDelegation={this.state.onlineOnly}
-                        participantID={this.state.participantID}
-                        evalNumber={evalNameToNumber[this.props.currentTextEval]}
-                    />
+                        {!this.state.skipText && this.state.allScenariosCompleted && this.state.showDemographics && !this.state.demographicsCompleted && this.state.showDemographicsSurvey && (
+                            <Survey model={this.state.demographicsConfig} />
+                        )}
+                        {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length && (!this.state.showDemographics || this.state.demographicsCompleted))) && (
+                            <ScenarioCompletionScreen
+                                sim1={this.state.sim1}
+                                sim2={this.state.sim2}
+                                moderatorExists={this.state.moderated}
+                                toDelegation={this.state.onlineOnly}
+                                participantID={this.state.participantID}
+                                evalNumber={evalNameToNumber[this.props.currentTextEval]}
+                            />
+                        )}
+                    </>
                 )}
             </>
         )
