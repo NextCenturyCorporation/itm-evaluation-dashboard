@@ -125,7 +125,6 @@ class TextBasedScenariosPage extends Component {
         };
 
         this.surveyData = {};
-        this.surveyDataByScenario = [];
         this.survey = null;
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
@@ -303,7 +302,6 @@ class TextBasedScenariosPage extends Component {
     componentDidMount() {
         const queryParams = new URLSearchParams(window.location.search);
         const pid = queryParams.get('pid');
-        const classification = queryParams.get('class');
         const adeptQualtrix = queryParams.get('adeptQualtrix');
         const caciProlific = queryParams.get('caciProlific');
         const startSurvey = queryParams.get('startSurvey');
@@ -856,12 +854,6 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    getPageQuestions = (pageName) => {
-        // returns every question on the page
-        const page = this.survey.getPageByName(pageName);
-        return page ? page.questions.map(question => question.name) : [];
-    };
-
     render() {
         const ConsentForm = ({ show, onAgree, onDisagree }) => (
             <Modal show={show} backdrop="static" keyboard={false} size="lg" centered>
@@ -1000,14 +992,12 @@ class TextBasedScenariosPage extends Component {
                             </Mutation>
                         )}
                         {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (
-                            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-                                <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
-                                    <Spinner animation="border" role="status">
-                                        <span className="sr-only">Loading...</span>
-                                    </Spinner>
-                                    <p style={{ marginTop: '10px' }}>{this.state.onlineOnly ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily" : "Uploading documents, please wait..."}</p>
-                                </div>
-                            </div>
+                            <LoadingSpinner
+                                message={this.state.onlineOnly
+                                    ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily"
+                                    : "Uploading documents, please wait..."}
+                                fullScreen={true}
+                            />
                         )}
                         {!this.state.skipText && this.state.allScenariosCompleted && this.state.showDemographics && !this.state.demographicsCompleted && this.state.showDemographicsSurvey && (
                             <Survey model={this.state.demographicsConfig} />
@@ -1058,12 +1048,10 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
             {toDelegation && evalNumber !== 13 ?
                 <SurveyPageWrapper />
                 : toDelegation && evalNumber === 13 ?
-                    <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <p>Redirecting you back to Prolific...</p>
-                        <Spinner animation="border" role="status">
-                            <span className="sr-only">Loading...</span>
-                        </Spinner>
-                    </div>
+                    <LoadingSpinner
+                        message="Redirecting you back to Prolific..."
+                        fullScreen={false}
+                    />
                     :
                     <Container className="mt-5">
                         <Row className="justify-content-center">
@@ -1111,6 +1099,38 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
                         </Row>
                     </Container>}
         </>
+    );
+};
+
+const LoadingSpinner = ({ message, fullScreen = true }) => {
+    const spinnerContent = (
+        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+            <Spinner animation="border" role="status">
+                <span className="sr-only">Loading...</span>
+            </Spinner>
+            <p style={{ marginTop: '10px' }}>{message}</p>
+        </div>
+    );
+
+    if (!fullScreen) {
+        return <div style={{ textAlign: 'center', padding: '50px' }}>{spinnerContent}</div>;
+    }
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999
+        }}>
+            {spinnerContent}
+        </div>
     );
 };
 
