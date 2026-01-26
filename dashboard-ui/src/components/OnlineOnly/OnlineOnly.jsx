@@ -1,7 +1,6 @@
 import React from "react";
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import gql from "graphql-tag";
-import { TextBasedScenariosPageWrapper } from "../TextBasedScenarios/TextBasedScenariosPage";
 import { useHistory, useLocation } from 'react-router-dom';
 import { useSelector } from "react-redux";
 import '../../css/scenario-page.css';
@@ -22,7 +21,6 @@ export default function StartOnline() {
     const pidBounds = useSelector(state => state.configs.pidBounds);
     const { refetch } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
-    const [textTime, setTextTime] = React.useState(false);
     const history = useHistory();
     const location = useLocation();
 
@@ -32,16 +30,13 @@ export default function StartOnline() {
         const caciProlific = queryParams.get('caciProlific');
 
         if (adeptQualtrix === 'true' || caciProlific === 'true') {
-            // continue to instructions or auto-start
-            if (queryParams.get('startSurvey') === 'true') {
-                setTextTime(true);
-            }
+            createParticipantAndRedirect();
         } else {
             history.push('/login');
         }
     }, [history]);
 
-    const startSurvey = async () => {
+    const createParticipantAndRedirect = async () => {
         const result = await refetch();
         const evalNumber = evalNameToNumber[currentTextEval]
 
@@ -76,34 +71,16 @@ export default function StartOnline() {
 
         currentSearchParams.set('pid', newPid);
         currentSearchParams.set('class', 'Online');
+        
         history.push({
-            pathname: location.pathname,
+            pathname: '/text-based',
             search: `?${currentSearchParams.toString()}`,
         });
-        setTextTime(true);
     }
 
     return (
-        <>
-            {!textTime ? (
-                <div className="text-instructions">
-                    <h2>Instructions</h2>
-                    <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
-                        <br />
-                        During this portion of the experiment, you will be presented with several medical triage scenarios. You will be given action options from which to choose. Please consider
-                        how you would act if you were placed in this scenario.
-                    </p>
-                    <h4>Guidelines:</h4>
-                    <ul>
-                        <li>Choose the option that best matches how you would triage the scenario.</li>
-                        <li>Read all details to understand each question before responding.</li>
-                    </ul>
-                    <p className='center-text'>Press "Start" to begin.</p>
-                    <button onClick={startSurvey}>Start</button>
-                </div>
-            ) : (
-                <TextBasedScenariosPageWrapper />
-            )}
-        </>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+            <p>Setting up your session...</p>
+        </div>
     );
 }
