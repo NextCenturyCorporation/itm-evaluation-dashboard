@@ -630,7 +630,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return updatedData;
     };
 
-    const toggleDataType = (newDataType) => {
+    const toggleDataType = (event, newDataType) => {
         if (newDataType !== null) {
             setShowLegacy(newDataType === 'Legacy');
             setShowPh2(newDataType === 'PH2');
@@ -899,12 +899,12 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             {isLoading ? (
                 <table className='itm-table'>
                     <tbody>
-                        <TableRow>
+                      <TableRow>
                             <TableCell>
-                                Loading survey results...
-                                <LinearProgress />
-                            </TableCell>
-                         </TableRow>
+                            Loading survey results...
+                            <LinearProgress />
+                    </TableCell>
+                </TableRow>  
                     </tbody>
                 </table>
 
