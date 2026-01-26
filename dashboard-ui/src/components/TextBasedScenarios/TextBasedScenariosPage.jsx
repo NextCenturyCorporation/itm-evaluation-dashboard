@@ -307,7 +307,6 @@ class TextBasedScenariosPage extends Component {
         const startSurvey = queryParams.get('startSurvey');
 
         if (isDefined(pid)) {
-            // Store participant info in state
             this.setState({
                 participantID: pid,
                 showConsentForm: true
@@ -394,7 +393,6 @@ class TextBasedScenariosPage extends Component {
             }
         });
 
-        // Reset data for the next scenario
         this.surveyData = {};
         this.pageStartTimes = {};
         this.shouldBlockNavigation = false;
