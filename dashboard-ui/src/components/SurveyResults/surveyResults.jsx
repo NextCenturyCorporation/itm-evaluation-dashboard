@@ -230,13 +230,11 @@ export function SurveyResults() {
         <div className='survey-results-content'>
             {loading && <p>Loading</p>}
             {error && <p>Error</p>}
-            <Tabs defaultActiveKey={0} className='p-1'>
-                <Tab eventKey={0}>
-                    {data?.getAllSurveyResults && dataParticipantLog?.getParticipantLog &&
-                        <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />
-                    }
-                </Tab>
-            </Tabs>
+
+            {data?.getAllSurveyResults && dataParticipantLog?.getParticipantLog &&
+                <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />
+            }
+
             {showScrollButton && (
                 <IconButton onClick={(e) => {
                     e.stopPropagation()

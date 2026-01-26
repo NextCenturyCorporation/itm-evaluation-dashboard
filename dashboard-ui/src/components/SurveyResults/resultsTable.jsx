@@ -1,6 +1,6 @@
 import React from "react";
 import './resultsTable.css';
-import { Modal, Autocomplete, TextField } from "@mui/material";
+import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
@@ -15,7 +15,7 @@ import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
 import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
 import { getEval89Attributes, getEval12Attributes } from "../Research/utils";
-import { ToggleButton, ToggleButtonGroup } from "react-bootstrap";
+import { Box, Chip, LinearProgress, TableCell, TableRow, Typography } from "@material-ui/core";
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -149,9 +149,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [evalFilters, setEvalFilters] = React.useState(evalNumbers);
     const [roles, setRoles] = React.useState([]);
     const [roleFilters, setRoleFilters] = React.useState([]);
-    const [surveyStatus] = React.useState(['Complete', 'Incomplete']);
     const [statusFilters, setStatusFilters] = React.useState(null);
-    const [militaryStatus] = React.useState(['Yes', 'No']);
     const [milFilters, setMilFilters] = React.useState(null);
     const [versions, setVersions] = React.useState([]);
     const [versionFilters, setVersionFilters] = React.useState([]);
@@ -159,6 +157,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [showLegacy, setShowLegacy] = React.useState(false);
     const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    const [dataType, setDataType] = React.useState('PH2');
+    const [isLoading, setIsLoading] = React.useState(true);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
         const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
@@ -590,6 +590,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     }, [evalNumbers, exploratory]);
 
     React.useEffect(() => {
+        if (formattedData.length === 0) {
+            return
+        }
         const filtered = formattedData.filter((x) =>
             (versionFilters.length === 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
             (evalFilters.length === 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
@@ -603,13 +606,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
                     (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))))
         );
+        setIsLoading(false)
         setFilteredData(filtered);
         // remove extra headers that have no data
         if (formattedData.length > 0) {
             const usedHeaders = getUsedHeaders(filtered);
             setHeaders(usedHeaders);
         }
-
     }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters, getUsedHeaders]);
 
     const refineData = (origData) => {
@@ -627,9 +630,21 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return updatedData;
     };
 
-    const toggleDataType = (event) => {
-        setShowLegacy(event.target.value === 'Legacy');
-        setShowPh2(event.target.value === 'PH2')
+    const toggleDataType = (newDataType) => {
+        if (newDataType !== null) {
+            setShowLegacy(newDataType === 'Legacy');
+            setShowPh2(newDataType === 'PH2');
+            setFilteredData(formattedData);
+            setEvalFilters([]);
+            setMilFilters(null);
+            setRoleFilters([]);
+            setStatusFilters(null);
+            setVersionFilters([]);
+            setDataType(newDataType);
+        }
+    };
+
+    const clearFilters = () => {
         setFilteredData(formattedData);
         setEvalFilters([]);
         setMilFilters(null);
@@ -647,7 +662,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     };
 
     const isFiltered = () => {
-        return filteredData.length < (exploratory ? (evalFilters.length === 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length);
+        return (
+            evalFilters.length > 0 ||
+            roleFilters.length > 0 ||
+            statusFilters !== null ||
+            milFilters !== null ||
+            versionFilters.length > 0
+        )
     };
 
     const makeDownloadButton = () => {
@@ -691,9 +712,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     multiple
                     options={evals}
                     filterSelectedOptions
+                    disableCloseOnSelect
                     size="small"
                     value={evalFilters}
-                    isOptionEqualToValue={(x, y) => x.value === y.value & x.label === y.label}
+                    limitTags={1}
+                    isOptionEqualToValue={(x, y) => x.value === y.value && x.label === y.label}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -706,8 +729,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 {showLegacy && <Autocomplete
                     multiple
                     options={versions}
+                    disableCloseOnSelect
                     filterSelectedOptions
                     size="small"
+                    limitTags={1}
                     value={versionFilters}
                     renderInput={(params) => (
                         <TextField
@@ -722,8 +747,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     multiple
                     options={roles}
                     filterSelectedOptions
+                    disableCloseOnSelect
                     size="small"
                     value={roleFilters}
+                    limitTags={1}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -733,88 +760,181 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     )}
                     onChange={(_, newVal) => setRoleFilters(newVal)}
                 />
-                {/* <Autocomplete
-                    options={militaryStatus}
-                    filterSelectedOptions
-                    size="small"
-                    value={milFilters}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Is Military"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setMilFilters(newVal)}
-                /> */}
+
                 <ToggleButtonGroup
+                    className='simple-toggles'
                     value={milFilters}
                     exclusive
                     size="small"
                     onChange={(_, newVal) => setMilFilters(newVal)}
-                    name="military"
                 >
-                    <ToggleButton value="Yes">
-                        Military
+                    <ToggleButton value="Yes" className='custom-toggle'>
+                        Is Military
                     </ToggleButton>
-                    <ToggleButton value="No">
-                        Civilian
+                    <ToggleButton value="No" className='custom-toggle'>
+                        Non-Military
                     </ToggleButton>
                 </ToggleButtonGroup>
-                <Autocomplete
-                    options={surveyStatus}
-                    filterSelectedOptions
-                    size="small"
+
+                <ToggleButtonGroup
+                    className='simple-toggles'
                     value={statusFilters}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Survey Status"
-                            placeholder=""
-                        />
-                    )}
+                    exclusive
+                    size="small"
                     onChange={(_, newVal) => setStatusFilters(newVal)}
-                />
-                {!exploratory && <RadioGroup className='simple-radios' row defaultValue="PH2" onChange={toggleDataType}>
-                    <FormControlLabel value="Legacy" control={<Radio />} label=" Legacy" />
-                    <FormControlLabel value="DRE/PH1" control={<Radio />} label=" DRE/PH1" />
-                    <FormControlLabel value="PH2" control={<Radio />} label=" PH2" />
-                </RadioGroup>}
+                >
+                    <ToggleButton value="Complete" className='custom-toggle'>
+                        Survey Complete
+                    </ToggleButton>
+                    <ToggleButton value="Incomplete" className='custom-toggle'>
+                        Survey Incomplete
+                    </ToggleButton>
+                </ToggleButtonGroup>
+
+                {!exploratory && <ToggleButtonGroup 
+                    className='simple-toggles' 
+                    exclusive 
+                    value={dataType} 
+                    onChange={toggleDataType}>
+                    <ToggleButton value="Legacy" label=" Legacy" className='custom-toggle'>
+                        Legacy
+                    </ToggleButton>
+                    <ToggleButton value="DRE/PH1" label=" DRE/PH1" className='custom-toggle'>
+                        DRE/Phase 1
+                    </ToggleButton>
+                    <ToggleButton value="PH2" label=" PH2" className='custom-toggle'>
+                        Phase 2
+                    </ToggleButton>
+                </ToggleButtonGroup>}
             </div>
 
             <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={exploratory ? 'Delegation Data By Block' : 'Survey Results'} extraAction={openModal} />
         </section>
-        <div className='resultTableSection'>
-            <table className='itm-table'>
-                <thead>
-                    <tr>
-                        {headers.map((val, index) => {
-                            return (<th key={'header-' + index}>
-                                {val}
-                            </th>);
-                        })}
-                    </tr>
-                </thead>
-                <tbody>
-                    {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Participant ID'] + '-' + index}>
-                            {headers.map((val) => {
-                                return (<td key={dataSet['Participant ID'] + '-' + val + '-' + index} className='participant'>
-                                    {dataSet[val] ?? '-'}
-                                </td>);
-                            })}
-                        </tr>);
-                    })}
-                </tbody>
-            </table>
-        </div>
+        {isFiltered() && (
+            <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: 2, px: 1.5}}
+            >
+                <Box
+                className="status-bar"
+                >
+                    {versionFilters.length > 0 && (
+                        <Box
+                        className="status-bar"
+                        >
+                        <Typography>
+                            Version:
+                        </Typography>
+                        {versionFilters.map((e) =>
+                        <Chip
+                        key={e}
+                        label={e}
+                        size="small"
+                        onDelete={() => {
+                            const updated = versionFilters.filter(item => item !== e)
+                            setVersionFilters(updated)
+                        }}
+                        />
+                    )}
+                        </Box>
+                    )} 
+                    {evalFilters.length > 0 && (
+                        <Box
+                        className="status-bar"
+                        >
+                        <Typography>
+                            Evals:
+                        </Typography>
+                        {evalFilters.map((e) =>
+                        <Chip
+                        key={e.label}
+                        label={e.label}
+                        size="small"
+                        onDelete={() => {
+                            const updated = evalFilters.filter(item => item.label !== e.label)
+                            setEvalFilters(updated)
+                        }}
+                        />
+                    )}
+                    </Box>
+                    )}
+                    {roleFilters.length > 0 && (
+                        <Box
+                        className="status-bar"
+                        >
+                            <Typography>
+                                Roles:
+                            </Typography>
+                        {roleFilters && (
+                            roleFilters.map((e) =>
+                            <Chip
+                            key={e}
+                            label={e}
+                            size="small"
+                            onDelete={() => {
+                                const updated = roleFilters.filter(item => item !== e)
+                                setRoleFilters(updated)
+                            }}
+                            />
+                    ))}
+                    </Box>
+                    )}
 
-        <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
-            <div className='modal-body'>
-                <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                {makeDownloadButton()}
-            </div>
-        </Modal>
+                </Box>
+            
+                <Typography
+                    onClick={clearFilters}
+                    className="clear-btn"
+                    >
+                        Clear
+                </Typography>
+            </Stack>
+
+        )}
+
+        <div className='resultTableSection'>
+            {isLoading ? (
+                <table className='itm-table'>
+                    <tbody>
+                        <TableRow>
+                            <TableCell>
+                                Loading survey results...
+                                <LinearProgress />
+                            </TableCell>
+                         </TableRow>
+                    </tbody>
+                </table>
+
+            ): filteredData.length === 0 ? (
+                    <Alert severity="info">No data available</Alert>
+                ) : (
+                    <table className='itm-table'>
+                        <thead>
+                            <tr>
+                                {headers.map((val, index) => (
+                                    <th key={'header-' + index}>
+                                        {val}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredData.map((dataSet, index) => (
+                                <tr key={dataSet['Participant ID'] + '-' + index}>
+                                    {headers.map((val) => (
+                                        <td key={dataSet['Participant ID'] + '-' + val + '-' + index} className='participant'>
+                                            {dataSet[val] ?? '-'}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+        </div>
 
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
