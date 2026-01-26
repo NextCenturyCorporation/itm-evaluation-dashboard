@@ -18,7 +18,7 @@ import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
-import consentPdf from '../OnlineOnly/consentForm2025.pdf';
+import consentPdf from '../OnlineOnly/consent.pdf';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
