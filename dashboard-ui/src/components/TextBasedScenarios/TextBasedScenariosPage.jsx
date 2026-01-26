@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
-import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
@@ -84,7 +83,6 @@ class TextBasedScenariosPage extends Component {
             currentConfig: null,
             uploadData: false,
             participantID: "",
-            vrEnvCompleted: [],
             startTime: null,
             scenarios: [],
             currentScenarioIndex: 0,
@@ -129,9 +127,6 @@ class TextBasedScenariosPage extends Component {
         this.surveyData = {};
         this.surveyDataByScenario = [];
         this.survey = null;
-        this.introSurvey = new Model(introConfig);
-        this.introSurvey.onComplete.add(this.introSurveyComplete)
-        this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefDemographics = React.createRef();
@@ -157,15 +152,6 @@ class TextBasedScenariosPage extends Component {
             this.setState({
                 showConsentForm: false,
                 consentGiven: true
-            }, () => {
-                // After consent is given, trigger the intro survey completion for online participants
-                if (this.state.onlineOnly && !this.state.skipText) {
-                    this.setState({ startSurvey: true }, () => {
-                        this.introSurveyComplete(this.introSurvey);
-                    });
-                } else if (!this.state.onlineOnly) {
-                    this.setState({ startSurvey: false });
-                }
             });
         }
     };
@@ -176,15 +162,13 @@ class TextBasedScenariosPage extends Component {
         return evalNum === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL
     }
 
-    introSurveyComplete = (survey) => {
-        const enteredParticipantID = survey.data["Participant ID"];
+    startScenarios = () => {
+        const { participantID } = this.state;
 
-        // match entered participant id to log to determine scenario order
+        // Match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
-            log => String(log['ParticipantID']) === enteredParticipantID
+            log => String(log['ParticipantID']) === participantID
         );
-
-        let scenarios = [];
 
         if (matchedLog) {
             this.setState({ updatePLog: true, startCount: matchedLog['textEntryCount'] }, () => {
@@ -195,53 +179,29 @@ class TextBasedScenariosPage extends Component {
         }
 
         if (!matchedLog) {
-            let message = "No matching participant ID was found.";
-            message += " Would you like to continue anyway?\n\n" +
-                `Click 'OK' to continue with the current ${this.state.moderated ? "ID" : "email"}.\n` +
-                `Click 'Cancel' to re-enter the ${this.state.moderated ? "participant ID" : "email"}.`;
-
-            const userChoice = window.confirm(message);
-
-            if (!userChoice) {
-                // just reload intro survey
-                if (this.state.moderated) {
-                    this.introSurvey = new Model(introConfig);
-                    this.introSurvey.onComplete.add(this.introSurveyComplete);
-                    this.introSurvey.applyTheme(surveyTheme);
-                    this.setState({ currentConfig: null }); // Force re-render
-                }
-                else {
-                    history.push('/participantText');
-                }
-                return;
-            } else {
-                // if you want to go through with a non-matched PID, giving default experience
-                const scenarioSet = Math.floor(Math.random() * 2) + 1;
-
-                matchedLog = {
-                    'AF-text-scenario': scenarioSet,
-                    'MF-text-scenario': scenarioSet,
-                    'PS-text-scenario': scenarioSet,
-                    'SS-text-scenario': scenarioSet
-                };
-
-            }
+            // If no match found, create default scenario set
+            const scenarioSet = Math.floor(Math.random() * 2) + 1;
+            matchedLog = {
+                'AF-text-scenario': scenarioSet,
+                'MF-text-scenario': scenarioSet,
+                'PS-text-scenario': scenarioSet,
+                'SS-text-scenario': scenarioSet
+            };
         }
 
-        scenarios = this.scenariosFromLog(matchedLog)
+        const scenarios = this.scenariosFromLog(matchedLog);
 
         this.setState({
             scenarios,
-            participantID: enteredParticipantID,
-            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
             matchedParticipantLog: matchedLog,
-            currentScenarioIndex: 0
+            currentScenarioIndex: 0,
+            startSurvey: true
         }, () => {
             if (this.state.scenarios.length > 0) {
                 this.loadNextScenario();
             }
         });
-    }
+    };
 
     loadDemographicsSurvey = () => {
         const demographicsConfig = Object.values(this.props.textBasedConfigs).find(
@@ -349,23 +309,20 @@ class TextBasedScenariosPage extends Component {
         const startSurvey = queryParams.get('startSurvey');
 
         if (isDefined(pid)) {
-            this.introSurvey.data = {
-                "Participant ID": pid,
-                "Military or Civilian background": classification === 'Online' ? 'Online' : classification,
-                "vrEnvironmentsCompleted": ['none']
-            };
-
-            // Show consent form first
-            this.setState({ showConsentForm: true });
+            // Store participant info in state
+            this.setState({
+                participantID: pid,
+                showConsentForm: true
+            });
 
             if (isDefined(adeptQualtrix) || isDefined(caciProlific)) {
                 if (startSurvey === 'true') {
                     this.setState({ moderated: false, onlineOnly: true, skipText: true });
                 } else {
-                    this.setState({ moderated: false, onlineOnly: true });
+                    this.setState({ moderated: false, onlineOnly: true, startSurvey: false });
                 }
             } else {
-                this.setState({ moderated: false });
+                this.setState({ moderated: false, startSurvey: false });
             }
         } else {
             history.push('/');
@@ -394,7 +351,6 @@ class TextBasedScenariosPage extends Component {
             scenario_id: currentScenario.scenario_id,
             author: currentScenario.author,
             participantID: this.state.participantID,
-            vrEnvCompleted: this.state.vrEnvCompleted,
             title: currentScenario.title,
             timeComplete: endStamp.data.getServerTimestamp,
             startTime: this.state.startTime
@@ -945,9 +901,6 @@ class TextBasedScenariosPage extends Component {
                             />
                         )}
                         <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
-                        {!this.state.skipText && !this.state.currentConfig && (
-                            <Survey model={this.introSurvey} />
-                        )}
                         {!this.state.skipText && !this.state.moderated && !this.state.startSurvey && (
                             <div className="text-instructions">
                                 <h2>Instructions</h2>
@@ -965,7 +918,7 @@ class TextBasedScenariosPage extends Component {
                                     <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
                                 </ul>
                                 <p className='center-text'>Press "Start" to begin.</p>
-                                <button onClick={() => this.setState({ startSurvey: true })}>Start</button>
+                                <button onClick={() => this.startScenarios()}>Start</button>
                             </div>
                         )
 
