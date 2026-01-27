@@ -26,9 +26,9 @@ import ScenarioProgress from './scenarioProgress';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
-const UPLOAD_SURVEY_RESULTS = gql`
-  mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
-    uploadSurveyResults(surveyId: $surveyId, results: $results)
+const UPLOAD_DEMOGRAPHICS = gql`
+  mutation UploadDemographics($surveyId: String, $results: JSON) {
+    uploadDemographics(surveyId: $surveyId, results: $results)
   }`;
 
 const GET_SERVER_TIMESTAMP = gql`
@@ -920,7 +920,7 @@ class TextBasedScenariosPage extends Component {
                         )}
                         {!this.state.skipText && this.state.demographicsUploadData && (
                             <Mutation
-                                mutation={UPLOAD_SURVEY_RESULTS}
+                                mutation={UPLOAD_DEMOGRAPHICS}
                                 onCompleted={() => {
                                     this.setState({
                                         demographicsCompleted: true,
