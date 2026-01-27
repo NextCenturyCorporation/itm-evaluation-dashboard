@@ -989,7 +989,7 @@ class TextBasedScenariosPage extends Component {
                                 )}
                             </Mutation>
                         )}
-                        {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (
+                        {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (!this.state.showDemographics || this.state.demographicsCompleted) && (
                             <LoadingSpinner
                                 message={this.state.onlineOnly
                                     ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily"
