@@ -37,6 +37,31 @@ const TRUST_MAP = {
     "Strongly agree": 5
 };
 
+const ALLOWED_ROLES_PH2 = [
+  'Medical student',
+  'Resident',
+  'Physician',
+  "Physician's Assistant",
+  'Nurse',
+  'EMT',
+  'Paramedic',
+  'Military Medicine'
+];
+
+const ALLOWED_ROLES_PH1 = [
+    'Paramedic',
+    'Emergency medical technician',
+    'EM faculty',
+    'Nurse',
+];
+
+const ALLOWED_ROLES_LEGACY = [
+    'Paramedic',
+    'Emergency medical technician',
+    'M-4 medical student',
+    'Nurse',
+]
+
 const CONFIDENCE_MAP = {
     "Not confident at all": 1,
     "No confident at all": 1,
@@ -186,6 +211,15 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         const allVersions = [];
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
+        let ALLOWED_ROLES;
+        
+        if (showLegacy) {
+            ALLOWED_ROLES = ALLOWED_ROLES_LEGACY;
+        } else if (showPh2) {
+            ALLOWED_ROLES = ALLOWED_ROLES_PH2;
+        } else {
+            ALLOWED_ROLES = ALLOWED_ROLES_PH1;
+        }
         // set up block headers
         let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Attribute', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', (showPh2 ? 'Probe_Set_Observation' : 'Scenario'), 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
         if (exploratory) {
@@ -324,8 +358,19 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                     else {
                         const roles = response?.toString();
-                        allRoles = [...allRoles, ...roles.split(',')];
+                        console.log(roles)
+                        const rolesArray = roles.split(',');
+                        
+                        const mappedRoles = rolesArray.map(role => {
+                            const trimmedRole = role.trim()
+                            return ALLOWED_ROLES.includes(trimmedRole) ? trimmedRole : 'Other';
+                        })
+
+                        const uniqueRoles = [...new Set(mappedRoles)]
+                        allRoles = [...allRoles, ...uniqueRoles];
                         obj[q] = roles.replaceAll(',', '; ');
+
+                        obj[q + '_filter'] = uniqueRoles.join('; ');
                     }
                 }
             }
@@ -596,7 +641,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         const filtered = formattedData.filter((x) =>
             (versionFilters.length === 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
             (evalFilters.length === 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
-            (roleFilters.length === 0 || roleFilters.some((filter) => x[(showPh2 ? 'What is your current role' : 'What is your current role (choose all that apply):')]?.split('; ').includes(filter))) &&
+            (roleFilters.length === 0 || roleFilters.some((filter) => x[(showPh2 ? 'What is your current role' : 'What is your current role (choose all that apply):') + '_filter']?.split('; ').includes(filter))) &&
             (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             ((showPh2 && (!milFilters || x['Served in Military']) &&

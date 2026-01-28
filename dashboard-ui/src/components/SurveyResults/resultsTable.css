@@ -300,5 +300,5 @@
 .status-bar {
     display: flex !important;
     flex-wrap: wrap !important;
-    gap: 10 !important;
+    gap: 10px !important;
 }
