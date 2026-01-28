@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys, takePhase1TextScenario } from "../__mocks__/testUtils";
+import { countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys, takePhase1TextScenario, agreeToProlificConsent} from "../__mocks__/testUtils";
 
 const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 let firstPid = 0;
@@ -11,6 +11,7 @@ describe('Test email-entry text scenarios', () => {
     beforeEach(async () => {
         page = await browser.newPage();
     }, 30000)
+    
     it('/participantText should only have email-entry option', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
         await page.waitForSelector('text=Text Scenario Login');
@@ -68,6 +69,9 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('.form-group button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
+        
+        await agreeToProlificConsent(page);
+        
         await page.waitForSelector('text/Welcome');
         const currentUrl = page.url();
         firstPid = currentUrl.split('pid=').slice(-1)[0];
@@ -86,6 +90,9 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('.form-group button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
+        
+        await agreeToProlificConsent(page);
+        
         await page.waitForSelector('text/Welcome');
         const currentUrl = page.url();
         const thisPid = currentUrl.split('pid=').slice(-1)[0];
@@ -105,6 +112,9 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('.form-group button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
+        
+        await agreeToProlificConsent(page);
+        
         await page.waitForSelector('text/Welcome');
         const currentUrl = page.url();
         const thisPid = currentUrl.split('pid=').slice(-1)[0];
@@ -146,6 +156,9 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('.form-group button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
+        
+        await agreeToProlificConsent(page);
+        
         await page.waitForSelector('text/Welcome');
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
@@ -165,6 +178,9 @@ describe('Test email-entry text scenarios', () => {
         await page.$$eval('.form-group button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
+        
+        await agreeToProlificConsent(page);
+        
         await page.waitForSelector('text/Welcome');
         await page.$$eval('button', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
