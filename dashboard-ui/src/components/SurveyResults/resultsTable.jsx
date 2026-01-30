@@ -313,7 +313,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const logData = pLog.find(
                 log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((version >= 6 || !version) && !logData) {
+            if ((version >= 4 || !version) && !logData) {
                 continue;
             }
 

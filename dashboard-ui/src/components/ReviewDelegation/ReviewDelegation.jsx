@@ -51,7 +51,11 @@ export function ReviewDelegationPage() {
                 if (page['evalNumber'] === 4) {
                     reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
                 } else if (page['evalNumber'] >= 8) {
-                    reviewText = page['scenarioName'] ? page['scenarioName'] : page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['target'];
+                    if (page['scenarioIndex'] && page['admName'] && page['target']) {
+                        reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['target'];
+                    } else {
+                        reviewText = page['scenarioName'] || 'Unknown';
+                    }
                 } else {
                     reviewText = (page['scenarioIndex'] ? PH1_NAME_MAP[page['scenarioIndex']] : 'Unknown') + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
                 }
@@ -65,7 +69,7 @@ export function ReviewDelegationPage() {
 
     const addPageToScenarios = (scenarios, page, useScenarioIndex) => {
         const scenarioKey = useScenarioIndex ? page['scenarioIndex'] : (page['scenarioName'] || page['scenarioIndex']);
-        
+
         if (!scenarios[scenarioKey]) {
             scenarios[scenarioKey] = {};
         }
