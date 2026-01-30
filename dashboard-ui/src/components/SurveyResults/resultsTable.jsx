@@ -295,8 +295,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             // ignore invalid versions
             const version = entry.surveyVersion;
-            // temp filter version 9 data
-            if ((!version && obj['eval'] !== 13) || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
+            const effectiveVersion = version ?? (obj['eval'] === 13 ? 6 : null);
+
+            if (!effectiveVersion || 
+                (showLegacy && effectiveVersion >= 4) || 
+                (!showLegacy && effectiveVersion < 4) || 
+                (showPh2 && effectiveVersion < 6) || 
+                (!showPh2 && effectiveVersion >= 6)) {
                 continue;
             }
 
