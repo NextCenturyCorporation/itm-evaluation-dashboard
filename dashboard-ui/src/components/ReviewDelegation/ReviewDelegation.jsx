@@ -5,62 +5,9 @@ import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey } from "survey-react-ui";
 import { Accordion, Alert, Button, Card, Container, Row, Col } from 'react-bootstrap';
+import '../../css/review-del.css';
 
 const HEADER_COLOR = '#602414';
-const SUBHEADER_COLOR = '#8B4513';
-const TEXT_COLOR = '#602414';
-
-const customStyles = `
-  .custom-btn {
-    color: ${TEXT_COLOR};
-    border-color: ${TEXT_COLOR};
-    background-color: white;
-    margin-left: 24px;
-    margin-right: 32px;
-    width: 80%;
-  }
-  .back-btn {
-    color: ${TEXT_COLOR};
-    border-color: ${TEXT_COLOR};
-    background-color: white;
-  }
-  .custom-btn:hover, .custom-btn:focus, .custom-btn:active {
-    background-color: ${TEXT_COLOR} !important;
-    color: white !important;
-    border-color: ${TEXT_COLOR} !important;
-  }
-  .subheader {
-    background-color: ${SUBHEADER_COLOR};
-    color: white;
-    padding: 10px 15px;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-  }
-  .scenarioName {
-    font-size: 20px;
-  }
-  .miniheader {
-    background-color: white;
-    color: ${SUBHEADER_COLOR};
-    border: 1px solid ${SUBHEADER_COLOR};
-    padding: 10px 15px;
-    margin-top: 48px;
-    margin-bottom: -8px;
-    margin-left: 24px;
-    border-radius: 4px;
-    width: 95%;
-  }
-  .sd-body.sd-body--static {
-    max-width: none;
-  }
-  .accordion {
-    margin-bottom: 8px;
-  }
-  .action-item {
-    font-size: 14px;
-  }
-`;
 
 const PH1_NAME_MAP = {
     'DryRunEval-MJ2-eval': 'phase1-adept-eval-MJ2',
@@ -76,6 +23,16 @@ const PH1_NAME_MAP = {
     'vol-ph1-eval-3': 'vol-ph1-eval-3',
     'vol-ph1-eval-4': 'vol-ph1-eval-4',
 };
+
+const CONFIG_METADATA = [
+    { key: 'dre', version: 'delegation_v4.0', title: 'DRE Scenarios', isPhase2: false, useScenarioIndex: true },
+    { key: 'ph1', version: 'delegation_v5.0', title: 'Phase 1 Scenarios', isPhase2: false, useScenarioIndex: true, nameMap: PH1_NAME_MAP },
+    { key: 'ph2_june', version: 'delegation_v6.0', title: 'Phase 2 June 2025 Collaboration', isPhase2: true },
+    { key: 'ph2_july', version: 'delegation_v7.0', title: 'Phase 2 July 2025 Collaboration', isPhase2: true },
+    { key: 'ph2_sept', version: 'delegation_v8.0', title: 'Phase 2 September 2025 Collaboration', isPhase2: true },
+    { key: 'uk', version: 'delegation_v9.0', title: 'UK Collaboration', isPhase2: false, useScenarioIndex: true },
+    { key: 'ph2_feb', version: 'delegation_v10.0', title: 'Phase 2 February 2026 Collaboration', isPhase2: true },
+];
 
 export function ReviewDelegationPage() {
     const delegationConfigs = useSelector(state => state.configs.surveyConfigs);
@@ -106,83 +63,33 @@ export function ReviewDelegationPage() {
         }
     };
 
+    const addPageToScenarios = (scenarios, page, useScenarioIndex) => {
+        const scenarioKey = useScenarioIndex ? page['scenarioIndex'] : (page['scenarioName'] || page['scenarioIndex']);
+        
+        if (!scenarios[scenarioKey]) {
+            scenarios[scenarioKey] = {};
+        }
+        if (!scenarios[scenarioKey][page['admName']]) {
+            scenarios[scenarioKey][page['admName']] = [];
+        }
+        scenarios[scenarioKey][page['admName']].push(page);
+    };
+
     const renderConfigButtons = () => {
-        const dre_scenarios = {};
-        const ph1_scenarios = {};
-        const ph2_june_scenarios = {};
-        const ph2_july_scenarios = {};
-        const ph2_sept_scenarios = {};
-        const uk_scenarios = {};
+        // Initialize scenario collections
+        const scenarioCollections = {};
+        CONFIG_METADATA.forEach(meta => {
+            scenarioCollections[meta.key] = {};
+        });
 
-        const dre_config = delegationConfigs["delegation_v4.0"];
-        const ph1_config = delegationConfigs["delegation_v5.0"];
-        const ph2_june_config = delegationConfigs["delegation_v6.0"];
-        const ph2_july_config = delegationConfigs["delegation_v7.0"];
-        const ph2_sept_config = delegationConfigs["delegation_v8.0"];
-        const uk_config = delegationConfigs["delegation_v9.0"];
-
-        [dre_config, ph1_config, ph2_june_config, ph2_july_config, ph2_sept_config, uk_config].forEach((config, i) => {
+        // Populate scenario collections
+        CONFIG_METADATA.forEach((meta, index) => {
+            const config = delegationConfigs[meta.version];
             if (!config) return;
 
             for (const page of config['pages']) {
                 if (Object.keys(page).includes('scenarioIndex') || Object.keys(page).includes('scenarioName')) {
-                    let scenarioKey = '';
-
-                    if (i === 0) {
-                        scenarioKey = page['scenarioIndex'];
-                        if (!Object.keys(dre_scenarios).includes(scenarioKey)) {
-                            dre_scenarios[scenarioKey] = {};
-                        }
-                        if (!Object.keys(dre_scenarios[scenarioKey]).includes(page['admName'])) {
-                            dre_scenarios[scenarioKey][page['admName']] = [];
-                        }
-                        dre_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 1) {
-                        scenarioKey = page['scenarioIndex'];
-                        if (!Object.keys(ph1_scenarios).includes(scenarioKey)) {
-                            ph1_scenarios[scenarioKey] = {};
-                        }
-                        if (!Object.keys(ph1_scenarios[scenarioKey]).includes(page['admName'])) {
-                            ph1_scenarios[scenarioKey][page['admName']] = [];
-                        }
-                        ph1_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 2) {
-                        scenarioKey = page['scenarioName'] || page['scenarioIndex'];
-                        if (!Object.keys(ph2_june_scenarios).includes(scenarioKey)) {
-                            ph2_june_scenarios[scenarioKey] = {};
-                        }
-                        if (!Object.keys(ph2_june_scenarios[scenarioKey]).includes(page['admName'])) {
-                            ph2_june_scenarios[scenarioKey][page['admName']] = [];
-                        }
-                        ph2_june_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 3) {
-                        scenarioKey = page['scenarioName'] || page['scenarioIndex'];
-                        if (!Object.keys(ph2_july_scenarios).includes(scenarioKey)) {
-                            ph2_july_scenarios[scenarioKey] = {};
-                        }
-                        if (!Object.keys(ph2_july_scenarios[scenarioKey]).includes(page['admName'])) {
-                            ph2_july_scenarios[scenarioKey][page['admName']] = [];
-                        }
-                        ph2_july_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 4) {
-                        scenarioKey = page['scenarioName'] || page['scenarioIndex'];
-                        if (!Object.keys(ph2_sept_scenarios).includes(scenarioKey)) {
-                            ph2_sept_scenarios[scenarioKey] = {};
-                        }
-                        if (!Object.keys(ph2_sept_scenarios[scenarioKey]).includes(page['admName'])) {
-                            ph2_sept_scenarios[scenarioKey][page['admName']] = [];
-                        }
-                        ph2_sept_scenarios[scenarioKey][page['admName']].push(page);
-                    } else if (i === 5) {
-                        scenarioKey = page['scenarioIndex'];
-                        if (!Object.keys(uk_scenarios).includes(scenarioKey)) {
-                            uk_scenarios[scenarioKey] = {};
-                        }
-                        if (!Object.keys(uk_scenarios[scenarioKey]).includes(page['admName'])) {
-                            uk_scenarios[scenarioKey][page['admName']] = [];
-                        }
-                        uk_scenarios[scenarioKey][page['admName']].push(page);
-                    }
+                    addPageToScenarios(scenarioCollections[meta.key], page, meta.useScenarioIndex);
                 }
             }
         });
@@ -225,100 +132,38 @@ export function ReviewDelegationPage() {
             </Accordion>
         );
 
+        const renderScenarioCard = (meta) => {
+            const scenarios = scenarioCollections[meta.key];
+            if (Object.keys(scenarios).length === 0) return null;
+
+            return (
+                <Card key={meta.key} className="mb-4 border-0 shadow">
+                    <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
+                        {meta.title}
+                    </Card.Header>
+                    <Card.Body className="bg-light">
+                        {Object.keys(scenarios).sort().map((scenarioName) => {
+                            const displayName = meta.nameMap ? meta.nameMap[scenarioName] : scenarioName;
+                            return (
+                                <div key={scenarioName}>
+                                    {renderConfigGroup(scenarios[scenarioName], displayName, meta.isPhase2)}
+                                </div>
+                            );
+                        })}
+                    </Card.Body>
+                </Card>
+            );
+        };
+
         return (
             <>
-                {Object.keys(uk_scenarios).length > 0 && (
-                    <Card className="mb-4 border-0 shadow">
-                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
-                            UK Collaboration
-                        </Card.Header>
-                        <Card.Body className="bg-light">
-                            {Object.keys(uk_scenarios).sort().map((scenarioName => (
-                                <div key={scenarioName}>
-                                    {renderConfigGroup(uk_scenarios[scenarioName], scenarioName)}
-                                </div>
-                            )))}
-                        </Card.Body>
-                    </Card>
-                )}
-                {Object.keys(ph2_sept_scenarios).length > 0 && (
-                    <Card className="mb-4 border-0 shadow">
-                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
-                            Phase 2 September 2025 Collaboration
-                        </Card.Header>
-                        <Card.Body className="bg-light">
-                            {Object.keys(ph2_sept_scenarios).sort().map((scenarioName => (
-                                <div key={scenarioName}>
-                                    {renderConfigGroup(ph2_sept_scenarios[scenarioName], scenarioName, true)}
-                                </div>
-                            )))}
-                        </Card.Body>
-                    </Card>
-                )}
-                {Object.keys(ph2_july_scenarios).length > 0 && (
-                    <Card className="mb-4 border-0 shadow">
-                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
-                            Phase 2 July 2025 Collaboration
-                        </Card.Header>
-                        <Card.Body className="bg-light">
-                            {Object.keys(ph2_july_scenarios).sort().map((scenarioName => (
-                                <div key={scenarioName}>
-                                    {renderConfigGroup(ph2_july_scenarios[scenarioName], scenarioName, true)}
-                                </div>
-                            )))}
-                        </Card.Body>
-                    </Card>
-                )}
-                {Object.keys(ph2_june_scenarios).length > 0 && (
-                    <Card className="mb-4 border-0 shadow">
-                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
-                            Phase 2 June 2025 Collaboration
-                        </Card.Header>
-                        <Card.Body className="bg-light">
-                            {Object.keys(ph2_june_scenarios).sort().map((scenarioName => (
-                                <div key={scenarioName}>
-                                    {renderConfigGroup(ph2_june_scenarios[scenarioName], scenarioName, true)}
-                                </div>
-                            )))}
-                        </Card.Body>
-                    </Card>
-                )}
-                {Object.keys(ph1_scenarios).length > 0 && (
-                    <Card className="mb-4 border-0 shadow">
-                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
-                            Phase 1 Scenarios
-                        </Card.Header>
-                        <Card.Body className="bg-light">
-                            {Object.keys(ph1_scenarios).sort().map((scenarioName => (
-                                <div key={PH1_NAME_MAP[scenarioName]}>
-                                    {renderConfigGroup(ph1_scenarios[scenarioName], PH1_NAME_MAP[scenarioName])}
-                                </div>
-                            )))}
-                        </Card.Body>
-                    </Card>
-                )}
-                {Object.keys(dre_scenarios).length > 0 && (
-                    <Card className="mb-4 border-0 shadow">
-                        <Card.Header as="h5" style={{ backgroundColor: HEADER_COLOR, color: 'white' }}>
-                            DRE Scenarios
-                        </Card.Header>
-                        <Card.Body className="bg-light">
-                            {Object.keys(dre_scenarios).sort().map((scenarioName => (
-                                <div key={scenarioName}>
-                                    {renderConfigGroup(dre_scenarios[scenarioName], scenarioName)}
-                                </div>
-                            )))}
-                        </Card.Body>
-                    </Card>
-                )}
+                {CONFIG_METADATA.map(meta => renderScenarioCard(meta))}
             </>
         );
-
     };
 
     return (
-        <div className={`min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
-            <style>{customStyles}</style>
+        <div className={`review-delegation-page min-vh-100 d-flex flex-column ${selectedConfig ? 'bg-light' : ''}`}>
             {!selectedConfig && (
                 <Container className="py-4">
                     <Alert variant="warning" dismissible>

@@ -258,11 +258,11 @@ export function getEval89Attributes(target, scenarioIndex) {
 
 export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
     const isPhase2 = [8, 9, 10].includes(evalNum);
-    const surveyResults = surveyData;
+    const surveyResults = Array.isArray(surveyData) ? surveyData : surveyData?.getAllSurveyResults ?? [];
     const participantLog = dataParticipantLog.getParticipantLog;
-    const textResults = textResultsData;
+    const textResults =  Array.isArray(textResultsData) ? textResultsData : textResultsData?.getAllScenarioResults ?? [];
     const admData = dataADMs.getAllHistoryByEvalNumber;
-    const comparisons = comparisonData;
+    const comparisons = Array.isArray(comparisonData) ? comparisonData : comparisonData?.getHumanToADMComparison ?? [];
     const simData = dataSim.getAllSimAlignmentByEval;
     const allObjs = [];
     const allTA1s = [];

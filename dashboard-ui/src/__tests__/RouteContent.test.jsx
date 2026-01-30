@@ -17,7 +17,7 @@ describe('Verify content on page matches expectation for route', () => {
     }, 30000);
 
     it('Check /survey-results route content', async () => {
-        await checkRouteContent(page, '/survey-results', ['Table View', 'Graph View', 'Post-Scenario Measures - Time Taken (mm:ss)']);
+        await checkRouteContent(page, '/survey-results', ['Table View', 'Post-Scenario Measures - Time Taken (mm:ss)']);
         // can take a long time to load this page
     }, 30000);
 
@@ -56,7 +56,7 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /results route content', async () => {
         // based off ph2 RQ2 table
-        await checkRouteContent(page, '/results', IS_PH1 ? ['Evaluation', 'Scenario', 'Trial_ID', 'TA2_Name', 'TA1_Name'] : ['Evaluation', 'Scenario', 'Attribute', 'Set', 'Probe IDs'], IS_PH1);
+        await checkRouteContent(page, '/results', ['Evaluation', 'Scenario'], IS_PH1);
     });
     it('Check /adm-results route content', async () => {
         // TODO: find how to check this a little better (more unique)

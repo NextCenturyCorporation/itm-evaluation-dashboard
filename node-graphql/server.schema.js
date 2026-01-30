@@ -88,6 +88,7 @@ const typeDefs = gql`
     addNewEval(caller: JSON, newEval: JSON): JSON,
     deleteEval(caller: JSON, evalId: String): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
+    uploadDemographics(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON): JSON,
     updateSurveyVersion(version: String!): String,
@@ -851,6 +852,13 @@ const resolvers = {
       const options = { upsert: true }
 
       return await context.db.collection('surveyResults').updateOne(filter, update, options)
+    },
+    uploadDemographics: async (obj, args, context, inflow) => {
+      const filter = { surveyId: args.surveyId }
+      const update = { $set: { results: args.results } }
+      const options = { upsert: true }
+
+      return await context.db.collection('demographicsData').updateOne(filter, update, options)
     },
     uploadScenarioResults: async (obj, args, context, inflow) => {
       const results = args.results
