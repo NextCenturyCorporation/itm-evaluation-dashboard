@@ -1745,3 +1745,8 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
     }
     return pages
 }
+
+export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults) => {
+    
+    return []
+}

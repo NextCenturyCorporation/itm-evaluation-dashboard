@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK} from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -70,9 +70,9 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
-    "10.0": {evalName: 'Februrary 2026 Evaluation', evalNumber: 15},
-    "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12},
-    "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10},
+    "10.0": { evalName: 'Februrary 2026 Evaluation', evalNumber: 15 },
+    "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12 },
+    "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10 },
     "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
     "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
     "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
@@ -442,7 +442,7 @@ class SurveyPage extends Component {
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
-           
+
 
             const allBlocks = [];
             const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
@@ -486,13 +486,13 @@ class SurveyPage extends Component {
             this.setState({ orderLog: pageOrder });
 
             return {};
-        } 
+        }
         else if (this.state.surveyVersion === "8.0") {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
             const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => String(log['ParticipantID']) === this.state.pid
+                log => String(log['ParticipantID']) === this.state.pid
             );
 
             const allBlocks = [];
@@ -527,7 +527,7 @@ class SurveyPage extends Component {
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
             return {};
-        } 
+        }
         else if (this.state.surveyVersion === "9.0") {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
@@ -536,7 +536,7 @@ class SurveyPage extends Component {
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
-           
+
 
             const allBlocks = [];
             const scenarioTypes = ['MJ', 'IO', 'VOL']
@@ -546,7 +546,7 @@ class SurveyPage extends Component {
                     allPages,
                     participantTextResults
                 )
-                if (block) { allBlocks.push(block)}
+                if (block) { allBlocks.push(block) }
             }
 
             const shuffledBlocks = shuffle(allBlocks);
@@ -576,13 +576,24 @@ class SurveyPage extends Component {
             );
 
             const allBlocks = []
-            const blockTypes = ['AF-PS', 'MF-SS', 'MF']
-            for (const blockType of blockTypes) {
+            const blockTypes = [
+                { type: 'AF-PS', model: 'mistral' },
+                { type: 'AF-PS', model: 'llama' },
+                { type: 'MF-SS', model: 'mistral' },
+                { type: 'MF-SS', model: 'llama' },
+                { type: 'MF3', model: 'mistral' },
+            ]
+
+            for (const { type, model } of blockTypes) {
                 const block = createScenarioBlockv10(
-                    //TODO MAKE THIS FUNCTION IN surveyUtil.js
+                    type,
+                    model,
+                    allPages,
+                    participantTextResults
                 )
-                if (block) {allBlocks.push(block)} 
+                if (block) allBlocks.push(block)
             }
+
 
             const shuffledBlocks = shuffle(allBlocks)
             const selectedPages = [];
@@ -885,7 +896,7 @@ class SurveyPage extends Component {
         }
 
         // instead of repeating near duplicate code blocks
-        
+
 
         const versionData = SURVEY_VERSION_DATA[this.state.surveyVersion];
 
