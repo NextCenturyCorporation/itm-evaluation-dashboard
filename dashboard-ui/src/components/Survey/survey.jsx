@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK } from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -576,20 +576,28 @@ class SurveyPage extends Component {
             );
 
             const allBlocks = []
-            const blockTypes = [
-                { type: 'AF-PS', model: 'mistral' },
-                { type: 'AF-PS', model: 'llama' },
-                { type: 'MF-SS', model: 'mistral' },
-                { type: 'MF-SS', model: 'llama' },
-                { type: 'MF3', model: 'mistral' },
-            ]
+            // helper function for which scenario/model combination for MF-SS/PS-AF
+            const twoDBlock = (type) => {
+                const models = shuffle(['mistral', 'llama']);
+                return [
+                    { type, model: models[0], scenario: 1 },
+                    { type, model: models[1], scenario: 2 },
+                ];
+            };
 
-            for (const { type, model } of blockTypes) {
+            const blockTypes = [
+                ...twoDBlock('AF-PS'),
+                ...twoDBlock('MF-SS'),
+                { type: 'MF3', model: 'mistral' },
+            ];
+
+            for (const { type, model, scenario } of blockTypes) {
                 const block = createScenarioBlockv10(
                     type,
                     model,
                     allPages,
-                    participantTextResults
+                    participantTextResults,
+                    scenario
                 )
                 if (block) allBlocks.push(block)
             }

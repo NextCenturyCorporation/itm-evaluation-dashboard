@@ -1746,7 +1746,8 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
     return pages
 }
 
-export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults) => {
-    
+export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, scenarioIndex) => {
+    // scenario index should 
+    const scenarioLookup = scenarioIndex ? (scenarioType + scenarioIndex) : scenarioType
     return []
 }
