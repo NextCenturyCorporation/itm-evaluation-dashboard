@@ -1746,8 +1746,51 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
     return pages
 }
 
-export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, scenarioIndex) => {
-    // scenario index should 
-    const scenarioLookup = scenarioIndex ? (scenarioType + scenarioIndex) : scenarioType
-    return []
+export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, index) => {
+    const scenarioIndex = index ? `${scenarioType}${index}` : scenarioType;
+
+    // TODO find their most aligned target using participantTextResults
+    const target = ''
+
+    const mostAlignedAdm = allPages.find(x =>
+        x.target === target &&
+        x.scenarioIndex.includes(scenarioIndex) &&
+        x.admName.includes(model) && !x.admName.includes('Baseline')
+    )
+
+    const baselineAdm = allPages.find(x =>
+        x.scenarioIndex.includes(scenarioIndex) &&
+        x.admName.includes(model) && x.admName.includes('Baseline')
+    )
+
+    const misalignedAdm = null
+    if (scenarioIndex === 'MF3') {
+        // TODO same logic but opposite froom target
+        const misalignedTarget = ''
+        misalignedAdm = allPages.find(x =>
+            x.target === misalignedTarget &&
+            x.scenarioIndex.includes(scenarioIndex) &&
+            x.admName.includes(model) && !x.admName.includes('Baseline')
+        )
+    }
+
+    const comparisonPage = genComparisonPagev10(mostAlignedAdm, baselineAdm, misalignedAdm)
+    const pages = [
+        mostAlignedAdm,
+        baselineAdm,
+        // misaligned only in MF3
+        ...(misalignedAdm ? [misalignedAdm] : []),
+    ]
+
+    const shuffledPages = shuffle(pages)
+
+    return [
+        ...shuffledPages,
+        comparisonPage
+    ]
+}
+
+
+const genComparisonPagev10 = (aligned, baseline, misaligned) => {
+    // TODO comp page
 }
