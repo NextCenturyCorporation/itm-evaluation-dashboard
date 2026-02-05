@@ -1746,49 +1746,83 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
     return pages
 }
 
-export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, index) => {
-    const scenarioIndex = index ? `${scenarioType}${index}` : scenarioType;
-
-    // TODO find their most aligned target using participantTextResults
-    const target = ''
-
-    const mostAlignedAdm = allPages.find(x =>
-        x.target === target &&
-        x.scenarioIndex.includes(scenarioIndex) &&
-        x.admName.includes(model) && !x.admName.includes('Baseline')
-    )
-
-    const baselineAdm = allPages.find(x =>
-        x.scenarioIndex.includes(scenarioIndex) &&
-        x.admName.includes(model) && x.admName.includes('Baseline')
-    )
-
-    const misalignedAdm = null
-    if (scenarioIndex === 'MF3') {
-        // TODO same logic but opposite froom target
-        const misalignedTarget = ''
-        misalignedAdm = allPages.find(x =>
-            x.target === misalignedTarget &&
-            x.scenarioIndex.includes(scenarioIndex) &&
-            x.admName.includes(model) && !x.admName.includes('Baseline')
-        )
+export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, scenarioNum) => {
+    const scenarioIndex = scenarioNum ? `${scenarioType}${scenarioNum}` : scenarioType;
+    
+    const attributeMap = { 'MF3': 'merit', 'AF-PS': 'affiliation', 'MF-SS': 'merit' };
+    const primaryAttribute = attributeMap[scenarioType];
+    
+    if (!primaryAttribute) {
+        console.warn(`Unknown scenario type: ${scenarioType}`);
+        return null;
     }
 
-    const comparisonPage = genComparisonPagev10(mostAlignedAdm, baselineAdm, misalignedAdm)
-    const pages = [
-        mostAlignedAdm,
-        baselineAdm,
-        // misaligned only in MF3
-        ...(misalignedAdm ? [misalignedAdm] : []),
-    ]
+    const textResult = participantTextResults.find(result => 
+        result.mostLeastAligned?.some(item => item.target === primaryAttribute)
+    );
 
-    const shuffledPages = shuffle(pages)
+    const alignmentData = textResult?.mostLeastAligned?.find(
+        item => item.target === primaryAttribute
+    );
 
-    return [
-        ...shuffledPages,
-        comparisonPage
-    ]
-}
+    if (!alignmentData?.response?.length) {
+        console.warn(`No alignment data for ${scenarioType}`);
+        return null;
+    }
+
+    // i.e don't grab MF-SS target for MF single attribute, don't grab single attribute target for AF-PS
+    const patternMatchers = {
+        'AF-PS': key => key.includes('AF') && key.includes('PS'),
+        'MF-SS': key => key.includes('MF') && key.includes('SS'),
+        'MF3': key => key.includes('MF') && !key.includes('SS')
+    };
+    
+    const filteredResponse = alignmentData.response.filter(entry => 
+        patternMatchers[scenarioType](Object.keys(entry)[0])
+    );
+
+    if (filteredResponse.length === 0) {
+        console.warn(`No matching targets found for ${scenarioType}`);
+        return null;
+    }
+
+    const findAdm = (target, isBaseline) => allPages.find(x =>
+        (isBaseline || x.target === target) &&
+        x.scenarioIndex?.includes(scenarioIndex) &&
+        x.admName?.toLowerCase().includes(model.toLowerCase()) &&
+        isBaseline === x.admName?.includes('Baseline')
+    );
+
+    const mostAlignedTarget = Object.keys(filteredResponse[0])[0];
+    const mostAlignedAdm = findAdm(mostAlignedTarget, false);
+    const baselineAdm = findAdm(null, true);
+
+    // MF single attr needs misaligned
+    let misalignedAdm = null;
+    if (scenarioType === 'MF3') {
+        const leastAlignedTarget = Object.keys(filteredResponse.at(-1))[0];
+        misalignedAdm = findAdm(leastAlignedTarget, false);
+    }
+
+    if (!mostAlignedAdm || !baselineAdm) {
+        console.warn(`Missing ADMs for ${scenarioType} - aligned: ${!!mostAlignedAdm}, baseline: ${!!baselineAdm}`);
+        return null;
+    }
+
+    Object.assign(mostAlignedAdm, { alignment: 'aligned', admChoiceProcess: 'most aligned' });
+    baselineAdm.alignment = 'baseline';
+    if (misalignedAdm) {
+        Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
+    }
+
+    const pages = [mostAlignedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
+
+    return {
+        type: scenarioType,
+        model,
+        pages: [...shuffle([...pages]), genComparisonPagev10(mostAlignedAdm, baselineAdm, misalignedAdm)]
+    };
+};
 
 
 const genComparisonPagev10 = (aligned, baseline, misaligned) => {

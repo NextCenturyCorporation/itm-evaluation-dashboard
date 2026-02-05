@@ -120,6 +120,16 @@ class TextBasedScenariosPage extends Component {
                 PS: null,
                 SS: null
             },
+            // Eval 15: PS+AF share one session, MF+SS share another session
+            // MF also gets individual scoring
+            eval15Groups: {
+                'PS-AF': [],  // PS and AF share a session
+                'MF-SS': []   // MF and SS share a session
+            },
+            eval15CombinedSessions: {
+                'PS-AF': null,
+                'MF-SS': null
+            },
             showConsentForm: false,
             consentGiven: false,
         };
@@ -402,14 +412,17 @@ class TextBasedScenariosPage extends Component {
         if (scenario.author === 'ADEPT' || adeptList.some(term => scenario.scenario_id.includes(term))) {
             const isPSAF = scenario.scenario_id.includes('PS-AF');
             const evalNum = evalNameToNumber[this.props.currentTextEval]
-            // ps-af needs its own individual session
-            const needsIsolatedSession = evalNum === 15 || (evalNum === 10 && isPSAF);
+            // ps-af needs its own individual session (for eval 10 only, not eval 15)
+            const needsIsolatedSession = evalNum === 10 && isPSAF;
             const isEval13 = evalNum === 13;
+            const isEval15 = evalNum === 15;
 
             if (needsIsolatedSession) {
                 await this.processIsolatedAdeptScenario(scenario);
             } else if (isEval13) {
                 await this.processEval13Scenario(scenario);
+            } else if (isEval15) {
+                await this.processEval15Scenario(scenario);
             } else {
                 if (this.state.adeptSessionsCompleted === 0) {
                     await this.beginRunningSession(scenario);
@@ -463,6 +476,123 @@ class TextBasedScenariosPage extends Component {
             }
         } catch (e) {
             console.error('Error creating isolated session:', e);
+        }
+    }
+
+    // Eval 15: PS+AF share one session, MF+SS share another session
+    // MF also gets individual scoring (both individual and combined data)
+    processEval15Scenario = async (scenario) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+
+        // Determine which group this scenario belongs to
+        let groupKey = null;
+        let attrType = null;
+        
+        if (scenario.scenario_id.includes('PS') || scenario.scenario_id.includes('AF')) {
+            groupKey = 'PS-AF';
+            attrType = scenario.scenario_id.includes('PS') ? 'PS' : 'AF';
+        } else if (scenario.scenario_id.includes('MF') || scenario.scenario_id.includes('SS')) {
+            groupKey = 'MF-SS';
+            attrType = scenario.scenario_id.includes('MF') ? 'MF' : 'SS';
+        }
+
+        if (!groupKey) {
+            console.error('Could not determine group for eval 15 scenario:', scenario.scenario_id);
+            return;
+        }
+
+        const isMF = attrType === 'MF';
+
+        try {
+            // MF scenarios need individual scoring
+            if (isMF) {
+                const individualSession = await axios.post(`${url}${sessionEndpoint}`);
+                if (individualSession.status === 200) {
+                    const individualSessionId = individualSession.data;
+                    
+                    await this.submitResponses(scenario, scenario.scenario_id, url, individualSessionId);
+                    
+                    const individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, scenario);
+                    const individualKdmas = await this.attachKdmaValue(individualSessionId, url);
+                    
+                    scenario.individualSessionId = individualSessionId;
+                    scenario.individualMostLeastAligned = individualMostLeastAligned;
+                    scenario.individualKdmas = individualKdmas;
+                }
+            }
+        } catch (e) {
+            console.error('Error processing eval 15 individual MF scoring:', e);
+            if (isMF) {
+                scenario.individualSessionId = null;
+                scenario.individualMostLeastAligned = null;
+                scenario.individualKdmas = null;
+                scenario.individualScoringError = e.message;
+            }
+        }
+
+        // Add to the appropriate group
+        const updatedGroup = [...this.state.eval15Groups[groupKey], scenario];
+        const updatedGroups = {
+            ...this.state.eval15Groups,
+            [groupKey]: updatedGroup
+        };
+
+        this.setState({ eval15Groups: updatedGroups });
+
+        // Check if the group is complete (2 scenarios per group: PS+AF or MF+SS)
+        if (updatedGroup.length === 2) {
+            await this.processEval15GroupCompletion(groupKey, updatedGroup);
+        }
+    }
+
+    processEval15GroupCompletion = async (groupKey, groupScenarios) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+
+        try {
+            // Create combined session for the group
+            const combinedSession = await axios.post(`${url}${sessionEndpoint}`);
+            if (combinedSession.status === 200) {
+                const combinedSessionId = combinedSession.data;
+
+                // Submit responses for all scenarios in the group to the combined session
+                for (const scenario of groupScenarios) {
+                    await this.submitResponses(scenario, scenario.scenario_id, url, combinedSessionId);
+                }
+
+                // Get combined alignment for the group
+                // Pass isEval15Combined=true and groupKey to get both targets
+                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, groupScenarios[0], true, groupKey);
+                const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
+
+                // Store the combined session
+                const updatedCombinedSessions = {
+                    ...this.state.eval15CombinedSessions,
+                    [groupKey]: combinedSessionId
+                };
+                this.setState({ eval15CombinedSessions: updatedCombinedSessions });
+
+                // Update each scenario with combined data and upload
+                // Use standard field names: combinedSessionId, mostLeastAligned, kdmas
+                for (const scenario of groupScenarios) {
+                    scenario.combinedSessionId = combinedSessionId;
+                    scenario.mostLeastAligned = combinedMostLeastAligned;
+                    scenario.kdmas = combinedKdmas;
+
+                    await this.uploadSingleScenario(scenario);
+                }
+            }
+        } catch (e) {
+            console.error('Error in eval 15 group completion:', e);
+            for (const scenario of groupScenarios) {
+                scenario.combinedSessionId = null;
+                scenario.mostLeastAligned = null;
+                scenario.kdmas = null;
+                scenario.combinedScoringError = e.message || 'Failed to communicate with ADEPT server for combined scoring';
+
+                await this.uploadSingleScenario(scenario);
+            }
         }
     }
 
@@ -637,7 +767,7 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario) => {
+    mostLeastAligned = async (sessionId, ta1, url, scenario, isEval15Combined = false, eval15GroupKey = null) => {
         let targets = []
         const endpoint = '/api/v1/get_ordered_alignment'
         if (ta1 === 'soartech') {
@@ -648,8 +778,15 @@ class TextBasedScenariosPage extends Component {
             }
         } else {
             const evalNumber = evalNameToNumber[this.props.currentTextEval];
-            // only one target for individual or group eval 13
-            if ([15, 13].includes(evalNumber) && scenario) {
+            // For eval 15 combined sessions, use both targets in the group
+            if (isEval15Combined && eval15GroupKey) {
+                if (eval15GroupKey === 'PS-AF') {
+                    targets = ['personal_safety', 'affiliation'];
+                } else if (eval15GroupKey === 'MF-SS') {
+                    targets = ['merit', 'search'];
+                }
+            } else if ([15, 13].includes(evalNumber) && scenario) {
+                // Individual scoring - use single target
                 if (scenario.scenario_id.includes('AF')) {
                     targets = ['affiliation'];
                 } else if (scenario.scenario_id.includes('MF')) {
