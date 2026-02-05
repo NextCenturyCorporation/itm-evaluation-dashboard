@@ -33,12 +33,12 @@ services:
     image: dashboard-ui:prod
     container_name: dashboard-ui
     restart: always
-    expose:
-      - "3000"
-    networks:
-      - dashboard-net
+    ports:
+      - 3000:3000
     depends_on:
       - dashboard-server
+    networks:
+      - dashboard-net
 
   dashboard-server:
     container_name: dashboard-graphql
