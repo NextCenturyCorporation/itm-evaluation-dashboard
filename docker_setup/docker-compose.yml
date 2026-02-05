@@ -20,25 +20,26 @@ services:
     depends_on:
       - dashboard-ui
       - dashboard-server
+
   dashboard-ui:
+    build:
+      context: ../dashboard-ui
+      target: runtime
+      args:
+        PUBLIC_URL: /
+        CONFIG_PATH: public/configs/prod/config.js
+        PORT_ARG: 3000
+        USE_CORP_CA: "false"
+    image: dashboard-ui:prod
     container_name: dashboard-ui
-    image: dashboard-ui
     restart: always
-    volumes:
-      - ../dashboard-ui/public/configs/prod/config.js:/usr/src/app/src/services/config.js
-      - ../dashboard-ui/public:/usr/src//app/public
-      - ../dashboard-ui/src:/usr/src//app/src
-      - ../dashboard-ui/package.json:/usr/src//app/package.json
-    ports: 
-      - 3000:3000
-    depends_on:
-      - dashboard-server
+    expose:
+      - "3000"
     networks:
       - dashboard-net
-    environment:
-      - WATCHPACK_POLLING=true
-      - FAST_REFRESH=false
-      - WDS_SOCKET_PORT=0
+    depends_on:
+      - dashboard-server
+
   dashboard-server:
     container_name: dashboard-graphql
     image: dashboard-graphql
@@ -57,6 +58,7 @@ services:
     environment:
       NODE_OPTIONS: "--max-old-space-size=16384"
       NODE_ENV: "production"
+
   dashboard-mongo: 
     image: 'mongo'
     restart: always

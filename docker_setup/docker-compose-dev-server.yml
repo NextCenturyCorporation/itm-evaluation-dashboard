@@ -19,12 +19,14 @@ services:
   dashboard-ui:
     build:
       context: ../dashboard-ui
+      target: runtime
       args:
         PUBLIC_URL: /dev
         CONFIG_PATH: public/configs/dev-server/config.js
-    image: dashboard-ui
+        PORT_ARG: 3000
+        USE_CORP_CA: "false"
+    image: dashboard-ui:dev-server
     container_name: dashboard-ui
-    restart: always
     expose:
       - "3000"
     networks:

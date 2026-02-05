@@ -6,30 +6,33 @@ networks:
 
 services:
  dashboard-ui:
-   build: 
-     context: ../dashboard-ui
-     args:
-       <<: *build-args
-   container_name: dashboard-ui
-   image: dashboard-ui
-   volumes:
-     - ../dashboard-ui/public/configs/dev/config.js:/usr/src/app/src/services/config.js
-     - ../dashboard-ui/public:/usr/src/app/public
-     - ../dashboard-ui/src:/usr/src/app/src
-     - ../dashboard-ui/package.json:/usr/src/app/package.json
-     - dashboard-ui-node-modules:/usr/src/app/node_modules
-   ports:
-     - 3000:3000
-   depends_on:
+    build:
+      context: ../dashboard-ui
+      target: dev
+      args:
+        PORT_ARG: 3000
+        USE_CORP_CA: "true"
+    image: dashboard-ui:dev
+    container_name: dashboard-ui
+    volumes:
+      - ../dashboard-ui/public/configs/dev/config.js:/usr/src/app/src/services/config.js
+      - ../dashboard-ui/public:/usr/src/app/public
+      - ../dashboard-ui/src:/usr/src/app/src
+      - ../dashboard-ui/package.json:/usr/src/app/package.json
+      - dashboard-ui-node-modules:/usr/src/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
      - dashboard-server
-   networks:
+    networks:
      - dashboard-net
-   environment:
-     - WATCHPACK_POLLING=true
-     - FAST_REFRESH=true 
-     - WDS_SOCKET_PORT=0
-     - NODE_ENV=development
-     - CHOKIDAR_USEPOLLING=true
+    environment:
+      - WATCHPACK_POLLING=true
+      - FAST_REFRESH=true
+      - WDS_SOCKET_PORT=0
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=development
+
  dashboard-server:
    container_name: dashboard-graphql
    image: dashboard-graphql
@@ -46,6 +49,7 @@ services:
      - dashboard-net
    environment:
      NODE_OPTIONS: "--max-old-space-size=16384"
+
  dashboard-mongo: 
    image: 'mongo'
    container_name: dashboard-mongo
