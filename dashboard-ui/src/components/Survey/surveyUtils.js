@@ -1746,39 +1746,65 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
     return pages
 }
 
+
 export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, scenarioNum) => {
     const scenarioIndex = scenarioNum ? `${scenarioType}${scenarioNum}` : scenarioType;
+    const isMF3 = scenarioType === 'MF3';
     
-    const attributeMap = { 'MF3': 'merit', 'AF-PS': 'affiliation', 'MF-SS': 'merit' };
-    const primaryAttribute = attributeMap[scenarioType];
-    
-    if (!primaryAttribute) {
+    // cuts down on repeat code
+    // MF3 -> individualMostLeastAligned
+    // PS-AF, MF-SS -> mostLeastAligned 
+    const config = {
+        'MF3': { 
+            scenarioMatch: 'MF', 
+            useIndividual: true, 
+            target: 'merit',
+            filterKey: key => key.includes('MF') && !key.includes('SS')
+        },
+        'AF-PS': { 
+            scenarioMatch: ['AF', 'PS'], 
+            useIndividual: false, 
+            target: null,
+            filterKey: key => key.includes('AF') && key.includes('PS')
+        },
+        'MF-SS': { 
+            scenarioMatch: ['MF', 'SS'], 
+            useIndividual: false, 
+            target: null,
+            filterKey: key => key.includes('MF') && key.includes('SS')
+        }
+    }[scenarioType];
+
+    if (!config) {
         console.warn(`Unknown scenario type: ${scenarioType}`);
         return null;
     }
 
-    const textResult = participantTextResults.find(result => 
-        result.mostLeastAligned?.some(item => item.target === primaryAttribute)
-    );
+    const matchScenario = id => Array.isArray(config.scenarioMatch)
+        ? config.scenarioMatch.some(m => id?.includes(m))
+        : id?.includes(config.scenarioMatch);
 
-    const alignmentData = textResult?.mostLeastAligned?.find(
-        item => item.target === primaryAttribute
-    );
+    const textResult = participantTextResults.find(result => {
+        if (!matchScenario(result.scenario_id)) return false;
+        return config.useIndividual 
+            ? result.individualMostLeastAligned?.length
+            : result.mostLeastAligned?.some(item => item.target === null);
+    });
+
+    const alignmentSource = config.useIndividual 
+        ? textResult?.individualMostLeastAligned 
+        : textResult?.mostLeastAligned;
+
+    const alignmentData = alignmentSource?.find(item => item.target === config.target);
 
     if (!alignmentData?.response?.length) {
         console.warn(`No alignment data for ${scenarioType}`);
         return null;
     }
 
-    // i.e don't grab MF-SS target for MF single attribute, don't grab single attribute target for AF-PS
-    const patternMatchers = {
-        'AF-PS': key => key.includes('AF') && key.includes('PS'),
-        'MF-SS': key => key.includes('MF') && key.includes('SS'),
-        'MF3': key => key.includes('MF') && !key.includes('SS')
-    };
-    
+    // Filter response for matching targets
     const filteredResponse = alignmentData.response.filter(entry => 
-        patternMatchers[scenarioType](Object.keys(entry)[0])
+        config.filterKey(Object.keys(entry)[0])
     );
 
     if (filteredResponse.length === 0) {
@@ -1796,13 +1822,7 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
     const mostAlignedTarget = Object.keys(filteredResponse[0])[0];
     const mostAlignedAdm = findAdm(mostAlignedTarget, false);
     const baselineAdm = findAdm(null, true);
-
-    // MF single attr needs misaligned
-    let misalignedAdm = null;
-    if (scenarioType === 'MF3') {
-        const leastAlignedTarget = Object.keys(filteredResponse.at(-1))[0];
-        misalignedAdm = findAdm(leastAlignedTarget, false);
-    }
+    const misalignedAdm = isMF3 ? findAdm(Object.keys(filteredResponse.at(-1))[0], false) : null;
 
     if (!mostAlignedAdm || !baselineAdm) {
         console.warn(`Missing ADMs for ${scenarioType} - aligned: ${!!mostAlignedAdm}, baseline: ${!!baselineAdm}`);
