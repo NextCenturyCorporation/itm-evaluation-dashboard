@@ -1750,26 +1750,26 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
 export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, scenarioNum) => {
     const scenarioIndex = scenarioNum ? `${scenarioType}${scenarioNum}` : scenarioType;
     const isMF3 = scenarioType === 'MF3';
-    
+
     // cuts down on repeat code
     // MF3 -> individualMostLeastAligned
-    // PS-AF, MF-SS -> mostLeastAligned 
+    // PS-AF, MF-SS -> mostLeastAligned
     const config = {
-        'MF3': { 
-            scenarioMatch: 'MF', 
-            useIndividual: true, 
+        'MF3': {
+            scenarioMatch: 'MF',
+            useIndividual: true,
             target: 'merit',
             filterKey: key => key.includes('MF') && !key.includes('SS')
         },
-        'AF-PS': { 
-            scenarioMatch: ['AF', 'PS'], 
-            useIndividual: false, 
+        'AF-PS': {
+            scenarioMatch: ['AF', 'PS'],
+            useIndividual: false,
             target: null,
             filterKey: key => key.includes('AF') && key.includes('PS')
         },
-        'MF-SS': { 
-            scenarioMatch: ['MF', 'SS'], 
-            useIndividual: false, 
+        'MF-SS': {
+            scenarioMatch: ['MF', 'SS'],
+            useIndividual: false,
             target: null,
             filterKey: key => key.includes('MF') && key.includes('SS')
         }
@@ -1786,13 +1786,13 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
 
     const textResult = participantTextResults.find(result => {
         if (!matchScenario(result.scenario_id)) return false;
-        return config.useIndividual 
+        return config.useIndividual
             ? result.individualMostLeastAligned?.length
             : result.mostLeastAligned?.some(item => item.target === null);
     });
 
-    const alignmentSource = config.useIndividual 
-        ? textResult?.individualMostLeastAligned 
+    const alignmentSource = config.useIndividual
+        ? textResult?.individualMostLeastAligned
         : textResult?.mostLeastAligned;
 
     const alignmentData = alignmentSource?.find(item => item.target === config.target);
@@ -1802,8 +1802,7 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
         return null;
     }
 
-    // Filter response for matching targets
-    const filteredResponse = alignmentData.response.filter(entry => 
+    const filteredResponse = alignmentData.response.filter(entry =>
         config.filterKey(Object.keys(entry)[0])
     );
 
@@ -1819,28 +1818,40 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
         isBaseline === x.admName?.includes('Baseline')
     );
 
+    // Mistral AF-PS1 edge case. If most aligned is one of these, use least aligned instead and label as misaligned
+    // Mistral AF-PS1 edge case. If most aligned is one of these, use least aligned instead and label as misaligned
+    const baselineOverlapTargets = ['Feb2026-AF4-PS6', 'Feb2026-AF4-PS7', 'Feb2026-AF4-PS8'];
+    const isMistralAFPS1 = model.toLowerCase() === 'mistral' && scenarioIndex === 'AF-PS1';
     const mostAlignedTarget = Object.keys(filteredResponse[0])[0];
-    const mostAlignedAdm = findAdm(mostAlignedTarget, false);
-    const baselineAdm = findAdm(null, true);
-    const misalignedAdm = isMF3 ? findAdm(Object.keys(filteredResponse.at(-1))[0], false) : null;
+    const leastAlignedTarget = Object.keys(filteredResponse.at(-1))[0];
+    const useLeastAligned = isMistralAFPS1 && baselineOverlapTargets.includes(mostAlignedTarget);
 
-    if (!mostAlignedAdm || !baselineAdm) {
-        console.warn(`Missing ADMs for ${scenarioType} - aligned: ${!!mostAlignedAdm}, baseline: ${!!baselineAdm}`);
+    const selectedAdm = findAdm(useLeastAligned ? leastAlignedTarget : mostAlignedTarget, false);
+    const baselineAdm = findAdm(null, true);
+    const misalignedAdm = isMF3 ? findAdm(leastAlignedTarget, false) : null;
+
+    if (!selectedAdm || !baselineAdm) {
+        console.warn(`Missing ADMs for ${scenarioType} - selected: ${!!selectedAdm}, baseline: ${!!baselineAdm}`);
         return null;
     }
 
-    Object.assign(mostAlignedAdm, { alignment: 'aligned', admChoiceProcess: 'most aligned' });
+    // In the baseline overlap case, label as misaligned; otherwise aligned
+    const [alignment, admChoiceProcess] = useLeastAligned 
+        ? ['misaligned', 'least aligned'] 
+        : ['aligned', 'most aligned'];
+    Object.assign(selectedAdm, { alignment, admChoiceProcess });
     baselineAdm.alignment = 'baseline';
     if (misalignedAdm) {
         Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
     }
 
-    const pages = [mostAlignedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
+
+    const pages = [selectedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
 
     return {
         type: scenarioType,
         model,
-        pages: [...shuffle([...pages]), genComparisonPagev10(mostAlignedAdm, baselineAdm, misalignedAdm)]
+        pages: [...shuffle([...pages]), genComparisonPagev10(selectedAdm, baselineAdm, misalignedAdm)]
     };
 };
 
