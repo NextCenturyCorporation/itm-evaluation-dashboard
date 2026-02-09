@@ -40,6 +40,11 @@
     padding: 4px 8px 4px 12px;
 }
 
+.itm-table td span[style*="cursor: help"] {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
 .itm-table tr td:first-child,
 .itm-table thead th:first-child {
     position: sticky;
