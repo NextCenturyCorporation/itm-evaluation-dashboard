@@ -16,9 +16,9 @@ COPY package*.json ./
 # Safely skipped on dev-server and production if not present.
 ARG USE_CORP_CA=false
 
-RUN --mount=type=bind,source=ca-bundle.crt,target=/tmp/ca-bundle.crt,required=false \
-    if [ "$USE_CORP_CA" = "true" ] && [ -f /tmp/ca-bundle.crt ]; then \
-      cp /tmp/ca-bundle.crt /usr/local/share/ca-bundle.crt && \
+RUN --mount=type=secret,id=corp_ca \
+    if [ "$USE_CORP_CA" = "true" ] && [ -f /run/secrets/corp_ca ]; then \
+      cp /run/secrets/corp_ca /usr/local/share/ca-bundle.crt && \
       npm config set cafile /usr/local/share/ca-bundle.crt; \
     else \
       echo "No corporate CA bundle (skipping)"; \

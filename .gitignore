@@ -1,5 +1,6 @@
 docker_setup/ServerCertificate.crt
 docker_setup/darpaitm.key
+docker_setup/certs
 .DS_Store
 dashboard-ui/coverage
 node_modules
