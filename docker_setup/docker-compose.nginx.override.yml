@@ -1,0 +1,6 @@
+services:
+  nginx:
+    volumes:
+      - ./resources/nginx.local.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
