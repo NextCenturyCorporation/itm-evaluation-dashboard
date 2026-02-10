@@ -1,3 +1,3 @@
-const API_URL = 'https://darpaitm.caci.com/api';
+const API_URL = '/api/';
 
 module.exports = {API_URL};
