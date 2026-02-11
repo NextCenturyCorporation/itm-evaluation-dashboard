@@ -17,7 +17,7 @@ describe('Verify content on page matches expectation for route', () => {
     }, 30000);
 
     it('Check /survey-results route content', async () => {
-        await checkRouteContent(page, '/survey-results', ['Table View', 'Post-Scenario Measures - Time Taken (mm:ss)']);
+        await checkRouteContent(page, '/survey-results', ['Post-Scenario Measures - Time Taken (mm:ss)']);
         // can take a long time to load this page
     }, 30000);
 

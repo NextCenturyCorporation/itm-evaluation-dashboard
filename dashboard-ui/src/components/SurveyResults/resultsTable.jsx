@@ -1,5 +1,5 @@
 import React from "react";
-import './resultsTable.css';
+import '../../css/resultsTable.css'
 import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack, Tooltip } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../Research/tables/download-buttons";
@@ -177,7 +177,14 @@ const TruncatedCell = ({text, maxLength = 100}) => {
 
     return (
         <Tooltip
-            title={<div style={{whiteSpace: 'pre-wrap'}}>{text}</div>} 
+            title=
+            {<div style={{
+                whiteSpace: 'pre-wrap',
+                fontSize: '16px',
+                lineHeight: '1.5'
+            }}>
+                {text}
+            </div>} 
             arrow 
             placement="top"
             enterDelay={300}

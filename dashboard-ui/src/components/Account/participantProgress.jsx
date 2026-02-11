@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import '../SurveyResults/resultsTable.css';
+import '../../css/resultsTable.css';
 import '../../css/admInfo.css';
 import { Autocomplete, TextField, Modal, Box, Snackbar, Alert } from "@mui/material";
 import { useMutation, useQuery } from 'react-apollo'
