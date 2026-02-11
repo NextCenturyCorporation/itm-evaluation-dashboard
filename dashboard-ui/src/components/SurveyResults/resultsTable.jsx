@@ -1,9 +1,8 @@
 import React from "react";
-import './resultsTable.css';
-import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack } from "@mui/material";
+import '../../css/resultsTable.css'
+import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack, Tooltip } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../Research/tables/download-buttons";
-import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import CloseIcon from '@material-ui/icons/Close';
 import { RQDefinitionTable } from "../Research/variables/rq-variables";
 import definitionXLFile from './Survey Delegation Variables.xlsx';
@@ -164,6 +163,35 @@ function formatTimeMinutes(seconds) {
     const minutes = (seconds / 60).toFixed(3);
     // if trailing zeroes just do a whole number
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
+}
+
+const TruncatedCell = ({text, maxLength = 100}) => {
+    const str = String(text);
+    
+    if (typeof text === 'number' || str.length <= maxLength) {
+        return <span>{str}</span>;
+    }
+    
+    const truncated = str.substring(0, maxLength) + '...';
+    
+
+    return (
+        <Tooltip
+            title=
+            {<div style={{
+                whiteSpace: 'pre-wrap',
+                fontSize: '16px',
+                lineHeight: '1.5'
+            }}>
+                {text}
+            </div>} 
+            arrow 
+            placement="top"
+            enterDelay={300}
+        >
+            <span style={{cursor: 'help', color: '#1976d2'}}>{truncated}</span>
+        </Tooltip>
+    )
 }
 
 export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }] }) {
@@ -973,11 +1001,14 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         <tbody>
                             {filteredData.map((dataSet, index) => (
                                 <tr key={dataSet['Participant ID'] + '-' + index}>
-                                    {headers.map((val) => (
-                                        <td key={dataSet['Participant ID'] + '-' + val + '-' + index} className='participant'>
-                                            {dataSet[val] ?? '-'}
-                                        </td>
-                                    ))}
+                                    {headers.map((val) => {
+                                        const cellValue = dataSet[val] ?? '-';
+                                        return (
+                                            <td key={dataSet['Participant ID'] + '-' + val + '-' + index} className='participant'>
+                                                <TruncatedCell text={cellValue} maxLength={100} />
+                                            </td>
+                                        )
+                                    })}
                                 </tr>
                             ))}
                         </tbody>

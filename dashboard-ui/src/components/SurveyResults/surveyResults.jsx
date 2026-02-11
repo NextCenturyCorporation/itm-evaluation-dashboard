@@ -3,7 +3,7 @@ import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
 import { VisualizationPanel, VisualizerBase } from 'survey-analytics';
 import 'survey-analytics/survey.analytics.min.css';
-import './surveyResults.css';
+import '../../css/surveyResults.css';
 import { Model } from 'survey-core';
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import { ResultsTable } from './resultsTable';

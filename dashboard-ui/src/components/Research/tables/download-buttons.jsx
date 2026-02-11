@@ -1,6 +1,6 @@
 import React from "react";
 import { exportToExcel } from "../utils";
-import '../../SurveyResults/resultsTable.css';
+import '../../../css/resultsTable.css';
 
 export function DownloadButtons({ formattedData, filteredData, HEADERS, fileName, extraAction, isParticipantData = false, extraActionText = 'View Variable Definitions', selectedPhase= null}) {
     const filterDataByHeaders = (data, headers) =>

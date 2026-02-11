@@ -3,7 +3,7 @@ import { ResultsTable } from '../../SurveyResults/resultsTable';
 import gql from "graphql-tag";
 import { useQuery } from '@apollo/react-hooks';
 import { Checkbox, FormControlLabel } from "@material-ui/core";
-import '../../SurveyResults/resultsTable.css';
+import '../../../css/resultsTable.css';
 
 const GET_SURVEY_RESULTS = gql`
     query GetSurveyResults{
