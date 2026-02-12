@@ -612,7 +612,6 @@ class SurveyPage extends Component {
 
             const finalPages = [...introPages, ...selectedPages]
             this.surveyConfigClone.pages = finalPages;
-            console.log(this.surveyConfigClone.pages)
 
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });

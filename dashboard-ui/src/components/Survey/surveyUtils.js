@@ -1765,13 +1765,13 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
             scenarioMatch: ['AF', 'PS'],
             useIndividual: false,
             target: null,
-            filterKey: key => key.includes('AF') && key.includes('PS')
+            filterKey: key => key.includes('AF') && key.includes('PS') && !key.includes('MF') && !key.includes('SS')
         },
         'MF-SS': {
             scenarioMatch: ['MF', 'SS'],
             useIndividual: false,
             target: null,
-            filterKey: key => key.includes('MF') && key.includes('SS')
+            filterKey: key => key.includes('MF') && key.includes('SS') && !key.includes('AF') && !key.includes('PS')
         }
     }[scenarioType];
 
