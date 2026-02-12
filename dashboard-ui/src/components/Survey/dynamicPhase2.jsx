@@ -81,17 +81,28 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
         );
     };
 
+    const scenarioStripTexts = [
+        'There are two patients, Patient A and Patient B, and you only have time to treat one of them.',
+    ];
+
     const renderInstructions = () => {
         if (!scenarioDescription) return null;
+
+        let cleanedDescription = scenarioDescription;
+        for (const text of scenarioStripTexts) {
+            cleanedDescription = cleanedDescription.replace(text, '').trim();
+        }
 
         return (
             <div className="instruction-section">
                 <h4 className="instruction-title">
                     Consider a decision-maker who made the highlighted choices in a series of scenarios.
                 </h4>
-                <p className="instruction-subtitle">
-                    {scenarioDescription}
-                </p>
+                {cleanedDescription && (
+                    <p className="instruction-subtitle">
+                        {cleanedDescription}
+                    </p>
+                )}
             </div>
         );
     };
