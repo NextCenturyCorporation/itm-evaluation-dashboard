@@ -3,6 +3,28 @@ import { Modal } from "@mui/material";
 import { determineChoiceProcessJune2025 } from '../Research/utils';
 import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 
+const MULTI_KDMA_CONFIG = {
+    'AF-PS': {
+        kdmas: ['affiliation', 'personal_safety'],
+        labels: ['Affiliation', 'Personal Safety'],
+        test: (id) => id.includes('AF') && id.includes('PS')
+    },
+    'MF-SS': {
+        kdmas: ['merit', 'search'],
+        labels: ['Merit', 'Search'],
+        test: (id) => id.includes('MF') && id.includes('SS')
+    }
+};
+
+function getMultiKDMAConfig(scenarioId) {
+    for (const config of Object.values(MULTI_KDMA_CONFIG)) {
+        if (config.test(scenarioId)) {
+            return config;
+        }
+    }
+    return null;
+}
+
 export default function AdmInfoModal({
     open,
     onClose,
@@ -39,8 +61,9 @@ export default function AdmInfoModal({
 
                     if (!cmpPage) return <p>No comparison page for {scenarioId}</p>;
 
-                    // need to handle multi kdma differently
-                    const isMultiKDMA = scenarioId.includes('AF') && scenarioId.includes('MF');
+                    // Determine if this is a multi-KDMA scenario
+                    const multiKDMA = getMultiKDMAConfig(scenarioId);
+                    const isMultiKDMA = multiKDMA !== null;
 
                     let medicData = [];
 
@@ -63,12 +86,22 @@ export default function AdmInfoModal({
                                 });
                             }
                         });
+
+                        // Find the doc that has kdma data for this multi-KDMA pairing
+                        for (const d of docs) {
+                            const hasRelevantKdmas = multiKDMA.kdmas.every(
+                                kdmaName => d.kdmas?.some(k => k.kdma === kdmaName)
+                            );
+                            if (hasRelevantKdmas) {
+                                doc = d;
+                                break;
+                            }
+                        }
                     } else {
                         const { baselineName, alignedTarget, misalignedTarget } = cmpPage;
                         target = KDMA_MAP[code] || code.toLowerCase();
 
                         let entry = null;
-                        let doc = null;
                         for (const d of docs) {
                             entry = d.mostLeastAligned.find(o => o.target === target);
                             if (entry) {
@@ -179,22 +212,40 @@ export default function AdmInfoModal({
                                                 <div className="adm-info-block-label">KDMA Scores</div>
 
                                                 {(() => {
-                                                    const meritScore = doc.kdmas?.find(k => k.kdma === 'merit')?.value;
-                                                    const affiliationScore = doc.kdmas?.find(k => k.kdma === 'affiliation')?.value;
+                                                    if (!doc) return <div>No KDMA scores available</div>;
 
-                                                    return (
-                                                        <>
-                                                            {meritScore !== undefined && (
-                                                                <div>Merit: {meritScore.toFixed(3)}</div>
-                                                            )}
-                                                            {affiliationScore !== undefined && (
-                                                                <div>Affiliation: {affiliationScore.toFixed(3)}</div>
-                                                            )}
-                                                            {meritScore === undefined && affiliationScore === undefined && (
-                                                                <div>No KDMA scores available</div>
-                                                            )}
-                                                        </>
-                                                    );
+                                                    const kdmaEntries = multiKDMA.kdmas.map((kdmaName, i) => ({
+                                                        label: multiKDMA.labels[i],
+                                                        entry: doc.kdmas?.find(k => k.kdma === kdmaName)
+                                                    }));
+
+                                                    const hasAny = kdmaEntries.some(k => k.entry);
+                                                    if (!hasAny) return <div>No KDMA scores available</div>;
+
+                                                    return kdmaEntries.map(({ label, entry }) => {
+                                                        if (!entry) return null;
+
+                                                        // Old format: single value on the entry
+                                                        if (entry.value !== undefined) {
+                                                            return <div key={label}>{label}: {entry.value.toFixed(3)}</div>;
+                                                        }
+
+                                                        // New format: parameters array
+                                                        if (entry.parameters?.length > 0) {
+                                                            return (
+                                                                <div key={label} style={{ marginBottom: '0.5rem' }}>
+                                                                    <strong>{label}:</strong>
+                                                                    {entry.parameters.map(p => (
+                                                                        <div key={p.name} style={{ marginLeft: '0.75rem' }}>
+                                                                            {p.name}: {p.value.toFixed(4)}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        return null;
+                                                    });
                                                 })()}
 
                                             </div>
