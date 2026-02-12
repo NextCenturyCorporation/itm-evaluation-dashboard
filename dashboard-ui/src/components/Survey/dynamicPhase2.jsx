@@ -8,7 +8,7 @@ const trailingTextMap = {
     'Which patient do you treat?':
         'There are two patients, Patient A and Patient B, and you only have time to treat one of them. Which patient do you treat?',
     'Do you stay with your current patient, or do you leave?':
-        'Do you stay with your current patient, or do you leave?',
+        'You arrive at the scene where you know there may be multiple casualties. Do you stay with your current patient, or do you leave?',
 };
 
 const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
