@@ -194,7 +194,30 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
         9: { prefix: 'July2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' }
     };
 
-    if (standardEvalConfigs[num]) {
+    // keep pairs together (PS+AF, MF+SS) but random order of pairs
+    // return early skips the general shuffle.
+    if (num === 15) {
+        const { prefix, suffix } = standardEvalConfigs[num];
+        const buildId = (type) =>
+            `${prefix}-${type}${participantLog[`${type}-text-scenario`]}-${suffix}`;
+
+
+        let pairPSAF = [buildId('PS'), buildId('AF')];
+        let pairMFSS = [buildId('MF'), buildId('SS')];
+
+        // random within pair
+        if (Math.random() < 0.5) pairPSAF.reverse();
+        if (Math.random() < 0.5) pairMFSS.reverse();
+
+        //randomize order of pairs
+        if (Math.random() < 0.5) {
+            scenarios = [...pairPSAF, ...pairMFSS];
+        } else {
+            scenarios = [...pairMFSS, ...pairPSAF];
+        }
+
+        return scenarios;
+    } else if (standardEvalConfigs[num]) {
         const { prefix, types, suffix } = standardEvalConfigs[num];
         scenarios = types.map(type =>
             `${prefix}-${type}${participantLog[`${type}-text-scenario`]}-${suffix}`

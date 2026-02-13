@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK} from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -70,8 +70,9 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
-    "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12},
-    "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10},
+    "10.0": { evalName: 'Februrary 2026 Evaluation', evalNumber: 15 },
+    "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12 },
+    "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10 },
     "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
     "6.0": { evalName: 'June 2025 Collaboration', evalNumber: 8 },
     "5.0": { evalName: 'Jan 2025 Eval', evalNumber: 6 },
@@ -89,7 +90,6 @@ class SurveyPage extends Component {
             surveyId: null,
             surveyConfig: null,
             surveyVersion: null,
-            iPad: false,
             browserInfo: null,
             isSurveyLoaded: false,
             firstGroup: [],
@@ -442,7 +442,7 @@ class SurveyPage extends Component {
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
-           
+
 
             const allBlocks = [];
             const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
@@ -486,12 +486,13 @@ class SurveyPage extends Component {
             this.setState({ orderLog: pageOrder });
 
             return {};
-        } else if (this.state.surveyVersion === "8.0") {
+        }
+        else if (this.state.surveyVersion === "8.0") {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
             const matchedLog = this.props.participantLog.getParticipantLog.find(
-                    log => String(log['ParticipantID']) === this.state.pid
+                log => String(log['ParticipantID']) === this.state.pid
             );
 
             const allBlocks = [];
@@ -526,7 +527,8 @@ class SurveyPage extends Component {
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
             return {};
-        } else if (this.state.surveyVersion === "9.0") {
+        }
+        else if (this.state.surveyVersion === "9.0") {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
 
@@ -534,7 +536,7 @@ class SurveyPage extends Component {
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
-           
+
 
             const allBlocks = [];
             const scenarioTypes = ['MJ', 'IO', 'VOL']
@@ -544,7 +546,7 @@ class SurveyPage extends Component {
                     allPages,
                     participantTextResults
                 )
-                if (block) { allBlocks.push(block)}
+                if (block) { allBlocks.push(block) }
             }
 
             const shuffledBlocks = shuffle(allBlocks);
@@ -564,6 +566,58 @@ class SurveyPage extends Component {
             const pageOrder = finalPages.map(page => page.name);
             this.setState({ orderLog: pageOrder });
             return {}
+        }
+        else if (this.state.surveyVersion === "10.0") {
+            const allPages = this.surveyConfigClone.pages;
+            const introPages = [...allPages.slice(0, 4)];
+
+            const participantTextResults = this.props.textResults.filter(
+                (res) => String(res['participantID']) === this.state.pid
+            );
+
+            const allBlocks = []
+            // helper function for which scenario/model combination for MF-SS/PS-AF
+            const twoDBlock = (type) => {
+                const models = shuffle(['mistral', 'llama']);
+                return [
+                    { type, model: models[0], scenario: 1 },
+                    { type, model: models[1], scenario: 2 },
+                ];
+            };
+
+            const blockTypes = [
+                ...twoDBlock('AF-PS'),
+                ...twoDBlock('MF-SS'),
+                { type: 'MF3', model: 'mistral' },
+            ];
+
+            for (const { type, model, scenario } of blockTypes) {
+                const block = createScenarioBlockv10(
+                    type,
+                    model,
+                    allPages,
+                    participantTextResults,
+                    scenario
+                )
+                if (block) allBlocks.push(block)
+            }
+
+
+            const shuffledBlocks = shuffle(allBlocks)
+            const selectedPages = [];
+
+            shuffledBlocks.forEach(block => {
+                selectedPages.push(...block.pages);
+            });
+
+            const finalPages = [...introPages, ...selectedPages]
+            this.surveyConfigClone.pages = finalPages;
+
+            const pageOrder = finalPages.map(page => page.name);
+            this.setState({ orderLog: pageOrder });
+
+            return {};
+
         }
     }
 
@@ -850,7 +904,7 @@ class SurveyPage extends Component {
         }
 
         // instead of repeating near duplicate code blocks
-        
+
 
         const versionData = SURVEY_VERSION_DATA[this.state.surveyVersion];
 
@@ -944,11 +998,6 @@ class SurveyPage extends Component {
     }
 
     detectUserInfo = () => {
-        const isiPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
-        if (isiPad) {
-            this.setState({ iPad: true });
-        }
-
         const browserInfo = Bowser.parse(window.navigator.userAgent);
         this.setState({ browserInfo });
     }

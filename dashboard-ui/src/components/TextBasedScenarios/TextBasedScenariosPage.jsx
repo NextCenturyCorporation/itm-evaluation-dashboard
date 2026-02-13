@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
-import introConfig from './introConfig.json'
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
@@ -10,7 +9,7 @@ import axios from 'axios';
 import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup, Spinner, Button } from 'react-bootstrap';
+import { Card, Container, Row, Col, ListGroup, Spinner, Button, Modal } from 'react-bootstrap';
 import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
@@ -19,6 +18,7 @@ import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
+import consentPdf from '../OnlineOnly/consent.pdf';
 import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
@@ -26,9 +26,9 @@ import ScenarioProgress from './scenarioProgress';
 
 const history = createBrowserHistory({ forceRefresh: true });
 
-const UPLOAD_SURVEY_RESULTS = gql`
-  mutation UploadSurveyResults( $surveyId: String, $results: JSON) {
-    uploadSurveyResults(surveyId: $surveyId, results: $results)
+const UPLOAD_DEMOGRAPHICS = gql`
+  mutation UploadDemographics($surveyId: String, $results: JSON) {
+    uploadDemographics(surveyId: $surveyId, results: $results)
   }`;
 
 const GET_SERVER_TIMESTAMP = gql`
@@ -83,7 +83,6 @@ class TextBasedScenariosPage extends Component {
             currentConfig: null,
             uploadData: false,
             participantID: "",
-            vrEnvCompleted: [],
             startTime: null,
             scenarios: [],
             currentScenarioIndex: 0,
@@ -120,15 +119,23 @@ class TextBasedScenariosPage extends Component {
                 MF: null,
                 PS: null,
                 SS: null
-            }
+            },
+            // Eval 15: PS+AF share one session, MF+SS share another session
+            // MF also gets individual scoring
+            eval15Groups: {
+                'PS-AF': [],  // PS and AF share a session
+                'MF-SS': []   // MF and SS share a session
+            },
+            eval15CombinedSessions: {
+                'PS-AF': null,
+                'MF-SS': null
+            },
+            showConsentForm: false,
+            consentGiven: false,
         };
 
         this.surveyData = {};
-        this.surveyDataByScenario = [];
         this.survey = null;
-        this.introSurvey = new Model(introConfig);
-        this.introSurvey.onComplete.add(this.introSurveyComplete)
-        this.introSurvey.applyTheme(surveyTheme);
         this.pageStartTimes = {};
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefDemographics = React.createRef();
@@ -136,21 +143,41 @@ class TextBasedScenariosPage extends Component {
         this.shouldBlockNavigation = true
     }
 
+    handleConsentResponse = (agree) => {
+        if (!agree) {
+            // Redirect based on entry point
+            if (this.state.onlineOnly) {
+                const queryParams = new URLSearchParams(window.location.search);
+                const caciProlific = queryParams.get('caciProlific');
+                if (caciProlific === 'true') {
+                    window.location.href = 'https://app.prolific.com/submissions/complete?cc=C155IMPM';
+                } else {
+                    history.push('/participantText');
+                }
+            } else {
+                history.push('/login');
+            }
+        } else {
+            this.setState({
+                showConsentForm: false,
+                consentGiven: true
+            });
+        }
+    };
+
     getAdeptUrl = () => {
         // for eval 12 (uk collection) we need to use the old adept server, not the current phase 2 one
         const evalNum = evalNameToNumber[this.props.currentTextEval]
         return evalNum === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL
     }
 
-    introSurveyComplete = (survey) => {
-        const enteredParticipantID = survey.data["Participant ID"];
+    startScenarios = () => {
+        const { participantID } = this.state;
 
-        // match entered participant id to log to determine scenario order
+        // Match entered participant id to log to determine scenario order
         let matchedLog = this.props.participantLogs.getParticipantLog.find(
-            log => String(log['ParticipantID']) === enteredParticipantID
+            log => String(log['ParticipantID']) === participantID
         );
-
-        let scenarios = [];
 
         if (matchedLog) {
             this.setState({ updatePLog: true, startCount: matchedLog['textEntryCount'] }, () => {
@@ -161,53 +188,29 @@ class TextBasedScenariosPage extends Component {
         }
 
         if (!matchedLog) {
-            let message = "No matching participant ID was found.";
-            message += " Would you like to continue anyway?\n\n" +
-                `Click 'OK' to continue with the current ${this.state.moderated ? "ID" : "email"}.\n` +
-                `Click 'Cancel' to re-enter the ${this.state.moderated ? "participant ID" : "email"}.`;
-
-            const userChoice = window.confirm(message);
-
-            if (!userChoice) {
-                // just reload intro survey
-                if (this.state.moderated) {
-                    this.introSurvey = new Model(introConfig);
-                    this.introSurvey.onComplete.add(this.introSurveyComplete);
-                    this.introSurvey.applyTheme(surveyTheme);
-                    this.setState({ currentConfig: null }); // Force re-render
-                }
-                else {
-                    history.push('/participantText');
-                }
-                return;
-            } else {
-                // if you want to go through with a non-matched PID, giving default experience
-                const scenarioSet = Math.floor(Math.random() * 2) + 1;
-
-                matchedLog = {
-                    'AF-text-scenario': scenarioSet,
-                    'MF-text-scenario': scenarioSet,
-                    'PS-text-scenario': scenarioSet,
-                    'SS-text-scenario': scenarioSet
-                };
-
-            }
+            // If no match found, create default scenario set
+            const scenarioSet = Math.floor(Math.random() * 2) + 1;
+            matchedLog = {
+                'AF-text-scenario': scenarioSet,
+                'MF-text-scenario': scenarioSet,
+                'PS-text-scenario': scenarioSet,
+                'SS-text-scenario': scenarioSet
+            };
         }
 
-        scenarios = this.scenariosFromLog(matchedLog)
+        const scenarios = this.scenariosFromLog(matchedLog);
 
         this.setState({
             scenarios,
-            participantID: enteredParticipantID,
-            vrEnvCompleted: survey.data["vrEnvironmentsCompleted"],
             matchedParticipantLog: matchedLog,
-            currentScenarioIndex: 0
+            currentScenarioIndex: 0,
+            startSurvey: true
         }, () => {
             if (this.state.scenarios.length > 0) {
                 this.loadNextScenario();
             }
         });
-    }
+    };
 
     loadDemographicsSurvey = () => {
         const demographicsConfig = Object.values(this.props.textBasedConfigs).find(
@@ -309,69 +312,28 @@ class TextBasedScenariosPage extends Component {
     componentDidMount() {
         const queryParams = new URLSearchParams(window.location.search);
         const pid = queryParams.get('pid');
-        const classification = queryParams.get('class');
         const adeptQualtrix = queryParams.get('adeptQualtrix');
-        const caciProlific = queryParams.get('caciProlific')
+        const caciProlific = queryParams.get('caciProlific');
         const startSurvey = queryParams.get('startSurvey');
+
         if (isDefined(pid)) {
-            this.introSurvey.data = {
-                "Participant ID": pid,
-                "Military or Civilian background": classification === 'Online' ? 'Online' : classification,
-                "vrEnvironmentsCompleted": ['none']
-            };
+            this.setState({
+                participantID: pid,
+                showConsentForm: true
+            });
+
             if (isDefined(adeptQualtrix) || isDefined(caciProlific)) {
                 if (startSurvey === 'true') {
                     this.setState({ moderated: false, onlineOnly: true, skipText: true });
+                } else {
+                    this.setState({ moderated: false, onlineOnly: true, startSurvey: false });
                 }
-                else {
-                    this.setState({ moderated: false, startSurvey: true, onlineOnly: true }, () => {
-                        this.introSurveyComplete(this.introSurvey);
-                    });
-                }
+            } else {
+                this.setState({ moderated: false, startSurvey: false });
             }
-            else {
-                this.setState({ moderated: false, startSurvey: false }, () => {
-                    this.introSurveyComplete(this.introSurvey);
-                });
-            }
-
-        }
-        else {
+        } else {
             history.push('/');
         }
-    }
-
-    resetState() {
-        this.setState({
-            currentConfig: null,
-            uploadData: false,
-            participantID: "",
-            vrEnvCompleted: [],
-            startTime: null,
-            scenarios: [],
-            currentScenarioIndex: 0,
-            sanitizedData: null,
-            matchedParticipantLog: null,
-            allScenariosCompleted: false,
-            sim1: null,
-            sim2: null,
-            isUploadButtonEnabled: false,
-            adeptSessionsCompleted: 0,
-            combinedSessionId: '',
-            adeptScenarios: [],
-            uploadedScenarios: 0,
-            startSurvey: true,
-            updatePLog: false
-        });
-
-        this.surveyData = {};
-        this.surveyDataByScenario = [];
-        this.survey = null;
-        this.introSurvey = new Model(introConfig);
-        this.introSurvey.onComplete.add(this.introSurveyComplete);
-        this.introSurvey.applyTheme(surveyTheme);
-        this.pageStartTimes = {};
-        this.shouldBlockNavigation = true;
     }
 
     sanitizeKeys = (obj) => {
@@ -396,7 +358,6 @@ class TextBasedScenariosPage extends Component {
             scenario_id: currentScenario.scenario_id,
             author: currentScenario.author,
             participantID: this.state.participantID,
-            vrEnvCompleted: this.state.vrEnvCompleted,
             title: currentScenario.title,
             timeComplete: endStamp.data.getServerTimestamp,
             startTime: this.state.startTime
@@ -442,7 +403,6 @@ class TextBasedScenariosPage extends Component {
             }
         });
 
-        // Reset data for the next scenario
         this.surveyData = {};
         this.pageStartTimes = {};
         this.shouldBlockNavigation = false;
@@ -452,14 +412,17 @@ class TextBasedScenariosPage extends Component {
         if (scenario.author === 'ADEPT' || adeptList.some(term => scenario.scenario_id.includes(term))) {
             const isPSAF = scenario.scenario_id.includes('PS-AF');
             const evalNum = evalNameToNumber[this.props.currentTextEval]
-            // ps-af needs its own individual session
-            const needsIsolatedSession = evalNum === 15 || (evalNum === 10 && isPSAF);
+            // ps-af needs its own individual session (for eval 10 only, not eval 15)
+            const needsIsolatedSession = evalNum === 10 && isPSAF;
             const isEval13 = evalNum === 13;
+            const isEval15 = evalNum === 15;
 
             if (needsIsolatedSession) {
                 await this.processIsolatedAdeptScenario(scenario);
             } else if (isEval13) {
                 await this.processEval13Scenario(scenario);
+            } else if (isEval15) {
+                await this.processEval15Scenario(scenario);
             } else {
                 if (this.state.adeptSessionsCompleted === 0) {
                     await this.beginRunningSession(scenario);
@@ -513,6 +476,95 @@ class TextBasedScenariosPage extends Component {
             }
         } catch (e) {
             console.error('Error creating isolated session:', e);
+        }
+    }
+
+    processEval15Scenario = async (scenario) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+        const scenarioId = scenario.scenario_id;
+
+        let groupKey = null;
+        if (scenarioId.includes('PS') || scenarioId.includes('AF')) {
+            groupKey = 'PS-AF';
+        } else if (scenarioId.includes('MF') || scenarioId.includes('SS')) {
+            groupKey = 'MF-SS';
+        }
+
+        if (!groupKey) {
+            console.error('Could not determine group for eval 15 scenario:', scenarioId);
+            return;
+        }
+
+        // ind processing of MF
+        if (scenarioId.includes('MF')) {
+            try {
+                const individualSession = await axios.post(`${url}${sessionEndpoint}`);
+                if (individualSession.status === 200) {
+                    const individualSessionId = individualSession.data;
+                    
+                    await this.submitResponses(scenario, scenarioId, url, individualSessionId);
+                    
+                    scenario.individualSessionId = individualSessionId;
+                    scenario.individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, scenario);
+                    scenario.individualKdmas = await this.attachKdmaValue(individualSessionId, url);
+                }
+            } catch (e) {
+                console.error('Error processing eval 15 individual MF scoring:', e);
+                scenario.individualSessionId = null;
+                scenario.individualMostLeastAligned = null;
+                scenario.individualKdmas = null;
+                scenario.individualScoringError = e.message;
+            }
+        }
+
+        const updatedGroup = [...this.state.eval15Groups[groupKey], scenario];
+        this.setState({ 
+            eval15Groups: { ...this.state.eval15Groups, [groupKey]: updatedGroup } 
+        });
+
+        // when both scenarios in the pair are done, submit probes and score
+        if (updatedGroup.length === 2) {
+            await this.processEval15GroupCompletion(groupKey, updatedGroup);
+        }
+    }
+
+    processEval15GroupCompletion = async (groupKey, groupScenarios) => {
+        const url = this.getAdeptUrl();
+        const sessionEndpoint = '/api/v1/new_session';
+
+        try {
+            const combinedSession = await axios.post(`${url}${sessionEndpoint}`);
+            if (combinedSession.status === 200) {
+                const combinedSessionId = combinedSession.data;
+
+                for (const scenario of groupScenarios) {
+                    await this.submitResponses(scenario, scenario.scenario_id, url, combinedSessionId);
+                }
+
+                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, groupScenarios[0], true);
+                const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
+
+                this.setState({ 
+                    eval15CombinedSessions: { ...this.state.eval15CombinedSessions, [groupKey]: combinedSessionId } 
+                });
+
+                for (const scenario of groupScenarios) {
+                    scenario.combinedSessionId = combinedSessionId;
+                    scenario.mostLeastAligned = combinedMostLeastAligned;
+                    scenario.kdmas = combinedKdmas;
+                    await this.uploadSingleScenario(scenario);
+                }
+            }
+        } catch (e) {
+            console.error('Error in eval 15 group completion:', e);
+            for (const scenario of groupScenarios) {
+                scenario.combinedSessionId = null;
+                scenario.mostLeastAligned = null;
+                scenario.kdmas = null;
+                scenario.combinedScoringError = e.message;
+                await this.uploadSingleScenario(scenario);
+            }
         }
     }
 
@@ -687,55 +739,58 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario) => {
-        let targets = []
-        const endpoint = '/api/v1/get_ordered_alignment'
-        if (ta1 === 'soartech') {
-            if (scenario.scenario_id.includes('qol')) {
-                targets = ['QualityOfLife']
-            } else {
-                targets = ['PerceivedQuantityOfLivesSaved']
+    mostLeastAligned = async (sessionId, ta1, url, scenario, isEval15Combined = false) => {
+        const endpoint = '/api/v1/get_ordered_alignment';
+        const evalNumber = evalNameToNumber[this.props.currentTextEval];
+        
+        // Determine which targets to query (null means no kdma_id param)
+        const getTargets = () => {
+            if (ta1 === 'soartech') {
+                return scenario.scenario_id.includes('qol') 
+                    ? ['QualityOfLife'] 
+                    : ['PerceivedQuantityOfLivesSaved'];
             }
-        } else {
-            const evalNumber = evalNameToNumber[this.props.currentTextEval];
-            // only one target for individual or group eval 13
-            if ([15, 13].includes(evalNumber) && scenario) {
-                if (scenario.scenario_id.includes('AF')) {
-                    targets = ['affiliation'];
-                } else if (scenario.scenario_id.includes('MF')) {
-                    targets = ['merit'];
-                } else if (scenario.scenario_id.includes('PS')) {
-                    targets = ['personal_safety'];
-                } else if (scenario.scenario_id.includes('SS')) {
-                    targets = ['search'];
+            
+            // Eval 15 combined sessions - single call without kdma_id
+            if (isEval15Combined) {
+                return [null];
+            }
+            
+            // Eval 13 or 15 individual - single target based on scenario
+            if ([13, 15].includes(evalNumber) && scenario) {
+                const attrMatch = scenario.scenario_id.match(/(AF|MF|PS|SS)/);
+                if (attrMatch) {
+                    const attrMap = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search' };
+                    return [attrMap[attrMatch[1]]];
                 }
-            } else {
-                targets = (evalNumber >= 8 && evalNumber !== 12) ?
-                    ['affiliation', 'merit', 'search', 'personal_safety'] :
-                    ['Moral judgement', 'Ingroup Bias']
             }
-        }
+            
+            // Default - all four targets or legacy targets
+            return (evalNumber >= 8 && evalNumber !== 12)
+                ? ['affiliation', 'merit', 'search', 'personal_safety']
+                : ['Moral judgement', 'Ingroup Bias'];
+        };
 
-        let responses = []
+        const targets = getTargets();
+        const responses = [];
+
         try {
             for (const target of targets) {
-                const response = await axios.get(`${url}${endpoint}`, {
-                    params: {
-                        session_id: sessionId,
-                        kdma_id: target
-                    }
-                });
-
+                const params = { session_id: sessionId };
+                if (target) params.kdma_id = target;
+                
+                const response = await axios.get(`${url}${endpoint}`, { params });
                 const filteredData = response.data.filter(obj =>
                     !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
                 );
-
-                responses.push({ 'target': target, 'response': filteredData })
+                
+                responses.push({ target, response: filteredData });
             }
         } catch (err) {
-            console.error(err)
+            console.error(err);
         }
-        return responses
+        
+        return responses;
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
@@ -902,145 +957,165 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    getPageQuestions = (pageName) => {
-        // returns every question on the page
-        const page = this.survey.getPageByName(pageName);
-        return page ? page.questions.map(question => question.name) : [];
-    };
-
     render() {
+        const ConsentForm = ({ show, onAgree, onDisagree }) => (
+            <Modal show={show} backdrop="static" keyboard={false} size="lg" centered>
+                <Modal.Header>
+                    <Modal.Title>Consent Form</Modal.Title>
+                </Modal.Header>
+                <Modal.Body style={{ height: '70vh', padding: 0 }}>
+                    <iframe
+                        src={consentPdf}
+                        title="Consent Form PDF"
+                        width="100%"
+                        height="100%"
+                        style={{ border: 'none' }}
+                    />
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={onDisagree}>I Do Not Agree</Button>
+                    <Button variant="primary" onClick={onAgree}>I Agree</Button>
+                </Modal.Footer>
+            </Modal>
+        );
         return (
             <>
-                {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
-                    <ScenarioProgress
-                        current={this.state.currentScenarioIndex + 1}
-                        total={this.state.scenarios.length}
+                {this.state.showConsentForm && !this.state.consentGiven && (
+                    <ConsentForm
+                        show={this.state.showConsentForm}
+                        onAgree={() => this.handleConsentResponse(true)}
+                        onDisagree={() => this.handleConsentResponse(false)}
                     />
                 )}
-                <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
-                {!this.state.skipText && !this.state.currentConfig && (
-                    <Survey model={this.introSurvey} />
-                )}
-                {!this.state.skipText && !this.state.moderated && !this.state.startSurvey && (
-                    <div className="text-instructions">
-                        <h2>Instructions</h2>
-                        <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
-                            <br />
-                            During this portion of the experiment, you will be presented with several medical triage scenarios. You will be given action options from which to choose. Please consider
-                            how you would act if you were placed in this scenario.
-                        </p>
-                        <h4>Guidelines:</h4>
-                        <ul>
-                            <li>Please complete the experiment in one sitting.</li>
-                            <li>Choose the option that best matches how you would triage the scenario.</li>
-                            <li>Read all details to clearly understand each question before responding.</li>
-                            <li>Do not close the browser until you reach the "Thank You" page at the end.</li>
-                            <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
-                        </ul>
-                        <p className='center-text'>Press "Start" to begin.</p>
-                        <button onClick={() => this.setState({ startSurvey: true })}>Start</button>
-                    </div>
-                )
-
-                }
-                {!this.state.skipText && this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                {this.state.consentGiven && (
                     <>
-                        <Survey model={this.survey} />
-                    </>
-                )}
-                {!this.state.skipText && this.state.demographicsUploadData && (
-                    <Mutation
-                        mutation={UPLOAD_SURVEY_RESULTS}
-                        onCompleted={() => {
-                            this.setState({
-                                demographicsCompleted: true,
-                                demographicsUploadData: null
-                            });
-                        }}
-                    >
-                        {(uploadSurveyResults, { data }) => (
-                            <div style={{ display: 'none' }}>
-                                <button ref={this.uploadButtonRefDemographics} disabled={!this.state.isDemographicsUploadEnabled} onClick={(e) => {
-                                    e.preventDefault();
-                                    if (this.state.isDemographicsUploadEnabled) {
-                                        uploadSurveyResults({
-                                            variables: {
-                                                surveyId: this.state.participantID,
-                                                results: this.state.demographicsUploadData
+                        {this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                            <ScenarioProgress
+                                current={this.state.currentScenarioIndex + 1}
+                                total={this.state.scenarios.length}
+                            />
+                        )}
+                        <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
+                        {!this.state.skipText && !this.state.moderated && !this.state.startSurvey && (
+                            <div className="text-instructions">
+                                <h2>Instructions</h2>
+                                <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
+                                    <br />
+                                    During this portion of the experiment, you will be presented with several medical triage scenarios. You will be given action options from which to choose. Please consider
+                                    how you would act if you were placed in this scenario.
+                                </p>
+                                <h4>Guidelines:</h4>
+                                <ul>
+                                    <li>Please complete the experiment in one sitting.</li>
+                                    <li>Choose the option that best matches how you would triage the scenario.</li>
+                                    <li>Read all details to clearly understand each question before responding.</li>
+                                    <li>Do not close the browser until you reach the "Thank You" page at the end.</li>
+                                    <li>The upload page may take a few minutes to complete. Please be patient while the spinner is spinning and do not exit the page.</li>
+                                </ul>
+                                <p className='center-text'>Press "Start" to begin.</p>
+                                <button onClick={() => this.startScenarios()}>Start</button>
+                            </div>
+                        )
+
+                        }
+                        {!this.state.skipText && this.state.currentConfig && !this.state.allScenariosCompleted && this.state.startSurvey && (
+                            <>
+                                <Survey model={this.survey} />
+                            </>
+                        )}
+                        {!this.state.skipText && this.state.demographicsUploadData && (
+                            <Mutation
+                                mutation={UPLOAD_DEMOGRAPHICS}
+                                onCompleted={() => {
+                                    this.setState({
+                                        demographicsCompleted: true,
+                                        demographicsUploadData: null
+                                    });
+                                }}
+                            >
+                                {(uploadSurveyResults, { data }) => (
+                                    <div style={{ display: 'none' }}>
+                                        <button ref={this.uploadButtonRefDemographics} disabled={!this.state.isDemographicsUploadEnabled} onClick={(e) => {
+                                            e.preventDefault();
+                                            if (this.state.isDemographicsUploadEnabled) {
+                                                uploadSurveyResults({
+                                                    variables: {
+                                                        surveyId: this.state.participantID,
+                                                        results: this.state.demographicsUploadData
+                                                    }
+                                                });
+                                            }
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
+                        {!this.state.skipText && this.state.uploadData && (
+                            <Mutation
+                                mutation={UPLOAD_SCENARIO_RESULTS}
+                                onCompleted={() => {
+                                    this.setState(prevState => ({
+                                        uploadedScenarios: prevState.uploadedScenarios + 1,
+                                    }), () => {
+                                        this.setState({ updatePLog: true }, () => {
+                                            if (this.uploadButtonRefPLog.current) {
+                                                this.uploadButtonRefPLog.current.click();
                                             }
                                         });
-                                    }
-                                }}></button>
-                            </div>
-                        )}
-                    </Mutation>
-                )}
-                {!this.state.skipText && this.state.uploadData && (
-                    <Mutation
-                        mutation={UPLOAD_SCENARIO_RESULTS}
-                        onCompleted={() => {
-                            this.setState(prevState => ({
-                                uploadedScenarios: prevState.uploadedScenarios + 1,
-                            }), () => {
-                                this.setState({ updatePLog: true }, () => {
-                                    if (this.uploadButtonRefPLog.current) {
-                                        this.uploadButtonRefPLog.current.click();
-                                    }
-                                });
-                            });
-                        }}
-                    >
-                        {(uploadSurveyResults, { data }) => (
-                            <div style={{ display: 'none' }}>
-                                <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
-                                    e.preventDefault();
-                                    if (this.state.isUploadButtonEnabled) {
-                                        uploadSurveyResults({
-                                            variables: { results: this.state.sanitizedData }
-                                        })
-                                    }
-                                }}></button>
-                            </div>
-                        )}
-                    </Mutation>
-                )}
-                {!this.state.skipText && this.state.updatePLog && (
-                    <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
-                        {(updateParticipantLog) => (
-                            <div>
-                                <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
-                                    e.preventDefault();
-                                    updateParticipantLog({
-                                        variables: { pid: this.state.participantID, updates: { claimed: true, textEntryCount: this.state.startCount + this.state.uploadedScenarios } }
                                     });
-                                    this.setState({ updatePLog: false });
-                                }}></button>
-                            </div>
+                                }}
+                            >
+                                {(uploadSurveyResults, { data }) => (
+                                    <div style={{ display: 'none' }}>
+                                        <button ref={this.uploadButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
+                                            e.preventDefault();
+                                            if (this.state.isUploadButtonEnabled) {
+                                                uploadSurveyResults({
+                                                    variables: { results: this.state.sanitizedData }
+                                                })
+                                            }
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
                         )}
-                    </Mutation>
-                )}
-                {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (
-                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-                        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
-                            <Spinner animation="border" role="status">
-                                <span className="sr-only">Loading...</span>
-                            </Spinner>
-                            <p style={{ marginTop: '10px' }}>{this.state.onlineOnly ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily" : "Uploading documents, please wait..."}</p>
-                        </div>
-                    </div>
-                )}
-                {!this.state.skipText && this.state.allScenariosCompleted && this.state.showDemographics && !this.state.demographicsCompleted && this.state.showDemographicsSurvey && (
-                    <Survey model={this.state.demographicsConfig} />
-                )}
-                {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length && (!this.state.showDemographics || this.state.demographicsCompleted))) && (
-                    <ScenarioCompletionScreen
-                        sim1={this.state.sim1}
-                        sim2={this.state.sim2}
-                        moderatorExists={this.state.moderated}
-                        toDelegation={this.state.onlineOnly}
-                        participantID={this.state.participantID}
-                        evalNumber={evalNameToNumber[this.props.currentTextEval]}
-                    />
+                        {!this.state.skipText && this.state.updatePLog && (
+                            <Mutation mutation={UPDATE_PARTICIPANT_LOG}>
+                                {(updateParticipantLog) => (
+                                    <div>
+                                        <button ref={this.uploadButtonRefPLog} hidden onClick={(e) => {
+                                            e.preventDefault();
+                                            updateParticipantLog({
+                                                variables: { pid: this.state.participantID, updates: { claimed: true, textEntryCount: this.state.startCount + this.state.uploadedScenarios } }
+                                            });
+                                            this.setState({ updatePLog: false });
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
+                        {!this.state.skipText && this.state.allScenariosCompleted && (this.state.uploadedScenarios < this.state.scenarios.length) && (!this.state.showDemographics || this.state.demographicsCompleted) && (
+                            <LoadingSpinner
+                                message={this.state.onlineOnly
+                                    ? "Please do not close your browser or press any keys. The second part of the experiment will load momentarily"
+                                    : "Uploading documents, please wait..."}
+                                fullScreen={true}
+                            />
+                        )}
+                        {!this.state.skipText && this.state.allScenariosCompleted && this.state.showDemographics && !this.state.demographicsCompleted && this.state.showDemographicsSurvey && (
+                            <Survey model={this.state.demographicsConfig} />
+                        )}
+                        {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length && (!this.state.showDemographics || this.state.demographicsCompleted))) && (
+                            <ScenarioCompletionScreen
+                                sim1={this.state.sim1}
+                                sim2={this.state.sim2}
+                                moderatorExists={this.state.moderated}
+                                toDelegation={this.state.onlineOnly}
+                                participantID={this.state.participantID}
+                                evalNumber={evalNameToNumber[this.props.currentTextEval]}
+                            />
+                        )}
+                    </>
                 )}
             </>
         )
@@ -1076,12 +1151,10 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
             {toDelegation && evalNumber !== 13 ?
                 <SurveyPageWrapper />
                 : toDelegation && evalNumber === 13 ?
-                    <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <p>Redirecting you back to Prolific...</p>
-                        <Spinner animation="border" role="status">
-                            <span className="sr-only">Loading...</span>
-                        </Spinner>
-                    </div>
+                    <LoadingSpinner
+                        message="Redirecting you back to Prolific..."
+                        fullScreen={false}
+                    />
                     :
                     <Container className="mt-5">
                         <Row className="justify-content-center">
@@ -1129,6 +1202,38 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
                         </Row>
                     </Container>}
         </>
+    );
+};
+
+const LoadingSpinner = ({ message, fullScreen = true }) => {
+    const spinnerContent = (
+        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+            <Spinner animation="border" role="status">
+                <span className="sr-only">Loading...</span>
+            </Spinner>
+            <p style={{ marginTop: '10px' }}>{message}</p>
+        </div>
+    );
+
+    if (!fullScreen) {
+        return <div style={{ textAlign: 'center', padding: '50px' }}>{spinnerContent}</div>;
+    }
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999
+        }}>
+            {spinnerContent}
+        </div>
     );
 };
 

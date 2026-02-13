@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import '../SurveyResults/resultsTable.css';
+import '../../css/resultsTable.css';
 import '../../css/admInfo.css';
 import { Autocomplete, TextField, Modal, Box, Snackbar, Alert } from "@mui/material";
 import { useMutation, useQuery } from 'react-apollo'
@@ -73,7 +73,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const [sortBy, setSortBy] = React.useState('Participant ID ↑');
     const [searchPid, setSearchPid] = React.useState('');
     const [isRefreshing, setIsRefreshing] = React.useState(false);
-    const [selectedPhase, setSelectedPhase] = React.useState('UK Phase 1');
+    const [selectedPhase, setSelectedPhase] = React.useState('Phase 2');
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = React.useState(false);
     const [rowToDelete, setRowToDelete] = React.useState({});
     const [deleteInput, setDeleteInput] = React.useState('');
@@ -315,13 +315,14 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 obj['Sim-4'] = sims[3]?.scenario_id;
 
                 const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || (x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response ?? x.results?.pid) === pid)
-                    && x.results?.['Post-Scenario Measures']);
+                    && ( x.results.evalNumber >= 15 || x.results?.['Post-Scenario Measures']));
                 const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response === pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const lastIncompleteSurvey = incompleteSurveys?.slice(-1)?.[0];
                 const surveyToUse = lastSurvey || lastIncompleteSurvey;
                 const survey_start_date = new Date(surveyToUse?.results?.startTime);
                 const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
+                
                 obj['Unformatted Delegation Start'] = survey_start_date;
                 obj['Unformatted Delegation End'] = survey_end_date;
                 obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;

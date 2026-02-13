@@ -1,5 +1,5 @@
 import React from "react";
-import '../../SurveyResults/resultsTable.css';
+import '../../../css/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
