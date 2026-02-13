@@ -148,6 +148,24 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                         leftContent = {
                             label: target_.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()), labelKey: "Attribute"
                         };
+
+                        // Show KDMA parameters/scores if available
+                        const kdmaEntry = doc?.kdmas?.find(k => k.kdma === target_) || doc?.individualKdmas?.find(k => k.kdma === target_);
+                        if (kdmaEntry) {
+                            if (kdmaEntry.parameters?.length) {
+                                leftContent.kdmaLabel = "KDMA Parameters";
+                                leftContent.kdmaDisplay = (
+                                    <div className="adm-info-block-value">
+                                        {kdmaEntry.parameters.map(p => (
+                                            <div key={p.name} style={{ marginLeft: '0.75rem' }}>{p.name}: {p.value.toFixed(4)}</div>
+                                        ))}
+                                    </div>
+                                );
+                            } else if (kdmaEntry.value !== undefined) {
+                                leftContent.kdmaLabel = "KDMA Score";
+                                leftContent.kdmaDisplay = <div>{kdmaEntry.value.toFixed(3)}</div>;
+                            }
+                        }
                     }
 
                     return (
