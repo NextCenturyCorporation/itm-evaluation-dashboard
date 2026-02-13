@@ -24,7 +24,7 @@ export const SCENARIO_HEADERS = [
 
 const isPhase2Scenario = (scenarioId, targetKey) => {
 
-    return scenarioId.endsWith(`2025-${targetKey}-eval`);
+    return scenarioId.endsWith(`2025-${targetKey}-eval`) || scenarioId.endsWith(`2026-${targetKey}-assess`);
 };
 
 export const setScenarioCompletion = (obj, completedScenarios) => {
