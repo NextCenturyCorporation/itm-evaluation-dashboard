@@ -207,7 +207,6 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
 
         // random within pair
         if (Math.random() < 0.5) pairPSAF.reverse();
-        if (Math.random() < 0.5) pairMFSS.reverse();
 
         //randomize order of pairs
         if (Math.random() < 0.5) {

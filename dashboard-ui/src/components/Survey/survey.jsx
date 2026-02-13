@@ -70,7 +70,7 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
-    "10.0": { evalName: 'Februrary 2026 Evaluation', evalNumber: 15 },
+    "10.0": { evalName: 'February 2026 Evaluation', evalNumber: 15 },
     "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12 },
     "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10 },
     "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
@@ -153,8 +153,12 @@ class SurveyPage extends Component {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const relevantVersions = [4, 5, 6, 7, 8, 9]
-            const pidExists = this.props.surveyResults.filter((res) => relevantVersions.includes(res.results?.surveyVersion) && res.results['Participant ID Page']?.questions['Participant ID']?.response === this.state.pid && isDefined(res.results['Post-Scenario Measures']));
+            const relevantVersions = [4, 5, 6, 7, 8, 9, 10]
+            const pidExists = this.props.surveyResults.filter((res) =>
+                relevantVersions.includes(res.results?.surveyVersion) &&
+                res.results['Participant ID Page']?.questions['Participant ID']?.response === this.state.pid &&
+                (res.results.surveyVersion >= 10 || isDefined(res.results['Post-Scenario Measures']))
+            );
             this.setState({ initialUploadedCount: pidExists.length });
             const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
             if (this.state.validPid || this.state.onlineOnly) {
