@@ -74,7 +74,15 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                             if (multiKDMA.kdmas.every(name => d.kdmas?.some(k => k.kdma === name))) { doc = d; break; }
                         }
                         const entry = doc?.mostLeastAligned?.find(o => o.target === null);
-                        filteredArr = (entry?.response || []).filter(o => !Object.keys(o)[0].split("-").pop().includes("_"));
+                        filteredArr = (entry?.response || []).filter(o => {
+                            const key = Object.keys(o)[0];
+                            if (key.split("-").pop().includes("_")) return false;
+                            // Must contain all codes for this pairing, and no codes from the other pairing
+                            const allCodes = ['MF', 'SS', 'AF', 'PS'];
+                            const requiredCodes = multiKDMA.kdmas.map(k => k === 'merit' ? 'MF' : k === 'search' ? 'SS' : k === 'affiliation' ? 'AF' : 'PS');
+                            const excludedCodes = allCodes.filter(c => !requiredCodes.includes(c));
+                            return requiredCodes.every(c => key.includes(c)) && !excludedCodes.some(c => key.includes(c));
+                        });
 
                         const { alignedTarget, misalignedTarget } = cmpPage;
                         const aligned = getMedicByAlignment("aligned"), misaligned = getMedicByAlignment("misaligned"), baseline = getMedicByAlignment("baseline");
@@ -116,7 +124,13 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
 
                         const arr = entry.response || [];
                         if (!arr.length) return <p>No alignments.</p>;
-                        filteredArr = arr.filter(o => !Object.keys(o)[0].split("-").pop().includes("_"));
+                        // For single-KDMA, only show targets that match this KDMA alone
+                        const otherCodes = ['MF', 'SS', 'AF', 'PS'].filter(c => c !== derivedCode);
+                        filteredArr = arr.filter(o => {
+                            const key = Object.keys(o)[0];
+                            if (key.split("-").pop().includes("_")) return false;
+                            return !otherCodes.some(c => key.includes(c));
+                        });
 
                         const { baselineName, alignedTarget, misalignedTarget } = cmpPage;
                         const aligned = getMedicByAlignment("aligned"), misaligned = getMedicByAlignment("misaligned");
