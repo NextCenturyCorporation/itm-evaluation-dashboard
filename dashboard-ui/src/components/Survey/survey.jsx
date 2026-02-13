@@ -70,7 +70,7 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
-    "10.0": { evalName: 'Februrary 2026 Evaluation', evalNumber: 15 },
+    "10.0": { evalName: 'February 2026 Evaluation', evalNumber: 15 },
     "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12 },
     "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10 },
     "7.0": { evalName: 'July 2025 Collaboration', evalNumber: 9 },
