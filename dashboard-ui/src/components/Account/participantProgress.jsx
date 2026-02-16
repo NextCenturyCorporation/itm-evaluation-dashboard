@@ -3,20 +3,16 @@ import '../../css/resultsTable.css';
 import '../../css/admInfo.css';
 import '../../css/repairAlignment.css';
 import { Autocomplete, TextField, Modal, Box, Snackbar, Alert } from "@mui/material";
+import {  VisibilityOff, Delete, Build, CheckCircle, Error } from '@material-ui/icons';
 import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
-import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
-import DeleteIcon from '@material-ui/icons/Delete';
 import { accountsClient } from "../../services/accountsService";
 import AdmInfoModal from "./admInfoModal";
 import { checkAlignmentStatus } from "./progressUtils";
-import BuildIcon from '@material-ui/icons/Build';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import ErrorIcon from '@material-ui/icons/Error';
 import RepairAlignmentModal from "./repairAlignmentModal";
 
 
@@ -440,7 +436,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (canDeleteData(dataSet)) {
                 return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
                     <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
-                        <DeleteIcon />
+                        <Delete/>
                     </button>
                 </td>
             }
@@ -458,8 +454,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             return (
                 <td key={`${pid}-${header}`} className={cellClass}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
-                        {isComplete && <CheckCircleIcon style={{ fontSize: '14px', color: '#2e7d32' }} />}
-                        {isMissing && <ErrorIcon style={{ fontSize: '14px', color: '#e65100' }} />}
+                        {isComplete && <CheckCircle style={{ fontSize: '14px', color: '#2e7d32' }} />}
+                        {isMissing && <Error style={{ fontSize: '14px', color: '#e65100' }} />}
                         <span>{val ?? '-'}</span>
                         {isMissing && isAdmin && (
                             <button
@@ -467,7 +463,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                                 title={`Repair: ${status?.missingScenarios?.join(', ')}`}
                                 onClick={() => setRepairModal({ open: true, pid, status })}
                             >
-                                <BuildIcon style={{ fontSize: '14px' }} />
+                                <Build style={{ fontSize: '14px' }} />
                             </button>
                         )}
                     </div>
@@ -787,7 +783,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     <tr>
                         {HEADERS.map((val, index) => {
                             return (!columnsToHide.includes(val) && <th key={'header-' + index} className={(val.length < 5 ? 'small-column ' : ' ') + (val === 'Delete' ? 'delete-column' : '')}>
-                                {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
+                                {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOff size={'small'} /></button>
                             </th>);
                         })}
                     </tr>
