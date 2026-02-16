@@ -40,9 +40,7 @@ export const setScenarioCompletion = (obj, completedScenarios) => {
     });
 };
 
-/**
- * Checks whether a scenario result has valid mostLeastAligned data.
- */
+// has mostLeastAligned (and populated) or not
 const hasMLA = (scenarioResult) => {
     const mla = scenarioResult?.mostLeastAligned;
     if (!mla || (Array.isArray(mla) && mla.length === 0)) return false;
@@ -52,9 +50,7 @@ const hasMLA = (scenarioResult) => {
     return true;
 };
 
-/**
- * For a given participant, returns alignment status across all their text scenarios.
- */
+// checks all documents
 export const checkAlignmentStatus = (allTextResults, pid) => {
     const results = (allTextResults || []).filter(r => r.participantID === pid);
     if (results.length === 0) {
@@ -79,7 +75,6 @@ export const checkAlignmentStatus = (allTextResults, pid) => {
     };
 };
 
-// ---- Repair helpers ----
 
 const getEval15Group = (scenarioId) => {
     if (scenarioId.includes('PS') || scenarioId.includes('AF')) return 'PS-AF';
@@ -95,12 +90,7 @@ const getEval13Group = (scenarioId) => {
 /**
  * Re-runs ADEPT alignment scoring for scenarios missing mostLeastAligned.
  * Uses the same shared functions as TextBasedScenariosPage.
- * 
- * @param {string[]} missingScenarioIds - scenario_ids that need repair
- * @param {object[]} allParticipantResults - ALL text results for this participant
- * @param {Function} updateMutation - GraphQL mutation fn ({ variables: { id, updates } })
- * @param {Function} onProgress - callback(message) for status updates
- */
+*/
 export const repairAlignment = async (missingScenarioIds, allParticipantResults, updateMutation, onProgress) => {
     if (!missingScenarioIds?.length) return { success: true, repaired: 0, total: 0, errors: [] };
 
