@@ -1,0 +1,57 @@
+
+.alignment-missing-cell {
+    background-color: #fff3cd !important;
+}
+
+.repair-align-btn {
+    background: none;
+    border: 1px solid #b15e2f;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    color: #b15e2f;
+    transition: background-color 0.2s ease;
+}
+
+.repair-align-btn:hover {
+    background-color: #fbe9e0;
+}
+
+.repair-modal-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 420px;
+    max-width: 90vw;
+
+    background: white;
+    border: 2px solid black;
+    border-radius: 8px;
+    padding: 20px;
+
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    z-index: 2000;
+}
+/*
+.MuiBackdrop-root {
+    backdrop-filter: blur(2px);
+}
+*/
+.repair-missing-list {
+    max-height: 140px;
+    overflow: auto;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 6px;
+    background: #fafafa;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.repair-missing-list div {
+    padding: 2px 0;
+}

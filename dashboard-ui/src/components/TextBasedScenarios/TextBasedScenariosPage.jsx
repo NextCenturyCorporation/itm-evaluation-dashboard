@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { submitResponses as sharedSubmitResponses, getMostLeastAligned, getKdmaProfile, getAdeptUrl as sharedGetAdeptUrl } from './adeptUtils';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
@@ -166,9 +167,7 @@ class TextBasedScenariosPage extends Component {
     };
 
     getAdeptUrl = () => {
-        // for eval 12 (uk collection) we need to use the old adept server, not the current phase 2 one
-        const evalNum = evalNameToNumber[this.props.currentTextEval]
-        return evalNum === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL
+        return sharedGetAdeptUrl(evalNameToNumber[this.props.currentTextEval]);
     }
 
     startScenarios = () => {
@@ -502,9 +501,9 @@ class TextBasedScenariosPage extends Component {
                 const individualSession = await axios.post(`${url}${sessionEndpoint}`);
                 if (individualSession.status === 200) {
                     const individualSessionId = individualSession.data;
-                    
+
                     await this.submitResponses(scenario, scenarioId, url, individualSessionId);
-                    
+
                     scenario.individualSessionId = individualSessionId;
                     scenario.individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, scenario);
                     scenario.individualKdmas = await this.attachKdmaValue(individualSessionId, url);
@@ -519,8 +518,8 @@ class TextBasedScenariosPage extends Component {
         }
 
         const updatedGroup = [...this.state.eval15Groups[groupKey], scenario];
-        this.setState({ 
-            eval15Groups: { ...this.state.eval15Groups, [groupKey]: updatedGroup } 
+        this.setState({
+            eval15Groups: { ...this.state.eval15Groups, [groupKey]: updatedGroup }
         });
 
         // when both scenarios in the pair are done, submit probes and score
@@ -545,8 +544,8 @@ class TextBasedScenariosPage extends Component {
                 const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, groupScenarios[0], true);
                 const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
 
-                this.setState({ 
-                    eval15CombinedSessions: { ...this.state.eval15CombinedSessions, [groupKey]: combinedSessionId } 
+                this.setState({
+                    eval15CombinedSessions: { ...this.state.eval15CombinedSessions, [groupKey]: combinedSessionId }
                 });
 
                 for (const scenario of groupScenarios) {
@@ -729,100 +728,34 @@ class TextBasedScenariosPage extends Component {
     }
 
     attachKdmaValue = async (sessionId, url) => {
-        const endpoint = '/api/v1/computed_kdma_profile?session_id='
-        try {
-            const response = await axios.get(`${url}${endpoint}${sessionId}`)
-            return response.data
-        } catch (e) {
-            console.error('Error getting kdmas: ' + e);
-            return null;
-        }
+        return getKdmaProfile(sessionId, url);
     }
 
     mostLeastAligned = async (sessionId, ta1, url, scenario, isEval15Combined = false) => {
-        const endpoint = '/api/v1/get_ordered_alignment';
         const evalNumber = evalNameToNumber[this.props.currentTextEval];
-        
-        // Determine which targets to query (null means no kdma_id param)
-        const getTargets = () => {
-            if (ta1 === 'soartech') {
-                return scenario.scenario_id.includes('qol') 
-                    ? ['QualityOfLife'] 
-                    : ['PerceivedQuantityOfLivesSaved'];
-            }
-            
-            // Eval 15 combined sessions - single call without kdma_id
-            if (isEval15Combined) {
-                return [null];
-            }
-            
-            // Eval 13 or 15 individual - single target based on scenario
-            if ([13, 15].includes(evalNumber) && scenario) {
-                const attrMatch = scenario.scenario_id.match(/(AF|MF|PS|SS)/);
-                if (attrMatch) {
-                    const attrMap = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search' };
-                    return [attrMap[attrMatch[1]]];
-                }
-            }
-            
-            // Default - all four targets or legacy targets
-            return (evalNumber >= 8 && evalNumber !== 12)
-                ? ['affiliation', 'merit', 'search', 'personal_safety']
-                : ['Moral judgement', 'Ingroup Bias'];
-        };
-
-        const targets = getTargets();
-        const responses = [];
-
-        try {
-            for (const target of targets) {
-                const params = { session_id: sessionId };
-                if (target) params.kdma_id = target;
-                
+        if (ta1 === 'soartech') {
+            // SoarTech still uses its own logic
+            const endpoint = '/api/v1/get_ordered_alignment';
+            const target = scenario.scenario_id.includes('qol')
+                ? 'QualityOfLife'
+                : 'PerceivedQuantityOfLivesSaved';
+            const params = { session_id: sessionId, kdma_id: target };
+            try {
                 const response = await axios.get(`${url}${endpoint}`, { params });
                 const filteredData = response.data.filter(obj =>
                     !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
                 );
-                
-                responses.push({ target, response: filteredData });
+                return [{ target, response: filteredData }];
+            } catch (err) {
+                console.error(err);
+                return [];
             }
-        } catch (err) {
-            console.error(err);
         }
-        
-        return responses;
+        return getMostLeastAligned(sessionId, url, scenario, evalNumber, isEval15Combined);
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
-        for (const [, fieldValue] of Object.entries(scenario)) {
-            if (typeof fieldValue !== 'object' || !fieldValue.questions) { continue }
-            for (const [questionName, question] of Object.entries(fieldValue.questions)) {
-                if (typeof question !== 'object') { continue }
-                if (question.response && !questionName.includes("Follow Up")) {
-                    const mapping = question.question_mapping[question.response]
-                    const responseUrl = `${urlBase}/api/v1/response`
-
-                    const choices = Array.isArray(mapping['choice']) ? mapping['choice'] : [mapping['choice']]
-                    for (const choice of choices) {
-                        const responsePayload = {
-                            "response": {
-                                "choice": choice,
-                                "justification": "justification",
-                                "probe_id": mapping['probe_id'],
-                                "scenario_id": scenarioID,
-                            },
-                            "session_id": sessionID
-                        }
-                        try {
-                            await axios.post(responseUrl, responsePayload)
-                        } catch (err) {
-                            console.log(err)
-                            continue
-                        }
-                    }
-                }
-            }
-        }
+        return sharedSubmitResponses(scenario, scenarioID, urlBase, sessionID);
     }
 
     getAlignmentData = async (targetId, url, alignmentEndpoint, sessionId, alignmentType) => {

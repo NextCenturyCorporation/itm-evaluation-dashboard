@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import '../../css/resultsTable.css';
 import '../../css/admInfo.css';
+import '../../css/repairAlignment.css';
 import { Autocomplete, TextField, Modal, Box, Snackbar, Alert } from "@mui/material";
 import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
@@ -13,10 +14,11 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { accountsClient } from "../../services/accountsService";
 import AdmInfoModal from "./admInfoModal";
 import { checkAlignmentStatus } from "./progressUtils";
-import RepairAlignmentModal from "./repairAlignmentModal";
 import BuildIcon from '@material-ui/icons/Build';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ErrorIcon from '@material-ui/icons/Error';
+import RepairAlignmentModal from "./repairAlignmentModal";
+
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -53,8 +55,8 @@ const UPDATE_SCENARIO_RESULT = gql`
 const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'MLA Status', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
-const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'MLA Status', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
+const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'Alignment Status', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
+const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'Alignment Status', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
 
 const HEADERS_UK_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
 const HEADERS_UK_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
@@ -91,9 +93,13 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const [deleteResultMessage, setDeleteResultMessage] = React.useState('');
     const [deleteUser] = useMutation(DELETE_PID_DATA);
     const [updateScenarioResult] = useMutation(UPDATE_SCENARIO_RESULT);
-    const [repairModalOpen, setRepairModalOpen] = React.useState(false);
-    const [repairPid, setRepairPid] = React.useState(null);
-    const [repairStatus, setRepairStatus] = React.useState(null);
+    const [repairSnackbar, setRepairSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
+    const [repairModal, setRepairModal] = React.useState({
+        open: false,
+        pid: null,
+        status: null
+    });
+
 
     const getHeaders = () => {
         let headers = [];
@@ -330,14 +336,14 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 obj['Sim-4'] = sims[3]?.scenario_id;
 
                 const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || (x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response ?? x.results?.pid) === pid)
-                    && ( x.results.evalNumber >= 15 || x.results?.['Post-Scenario Measures']));
+                    && (x.results.evalNumber >= 15 || x.results?.['Post-Scenario Measures']));
                 const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response === pid));
                 const lastSurvey = surveys?.slice(-1)?.[0];
                 const lastIncompleteSurvey = incompleteSurveys?.slice(-1)?.[0];
                 const surveyToUse = lastSurvey || lastIncompleteSurvey;
                 const survey_start_date = new Date(surveyToUse?.results?.startTime);
                 const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
-                
+
                 obj['Unformatted Delegation Start'] = survey_start_date;
                 obj['Unformatted Delegation End'] = survey_end_date;
                 obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
@@ -404,13 +410,13 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 setScenarioCompletion(obj, completedScenarios);
                 // Check alignment status for phase 2 participants
                 if (isPhase2) {
-                    const alignmentStatus = checkAlignmentStatus(textResults, pid);
-                    obj['MLA Status'] = alignmentStatus.totalScenarios === 0
+                    const alignStatus = checkAlignmentStatus(textResults, pid);
+                    obj['Alignment Status'] = alignStatus.totalScenarios === 0
                         ? 'No Data'
-                        : alignmentStatus.allPopulated
-                            ? `Complete (${alignmentStatus.totalScenarios})`
-                            : `Missing (${alignmentStatus.missingCount}/${alignmentStatus.totalScenarios})`;
-                    obj['_alignmentStatus'] = alignmentStatus;
+                        : alignStatus.allPopulated
+                            ? `Complete (${alignStatus.totalScenarios})`
+                            : `Missing (${alignStatus.missingCount}/${alignStatus.totalScenarios})`;
+                    obj['_alignmentStatus'] = alignStatus;
                 }
 
                 if (res['Type']) {
@@ -441,31 +447,27 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             else return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>-</td>
         }
 
-        if (header === 'MLA Status') {
-            const val = dataSet['MLA Status'];
+        if (header === 'Alignment Status') {
+            const val = dataSet['Alignment Status'];
             const pid = dataSet['Participant ID'];
             const status = dataSet['_alignmentStatus'];
             const isMissing = val && val.startsWith('Missing');
             const isComplete = val && val.startsWith('Complete');
-            const cellClass = isComplete ? 'dk-green-cell' : isMissing ? 'mla-missing-cell' : 'white-cell';
+            const cellClass = isComplete ? 'dk-green-cell' : isMissing ? 'alignment-missing-cell' : 'white-cell';
 
             return (
                 <td key={`${pid}-${header}`} className={cellClass}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
-                        {isComplete && <CheckCircleIcon style={{ fontSize: '16px', color: '#2e7d32' }} />}
-                        {isMissing && <ErrorIcon style={{ fontSize: '16px', color: '#e65100' }} />}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                        {isComplete && <CheckCircleIcon style={{ fontSize: '14px', color: '#2e7d32' }} />}
+                        {isMissing && <ErrorIcon style={{ fontSize: '14px', color: '#e65100' }} />}
                         <span>{val ?? '-'}</span>
                         {isMissing && isAdmin && (
                             <button
-                                className="repair-mla-btn"
+                                className="repair-align-btn"
                                 title={`Repair: ${status?.missingScenarios?.join(', ')}`}
-                                onClick={() => {
-                                    setRepairPid(pid);
-                                    setRepairStatus(status);
-                                    setRepairModalOpen(true);
-                                }}
+                                onClick={() => setRepairModal({ open: true, pid, status })}
                             >
-                                <BuildIcon style={{ fontSize: '16px' }} />
+                                <BuildIcon style={{ fontSize: '14px' }} />
                             </button>
                         )}
                     </div>
@@ -855,6 +857,11 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 {deleteResultMessage}
             </Alert>
         </Snackbar>
+        <Snackbar open={repairSnackbar.open} autoHideDuration={10000} onClose={() => setRepairSnackbar({ ...repairSnackbar, open: false })}>
+            <Alert severity={repairSnackbar.severity} onClose={() => setRepairSnackbar({ ...repairSnackbar, open: false })} variant="filled">
+                {repairSnackbar.message}
+            </Alert>
+        </Snackbar>
         <AdmInfoModal
             open={popupInfo.open && (selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1')}
             onClose={closePopup}
@@ -866,22 +873,22 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             formatLoading={formatLoading}
         />
         <RepairAlignmentModal
-            open={repairModalOpen}
-            onClose={() => {
-                setRepairModalOpen(false);
-                setRepairPid(null);
-                setRepairStatus(null);
-            }}
-            pid={repairPid}
-            alignmentStatus={repairStatus}
+            open={repairModal.open}
+            pid={repairModal.pid}
+            alignmentStatus={repairModal.status}
             textResults={dataTextResults?.getAllScenarioResults || []}
             updateScenarioResult={updateScenarioResult}
+            onClose={() => setRepairModal({ open: false, pid: null, status: null })}
             onRepairComplete={async () => {
-                setRepairModalOpen(false);
-                setRepairPid(null);
-                setRepairStatus(null);
+                setRepairModal({ open: false, pid: null, status: null });
                 await refreshData();
+                setRepairSnackbar({
+                    open: true,
+                    message: `Alignment repaired for ${repairModal.pid}`,
+                    severity: 'success'
+                });
             }}
         />
+
     </>);
 }
