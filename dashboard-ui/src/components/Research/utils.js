@@ -74,7 +74,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
 
         for (let row = 1; row <= dataCopy.length; row++) {
             const rowEvalNumber = evalNumbers[row - 1];
-            
+
             // Determine text threshold based on eval number for this specific row
             let textThreshold;
             if (rowEvalNumber === 13) {
@@ -84,7 +84,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
             } else {
                 textThreshold = 5;
             }
-            
+
             const delThreshold = isUKPhase1 ? 3 : (isPhase2 ? 5 : 4);
 
             for (let col = 0; col < columnHeaders.length; col++) {
@@ -110,6 +110,21 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                                 fgColor: { rgb: '7bbc7b' }  // Dark green color
                             }
                         };
+                    }
+                    if (headerName === 'Alignment Status' && val) {
+                        if (typeof val === 'string' && val.startsWith('Complete')) {
+                            cell.s = {
+                                fill: {
+                                    fgColor: { rgb: '7bbc7b' }  
+                                }
+                            };
+                        } else if (typeof val === 'string' && val.startsWith('Missing')) {
+                            cell.s = {
+                                fill: {
+                                    fgColor: { rgb: 'FFE0B2' }
+                                }
+                            };
+                        }
                     }
                 }
             }
@@ -252,7 +267,7 @@ export function getEval89Attributes(target, scenarioIndex) {
     else if (scenario.includes("mf")) {
         return "MF";
     }
-    
+
     return target;
 }
 
@@ -260,7 +275,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
     const isPhase2 = [8, 9, 10].includes(evalNum);
     const surveyResults = Array.isArray(surveyData) ? surveyData : surveyData?.getAllSurveyResults ?? [];
     const participantLog = dataParticipantLog.getParticipantLog;
-    const textResults =  Array.isArray(textResultsData) ? textResultsData : textResultsData?.getAllScenarioResults ?? [];
+    const textResults = Array.isArray(textResultsData) ? textResultsData : textResultsData?.getAllScenarioResults ?? [];
     const admData = dataADMs.getAllHistoryByEvalNumber;
     const comparisons = Array.isArray(comparisonData) ? comparisonData : comparisonData?.getHumanToADMComparison ?? [];
     const simData = dataSim.getAllSimAlignmentByEval;
