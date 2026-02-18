@@ -1,9 +1,8 @@
 import React from "react";
-import './resultsTable.css';
-import { Modal, Autocomplete, TextField } from "@mui/material";
+import '../../css/resultsTable.css'
+import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack, Tooltip } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../Research/tables/download-buttons";
-import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import CloseIcon from '@material-ui/icons/Close';
 import { RQDefinitionTable } from "../Research/variables/rq-variables";
 import definitionXLFile from './Survey Delegation Variables.xlsx';
@@ -15,6 +14,7 @@ import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
 import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
 import { getEval89Attributes, getEval12Attributes } from "../Research/utils";
+import { Box, Chip, LinearProgress, TableCell, TableRow, Typography } from "@material-ui/core";
 
 const EVAL_MAP = {
     3: 'MRE',
@@ -35,6 +35,31 @@ const TRUST_MAP = {
     "Agree": 4,
     "Strongly agree": 5
 };
+
+const ALLOWED_ROLES_PH2 = [
+  'Medical student',
+  'Resident',
+  'Physician',
+  "Physician's Assistant",
+  'Nurse',
+  'EMT',
+  'Paramedic',
+  'Military Medicine'
+];
+
+const ALLOWED_ROLES_PH1 = [
+    'Paramedic',
+    'Emergency medical technician',
+    'EM faculty',
+    'Nurse',
+];
+
+const ALLOWED_ROLES_LEGACY = [
+    'Paramedic',
+    'Emergency medical technician',
+    'M-4 medical student',
+    'Nurse',
+]
 
 const CONFIDENCE_MAP = {
     "Not confident at all": 1,
@@ -140,6 +165,35 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
+const TruncatedCell = ({text, maxLength = 100}) => {
+    const str = String(text);
+    
+    if (typeof text === 'number' || str.length <= maxLength) {
+        return <span>{str}</span>;
+    }
+    
+    const truncated = str.substring(0, maxLength) + '...';
+    
+
+    return (
+        <Tooltip
+            title=
+            {<div style={{
+                whiteSpace: 'pre-wrap',
+                fontSize: '16px',
+                lineHeight: '1.5'
+            }}>
+                {text}
+            </div>} 
+            arrow 
+            placement="top"
+            enterDelay={300}
+        >
+            <span style={{cursor: 'help', color: '#1976d2'}}>{truncated}</span>
+        </Tooltip>
+    )
+}
+
 export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
@@ -148,9 +202,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [evalFilters, setEvalFilters] = React.useState(evalNumbers);
     const [roles, setRoles] = React.useState([]);
     const [roleFilters, setRoleFilters] = React.useState([]);
-    const [surveyStatus] = React.useState(['Complete', 'Incomplete']);
     const [statusFilters, setStatusFilters] = React.useState(null);
-    const [militaryStatus] = React.useState(['Yes', 'No']);
     const [milFilters, setMilFilters] = React.useState(null);
     const [versions, setVersions] = React.useState([]);
     const [versionFilters, setVersionFilters] = React.useState([]);
@@ -158,6 +210,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [showLegacy, setShowLegacy] = React.useState(false);
     const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    const [dataType, setDataType] = React.useState('PH2');
+    const [isLoading, setIsLoading] = React.useState(true);
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
         const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
@@ -185,6 +239,15 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         const allVersions = [];
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
+        let ALLOWED_ROLES;
+        
+        if (showLegacy) {
+            ALLOWED_ROLES = ALLOWED_ROLES_LEGACY;
+        } else if (showPh2) {
+            ALLOWED_ROLES = ALLOWED_ROLES_PH2;
+        } else {
+            ALLOWED_ROLES = ALLOWED_ROLES_PH1;
+        }
         // set up block headers
         let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Attribute', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', (showPh2 ? 'Probe_Set_Observation' : 'Scenario'), 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
         if (exploratory) {
@@ -260,8 +323,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             // ignore invalid versions
             const version = entry.surveyVersion;
-            // temp filter version 9 data
-            if ((!version && obj['eval'] !== 13) || ((showLegacy && version >= 4) || (!showLegacy && version < 4) || (showPh2 && version < 6) || (!showPh2 && version >= 6))) {
+            const effectiveVersion = version ?? (obj['eval'] === 13 ? 6 : null);
+
+            if (!effectiveVersion || 
+                (showLegacy && effectiveVersion >= 4) || 
+                (!showLegacy && effectiveVersion < 4) || 
+                (showPh2 && effectiveVersion < 6) || 
+                (!showPh2 && effectiveVersion >= 6)) {
                 continue;
             }
 
@@ -278,7 +346,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             const logData = pLog.find(
                 log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
             );
-            if ((version >= 6 || !version) && !logData) {
+            if ((version >= 4 || !version) && !logData) {
                 continue;
             }
 
@@ -323,8 +391,18 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                     else {
                         const roles = response?.toString();
-                        allRoles = [...allRoles, ...roles.split(',')];
+                        const rolesArray = roles.split(',');
+                        
+                        const mappedRoles = rolesArray.map(role => {
+                            const trimmedRole = role.trim()
+                            return ALLOWED_ROLES.includes(trimmedRole) ? trimmedRole : 'Other';
+                        })
+
+                        const uniqueRoles = [...new Set(mappedRoles)]
+                        allRoles = [...allRoles, ...uniqueRoles];
                         obj[q] = roles.replaceAll(',', '; ');
+
+                        obj[q + '_filter'] = uniqueRoles.join('; ');
                     }
                 }
             }
@@ -589,10 +667,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     }, [evalNumbers, exploratory]);
 
     React.useEffect(() => {
+        if (formattedData.length === 0) {
+            return
+        }
         const filtered = formattedData.filter((x) =>
             (versionFilters.length === 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
             (evalFilters.length === 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
-            (roleFilters.length === 0 || roleFilters.some((filter) => x[(showPh2 ? 'What is your current role' : 'What is your current role (choose all that apply):')]?.split('; ').includes(filter))) &&
+            (roleFilters.length === 0 || roleFilters.some((filter) => x[(showPh2 ? 'What is your current role' : 'What is your current role (choose all that apply):') + '_filter']?.split('; ').includes(filter))) &&
             (!statusFilters?.includes('Complete') || isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             (!statusFilters?.includes('Incomplete') || !isDefined(x['Post-Scenario Measures - Time Taken (Minutes)'])) &&
             ((showPh2 && (!milFilters || x['Served in Military']) &&
@@ -602,13 +683,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
                     (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))))
         );
+        setIsLoading(false)
         setFilteredData(filtered);
         // remove extra headers that have no data
         if (formattedData.length > 0) {
             const usedHeaders = getUsedHeaders(filtered);
             setHeaders(usedHeaders);
         }
-
     }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters, getUsedHeaders]);
 
     const refineData = (origData) => {
@@ -626,9 +707,21 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         return updatedData;
     };
 
-    const toggleDataType = (event) => {
-        setShowLegacy(event.target.value === 'Legacy');
-        setShowPh2(event.target.value === 'PH2')
+    const toggleDataType = (event, newDataType) => {
+        if (newDataType !== null) {
+            setShowLegacy(newDataType === 'Legacy');
+            setShowPh2(newDataType === 'PH2');
+            setFilteredData(formattedData);
+            setEvalFilters([]);
+            setMilFilters(null);
+            setRoleFilters([]);
+            setStatusFilters(null);
+            setVersionFilters([]);
+            setDataType(newDataType);
+        }
+    };
+
+    const clearFilters = () => {
         setFilteredData(formattedData);
         setEvalFilters([]);
         setMilFilters(null);
@@ -646,7 +739,13 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     };
 
     const isFiltered = () => {
-        return filteredData.length < (exploratory ? (evalFilters.length === 0 || formattedData.filter((x) => evalFilters.map((y) => y.value).includes(x['eval']?.toString())).length) : formattedData.length);
+        return (
+            evalFilters.length > 0 ||
+            roleFilters.length > 0 ||
+            statusFilters !== null ||
+            milFilters !== null ||
+            versionFilters.length > 0
+        )
     };
 
     const makeDownloadButton = () => {
@@ -690,9 +789,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     multiple
                     options={evals}
                     filterSelectedOptions
+                    disableCloseOnSelect
                     size="small"
                     value={evalFilters}
-                    isOptionEqualToValue={(x, y) => x.value === y.value & x.label === y.label}
+                    limitTags={1}
+                    isOptionEqualToValue={(x, y) => x.value === y.value && x.label === y.label}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -705,8 +806,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 {showLegacy && <Autocomplete
                     multiple
                     options={versions}
+                    disableCloseOnSelect
                     filterSelectedOptions
                     size="small"
+                    limitTags={1}
                     value={versionFilters}
                     renderInput={(params) => (
                         <TextField
@@ -721,8 +824,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     multiple
                     options={roles}
                     filterSelectedOptions
+                    disableCloseOnSelect
                     size="small"
                     value={roleFilters}
+                    limitTags={1}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -732,67 +837,185 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     )}
                     onChange={(_, newVal) => setRoleFilters(newVal)}
                 />
-                <Autocomplete
-                    options={militaryStatus}
-                    filterSelectedOptions
-                    size="small"
+
+                <ToggleButtonGroup
+                    className='simple-toggles'
                     value={milFilters}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Is Military"
-                            placeholder=""
-                        />
-                    )}
-                    onChange={(_, newVal) => setMilFilters(newVal)}
-                />
-                <Autocomplete
-                    options={surveyStatus}
-                    filterSelectedOptions
+                    exclusive
                     size="small"
+                    onChange={(_, newVal) => setMilFilters(newVal)}
+                >
+                    <ToggleButton value="Yes" className='custom-toggle'>
+                        Is Military
+                    </ToggleButton>
+                    <ToggleButton value="No" className='custom-toggle'>
+                        Non-Military
+                    </ToggleButton>
+                </ToggleButtonGroup>
+
+                <ToggleButtonGroup
+                    className='simple-toggles'
                     value={statusFilters}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Survey Status"
-                            placeholder=""
-                        />
-                    )}
+                    exclusive
+                    size="small"
                     onChange={(_, newVal) => setStatusFilters(newVal)}
-                />
-                {!exploratory && <RadioGroup className='simple-radios' row defaultValue="PH2" onChange={toggleDataType}>
-                    <FormControlLabel value="Legacy" control={<Radio />} label=" Legacy" />
-                    <FormControlLabel value="DRE/PH1" control={<Radio />} label=" DRE/PH1" />
-                    <FormControlLabel value="PH2" control={<Radio />} label=" PH2" />
-                </RadioGroup>}
+                >
+                    <ToggleButton value="Complete" className='custom-toggle'>
+                        Survey Complete
+                    </ToggleButton>
+                    <ToggleButton value="Incomplete" className='custom-toggle'>
+                        Survey Incomplete
+                    </ToggleButton>
+                </ToggleButtonGroup>
+
+                {!exploratory && <ToggleButtonGroup 
+                    className='simple-toggles' 
+                    exclusive 
+                    value={dataType} 
+                    onChange={toggleDataType}>
+                    <ToggleButton value="Legacy" label=" Legacy" className='custom-toggle'>
+                        Legacy
+                    </ToggleButton>
+                    <ToggleButton value="DRE/PH1" label=" DRE/PH1" className='custom-toggle'>
+                        DRE/Phase 1
+                    </ToggleButton>
+                    <ToggleButton value="PH2" label=" PH2" className='custom-toggle'>
+                        Phase 2
+                    </ToggleButton>
+                </ToggleButtonGroup>}
             </div>
 
             <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={exploratory ? 'Delegation Data By Block' : 'Survey Results'} extraAction={openModal} />
         </section>
+        {isFiltered() && (
+            <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: 2, px: 1.5}}
+            >
+                <Box
+                className="status-bar"
+                >
+                    {versionFilters.length > 0 && (
+                        <Box
+                        className="status-bar"
+                        >
+                        <Typography>
+                            Version:
+                        </Typography>
+                        {versionFilters.map((e) =>
+                        <Chip
+                        key={e}
+                        label={e}
+                        size="small"
+                        onDelete={() => {
+                            const updated = versionFilters.filter(item => item !== e)
+                            setVersionFilters(updated)
+                        }}
+                        />
+                    )}
+                        </Box>
+                    )} 
+                    {evalFilters.length > 0 && (
+                        <Box
+                        className="status-bar"
+                        >
+                        <Typography>
+                            Evals:
+                        </Typography>
+                        {evalFilters.map((e) =>
+                        <Chip
+                        key={e.label}
+                        label={e.label}
+                        size="small"
+                        onDelete={() => {
+                            const updated = evalFilters.filter(item => item.label !== e.label)
+                            setEvalFilters(updated)
+                        }}
+                        />
+                    )}
+                    </Box>
+                    )}
+                    {roleFilters.length > 0 && (
+                        <Box
+                        className="status-bar"
+                        >
+                            <Typography>
+                                Roles:
+                            </Typography>
+                        {roleFilters && (
+                            roleFilters.map((e) =>
+                            <Chip
+                            key={e}
+                            label={e}
+                            size="small"
+                            onDelete={() => {
+                                const updated = roleFilters.filter(item => item !== e)
+                                setRoleFilters(updated)
+                            }}
+                            />
+                    ))}
+                    </Box>
+                    )}
+
+                </Box>
+            
+                <Typography
+                    onClick={clearFilters}
+                    className="clear-btn"
+                    >
+                        Clear
+                </Typography>
+            </Stack>
+
+        )}
+
         <div className='resultTableSection'>
-            <table className='itm-table'>
-                <thead>
-                    <tr>
-                        {headers.map((val, index) => {
-                            return (<th key={'header-' + index}>
-                                {val}
-                            </th>);
-                        })}
-                    </tr>
-                </thead>
-                <tbody>
-                    {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Participant ID'] + '-' + index}>
-                            {headers.map((val) => {
-                                return (<td key={dataSet['Participant ID'] + '-' + val + '-' + index}>
-                                    {dataSet[val] ?? '-'}
-                                </td>);
-                            })}
-                        </tr>);
-                    })}
-                </tbody>
-            </table>
+            {isLoading ? (
+                <table className='itm-table'>
+                    <tbody>
+                      <TableRow>
+                            <TableCell>
+                            Loading survey results...
+                            <LinearProgress />
+                    </TableCell>
+                </TableRow>  
+                    </tbody>
+                </table>
+
+            ): filteredData.length === 0 ? (
+                    <Alert severity="info">No data available</Alert>
+                ) : (
+                    <table className='itm-table'>
+                        <thead>
+                            <tr>
+                                {headers.map((val, index) => (
+                                    <th key={'header-' + index}>
+                                        {val}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredData.map((dataSet, index) => (
+                                <tr key={dataSet['Participant ID'] + '-' + index}>
+                                    {headers.map((val) => {
+                                        const cellValue = dataSet[val] ?? '-';
+                                        return (
+                                            <td key={dataSet['Participant ID'] + '-' + val + '-' + index} className='participant'>
+                                                <TruncatedCell text={cellValue} maxLength={100} />
+                                            </td>
+                                        )
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
         </div>
+
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>

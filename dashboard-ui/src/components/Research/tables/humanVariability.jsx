@@ -1,5 +1,5 @@
 import React from "react";
-import '../../SurveyResults/resultsTable.css';
+import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "./download-buttons";

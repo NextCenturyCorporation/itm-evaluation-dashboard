@@ -40,6 +40,11 @@
     padding: 4px 8px 4px 12px;
 }
 
+.itm-table td span[style*="cursor: help"] {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
 .itm-table tr td:first-child,
 .itm-table thead th:first-child {
     position: sticky;
@@ -67,28 +72,8 @@
     background-color: rgb(212, 212, 212);
     border: 1px solid black;
     color: black;
-}
-
-.rCodeModal .modal-dialog {
-    min-width: 70%;
-}
-
-.rCode {
-    border: 1px solid black;
-    border-radius: 4px;
-    padding: 4px;
-    max-height: 600px;
-    overflow: auto;
-}
-
-.codeDownload {
-    padding: 8px 4px;
-    margin-bottom: 4px;
-}
-
-.code-line {
-    margin-bottom: 2px;
-    font-family: 'Courier New', 'Courier', 'monospace';
+    height: 60px;
+    font-size: 13px;
 }
 
 .downloadBtn:hover {
@@ -110,29 +95,14 @@
     flex-direction: row;
     justify-content: flex-end;
     gap: 8px;
-}
-
-.adjusted-margin {
-    margin-top: -32px;
-    height: 72px;
-}
-
-.checkboxes {
-    display: flex;
-    flex-direction: row;
-    padding-top: 10px;
-    margin-right: 20px;
-}
-
-.checkboxes li {
-    padding: 0 5px;
+    padding-left: 10px;
 }
 
 .filters {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    gap: 8px;
+    gap: 20px;
 }
 
 .filters>* {
@@ -236,15 +206,18 @@
     min-width: 220px !important;
 }
 
-.simple-radios {
+.simple-toggles {
     display: flex;
     flex-direction: row;
-    min-width: 320px !important;
+    min-width: 200px !important;
     border: 1px solid rgb(175, 175, 175);
-    padding-left: 16px;
     border-radius: 4px;
     max-height: 40px !important;
     justify-content: space-between;
+}
+
+.simple-toggles .MuiToggleButton-root {
+    flex: 1;
 }
 
 .hide-header {
@@ -300,6 +273,39 @@
 
 .lowered-table {
     margin-top: 40px;
+}
+
+.custom-toggle {
+    background-color: #fdfdfd !important;
+    color: #666666 !important;
+    border: 1px solid #e0e0e0 !important;
+    text-transform: none !important;
+}
+
+.custom-toggle.Mui-selected {
+    background-color: rgba(89, 38, 16, 1) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+.custom-toggle:hover {
+    background-color: #2f508d !important;
+    color: #fdfdfd !important;
+}
+
+.clear-btn {
+    color: rgb(88, 88, 115);
+}
+
+.clear-btn:hover {
+    cursor: pointer;
+    color: rgb(188, 13, 13);
+}
+
+.status-bar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
 }
 
 .delete-btn {

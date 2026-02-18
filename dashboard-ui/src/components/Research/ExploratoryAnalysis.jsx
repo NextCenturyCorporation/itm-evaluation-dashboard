@@ -14,11 +14,16 @@ import { PAGES, getEvalOptionsForPage } from './utils';
 
 export function ExploratoryAnalysis() {
     const evalOptions = getEvalOptionsForPage(PAGES.EXPLORATORY_ANALYSIS);
+    const evalRQ1Options = getEvalOptionsForPage(PAGES.RQ1); 
 
     const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
     function selectEvaluation(target) {
         setSelectedEval(target.value);
     }
+
+    // Extract all evaluation values that have an RQ1 page to conditionally render RQ4 content 
+    const rq1Values = evalRQ1Options.map(option => option.value); 
+    const hasRQ1Page = rq1Values.includes(selectedEval);
     return (<div className="researchQuestion">
         <div className="rq-selection-section">
             <Select
@@ -38,7 +43,9 @@ export function ExploratoryAnalysis() {
                 <HumanVariability evalNum={selectedEval} />
             </div>
         }
-        <div className="section-container">
+        {hasRQ1Page && ( 
+            <>
+            <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
             <p className='indented'>
                 <b>H<sub>1</sub></b> = Alignment score calculated between the responses of one human on attribute-driven
@@ -57,6 +64,7 @@ export function ExploratoryAnalysis() {
                 <b>Dependent variable:</b> Self-reported alignment rating on each observed DM
             </p>
         </div>
+        
         <div className="section-container">
             <RQ134 evalNum={selectedEval} tableTitle={'RQ4 Data'} />
             <p>
@@ -68,6 +76,8 @@ export function ExploratoryAnalysis() {
                 <li>SRAlign_Rating</li>
             </ul>
         </div>
+        </>)}
+
         {selectedEval < 8 &&
             <>
                 <div className="section-container">

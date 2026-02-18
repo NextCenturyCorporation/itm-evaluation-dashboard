@@ -88,6 +88,7 @@ const typeDefs = gql`
     addNewEval(caller: JSON, newEval: JSON): JSON,
     deleteEval(caller: JSON, evalId: String): JSON,
     uploadSurveyResults(surveyId: String, results: JSON): JSON,
+    uploadDemographics(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON): JSON,
     updateSurveyVersion(version: String!): String,
@@ -97,7 +98,8 @@ const typeDefs = gql`
     updateTextEval(eval: String!): String
     updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
     updateShowDemographics(showDemographics: Boolean!): JSON,
-    deleteDataByPID(caller: JSON, pid: String): JSON
+    deleteDataByPID(caller: JSON, pid: String): JSON,
+    updateScenarioResult(id: String!, updates: JSON!): JSON
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
@@ -852,6 +854,13 @@ const resolvers = {
 
       return await context.db.collection('surveyResults').updateOne(filter, update, options)
     },
+    uploadDemographics: async (obj, args, context, inflow) => {
+      const filter = { surveyId: args.surveyId }
+      const update = { $set: { results: args.results } }
+      const options = { upsert: true }
+
+      return await context.db.collection('demographicsData').updateOne(filter, update, options)
+    },
     uploadScenarioResults: async (obj, args, context, inflow) => {
       const results = args.results
       for (const result of results) {
@@ -1079,6 +1088,13 @@ const resolvers = {
           extensions: { code: '404' }
         });
       }
+    },
+    updateScenarioResult: async (obj, args, context, inflow) => {
+        const result = await context.db.collection('userScenarioResults').updateOne(
+            { _id: new ObjectId(args.id) },
+            { $set: args.updates }
+        );
+        return { ok: result.modifiedCount > 0, modifiedCount: result.modifiedCount };
     },
   },
   StringOrFloat: new GraphQLScalarType({

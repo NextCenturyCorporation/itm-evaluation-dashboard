@@ -1745,3 +1745,190 @@ export const createScenarioBlockUK = (scenarioType, allPages, participantTextRes
     }
     return pages
 }
+
+
+export const createScenarioBlockv10 = (scenarioType, model, allPages, participantTextResults, scenarioNum) => {
+    const scenarioIndex = scenarioNum ? `${scenarioType}${scenarioNum}` : scenarioType;
+    const isMF3 = scenarioType === 'MF3';
+
+    // cuts down on repeat code
+    // MF3 -> individualMostLeastAligned
+    // PS-AF, MF-SS -> mostLeastAligned
+    const config = {
+        'MF3': {
+            scenarioMatch: 'MF',
+            useIndividual: true,
+            target: 'merit',
+            filterKey: key => key.includes('MF') && !key.includes('SS')
+        },
+        'AF-PS': {
+            scenarioMatch: ['AF', 'PS'],
+            useIndividual: false,
+            target: null,
+            filterKey: key => key.includes('AF') && key.includes('PS') && !key.includes('MF') && !key.includes('SS')
+        },
+        'MF-SS': {
+            scenarioMatch: ['MF', 'SS'],
+            useIndividual: false,
+            target: null,
+            filterKey: key => key.includes('MF') && key.includes('SS') && !key.includes('AF') && !key.includes('PS')
+        }
+    }[scenarioType];
+
+    if (!config) {
+        console.warn(`Unknown scenario type: ${scenarioType}`);
+        return null;
+    }
+
+    const matchScenario = id => Array.isArray(config.scenarioMatch)
+        ? config.scenarioMatch.some(m => id?.includes(m))
+        : id?.includes(config.scenarioMatch);
+
+    const textResult = participantTextResults.find(result => {
+        if (!matchScenario(result.scenario_id)) return false;
+        return config.useIndividual
+            ? result.individualMostLeastAligned?.length
+            : result.mostLeastAligned?.some(item => item.target === null);
+    });
+
+    const alignmentSource = config.useIndividual
+        ? textResult?.individualMostLeastAligned
+        : textResult?.mostLeastAligned;
+
+    const alignmentData = alignmentSource?.find(item => item.target === config.target);
+
+    if (!alignmentData?.response?.length) {
+        console.warn(`No alignment data for ${scenarioType}`);
+        return null;
+    }
+
+    const filteredResponse = alignmentData.response.filter(entry =>
+        config.filterKey(Object.keys(entry)[0])
+    );
+
+    if (filteredResponse.length === 0) {
+        console.warn(`No matching targets found for ${scenarioType}`);
+        return null;
+    }
+
+    const findAdm = (target, isBaseline) => allPages.find(x =>
+        (isBaseline || x.target === target) &&
+        x.scenarioIndex?.includes(scenarioIndex) &&
+        x.admName?.toLowerCase().includes(model.toLowerCase()) &&
+        isBaseline === x.admName?.includes('Baseline')
+    );
+
+    // Mistral AF-PS1 edge case. If most aligned is one of these, use least aligned instead and label as misaligned
+    // Mistral AF-PS1 edge case. If most aligned is one of these, use least aligned instead and label as misaligned
+    const baselineOverlapTargets = ['Feb2026-AF4-PS6', 'Feb2026-AF4-PS7', 'Feb2026-AF4-PS8'];
+    const isMistralAFPS1 = model.toLowerCase() === 'mistral' && scenarioIndex === 'AF-PS1';
+    const mostAlignedTarget = Object.keys(filteredResponse[0])[0];
+    const leastAlignedTarget = Object.keys(filteredResponse.at(-1))[0];
+    const useLeastAligned = isMistralAFPS1 && baselineOverlapTargets.includes(mostAlignedTarget);
+
+    const selectedAdm = findAdm(useLeastAligned ? leastAlignedTarget : mostAlignedTarget, false);
+    const baselineAdm = findAdm(null, true);
+    const misalignedAdm = isMF3 ? findAdm(leastAlignedTarget, false) : null;
+
+    if (!selectedAdm || !baselineAdm) {
+        console.warn(`Missing ADMs for ${scenarioType} - selected: ${!!selectedAdm}, baseline: ${!!baselineAdm}`);
+        return null;
+    }
+
+    // In the baseline overlap case, label as misaligned; otherwise aligned
+    const [alignment, admChoiceProcess] = useLeastAligned 
+        ? ['misaligned', 'least aligned'] 
+        : ['aligned', 'most aligned'];
+    Object.assign(selectedAdm, { alignment, admChoiceProcess });
+    baselineAdm.alignment = 'baseline';
+    if (misalignedAdm) {
+        Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
+    }
+
+
+    const pages = [selectedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
+
+    return {
+        type: scenarioType,
+        model,
+        pages: [...shuffle([...pages]), genComparisonPagev10(selectedAdm, baselineAdm, misalignedAdm)]
+    };
+};
+
+
+const genComparisonPagev10 = (aligned, baseline, misaligned) => {
+    // handles if misaligned is null (is null for ps-af and mf-ss)
+    const alignedName = aligned.name;
+    const baselineName = baseline.name;
+
+    const createComparisonElements = (name1, name2) => [
+        {
+            "type": "comparison-phase-2",
+            "name": `${name1} vs ${name2}: Review`,
+            "title": "",
+            "decisionMakers": [name1, name2]
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Forced Choice`,
+            "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+            "choices": [name1, name2],
+            "isRequired": true
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Percent Delegation`,
+            "title": "For a set of future patients, you can delegate the patients to either or both of these decision-makers. In this scenario, either of these decision makers could handle 100% of this task load in a timely manner and it is not more or less efficient to divide the work between them. How would you allocate the patients between these two decision makers?",
+            "choices": [
+                `${name1} 100%`,
+                `${name1} 75% / ${name2} 25%`,
+                `${name1} 50% / ${name2} 50%`,
+                `${name1} 25% / ${name2} 75%`,
+                `${name2} 100%`
+            ],
+            "isRequired": true
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Rate your confidence about the delegation decision indicated in the previous question`,
+            "title": "Rate your confidence about the delegation decision indicated in the previous question",
+            "choices": [
+                "Not confident at all",
+                "Not confident",
+                "Somewhat confident",
+                "Confident",
+                "Completely confident"
+            ],
+            "isRequired": true
+        },
+        {
+            "type": "comment",
+            "name": `${name1} vs ${name2}: Explain your response to the delegation preference question`,
+            "title": "Explain your response to the delegation preference question:",
+            "isRequired": true
+        }
+    ];
+
+    const elements = [
+        ...createComparisonElements(alignedName, baselineName),
+        ...(misaligned ? createComparisonElements(alignedName, misaligned.name) : [])
+    ];
+
+    const pageName = misaligned
+        ? `${alignedName} vs ${baselineName} vs ${misaligned.name}`
+        : `${alignedName} vs ${baselineName}`;
+
+    return {
+        "name": pageName,
+        "scenarioIndex": aligned.scenarioIndex,
+        "pageType": "comparison",
+        "admAuthor": aligned.admAuthor,
+        "alignedName": aligned.admName,
+        "alignedTarget": aligned.target,
+        "baselineName": baseline.admName,
+        "baselineTarget": baseline.target,
+        "misalignedName": misaligned?.admName ?? null,
+        "misalignedTarget": misaligned?.target ?? null,
+        "elements": elements
+    };
+};
