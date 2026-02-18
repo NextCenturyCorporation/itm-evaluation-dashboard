@@ -1614,6 +1614,7 @@ function getRatingsBySelectionStatus(data) {
 
 function populateDataSetP2(data) {
     const pLog = data.getParticipantLog;
+    const demographicsData = data.getDemographicsByEval ?? [];
     const results = [];
     const processedPids = new Set();
 
@@ -1630,10 +1631,13 @@ function populateDataSetP2(data) {
         if (processedPids.has(pid)) continue;
 
         const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
-        if (survey && !survey?.results?.['Post-Scenario Measures']) continue;
-
+        // this filters out incomplete surveys from previous evals but eval 15 has no post scenario measure page in the survey
+        if (survey && !survey?.results?.['Post-Scenario Measures'] && survey?.results?.evalNumber !== 15) continue;
         const participant = pLog.find((p) => p.ParticipantID === Number(pid));
         if (!participant) continue;
+
+        const demographics = demographicsData.find((x) => x.surveyId === pid || x.surveyId === Number(pid));
+        const demoMeasures = demographics?.results?.['Post-Scenario Measures'];
 
         const row = {};
         row['Participant ID'] = pid;
@@ -1721,6 +1725,18 @@ function populateDataSetP2(data) {
             row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
             row['Trust'] = getOverallTrust(survey);
             row['Delegation'] = getOverallDelRate(survey);
+        }
+
+        if (!row['MedRole'] && demoMeasures) {
+            row['MedRole'] = demoMeasures['What is your current role'] ?? null;
+            row['MedExp'] = demoMeasures['Years of experience in role'] ?? null;
+            row['MilitaryExp'] = demoMeasures['Served in Military'] ?? null;
+            row['YrsMilExp'] = safeGet(demographics, ['results', 'Post-Scenario Measures', 'How many years of experience do you have serving in a medical role in the military']) ?? null;
+            
+            const trust1 = TRUST_MAP[demoMeasures['I feel that people are generally reliable']] ?? 0;
+            const trust2 = TRUST_MAP[demoMeasures['I usually trust people until they give me a reason not to trust them']] ?? 0;
+            const trust3 = TRUST_MAP[demoMeasures['Trusting another person is not difficult for me']] ?? 0;
+            row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
         }
 
         results.push(row);
