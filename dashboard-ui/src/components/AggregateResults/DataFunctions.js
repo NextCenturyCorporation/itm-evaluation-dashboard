@@ -1717,7 +1717,11 @@ function populateDataSetP2(data) {
             row['MedExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '');
             row['MilitaryExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Served in Military', 'response'], '');
             row['YrsMilExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'How many years of experience do you have serving in a medical role in the military', 'response'], '');
-
+            row['Active-DecisionMaking'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation', 'response'], '');
+            row['Sufficient-Info'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs', 'response'], '');
+            row['Open-Influence'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'What was the biggest influence on your delegation decision between different medics?', 'response'], '');
+            row['VRExperience'] = safeGet(survey, ['results', 'VR Page', 'questions', 'VR Experience Level', 'response'], '');
+            row['VRComfort'] = safeGet(survey, ['results', 'VR Page', 'questions', 'VR Comfort Level', 'response'], '');
             const trust1 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I feel that people are generally reliable', 'response'])] ?? 0;
             const trust2 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I usually trust people until they give me a reason not to trust them', 'response'])] ?? 0;
             const trust3 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Trusting another person is not difficult for me', 'response'])] ?? 0;
