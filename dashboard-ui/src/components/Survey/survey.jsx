@@ -615,6 +615,10 @@ class SurveyPage extends Component {
             });
 
             const finalPages = [...introPages, ...selectedPages]
+            const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
+            if (postScenarioPage) {
+                finalPages.push(postScenarioPage);
+            }
             this.surveyConfigClone.pages = finalPages;
 
             const pageOrder = finalPages.map(page => page.name);
