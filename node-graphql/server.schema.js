@@ -98,7 +98,8 @@ const typeDefs = gql`
     updateTextEval(eval: String!): String
     updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
     updateShowDemographics(showDemographics: Boolean!): JSON,
-    deleteDataByPID(caller: JSON, pid: String): JSON
+    deleteDataByPID(caller: JSON, pid: String): JSON,
+    updateScenarioResult(id: String!, updates: JSON!): JSON
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
@@ -1087,6 +1088,13 @@ const resolvers = {
           extensions: { code: '404' }
         });
       }
+    },
+    updateScenarioResult: async (obj, args, context, inflow) => {
+        const result = await context.db.collection('userScenarioResults').updateOne(
+            { _id: new ObjectId(args.id) },
+            { $set: args.updates }
+        );
+        return { ok: result.modifiedCount > 0, modifiedCount: result.modifiedCount };
     },
   },
   StringOrFloat: new GraphQLScalarType({
