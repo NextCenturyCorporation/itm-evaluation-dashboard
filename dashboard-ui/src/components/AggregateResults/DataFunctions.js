@@ -143,7 +143,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12];
+export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12, 15];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -477,7 +477,7 @@ function getOverallDelRate(res) {
             if (pageName.includes(' vs ')) {
                 for (const q of Object.keys(res.results[pageName].questions)) {
                     // ignore parallax runs where it's only misaligned vs baseline
-                    if (q?.includes("Forced Choice") && (res.results[pageName]['admAlignment']?.includes(' aligned') || res.results[pageName]['admAlignment']?.includes('multi-KDMA comparison')) ) {
+                    if (q?.includes("Forced Choice") && (res.results[pageName]['admAlignment']?.includes(' aligned') || res.results[pageName]['admAlignment']?.includes('multi-KDMA comparison'))) {
                         tally += 1;
                         const response = res.results[pageName].questions[q].response;
                         const aligned = q.split(' vs ')[0]; // aligned is always listed first in forced choice questions
@@ -804,7 +804,7 @@ function populateDataSet(data) {
             // get seasoned first responder. use not sure as default
             let medExp = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'I consider myself a seasoned first responder', 'response']);
             tmpSet['MedExp'] = isDefined(medExp) ? isDefined(MED_EXP_MAP[medExp]) ? MED_EXP_MAP[medExp] : 1 : null;
-            if (!medExp) { 
+            if (!medExp) {
                 tmpSet['MedExp'] = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '');
             }
 
@@ -1675,14 +1675,14 @@ function populateDataSetP2(data) {
 
                 const prefix =
                     scenario.scenario_id.includes('-AF') ? 'AF' :
-                    scenario.scenario_id.includes('-MF') ? 'MF' :
-                    scenario.scenario_id.includes('-PS') ? 'PS' :
-                    scenario.scenario_id.includes('-SS') ? 'SS' :
-                    null;
+                        scenario.scenario_id.includes('-MF') ? 'MF' :
+                            scenario.scenario_id.includes('-PS') ? 'PS' :
+                                scenario.scenario_id.includes('-SS') ? 'SS' :
+                                    null;
 
                 if (prefix) {
                     row[`${prefix}_intercept`] = params.intercept;
-                    row[`${prefix}_medical`]   = params.medical;
+                    row[`${prefix}_medical`] = params.medical;
                     row[`${prefix}_attribute`] = params.attribute;
                 }
 
@@ -1730,12 +1730,27 @@ function populateDataSetP2(data) {
         if (!row['MedRole'] && demoMeasures) {
             row['MedRole'] = demoMeasures['What is your current role'] ?? null;
             row['MedExp'] = demoMeasures['Years of experience in role'] ?? null;
+            row['Imagine'] = demoMeasures['I was easily able to imagine myself as the medic in these scenarios'] ?? null
+            row['Experience-Informed'] = demoMeasures['I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios'] ?? null
+            row['Env-Practice'] = demoMeasures['Primary practice environment'] ?? null
+            row['MCIExperience'] = demoMeasures['Have you participated in mass casualty events'] ?? null
             row['MilitaryExp'] = demoMeasures['Served in Military'] ?? null;
-            row['YrsMilExp'] = safeGet(demographics, ['results', 'Post-Scenario Measures', 'How many years of experience do you have serving in a medical role in the military']) ?? null;
-            
+            row['MilBranch'] = demoMeasures['Military Branch'] ?? null
+            row['MilMed'] = demoMeasures['Did you serve in a military medical role'] ?? null
+            row['MOS'] = demoMeasures['What was/is your medical-related MOS or rate'] ?? null
+            row['YrsMilExp'] = demoMeasures['How many years of experience do you have serving in a medical role in the military'] ?? null;
+            row['Env-Experience'] = demoMeasures['In which environments have you provided medical care during military service'] ?? null
+            row['TCCCTraining'] = demoMeasures['When did you last complete TCCC training or recertification'] ?? null
+            row['TCCCExpertise'] = demoMeasures['How would you rate your expertise with TCCC procedures'] ?? null
+            row['TCCCExperience'] = demoMeasures['How many real-world casualties have you assessed using TCCC protocols'] ?? null
+
             const trust1 = TRUST_MAP[demoMeasures['I feel that people are generally reliable']] ?? 0;
             const trust2 = TRUST_MAP[demoMeasures['I usually trust people until they give me a reason not to trust them']] ?? 0;
             const trust3 = TRUST_MAP[demoMeasures['Trusting another person is not difficult for me']] ?? 0;
+
+            row['TrustPropensity1'] = trust1 || null;
+            row['TrustPropensity2'] = trust2 || null;
+            row['TrustPropensity3'] = trust3 || null;
             row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
         }
 
