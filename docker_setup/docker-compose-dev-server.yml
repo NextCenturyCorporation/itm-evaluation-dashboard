@@ -61,5 +61,5 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=dashr00tp@ssw0rd
     volumes:
       - ./resources/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    expose:
-      - "27030"
+    ports:
+      - "27030:27030"
