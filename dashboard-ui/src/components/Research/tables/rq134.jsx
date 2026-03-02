@@ -49,6 +49,7 @@ const HEADERS_DRE = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp',
 const HEADERS_PH1 = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'TA1_Name', 'Trial_ID', 'Attribute', 'Scenario', 'TA2_Name', 'ADM_Type', 'Target', 'P1E/Population Alignment score (ADM|target)', 'DRE/Distance Alignment score (ADM|target)', 'P1E/Population Alignment score (Delegator|target)', 'DRE/Distance Alignment score (Delegator|target)', 'Alignment score (Participant_sim|Observed_ADM(target))', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'DRE ADM Loading', 'Competence Error', 'P1E/Population Alignment score (Delegator|Observed_ADM (target))', 'DRE/Distance Alignment score (Delegator|Observed_ADM (target))', 'Truncation Error', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Delegation (A/HH)', 'Delegation (A/HL)', 'Delegation (A/LH)', 'Delegation (A/LL)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Server Session ID (Delegator)', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation Preference (PSAF-1/PSAF-2)', 'Delegation Preference (PSAF-1/PSAF-3)', 'Delegation Preference (PSAF-1/PSAF-4)', 'Delegation Preference (PSAF-2/PSAF-3)', 'Delegation Preference (PSAF-2/PSAF-4)', 'Delegation Preference (PSAF-3/PSAF-4)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_PH2_FEB_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Delegation (A/HH)', 'Delegation (A/HL)', 'Delegation (A/LH)', 'Delegation (A/LL)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 
 export function RQ134({ evalNum, tableTitle }) {
     // -------------------------- State: filters, toggles, and table data --------------------------
@@ -99,34 +100,34 @@ export function RQ134({ evalNum, tableTitle }) {
 
     // Set evals to be rendered by number
     const evalNumbers = React.useMemo(() => {
-      const evalNumbers = [evalNum];
+        const evalNumbers = [evalNum];
 
-      if (includeDRE || includeUSEvals) evalNumbers.push(4);
-      if (includeJAN || includeUSEvals) evalNumbers.push(6);
-      if (includeJune || includeUSEvals) evalNumbers.push(8);
-      if (includeJuly) evalNumbers.push(9);
+        if (includeDRE || includeUSEvals) evalNumbers.push(4);
+        if (includeJAN || includeUSEvals) evalNumbers.push(6);
+        if (includeJune || includeUSEvals) evalNumbers.push(8);
+        if (includeJuly) evalNumbers.push(9);
 
-      return evalNumbers;
+        return evalNumbers;
     }, [
-      evalNum,
-      includeDRE,
-      includeJAN,
-      includeJune,
-      includeJuly,
-      includeUSEvals
+        evalNum,
+        includeDRE,
+        includeJAN,
+        includeJune,
+        includeJuly,
+        includeUSEvals
     ]);
 
     const evalNumbersToFetchSurveys = React.useMemo(
-      () => evalNumbers.filter((num) => !fetchedSurveyEvals.includes(num)),
-      [evalNumbers, fetchedSurveyEvals]
+        () => evalNumbers.filter((num) => !fetchedSurveyEvals.includes(num)),
+        [evalNumbers, fetchedSurveyEvals]
     );
     const evalNumbersToFetchScenarios = React.useMemo(
-      () => evalNumbers.filter((num) => !fetchedScenarioEvals.includes(num)),
-      [evalNumbers, fetchedScenarioEvals]
+        () => evalNumbers.filter((num) => !fetchedScenarioEvals.includes(num)),
+        [evalNumbers, fetchedScenarioEvals]
     );
     const evalNumbersToFetchComparison = React.useMemo(
-      () => evalNumbers.filter((num) => !fetchedComparisonEvals.includes(num)),
-      [evalNumbers, fetchedComparisonEvals]
+        () => evalNumbers.filter((num) => !fetchedComparisonEvals.includes(num)),
+        [evalNumbers, fetchedComparisonEvals]
     );
 
     // ------------------------------------ GraphQL query hooks ------------------------------------
@@ -137,48 +138,48 @@ export function RQ134({ evalNum, tableTitle }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA_BY_EVAL, { variables: { "evalNumber": evalNum } });
     // Queries fetched by eval number
     const {
-      loading: loadingSurveyResults,
-      error: errorSurveyResults
+        loading: loadingSurveyResults,
+        error: errorSurveyResults
     } = useQuery(GET_SURVEY_RESULTS_BY_EVAL_ARRAY, {
-      variables: { evalNumbers: evalNumbersToFetchSurveys },
-      skip: evalNumbersToFetchSurveys.length === 0,
-      onCompleted: (data) => {
-        const newRows = data?.getSurveyResultsByEvalArray ?? [];
-        setSurveyData((prev) => [...prev, ...newRows]); // append new rows to surveyData
-        // mark evals as fetched so we don't refetch them
-        setFetchedSurveyEvals((prev) => [...prev, ...evalNumbersToFetchSurveys]);
-      }
+        variables: { evalNumbers: evalNumbersToFetchSurveys },
+        skip: evalNumbersToFetchSurveys.length === 0,
+        onCompleted: (data) => {
+            const newRows = data?.getSurveyResultsByEvalArray ?? [];
+            setSurveyData((prev) => [...prev, ...newRows]); // append new rows to surveyData
+            // mark evals as fetched so we don't refetch them
+            setFetchedSurveyEvals((prev) => [...prev, ...evalNumbersToFetchSurveys]);
+        }
     });
     const {
-      loading: loadingTextResults,
-      error: errorTextResults
+        loading: loadingTextResults,
+        error: errorTextResults
     } = useQuery(GET_SCENARIO_RESULTS_BY_EVAL_ARRAY, {
-      variables: { evalNumbers: evalNumbersToFetchScenarios },
-      skip: evalNumbersToFetchScenarios.length === 0,
-      onCompleted: (data) => {
-        const newRows = data?.getScenarioResultsByEvalArray ?? [];
-        setTextResultsData((prev) => [...prev, ...newRows]); // append new rows to textResultsData
-        // mark evals as fetched so we don't refetch them
-        setFetchedScenarioEvals((prev) => [...prev, ...evalNumbersToFetchScenarios]);
-      }
+        variables: { evalNumbers: evalNumbersToFetchScenarios },
+        skip: evalNumbersToFetchScenarios.length === 0,
+        onCompleted: (data) => {
+            const newRows = data?.getScenarioResultsByEvalArray ?? [];
+            setTextResultsData((prev) => [...prev, ...newRows]); // append new rows to textResultsData
+            // mark evals as fetched so we don't refetch them
+            setFetchedScenarioEvals((prev) => [...prev, ...evalNumbersToFetchScenarios]);
+        }
     });
     const {
-      loading: loadingComparisonData,
-      error: errorComparisonData,
+        loading: loadingComparisonData,
+        error: errorComparisonData,
     } = useQuery(GET_COMPARISON_DATA_BY_EVAL_ARRAY, {
-      variables: { evalNumbers: evalNumbersToFetchComparison },
-      skip: evalNumbersToFetchComparison.length === 0,
-      onCompleted: (data) => {
-        const newRows = data?.getHumanToADMComparisonByEvalArray ?? [];
-        setComparisonData((prev) => [...prev, ...newRows]); // append new rows to comparisonData
-        // mark evals as fetched so we don't refetch them
-        setFetchedComparisonEvals((prev) => [...prev, ...evalNumbersToFetchComparison]);
-      }
+        variables: { evalNumbers: evalNumbersToFetchComparison },
+        skip: evalNumbersToFetchComparison.length === 0,
+        onCompleted: (data) => {
+            const newRows = data?.getHumanToADMComparisonByEvalArray ?? [];
+            setComparisonData((prev) => [...prev, ...newRows]); // append new rows to comparisonData
+            // mark evals as fetched so we don't refetch them
+            setFetchedComparisonEvals((prev) => [...prev, ...evalNumbersToFetchComparison]);
+        }
     });
     // Sim and ADM queries
     const { data: dreAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
-      variables: { evalNumber: 4 },
-      skip: !includeDRE && !includeUSEvals
+        variables: { evalNumber: 4 },
+        skip: !includeDRE && !includeUSEvals
     });
     const { data: juneAdms } = useQuery(GET_ADM_DATA_BY_EVAL, {
         variables: { evalNumber: 8 },
@@ -273,7 +274,7 @@ export function RQ134({ evalNum, tableTitle }) {
             (!needsJuly || (julyAdms?.getAllHistoryByEvalNumber && julySim?.getAllSimAlignmentByEval))
         ) {
             const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim);
-
+            console.log(data)
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
                     ...obj,
