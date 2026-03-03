@@ -420,8 +420,24 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         const admNameMatches = obj['pageType'] === 'comparison'
                             ? obj['baselineName']?.includes(entry['admName'])
                             : obj['admName']?.includes(entry['admName']);
-                        //const scenarioMatches = obj['scenarioIndex'] === scenario;
-                        return alignMatches && ta2Matches /*&& scenarioMatches*/ && admNameMatches;
+
+                        const scenarioIndex = obj['scenarioIndex'] ?? '';
+                        let attributeScenarioMatches;
+                        switch (entry['Attribute']) {
+                            case 'MF-SS':
+                                attributeScenarioMatches = scenarioIndex.includes('MF-SS');
+                                break;
+                            case 'MF':
+                                attributeScenarioMatches = scenarioIndex.includes('MF') && !scenarioIndex.includes('MF-SS');
+                                break;
+                            case 'AF-PS':
+                                attributeScenarioMatches = scenarioIndex.includes('AF-PS');
+                                break;
+                            default:
+                                attributeScenarioMatches = true;
+                        }
+
+                        return alignMatches && ta2Matches && admNameMatches && attributeScenarioMatches;
                     }
 
                     if (entry['TA1'] === 'Adept') {
