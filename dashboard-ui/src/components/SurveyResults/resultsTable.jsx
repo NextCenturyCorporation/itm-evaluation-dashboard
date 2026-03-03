@@ -392,6 +392,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                     else {
                         const roles = response?.toString();
+                        
+                        if (!roles) {
+                            continue
+                        }
+                        
                         const rolesArray = roles.split(',');
                         
                         const mappedRoles = rolesArray.map(role => {
