@@ -365,7 +365,6 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
 
                         scenario = getDelEnvMapping(evalNum)[ph2_scenario][mapping_array_number];
                         const scenarioMatches = obj['scenarioIndex']?.slice(0, -6) === scenario?.slice(0, -6);
-                        console.log(scenarioMatches)
                         return alignMatches && ta2Matches && scenarioMatches;
                     }
                     if (evalNum == 10) {
@@ -418,13 +417,14 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                     }
 
                     if (evalNum === 15) {
-                        const admNameMatches = obj['admName']?.includes(entry['admName']);
+                        const admNameMatches = obj['pageType'] === 'comparison'
+                            ? obj['baselineName']?.includes(entry['admName'])
+                            : obj['admName']?.includes(entry['admName']);
                         //const scenarioMatches = obj['scenarioIndex'] === scenario;
                         return alignMatches && ta2Matches /*&& scenarioMatches*/ && admNameMatches;
                     }
 
                     if (entry['TA1'] === 'Adept') {
-                        console.log(ad_scenario)
                         scenario = entry['Attribute'] === 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
                     }
                     else {
@@ -434,7 +434,6 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
 
                     return alignMatches && ta2Matches && scenarioMatches;
                 });
-                console.log(pagesFound)
                 if (pagesFound.length == 0) {
                     // likely from missing misaligned/aligned for those few parallax adms
                     continue;
@@ -563,6 +562,10 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                     if (evalNum === 4 && fullSetOnly && includeDreServer) {
                         entryObj['DRE ADM Loading'] = entryObj['ADM Loading'];
                         entryObj['ADM Loading'] = entry['TA1'] === 'Adept' ? page.ph1ChoiceProcess : entryObj['ADM Loading']
+                    }
+
+                    if (evalNum === 15) {
+                        entryObj['Kitware Model'] = page['admName']?.replace('ALIGN-ADM-', '') ?? '-';
                     }
 
                     entryObj['Competence Error'] = (evalNum === 5 || evalNum === 6) && entry['TA2'] === 'Kitware' && entryObj['ADM_Type'] === 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
@@ -699,20 +702,27 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
                         entryObj['Probe Set Assessment'] = page["scenarioIndex"].includes('PS-AF') ? logData["PS-AF-text-scenario"] : logData["AF-text-scenario"];
                         allProbeSetAssessment.push(entryObj['Probe Set Assessment'])
-                        // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
-                        if (evalNum !== 10) {
+
+                        if (evalNum === 15) {
+                            const match = page['scenarioIndex']?.match(/(\d+)-observe$/);
+                            entryObj['Probe Set Observation'] = match ? parseInt(match[1]) : '-';
+                        } else if (evalNum !== 10) {
+                            // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
                             const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
                             entryObj['Probe Set Observation'] = adjustScenarioNumber(
                                 isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
                             );
-                        }
-                        else {
+                        } else {
                             const isMultiKdma = page['scenarioIndex'].includes('PS-AF');
                             const isCombined = page['scenarioIndex'].includes("PSAF");
                             entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData["PS-AF-text-scenario"], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
                         }
                         allProbeSetObservation.push(entryObj['Probe Set Observation'])
                         entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
+                        if (evalNum === 15 && page['scenarioIndex'] === 'Feb2026-MF3-observe') {
+                            entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
+                                textResultsForPID.find(r => r.scenario_id?.includes('MF') && !r.scenario_id?.includes('SS'))?.individualSessionId ?? '-';
+                        }
                     }
 
                     // include truncation error status for all, column visibility toggled from rq134.jsx
@@ -728,6 +738,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                     entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
 
                     if (t === 'comparison') {
+                        console.log('inside comparison')
                         const adms = page['pageName'].split(' vs ');
                         if (evalNum == 10 && adms.length === 2) {
                             handlePSAFPreferences(res.results, page, entryObj, allObjs);
@@ -735,29 +746,44 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         else if (evalNum >= 8 && adms.length === 4) {
                             handleMultiKdmaComparison(res.results, page, entryObj, allObjs);
                         } else {
-                            const alignedAdm = adms[1];
-                            const baselineAdm = adms[0];
+                            const alignedAdm = evalNum === 15 ? adms[0] : adms[1];
+                            const baselineAdm = evalNum === 15 ? adms[1] : adms[0];
                             const misalignedAdm = adms[2];
+
                             const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
                             const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
 
                             entryObj['Delegation preference (A/B)'] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : 'B');
                             entryObj['Delegation preference (A/M)'] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
-                            // need to back-populate previous rows with which was chosen
+                            entryObj['Delegation Percentage (Aligned/Baseline)'] = '-';
+                            entryObj['Delegation Percentage (Aligned/Misaligned)'] = '-';
+
+                            const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
+                            const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
+
+                            const extractPct = (response, medicName) => {
+                                const match = response !== '-' && response?.match(new RegExp(medicName + '\\s+(\\d+%)'));
+                                return match ? match[1] : '-';
+                            };
+
                             for (let i = 0; i < 3; i++) {
-                                switch (allObjs?.[allObjs.length - 1 - i]?.['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                                const row = allObjs[allObjs.length - 1 - i];
+                                if (!row) break;
+                                switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
                                     case 'aligned':
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
-                                        break
+                                        row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
+                                        if (misalignedAdm) row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
+                                        row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, alignedAdm);
+                                        if (misalignedAdm) row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, alignedAdm);
+                                        break;
                                     case 'baseline':
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
-                                        break
+                                        row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
+                                        row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, baselineAdm);
+                                        break;
                                     case 'misaligned':
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
-                                        break
-                                    default:
-                                        break
+                                        row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
+                                        row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, misalignedAdm);
+                                        break;
                                 }
                             }
                         }
