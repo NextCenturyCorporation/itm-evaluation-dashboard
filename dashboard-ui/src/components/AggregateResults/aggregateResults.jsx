@@ -21,6 +21,7 @@ const GET_SURVEY_RESULTS = gql`
         getAllSurveyResultsByEval(evalNumber: $evalNumber),
         getAllScenarioResultsByEval(evalNumber: $evalNumber),
         getAllSimAlignmentByEval(evalNumber: $evalNumber),
+        getDemographicsByEval(evalNumber: $evalNumber),
         getParticipantLog
     }`;
 

@@ -74,6 +74,7 @@ const typeDefs = gql`
     getTextEvalOptions: [String] @complexity(value: 10)
     getPidBounds: JSON @complexity(value: 5)
     getShowDemographics: JSON @complexity(value: 5)
+    getDemographicsByEval(evalNumber: Float): [JSON] @complexity(value: 20)
     getSurveyConfigByVersion(version: String!): [JSON] @complexity(value: 50)
     getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
   }
@@ -669,6 +670,9 @@ const resolvers = {
     getShowDemographics: async (obj, args, context, info) => {
       const demographics = await context.db.collection('surveyVersion').findOne();
       return demographics.showDemographics;
+    },
+    getDemographicsByEval: async (obj, args, context, info) => {
+      return await context.db.collection('demographicsData').find({'results.evalNumber': args.evalNumber}).toArray().then(result => {return result})
     },
     getSurveyConfigByVersion: async (obj, args, context, inflow) => {
       const version = parseFloat(args.version);

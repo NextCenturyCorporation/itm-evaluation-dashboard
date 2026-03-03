@@ -6,10 +6,12 @@ import dreXlFile from './Variable Definitions/DRE_Variables.xlsx';
 import ph1XlFile from './Variable Definitions/PH1_Variables.xlsx'
 import ph2XlFile from './Variable Definitions/PH2_Variables.xlsx'
 import ukXlFile from './Variable Definitions/UK_Variables.xlsx'
+import ph2FebXlFile from './Variable Definitions/PH2_Feb_Variables.xlsx'
 const getDefinitionFile = (evalNumber) => {
     if (evalNumber === 4) return { file: dreXlFile, prefix: 'dre_' };
     if (evalNumber === 5) return { file: ph1XlFile, prefix: 'ph1_' };
-    if (evalNumber === 12) return { file: ukXlFile, prefix: 'uk_'}
+    if (evalNumber === 12) return { file: ukXlFile, prefix: 'uk_'};
+    if (evalNumber === 15) return { file: ph2FebXlFile, prefix: 'ph2_feb_' };
     if (evalNumber >= 8) return { file: ph2XlFile, prefix: 'ph2_' };
     return { file: mreXlFile, prefix: 'mre_' };
 };
@@ -28,8 +30,9 @@ export function DefinitionTable({ evalNumber }) {
             const wb = XLSX.read(arraybuffer, { type: 'array' });
             const ws = wb.Sheets[wb.SheetNames[0]];
             const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            const maxLen = data[0].length
             for (let i = 0; i < data.length; i++) {
-                for (let j = 0; j < data[i].length; j++) {
+                for (let j = 0; j < maxLen; j++) {
                     if (data[i][j] === undefined) {
                         data[i][j] = '-';
                     }

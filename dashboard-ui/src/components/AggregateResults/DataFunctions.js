@@ -143,7 +143,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12];
+export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12, 15];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -477,7 +477,7 @@ function getOverallDelRate(res) {
             if (pageName.includes(' vs ')) {
                 for (const q of Object.keys(res.results[pageName].questions)) {
                     // ignore parallax runs where it's only misaligned vs baseline
-                    if (q?.includes("Forced Choice") && (res.results[pageName]['admAlignment']?.includes(' aligned') || res.results[pageName]['admAlignment']?.includes('multi-KDMA comparison')) ) {
+                    if (q?.includes("Forced Choice") && (res.results[pageName]['admAlignment']?.includes(' aligned') || res.results[pageName]['admAlignment']?.includes('multi-KDMA comparison'))) {
                         tally += 1;
                         const response = res.results[pageName].questions[q].response;
                         const aligned = q.split(' vs ')[0]; // aligned is always listed first in forced choice questions
@@ -804,7 +804,7 @@ function populateDataSet(data) {
             // get seasoned first responder. use not sure as default
             let medExp = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'I consider myself a seasoned first responder', 'response']);
             tmpSet['MedExp'] = isDefined(medExp) ? isDefined(MED_EXP_MAP[medExp]) ? MED_EXP_MAP[medExp] : 1 : null;
-            if (!medExp) { 
+            if (!medExp) {
                 tmpSet['MedExp'] = safeGet(res, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '');
             }
 
@@ -1614,96 +1614,157 @@ function getRatingsBySelectionStatus(data) {
 
 function populateDataSetP2(data) {
     const pLog = data.getParticipantLog;
+    const demographicsData = data.getDemographicsByEval ?? [];
     const results = [];
     const processedPids = new Set();
-    
+
     const scenariosByPid = {};
     for (const res of data.getAllScenarioResultsByEval) {
         const pid = res['participantID'];
         if (!pid) continue;
-        
-        if (!scenariosByPid[pid]) {
-            scenariosByPid[pid] = [];
-        }
+
+        if (!scenariosByPid[pid]) scenariosByPid[pid] = [];
         scenariosByPid[pid].push(res);
     }
-    
+
     for (const pid of Object.keys(scenariosByPid)) {
         if (processedPids.has(pid)) continue;
-        
+
         const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
-        // skip if the survey is incomplete (but include if no survey at all for initial june 2025 batch)
-        if (survey && !survey?.results?.['Post-Scenario Measures']) continue;
-        
+        // this filters out incomplete surveys from previous evals but eval 15 has no post scenario measure page in the survey
+        if (survey && !survey?.results?.['Post-Scenario Measures'] && survey?.results?.evalNumber !== 15) continue;
         const participant = pLog.find((p) => p.ParticipantID === Number(pid));
         if (!participant) continue;
-        
+
+        const demographics = demographicsData.find((x) => x.surveyId === pid || x.surveyId === Number(pid));
+        const demoMeasures = demographics?.results?.['Post-Scenario Measures'];
+
         const row = {};
         row['Participant ID'] = pid;
         processedPids.add(pid);
-        
+
         const scenarios = scenariosByPid[pid];
-        
+
         if (scenarios.length > 0) {
             row['Date'] = new Date(safeGet(scenarios[0], ['startTime'], ['timeComplete'])).toLocaleDateString();
         }
-        
+
         row['Probe Set'] = participant['AF-text-scenario'];
         row['AF_KDMA_Text'] = null;
         row['MF_KDMA_Text'] = null;
         row['PS_KDMA_Text'] = null;
         row['SS_KDMA_Text'] = null;
-        
+
+        const isEval15 = data.getAllScenarioResultsByEval[0]?.evalNumber === 15;
+
+        if (isEval15) {
+            row['AF_intercept'] = row['AF_medical'] = row['AF_attribute'] = null;
+            row['MF_intercept'] = row['MF_medical'] = row['MF_attribute'] = null;
+            row['PS_intercept'] = row['PS_medical'] = row['PS_attribute'] = null;
+            row['SS_intercept'] = row['SS_medical'] = row['SS_attribute'] = null;
+        }
+
         if (data.getAllScenarioResultsByEval[0]?.evalNumber === 10) {
             row['PS_Multi_KDMA_Text'] = null;
             row['AF_Multi_KDMA_Text'] = null;
         }
-        
+
         for (const scenario of scenarios) {
+            if (isEval15 && scenario?.kdmas?.length) {
+                const params = getKdmaParamsFromScenario(scenario);
+
+                const prefix =
+                    scenario.scenario_id.includes('-AF') ? 'AF' :
+                        scenario.scenario_id.includes('-MF') ? 'MF' :
+                            scenario.scenario_id.includes('-PS') ? 'PS' :
+                                scenario.scenario_id.includes('-SS') ? 'SS' :
+                                    null;
+
+                if (prefix) {
+                    row[`${prefix}_intercept`] = params.intercept;
+                    row[`${prefix}_medical`] = params.medical;
+                    row[`${prefix}_attribute`] = params.attribute;
+                }
+
+                continue; // do NOT do eval 8/9/10 processing on eval 15
+            }
+
             if (scenario['kdmas']) {
                 const afValue = scenario['kdmas'].find((x) => x.kdma === 'affiliation')?.value;
                 const mfValue = scenario['kdmas'].find((x) => x.kdma === 'merit')?.value;
                 const psValue = scenario['kdmas'].find((x) => x.kdma === 'personal_safety')?.value;
                 const ssValue = scenario['kdmas'].find((x) => x.kdma === 'search')?.value;
-                
+
                 if (afValue) row['AF_KDMA_Text'] = afValue;
                 if (mfValue) row['MF_KDMA_Text'] = mfValue;
-                if (psValue ) row['PS_KDMA_Text'] = psValue;
+                if (psValue) row['PS_KDMA_Text'] = psValue;
                 if (ssValue) row['SS_KDMA_Text'] = ssValue;
-                
-                if (data.getAllScenarioResultsByEval[0]?.evalNumber === 10 && 
-                    scenario['scenario_id'] && scenario['scenario_id'].includes('PS-AF')) {
-                    // multi kdma scores PS-AF
+
+                if (data.getAllScenarioResultsByEval[0]?.evalNumber === 10 &&
+                    scenario['scenario_id']?.includes('PS-AF')) {
+
                     const psMultiValue = scenario['kdmas'].find((x) => x.kdma === 'personal_safety')?.value;
                     const afMultiValue = scenario['kdmas'].find((x) => x.kdma === 'affiliation')?.value;
-                    
+
                     if (psMultiValue) row['PS_Multi_KDMA_Text'] = psMultiValue;
                     if (afMultiValue) row['AF_Multi_KDMA_Text'] = afMultiValue;
                 }
             }
         }
-        
+
         if (survey) {
-            // Demographics
             row['MedRole'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'What is your current role', 'response'], '');
             row['MedExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Years of experience in role', 'response'], '');
             row['MilitaryExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Served in Military', 'response'], '');
             row['YrsMilExp'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'How many years of experience do you have serving in a medical role in the military', 'response'], '');
-            
-            // Propensity to trust
+            row['Active-DecisionMaking'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'As I was reading through the scenarios and Medic decisions, I actively thought about how I would handle the same situation', 'response'], '');
+            row['Sufficient-Info'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I had enough information in this presentation to make the ratings for the questions asked on the previous pages about the DMs', 'response'], '');
+            row['Open-Influence'] = safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'What was the biggest influence on your delegation decision between different medics?', 'response'], '');
+            row['VRExperience'] = safeGet(survey, ['results', 'VR Page', 'questions', 'VR Experience Level', 'response'], '');
+            row['VRComfort'] = safeGet(survey, ['results', 'VR Page', 'questions', 'VR Comfort Level', 'response'], '');
             const trust1 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I feel that people are generally reliable', 'response'])] ?? 0;
             const trust2 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'I usually trust people until they give me a reason not to trust them', 'response'])] ?? 0;
             const trust3 = TRUST_MAP[safeGet(survey, ['results', 'Post-Scenario Measures', 'questions', 'Trusting another person is not difficult for me', 'response'])] ?? 0;
+
             row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
             row['Trust'] = getOverallTrust(survey);
             row['Delegation'] = getOverallDelRate(survey);
         }
-        
+
+        if (!row['MedRole'] && demoMeasures) {
+            row['MedRole'] = demoMeasures['What is your current role'] ?? null;
+            row['MedExp'] = demoMeasures['Years of experience in role'] ?? null;
+            row['Imagine'] = demoMeasures['I was easily able to imagine myself as the medic in these scenarios'] ?? null
+            row['Experience-Informed'] = demoMeasures['I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios'] ?? null
+            row['Env-Practice'] = demoMeasures['Primary practice environment'] ?? null
+            row['MCIExperience'] = demoMeasures['Have you participated in mass casualty events'] ?? null
+            row['MilitaryExp'] = demoMeasures['Served in Military'] ?? null;
+            row['MilBranch'] = demoMeasures['Military Branch'] ?? null
+            row['MilMed'] = demoMeasures['Did you serve in a military medical role'] ?? null
+            row['MOS'] = demoMeasures['What was/is your medical-related MOS or rate'] ?? null
+            row['YrsMilExp'] = demoMeasures['How many years of experience do you have serving in a medical role in the military'] ?? null;
+            row['Env-Experience'] = demoMeasures['In which environments have you provided medical care during military service'] ?? null
+            row['TCCCTraining'] = demoMeasures['When did you last complete TCCC training or recertification'] ?? null
+            row['TCCCExpertise'] = demoMeasures['How would you rate your expertise with TCCC procedures'] ?? null
+            row['TCCCExperience'] = demoMeasures['How many real-world casualties have you assessed using TCCC protocols'] ?? null
+
+            const trust1 = TRUST_MAP[demoMeasures['I feel that people are generally reliable']] ?? 0;
+            const trust2 = TRUST_MAP[demoMeasures['I usually trust people until they give me a reason not to trust them']] ?? 0;
+            const trust3 = TRUST_MAP[demoMeasures['Trusting another person is not difficult for me']] ?? 0;
+
+            row['TrustPropensity1'] = trust1 || null;
+            row['TrustPropensity2'] = trust2 || null;
+            row['TrustPropensity3'] = trust3 || null;
+            row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
+        }
+
         results.push(row);
     }
-    
+
     return results;
 }
+
+function getKdmaParamsFromScenario(scenario) { const out = { intercept: null, medical: null, attribute: null }; if (!scenario?.kdmas || !scenario.kdmas.length) return out; const params = scenario.kdmas[0].parameters || []; for (const p of params) { if (p.name === 'intercept') out.intercept = p.value; if (p.name === 'medical_weight') out.medical = p.value; if (p.name === 'attr_weight') out.attribute = p.value; } return out; }
 
 export {
     populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey,
