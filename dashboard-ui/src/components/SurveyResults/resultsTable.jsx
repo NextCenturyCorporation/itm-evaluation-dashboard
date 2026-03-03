@@ -25,7 +25,8 @@ const EVAL_MAP = {
     9: 'PH2 July',
     10: 'PH2 September',
     12: "UK PH1",
-    13: 'PH2 October'
+    13: 'PH2 October',
+    15: 'PH2 February'
 }
 
 const TRUST_MAP = {
@@ -194,7 +195,7 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     )
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -256,7 +257,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
         const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
 
-        for (let block = 1; block < 5; block++) {
+        for (let block = 1; block < 6; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
