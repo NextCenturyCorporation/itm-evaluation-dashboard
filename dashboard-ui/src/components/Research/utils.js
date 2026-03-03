@@ -148,7 +148,7 @@ export function getAlignments(evalNum, textResults, pid) {
     for (const textRes of textResultsForPID) {
         // adept
         if (Object.keys(textRes).includes('combinedSessionId')) {
-            if (!addedMJ) {
+            if (!addedMJ || evalNum === 15) {
                 if (textRes['mostLeastAligned']) {
                     const atts = [];
                     for (const attSet of textRes['mostLeastAligned']) {
@@ -738,7 +738,6 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                     entryObj['Trust_Rating'] = RATING_MAP[page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.['response'] ?? '-' : '-'];
 
                     if (t === 'comparison') {
-                        console.log('inside comparison')
                         const adms = page['pageName'].split(' vs ');
                         if (evalNum == 10 && adms.length === 2) {
                             handlePSAFPreferences(res.results, page, entryObj, allObjs);
