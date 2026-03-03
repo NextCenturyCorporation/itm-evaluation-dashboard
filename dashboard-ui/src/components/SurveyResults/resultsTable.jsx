@@ -26,7 +26,7 @@ const EVAL_MAP = {
     10: 'PH2 September',
     12: "UK PH1",
     13: 'PH2 October',
-    15: 'PH2 February'
+    15: 'Feb2026'
 }
 
 const TRUST_MAP = {
@@ -195,7 +195,7 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     )
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - Feb2026' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -256,8 +256,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         }
 
         const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
+        const blockCount = 5;
 
-        for (let block = 1; block < 6; block++) {
+        for (let block = 1; block <= blockCount; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
@@ -768,7 +769,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 pdfFile = definitionXLFileExploratoryPH2;
             }
             else {
-                name = 'Survey Results Definitions - PH2.pdf';
+                name = 'Survey Delegation Variables - PH2.xlsx';
                 xlFile = definitionXLFilePH2;
                 pdfFile = definitionXLFilePH2;
             }
