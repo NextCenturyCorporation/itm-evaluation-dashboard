@@ -242,7 +242,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
-        if ([8, 9].includes(evalNum)) {
+        if ([8, 9, 15].includes(evalNum)) {
             currentHeaders = [...HEADERS_PH2_JUNE_2025];
         }
         if (evalNum == 10) {

@@ -86,11 +86,17 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
 
                         const { alignedTarget, misalignedTarget } = cmpPage;
                         const aligned = getMedicByAlignment("aligned"), misaligned = getMedicByAlignment("misaligned"), baseline = getMedicByAlignment("baseline");
+                        const getMultiLoading = (page) => {
+                            if (!page) return "N/A";
+                            if (page?.admChoiceProcess) return formatLoading(page.admChoiceProcess);
+                            return "Normal";
+                        };
+
                         medicData = [
                             { type: "Baseline", admName: baseline?.admName || "-", target: "N/A", loading: "N/A" },
-                            { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: "Normal" },
+                            { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: getMultiLoading(aligned) },
                         ];
-                        if (misalignedTarget) medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: "Normal" });
+                        if (misalignedTarget) medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: getMultiLoading(misaligned) });
 
                         leftContent = {
                             label: multiKDMA.labels.join(' + '), labelKey: "Attribute",
