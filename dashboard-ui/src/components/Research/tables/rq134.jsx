@@ -10,6 +10,7 @@ import ph1DefinitionXLFile from '../variables/Variable Definitions RQ134_PH1.xls
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2.xlsx';
 import ukDefinitionXLFile from '../variables/Variable Definitions RQ134_UK.xlsx'
 import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
+import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -745,8 +746,18 @@ export function RQ134({ evalNum, tableTitle }) {
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={evalNum === 12 ? ukDefinitionXLFile : evalNum === 10 ? septemberDefinitionXLFile : evalNum >= 8 ? ph2DefinitionXLFile : (evalNum === 5 || evalNum === 6) ? ph1DefinitionXLFile : dreDefinitionXLFile} />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={DEFINITION_FILE_MAP[evalNum] ?? dreDefinitionXLFile}  />
             </div>
         </Modal>
     </>);
 }
+
+const DEFINITION_FILE_MAP = {
+    15: febDefinitionXLFile,
+    12: ukDefinitionXLFile,
+    10: septemberDefinitionXLFile,
+    8: ph2DefinitionXLFile,
+    9: ph2DefinitionXLFile,
+    6: ph1DefinitionXLFile,
+    5: ph1DefinitionXLFile,
+};
