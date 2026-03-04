@@ -789,8 +789,9 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                             const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
 
                             const extractPct = (response, medicName) => {
-                                const match = response !== '-' && response?.match(new RegExp(medicName + '\\s+(\\d+%)'));
-                                return match ? match[1] : '-';
+                                if (response === '-' || !response) return '-';
+                                const match = response.match(new RegExp(medicName + '\\s+(\\d+%)'));
+                                return match ? match[1] : '0%';
                             };
 
                             for (let i = 0; i < 3; i++) {
