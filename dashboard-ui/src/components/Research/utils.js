@@ -734,10 +734,22 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                             entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData["PS-AF-text-scenario"], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
                         }
                         allProbeSetObservation.push(entryObj['Probe Set Observation'])
-                        entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
-                        if (evalNum === 15 && page['scenarioIndex'] === 'Feb2026-MF3-observe') {
-                            entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
-                                textResultsForPID.find(r => r.scenario_id?.includes('MF') && !r.scenario_id?.includes('SS'))?.individualSessionId ?? '-';
+                        if (evalNum === 15) {
+                            if (page['scenarioIndex'] === 'Feb2026-MF3-observe') {
+                                entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
+                                    textResultsForPID.find(r => r.scenario_id?.includes('MF') && !r.scenario_id?.includes('SS'))?.individualSessionId ?? '-';
+                            } else {
+                                const isMFSS = page['scenarioIndex']?.includes('MF-SS');
+                                const isAFPS = page['scenarioIndex']?.includes('AF-PS');
+                                entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
+                                    textResultsForPID.find(r =>
+                                        isMFSS ? (r.scenario_id?.includes('MF') || r.scenario_id?.includes('SS')) :
+                                            isAFPS ? (r.scenario_id?.includes('AF') || r.scenario_id?.includes('PS')) :
+                                                true
+                                    )?.combinedSessionId ?? '-';
+                            }
+                        } else {
+                            entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
                         }
                     }
 
