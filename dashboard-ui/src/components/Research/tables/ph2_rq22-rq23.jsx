@@ -196,7 +196,6 @@ export function PH2RQ2223({ evalNum }) {
                     entryObj['Attribute'] = attribute;
                     allAttributes.push(attribute);
 
-                    const sliceNum = attribute === 'AF-MF' ? -7 : -3;
 
                     entryObj['Set'] = scenarioSet;
                     allSets.push(scenarioSet);
@@ -216,6 +215,7 @@ export function PH2RQ2223({ evalNum }) {
                     }
 
                     else {
+                        const sliceNum = attribute === 'AF-MF' ? -7 : -3;
                         entryObj['Target'] = target.slice(sliceNum);
                         allTargets.push(target.slice(sliceNum));
                     }
