@@ -1,6 +1,6 @@
 import React from "react";
 import '../../css/resultsTable.css'
-import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack, Tooltip } from "@mui/material";
+import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import CloseIcon from '@material-ui/icons/Close';
@@ -175,24 +175,11 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     
     const truncated = str.substring(0, maxLength) + '...';
     
-
     return (
-        <Tooltip
-            title=
-            {<div style={{
-                whiteSpace: 'pre-wrap',
-                fontSize: '16px',
-                lineHeight: '1.5'
-            }}>
-                {text}
-            </div>} 
-            arrow 
-            placement="top"
-            enterDelay={300}
-        >
-            <span style={{cursor: 'help', color: '#1976d2'}}>{truncated}</span>
-        </Tooltip>
-    )
+        <span className="itm-tooltip" data-tooltip={str}>
+            {truncated}
+        </span>
+    );
 }
 
 export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }] }) {
