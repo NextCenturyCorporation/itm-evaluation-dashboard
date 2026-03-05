@@ -93,6 +93,18 @@ export function PH2RQ2223({ evalNum }) {
         return targets
     }
 
+    const ALIGNED_PREFIXES = ['ALIGN', 'ADM', 'Ph2', 'BertRelevance', 'DirectRegression', 'ComparativeRegression'];
+
+    const getModelSuffix = (admName) => {
+        const parts = admName.split('-');
+        let i = 0;
+        while (i < parts.length && ALIGNED_PREFIXES.includes(parts[i])) i++;
+        const raw = parts.slice(i).join('-');
+        return raw.includes('__') ? raw.split('__')[0] : raw;
+
+    };
+
+
     // reset all filters when eval num changes
     React.useEffect(() => {
         setSetConstructionFilters([])
@@ -168,7 +180,7 @@ export function PH2RQ2223({ evalNum }) {
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
                 // exclude full runs (not sets)
                 if (!setMatch) { continue; }
-                if ((evalNum === 14 || evalNum === 15) && !isRandom) { continue; }
+                if (evalNum === 14 && !isRandom) { continue; }
                 const scenarioSet = evalNum === 14 || evalNum === 15
                     ? scenarioName
                     : isRandom
@@ -181,7 +193,15 @@ export function PH2RQ2223({ evalNum }) {
 
 
                 for (const target of Object.keys(targets)) {
-                    const entryObj = {};
+                    const alignedAdms = Object.keys(targets[target])
+                        .filter(name => evalNum === 15
+                        ? !name.includes('OutlinesBaseline')
+                        : name.includes('aligned') || name.includes('ComparativeRegression') || name.includes('DirectRegression')
+                        )
+                        .map(name => ({ name, ...targets[target][name] }));
+
+                    if (alignedAdms.length === 0) continue;
+
                     const parsed = evalNum === 15 ? parseEval15Target(target) : null;
 
 
@@ -191,11 +211,24 @@ export function PH2RQ2223({ evalNum }) {
                         actualScenario.includes('MF') ? 'MF' :
                         actualScenario.includes('AF') ? 'AF' :
                         actualScenario.includes('SS') ? 'SS' : 'PS';
+                    
+                    let baselineMap = {};
+                    if (evalNum === 15) {
+                        for (const admName of Object.keys(targets[target])) {
+                            if (admName.includes('OutlinesBaseline')) {
+                                const idx = admName.indexOf('OutlinesBaseline-');
+                                const rawSuffix = admName.slice(idx + 'OutlinesBaseline-'.length);
+                                const suffix = rawSuffix.includes('__') ? rawSuffix.split('__')[0] : rawSuffix;
+                                baselineMap[suffix] = targets[target][admName];
+                            }
+                        }
+                    }
 
 
-                    entryObj['Attribute'] = attribute;
-                    allAttributes.push(attribute);
-
+                    for (const aligned of alignedAdms) {
+                         const entryObj = {};
+                         entryObj['Attribute'] = attribute;
+                        allAttributes.push(attribute);
 
                     entryObj['Set'] = scenarioSet;
                     allSets.push(scenarioSet);
@@ -203,8 +236,8 @@ export function PH2RQ2223({ evalNum }) {
                     if (evalNum === 15) {
                         entryObj['Target'] = target.replace('Feb2026-', '')
                         allTargets.push(target.replace('Feb2026-', ''))
-                        entryObj['ADM Name'] = setAdmName
-                        allAdmNames.push(setAdmName)
+                        entryObj['ADM Name'] = aligned.name
+                        allAdmNames.push(aligned.name)
                         entryObj['Set Construction'] = setConstruction || '-';
                         allSetConstructions.push(setConstruction)
 
@@ -226,21 +259,10 @@ export function PH2RQ2223({ evalNum }) {
                         allSetConstructions.push(setConstruction)
                     }
 
-                    let aligned = null;
-                    for (const admName of Object.keys(targets[target])) {
-                        if (admName.includes('aligned') || admName.includes('ComparativeRegression') || admName.includes('DirectRegression')) {
-                            aligned = targets[target][admName];
-                            break;
-                        }
-                    }
-
                     if (aligned) {
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
                         entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-'
-                    } else {
-                        entryObj['Aligned ADM Alignment score (ADM|target)'] = '-';
-                        entryObj['Aligned Server Session ID'] = '-';
-                    }
+                    } 
 
                     const mapKey = evalNum === 14 
                         ? `${actualScenario}_${setConstruction}_${target}_${aligned?.alignment}`
@@ -278,12 +300,17 @@ export function PH2RQ2223({ evalNum }) {
                     entryObj['Probe IDs'] = formatted;
 
                     let baseline = null;
-                    for (const admName of Object.keys(targets[target])) {
-                        if (admName.includes('OutlinesBaseline')) {
-                            baseline = targets[target][admName];
-                            break;
+                    if (evalNum === 15) {
+                        baseline = baselineMap[getModelSuffix(aligned.name)] || null;
+                    } else {
+                        for (const admName of Object.keys(targets[target])) {
+                            if (admName.includes('OutlinesBaseline')) {
+                                baseline = targets[target][admName];
+                                break;
+                            }
                         }
                     }
+
 
                     if (baseline) {
                         entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline.alignment;
@@ -301,9 +328,28 @@ export function PH2RQ2223({ evalNum }) {
                         groupedEntries[groupKey] = [];
                     }
                     groupedEntries[groupKey].push(entryObj);
+                    if (evalNum === 15 && attribute.includes('-') && aligned.adm?.results?.attribute_data?.length > 0) {
+                        for (const attrEntry of aligned.adm.results.attribute_data) {
+                            const attrKey = Object.keys(attrEntry)[0];
+                            const attrData = attrEntry[attrKey];
+
+                            const attr1DObj = { ...entryObj };
+                            attr1DObj['Attribute'] = attrKey;
+                            attr1DObj['Aligned ADM Alignment score (ADM|target)'] = attrData.alignment_score;
+                            attr1DObj['Aligned Server Session ID'] = attrData.ta1_session_id ?? '-';
+                            attr1DObj['Probe IDs'] = (attrData.probes ?? []).map(p => p.probe_id).join(', ');
+
+                            allAttributes.push(attrKey);
+
+                            const attrGroupKey = `${attrKey}_${setConstruction}_${scenarioSet}`;
+                            if (!groupedEntries[attrGroupKey]) groupedEntries[attrGroupKey] = [];
+                            groupedEntries[attrGroupKey].push(attr1DObj);
+                        }
+                    }
+
                 }
             }
-
+        }
             for (const groupKey of Object.keys(groupedEntries)) {
                 const entries = groupedEntries[groupKey];
 
@@ -440,7 +486,7 @@ export function PH2RQ2223({ evalNum }) {
                         filterSelectedOptions
                         size="small"
                         renderInput={(params) => (
-                            <TextField {...params} label="Adm Name" />
+                            <TextField {...params} label="ADM Name" />
                         )}
                         onChange={(_, newVal) => setAdmNamesFilters(newVal)}
                     />
