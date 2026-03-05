@@ -55,6 +55,7 @@ const typeDefs = gql`
     getEvalNameNumbers: [JSON] @complexity(value: 15)
     getEvalIdsForHumanResults: [JSON] @complexity(value: 20)
     getAllRawSimData: [JSON] @complexity(value: 180)
+    getAllRawSimDataByEval(evalNumber: Float): [JSON] @complexity(value: 90)
     getAllSurveyConfigs: [JSON] @complexity(value: 200)
     getAllSurveyVersions: [Float] @complexity(value: 10)
     getAllTextBasedConfigs: [JSON] @complexity(value: 150)
@@ -561,6 +562,12 @@ const resolvers = {
     getAllRawSimData: async (obj, args, context, inflow) => {
       return await context.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });
     },
+    getAllRawSimDataByEval: async (obj, args, context, inflow) => {
+      return await context.db.collection('humanSimulatorRaw')
+        .find({ "evalNumber": args["evalNumber"] })
+        .toArray()
+        .then(result => { return result; });
+    },
     getUsers: async (obj, args, context, infow) => {
       const session = await context.db.collection('sessions')
         .find({ "_id": new ObjectId(args['caller']?.['sessionId']) })
@@ -633,7 +640,7 @@ const resolvers = {
       // Query humanToADMComparison for any of the evalNumbers
       const results = await context.db
         .collection('humanToADMComparison')
-        .find({evalNumber: { $in: evalNumbers }})
+        .find({ evalNumber: { $in: evalNumbers } })
         .toArray();
 
       return results;
@@ -1094,11 +1101,11 @@ const resolvers = {
       }
     },
     updateScenarioResult: async (obj, args, context, inflow) => {
-        const result = await context.db.collection('userScenarioResults').updateOne(
-            { _id: new ObjectId(args.id) },
-            { $set: args.updates }
-        );
-        return { ok: result.modifiedCount > 0, modifiedCount: result.modifiedCount };
+      const result = await context.db.collection('userScenarioResults').updateOne(
+        { _id: new ObjectId(args.id) },
+        { $set: args.updates }
+      );
+      return { ok: result.modifiedCount > 0, modifiedCount: result.modifiedCount };
     },
   },
   StringOrFloat: new GraphQLScalarType({

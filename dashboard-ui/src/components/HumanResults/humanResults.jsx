@@ -12,10 +12,10 @@ import { PAGES, getEvalOptionsForPage } from "../Research/utils";
 
 
 const GET_HUMAN_RESULTS = gql`
-    query getAllRawSimData {
-        getAllRawSimData
-        getAllSimAlignment
-  }`;
+    query getHumanResultsByEval($evalNumber: Float) {
+        getAllRawSimDataByEval(evalNumber: $evalNumber)
+        getAllSimAlignmentByEval(evalNumber: $evalNumber)
+    }`;
 
 const MRE_ENV_MAP = {
     "sim-sub": "Submarine",
@@ -62,25 +62,44 @@ const PH1_MAP = {
     "vol-ph1-eval-4": "vol-ph1-eval-4"
 };
 
-const USE_OPEN_WORLD = [8, 9];
+const EVAL_CONFIG = {
+    3: { type: 'MRE', scenarios: null, showTeamToggle: true, showKdma: true },
+    4: { type: 'DRE', scenarios: DRE_SCENARIOS, showTeamToggle: false, showKdma: false },
+    5: { type: 'PH1', scenarios: Object.keys(PH1_SCENARIOS), showTeamToggle: false, showKdma: true },
+    6: { type: 'PH1', scenarios: Object.keys(PH1_SCENARIOS), showTeamToggle: false, showKdma: true },
+    8: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
+    9: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
+    10: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
+};
+
+const USE_OPEN_WORLD = [8, 9, 10];
 
 export default function HumanResults() {
     const evalOptions = getEvalOptionsForPage(PAGES.HUMAN_SIM_PLAY_BY_PLAY);
     const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
-        // only pulls from network, never cached
-        // fetchPolicy: 'network-only',
+        variables: { evalNumber: selectedEval },
     });
     const [dataByScene, setDataByScene] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
     const [teamSelected, setSelectedTeam] = React.useState('adept');
     const [selectedPID, setSelectedPID] = React.useState(null);
 
+    const evalConfig = EVAL_CONFIG[selectedEval];
+
+    const getScenarioName = () => {
+        if (evalConfig?.type === 'DRE') return selectedScene;
+        if (evalConfig?.type === 'PH1') return PH1_MAP[selectedScene];
+        return MRE_ENV_MAP[selectedScene] || selectedScene;
+    }
+
     React.useEffect(() => {
-        if (data?.getAllRawSimData && data?.getAllSimAlignment) {
+        const rawSimData = data?.getAllRawSimDataByEval;
+        const simAlignment = data?.getAllSimAlignmentByEval;
+        if (rawSimData && simAlignment) {
             const organized = {};
-            for (const entry of data.getAllRawSimData) {
+            for (const entry of rawSimData) {
                 if (entry.openWorld && !USE_OPEN_WORLD.includes(selectedEval)) {
                     continue;
                 }
@@ -88,7 +107,7 @@ export default function HumanResults() {
                 const scene = USE_OPEN_WORLD.includes(version) ? entry?._id?.split('june2025-')[1] : version === 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
-                    const probes = data.getAllSimAlignment.filter((x) => !x.openWorld && pid === x.pid && (version === 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene === x.scenario_id));
+                    const probes = simAlignment.filter((x) => !x.openWorld && pid === x.pid && (version === 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene === x.scenario_id));
                     // go through the scene to find where each scenario starts/ends
                     entry['adept'] = [];
                     entry['soartech'] = [];
@@ -100,23 +119,23 @@ export default function HumanResults() {
                     let freeform_start = -1;
                     let last_action = null;
                     let probes_matched = [];
-                    for (const action of entry.data.actionList) {
+                    for (const [index, action] of entry.data.actionList.entries()) {
                         if (soartech_start === -1 && (action.question?.toLowerCase().includes('soartech') || action.casualty.includes('atient U') || action.casualty.includes('atient V') || action.casualty.includes('atient W') || action.casualty.includes('atient X'))) {
                             // soartech!!
-                            soartech_start = entry.data.actionList.indexOf(action);
+                            soartech_start = index;
                             if (adept_start !== -1) {
                                 adept_end = soartech_start - 1;
                             }
                         }
                         if (adept_start === -1 && (action.question?.toLowerCase().includes('adept') || action.casualty.includes('Adept') || action.casualty.includes('NPC') || action.casualty.includes('Soldier') || action.casualty.includes('electrician') || action.casualty.includes('bystander') || (action.casualty.includes('Civilian 1') && !action.casualty.toLowerCase().includes('male')) || action.casualty.includes('Civilian 2'))) {
                             // adept!! adept shooter/victim, npcs sometimes end up in the data, local soldier and us soldier, electrician and bystander, and jungle civilians
-                            adept_start = entry.data.actionList.indexOf(action);
+                            adept_start = index;
                             if (soartech_start !== -1) {
                                 soartech_end = adept_start - 1;
                             }
                         }
                         if ((adept_start !== -1 && soartech_start !== -1 && freeform_start === -1) && (action.casualty.includes('Navy') || action.casualty.includes('Open World') || action.casualty.includes('Marine') || action.casualty.includes('Civilian 1 Female'))) {
-                            freeform_start = entry.data.actionList.indexOf(action);
+                            freeform_start = index;
                             if (adept_end === -1) {
                                 adept_end = freeform_start - 1;
                             }
@@ -165,7 +184,7 @@ export default function HumanResults() {
             }
             setDataByScene(organized);
         }
-    }, [data]);
+    }, [data, selectedEval]);
 
     React.useEffect(() => {
         if (selectedScene?.includes('vol') || selectedScene?.includes('qol')) {
@@ -181,16 +200,6 @@ export default function HumanResults() {
             setSelectedTeam(selected[1]);
         }
     };
-
-    const getScenarioName = () => {
-        if (selectedEval === 4) {
-            return selectedScene
-        } else if (selectedEval === 5 || selectedEval === 6) {
-            return PH1_MAP[selectedScene]
-        } else {
-            return MRE_ENV_MAP[selectedScene] || selectedScene
-        }
-    }
 
     function selectEvaluation(target) {
         setSelectedEval(target.value);
@@ -213,7 +222,7 @@ export default function HumanResults() {
                         value={evalOptions.find(option => option.value === selectedEval)}
                     />
                 </div>}
-            {selectedEval && !POST_MRE_EVALS.includes(selectedEval) && dataByScene &&
+            {evalConfig?.type === 'MRE' && dataByScene &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Environment</span>
@@ -233,25 +242,25 @@ export default function HumanResults() {
                         }
                     </List>
                 </div>}
-            {POST_MRE_EVALS.includes(selectedEval) &&
+            {evalConfig?.type !== 'MRE' && evalConfig?.scenarios &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Scenario</span>
                     </div>
                     <List component="nav" className="nav-list" aria-label="secondary mailbox folder">
                         {
-                            (selectedEval === 4 ? DRE_SCENARIOS : (selectedEval == 8 || selectedEval == 9) ? SUMMER_SCENARIOS : Object.keys(PH1_SCENARIOS)).map((item) =>
+                            evalConfig.scenarios.map((item) =>
                                 <ListItem id={"scene_" + item} key={"scene_" + item}
                                     button
-                                    selected={selectedScene === ([4, 8, 9].includes(selectedEval) ? item : PH1_SCENARIOS[item])}
-                                    onClick={() => { setSelectedScene([4, 8, 9].includes(selectedEval) ? item : PH1_SCENARIOS[item]); setSelectedPID(null); }}>
+                                    selected={selectedScene === (evalConfig.type === 'PH1' ? PH1_SCENARIOS[item] : item)}
+                                    onClick={() => { setSelectedScene(evalConfig.type === 'PH1' ? PH1_SCENARIOS[item] : item); setSelectedPID(null); }}>
                                     <ListItemText primary={item} />
                                 </ListItem>
                             )
                         }
                     </List>
                 </div>}
-            {selectedScene && dataByScene && Object.keys(dataByScene).includes(selectedScene) && 
+            {selectedScene && dataByScene && Object.keys(dataByScene).includes(selectedScene) &&
                 <div className="selection-section">
                     <div className="nav-header">
                         <span className="nav-header-text">Participant ID</span>
@@ -266,7 +275,6 @@ export default function HumanResults() {
                                         onClick={() => setSelectedPID(item)}>
                                         <ListItemText primary={item} />
                                     </ListItem>)
-
                             }
                             return null;
                         }
@@ -277,14 +285,14 @@ export default function HumanResults() {
         {selectedPID ?
             <div className="sim-participant">
                 <div className="participant-header">
-                <h2 className="participant-title">
-                    {`${getScenarioName()} - Participant ${selectedPID}`}
-                </h2>
-                {selectedEval === 3 && <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
-                    <ToggleButton variant="secondary" id='choose-adept' value={"adept"}>ADEPT</ToggleButton>
-                    <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
-                    <ToggleButton variant="secondary" id='choose-freeform' value={"freeform"}>Freeform</ToggleButton>
-                </ToggleButtonGroup>}
+                    <h2 className="participant-title">
+                        {`${getScenarioName()} - Participant ${selectedPID}`}
+                    </h2>
+                    {evalConfig?.showTeamToggle && <ToggleButtonGroup className="team-chooser" type="checkbox" value={teamSelected} onChange={handleTeamChange}>
+                        <ToggleButton variant="secondary" id='choose-adept' value={"adept"}>ADEPT</ToggleButton>
+                        <ToggleButton variant="secondary" id='choose-soartech' value={"soartech"}>SoarTech</ToggleButton>
+                        <ToggleButton variant="secondary" id='choose-freeform' value={"freeform"}>Freeform</ToggleButton>
+                    </ToggleButtonGroup>}
                 </div>
                 <div className="table-container">
                     <table className="action-list">
@@ -298,7 +306,7 @@ export default function HumanResults() {
                         <tbody>
                             {
                                 (dataByScene[selectedScene][selectedPID][teamSelected]).map((action, index) =>
-                                    < tr key={action + '_' + index}>
+                                    <tr key={action + '_' + index}>
                                         <td className="action-type-cell">{action.actionType}</td>
                                         <td>
                                             <table className="sub-table">
@@ -318,7 +326,6 @@ export default function HumanResults() {
                                                     {isStringDefined(action.note) && <tr><td>Note:</td><td>{action.note}</td></tr>}
                                                 </tbody>
                                             </table>
-
                                         </td>
                                         {teamSelected !== 'freeform' && <td className='probe-cell'>
                                             {action.probe && <table className="sub-table">
@@ -329,7 +336,7 @@ export default function HumanResults() {
                                                     {isStringDefined(action.probe.action_type) && <tr><td>Action Type:</td><td>{action.probe.action_type}</td></tr>}
                                                     {isStringDefined(action.probe.character_id) && <tr><td>Character ID:</td><td>{action.probe.character_id}</td></tr>}
                                                     {isStringDefined(action.probe.choice) && <tr><td>Choice:</td><td>{action.probe.choice}</td></tr>}
-                                                    {selectedEval !== 4 && isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
+                                                    {evalConfig?.showKdma && isStringDefined(action.probe.kdma_association) && <tr><td>KDMA:</td><td>{action.probe.kdma_association[Object.keys(action.probe.kdma_association)[0]]}</td></tr>}
                                                 </tbody>
                                             </table>}
                                         </td>}
@@ -340,9 +347,9 @@ export default function HumanResults() {
                     </table>
                 </div>
             </div>
-            : <h2 className="not-found">Please select {POST_MRE_EVALS.includes(selectedEval) ? "a scenario" : "an environment"} and participant to view results</h2>
+            : <h2 className="not-found">Please select {evalConfig?.type === 'MRE' ? "an environment" : "a scenario"} and participant to view results</h2>
         }
-    </div >);
+    </div>);
 }
 
 function isStringDefined(str) {
