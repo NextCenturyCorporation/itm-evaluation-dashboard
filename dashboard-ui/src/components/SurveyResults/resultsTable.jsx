@@ -1,6 +1,6 @@
 import React from "react";
 import '../../css/resultsTable.css'
-import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack, Tooltip } from "@mui/material";
+import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import CloseIcon from '@material-ui/icons/Close';
@@ -25,7 +25,8 @@ const EVAL_MAP = {
     9: 'PH2 July',
     10: 'PH2 September',
     12: "UK PH1",
-    13: 'PH2 October'
+    13: 'PH2 October',
+    15: 'PH2 February'
 }
 
 const TRUST_MAP = {
@@ -174,27 +175,14 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     
     const truncated = str.substring(0, maxLength) + '...';
     
-
     return (
-        <Tooltip
-            title=
-            {<div style={{
-                whiteSpace: 'pre-wrap',
-                fontSize: '16px',
-                lineHeight: '1.5'
-            }}>
-                {text}
-            </div>} 
-            arrow 
-            placement="top"
-            enterDelay={300}
-        >
-            <span style={{cursor: 'help', color: '#1976d2'}}>{truncated}</span>
-        </Tooltip>
-    )
+        <span className="itm-tooltip" data-tooltip={str}>
+            {truncated}
+        </span>
+    );
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -255,8 +243,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         }
 
         const dmCount = showLegacy ? 2 : showPh2 ? 4 : 3;
+        const blockCount = 5;
 
-        for (let block = 1; block < 5; block++) {
+        for (let block = 1; block <= blockCount; block++) {
             for (let dm = 1; dm < 1 + dmCount; dm++) {
                 for (let subhead of subheaders) {
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
@@ -767,7 +756,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 pdfFile = definitionXLFileExploratoryPH2;
             }
             else {
-                name = 'Survey Results Definitions - PH2.pdf';
+                name = 'Survey Delegation Variables - PH2.xlsx';
+
                 xlFile = definitionXLFilePH2;
                 pdfFile = definitionXLFilePH2;
             }

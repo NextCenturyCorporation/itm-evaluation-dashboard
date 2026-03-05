@@ -237,3 +237,32 @@
 .itm-table td {
     white-space: pre-line;
 }
+
+.itm-tooltip {
+    cursor: help;
+    color: #1976d2;
+    position: relative;
+}
+
+.itm-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition-delay: 300ms;
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    max-width: 400px;
+    width: max-content;
+    z-index: 1000;
+    opacity: 0;
+}
+
+.itm-tooltip:hover::after {
+    opacity: 1;
+}
