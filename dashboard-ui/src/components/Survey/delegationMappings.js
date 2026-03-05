@@ -44,17 +44,24 @@ export const admOrderMapping = {
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
-        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-MF" }],
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-MF" }],
     6: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "PSAF" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-AF" }],
     // UK Expierment
-    7: [{"TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ"},
-        {"TA2": "Kitware", "TA1": "Adept", "Attribute": "IO"},
-        {"TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" }
-    ]
+    7: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
+    { "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" }
+    ],
+    8: [
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF-SS", "admName": "DeepSeek-R1-Distill-Llama-8B_01_27" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF",    "admName": "Mistral-7B-Instruct-v0.3_01_26" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF-SS", "admName": "Mistral-7B-Instruct-v0.3_01_26" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS", "admName": "Mistral-7B-Instruct-v0.3_01_12" },
+    { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS", "admName": "spectrum-Llama-3.1-8B-v1_01_12" },
+]
 }
 
 export const getKitwareBaselineMapping = (sv) => {

@@ -115,7 +115,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                         if (typeof val === 'string' && val.startsWith('Complete')) {
                             cell.s = {
                                 fill: {
-                                    fgColor: { rgb: '7bbc7b' }  
+                                    fgColor: { rgb: '7bbc7b' }
                                 }
                             };
                         } else if (typeof val === 'string' && val.startsWith('Missing')) {
@@ -148,7 +148,7 @@ export function getAlignments(evalNum, textResults, pid) {
     for (const textRes of textResultsForPID) {
         // adept
         if (Object.keys(textRes).includes('combinedSessionId')) {
-            if (!addedMJ) {
+            if (!addedMJ || evalNum === 15) {
                 if (textRes['mostLeastAligned']) {
                     const atts = [];
                     for (const attSet of textRes['mostLeastAligned']) {
@@ -272,7 +272,7 @@ export function getEval89Attributes(target, scenarioIndex) {
 }
 
 export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
-    const isPhase2 = [8, 9, 10].includes(evalNum);
+    const isPhase2 = [8, 9, 10, 15].includes(evalNum);
     const surveyResults = Array.isArray(surveyData) ? surveyData : surveyData?.getAllSurveyResults ?? [];
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = Array.isArray(textResultsData) ? textResultsData : textResultsData?.getAllScenarioResults ?? [];
@@ -295,7 +295,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
     }
 
     // find participants that have completed the delegation survey
-    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10, 12].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10, 12, 15].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const wrong_del_materials = evalNum === 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
@@ -317,7 +317,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
         }
         const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
         if (isPhase2) {
-            logData['ADMOrder'] = evalNum == 10 ? 6 : 5;
+            logData['ADMOrder'] = evalNum == 10 ? 6 : evalNum == 15 ? 8 : 5;
         }
         if (evalNum === 12) {
             logData['ADMOrder'] = 7
@@ -365,7 +365,6 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
 
                         scenario = getDelEnvMapping(evalNum)[ph2_scenario][mapping_array_number];
                         const scenarioMatches = obj['scenarioIndex']?.slice(0, -6) === scenario?.slice(0, -6);
-
                         return alignMatches && ta2Matches && scenarioMatches;
                     }
                     if (evalNum == 10) {
@@ -417,6 +416,30 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         return alignMatches && ta2Matches && scenarioMatches;
                     }
 
+                    if (evalNum === 15) {
+                        const admNameMatches = obj['pageType'] === 'comparison'
+                            ? obj['baselineName']?.includes(entry['admName'])
+                            : obj['admName']?.includes(entry['admName']);
+
+                        const scenarioIndex = obj['scenarioIndex'] ?? '';
+                        let attributeScenarioMatches;
+                        switch (entry['Attribute']) {
+                            case 'MF-SS':
+                                attributeScenarioMatches = scenarioIndex.includes('MF-SS');
+                                break;
+                            case 'MF':
+                                attributeScenarioMatches = scenarioIndex.includes('MF') && !scenarioIndex.includes('MF-SS');
+                                break;
+                            case 'AF-PS':
+                                attributeScenarioMatches = scenarioIndex.includes('AF-PS');
+                                break;
+                            default:
+                                attributeScenarioMatches = true;
+                        }
+
+                        return alignMatches && ta2Matches && admNameMatches && attributeScenarioMatches;
+                    }
+
                     if (entry['TA1'] === 'Adept') {
                         scenario = entry['Attribute'] === 'MJ' ? getDelEnvMapping(evalNum)[ad_scenario][0] : getDelEnvMapping(evalNum)[ad_scenario][1];
                     }
@@ -439,7 +462,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                     const entryObj = {};
                     entryObj['Delegator ID'] = pid;
                     entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
-                    entryObj['Datasource'] = evalNum === 12 ? "UK_2025" : evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : evalNum == 10 ? "P2E_Sept_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
+                    entryObj['Datasource'] = evalNum === 15 ? 'P2E_Feb_2026' : evalNum === 12 ? "UK_2025" : evalNum == 8 ? "P2E_June_2025" : evalNum == 9 ? "P2E_July_2025" : evalNum == 10 ? "P2E_Sept_2025" : (evalNum === 4 ? 'DRE' : evalNum === 5 ? (logData.Type === 'Online' ? 'P1E_online' : 'P1E_IRL') : (logData.Type === 'Online' ? 'P1E_online_2025' : 'P1E_IRL_2025'));
                     entryObj['Delegator_grp'] = logData['Type'] === 'Civ' ? 'Civilian' : logData['Type'] === 'Mil' ? 'Military' : logData['Type'];
                     const CURRENT_ROLE_QTEXT = evalNum >= 8 ? 'What is your current role' : 'What is your current role (choose all that apply):';
                     const roles = res.results?.['Post-Scenario Measures']?.questions?.[CURRENT_ROLE_QTEXT]?.['response'];
@@ -557,6 +580,10 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         entryObj['ADM Loading'] = entry['TA1'] === 'Adept' ? page.ph1ChoiceProcess : entryObj['ADM Loading']
                     }
 
+                    if (evalNum === 15) {
+                        entryObj['Kitware Model'] = page['admName']?.replace('ALIGN-ADM-', '') ?? '-';
+                    }
+
                     entryObj['Competence Error'] = (evalNum === 5 || evalNum === 6) && entry['TA2'] === 'Kitware' && entryObj['ADM_Type'] === 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
 
                     let comparison_entry;
@@ -636,74 +663,94 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         entryObj['Alignment score (ADM|target)'] = (t === 'baseline' && evalNum !== 12) ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
                         entryObj['Alignment score (Delegator|target)'] = (t === 'baseline' && evalNum !== 12) ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
                         entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
+                        if (evalNum !== 15) {
+                            let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
+                            const entryObjTarget = entryObj['Target'].toLowerCase();
+                            const scenario = page["scenarioIndex"]?.toLowerCase();
+                            if (aligned_target_name === undefined) {
+                                aligned_target_name = "";
+                            }
 
-                        let aligned_target_name = page["baselineTarget"] !== undefined ? page["baselineTarget"]?.toLowerCase() : page["admTarget"]?.toLowerCase();
-                        const entryObjTarget = entryObj['Target'].toLowerCase();
-                        const scenario = page["scenarioIndex"]?.toLowerCase();
-                        if (aligned_target_name === undefined) {
-                            aligned_target_name = "";
-                        }
+                            const doesTargetContain = (str) => {
+                                return entryObjTarget.indexOf(str) !== -1 || aligned_target_name.indexOf(str) !== -1;
+                            }
 
-                        const doesTargetContain = (str) => {
-                            return entryObjTarget.indexOf(str) !== -1 || aligned_target_name.indexOf(str) !== -1;
-                        }
+                            const doesScenarioContain = (str) => {
+                                return scenario?.indexOf(str) !== -1;
+                            }
 
-                        const doesScenarioContain = (str) => {
-                            return scenario?.indexOf(str) !== -1;
-                        }
-
-                        switch (true) {
-                            case doesTargetContain("safety") || doesTargetContain("ps-") || doesScenarioContain("-ps"):
-                                if (doesTargetContain("affiliation") || doesTargetContain("ps-af") || doesScenarioContain("ps-af")) {
-                                    entryObj['Attribute'] = "PS-AF";
-                                }
-                                else if (doesScenarioContain("-psaf") && doesScenarioContain("-combined")) {
-                                    entryObj['Attribute'] = "PSAF-combined"
-                                } else {
-                                    entryObj['Attribute'] = "PS";
-                                }
-                                break;
-                            case doesTargetContain("affiliation") || doesScenarioContain("-af"):
-                                if (entryObjTarget.indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
+                            switch (true) {
+                                case doesTargetContain("safety") || doesTargetContain("ps-") || doesScenarioContain("-ps"):
+                                    if (doesTargetContain("affiliation") || doesTargetContain("ps-af") || doesScenarioContain("ps-af")) {
+                                        entryObj['Attribute'] = "PS-AF";
+                                    }
+                                    else if (doesScenarioContain("-psaf") && doesScenarioContain("-combined")) {
+                                        entryObj['Attribute'] = "PSAF-combined"
+                                    } else {
+                                        entryObj['Attribute'] = "PS";
+                                    }
+                                    break;
+                                case doesTargetContain("affiliation") || doesScenarioContain("-af"):
+                                    if (entryObjTarget.indexOf("merit") !== -1 || aligned_target_name.indexOf("merit") !== -1) {
+                                        entryObj['Attribute'] = "AF-MF";
+                                    } else {
+                                        entryObj['Attribute'] = "AF";
+                                    }
+                                    break;
+                                case doesTargetContain("search"):
+                                    entryObj['Attribute'] = "SS";
+                                    break;
+                                case doesTargetContain("merit"):
+                                    if (doesTargetContain("affiliation")) {
+                                        entryObj['Attribute'] = "AF-MF";
+                                    } else {
+                                        entryObj['Attribute'] = "MF";
+                                    }
+                                    break;
+                                case doesScenarioContain("-af-mf"):
                                     entryObj['Attribute'] = "AF-MF";
-                                } else {
-                                    entryObj['Attribute'] = "AF";
-                                }
-                                break;
-                            case doesTargetContain("search"):
-                                entryObj['Attribute'] = "SS";
-                                break;
-                            case doesTargetContain("merit"):
-                                if (doesTargetContain("affiliation")) {
-                                    entryObj['Attribute'] = "AF-MF";
-                                } else {
-                                    entryObj['Attribute'] = "MF";
-                                }
-                                break;
-                            case doesScenarioContain("-af-mf"):
-                                entryObj['Attribute'] = "AF-MF";
-                                break;
-                            default:
-                            //console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name, scenario)
+                                    break;
+                                default:
+                                //console.log("Target and Attributes don't match for Evaluations greater than 8.", entryObj['Target'], aligned_target_name, scenario)
+                            }
                         }
 
                         // All Scenarios for Eval 8 are in same set, so you can grab any of them to get Probe Set
                         entryObj['Probe Set Assessment'] = page["scenarioIndex"].includes('PS-AF') ? logData["PS-AF-text-scenario"] : logData["AF-text-scenario"];
                         allProbeSetAssessment.push(entryObj['Probe Set Assessment'])
-                        // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
-                        if (evalNum !== 10) {
+
+                        if (evalNum === 15) {
+                            const match = page['scenarioIndex']?.match(/(\d+)-observe$/);
+                            entryObj['Probe Set Observation'] = match ? parseInt(match[1]) : '-';
+                        } else if (evalNum !== 10) {
+                            // 2-> 3, 3 -> 1. Multi KDMA gets an additional bump
                             const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
                             entryObj['Probe Set Observation'] = adjustScenarioNumber(
                                 isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3
                             );
-                        }
-                        else {
+                        } else {
                             const isMultiKdma = page['scenarioIndex'].includes('PS-AF');
                             const isCombined = page['scenarioIndex'].includes("PSAF");
                             entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData["PS-AF-text-scenario"], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
                         }
                         allProbeSetObservation.push(entryObj['Probe Set Observation'])
-                        entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
+                        if (evalNum === 15) {
+                            if (page['scenarioIndex'] === 'Feb2026-MF3-observe') {
+                                entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
+                                    textResultsForPID.find(r => r.scenario_id?.includes('MF') && !r.scenario_id?.includes('SS'))?.individualSessionId ?? '-';
+                            } else {
+                                const isMFSS = page['scenarioIndex']?.includes('MF-SS');
+                                const isAFPS = page['scenarioIndex']?.includes('AF-PS');
+                                entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
+                                    textResultsForPID.find(r =>
+                                        isMFSS ? (r.scenario_id?.includes('MF') || r.scenario_id?.includes('SS')) :
+                                            isAFPS ? (r.scenario_id?.includes('AF') || r.scenario_id?.includes('PS')) :
+                                                true
+                                    )?.combinedSessionId ?? '-';
+                            }
+                        } else {
+                            entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
+                        }
                     }
 
                     // include truncation error status for all, column visibility toggled from rq134.jsx
@@ -726,29 +773,45 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         else if (evalNum >= 8 && adms.length === 4) {
                             handleMultiKdmaComparison(res.results, page, entryObj, allObjs);
                         } else {
-                            const alignedAdm = adms[1];
-                            const baselineAdm = adms[0];
+                            const alignedAdm = evalNum === 15 ? adms[0] : adms[1];
+                            const baselineAdm = evalNum === 15 ? adms[1] : adms[0];
                             const misalignedAdm = adms[2];
+
                             const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
                             const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
 
                             entryObj['Delegation preference (A/B)'] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : 'B');
                             entryObj['Delegation preference (A/M)'] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
-                            // need to back-populate previous rows with which was chosen
+                            entryObj['Delegation Percentage (Aligned/Baseline)'] = '-';
+                            entryObj['Delegation Percentage (Aligned/Misaligned)'] = '-';
+
+                            const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
+                            const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
+
+                            const extractPct = (response, medicName) => {
+                                if (response === '-' || !response) return '-';
+                                const match = response.match(new RegExp(medicName + '\\s+(\\d+%)'));
+                                return match ? match[1] : '0%';
+                            };
+
                             for (let i = 0; i < 3; i++) {
-                                switch (allObjs?.[allObjs.length - 1 - i]?.['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                                const row = allObjs[allObjs.length - 1 - i];
+                                if (!row) break;
+                                switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
                                     case 'aligned':
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
-                                        break
+                                        row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
+                                        if (misalignedAdm) row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
+                                        row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, alignedAdm);
+                                        if (misalignedAdm) row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, alignedAdm);
+                                        break;
                                     case 'baseline':
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
-                                        break
+                                        row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
+                                        row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, baselineAdm);
+                                        break;
                                     case 'misaligned':
-                                        allObjs[allObjs.length - 1 - i]['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
-                                        break
-                                    default:
-                                        break
+                                        row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
+                                        row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, misalignedAdm);
+                                        break;
                                 }
                             }
                         }

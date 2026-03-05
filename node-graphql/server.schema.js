@@ -679,7 +679,7 @@ const resolvers = {
       return demographics.showDemographics;
     },
     getDemographicsByEval: async (obj, args, context, info) => {
-      return await context.db.collection('demographicsData').find({ 'results.evalNumber': args.evalNumber }).toArray().then(result => { return result })
+      return await context.db.collection('demographicsData').find({'results.evalNumber': args.evalNumber}).toArray().then(result => {return result})
     },
     getSurveyConfigByVersion: async (obj, args, context, inflow) => {
       const version = parseFloat(args.version);
