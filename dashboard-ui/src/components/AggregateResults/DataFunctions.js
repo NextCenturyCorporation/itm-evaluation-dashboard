@@ -1731,31 +1731,37 @@ function populateDataSetP2(data) {
             row['Delegation'] = getOverallDelRate(survey);
         }
 
+        let tp1 = null, tp2 = null, tp3 = null;
+
+        if (demoMeasures) {
+            row['Imagine'] = demoMeasures['I was easily able to imagine myself as the medic in these scenarios'] ?? null;
+            row['Experience-Informed'] = demoMeasures['I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios'] ?? null;
+            row['Env-Practice'] = demoMeasures['Primary practice environment'] ?? null;
+            row['MCIExperience'] = demoMeasures['Have you participated in mass casualty events'] ?? null;
+            row['MilBranch'] = demoMeasures['Military Branch'] ?? null;
+            row['MilMed'] = demoMeasures['Did you serve in a military medical role'] ?? null;
+            row['MOS'] = demoMeasures['What was/is your medical-related MOS or rate'] ?? null;
+            row['Env-Experience'] = demoMeasures['In which environments have you provided medical care during military service'] ?? null;
+            row['TCCCTraining'] = demoMeasures['When did you last complete TCCC training or recertification'] ?? null;
+            row['TCCCExpertise'] = demoMeasures['How would you rate your expertise with TCCC procedures'] ?? null;
+            row['TCCCExperience'] = demoMeasures['How many real-world casualties have you assessed using TCCC protocols'] ?? null;
+
+            tp1 = TRUST_MAP[demoMeasures['I feel that people are generally reliable']] || null;
+            tp2 = TRUST_MAP[demoMeasures['I usually trust people until they give me a reason not to trust them']] || null;
+            tp3 = TRUST_MAP[demoMeasures['Trusting another person is not difficult for me']] || null;
+            row['TrustPropensity1'] = tp1;
+            row['TrustPropensity2'] = tp2;
+            row['TrustPropensity3'] = tp3;
+        }
+
         if (!row['MedRole'] && demoMeasures) {
             row['MedRole'] = demoMeasures['What is your current role'] ?? null;
             row['MedExp'] = demoMeasures['Years of experience in role'] ?? null;
-            row['Imagine'] = demoMeasures['I was easily able to imagine myself as the medic in these scenarios'] ?? null
-            row['Experience-Informed'] = demoMeasures['I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios'] ?? null
-            row['Env-Practice'] = demoMeasures['Primary practice environment'] ?? null
-            row['MCIExperience'] = demoMeasures['Have you participated in mass casualty events'] ?? null
             row['MilitaryExp'] = demoMeasures['Served in Military'] ?? null;
-            row['MilBranch'] = demoMeasures['Military Branch'] ?? null
-            row['MilMed'] = demoMeasures['Did you serve in a military medical role'] ?? null
-            row['MOS'] = demoMeasures['What was/is your medical-related MOS or rate'] ?? null
             row['YrsMilExp'] = demoMeasures['How many years of experience do you have serving in a medical role in the military'] ?? null;
-            row['Env-Experience'] = demoMeasures['In which environments have you provided medical care during military service'] ?? null
-            row['TCCCTraining'] = demoMeasures['When did you last complete TCCC training or recertification'] ?? null
-            row['TCCCExpertise'] = demoMeasures['How would you rate your expertise with TCCC procedures'] ?? null
-            row['TCCCExperience'] = demoMeasures['How many real-world casualties have you assessed using TCCC protocols'] ?? null
-
-            const trust1 = TRUST_MAP[demoMeasures['I feel that people are generally reliable']] ?? 0;
-            const trust2 = TRUST_MAP[demoMeasures['I usually trust people until they give me a reason not to trust them']] ?? 0;
-            const trust3 = TRUST_MAP[demoMeasures['Trusting another person is not difficult for me']] ?? 0;
-
-            row['TrustPropensity1'] = trust1 || null;
-            row['TrustPropensity2'] = trust2 || null;
-            row['TrustPropensity3'] = trust3 || null;
-            row['PropTrust'] = (trust1 + trust2 + trust3) / 3;
+            if (!row['PropTrust']) {
+                row['PropTrust'] = ((tp1 || 0) + (tp2 || 0) + (tp3 || 0)) / 3;
+            }
         }
 
         results.push(row);
