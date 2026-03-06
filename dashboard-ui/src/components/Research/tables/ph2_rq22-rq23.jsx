@@ -490,6 +490,7 @@ export function PH2RQ2223({ evalNum }) {
 
                     {evalNum === 15 && 
                         <Autocomplete
+                        className='large-box'
                         multiple
                         options={admNames}
                         value={admNamesFilters}
@@ -503,6 +504,7 @@ export function PH2RQ2223({ evalNum }) {
                     }
 
                     <Autocomplete
+                        className='large-box'
                         multiple
                         options={sets}
                         value={setFilters}
