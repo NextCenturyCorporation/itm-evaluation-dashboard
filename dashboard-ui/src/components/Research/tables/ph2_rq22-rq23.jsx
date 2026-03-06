@@ -100,7 +100,9 @@ export function PH2RQ2223({ evalNum }) {
         let i = 0;
         while (i < parts.length && ALIGNED_PREFIXES.includes(parts[i])) i++;
         const raw = parts.slice(i).join('-');
-        return raw.includes('__') ? raw.split('__')[0] : raw;
+        if (raw.includes('__')) return raw.split('__')[0];
+            return raw.replace(/_\d+(_\d+)*$/, '');
+
 
     };
 
@@ -224,12 +226,14 @@ export function PH2RQ2223({ evalNum }) {
                             if (admName.includes('OutlinesBaseline')) {
                                 const idx = admName.indexOf('OutlinesBaseline-');
                                 const rawSuffix = admName.slice(idx + 'OutlinesBaseline-'.length);
-                                const suffix = rawSuffix.includes('__') ? rawSuffix.split('__')[0] : rawSuffix;
+                                const suffix = rawSuffix.includes('__') 
+                                    ? rawSuffix.split('__')[0] 
+                                    : rawSuffix.replace(/_\d+(_\d+)*$/, '');
+
                                 baselineMap[suffix] = targets[target][admName];
                             }
                         }
                     }
-
 
                     for (const aligned of alignedAdms) {
                          const entryObj = {};
