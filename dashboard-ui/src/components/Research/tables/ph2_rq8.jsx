@@ -139,7 +139,18 @@ export function PH2RQ8({ evalNum }) {
             const allAttributes = [];
             const simData = dataSim.getAllSimAlignment;
             const participantLog = dataParticipantLog.getParticipantLog;
-            const evals = evalNum !== 12 ? [8, 9, 10] : [evalNum]
+            const combinedEvals = [8, 9, 10];
+            const evals = combinedEvals.includes(evalNum) ? combinedEvals : [evalNum];
+
+            const getKdmaValue = (kdmas, kdmaName) => {
+              const k = kdmas?.find((x) => x?.kdma === kdmaName);
+              return k?.value; // old structure
+            };
+
+            const getKdmaParam = (kdmas, kdmaName, paramName) => {
+              const k = kdmas?.find((x) => x?.kdma === kdmaName);
+              return k?.parameters?.find((p) => p?.name === paramName)?.value; // new structure
+            };
 
             for (let evalNum of evals) {
                 const textResults = dataTextResults.getAllScenarioResults.filter((x) => x.evalNumber === evalNum);
@@ -196,14 +207,34 @@ export function PH2RQ8({ evalNum }) {
 
                     const desert_kdmas = desert_entry?.data?.alignment?.kdmas;
                     if (desert_kdmas) {
+                        // old structure (single scalar value)
+                        entryObj["Desert AF KDMA"] = getKdmaValue(desert_kdmas, "affiliation");
+                        entryObj["Desert MF KDMA"] = getKdmaValue(desert_kdmas, "merit");
 
-                        entryObj['Desert MF KDMA'] = desert_kdmas?.find((x) => x['kdma'] === 'merit')?.value;
-                        entryObj['Desert AF KDMA'] = desert_kdmas?.find((x) => x['kdma'] === 'affiliation')?.value;
+                        // new structure (parameters)
+                        entryObj["Desert AF intercept"] = getKdmaParam(desert_kdmas, "affiliation", "intercept");
+                        entryObj["Desert AF attr_weight"] = getKdmaParam(desert_kdmas, "affiliation", "attr_weight");
+                        entryObj["Desert AF medical_weight"] = getKdmaParam(desert_kdmas, "affiliation", "medical_weight");
+
+                        entryObj["Desert MF intercept"] = getKdmaParam(desert_kdmas, "merit", "intercept");
+                        entryObj["Desert MF attr_weight"] = getKdmaParam(desert_kdmas, "merit", "attr_weight");
+                        entryObj["Desert MF medical_weight"] = getKdmaParam(desert_kdmas, "merit", "medical_weight");
                     }
+
                     const urban_kdmas = urban_entry?.data?.alignment?.kdmas;
                     if (urban_kdmas) {
-                        entryObj['Urban MF KDMA'] = urban_kdmas?.find((x) => x['kdma'] === 'merit')?.value;
-                        entryObj['Urban AF KDMA'] = urban_kdmas?.find((x) => x['kdma'] === 'affiliation')?.value;
+                        // old structure (single scalar value)
+                        entryObj["Urban AF KDMA"] = getKdmaValue(urban_kdmas, "affiliation");
+                        entryObj["Urban MF KDMA"] = getKdmaValue(urban_kdmas, "merit");
+
+                        // new structure (parameters)
+                        entryObj["Urban AF intercept"] = getKdmaParam(urban_kdmas, "affiliation", "intercept");
+                        entryObj["Urban AF attr_weight"] = getKdmaParam(urban_kdmas, "affiliation", "attr_weight");
+                        entryObj["Urban AF medical_weight"] = getKdmaParam(urban_kdmas, "affiliation", "medical_weight");
+
+                        entryObj["Urban MF intercept"] = getKdmaParam(urban_kdmas, "merit", "intercept");
+                        entryObj["Urban MF attr_weight"] = getKdmaParam(urban_kdmas, "merit", "attr_weight");
+                        entryObj["Urban MF medical_weight"] = getKdmaParam(urban_kdmas, "merit", "medical_weight");
                     }
 
                     const dataEntries = [desert_entry, urban_entry];
