@@ -178,6 +178,7 @@ export function PH2RQ2223({ evalNum }) {
 
                 const isRandom = scenarioName.includes('Random');
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
+
                 // exclude full runs (not sets)
                 if (!setMatch) { continue; }
                 if (evalNum === 14 && !isRandom) { continue; }
@@ -199,7 +200,7 @@ export function PH2RQ2223({ evalNum }) {
                         : name.includes('aligned') || name.includes('ComparativeRegression') || name.includes('DirectRegression')
                         )
                         .map(name => ({ name, ...targets[target][name] }));
-
+                    
                     if (alignedAdms.length === 0) continue;
 
                     const parsed = evalNum === 15 ? parseEval15Target(target) : null;
@@ -211,6 +212,11 @@ export function PH2RQ2223({ evalNum }) {
                         actualScenario.includes('MF') ? 'MF' :
                         actualScenario.includes('AF') ? 'AF' :
                         actualScenario.includes('SS') ? 'SS' : 'PS';
+
+                    const derivedSetConstruction = (evalNum === 15 && !setConstruction)
+                        ? (attribute.includes('-') ? '2D' : '1D')
+                        : setConstruction;
+
                     
                     let baselineMap = {};
                     if (evalNum === 15) {
@@ -238,8 +244,8 @@ export function PH2RQ2223({ evalNum }) {
                         allTargets.push(target.replace('Feb2026-', ''))
                         entryObj['ADM Name'] = aligned.name
                         allAdmNames.push(aligned.name)
-                        entryObj['Set Construction'] = setConstruction || '-';
-                        allSetConstructions.push(setConstruction)
+                        entryObj['Set Construction'] = derivedSetConstruction || '-';
+                        allSetConstructions.push(derivedSetConstruction)
 
                         entryObj['AF Target'] = parsed.AF
                         entryObj['MF Target'] = parsed.MF
@@ -322,7 +328,7 @@ export function PH2RQ2223({ evalNum }) {
                     }
 
                     const groupKey = evalNum === 14 || evalNum === 15
-                        ? `${attribute}_${setConstruction}_${scenarioSet}`
+                        ? `${attribute}_${derivedSetConstruction}_${scenarioSet}`
                         : `${attribute}_${scenarioSet}`;
                     if (!groupedEntries[groupKey]) {
                         groupedEntries[groupKey] = [];
@@ -341,7 +347,7 @@ export function PH2RQ2223({ evalNum }) {
 
                             allAttributes.push(attrKey);
 
-                            const attrGroupKey = `${attrKey}_${setConstruction}_${scenarioSet}`;
+                            const attrGroupKey = `${attrKey}_${derivedSetConstruction}_${scenarioSet}`
                             if (!groupedEntries[attrGroupKey]) groupedEntries[attrGroupKey] = [];
                             groupedEntries[attrGroupKey].push(attr1DObj);
                         }
