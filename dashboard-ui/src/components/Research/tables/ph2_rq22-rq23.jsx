@@ -441,12 +441,21 @@ export function PH2RQ2223({ evalNum }) {
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
+    //eval 15 at least one filter before rendering rows due to dataset size
+    const hasActiveFilters = attributeFilters.length > 0 || targetFilters.length > 0 ||
+        setFilters.length > 0 || setConstructionFilters.length > 0 || admNamesFilters.length > 0;
+    const shouldRenderRows = evalNum !== 15 || hasActiveFilters;
+
     return (
         <>
-            {filteredData.length < formattedData.length &&
-                <p className='filteredText'>
-                    Showing {filteredData.length} of {formattedData.length} rows based on filters
-                </p>
+            {evalNum === 15 && !hasActiveFilters
+                ? <p className='filteredText'>
+                    Select at least one filter to display results. Full data is available for download.
+                  </p>
+                : filteredData.length < formattedData.length &&
+                    <p className='filteredText'>
+                        Showing {filteredData.length} of {formattedData.length} rows based on filters
+                    </p>
             }
 
             <section className='tableHeader'>
@@ -536,7 +545,7 @@ export function PH2RQ2223({ evalNum }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredData.map((dataSet, index) => (
+                        {shouldRenderRows && filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
                                 {PH2_HEADERS.map((val) => {
                                     if (val === 'Probe IDs') {
