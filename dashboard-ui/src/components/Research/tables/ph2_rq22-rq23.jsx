@@ -7,6 +7,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_PH2.xlsx';
 import eval14Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval14.xlsx';
+import eval15Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval15.xlsx';
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 
@@ -30,11 +31,13 @@ export function PH2RQ2223({ evalNum }) {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
 
     const [attributes, setAttributes] = React.useState([]);
+    const [admNames, setAdmNames] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
     const [sets, setSets] = React.useState([]);
     const [setConstructions, setSetConstructions] = React.useState([]);
 
     const [attributeFilters, setAttributeFilters] = React.useState([]);
+    const [admNamesFilters, setAdmNamesFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [setFilters, setSetFilters] = React.useState([]);
     const [setConstructionFilters, setSetConstructionFilters] = React.useState([]);
@@ -53,7 +56,15 @@ export function PH2RQ2223({ evalNum }) {
             'Target',
         ];
 
-        if (evalNum === 14) {
+        if (evalNum === 15) {
+            baseHeaders.push('ADM Name')
+            baseHeaders.push('AF Target')
+            baseHeaders.push('MF Target')
+            baseHeaders.push('PS Target')
+            baseHeaders.push('SS Target')
+        }
+
+        if (evalNum === 14 || evalNum === 15) {
             baseHeaders.push('Set Construction');
         }
 
@@ -69,6 +80,33 @@ export function PH2RQ2223({ evalNum }) {
         return baseHeaders;
     }, [evalNum]);
 
+    const parseEval15Target = (target) => {
+        const targets = {'AF': '', 'MF': '', 'PS': '', 'SS': ''}
+        const regexp = /([A-Z]+)-?(\d+)/g
+
+        const matchedTargets = [...target.matchAll(regexp)]
+
+        matchedTargets.forEach(match => {
+            targets[match[1]] = match[2]
+        })
+
+        return targets
+    }
+
+    const ALIGNED_PREFIXES = ['ALIGN', 'ADM', 'Ph2', 'BertRelevance', 'DirectRegression', 'ComparativeRegression'];
+
+    const getModelSuffix = (admName) => {
+        const parts = admName.split('-');
+        let i = 0;
+        while (i < parts.length && ALIGNED_PREFIXES.includes(parts[i])) i++;
+        const raw = parts.slice(i).join('-');
+        if (raw.includes('__')) return raw.split('__')[0];
+            return raw.replace(/_\d+(_\d+)*$/, '');
+
+
+    };
+
+
     // reset all filters when eval num changes
     React.useEffect(() => {
         setSetConstructionFilters([])
@@ -76,6 +114,7 @@ export function PH2RQ2223({ evalNum }) {
         setTargetFilters([])
         setSetFilters([])
         setTargetTypeFilters([])
+        setAdmNamesFilters([])
     }, [evalNum])
 
     React.useEffect(() => {
@@ -86,6 +125,7 @@ export function PH2RQ2223({ evalNum }) {
             const allAttributes = [];
             const allTargets = [];
             const allSets = [];
+            const allAdmNames = [];
             const allSetConstructions = []
             const probeMap = {};
 
@@ -112,6 +152,7 @@ export function PH2RQ2223({ evalNum }) {
 
                 if (!organized_adms[scenarioKey]) {
                     organized_adms[scenarioKey] = {
+                        admName,
                         scenarioName,
                         setConstruction,
                         targets: {}
@@ -132,16 +173,18 @@ export function PH2RQ2223({ evalNum }) {
             const groupedEntries = {};
 
             for (const scenarioKey of Object.keys(organized_adms)) {
+                const setAdmName = organized_adms[scenarioKey].admName
                 const scenarioName = organized_adms[scenarioKey].scenarioName;
                 const setConstruction = organized_adms[scenarioKey].setConstruction;
                 const targets = organized_adms[scenarioKey].targets;
 
                 const isRandom = scenarioName.includes('Random');
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
+
                 // exclude full runs (not sets)
                 if (!setMatch) { continue; }
                 if (evalNum === 14 && !isRandom) { continue; }
-                const scenarioSet = evalNum === 14
+                const scenarioSet = evalNum === 14 || evalNum === 15
                     ? scenarioName
                     : isRandom
                         ? `P2${evalToName[evalNum]} Dynamic Set ${setMatch[1]}`
@@ -153,23 +196,72 @@ export function PH2RQ2223({ evalNum }) {
 
 
                 for (const target of Object.keys(targets)) {
-                    const entryObj = {};
+                    const alignedAdms = Object.keys(targets[target])
+                        .filter(name => evalNum === 15
+                        ? !name.includes('OutlinesBaseline')
+                        : name.includes('aligned') || name.includes('ComparativeRegression') || name.includes('DirectRegression')
+                        )
+                        .map(name => ({ name, ...targets[target][name] }));
+                    
+                    if (alignedAdms.length === 0) continue;
 
-                    const attribute = actualScenario.includes('MF') && actualScenario.includes('AF') ? 'AF-MF' :
+                    const parsed = evalNum === 15 ? parseEval15Target(target) : null;
+
+
+                    const attribute = evalNum === 15
+                        ? ['AF', 'MF', 'PS', 'SS'].filter(a => parsed[a] !== '').join('-')
+                        : actualScenario.includes('MF') && actualScenario.includes('AF') ? 'AF-MF' :
                         actualScenario.includes('MF') ? 'MF' :
-                            actualScenario.includes('AF') ? 'AF' :
-                                actualScenario.includes('SS') ? 'SS' : 'PS';
+                        actualScenario.includes('AF') ? 'AF' :
+                        actualScenario.includes('SS') ? 'SS' : 'PS';
 
-                    entryObj['Attribute'] = attribute;
-                    allAttributes.push(attribute);
+                    const derivedSetConstruction = (evalNum === 15 && !setConstruction)
+                        ? (attribute.includes('-') ? '2D' : '1D')
+                        : setConstruction;
 
-                    const sliceNum = attribute === 'AF-MF' ? -7 : -3;
+                    
+                    let baselineMap = {};
+                    if (evalNum === 15) {
+                        for (const admName of Object.keys(targets[target])) {
+                            if (admName.includes('OutlinesBaseline')) {
+                                const idx = admName.indexOf('OutlinesBaseline-');
+                                const rawSuffix = admName.slice(idx + 'OutlinesBaseline-'.length);
+                                const suffix = rawSuffix.includes('__') 
+                                    ? rawSuffix.split('__')[0] 
+                                    : rawSuffix.replace(/_\d+(_\d+)*$/, '');
 
-                    entryObj['Target'] = target.slice(sliceNum);
-                    allTargets.push(target.slice(sliceNum));
+                                baselineMap[suffix] = targets[target][admName];
+                            }
+                        }
+                    }
+
+                    for (const aligned of alignedAdms) {
+                         const entryObj = {};
+                         entryObj['Attribute'] = attribute;
+                        allAttributes.push(attribute);
 
                     entryObj['Set'] = scenarioSet;
                     allSets.push(scenarioSet);
+
+                    if (evalNum === 15) {
+                        entryObj['Target'] = target.replace('Feb2026-', '')
+                        allTargets.push(target.replace('Feb2026-', ''))
+                        entryObj['ADM Name'] = aligned.name
+                        allAdmNames.push(aligned.name)
+                        entryObj['Set Construction'] = derivedSetConstruction || '-';
+                        allSetConstructions.push(derivedSetConstruction)
+
+                        entryObj['AF Target'] = parsed.AF
+                        entryObj['MF Target'] = parsed.MF
+                        entryObj['PS Target'] = parsed.PS
+                        entryObj['SS Target'] = parsed.SS
+                    }
+
+                    else {
+                        const sliceNum = attribute === 'AF-MF' ? -7 : -3;
+                        entryObj['Target'] = target.slice(sliceNum);
+                        allTargets.push(target.slice(sliceNum));
+                    }
 
                     // only applicable for eval 14
                     if (evalNum === 14) {
@@ -177,21 +269,10 @@ export function PH2RQ2223({ evalNum }) {
                         allSetConstructions.push(setConstruction)
                     }
 
-                    let aligned = null;
-                    for (const admName of Object.keys(targets[target])) {
-                        if (admName.includes('aligned') || admName.includes('ComparativeRegression') || admName.includes('DirectRegression')) {
-                            aligned = targets[target][admName];
-                            break;
-                        }
-                    }
-
                     if (aligned) {
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
                         entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-'
-                    } else {
-                        entryObj['Aligned ADM Alignment score (ADM|target)'] = '-';
-                        entryObj['Aligned Server Session ID'] = '-';
-                    }
+                    } 
 
                     const mapKey = evalNum === 14 
                         ? `${actualScenario}_${setConstruction}_${target}_${aligned?.alignment}`
@@ -229,12 +310,17 @@ export function PH2RQ2223({ evalNum }) {
                     entryObj['Probe IDs'] = formatted;
 
                     let baseline = null;
-                    for (const admName of Object.keys(targets[target])) {
-                        if (admName.includes('OutlinesBaseline')) {
-                            baseline = targets[target][admName];
-                            break;
+                    if (evalNum === 15) {
+                        baseline = baselineMap[getModelSuffix(aligned.name)] || null;
+                    } else {
+                        for (const admName of Object.keys(targets[target])) {
+                            if (admName.includes('OutlinesBaseline')) {
+                                baseline = targets[target][admName];
+                                break;
+                            }
                         }
                     }
+
 
                     if (baseline) {
                         entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline.alignment;
@@ -245,16 +331,35 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Baseline Server Session ID'] = '-';
                     }
 
-                    const groupKey = evalNum === 14 
-                        ? `${attribute}_${setConstruction}_${scenarioSet}`
+                    const groupKey = evalNum === 14 || evalNum === 15
+                        ? `${attribute}_${derivedSetConstruction}_${scenarioSet}`
                         : `${attribute}_${scenarioSet}`;
                     if (!groupedEntries[groupKey]) {
                         groupedEntries[groupKey] = [];
                     }
                     groupedEntries[groupKey].push(entryObj);
+                    if (evalNum === 15 && attribute.includes('-') && aligned.adm?.results?.attribute_data?.length > 0) {
+                        for (const attrEntry of aligned.adm.results.attribute_data) {
+                            const attrKey = Object.keys(attrEntry)[0];
+                            const attrData = attrEntry[attrKey];
+
+                            const attr1DObj = { ...entryObj };
+                            attr1DObj['Attribute'] = attrKey;
+                            attr1DObj['Aligned ADM Alignment score (ADM|target)'] = attrData.alignment_score;
+                            attr1DObj['Aligned Server Session ID'] = attrData.ta1_session_id ?? '-';
+                            attr1DObj['Probe IDs'] = (attrData.probes ?? []).map(p => p.probe_id).join(', ');
+
+                            allAttributes.push(attrKey);
+
+                            const attrGroupKey = `${attrKey}_${derivedSetConstruction}_${scenarioSet}`
+                            if (!groupedEntries[attrGroupKey]) groupedEntries[attrGroupKey] = [];
+                            groupedEntries[attrGroupKey].push(attr1DObj);
+                        }
+                    }
+
                 }
             }
-
+        }
             for (const groupKey of Object.keys(groupedEntries)) {
                 const entries = groupedEntries[groupKey];
 
@@ -288,7 +393,7 @@ export function PH2RQ2223({ evalNum }) {
             allObjs.sort((a, b) => {
                 if (a.Attribute < b.Attribute) return -1;
                 if (a.Attribute > b.Attribute) return 1;
-                if (evalNum === 14) {
+                if (evalNum === 14 || evalNum === 15) {
                     const aSetConst = a['Set Construction'] || '';
                     const bSetConst = b['Set Construction'] || '';
                     if (aSetConst < bSetConst) return -1;
@@ -312,6 +417,7 @@ export function PH2RQ2223({ evalNum }) {
                 setFilteredData([{ 'Trial_ID': '-' }]);
             }
 
+            setAdmNames(Array.from(new Set(allAdmNames)));
             setAttributes(Array.from(new Set(allAttributes)));
             setTargets(Array.from(new Set(allTargets)));
             setSets(Array.from(new Set(allSets)));
@@ -325,20 +431,31 @@ export function PH2RQ2223({ evalNum }) {
                 (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute'])) &&
                 (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
                 (setFilters.length === 0 || setFilters.includes(x['Set'])) &&
-                (setConstructionFilters.length === 0 || setConstructionFilters.includes(x['Set Construction']))
+                (setConstructionFilters.length === 0 || setConstructionFilters.includes(x['Set Construction'])) &&
+                (admNamesFilters.length === 0 || admNamesFilters.includes(x['ADM Name']))
+
             ));
         }
-    }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters, setConstructionFilters]);
+    }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters, setConstructionFilters, admNamesFilters]);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
+    //eval 15 at least one filter before rendering rows due to dataset size
+    const hasActiveFilters = attributeFilters.length > 0 || targetFilters.length > 0 ||
+        setFilters.length > 0 || setConstructionFilters.length > 0 || admNamesFilters.length > 0;
+    const shouldRenderRows = evalNum !== 15 || hasActiveFilters;
+
     return (
         <>
-            {filteredData.length < formattedData.length &&
-                <p className='filteredText'>
-                    Showing {filteredData.length} of {formattedData.length} rows based on filters
-                </p>
+            {evalNum === 15 && !hasActiveFilters
+                ? <p className='filteredText'>
+                    Select at least one filter to display results. Full data is available for download.
+                  </p>
+                : filteredData.length < formattedData.length &&
+                    <p className='filteredText'>
+                        Showing {filteredData.length} of {formattedData.length} rows based on filters
+                    </p>
             }
 
             <section className='tableHeader'>
@@ -366,7 +483,7 @@ export function PH2RQ2223({ evalNum }) {
                         )}
                         onChange={(_, newVal) => setTargetFilters(newVal)}
                     />
-                    {evalNum === 14 && 
+                    {(evalNum === 14 || evalNum === 15) && 
                         <Autocomplete
                         multiple
                         options={setConstructions}
@@ -380,7 +497,23 @@ export function PH2RQ2223({ evalNum }) {
                     />
                     }
 
+                    {evalNum === 15 && 
+                        <Autocomplete
+                        className='large-box'
+                        multiple
+                        options={admNames}
+                        value={admNamesFilters}
+                        filterSelectedOptions
+                        size="small"
+                        renderInput={(params) => (
+                            <TextField {...params} label="ADM Name" />
+                        )}
+                        onChange={(_, newVal) => setAdmNamesFilters(newVal)}
+                    />
+                    }
+
                     <Autocomplete
+                        className='large-box'
                         multiple
                         options={sets}
                         value={setFilters}
@@ -412,7 +545,7 @@ export function PH2RQ2223({ evalNum }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredData.map((dataSet, index) => (
+                        {shouldRenderRows && filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
                                 {PH2_HEADERS.map((val) => {
                                     if (val === 'Probe IDs') {
@@ -439,7 +572,7 @@ export function PH2RQ2223({ evalNum }) {
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                     <RQDefinitionTable
                         downloadName={`Definitions_RQ22_23_PH2.xlsx`}
-                        xlFile={evalNum === 14 ? eval14Defs : ph2DefinitionXLFile}
+                        xlFile={evalNum === 14 ? eval14Defs : evalNum === 15 ? eval15Defs : ph2DefinitionXLFile}
                     />
                 </div>
             </Modal>

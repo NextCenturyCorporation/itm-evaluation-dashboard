@@ -117,6 +117,7 @@
 
 .filters .large-box {
     min-width: 220px !important;
+    max-width: 650px !important;
 }
 
 .too-many-filters {

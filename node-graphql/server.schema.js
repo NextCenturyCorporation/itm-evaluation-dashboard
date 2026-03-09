@@ -141,6 +141,7 @@ const resolvers = {
         projection: {
           "synthetic": 1,
           "probe_ids": 1,
+          "probes": 1,
           "scenario": 1,
           "alignment_target": 1,
           "evaluation": 1,
@@ -162,10 +163,14 @@ const resolvers = {
       }).toArray();
       return docs.map(doc => {
         if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
-          doc.probe_ids = (doc.history || [])
-            .filter(h => h.command === 'Respond to TA1 Probe')
-            .map(h => h.parameters?.probe_id);
-        }
+          if (doc.probes?.length > 0) {
+              doc.probe_ids = doc.probes.map(p => p.probe_id);
+          } else {
+              doc.probe_ids = (doc.history || [])
+                  .filter(h => h.command === 'Respond to TA1 Probe')
+                  .map(h => h.parameters?.probe_id);
+          }
+      }
         return doc;
       });
     },
