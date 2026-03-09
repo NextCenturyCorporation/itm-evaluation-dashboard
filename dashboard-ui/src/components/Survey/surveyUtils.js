@@ -1819,7 +1819,6 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
     );
 
     // Mistral AF-PS1 edge case. If most aligned is one of these, use least aligned instead and label as misaligned
-    // Mistral AF-PS1 edge case. If most aligned is one of these, use least aligned instead and label as misaligned
     const baselineOverlapTargets = ['Feb2026-AF4-PS6', 'Feb2026-AF4-PS7', 'Feb2026-AF4-PS8'];
     const isMistralAFPS1 = model.toLowerCase() === 'mistral' && scenarioIndex === 'AF-PS1';
     const mostAlignedTarget = Object.keys(filteredResponse[0])[0];

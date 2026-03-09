@@ -55,6 +55,7 @@ const typeDefs = gql`
     getEvalNameNumbers: [JSON] @complexity(value: 15)
     getEvalIdsForHumanResults: [JSON] @complexity(value: 20)
     getAllRawSimData: [JSON] @complexity(value: 180)
+    getAllRawSimDataByEval(evalNumber: Float): [JSON] @complexity(value: 90)
     getAllSurveyConfigs: [JSON] @complexity(value: 200)
     getAllSurveyVersions: [Float] @complexity(value: 10)
     getAllTextBasedConfigs: [JSON] @complexity(value: 150)
@@ -74,6 +75,7 @@ const typeDefs = gql`
     getTextEvalOptions: [String] @complexity(value: 10)
     getPidBounds: JSON @complexity(value: 5)
     getShowDemographics: JSON @complexity(value: 5)
+    getDemographicsByEval(evalNumber: Float): [JSON] @complexity(value: 20)
     getSurveyConfigByVersion(version: String!): [JSON] @complexity(value: 50)
     getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
   }
@@ -139,6 +141,7 @@ const resolvers = {
         projection: {
           "synthetic": 1,
           "probe_ids": 1,
+          "probes": 1,
           "scenario": 1,
           "alignment_target": 1,
           "evaluation": 1,
@@ -160,10 +163,14 @@ const resolvers = {
       }).toArray();
       return docs.map(doc => {
         if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
-          doc.probe_ids = (doc.history || [])
-            .filter(h => h.command === 'Respond to TA1 Probe')
-            .map(h => h.parameters?.probe_id);
-        }
+          if (doc.probes?.length > 0) {
+              doc.probe_ids = doc.probes.map(p => p.probe_id);
+          } else {
+              doc.probe_ids = (doc.history || [])
+                  .filter(h => h.command === 'Respond to TA1 Probe')
+                  .map(h => h.parameters?.probe_id);
+          }
+      }
         return doc;
       });
     },
@@ -560,6 +567,12 @@ const resolvers = {
     getAllRawSimData: async (obj, args, context, inflow) => {
       return await context.db.collection('humanSimulatorRaw').find().toArray().then(result => { return result; });
     },
+    getAllRawSimDataByEval: async (obj, args, context, inflow) => {
+      return await context.db.collection('humanSimulatorRaw')
+        .find({ "evalNumber": args["evalNumber"] })
+        .toArray()
+        .then(result => { return result; });
+    },
     getUsers: async (obj, args, context, infow) => {
       const session = await context.db.collection('sessions')
         .find({ "_id": new ObjectId(args['caller']?.['sessionId']) })
@@ -632,7 +645,7 @@ const resolvers = {
       // Query humanToADMComparison for any of the evalNumbers
       const results = await context.db
         .collection('humanToADMComparison')
-        .find({evalNumber: { $in: evalNumbers }})
+        .find({ evalNumber: { $in: evalNumbers } })
         .toArray();
 
       return results;
@@ -669,6 +682,9 @@ const resolvers = {
     getShowDemographics: async (obj, args, context, info) => {
       const demographics = await context.db.collection('surveyVersion').findOne();
       return demographics.showDemographics;
+    },
+    getDemographicsByEval: async (obj, args, context, info) => {
+      return await context.db.collection('demographicsData').find({'results.evalNumber': args.evalNumber}).toArray().then(result => {return result})
     },
     getSurveyConfigByVersion: async (obj, args, context, inflow) => {
       const version = parseFloat(args.version);
@@ -1090,11 +1106,11 @@ const resolvers = {
       }
     },
     updateScenarioResult: async (obj, args, context, inflow) => {
-        const result = await context.db.collection('userScenarioResults').updateOne(
-            { _id: new ObjectId(args.id) },
-            { $set: args.updates }
-        );
-        return { ok: result.modifiedCount > 0, modifiedCount: result.modifiedCount };
+      const result = await context.db.collection('userScenarioResults').updateOne(
+        { _id: new ObjectId(args.id) },
+        { $set: args.updates }
+      );
+      return { ok: result.modifiedCount > 0, modifiedCount: result.modifiedCount };
     },
   },
   StringOrFloat: new GraphQLScalarType({
