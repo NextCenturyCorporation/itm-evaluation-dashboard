@@ -57,7 +57,7 @@ export function PH2RQ8({ evalNum }) {
             }
             const variablesRow = data[variablesRowIdx];
             // first column we need to grab, go from there
-            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Probe_AF1');
+            const startColIdx = variablesRow.findIndex(cell => cell === 'Desert Spawn_location');
             if (startColIdx === -1) {
                 setVariableFields([]);
                 return;
