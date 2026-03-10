@@ -3,16 +3,13 @@ networks:
 
 services:
   nginx:
-    image: nginx:latest
+    image: nginx:alpine
+    container_name: dashboard-nginx-dev
     restart: always
-    container_name: dashboard-nginx
     volumes:
-      - ./resources/nginx.conf:/etc/nginx/nginx.conf
-      - ./certs:/certs
-      - ./nginxpwd:/nginxpwd
+      - ./resources/nginx-dev-server.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - "80:80"
-      - "443:443"
     networks:
       - dashboard-net
     depends_on:
@@ -24,43 +21,40 @@ services:
       context: ../dashboard-ui
       target: runtime
       args:
-        PUBLIC_URL: /
-        CONFIG_PATH: public/configs/prod/config.js
+        PUBLIC_URL: /dev
+        CONFIG_PATH: public/configs/dev-server/config.js
         USE_CORP_CA: "false"
-    image: dashboard-ui:prod
+    image: dashboard-ui:dev-server
     container_name: dashboard-ui
-    restart: always
     expose:
       - "80"
-    depends_on:
-      - dashboard-server
     networks:
       - dashboard-net
 
   dashboard-server:
     container_name: dashboard-graphql
-    image: dashboard-graphql:prod
+    image: dashboard-graphql
     restart: always
     volumes:
-      - ../dashboard-ui/public/configs/prod/graphql-config.js:/usr/src/app/config.js
+      - ../dashboard-ui/public/configs/dev-server/graphql-config.js:/usr/src/app/config.js
       - $HOME/.aws/:/root/.aws/:ro
     expose:
       - "9100"
-    depends_on:
-      - dashboard-mongo
     networks:
       - dashboard-net
+    depends_on:
+      - dashboard-mongo
     environment:
       NODE_OPTIONS: "--max-old-space-size=16384"
       NODE_ENV: "production"
 
   dashboard-mongo:
-    image: "mongo"
+    image: mongo
     restart: always
     container_name: dashboard-mongo
     command: --port 27030
     networks:
-      dashboard-net:
+      - dashboard-net
     environment:
       - MONGO_INITDB_DATABASE=dashboard
       - MONGO_INITDB_ROOT_USERNAME=dashroot

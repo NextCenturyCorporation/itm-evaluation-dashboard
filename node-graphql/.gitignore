@@ -2,4 +2,3 @@
 package-lock.json
 yarn.lock
 account-configs.js
-ca-bundle.crt
