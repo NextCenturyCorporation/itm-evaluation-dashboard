@@ -1671,19 +1671,23 @@ function populateDataSetP2(data) {
 
         for (const scenario of scenarios) {
             if (isEval15 && scenario?.kdmas?.length) {
-                const params = getKdmaParamsFromScenario(scenario);
+                const KDMA_PREFIX_MAP = {
+                    'affiliation': 'AF',
+                    'merit': 'MF',
+                    'personal_safety': 'PS',
+                    'search': 'SS'
+                };
 
-                const prefix =
-                    scenario.scenario_id.includes('-AF') ? 'AF' :
-                        scenario.scenario_id.includes('-MF') ? 'MF' :
-                            scenario.scenario_id.includes('-PS') ? 'PS' :
-                                scenario.scenario_id.includes('-SS') ? 'SS' :
-                                    null;
+                for (const kdma of scenario.kdmas) {
+                    const prefix = KDMA_PREFIX_MAP[kdma.kdma];
+                    if (!prefix) continue;
 
-                if (prefix) {
-                    row[`${prefix}_intercept`] = params.intercept;
-                    row[`${prefix}_medical`] = params.medical;
-                    row[`${prefix}_attribute`] = params.attribute;
+                    const params = kdma.parameters || [];
+                    for (const p of params) {
+                        if (p.name === 'intercept') row[`${prefix}_intercept`] = p.value;
+                        if (p.name === 'medical_weight') row[`${prefix}_medical`] = p.value;
+                        if (p.name === 'attr_weight') row[`${prefix}_attribute`] = p.value;
+                    }
                 }
 
                 continue; // do NOT do eval 8/9/10 processing on eval 15
@@ -1769,8 +1773,6 @@ function populateDataSetP2(data) {
 
     return results;
 }
-
-function getKdmaParamsFromScenario(scenario) { const out = { intercept: null, medical: null, attribute: null }; if (!scenario?.kdmas || !scenario.kdmas.length) return out; const params = scenario.kdmas[0].parameters || []; for (const p of params) { if (p.name === 'intercept') out.intercept = p.value; if (p.name === 'medical_weight') out.medical = p.value; if (p.name === 'attr_weight') out.attribute = p.value; } return out; }
 
 export {
     populateDataSet, getAggregatedData, getChartData, isDefined, getGroupKey,
