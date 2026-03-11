@@ -144,8 +144,11 @@ export function PH2RQ8({ evalNum }) {
             entry.actionAnalysis[fieldName] = `Patient ${scene?.response?.slice(-1)}`;
         }
 
-        entry.actionAnalysis[`${fieldPrefix}_PS1`] =
-            entry.actionAnalysis[`${envLabel} Personal_safety`];
+        if (currentMode === "legacy") {
+            entry.actionAnalysis[`${fieldPrefix}_PS1`] =
+                entry.actionAnalysis[`${fieldPrefix}_PS1`] ??
+                entry.actionAnalysis[`${envLabel} Personal_safety`];
+        }
 
         if (currentMode === "legacy") {
             entry.actionAnalysis[`${fieldPrefix}_SS1`] =
