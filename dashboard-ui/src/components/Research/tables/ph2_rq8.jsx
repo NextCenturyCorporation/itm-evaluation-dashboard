@@ -271,6 +271,7 @@ export function PH2RQ8({ evalNum }) {
                 const textKdmas = res?.kdmas;
                 const desertKdmas = desertEntry?.data?.alignment?.kdmas;
                 const urbanKdmas = urbanEntry?.data?.alignment?.kdmas;
+                const textKdmaFields = openWorld?.text_kdmas || {};
 
                 valueMap["Participant_ID"] = pid;
                 valueMap["Probe Set Assessment"] = openWorld?.evalName?.includes("June")
@@ -290,90 +291,33 @@ export function PH2RQ8({ evalNum }) {
                 }
 
                 if (mode === "feb26") {
-                    valueMap["AF_Intercept_Text"] = getTextKdmaParam(textKdmas, "AF", "intercept");
-                    valueMap["AF_medical_Text"] = getTextKdmaParam(textKdmas, "AF", "medical_weight");
-                    valueMap["AF_attribute_Text"] = getTextKdmaParam(textKdmas, "AF", "attr_weight");
+                    valueMap["AF_Intercept_Text"] =
+                        textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
+                    valueMap["AF_medical_Text"] =
+                        textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
+                    valueMap["AF_attribute_Text"] =
+                        textKdmaFields["Participant Text AF attr_weight KDMA"] ?? "";
 
-                    valueMap["MF_intercept_Text"] = getTextKdmaParam(textKdmas, "MF", "intercept");
-                    valueMap["MF_medical_Text"] = getTextKdmaParam(textKdmas, "MF", "medical_weight");
-                    valueMap["MF_attribute_Text"] = getTextKdmaParam(textKdmas, "MF", "attr_weight");
+                    valueMap["MF_intercept_Text"] =
+                        textKdmaFields["Participant Text MF intercept KDMA"] ?? "";
+                    valueMap["MF_medical_Text"] =
+                        textKdmaFields["Participant Text MF medical_weight KDMA"] ?? "";
+                    valueMap["MF_attribute_Text"] =
+                        textKdmaFields["Participant Text MF attr_weight KDMA"] ?? "";
 
-                    valueMap["PS_intercept_Text"] = getTextKdmaParam(textKdmas, "PS", "intercept");
-                    valueMap["PS_medical_Text"] = getTextKdmaParam(textKdmas, "PS", "medical_weight");
-                    valueMap["PS_attribute_Text"] = getTextKdmaParam(textKdmas, "PS", "attr_weight");
+                    valueMap["PS_intercept_Text"] =
+                        textKdmaFields["Participant Text PS intercept KDMA"] ?? "";
+                    valueMap["PS_medical_Text"] =
+                        textKdmaFields["Participant Text PS medical_weight KDMA"] ?? "";
+                    valueMap["PS_attribute_Text"] =
+                        textKdmaFields["Participant Text PS attr_weight KDMA"] ?? "";
 
-                    valueMap["SS_intercept_Text"] = getTextKdmaParam(textKdmas, "SS", "intercept");
-                    valueMap["SS_medical_Text"] = getTextKdmaParam(textKdmas, "SS", "medical_weight");
-                    valueMap["SS_attribute_Text"] = getTextKdmaParam(textKdmas, "SS", "attr_weight");
-
-                    valueMap["AF_Intercept_Desert"] = getKdmaParam(
-                        desertKdmas,
-                        "affiliation",
-                        "intercept"
-                    );
-                    valueMap["AF_medical_Desert"] = getKdmaParam(
-                        desertKdmas,
-                        "affiliation",
-                        "medical_weight"
-                    );
-                    valueMap["AF_attribute_Desert"] = getKdmaParam(
-                        desertKdmas,
-                        "affiliation",
-                        "attr_weight"
-                    );
-
-                    valueMap["MF_intercept_Desert"] = getKdmaParam(
-                        desertKdmas,
-                        "merit",
-                        "intercept"
-                    );
-                    valueMap["MF_medical_Desert"] = getKdmaParam(
-                        desertKdmas,
-                        "merit",
-                        "medical_weight"
-                    );
-                    valueMap["MF_attribute_Desert"] = getKdmaParam(
-                        desertKdmas,
-                        "merit",
-                        "attr_weight"
-                    );
-
-                    valueMap["AF_Intercept_Urban"] = getKdmaParam(
-                        urbanKdmas,
-                        "affiliation",
-                        "intercept"
-                    );
-                    valueMap["AF_medical_Urban"] = getKdmaParam(
-                        urbanKdmas,
-                        "affiliation",
-                        "medical_weight"
-                    );
-                    valueMap["AF_attribute_Urban"] = getKdmaParam(
-                        urbanKdmas,
-                        "affiliation",
-                        "attr_weight"
-                    );
-
-                    valueMap["MF_intercept_Urban"] = getKdmaParam(
-                        urbanKdmas,
-                        "merit",
-                        "intercept"
-                    );
-                    valueMap["MF_medical_Urban"] = getKdmaParam(
-                        urbanKdmas,
-                        "merit",
-                        "medical_weight"
-                    );
-                    valueMap["MF_attribute_Urban"] = getKdmaParam(
-                        urbanKdmas,
-                        "merit",
-                        "attr_weight"
-                    );
-
-                    valueMap["AF Alignment_Desert"] = getKdmaValue(desertKdmas, "affiliation");
-                    valueMap["MF Alignment_Desert"] = getKdmaValue(desertKdmas, "merit");
-                    valueMap["AF Alignment_Urban"] = getKdmaValue(urbanKdmas, "affiliation");
-                    valueMap["MF Alignment_Urban"] = getKdmaValue(urbanKdmas, "merit");
+                    valueMap["SS_intercept_Text"] =
+                        textKdmaFields["Participant Text SS intercept KDMA"] ?? "";
+                    valueMap["SS_medical_Text"] =
+                        textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
+                    valueMap["SS_attribute_Text"] =
+                        textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
                 }
 
                 for (const field of definitionFields) {
