@@ -43,7 +43,7 @@ export function ExploratoryAnalysis() {
                 <HumanVariability evalNum={selectedEval} />
             </div>
         }
-        {hasRQ1Page && ( 
+        {(hasRQ1Page && selectedEval !== 15) && ( 
             <>
             <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
