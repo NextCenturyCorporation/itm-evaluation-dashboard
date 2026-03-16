@@ -1098,7 +1098,6 @@ export const SurveyPageWrapper = (props) => {
         fetchPolicy: 'no-cache',
         skip: !evalNumber
     });
-    console.log(dataEvalData)
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
 
