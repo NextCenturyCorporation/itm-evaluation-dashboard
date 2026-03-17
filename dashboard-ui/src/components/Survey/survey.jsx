@@ -54,14 +54,10 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }
 `
-const GET_TEXT_RESULTS = gql`
-    query GetAllResults {
-        getAllScenarioResults
-    }`;
-
-const GET_SURVEY_RESULTS = gql`
-    query GetAllResults {
-        getAllSurveyResults
+const GET_EVAL_DATA = gql`
+    query GetEvalData($evalNumber: Float) {
+        getAllScenarioResultsByEval(evalNumber: $evalNumber)
+        getAllSurveyResultsByEval(evalNumber: $evalNumber)
     }`;
 
 const ADD_PARTICIPANT = gql`
@@ -153,9 +149,7 @@ class SurveyPage extends Component {
                 "Participant ID": this.state.pid
             };
             // search to see if this pid has been used before and fully completed the survey
-            const relevantVersions = [4, 5, 6, 7, 8, 9, 10]
             const pidExists = this.props.surveyResults.filter((res) =>
-                relevantVersions.includes(res.results?.surveyVersion) &&
                 res.results['Participant ID Page']?.questions['Participant ID']?.response === this.state.pid &&
                 (res.results.surveyVersion >= 10 || isDefined(res.results['Post-Scenario Measures']))
             );
@@ -1096,16 +1090,19 @@ export const SurveyPageWrapper = (props) => {
     const { loading: loadingHumanGroupFirst, error: errorHumanGroupFirst, data: dataHumanGroupFirst } = useQuery(COUNT_HUMAN_GROUP_FIRST);
     const { loading: loadingAIGroupFirst, error: errorAIGroupFirst, data: dataAIGroupFirst } = useQuery(COUNT_AI_GROUP_FIRST);
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(GET_TEXT_RESULTS, {
-        fetchPolicy: 'no-cache'
-    });
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults } = useQuery(GET_SURVEY_RESULTS);
+    const evalNumber = SURVEY_VERSION_DATA[currentSurveyVersion]?.evalNumber;
+
+    const { loading: loadingEvalData, error: errorEvalData, data: dataEvalData } = useQuery(GET_EVAL_DATA, {
+        variables: { evalNumber },
+        fetchPolicy: 'no-cache',
+        skip: !evalNumber
+    });
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
 
-    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingTextResults || loadingSurveyResults) return <p>Loading...</p>;
-    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorTextResults || errorSurveyResults) return <p>Error :</p>;
+    if (loadingHumanGroupFirst || loadingAIGroupFirst || loadingParticipantLog || loadingEvalData) return <p>Loading...</p>;
+    if (errorHumanGroupFirst || errorAIGroupFirst || errorParticipantLog || errorEvalData) return <p>Error :</p>;
 
     return (
         <SurveyPage
@@ -1113,8 +1110,8 @@ export const SurveyPageWrapper = (props) => {
             countAIGroupFirst={dataAIGroupFirst.countAIGroupFirst}
             participantLog={dataParticipantLog}
             currentUser={props.currentUser}
-            textResults={dataTextResults?.getAllScenarioResults}
-            surveyResults={dataSurveyResults.getAllSurveyResults}
+            textResults={dataEvalData?.getAllScenarioResultsByEval ?? []}
+            surveyResults={dataEvalData?.getAllSurveyResultsByEval ?? []}
             surveyVersion={currentSurveyVersion}
             getServerTimestamp={getServerTimestamp}
             addParticipant={addParticipant}

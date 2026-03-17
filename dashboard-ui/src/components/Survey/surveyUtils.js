@@ -1795,7 +1795,9 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
         ? textResult?.individualMostLeastAligned
         : textResult?.mostLeastAligned;
 
-    const alignmentData = alignmentSource?.find(item => item.target === config.target);
+    const alignmentData = config.useIndividual
+        ? alignmentSource?.[0]
+        : alignmentSource?.find(item => item.target === config.target);
 
     if (!alignmentData?.response?.length) {
         console.warn(`No alignment data for ${scenarioType}`);
@@ -1835,8 +1837,8 @@ export const createScenarioBlockv10 = (scenarioType, model, allPages, participan
     }
 
     // In the baseline overlap case, label as misaligned; otherwise aligned
-    const [alignment, admChoiceProcess] = useLeastAligned 
-        ? ['misaligned', 'least aligned'] 
+    const [alignment, admChoiceProcess] = useLeastAligned
+        ? ['misaligned', 'least aligned']
         : ['aligned', 'most aligned'];
     Object.assign(selectedAdm, { alignment, admChoiceProcess });
     baselineAdm.alignment = 'baseline';
