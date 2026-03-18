@@ -312,8 +312,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             // ignore invalid versions
             const version = entry.surveyVersion;
-            const effectiveVersion = version ?? (obj['eval'] === 13 ? 6 : null);
-
+            const effectiveVersion = version ?? (obj['eval'] === 13 ? 6 : obj['eval'] === 9 ? 7 : null);
+            
             if (!effectiveVersion || 
                 (showLegacy && effectiveVersion >= 4) || 
                 (!showLegacy && effectiveVersion < 4) || 

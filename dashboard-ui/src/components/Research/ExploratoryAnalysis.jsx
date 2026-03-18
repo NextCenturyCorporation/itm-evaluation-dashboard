@@ -43,7 +43,7 @@ export function ExploratoryAnalysis() {
                 <HumanVariability evalNum={selectedEval} />
             </div>
         }
-        {hasRQ1Page && ( 
+        {(hasRQ1Page && selectedEval !== 15) && ( 
             <>
             <div className="section-container">
             <h2>RQ4: Does alignment score predict perceived alignment?</h2>
@@ -156,16 +156,18 @@ export function ExploratoryAnalysis() {
             {selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
         </div>
 
-        <>
-            <div className="section-container">
-                <BlockedTable evalNum={selectedEval} />
-            </div>
-            {selectedEval > 4 && selectedEval < 8 &&
+        {selectedEval !== 15 && ( 
+            <>
                 <div className="section-container">
-                    <CalibrationData evalNum={selectedEval} />
+                    <BlockedTable evalNum={selectedEval} />
                 </div>
-            }
-        </>
+                {selectedEval > 4 && selectedEval < 8 &&
+                    <div className="section-container">
+                        <CalibrationData evalNum={selectedEval} />
+                    </div>
+                }
+            </>
+        )}
 
     </div>);
 }
