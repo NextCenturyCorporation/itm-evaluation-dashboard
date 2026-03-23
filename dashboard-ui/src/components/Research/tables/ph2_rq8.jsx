@@ -206,7 +206,7 @@ export function PH2RQ8({ evalNum }) {
             for (const field of variablesRow) {
                 if (field.includes("{N}")) {
                     const isDesert = field.includes("Desert");
-                    const maxN = isDesert ? 9 : 8;
+                    const maxN = isDesert ? 10 : 8;
 
                     for (let n = 1; n <= maxN; n++) {
                         expandedFields.push(field.replace("{N}", n));
