@@ -3,6 +3,7 @@ import store from "../../store/store";
 import bcrypt from 'bcryptjs';
 
 export const evalNameToNumber = {
+    'Phase 2 April 2026 Evaluation': 16,
     'Phase 2 February 2026 Evaluation': 15,
     'Phase 2 October 2025 Collaboration': 13,
     'Eval 12 UK Phase 1': 12,
