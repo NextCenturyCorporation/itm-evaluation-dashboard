@@ -88,6 +88,16 @@ export const createAdeptSession = async (url) => {
     return response.data;
 };
 
+export const getSubPop = async (sessionId, url) => {
+    try {
+        const response = await axios.post(`${url}/api/v1/subpopulation?session_id=${sessionId}`);
+        return response.data
+    } catch (e) {
+        console.error('Error getting subpopulation group: ', e)
+        return null
+    }
+}
+
 
 export const getAdeptUrl = (evalNumber) => {
     return evalNumber === 12 ? process.env.REACT_APP_ADEPT_DRE_URL : process.env.REACT_APP_ADEPT_URL;
