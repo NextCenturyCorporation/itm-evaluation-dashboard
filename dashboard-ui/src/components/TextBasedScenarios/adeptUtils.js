@@ -33,7 +33,7 @@ export const submitResponses = async (scenario, scenarioID, urlBase, sessionID) 
     }
 };
 
-export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, skipKdmaFilter = false) => {
+export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, skipKdmaFilter = false, enable_subpop = false) => {
     const endpoint = '/api/v1/get_ordered_alignment';
 
     const getTargets = () => {
@@ -61,6 +61,7 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
         for (const target of targets) {
             const params = { session_id: sessionId };
             if (target) params.kdma_id = target;
+            if (enable_subpop) params.enable_subpop = enable_subpop
 
             const response = await axios.get(`${url}${endpoint}`, { params });
             const filteredData = response.data.filter(obj =>
@@ -75,9 +76,12 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
     return responses;
 };
 
-export const getKdmaProfile = async (sessionId, url) => {
+export const getKdmaProfile = async (sessionId, url, enable_subpop = false) => {
+    const endpoint = '/api/v1/computed_kdma_profile'
+    const params = {session_id: sessionId}
+    if (enable_subpop) params.enable_subpop = enable_subpop
     try {
-        const response = await axios.get(`${url}/api/v1/computed_kdma_profile?session_id=${sessionId}`);
+        const response = await axios.get(`${url}${endpoint}`, {params});
         return response.data;
     } catch (e) {
         console.error('Error getting kdmas:', e);

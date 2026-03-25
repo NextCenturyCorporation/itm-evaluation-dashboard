@@ -540,8 +540,9 @@ class TextBasedScenariosPage extends Component {
 
         // All 4 regular scenarios complete: score combined session and upload
         if (updatedScenarios.length === 4) {
-            const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null);
-            const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
+            // enable subpop passed for combined session
+            const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null, false, true);
+            const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url, true);
 
             for (const s of updatedScenarios) {
                 s.combinedSessionId = combinedSessionId;
@@ -830,11 +831,11 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    attachKdmaValue = async (sessionId, url) => {
-        return getKdmaProfile(sessionId, url);
+    attachKdmaValue = async (sessionId, url, enable_subpop = false) => {
+        return getKdmaProfile(sessionId, url, enable_subpop);
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false) => {
+    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false) => {
         const evalNumber = evalNameToNumber[this.props.currentTextEval];
         if (ta1 === 'soartech') {
             // SoarTech still uses its own logic
@@ -854,7 +855,7 @@ class TextBasedScenariosPage extends Component {
                 return [];
             }
         }
-        return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter);
+        return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop);
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
