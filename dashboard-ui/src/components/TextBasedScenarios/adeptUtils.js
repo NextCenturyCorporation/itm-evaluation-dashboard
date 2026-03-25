@@ -33,11 +33,11 @@ export const submitResponses = async (scenario, scenarioID, urlBase, sessionID) 
     }
 };
 
-export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, isEval15Combined = false) => {
+export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, skipKdmaFilter = false) => {
     const endpoint = '/api/v1/get_ordered_alignment';
 
     const getTargets = () => {
-        if (isEval15Combined) return [null];
+        if (skipKdmaFilter) return [null];
 
         if ([13, 15].includes(evalNumber) && scenario) {
             const attrMatch = scenario.scenario_id.match(/(AF|MF|PS|SS)/);
