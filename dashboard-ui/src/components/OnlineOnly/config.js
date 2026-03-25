@@ -262,13 +262,16 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
         return [];
     }
 
-    if (num >= 8 && num !== 13) {
+    // eval 16 make subpop always first and SS always last (performance reasons)
+    if (num === 16) {
+        const ss = scenarios.find(s => s.includes('SS'));
+        scenarios = scenarios.filter(s => !s.includes('SS'));
         shuffle(scenarios);
+        return ['April2026-subpopulation', ...scenarios, ss];
     }
 
-    // Eval 16 - subpopulation scenario always first
-    if (num === 16) {
-        scenarios.unshift('April2026-subpopulation');
+    if (num >= 8 && num !== 13) {
+        shuffle(scenarios);
     }
 
     return scenarios;
