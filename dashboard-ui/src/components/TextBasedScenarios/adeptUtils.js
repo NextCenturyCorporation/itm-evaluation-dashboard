@@ -47,6 +47,8 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
             }
         }
 
+        if (evalNumber === 16) return ['affiliation', 'merit'];
+
         return (evalNumber >= 8 && evalNumber !== 12)
             ? ['affiliation', 'merit', 'search', 'personal_safety']
             : ['Moral judgement', 'Ingroup Bias'];

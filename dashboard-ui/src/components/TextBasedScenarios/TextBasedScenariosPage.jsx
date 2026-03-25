@@ -148,7 +148,7 @@ class TextBasedScenariosPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefDemographics = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
-        this.shouldBlockNavigation = true
+        this.shouldBlockNavigation = true;
     }
 
     handleConsentResponse = (agree) => {
@@ -495,7 +495,7 @@ class TextBasedScenariosPage extends Component {
         const url = this.getAdeptUrl();
         const scenarioId = scenario.scenario_id;
 
-        // Subpopulation: create combined session, get subpop result, upload immediately
+        // subpop - create combined session, get subpop result, upload immediately
         if (scenarioId === 'April2026-subpopulation') {
             try {
                 const combinedSessionId = await createAdeptSession(url);
@@ -515,14 +515,14 @@ class TextBasedScenariosPage extends Component {
             return;
         }
 
-        // Regular scenarios (AF, MF, PS, SS): submit to combined session
+        //submit to combined session
         const combinedSessionId = this.state.eval16CombinedSessionId;
         await this.submitResponses(scenario, scenarioId, url, combinedSessionId);
 
         const updatedScenarios = [...this.state.eval16Scenarios, scenario];
         this.setState({ eval16Scenarios: updatedScenarios });
 
-        // Add to pair groups — PS belongs to both
+        // Add to pair groups, PS belongs to both
         const groupKeys = [];
         if (scenarioId.includes('AF') || scenarioId.includes('PS')) groupKeys.push('AF-PS');
         if (scenarioId.includes('MF') || scenarioId.includes('PS')) groupKeys.push('MF-PS');
