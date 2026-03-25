@@ -212,7 +212,13 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
     const num = evalNameToNumber[currentEval];
 
     const configs = {
-        16: { prefix: 'April2026', types: ['AF', 'MF', 'PS', 'SS'], noDigitTypes: ['AF', 'MF'], suffix: 'assess' },
+        16: {
+            prefix: 'April2026',
+            types: ['AF', 'MF', 'PS', 'SS'],
+            noDigitTypes: ['AF', 'MF'],
+            prefixOverrides: { PS: 'Feb2026', SS: 'Feb2026' },
+            suffix: 'assess'
+        },
         15: { prefix: 'Feb2026', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'assess' },
         10: { prefix: 'Sept2025', types: ['AF', 'MF', 'PS', 'PS-AF'], suffix: 'eval' },
         9:  { prefix: 'July2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' },
@@ -220,8 +226,9 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
     };
 
     const buildId = (config, type) => {
+        const prefix = config.prefixOverrides?.[type] || config.prefix;
         const digit = config.noDigitTypes?.includes(type) ? '' : participantLog[`${type}-text-scenario`];
-        return `${config.prefix}-${type}${digit}-${config.suffix}`;
+        return `${prefix}-${type}${digit}-${config.suffix}`;
     };
 
     // paired ordering, return early to skip general shuffle
