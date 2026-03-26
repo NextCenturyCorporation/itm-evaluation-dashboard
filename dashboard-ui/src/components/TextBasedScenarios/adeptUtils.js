@@ -96,7 +96,7 @@ export const createAdeptSession = async (url) => {
 
 export const getSubPop = async (sessionId, url) => {
     try {
-        const response = await axios.post(`${url}/api/v1/subpopulation?session_id=${sessionId}`);
+        const response = await axios.get(`${url}/api/v1/subpopulation?session_id=${sessionId}`);
         return response.data
     } catch (e) {
         console.error('Error getting subpopulation group: ', e)
