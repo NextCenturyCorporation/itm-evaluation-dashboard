@@ -541,8 +541,9 @@ class TextBasedScenariosPage extends Component {
         // All 4 regular scenarios complete: score combined session and upload
         if (updatedScenarios.length === 4) {
             // enable subpop passed for combined session
-            const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null, false, true);
-            const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url, true);
+            const subPopValue = this.state.eval16SubPopResult;
+            const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null, false, subPopValue);
+            const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url, subPopValue);
 
             for (const s of updatedScenarios) {
                 s.combinedSessionId = combinedSessionId;
