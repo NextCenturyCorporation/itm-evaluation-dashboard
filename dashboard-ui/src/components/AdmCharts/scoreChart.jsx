@@ -19,7 +19,22 @@ const formatLeftIndexString = function(peformerADMString) {
     }
 }
 
-const MyResponsiveBar = ({mappedArray}) => {
+const MyResponsiveBar = ({mappedArray, evalNumber}) => {
+    // eval < 15 -> scoring range 0.0-1.0. eval >= 15 -> scoring range -∞-0
+    const isNewScoring = evalNumber >= 15;
+
+    let valueScaleConfig;
+    if (isNewScoring) {
+        // finds minimum score for group
+        const scores = mappedArray.map(d => parseFloat(d['Average Alignment Score']));
+        const minScore = Math.min(...scores);
+        // add some padding below min score
+        const paddedMin = minScore < 0 ? minScore * 1.1 : minScore - 0.1;
+        valueScaleConfig = { type: 'linear', min: paddedMin, max: 0 };
+    } else {
+        valueScaleConfig = { type: 'linear', min: 0, max: 1 };
+    }
+
     return (
         <div className="score-chart-container">
             <ResponsiveBar
@@ -29,7 +44,7 @@ const MyResponsiveBar = ({mappedArray}) => {
                 margin={{ top: 50, right: 50, bottom: 50, left: 160 }}
                 padding={0.4}
                 layout="horizontal"
-                valueScale={{ type: 'linear', min: 0, max: 1 }}
+                valueScale={valueScaleConfig}
                 indexScale={{ type: 'band', round: true }}
                 colors={['#00A0D2', "#999D5D"]}
                 colorBy="index"
@@ -96,7 +111,7 @@ class ScoreChart extends React.Component {
                     return (
                         <div className="flex-chart-center">
                             <div className="results-chart-container">
-                                <MyResponsiveBar mappedArray={mappedArray}/>
+                                <MyResponsiveBar mappedArray={mappedArray} evalNumber={this.props.evalNumber}/>
                             </div>
                         </div>
 
