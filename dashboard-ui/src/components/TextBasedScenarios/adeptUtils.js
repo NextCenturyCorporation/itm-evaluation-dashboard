@@ -33,11 +33,11 @@ export const submitResponses = async (scenario, scenarioID, urlBase, sessionID) 
     }
 };
 
-export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, isEval15Combined = false) => {
+export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, skipKdmaFilter = false, enable_subpop = false) => {
     const endpoint = '/api/v1/get_ordered_alignment';
 
     const getTargets = () => {
-        if (isEval15Combined) return [null];
+        if (skipKdmaFilter) return [null];
 
         if ([13, 15].includes(evalNumber) && scenario) {
             const attrMatch = scenario.scenario_id.match(/(AF|MF|PS|SS)/);
@@ -46,6 +46,8 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
                 return [attrMap[attrMatch[1]]];
             }
         }
+
+        if (evalNumber === 16) return ['affiliation', 'merit'];
 
         return (evalNumber >= 8 && evalNumber !== 12)
             ? ['affiliation', 'merit', 'search', 'personal_safety']
@@ -59,6 +61,7 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
         for (const target of targets) {
             const params = { session_id: sessionId };
             if (target) params.kdma_id = target;
+            if (enable_subpop) params.enable_subpop = enable_subpop
 
             const response = await axios.get(`${url}${endpoint}`, { params });
             const filteredData = response.data.filter(obj =>
@@ -73,9 +76,12 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
     return responses;
 };
 
-export const getKdmaProfile = async (sessionId, url) => {
+export const getKdmaProfile = async (sessionId, url, enable_subpop = false) => {
+    const endpoint = '/api/v1/computed_kdma_profile'
+    const params = {session_id: sessionId}
+    if (enable_subpop) params.enable_subpop = enable_subpop
     try {
-        const response = await axios.get(`${url}/api/v1/computed_kdma_profile?session_id=${sessionId}`);
+        const response = await axios.get(`${url}${endpoint}`, {params});
         return response.data;
     } catch (e) {
         console.error('Error getting kdmas:', e);
@@ -87,6 +93,16 @@ export const createAdeptSession = async (url) => {
     const response = await axios.post(`${url}/api/v1/new_session`);
     return response.data;
 };
+
+export const getSubPop = async (sessionId, url) => {
+    try {
+        const response = await axios.get(`${url}/api/v1/subpopulation?session_id=${sessionId}`);
+        return response.data
+    } catch (e) {
+        console.error('Error getting subpopulation group: ', e)
+        return null
+    }
+}
 
 
 export const getAdeptUrl = (evalNumber) => {

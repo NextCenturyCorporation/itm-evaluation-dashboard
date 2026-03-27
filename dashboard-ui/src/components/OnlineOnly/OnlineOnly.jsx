@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 import { useHistory, useLocation } from 'react-router-dom';
 import { useSelector } from "react-redux";
 import '../../css/scenario-page.css';
-import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData } from "./config";
+import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData } from "./config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -52,6 +52,7 @@ export default function StartOnline() {
         // get correct plog data
         const currentSearchParams = new URLSearchParams(location.search);
         const participantDataFunctions = {
+            16: aprilParticipantData,
             15: febParticipantData,
             13: octoberParticipantData,
             12: ukParticipantData,
