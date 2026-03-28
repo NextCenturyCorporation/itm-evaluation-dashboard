@@ -7,18 +7,22 @@ import rq1CodePh1 from './rcode/code_for_dashboard_RQ1_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
 import { PAGES, getEvalOptionsForPage } from './utils';
+import { useSelector, useDispatch } from 'react-redux'
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 export function RQ1() {
     const evalOptions = getEvalOptionsForPage(PAGES.RQ1);
+    const dispatch = useDispatch()
+    const storedEval = useSelector(state => state.configs.selectedResearchEval)
 
     const [rq1CodeShowing, setRQ1CodeShowing] = React.useState(false);
 
     const close1Code = () => {
         setRQ1CodeShowing(false);
     }
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const selectedEval = storedEval ?? evalOptions[0].value
     function selectEvaluation(target) {
-        setSelectedEval(target.value);
+        dispatch(setSelectedResearchEval(target.value))
     }
     return (<div className="researchQuestion">
         <div className="rq-selection-section">

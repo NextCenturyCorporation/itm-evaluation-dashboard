@@ -12,16 +12,20 @@ import { RCodeModal } from "./rcode/RcodeModal";
 import { MultiKDMA_RQ23 as MultiKdmaRq23 } from './tables/rq23_multiKDMA';
 import { PH2RQ2223 } from './tables/ph2_rq22-rq23';
 import { PAGES, getEvalOptionsForPage } from './utils';
+import { useSelector, useDispatch } from 'react-redux'
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 export function RQ2() {
     const evalOptions = getEvalOptionsForPage(PAGES.RQ2);
+    const dispatch = useDispatch()
+    const storedEval = useSelector(state => state.configs.selectedResearchEval)
 
     const [rq21CodeShowing, setRQ21CodeShowing] = React.useState(false);
     const [rq2CodeShowing, setRQ2CodeShowing] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const selectedEval = storedEval ?? evalOptions[0].value
 
     function selectEvaluation(target) {
-        setSelectedEval(target.value);
+        dispatch(setSelectedResearchEval(target.value))
     }
 
     const close21Code = () => {
