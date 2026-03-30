@@ -1,8 +1,7 @@
-import { SURVEY_VERSION_DATA } from "../Survey/survey";
-import store from "../../store/store";
 import bcrypt from 'bcryptjs';
-
+import { shuffle } from '../Survey/surveyUtils';
 export const evalNameToNumber = {
+    'Phase 2 April 2026 Evaluation': 16,
     'Phase 2 February 2026 Evaluation': 15,
     'Phase 2 October 2025 Collaboration': 13,
     'Eval 12 UK Phase 1': 12,
@@ -183,69 +182,97 @@ export const febParticipantData = (currentSearchParams, hashedEmail, newPid, typ
     };
 };
 
-export const scenarioIdsFromLog = (participantLog, currentEval) => {
-    const num = evalNameToNumber[currentEval]
-    let scenarios = [];
+export const aprilParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
+    const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
+    const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
+    const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
 
-    const standardEvalConfigs = {
-        10: { prefix: 'Sept2025', types: ['AF', 'MF', 'PS', 'PS-AF'], suffix: 'eval' },
+    return {
+        "ParticipantID": newPid,
+        "Type": type,
+        "prolificId": prolificId,
+        "contactId": contactId,
+        "claimed": true,
+        "simEntryCount": 0,
+        "surveyEntryCount": 0,
+        "textEntryCount": 0,
+        "hashedEmail": email,
+        'evalNum': evalNum,
+        /*
+        We are using PS2 and SS2. There is only one AF and oen MF so I am putting 2 just for consistency
+        */
+        "AF-text-scenario": 2,
+        "MF-text-scenario": 2,
+        "PS-text-scenario": 2,
+        "SS-text-scenario": 2,
+    };
+};
+
+export const scenarioIdsFromLog = (participantLog, currentEval) => {
+    const num = evalNameToNumber[currentEval];
+
+    const configs = {
+        16: {
+            prefix: 'April2026',
+            types: ['AF', 'MF', 'PS', 'SS'],
+            noDigitTypes: ['AF', 'MF'],
+            prefixOverrides: { PS: 'Feb2026', SS: 'Feb2026' },
+            suffix: 'assess'
+        },
         15: { prefix: 'Feb2026', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'assess' },
-        8: { prefix: 'June2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' },
-        9: { prefix: 'July2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' }
+        10: { prefix: 'Sept2025', types: ['AF', 'MF', 'PS', 'PS-AF'], suffix: 'eval' },
+        9:  { prefix: 'July2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' },
+        8:  { prefix: 'June2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' },
     };
 
-    // keep pairs together (PS+AF, MF+SS) but random order of pairs
-    // return early skips the general shuffle.
+    const buildId = (config, type) => {
+        const prefix = config.prefixOverrides?.[type] || config.prefix;
+        const digit = config.noDigitTypes?.includes(type) ? '' : participantLog[`${type}-text-scenario`];
+        return `${prefix}-${type}${digit}-${config.suffix}`;
+    };
+
+    // paired ordering, return early to skip general shuffle
     if (num === 15) {
-        const { prefix, suffix } = standardEvalConfigs[num];
-        const buildId = (type) =>
-            `${prefix}-${type}${participantLog[`${type}-text-scenario`]}-${suffix}`;
-
-
-        let pairPSAF = [buildId('PS'), buildId('AF')];
-        let pairMFSS = [buildId('MF'), buildId('SS')];
-
-        // random within pair
+        const config = configs[15];
+        let pairPSAF = [buildId(config, 'PS'), buildId(config, 'AF')];
+        let pairMFSS = [buildId(config, 'MF'), buildId(config, 'SS')];
         if (Math.random() < 0.5) pairPSAF.reverse();
+        const paired = Math.random() < 0.5
+            ? [...pairPSAF, ...pairMFSS]
+            : [...pairMFSS, ...pairPSAF];
+        return paired;
+    }
 
-        //randomize order of pairs
-        if (Math.random() < 0.5) {
-            scenarios = [...pairPSAF, ...pairMFSS];
-        } else {
-            scenarios = [...pairMFSS, ...pairPSAF];
-        }
+    let scenarios;
 
-        return scenarios;
-    } else if (standardEvalConfigs[num]) {
-        const { prefix, types, suffix } = standardEvalConfigs[num];
-        scenarios = types.map(type =>
-            `${prefix}-${type}${participantLog[`${type}-text-scenario`]}-${suffix}`
-        );
+    if (configs[num]) {
+        scenarios = configs[num].types.map(type => buildId(configs[num], type));
     } else if (num === 5) {
         scenarios = [
-            ...p1Mappings[participantLog['Text-1']] || [],
-            ...p1Mappings[participantLog['Text-2']] || []
+            ...(p1Mappings[participantLog['Text-1']] || []),
+            ...(p1Mappings[participantLog['Text-2']] || []),
         ];
     } else if (num === 12) {
-        scenarios = [
-            'DryRunEval-MJ5-eval',
-            'vol-ph1-eval-2',
-            'DryRunEval.IO1',
-            'DryRunEval.MJ1'
-        ];
+        scenarios = ['DryRunEval-MJ5-eval', 'vol-ph1-eval-2', 'DryRunEval.IO1', 'DryRunEval.MJ1'];
     } else if (num === 13) {
-        const scenarioTypes = ['AF', 'MF', 'PS', 'SS'];
-        scenarios = [1, 2, 3].flatMap(num =>
-            scenarioTypes.map(type => `July2025-${type}${num}-eval`)
+        scenarios = [1, 2, 3].flatMap(n =>
+            ['AF', 'MF', 'PS', 'SS'].map(type => `July2025-${type}${n}-eval`)
         );
+    } else {
+        return [];
+    }
+
+    // eval 16 make subpop always first and SS always last (performance reasons)
+    if (num === 16) {
+        const ss = scenarios.find(s => s.includes('SS'));
+        scenarios = scenarios.filter(s => !s.includes('SS'));
+        shuffle(scenarios);
+        return ['April2026-subpopulation', ...scenarios, ss];
     }
 
     if (num >= 8 && num !== 13) {
-        for (let i = scenarios.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
-        }
+        shuffle(scenarios);
     }
 
     return scenarios;
-}
+};
