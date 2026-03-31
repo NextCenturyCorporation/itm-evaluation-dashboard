@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { submitResponses as sharedSubmitResponses, getMostLeastAligned, getKdmaProfile, getAdeptUrl as sharedGetAdeptUrl } from './adeptUtils';
+import { submitResponses as sharedSubmitResponses, getMostLeastAligned, getKdmaProfile, getAdeptUrl as sharedGetAdeptUrl, getSubPop, createAdeptSession } from './adeptUtils';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
@@ -133,6 +133,13 @@ class TextBasedScenariosPage extends Component {
             },
             showConsentForm: false,
             consentGiven: false,
+            eval16CombinedSessionId: null,
+            eval16Scenarios: [],
+            eval16Groups: {
+                'AF-PS': [],
+                'MF-PS': [],
+            },
+            eval16SubPopResult: null,
         };
 
         this.surveyData = {};
@@ -141,7 +148,7 @@ class TextBasedScenariosPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefDemographics = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
-        this.shouldBlockNavigation = true
+        this.shouldBlockNavigation = true;
     }
 
     handleConsentResponse = (agree) => {
@@ -408,52 +415,58 @@ class TextBasedScenariosPage extends Component {
     }
 
     getAlignmentScore = async (scenario) => {
-        if (scenario.author === 'ADEPT' || adeptList.some(term => scenario.scenario_id.includes(term))) {
-            const isPSAF = scenario.scenario_id.includes('PS-AF');
-            const evalNum = evalNameToNumber[this.props.currentTextEval]
-            // ps-af needs its own individual session (for eval 10 only, not eval 15)
-            const needsIsolatedSession = evalNum === 10 && isPSAF;
-            const isEval13 = evalNum === 13;
-            const isEval15 = evalNum === 15;
+        const evalNum = evalNameToNumber[this.props.currentTextEval];
+        const isAdept = scenario.author === 'ADEPT' || adeptList.some(term => scenario.scenario_id.includes(term));
 
-            if (needsIsolatedSession) {
-                await this.processIsolatedAdeptScenario(scenario);
-            } else if (isEval13) {
-                await this.processEval13Scenario(scenario);
-            } else if (isEval15) {
-                await this.processEval15Scenario(scenario);
-            } else {
-                if (this.state.adeptSessionsCompleted === 0) {
-                    await this.beginRunningSession(scenario);
-                } else {
-                    await this.continueRunningSession(scenario);
-                }
-
-                let updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
-
-                this.setState(prevState => ({
-                    adeptSessionsCompleted: prevState.adeptSessionsCompleted + 1,
-                    adeptScenarios: updatedAdeptScenarios
-                }), async () => {
-                    /*
-                    Phase 1/Jan/Dre 3 adept scenarios
-                    June/July/Feb 4
-                    September 3 (because PS-AF scored separately)
-                    UK 3 (MJ5, IO2, MJ2)
-                    */
-                    const expectedScenarios = evalNameToNumber[this.props.currentTextEval] >= 8 ?
-                        ([10, 12].includes(evalNum) ? 3 : 4) : 3;
-
-                    if (this.state.adeptSessionsCompleted === expectedScenarios) {
-                        await this.uploadAdeptScenarios(updatedAdeptScenarios);
-                    }
-                });
-            }
-        } else {
+        if (!isAdept) {
             await this.calcScore(scenario, 'soartech');
             const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL);
             scenario.kdmas = kdma_data;
+            return;
         }
+
+        const evalProcessors = {
+            16: () => this.processEval16Scenario(scenario),
+            15: () => this.processEval15Scenario(scenario),
+            13: () => this.processEval13Scenario(scenario),
+        };
+
+        // Eval 10 PS-AF gets isolated session
+        if (evalNum === 10 && scenario.scenario_id.includes('PS-AF')) {
+            return this.processIsolatedAdeptScenario(scenario);
+        }
+
+        if (evalProcessors[evalNum]) {
+            return evalProcessors[evalNum]();
+        }
+
+        // Default combined session path
+        await this.processDefaultAdeptScenario(scenario, evalNum);
+    }
+
+    processDefaultAdeptScenario = async (scenario, evalNum) => {
+        if (this.state.adeptSessionsCompleted === 0) {
+            await this.beginRunningSession(scenario);
+        } else {
+            await this.continueRunningSession(scenario);
+        }
+
+        const updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
+        const completedCount = this.state.adeptSessionsCompleted + 1;
+
+        // Phase 1/Jan/DRE: 3, Sept/UK: 3, June/July/Feb/April: 4
+        const expectedScenarios = evalNum >= 8
+            ? ([10, 12].includes(evalNum) ? 3 : 4)
+            : 3;
+
+        this.setState({
+            adeptSessionsCompleted: completedCount,
+            adeptScenarios: updatedAdeptScenarios
+        }, async () => {
+            if (completedCount === expectedScenarios) {
+                await this.uploadAdeptScenarios(updatedAdeptScenarios);
+            }
+        });
     }
 
     processIsolatedAdeptScenario = async (scenario) => {
@@ -475,6 +488,98 @@ class TextBasedScenariosPage extends Component {
             }
         } catch (e) {
             console.error('Error creating isolated session:', e);
+        }
+    }
+
+    processEval16Scenario = async (scenario) => {
+        const url = this.getAdeptUrl();
+        const scenarioId = scenario.scenario_id;
+
+        // subpop - create combined session, get subpop result, upload immediately
+        if (scenarioId === 'April2026-subpopulation') {
+            try {
+                const combinedSessionId = await createAdeptSession(url);
+                this.setState({ eval16CombinedSessionId: combinedSessionId });
+
+                await this.submitResponses(scenario, scenarioId, url, combinedSessionId);
+
+                const subPopResult = await getSubPop(combinedSessionId, url);
+                this.setState({ eval16SubPopResult: subPopResult });
+
+                scenario.combinedSessionId = combinedSessionId;
+                scenario.subPopResult = subPopResult;
+                await this.uploadSingleScenario(scenario);
+            } catch (e) {
+                console.error('Error processing eval 16 subpopulation:', e);
+            }
+            return;
+        }
+
+        //submit to combined session
+        const combinedSessionId = this.state.eval16CombinedSessionId;
+        await this.submitResponses(scenario, scenarioId, url, combinedSessionId);
+
+        const updatedScenarios = [...this.state.eval16Scenarios, scenario];
+        this.setState({ eval16Scenarios: updatedScenarios });
+
+        // Add to pair groups, PS belongs to both
+        const groupKeys = [];
+        if (scenarioId.includes('AF') || scenarioId.includes('PS')) groupKeys.push('AF-PS');
+        if (scenarioId.includes('MF') || scenarioId.includes('PS')) groupKeys.push('MF-PS');
+
+        for (const groupKey of groupKeys) {
+            const updatedGroup = [...this.state.eval16Groups[groupKey], scenario];
+            this.setState(prevState => ({
+                eval16Groups: { ...prevState.eval16Groups, [groupKey]: updatedGroup }
+            }));
+
+            if (updatedGroup.length === 2) {
+                await this.processEval16GroupCompletion(groupKey, updatedGroup);
+            }
+        }
+
+        // All 4 regular scenarios complete: score combined session and upload
+        if (updatedScenarios.length === 4) {
+            // enable subpop passed for combined session
+            const subPopValue = this.state.eval16SubPopResult;
+            const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null, false, subPopValue);
+            const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url, subPopValue);
+
+            for (const s of updatedScenarios) {
+                s.combinedSessionId = combinedSessionId;
+                s.combinedMostLeastAligned = combinedMostLeastAligned;
+                s.combinedKdmas = combinedKdmas;
+                await this.uploadSingleScenario(s);
+            }
+        }
+    }
+
+    processEval16GroupCompletion = async (groupKey, groupScenarios) => {
+        const url = this.getAdeptUrl();
+
+        try {
+            const groupSessionId = await createAdeptSession(url);
+
+            for (const scenario of groupScenarios) {
+                await this.submitResponses(scenario, scenario.scenario_id, url, groupSessionId);
+            }
+
+            const groupMostLeastAligned = await this.mostLeastAligned(groupSessionId, 'adept', url, groupScenarios[0], true);
+            const groupKdmas = await this.attachKdmaValue(groupSessionId, url);
+
+            for (const scenario of groupScenarios) {
+                scenario[`${groupKey}_sessionId`] = groupSessionId;
+                scenario[`${groupKey}_mostLeastAligned`] = groupMostLeastAligned;
+                scenario[`${groupKey}_kdmas`] = groupKdmas;
+            }
+        } catch (e) {
+            console.error(`Error in eval 16 ${groupKey} group completion:`, e);
+            for (const scenario of groupScenarios) {
+                scenario[`${groupKey}_sessionId`] = null;
+                scenario[`${groupKey}_mostLeastAligned`] = null;
+                scenario[`${groupKey}_kdmas`] = null;
+                scenario[`${groupKey}_error`] = e.message;
+            }
         }
     }
 
@@ -727,11 +832,11 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    attachKdmaValue = async (sessionId, url) => {
-        return getKdmaProfile(sessionId, url);
+    attachKdmaValue = async (sessionId, url, enable_subpop = false) => {
+        return getKdmaProfile(sessionId, url, enable_subpop);
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario, isEval15Combined = false) => {
+    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false) => {
         const evalNumber = evalNameToNumber[this.props.currentTextEval];
         if (ta1 === 'soartech') {
             // SoarTech still uses its own logic
@@ -751,7 +856,7 @@ class TextBasedScenariosPage extends Component {
                 return [];
             }
         }
-        return getMostLeastAligned(sessionId, url, scenario, evalNumber, isEval15Combined);
+        return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop);
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
@@ -1201,4 +1306,4 @@ const adeptScenarioIdMap = {
 }
 
 // used to stop premature uploads/duplicate uploads
-const adeptList = ['adept', '2025', 'DryRun'];
+const adeptList = ['adept', '2025', '2026', 'DryRun'];

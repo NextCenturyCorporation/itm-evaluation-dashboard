@@ -121,18 +121,6 @@ const UPDATE_UI_STYLE = gql`
     }
 `;
 
-const GET_SURVEY_CONFIG_BY_VERSION = gql`
-  query GetSurveyConfigByVersion($version: String!) {
-    getSurveyConfigByVersion(version: $version)
-  }
-`;
-
-const GET_TEXT_CONFIG_BY_EVAL = gql`
-  query GetTextBasedConfigByEval($evalName: String!) {
-    getTextBasedConfigByEval(evalName: $evalName)
-  }
-`;
-
 const GET_SPECIFIC_CONFIGS = gql`
     query GetSpecificConfigs($surveyVersion: String!, $textEval: String!) {
         getSurveyConfigByVersion(version: $surveyVersion)
