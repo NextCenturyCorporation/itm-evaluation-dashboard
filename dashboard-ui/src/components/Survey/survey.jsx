@@ -66,6 +66,7 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
+    "11.0": { evalName: 'April 2026 Evaluation', evalNumber: 16 },
     "10.0": { evalName: 'February 2026 Evaluation', evalNumber: 15 },
     "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12 },
     "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10 },
@@ -600,6 +601,44 @@ class SurveyPage extends Component {
                 if (block) allBlocks.push(block)
             }
 
+
+            const shuffledBlocks = shuffle(allBlocks)
+            const selectedPages = [];
+
+            shuffledBlocks.forEach(block => {
+                selectedPages.push(...block.pages);
+            });
+
+            const finalPages = [...introPages, ...selectedPages]
+            const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
+            if (postScenarioPage) {
+                finalPages.push(postScenarioPage);
+            }
+            this.surveyConfigClone.pages = finalPages;
+
+            const pageOrder = finalPages.map(page => page.name);
+            this.setState({ orderLog: pageOrder });
+
+            return {};
+        }
+        else if (this.state.surveyVersion === "11.0") {
+            const allPages = this.surveyConfigClone.pages;
+            const introPages = [...allPages.slice(0, 4)];
+
+            const participantTextResults = this.props.textResults.filter(
+                (res) => String(res['participantID']) === this.state.pid
+            );
+
+            // randomly select which two blocks are verison A and which two are verion B
+
+            const allBlocks = []
+            const types = ['AF-PS', 'MF-PS', 'MF', 'AF']
+            types.forEach( type => {
+                const block = {
+
+                }
+                if (block) allBlocks.push(block)
+            })
 
             const shuffledBlocks = shuffle(allBlocks)
             const selectedPages = [];
