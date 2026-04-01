@@ -62,6 +62,7 @@ export function PH2RQ2223({ evalNum }) {
             baseHeaders.push('MF Target')
             baseHeaders.push('PS Target')
             baseHeaders.push('SS Target')
+            baseHeaders.push('Oracle Alignment')
         }
 
         if (evalNum === 14 || evalNum === 15) {
@@ -255,6 +256,7 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['MF Target'] = parsed.MF
                         entryObj['PS Target'] = parsed.PS
                         entryObj['SS Target'] = parsed.SS
+                        entryObj['Oracle Alignment'] = aligned.adm.oracle_alignment
                     }
 
                     else {
