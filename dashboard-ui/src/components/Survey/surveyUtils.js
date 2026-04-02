@@ -1934,109 +1934,86 @@ const genComparisonPagev10 = (aligned, baseline, misaligned) => {
     };
 };
 
-export const createScenarioBlockv11 = (scenarioType, allPages, textResults) => {
-    const subpop = textResults.find(result => result.scenario_id === 'April2026-subpopulation')?.subPopResult
-    if (!subpop) { console.warn("Couldn't find subpopulation group in text result documents " + textResults) }
+export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delVersion) => {
+    const subpop = textResults.find(result => result.scenario_id === 'April2026-subpopulation')?.subPopResult;
+    if (!subpop) { console.warn("Couldn't find subpopulation group in text result documents " + textResults); }
 
-    const pageLookup = ( target, baseline=false, oracle=false, subpop=null) => {
-        if (!oracle){
-            return allPages.find(page => {
+    const extractTarget = (response, filter, fromEnd = false) => {
+        const entry = response[fromEnd ? 'findLast' : 'find'](e => filter(Object.keys(e)[0]));
+        return entry ? Object.keys(entry)[0] : null;
+    };
+
+    const matchesOnly = (key, include, exclude) =>
+        include.every(k => key.includes(k)) && exclude.every(k => !key.includes(k));
+
+    const pageLookup = (target, baseline = false, oracle = false, sub = null) => {
+        if (!oracle) {
+            return allPages.find(page => (
                 page.scenarioIndex.includes(scenarioType) &&
                 (!page.admName.includes('Baseline') || (baseline && page.admName.includes('Baseline'))) &&
                 (page.target === target || baseline)
-            })
+            ));
         } else {
-            return allPages.find(page => {
+            return allPages.find(page => (
                 page.scenarioIndex.includes(scenarioType) &&
                 page.admName === 'Oracle' &&
                 page.target === target &&
-                page.subpop === subpop
-            })
+                page.subpop === sub
+            ));
         }
+    };
+
+    const configs = {
+        'AF-PS': { scenarioId: 'April2026-AF-assess', alignmentKey: 'AF-PS_mostLeastAligned', include: ['AF', 'PS'], exclude: ['MF', 'SS'] },
+        'MF-PS': { scenarioId: 'April2026-MF-assess', alignmentKey: 'MF-PS_mostLeastAligned', include: ['MF', 'PS'], exclude: ['AF', 'SS'] },
+        'AF':    { scenarioId: 'April2026-AF-assess', combinedIndex: 0, include: ['AF'], exclude: ['PS', 'MF', 'SS'] },
+        'MF':    { scenarioId: 'April2026-MF-assess', combinedIndex: 1, include: ['MF'], exclude: ['PS', 'AF', 'SS'] },
+    };
+
+    const config = configs[scenarioType];
+    const doc = textResults.find(result => result.scenario_id === config.scenarioId);
+    const filter = key => matchesOnly(key, config.include, config.exclude);
+
+    let admPages = [];
+    let compPage = null;
+
+    // (AF-PS, MF-PS): aligned vs baseline
+    if ('alignmentKey' in config) {
+        const response = doc[config.alignmentKey][0]['response'];
+        const mostAlignedTarget = extractTarget(response, filter);
+        const mostAlignedAdm = pageLookup(mostAlignedTarget);
+        const baselineAdm = pageLookup(mostAlignedTarget, true);
+
+        admPages = [mostAlignedAdm, baselineAdm];
+        compPage = genComparisonPagev11(mostAlignedAdm, baselineAdm);
     }
 
-    if (scenarioType === 'AF-PS') {
-        const afDoc = textResults.find(result => result.scenario_id === 'April2026-AF-assess')
-        const mostAlignedTarget = Object.keys(
-            afDoc['AF-PS_mostLeastAligned'][0]['response']
-                .find(entry => {
-                    const key = Object.keys(entry)[0];
-                    return key.includes('AF') && key.includes('PS') && !key.includes('MF') && !key.includes('SS');
-                })
-        )[0];
-        const mostAlignedAdm = pageLookup(mostAlignedTarget)
-        const baselineAdm = pageLookup(mostAlignedTarget)
+    // (AF, MF): most aligned (own subpop) vs most aligned (other subpop), and vs least aligned (own subpop)
+    if ('combinedIndex' in config) {
+        const response = doc['combinedMostLeastAligned'][config.combinedIndex]['response'];
+        const otherSubpop = subpop === 'A' ? 'B' : 'A';
 
-        const compPage = genComparisonPagev11(mostAlignedAdm, baselineAdm)
+        const mostAlignedTarget = extractTarget(response, filter);
+        const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop);
+        const otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop);
+
+        const leastAlignedTarget = extractTarget(response, filter, true);
+        const leastAlignedAdm = pageLookup(leastAlignedTarget, false, true, subpop);
+
+        admPages = [mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm];
+        compPage = genComparisonPagev11(mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm, true);
     }
-    if (scenarioType === 'MF-PS') {
-        const afDoc = textResults.find(result => result.scenario_id === 'April2026-MF-assess')
-        const mostAlignedTarget = Object.keys(
-            afDoc['MF-PS_mostLeastAligned'][0]['response']
-                .find(entry => {
-                    const key = Object.keys(entry)[0];
-                    return key.includes('MF') && key.includes('PS') && !key.includes('AF') && !key.includes('SS');
-                })
-        )[0];
-        const mostAlignedAdm = pageLookup(mostAlignedTarget)
-        const baselineAdm = pageLookup(mostAlignedTarget)
 
-        const compPage = genComparisonPagev11(mostAlignedAdm, baselineAdm)
-    }
-    if (scenarioType === 'AF') {
-        const afDoc = textResults.find(result => result.scenario_id === 'April2026-AF-assess')
-        const mostAlignedTarget = Object.keys(
-            afDoc['combinedMostLeastAligned'][0]['response']
-                .find(entry => {
-                    const key = Object.keys(entry)[0];
-                    return key.includes('AF') && !key.includes('PS') && !key.includes('MF') && !key.includes('SS');
-                })
-        )[0];
-        const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop)
-        const otherSubpop = subpop === 'A' ? 'B' : 'A'
-        const otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop)
-
-        const leastAlignedTarget = Object.keys(
-            afDoc['combinedMostLeastAligned'][0]['response']
-                .findLast(entry => {
-                    const key = Object.keys(entry)[0];
-                    return key.includes('AF') && !key.includes('PS') && !key.includes('MF') && !key.includes('SS');
-                })
-        )[0];
-        const leastAlignedAdm = pageLookup(leastAlignedTarget, false, true, subpop)
-
-        const compPage = genComparisonPagev11(mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm)
-    }
-    if (scenarioType === 'MF') {
-        const afDoc = textResults.find(result => result.scenario_id === 'April2026-MF-assess')
-        const mostAlignedTarget = Object.keys(
-            afDoc['combinedMostLeastAligned'][1]['response']
-                .find(entry => {
-                    const key = Object.keys(entry)[0];
-                    return key.includes('MF') && !key.includes('PS') && !key.includes('AF') && !key.includes('SS');
-                })
-        )[0];
-        const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop)
-        const otherSubpop = subpop === 'A' ? 'B' : 'A'
-        const otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop)
-
-        const leastAlignedTarget = Object.keys(
-            afDoc['combinedMostLeastAligned'][1]['response']
-                .findLast(entry => {
-                    const key = Object.keys(entry)[0];
-                    return key.includes('MF') && !key.includes('PS') && !key.includes('AF') && !key.includes('SS');
-                })
-        )[0];
-        const leastAlignedAdm = pageLookup(leastAlignedTarget, false, true, subpop)
-
-        const compPage = genComparisonPagev11(mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm)
-    }
+    return {
+        type: scenarioType,
+        delVersion,
+        pages: [...shuffle(admPages), compPage]
+    };
 }
 
-const genComparisonPagev11 = (aligned, baseline, otherAligned) => {
-     // only gens third comparison of other aligned is provided
-    const alignedName = aligned.name;
-    const baselineName = baseline.name;
+const genComparisonPagev11 = (primary, secondary, leastAligned, isOracle = false) => {
+    const primaryName = primary.name;
+    const secondaryName = secondary.name;
 
     const createComparisonElements = (name1, name2) => [
         {
@@ -2087,25 +2064,35 @@ const genComparisonPagev11 = (aligned, baseline, otherAligned) => {
     ];
 
     const elements = [
-        ...createComparisonElements(alignedName, baselineName),
-        ...(otherAligned ? createComparisonElements(alignedName, otherAligned.name) : [])
+        ...createComparisonElements(primaryName, secondaryName),
+        ...(leastAligned ? createComparisonElements(primaryName, leastAligned.name) : [])
     ];
 
-    const pageName = otherAligned
-        ? `${alignedName} vs ${baselineName} vs ${otherAligned.name}`
-        : `${alignedName} vs ${baselineName}`;
+    const pageName = leastAligned
+        ? `${primaryName} vs ${secondaryName} vs ${leastAligned.name}`
+        : `${primaryName} vs ${secondaryName}`;
 
-    return {
+    const metadata = {
         "name": pageName,
-        "scenarioIndex": aligned.scenarioIndex,
+        "scenarioIndex": primary.scenarioIndex,
         "pageType": "comparison",
-        "admAuthor": aligned.admAuthor,
-        "alignedName": aligned.admName,
-        "alignedTarget": aligned.target,
-        "baselineName": baseline.admName,
-        "baselineTarget": baseline.target,
-        "misalignedName": otherAligned?.admName ?? null,
-        "misalignedTarget": otherAligned?.target ?? null,
+        "admAuthor": primary.admAuthor,
+        "alignedName": primary.admName,
+        "alignedTarget": primary.target,
         "elements": elements
     };
+
+    if (isOracle) {
+        metadata.alignedSubpop = primary.subpop ?? null;
+        metadata.otherSubpopName = secondary.admName;
+        metadata.otherSubpopTarget = secondary.target;
+        metadata.otherSubpop = secondary.subpop ?? null;
+        metadata.leastAlignedName = leastAligned?.admName ?? null;
+        metadata.leastAlignedTarget = leastAligned?.target ?? null;
+    } else {
+        metadata.baselineName = secondary.admName;
+        metadata.baselineTarget = secondary.target;
+    }
+
+    return metadata;
 }

@@ -629,22 +629,15 @@ class SurveyPage extends Component {
                 (res) => String(res['participantID']) === this.state.pid
             );
 
-            // randomly select which two blocks are verison A and which two are verion B
+            // determine version based on if pid is even or odd
+            const isEven = parseInt(this.state.pid, 10) % 2 === 0;
+            const getVersion = (type) => type.startsWith('MF') === isEven ? 'A' : 'B';
 
-            const allBlocks = []
-            const types = ['AF-PS', 'MF-PS', 'MF', 'AF']
-            types.forEach(type => {
-                const block = createScenarioBlockv11(type, allPages, participantTextResults)
-                if (block) allBlocks.push(block)
-            })
+            const allBlocks = ['AF-PS', 'MF-PS', 'MF', 'AF']
+                .map(type => createScenarioBlockv11(type, allPages, participantTextResults, getVersion(type)))
+                .filter(Boolean);// null check
 
-            const shuffledBlocks = shuffle(allBlocks)
-            const selectedPages = [];
-
-            shuffledBlocks.forEach(block => {
-                selectedPages.push(...block.pages);
-            });
-
+            const selectedPages = shuffle(allBlocks).flatMap(block => block.pages);
             const finalPages = [...introPages, ...selectedPages]
             const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
             if (postScenarioPage) {
@@ -652,8 +645,7 @@ class SurveyPage extends Component {
             }
             this.surveyConfigClone.pages = finalPages;
 
-            const pageOrder = finalPages.map(page => page.name);
-            this.setState({ orderLog: pageOrder });
+            this.setState({ orderLog: finalPages.map(page => page.name) });
 
             return {};
         }

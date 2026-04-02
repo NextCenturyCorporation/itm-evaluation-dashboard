@@ -114,7 +114,9 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
     return (
         <Container className="py-4" style={{ maxWidth: '1200px', width: '100%' }}>
             {renderInstructions()}
+            {/*
             {renderSupplies()}
+            */}
 
             <Table className="table-borderless decision-table">
                 <thead>
