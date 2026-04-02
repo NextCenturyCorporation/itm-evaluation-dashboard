@@ -155,7 +155,7 @@ class SurveyPage extends Component {
                 (res.results.surveyVersion >= 10 || isDefined(res.results['Post-Scenario Measures']))
             );
             this.setState({ initialUploadedCount: pidExists.length });
-            const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
+            const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && (Object.keys(res).includes('mostLeastAligned') || Object.keys(res).includes('combinedMostLeastAligned')));
             if (this.state.validPid || this.state.onlineOnly) {
                 if (pidExists.length > 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
@@ -624,7 +624,6 @@ class SurveyPage extends Component {
         else if (this.state.surveyVersion === "11.0") {
             const allPages = this.surveyConfigClone.pages;
             const introPages = [...allPages.slice(0, 4)];
-
             const participantTextResults = this.props.textResults.filter(
                 (res) => String(res['participantID']) === this.state.pid
             );
@@ -644,7 +643,7 @@ class SurveyPage extends Component {
                 finalPages.push(postScenarioPage);
             }
             this.surveyConfigClone.pages = finalPages;
-
+            console.log(finalPages)
             this.setState({ orderLog: finalPages.map(page => page.name) });
 
             return {};

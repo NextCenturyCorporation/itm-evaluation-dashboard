@@ -1949,13 +1949,13 @@ export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delV
     const pageLookup = (target, baseline = false, oracle = false, sub = null) => {
         if (!oracle) {
             return allPages.find(page => (
-                page.scenarioIndex.includes(scenarioType) &&
-                (!page.admName.includes('Baseline') || (baseline && page.admName.includes('Baseline'))) &&
+                page.scenarioIndex?.includes(scenarioType) &&
+                (!page.admName?.includes('Baseline') || (baseline && page.admName?.includes('Baseline'))) &&
                 (page.target === target || baseline)
             ));
         } else {
             return allPages.find(page => (
-                page.scenarioIndex.includes(scenarioType) &&
+                page.scenarioIndex?.includes(scenarioType) &&
                 page.admName === 'Oracle' &&
                 page.target === target &&
                 page.subpop === sub
