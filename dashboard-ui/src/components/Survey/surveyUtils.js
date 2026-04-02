@@ -2004,6 +2004,14 @@ export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delV
         compPage = genComparisonPagev11(mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm, true);
     }
 
+    // enforce delVersion
+    const removeVersion = delVersion === 'A' ? 'Del Version B' : 'Del Version A';
+    admPages.forEach(page => {
+        if (page?.elements) {
+            page.elements = page.elements.filter(el => !el.name?.includes(removeVersion));
+        }
+    });
+
     return {
         type: scenarioType,
         delVersion,
