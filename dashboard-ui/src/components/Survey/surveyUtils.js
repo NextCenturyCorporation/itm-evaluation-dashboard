@@ -1933,3 +1933,179 @@ const genComparisonPagev10 = (aligned, baseline, misaligned) => {
         "elements": elements
     };
 };
+
+export const createScenarioBlockv11 = (scenarioType, allPages, textResults) => {
+    const subpop = textResults.find(result => result.scenario_id === 'April2026-subpopulation')?.subPopResult
+    if (!subpop) { console.warn("Couldn't find subpopulation group in text result documents " + textResults) }
+
+    const pageLookup = ( target, baseline=false, oracle=false, subpop=null) => {
+        if (!oracle){
+            return allPages.find(page => {
+                page.scenarioIndex.includes(scenarioType) &&
+                (!page.admName.includes('Baseline') || (baseline && page.admName.includes('Baseline'))) &&
+                (page.target === target || baseline)
+            })
+        } else {
+            return allPages.find(page => {
+                page.scenarioIndex.includes(scenarioType) &&
+                page.admName === 'Oracle' &&
+                page.target === target &&
+                page.subpop === subpop
+            })
+        }
+    }
+
+    if (scenarioType === 'AF-PS') {
+        const afDoc = textResults.find(result => result.scenario_id === 'April2026-AF-assess')
+        const mostAlignedTarget = Object.keys(
+            afDoc['AF-PS_mostLeastAligned'][0]['response']
+                .find(entry => {
+                    const key = Object.keys(entry)[0];
+                    return key.includes('AF') && key.includes('PS') && !key.includes('MF') && !key.includes('SS');
+                })
+        )[0];
+        const mostAlignedAdm = pageLookup(mostAlignedTarget)
+        const baselineAdm = pageLookup(mostAlignedTarget)
+
+        const compPage = genComparisonPagev11(mostAlignedAdm, baselineAdm)
+    }
+    if (scenarioType === 'MF-PS') {
+        const afDoc = textResults.find(result => result.scenario_id === 'April2026-MF-assess')
+        const mostAlignedTarget = Object.keys(
+            afDoc['MF-PS_mostLeastAligned'][0]['response']
+                .find(entry => {
+                    const key = Object.keys(entry)[0];
+                    return key.includes('MF') && key.includes('PS') && !key.includes('AF') && !key.includes('SS');
+                })
+        )[0];
+        const mostAlignedAdm = pageLookup(mostAlignedTarget)
+        const baselineAdm = pageLookup(mostAlignedTarget)
+
+        const compPage = genComparisonPagev11(mostAlignedAdm, baselineAdm)
+    }
+    if (scenarioType === 'AF') {
+        const afDoc = textResults.find(result => result.scenario_id === 'April2026-AF-assess')
+        const mostAlignedTarget = Object.keys(
+            afDoc['combinedMostLeastAligned'][0]['response']
+                .find(entry => {
+                    const key = Object.keys(entry)[0];
+                    return key.includes('AF') && !key.includes('PS') && !key.includes('MF') && !key.includes('SS');
+                })
+        )[0];
+        const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop)
+        const otherSubpop = subpop === 'A' ? 'B' : 'A'
+        const otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop)
+
+        const leastAlignedTarget = Object.keys(
+            afDoc['combinedMostLeastAligned'][0]['response']
+                .findLast(entry => {
+                    const key = Object.keys(entry)[0];
+                    return key.includes('AF') && !key.includes('PS') && !key.includes('MF') && !key.includes('SS');
+                })
+        )[0];
+        const leastAlignedAdm = pageLookup(leastAlignedTarget, false, true, subpop)
+
+        const compPage = genComparisonPagev11(mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm)
+    }
+    if (scenarioType === 'MF') {
+        const afDoc = textResults.find(result => result.scenario_id === 'April2026-MF-assess')
+        const mostAlignedTarget = Object.keys(
+            afDoc['combinedMostLeastAligned'][1]['response']
+                .find(entry => {
+                    const key = Object.keys(entry)[0];
+                    return key.includes('MF') && !key.includes('PS') && !key.includes('AF') && !key.includes('SS');
+                })
+        )[0];
+        const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop)
+        const otherSubpop = subpop === 'A' ? 'B' : 'A'
+        const otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop)
+
+        const leastAlignedTarget = Object.keys(
+            afDoc['combinedMostLeastAligned'][1]['response']
+                .findLast(entry => {
+                    const key = Object.keys(entry)[0];
+                    return key.includes('MF') && !key.includes('PS') && !key.includes('AF') && !key.includes('SS');
+                })
+        )[0];
+        const leastAlignedAdm = pageLookup(leastAlignedTarget, false, true, subpop)
+
+        const compPage = genComparisonPagev11(mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm)
+    }
+}
+
+const genComparisonPagev11 = (aligned, baseline, otherAligned) => {
+     // only gens third comparison of other aligned is provided
+    const alignedName = aligned.name;
+    const baselineName = baseline.name;
+
+    const createComparisonElements = (name1, name2) => [
+        {
+            "type": "comparison-phase-2",
+            "name": `${name1} vs ${name2}: Review`,
+            "title": "",
+            "decisionMakers": [name1, name2]
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Forced Choice`,
+            "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+            "choices": [name1, name2],
+            "isRequired": true
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Percent Delegation`,
+            "title": "For a set of future patients, you can delegate the patients to either or both of these decision-makers. In this scenario, either of these decision makers could handle 100% of this task load in a timely manner and it is not more or less efficient to divide the work between them. How would you allocate the patients between these two decision makers?",
+            "choices": [
+                `${name1} 100%`,
+                `${name1} 75% / ${name2} 25%`,
+                `${name1} 50% / ${name2} 50%`,
+                `${name1} 25% / ${name2} 75%`,
+                `${name2} 100%`
+            ],
+            "isRequired": true
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Rate your confidence about the delegation decision indicated in the previous question`,
+            "title": "Rate your confidence about the delegation decision indicated in the previous question",
+            "choices": [
+                "Not confident at all",
+                "Not confident",
+                "Somewhat confident",
+                "Confident",
+                "Completely confident"
+            ],
+            "isRequired": true
+        },
+        {
+            "type": "comment",
+            "name": `${name1} vs ${name2}: Explain your response to the delegation preference question`,
+            "title": "Explain your response to the delegation preference question:",
+            "isRequired": true
+        }
+    ];
+
+    const elements = [
+        ...createComparisonElements(alignedName, baselineName),
+        ...(otherAligned ? createComparisonElements(alignedName, otherAligned.name) : [])
+    ];
+
+    const pageName = otherAligned
+        ? `${alignedName} vs ${baselineName} vs ${otherAligned.name}`
+        : `${alignedName} vs ${baselineName}`;
+
+    return {
+        "name": pageName,
+        "scenarioIndex": aligned.scenarioIndex,
+        "pageType": "comparison",
+        "admAuthor": aligned.admAuthor,
+        "alignedName": aligned.admName,
+        "alignedTarget": aligned.target,
+        "baselineName": baseline.admName,
+        "baselineTarget": baseline.target,
+        "misalignedName": otherAligned?.admName ?? null,
+        "misalignedTarget": otherAligned?.target ?? null,
+        "elements": elements
+    };
+}
