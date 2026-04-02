@@ -11,6 +11,19 @@ const trailingTextMap = {
         'You arrive at the scene where you know there may be multiple casualties. Do you stay with your current patient, or do you leave?',
 };
 
+const TARGET_PROMPT = 'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?';
+const WARFIGHTER_TEXT = 'They are a warfighter in the same military unit as you.';
+
+const transformRowText = (text, groupPrompt) => {
+    if (groupPrompt === TARGET_PROMPT) {
+        return text
+            .replace(WARFIGHTER_TEXT, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+    return text;
+};
+
 const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
 
     const stripTrailingText = (text) => {
@@ -135,6 +148,9 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                         const showGroupHeader = isNewGroup(index);
                         const groupPrompt = row.trailingKey ? trailingTextMap[row.trailingKey] : null;
 
+                        // 🔹 apply transformation here
+                        const cleanedRowText = transformRowText(row.strippedDescription, groupPrompt);
+
                         return (
                             <React.Fragment key={index}>
                                 {showGroupHeader && index !== 0 && (
@@ -161,7 +177,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                                     <td className="row-number">
                                         {index + 1}
                                     </td>
-                                    <td className="patient-cell">{row.strippedDescription}</td>
+                                    <td className="patient-cell">{cleanedRowText}</td>
                                     <td className={`patient-cell ${isChoiceASelected ? 'patient-cell-selected' : 'patient-cell-default'}`}>
                                         <div className="badge-container">
                                             {isChoiceASelected ? (
