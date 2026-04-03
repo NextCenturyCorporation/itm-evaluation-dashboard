@@ -32,12 +32,17 @@ const CONFIG_METADATA = [
     { key: 'ph2_sept', version: 'delegation_v8.0', title: 'Phase 2 September 2025 Collaboration', isPhase2: true },
     { key: 'uk', version: 'delegation_v9.0', title: 'UK Collaboration', isPhase2: false, useScenarioIndex: true },
     { key: 'ph2_feb', version: 'delegation_v10.0', title: 'Phase 2 February 2026 Collaboration', isPhase2: true },
+    { key: 'ph2_april', version: 'delegation_v11.0', title: 'Phase 2 April 2026 Collaboration', isPhase2: true },
 ];
+
 
 export function ReviewDelegationPage() {
     const delegationConfigs = useSelector(state => state.configs.surveyConfigs);
     const [selectedConfig, setSelectedConfig] = useState(null);
     const [reviewingText, setReviewingText] = useState(null);
+
+    const getSubpopSuffix = (page) =>
+        page['admName'] === 'Oracle' && page['subpop'] ? ' - ' + page['subpop'] : '';
 
     const handleConfigSelect = (page) => {
         if (page) {
@@ -52,7 +57,7 @@ export function ReviewDelegationPage() {
                     reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['admAlignment'];
                 } else if (page['evalNumber'] >= 8) {
                     if (page['scenarioIndex'] && page['admName'] && page['target']) {
-                        reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['target'];
+                        reviewText = page['scenarioIndex'] + ' - ' + page['admName'] + ' - ' + page['target'] + getSubpopSuffix(page);
                     } else {
                         reviewText = page['scenarioName'] || 'Unknown';
                     }
@@ -111,8 +116,8 @@ export function ReviewDelegationPage() {
                                         <Accordion.Body>
                                             <Row xs={1} md={2} lg={2} className="g-4">
                                                 {configs[admName].sort((a, b) => {
-                                                    const aValue = isPhase2 ? a['target'] : a['admAlignment'];
-                                                    const bValue = isPhase2 ? b['target'] : b['admAlignment'];
+                                                    const aValue = isPhase2 ? (a['target'] + (a['subpop'] || '')) : a['admAlignment'];
+                                                    const bValue = isPhase2 ? (b['target'] + (b['subpop'] || '')) : b['admAlignment'];
                                                     return aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
                                                 }).map((page, index) => (
                                                     <Col key={title + ' ' + admName + ' ' + (isPhase2 ? page['target'] : page['admAlignment']) + ' ' + index}>
@@ -121,7 +126,7 @@ export function ReviewDelegationPage() {
                                                             onClick={() => handleConfigSelect(page)}
                                                             className="text-start text-truncate custom-btn"
                                                         >
-                                                            {isPhase2 ? page['target'] : page['admAlignment']}
+                                                            {isPhase2 ? (page['target'] + getSubpopSuffix(page)) : page['admAlignment']}
                                                         </Button>
                                                     </Col>
                                                 ))}
