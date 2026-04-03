@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10 } from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11} from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -66,6 +66,7 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
+    "11.0": { evalName: 'April 2026 Evaluation', evalNumber: 16 },
     "10.0": { evalName: 'February 2026 Evaluation', evalNumber: 15 },
     "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12 },
     "8.0": { evalName: 'September 2025 Collaboration', evalNumber: 10 },
@@ -154,7 +155,7 @@ class SurveyPage extends Component {
                 (res.results.surveyVersion >= 10 || isDefined(res.results['Post-Scenario Measures']))
             );
             this.setState({ initialUploadedCount: pidExists.length });
-            const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && Object.keys(res).includes('mostLeastAligned'));
+            const completedTextSurvey = this.props.textResults.filter((res) => String(res['participantID']) === this.state.pid && (Object.keys(res).includes('mostLeastAligned') || Object.keys(res).includes('combinedMostLeastAligned')));
             if (this.state.validPid || this.state.onlineOnly) {
                 if (pidExists.length > 0 && !this.state.onlineOnly) {
                     this.survey.currentPage = 1;
@@ -619,7 +620,33 @@ class SurveyPage extends Component {
             this.setState({ orderLog: pageOrder });
 
             return {};
+        }
+        else if (this.state.surveyVersion === "11.0") {
+            const allPages = this.surveyConfigClone.pages;
+            const introPages = [...allPages.slice(0, 4)];
+            const participantTextResults = this.props.textResults.filter(
+                (res) => String(res['participantID']) === this.state.pid
+            );
 
+            // determine version based on if pid is even or odd
+            const isEven = parseInt(this.state.pid, 10) % 2 === 0;
+            const getVersion = (type) => type.startsWith('MF') === isEven ? 'A' : 'B';
+
+            const allBlocks = ['AF-PS', 'MF-PS', 'MF', 'AF']
+                .map(type => createScenarioBlockv11(type, allPages, participantTextResults, getVersion(type)))
+                .filter(Boolean);// null check
+
+            const selectedPages = shuffle(allBlocks).flatMap(block => block.pages);
+            const finalPages = [...introPages, ...selectedPages]
+            const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
+            if (postScenarioPage) {
+                finalPages.push(postScenarioPage);
+            }
+            this.surveyConfigClone.pages = finalPages;
+            console.log(finalPages)
+            this.setState({ orderLog: finalPages.map(page => page.name) });
+
+            return {};
         }
     }
 

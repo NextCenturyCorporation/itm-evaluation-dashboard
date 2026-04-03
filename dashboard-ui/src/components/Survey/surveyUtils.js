@@ -1933,3 +1933,174 @@ const genComparisonPagev10 = (aligned, baseline, misaligned) => {
         "elements": elements
     };
 };
+
+export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delVersion) => {
+    const subpop = textResults.find(result => result.scenario_id === 'April2026-subpopulation')?.subPopResult;
+    if (!subpop) { console.warn("Couldn't find subpopulation group in text result documents " + textResults); }
+
+    const extractTarget = (response, filter, fromEnd = false) => {
+        const entry = response[fromEnd ? 'findLast' : 'find'](e => filter(Object.keys(e)[0]));
+        return entry ? Object.keys(entry)[0] : null;
+    };
+
+    const matchesOnly = (key, include, exclude) =>
+        include.every(k => key.includes(k)) && exclude.every(k => !key.includes(k));
+
+    const pageLookup = (target, baseline = false, oracle = false, sub = null) => {
+        if (!oracle) {
+            return allPages.find(page => (
+                page.scenarioIndex?.includes(scenarioType) &&
+                (!page.admName?.includes('Baseline') || (baseline && page.admName?.includes('Baseline'))) &&
+                (page.target === target || baseline)
+            ));
+        } else {
+            return allPages.find(page => (
+                page.scenarioIndex?.includes(scenarioType) &&
+                page.admName === 'Oracle' &&
+                page.target === target &&
+                page.subpop === sub
+            ));
+        }
+    };
+
+    const configs = {
+        'AF-PS': { scenarioId: 'April2026-AF-assess', alignmentKey: 'AF-PS_mostLeastAligned', include: ['AF', 'PS'], exclude: ['MF', 'SS'] },
+        'MF-PS': { scenarioId: 'April2026-MF-assess', alignmentKey: 'MF-PS_mostLeastAligned', include: ['MF', 'PS'], exclude: ['AF', 'SS'] },
+        'AF':    { scenarioId: 'April2026-AF-assess', combinedIndex: 0, include: ['AF'], exclude: ['PS', 'MF', 'SS'] },
+        'MF':    { scenarioId: 'April2026-MF-assess', combinedIndex: 1, include: ['MF'], exclude: ['PS', 'AF', 'SS'] },
+    };
+
+    const config = configs[scenarioType];
+    const doc = textResults.find(result => result.scenario_id === config.scenarioId);
+    const filter = key => matchesOnly(key, config.include, config.exclude);
+
+    let admPages = [];
+    let compPage = null;
+
+    // (AF-PS, MF-PS): aligned vs baseline
+    if ('alignmentKey' in config) {
+        const response = doc[config.alignmentKey][0]['response'];
+        const mostAlignedTarget = extractTarget(response, filter);
+        const mostAlignedAdm = pageLookup(mostAlignedTarget);
+        const baselineAdm = pageLookup(mostAlignedTarget, true);
+
+        admPages = [mostAlignedAdm, baselineAdm];
+        compPage = genComparisonPagev11(mostAlignedAdm, baselineAdm);
+    }
+
+    // (AF, MF): most aligned (own subpop) vs most aligned (other subpop), and vs least aligned (own subpop)
+    if ('combinedIndex' in config) {
+        const response = doc['combinedMostLeastAligned'][config.combinedIndex]['response'];
+        const otherSubpop = subpop === 'A' ? 'B' : 'A';
+
+        const mostAlignedTarget = extractTarget(response, filter);
+        const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop);
+        const otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop);
+
+        const leastAlignedTarget = extractTarget(response, filter, true);
+        const leastAlignedAdm = pageLookup(leastAlignedTarget, false, true, subpop);
+
+        admPages = [mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm];
+        compPage = genComparisonPagev11(mostAlignedAdm, otherGroupMostAligned, leastAlignedAdm, true);
+    }
+
+    // enforce delVersion
+    const removeVersion = delVersion === 'A' ? 'Del Version B' : 'Del Version A';
+    admPages.forEach(page => {
+        if (page?.elements) {
+            page.elements = page.elements.filter(el => !el.name?.includes(removeVersion));
+        }
+    });
+
+    return {
+        type: scenarioType,
+        delVersion,
+        pages: [...shuffle(admPages), compPage]
+    };
+}
+
+const genComparisonPagev11 = (primary, secondary, leastAligned, isOracle = false) => {
+    const primaryName = primary.name;
+    const secondaryName = secondary.name;
+
+    const createComparisonElements = (name1, name2) => [
+        {
+            "type": "comparison-phase-2",
+            "name": `${name1} vs ${name2}: Review`,
+            "title": "",
+            "decisionMakers": [name1, name2]
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Forced Choice`,
+            "title": "If you had to choose just one of these decision-makers to give complete responsibility for medical triage, which one would you choose?",
+            "choices": [name1, name2],
+            "isRequired": true
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Percent Delegation`,
+            "title": "For a set of future patients, you can delegate the patients to either or both of these decision-makers. In this scenario, either of these decision makers could handle 100% of this task load in a timely manner and it is not more or less efficient to divide the work between them. How would you allocate the patients between these two decision makers?",
+            "choices": [
+                `${name1} 100%`,
+                `${name1} 75% / ${name2} 25%`,
+                `${name1} 50% / ${name2} 50%`,
+                `${name1} 25% / ${name2} 75%`,
+                `${name2} 100%`
+            ],
+            "isRequired": true
+        },
+        {
+            "type": "radiogroup",
+            "name": `${name1} vs ${name2}: Rate your confidence about the delegation decision indicated in the previous question`,
+            "title": "Rate your confidence about the delegation decision indicated in the previous question",
+            "choices": [
+                "Not confident at all",
+                "Not confident",
+                "Somewhat confident",
+                "Confident",
+                "Completely confident"
+            ],
+            "isRequired": true
+        },
+        {
+            "type": "comment",
+            "name": `${name1} vs ${name2}: Explain your response to the delegation preference question`,
+            "title": "Explain your response to the delegation preference question:",
+            "isRequired": true
+        }
+    ];
+
+    const elements = [
+        ...createComparisonElements(primaryName, secondaryName),
+        ...(leastAligned ? createComparisonElements(primaryName, leastAligned.name) : [])
+    ];
+
+    const pageName = leastAligned
+        ? `${primaryName} vs ${secondaryName} vs ${leastAligned.name}`
+        : `${primaryName} vs ${secondaryName}`;
+
+    const metadata = {
+        "name": pageName,
+        "scenarioIndex": primary.scenarioIndex,
+        "pageType": "comparison",
+        "admAuthor": primary.admAuthor,
+        "alignedName": primary.admName,
+        "alignedTarget": primary.target,
+        "elements": elements
+    };
+
+    if (isOracle) {
+        metadata.alignedSubpop = primary.subpop ?? null;
+        metadata.otherSubpopName = secondary.admName;
+        metadata.otherSubpopTarget = secondary.target;
+        metadata.otherSubpop = secondary.subpop ?? null;
+        metadata.leastAlignedName = leastAligned?.admName ?? null;
+        metadata.leastAlignedTarget = leastAligned?.target ?? null;
+    } else {
+        metadata.baselineName = secondary.admName;
+        metadata.baselineTarget = secondary.target;
+    }
+
+    return metadata;
+}
