@@ -24,7 +24,12 @@ export const SCENARIO_HEADERS = [
 ];
 
 const isPhase2Scenario = (scenarioId, targetKey) => {
+    //subpop check
     if (scenarioId.includes('subpop') && targetKey === 'Subpop') return true
+    // for april 2026 we use PS2 and SS2 (only one AF and MF)
+    // so for consistency I am gonna mark these as AF2 and MF2 even though they are rlly labeled as AF-assess and MF-assess
+    if (targetKey === 'AF2' && scenarioId.endsWith('2026-AF-assess')) return true;
+    if (targetKey === 'MF2' && scenarioId.endsWith('2026-MF-assess')) return true;
     return scenarioId.endsWith(`2025-${targetKey}-eval`) || scenarioId.endsWith(`2026-${targetKey}-assess`);
 };
 
