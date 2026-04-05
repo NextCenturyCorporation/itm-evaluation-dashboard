@@ -9,15 +9,19 @@ import rq32CodePh1 from './rcode/code_for_dashboard_RQ32_ph1.R';
 import rq31CodePh1 from './rcode/code_for_dashboard_RQ31_and_RQ33_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { PAGES, getEvalOptionsForPage } from './utils';
+import { useSelector, useDispatch } from 'react-redux'
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 export function RQ3() {
     const evalOptions = getEvalOptionsForPage(PAGES.RQ3);
+    const dispatch = useDispatch()
+    const storedEval = useSelector(state => state.configs.selectedResearchEval)
 
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
     const [rq31CodeShowing, setRQ31CodeShowing] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const selectedEval = storedEval ?? evalOptions[0].value
     function selectEvaluation(target) {
-        setSelectedEval(target.value);
+        dispatch(setSelectedResearchEval(target.value))
     }
 
     const close32Code = () => {
