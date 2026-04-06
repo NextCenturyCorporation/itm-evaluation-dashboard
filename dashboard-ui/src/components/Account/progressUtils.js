@@ -52,8 +52,20 @@ const hasMLA = (scenarioResult) => {
     const mla = scenarioResult?.mostLeastAligned || scenarioResult?.combinedMostLeastAligned;
     if (!mla || (Array.isArray(mla) && mla.length === 0)) return false;
     if (Array.isArray(mla)) {
-        return mla.some(entry => Array.isArray(entry?.response) && entry.response.length > 0);
+        if (!mla.some(entry => Array.isArray(entry?.response) && entry.response.length > 0)) return false;
     }
+
+    // Eval 16: also verify pair group data exists
+    if (scenarioResult?.evalNumber === 16 && scenarioResult?.scenario_id !== 'April2026-subpopulation') {
+        const sid = scenarioResult.scenario_id;
+        if (sid.includes('AF') || sid.includes('PS')) {
+            if (!scenarioResult['AF-PS_mostLeastAligned']) return false;
+        }
+        if (sid.includes('MF') || sid.includes('PS')) {
+            if (!scenarioResult['MF-PS_mostLeastAligned']) return false;
+        }
+    }
+
     return true;
 };
 
