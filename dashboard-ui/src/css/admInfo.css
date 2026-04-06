@@ -138,3 +138,9 @@
 .adm-align-list > div:first-child {
   margin-top: 0;
 }
+
+.adm-left .adm-info-block-value.adm-kdma-params {
+  display: block;
+  margin-top: 0.25rem;
+  margin-left: 0.75rem;
+}

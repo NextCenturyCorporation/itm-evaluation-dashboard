@@ -4,7 +4,8 @@ import { determineChoiceProcessJune2025 } from '../Research/utils';
 import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 
 const MULTI_KDMA_CONFIG = {
-    'AF-PS': { kdmas: ['affiliation', 'personal_safety'], labels: ['Affiliation', 'Personal Safety'], test: id => id.includes('AF') && id.includes('PS') },
+    'AF-PS': { kdmas: ['affiliation', 'personal_safety'], labels: ['Affiliation', 'Personal Safety'], test: id => id.includes('AF') && id.includes('PS') && !id.includes('MF') },
+    'MF-PS': { kdmas: ['merit', 'personal_safety'], labels: ['Merit', 'Personal Safety'], test: id => id.includes('MF') && id.includes('PS') && !id.includes('AF') },
     'MF-SS': { kdmas: ['merit', 'search'], labels: ['Merit', 'Search'], test: id => id.includes('MF') && id.includes('SS') }
 };
 
@@ -69,15 +70,17 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                         };
 
                     } else if (multiKDMA) {
-                        // Eval 15+ multi-KDMA (AF-PS or MF-SS)
+                        // Eval 15+ multi-KDMA (AF-PS, MF-PS, or MF-SS)
+                        const multiKey = Object.keys(MULTI_KDMA_CONFIG).find(k => MULTI_KDMA_CONFIG[k] === multiKDMA);
                         for (const d of docs) {
-                            if (multiKDMA.kdmas.every(name => d.kdmas?.some(k => k.kdma === name))) { doc = d; break; }
+                            if (multiKDMA.kdmas.every(name => (d?.[`${multiKey}_kdmas`] || d?.kdmas)?.some(k => k.kdma === name))) { doc = d; break; }
                         }
-                        const entry = doc?.mostLeastAligned?.find(o => o.target === null);
+                        const mlaSource = doc?.[`${multiKey}_mostLeastAligned`] || doc?.mostLeastAligned;
+                        const kdmaSource = doc?.[`${multiKey}_kdmas`] || doc?.kdmas;
+                        const entry = mlaSource?.find(o => o.target === null);
                         filteredArr = (entry?.response || []).filter(o => {
                             const key = Object.keys(o)[0];
                             if (key.split("-").pop().includes("_")) return false;
-                            // Must contain all codes for this pairing, and no codes from the other pairing
                             const allCodes = ['MF', 'SS', 'AF', 'PS'];
                             const requiredCodes = multiKDMA.kdmas.map(k => k === 'merit' ? 'MF' : k === 'search' ? 'SS' : k === 'affiliation' ? 'AF' : 'PS');
                             const excludedCodes = allCodes.filter(c => !requiredCodes.includes(c));
@@ -100,9 +103,9 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
 
                         leftContent = {
                             label: multiKDMA.labels.join(' + '), labelKey: "Attribute",
-                            kdmaDisplay: <div className="adm-info-block-value">
+                            kdmaDisplay: <div className="adm-info-block-value adm-kdma-params">
                                 {multiKDMA.kdmas.map((name, i) => {
-                                    const e = doc?.kdmas?.find(k => k.kdma === name);
+                                    const e = kdmaSource?.find(k => k.kdma === name);
                                     if (!e) return null;
                                     if (e.parameters?.length) return (
                                         <div key={name} style={{ marginBottom: '0.5rem' }}>
@@ -115,6 +118,49 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                                 })}
                             </div>,
                             kdmaLabel: "KDMA Parameters"
+                        };
+
+                    } else if (scenarioId.startsWith('April2026-') && scenarioId.endsWith('-observe')) {
+                        // Eval 16 Oracle (AF or MF)
+                        const attrCode = scenarioId.includes('AF') ? 'AF' : 'MF';
+                        const attrMap = { AF: 'affiliation', MF: 'merit' };
+                        const target_ = attrMap[attrCode];
+                        const assessId = attrCode === 'AF' ? 'April2026-AF-assess' : 'April2026-MF-assess';
+                        doc = docs.find(d => d.scenario_id === assessId);
+                        if (!doc) return <p>No alignment data found for {assessId}</p>;
+
+                        const combinedIdx = attrCode === 'AF' ? 0 : 1;
+                        const entry = doc.combinedMostLeastAligned?.[combinedIdx];
+                        const otherCodes = ['MF', 'SS', 'AF', 'PS'].filter(c => c !== attrCode);
+                        filteredArr = (entry?.response || []).filter(o => {
+                            const key = Object.keys(o)[0];
+                            if (key.split("-").pop().includes("_")) return false;
+                            return key.includes(attrCode) && !otherCodes.some(c => key.includes(c));
+                        });
+
+                        medicData = medicIds.map((id, idx) => {
+                            const p = getMedicPage(id);
+                            if (!p) return null;
+                            const type = idx === 0
+                                ? `Aligned (Subpop ${p.subpop})`
+                                : idx === 1
+                                    ? `Other Subpop (${p.subpop})`
+                                    : `Least Aligned (Subpop ${p.subpop})`;
+                            return { type, admName: p.admName || '-', target: p.admTarget || '-', loading: 'N/A' };
+                        }).filter(Boolean);
+
+                        const kdmaEntry = doc.combinedKdmas?.find(k => k.kdma === target_);
+                        leftContent = {
+                            label: target_.charAt(0).toUpperCase() + target_.slice(1),
+                            labelKey: 'Attribute',
+                            kdmaLabel: 'KDMA Parameters',
+                            kdmaDisplay: kdmaEntry?.parameters?.length ? (
+                                <div className="adm-info-block-value adm-kdma-params">
+                                    {kdmaEntry.parameters.map(p => (
+                                        <div key={p.name}>{p.name}: {p.value.toFixed(4)}</div>
+                                    ))}
+                                </div>
+                            ) : <div>No KDMA data</div>
                         };
 
                     } else {
@@ -130,7 +176,6 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
 
                         const arr = entry.response || [];
                         if (!arr.length) return <p>No alignments.</p>;
-                        // For single-KDMA, only show targets that match this KDMA alone
                         const otherCodes = ['MF', 'SS', 'AF', 'PS'].filter(c => c !== derivedCode);
                         filteredArr = arr.filter(o => {
                             const key = Object.keys(o)[0];
@@ -155,13 +200,12 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                             label: target_.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()), labelKey: "Attribute"
                         };
 
-                        // Show KDMA parameters/scores if available
                         const kdmaEntry = doc?.kdmas?.find(k => k.kdma === target_) || doc?.individualKdmas?.find(k => k.kdma === target_);
                         if (kdmaEntry) {
                             if (kdmaEntry.parameters?.length) {
                                 leftContent.kdmaLabel = "KDMA Parameters";
                                 leftContent.kdmaDisplay = (
-                                    <div className="adm-info-block-value">
+                                    <div className="adm-info-block-value adm-kdma-params">
                                         {kdmaEntry.parameters.map(p => (
                                             <div key={p.name} style={{ marginLeft: '0.75rem' }}>{p.name}: {p.value.toFixed(4)}</div>
                                         ))}
