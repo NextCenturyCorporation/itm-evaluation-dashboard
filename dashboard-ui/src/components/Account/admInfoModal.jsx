@@ -87,8 +87,10 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                             return requiredCodes.every(c => key.includes(c)) && !excludedCodes.some(c => key.includes(c));
                         });
 
-                        const { alignedTarget, misalignedTarget } = cmpPage;
-                        const aligned = getMedicByAlignment("aligned"), misaligned = getMedicByAlignment("misaligned"), baseline = getMedicByAlignment("baseline");
+                        const { alignedTarget, baselineTarget, misalignedTarget } = cmpPage;
+                        const aligned = getMedicPage(medicIds.find(id => getMedicPage(id)?.admTarget === alignedTarget));
+                        const baseline = getMedicPage(medicIds.find(id => getMedicPage(id)?.admTarget === baselineTarget));
+                        const misaligned = misalignedTarget ? getMedicPage(medicIds.find(id => getMedicPage(id)?.admTarget === misalignedTarget)) : null;
                         const getMultiLoading = (page) => {
                             if (!page) return "N/A";
                             if (page?.admChoiceProcess) return formatLoading(page.admChoiceProcess);
@@ -96,7 +98,7 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                         };
 
                         medicData = [
-                            { type: "Baseline", admName: baseline?.admName || "-", target: "N/A", loading: "N/A" },
+                            { type: "Baseline", admName: baseline?.admName || "-", target: baselineTarget || "N/A", loading: "N/A" },
                             { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: getMultiLoading(aligned) },
                         ];
                         if (misalignedTarget) medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: getMultiLoading(misaligned) });
@@ -138,6 +140,16 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                             return key.includes(attrCode) && !otherCodes.some(c => key.includes(c));
                         });
 
+                        const mostAlignedTarget = filteredArr.length > 0 ? Object.keys(filteredArr[0])[0] : null;
+                        const leastAlignedTarget = filteredArr.length > 0 ? Object.keys(filteredArr[filteredArr.length - 1])[0] : null;
+
+                        const getOracleLoading = (idx, admTarget) => {
+                            if (idx === 0) return admTarget === mostAlignedTarget ? 'Normal' : 'Exemption';
+                            if (idx === 1) return admTarget === mostAlignedTarget ? 'Normal' : 'Exemption';
+                            if (idx === 2) return admTarget === leastAlignedTarget ? 'Normal' : 'Exemption';
+                            return 'Exemption';
+                        };
+
                         medicData = medicIds.map((id, idx) => {
                             const p = getMedicPage(id);
                             if (!p) return null;
@@ -146,7 +158,7 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                                 : idx === 1
                                     ? `Other Subpop (${p.subpop})`
                                     : `Least Aligned (Subpop ${p.subpop})`;
-                            return { type, admName: p.admName || '-', target: p.admTarget || '-', loading: 'N/A' };
+                            return { type, admName: p.admName || '-', target: p.admTarget || '-', loading: getOracleLoading(idx, p.admTarget) };
                         }).filter(Boolean);
 
                         const kdmaEntry = doc.combinedKdmas?.find(k => k.kdma === target_);
