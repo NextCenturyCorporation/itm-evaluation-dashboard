@@ -883,6 +883,7 @@ class SurveyPage extends Component {
                     admAuthor: page?.admAuthor,
                     admAlignment: page?.alignment,
                     admChoiceProcess: page?.admStatus ?? page?.admChoiceProcess,
+                    subpop: page?.subpop,
                     questions: {}
                 };
 
