@@ -1966,8 +1966,8 @@ export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delV
     const configs = {
         'AF-PS': { scenarioId: 'April2026-AF-assess', alignmentKey: 'AF-PS_mostLeastAligned', include: ['AF', 'PS'], exclude: ['MF', 'SS'] },
         'MF-PS': { scenarioId: 'April2026-MF-assess', alignmentKey: 'MF-PS_mostLeastAligned', include: ['MF', 'PS'], exclude: ['AF', 'SS'] },
-        'AF':    { scenarioId: 'April2026-AF-assess', combinedIndex: 0, include: ['AF'], exclude: ['PS', 'MF', 'SS'] },
-        'MF':    { scenarioId: 'April2026-MF-assess', combinedIndex: 1, include: ['MF'], exclude: ['PS', 'AF', 'SS'] },
+        'AF': { scenarioId: 'April2026-AF-assess', combinedIndex: 0, include: ['AF'], exclude: ['PS', 'MF', 'SS'] },
+        'MF': { scenarioId: 'April2026-MF-assess', combinedIndex: 1, include: ['MF'], exclude: ['PS', 'AF', 'SS'] },
     };
 
     const config = configs[scenarioType];
@@ -1995,7 +1995,15 @@ export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delV
 
         const mostAlignedTarget = extractTarget(response, filter);
         const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop);
-        const otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop);
+        let otherGroupMostAligned;
+        if (IDENTICAL_SUBPOP_TARGETS.has(mostAlignedTarget)) {
+            const otherTarget = extractTarget(response, key =>
+                filter(key) && !IDENTICAL_SUBPOP_TARGETS.has(key)
+            );
+            otherGroupMostAligned = pageLookup(otherTarget, false, true, otherSubpop);
+        } else {
+            otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop);
+        }
 
         const leastAlignedTarget = extractTarget(response, filter, true);
         const leastAlignedAdm = pageLookup(leastAlignedTarget, false, true, subpop);
@@ -2104,3 +2112,10 @@ const genComparisonPagev11 = (primary, secondary, leastAligned, isOracle = false
 
     return metadata;
 }
+
+const IDENTICAL_SUBPOP_TARGETS = new Set([
+    'Feb2026-AF-1',
+    'Feb2026-AF-3',
+    'Feb2026-AF-8',
+    'Feb2026-MF-8',
+]);
