@@ -405,7 +405,6 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                     </thead>
                     <tbody>
                         {unapproved.map((user) => {
-                            console.log(user)
                             return (
                                 <tr key={user._id}>
                                     <td>{user.emails?.[0]?.address}</td>
