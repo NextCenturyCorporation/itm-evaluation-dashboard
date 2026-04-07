@@ -407,7 +407,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                         {unapproved.map((user) => {
                             return (
                                 <tr key={user._id}>
-                                    <td>{user.emails[0]?.address}</td>
+                                    <td>{user.emails?.[0]?.address}</td>
                                     <td>{user.username}</td>
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'admin', e)} /></td>
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'evaluator', e)} /></td>
