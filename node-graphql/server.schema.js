@@ -1042,7 +1042,7 @@ const resolvers = {
           return (milliseconds / (1000 * 60 * 60)) >= 24;
         };
         const now = new Date();
-        const allOldEnough = true;
+        let allOldEnough = true;
 
         // check that pid was created at least 24 hours ago
         for (const doc of foundPlog) {
