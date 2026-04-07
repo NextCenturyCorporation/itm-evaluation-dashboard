@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11} from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11 } from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -882,6 +882,7 @@ class SurveyPage extends Component {
                     admAuthor: page?.admAuthor,
                     admAlignment: page?.alignment,
                     admChoiceProcess: page?.admStatus ?? page?.admChoiceProcess,
+                    subpop: page?.subpop,
                     questions: {}
                 };
 
@@ -892,6 +893,14 @@ class SurveyPage extends Component {
                     this.surveyData[pageName]['alignedTarget'] = page?.alignedTarget
                     this.surveyData[pageName]['misalignedTarget'] = page?.misalignedTarget
                     this.surveyData[pageName]['admAuthor'] = page?.admAuthor
+                    if (page?.alignedSubpop) {
+                        this.surveyData[pageName]['alignedSubpop'] = page.alignedSubpop;
+                        this.surveyData[pageName]['otherSubpopName'] = page.otherSubpopName;
+                        this.surveyData[pageName]['otherSubpopTarget'] = page.otherSubpopTarget;
+                        this.surveyData[pageName]['otherSubpop'] = page.otherSubpop;
+                        this.surveyData[pageName]['leastAlignedName'] = page.leastAlignedName;
+                        this.surveyData[pageName]['leastAlignedTarget'] = page.leastAlignedTarget;
+                    }
                 }
 
                 const pageQuestions = this.getPageQuestions(pageName);
