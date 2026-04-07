@@ -124,7 +124,7 @@ const resolvers = {
     checkUserExists: async (obj, args, context, infow) => {
       const userByEmail = await context.db.collection('users').findOne({
         $or: [
-          { "emails.address": { $regex: `^${args.email.toLowerCase().trim()}$`, $options: 'i' } },
+          { "emails.address": args.email.toLowerCase().trim() },
           { "username": { $regex: `^${args.username.toLowerCase().trim()}$`, $options: 'i' } }
         ]
       });

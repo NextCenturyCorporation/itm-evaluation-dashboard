@@ -38,7 +38,14 @@ const connection = mongoose.connect('mongodb://dashboard-mongo:27030/dashboard',
 
 const dashboardDB = new Mongo(mongoose.connection);
 
-const accountsPassword = new AccountsPassword({});
+const accountsPassword = new AccountsPassword({
+  validateNewUser: (user) => {
+    if (!user.email || !user.email.trim()) {
+      throw new Error('Email is required');
+    }
+    return user;
+  }
+});
 
 const accountsServer = new AccountsServer(
   {
