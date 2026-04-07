@@ -124,7 +124,7 @@ const resolvers = {
     checkUserExists: async (obj, args, context, infow) => {
       const userByEmail = await context.db.collection('users').findOne({
         $or: [
-          { "emails.address": { $regex: `^${args.email.toLowerCase().trim()}$`, $options: 'i' } },
+          { "emails.address": args.email.toLowerCase().trim() },
           { "username": { $regex: `^${args.username.toLowerCase().trim()}$`, $options: 'i' } }
         ]
       });
@@ -1042,7 +1042,7 @@ const resolvers = {
           return (milliseconds / (1000 * 60 * 60)) >= 24;
         };
         const now = new Date();
-        const allOldEnough = true;
+        let allOldEnough = true;
 
         // check that pid was created at least 24 hours ago
         for (const doc of foundPlog) {
