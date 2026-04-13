@@ -1934,6 +1934,16 @@ const genComparisonPagev10 = (aligned, baseline, misaligned) => {
     };
 };
 
+const haveSameResponses = (page1, page2) => {
+    const rows1 = page1?.elements?.[0]?.rows || [];
+    const rows2 = page2?.elements?.[0]?.rows || [];
+    if (rows1.length !== rows2.length) return false;
+    const responses1 = Object.fromEntries(rows1.map(r => [r.probe_id, r.choice_id]));
+    const responses2 = Object.fromEntries(rows2.map(r => [r.probe_id, r.choice_id]));
+    return Object.keys(responses1).length === Object.keys(responses2).length &&
+        Object.keys(responses1).every(k => responses1[k] === responses2[k]);
+};
+
 export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delVersion) => {
     const subpop = textResults.find(result => result.scenario_id === 'April2026-subpopulation')?.subPopResult;
     if (!subpop) { console.warn("Couldn't find subpopulation group in text result documents " + textResults); }
@@ -1995,13 +2005,20 @@ export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delV
 
         const mostAlignedTarget = extractTarget(response, filter);
         const mostAlignedAdm = pageLookup(mostAlignedTarget, false, true, subpop);
-        let otherGroupMostAligned;
-        if (IDENTICAL_SUBPOP_TARGETS.has(mostAlignedTarget)) {
-            const otherTarget = extractTarget(response, key =>
-                filter(key) && !IDENTICAL_SUBPOP_TARGETS.has(key)
-            );
-            otherGroupMostAligned = pageLookup(otherTarget, false, true, otherSubpop);
-        } else {
+
+        // Walk down until we find a difference
+        let otherGroupMostAligned = null;
+        for (const entry of response) {
+            const target = Object.keys(entry)[0];
+            if (!filter(target)) continue;
+            const candidate = pageLookup(target, false, true, otherSubpop);
+            if (candidate && !haveSameResponses(mostAlignedAdm, candidate)) {
+                otherGroupMostAligned = candidate;
+                break;
+            }
+        }
+        // Fallback if all are identical (shouldn't happen, but safe)
+        if (!otherGroupMostAligned) {
             otherGroupMostAligned = pageLookup(mostAlignedTarget, false, true, otherSubpop);
         }
 
@@ -2112,10 +2129,3 @@ const genComparisonPagev11 = (primary, secondary, leastAligned, isOracle = false
 
     return metadata;
 }
-
-const IDENTICAL_SUBPOP_TARGETS = new Set([
-    'Feb2026-AF-1',
-    'Feb2026-AF-3',
-    'Feb2026-AF-8',
-    'Feb2026-MF-8',
-]);
