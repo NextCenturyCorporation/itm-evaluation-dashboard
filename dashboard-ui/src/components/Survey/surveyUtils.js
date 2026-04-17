@@ -2142,7 +2142,5 @@ const genComparisonPagev11 = (primary, secondary, leastAligned, isOracle = false
 
 const onlineOnlyTitles = {
     'A': 'If you had to triage a similar scenario with 18-20 patients, how would you allocate decision-making responsibilities with the medic above?',
-    'B': 'Waves of 8-10 patients are being discovered, requiring medical assistance. If you had to \
-            triage the next wave of patients, knowing there are more coming, and the medic above \
-            was available, how would you allocate responsibilities?'
+    'B': 'Waves of 8-10 patients are being discovered, requiring medical assistance. If you had to triage the next wave of patients, knowing there are more coming, and the medic above was available, how would you allocate responsibilities?'
 }
