@@ -227,6 +227,16 @@ class TextBasedScenariosPage extends Component {
             const configCopy = JSON.parse(JSON.stringify(demographicsConfig));
             configCopy.showTitle = false;
 
+            if (this.state.onlineOnly) {
+                configCopy.pages.forEach(page => {
+                    if (page.elements) {
+                        page.elements = page.elements.filter(el =>
+                            !el.name?.toLowerCase().includes('virtual reality')
+                        );
+                    }
+                });
+            }
+
             const surveyModel = new Model(configCopy);
             surveyModel.applyTheme(surveyTheme);
             surveyModel.onComplete.add(this.demographicsSurveyComplete);
