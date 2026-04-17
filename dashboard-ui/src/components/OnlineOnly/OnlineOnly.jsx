@@ -38,6 +38,23 @@ export default function StartOnline() {
 
     const createParticipantAndRedirect = async () => {
         const result = await refetch();
+        const currentSearchParams = new URLSearchParams(location.search);
+        const existingPid = currentSearchParams.get('pid');
+
+        // reached using survey link from progress table
+        if (existingPid) {
+            const matchedLog = result.data.getParticipantLog.find(
+                log => String(log['ParticipantID']) === existingPid
+            );
+            if (matchedLog) {
+                currentSearchParams.set('class', 'Online');
+                history.push({
+                    pathname: '/text-based',
+                    search: `?${currentSearchParams.toString()}`,
+                });
+                return;
+            }
+        }
         const evalNumber = evalNameToNumber[currentTextEval]
 
         const lowPid = pidBounds.lowPid;
@@ -49,8 +66,6 @@ export default function StartOnline() {
             x.ParticipantID >= lowPid && x.ParticipantID <= highPid
         ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         
-        // get correct plog data
-        const currentSearchParams = new URLSearchParams(location.search);
         const participantDataFunctions = {
             16: aprilParticipantData,
             15: febParticipantData,
