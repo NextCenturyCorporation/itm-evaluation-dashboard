@@ -633,7 +633,7 @@ class SurveyPage extends Component {
             const getVersion = (type) => type.startsWith('MF') === isEven ? 'A' : 'B';
 
             const allBlocks = ['AF-PS', 'MF-PS', 'MF', 'AF']
-                .map(type => createScenarioBlockv11(type, allPages, participantTextResults, getVersion(type)))
+                .map(type => createScenarioBlockv11(type, allPages, participantTextResults, getVersion(type), this.state.onlineOnly))
                 .filter(Boolean);// null check
 
             const selectedPages = shuffle(allBlocks).flatMap(block => block.pages);
