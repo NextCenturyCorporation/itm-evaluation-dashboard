@@ -642,6 +642,7 @@ class SurveyPage extends Component {
             if (postScenarioPage) {
                 finalPages.push(postScenarioPage);
             }
+            console.log(finalPages)
             this.surveyConfigClone.pages = finalPages;
             this.setState({ orderLog: finalPages.map(page => page.name) });
 
