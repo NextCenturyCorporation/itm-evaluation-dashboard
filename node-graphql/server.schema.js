@@ -17,6 +17,7 @@ const typeDefs = gql`
     evaluator: Boolean
     experimenter: Boolean
     adeptUser: Boolean
+    ta3User: Boolean
     approved: Boolean
     rejected: Boolean
   }
@@ -78,6 +79,7 @@ const typeDefs = gql`
     getDemographicsByEval(evalNumber: Float): [JSON] @complexity(value: 20)
     getSurveyConfigByVersion(version: String!): [JSON] @complexity(value: 50)
     getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
+    getTcccResults(eval: String):  [JSON] @complexity(value:100)
   }
 
   type Mutation {
@@ -85,7 +87,8 @@ const typeDefs = gql`
     updateEvaluatorUser(caller: JSON, username: String, isEvaluator: Boolean): JSON,
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
-    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean): JSON,
+    updateTa3User(caller: JSON, username: String, isTa3User: Boolean): JSON,
+    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean, isTa3User: Boolean): JSON,
     updateEvalData(caller: JSON, dataToUpdate: JSON): JSON,
     addNewEval(caller: JSON, newEval: JSON): JSON,
     deleteEval(caller: JSON, evalId: String): JSON,
@@ -706,6 +709,20 @@ const resolvers = {
         })
         .toArray()
         .then(result => { return result; });
+    },
+
+    getTcccResults: async (obj, args, context, inflow) => {
+       if (args.eval) {
+          return await context.db.collection('tcccResults')
+      .find({
+        "eval": args.eval
+      })
+      .toArray()
+      .then(result => { return result; });
+        }
+      else {
+        return await context.db.collection('tcccResults').find().toArray().then(result => { return result; });
+      }
     }
   },
   Mutation: {
@@ -769,6 +786,21 @@ const resolvers = {
         });
       }
     },
+    updateTa3User: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await context.db.collection('users').update(
+          { "username": args["username"] },
+          { $set: { "ta3User": args["isTa3User"] } }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update TA3 user status.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
     updateUserApproval: async (obj, args, context, inflow) => {
       const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
       const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
@@ -782,6 +814,7 @@ const resolvers = {
               "adeptUser": args["isAdeptUser"],
               "experimenter": args["isExperimenter"],
               "evaluator": args["isEvaluator"],
+              "ta3User": args["isTa3User"],
               "admin": args["isAdmin"]
             }
           }

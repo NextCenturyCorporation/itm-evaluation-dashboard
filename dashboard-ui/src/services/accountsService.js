@@ -33,6 +33,7 @@ const accountsGraphQL = new GraphQLClient({
       evaluator
       experimenter
       adeptUser
+      ta3User
       approved
       rejected
     }
