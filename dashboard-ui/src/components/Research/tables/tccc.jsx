@@ -67,7 +67,7 @@ export function TCCC({ evalDate }) {
         if (dataResults.length > 0) {
             setFormattedData(dataResults)
             setFilteredData(dataResults)
-            setHeaders(Object.keys(dataResults[0]))
+            setHeaders(Array.from(new Set(dataResults.map(row => Object.keys(row)).flat())))
         }
     }, [dataTcccResults]);
 
