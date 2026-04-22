@@ -746,7 +746,15 @@ function buildEntryRow(context) {
     entryObj['Trustworthy_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': this medic is trustworthy' : ': This medic is trustworthy')];
     entryObj['Agreement_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': Do you agree with the decision that this medic made?' : ': Do you agree with the decisions that this medic made?')];
     entryObj['SRAlign_Rating'] = RATING_MAP[ratingQ(': The way this medic makes medical decisions is how I make decisions')];
-
+    entryObj['Distrust_Rating'] = RATING_MAP[
+        ratingQ(': Based on this experience, I cannot rely on this person with complete confidence.')
+    ];
+    entryObj['Trustworthy(INT)_Rating'] = RATING_MAP[
+        ratingQ(': This medic’s actions and behaviors are not very consistent.')
+    ];
+    entryObj['Trustworthy(BEN)_Rating'] = RATING_MAP[
+        ratingQ(': This medic really looks out for what is important to me.')
+    ];
     // --- Delegation preferences ---
     if (t === 'comparison') {
         const adms = page['pageName'].split(' vs ');
