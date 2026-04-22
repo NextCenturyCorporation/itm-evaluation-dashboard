@@ -78,6 +78,7 @@ const typeDefs = gql`
     getDemographicsByEval(evalNumber: Float): [JSON] @complexity(value: 20)
     getSurveyConfigByVersion(version: String!): [JSON] @complexity(value: 50)
     getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
+    getMedicsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
   }
 
   type Mutation {
@@ -706,6 +707,14 @@ const resolvers = {
         })
         .toArray()
         .then(result => { return result; });
+    },
+    getMedicsByEval: async (obj, args, context, inflow) => {
+      return await context.db.collection('admMedics')
+        .find({
+          'evalNumber': args.evalNumber
+        })
+        .toArray()
+        .then(result => { return result; })
     }
   },
   Mutation: {
