@@ -30,8 +30,8 @@ export function TCCC({ evalDate }) {
                     if (key === 'File Name' || key === 'PID') {
                         continue
                     }
-                    row[`tccc_analysis: ${key}`] = val
-                }
+                    row[`tccc_analysis: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+                
             }
 
             if (doc.ordered_tagging) {
@@ -39,7 +39,8 @@ export function TCCC({ evalDate }) {
                     if (key === 'Participant') {
                         continue
                     }
-                    row[`ordered_tagging: ${key}`] = val
+                    row[`ordered_tagging: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+                }
                 }
             }
            
@@ -48,7 +49,8 @@ export function TCCC({ evalDate }) {
                     if (key === 'PID') {
                         continue
                     }
-                    row[`interaction_time: ${key}`] = val
+                    row[`interaction_time: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+                
                 }
             }
 
@@ -57,7 +59,8 @@ export function TCCC({ evalDate }) {
                     if (key === 'PID') {
                         continue
                     }
-                    row[`patient_hc_times: ${key}`] = val
+                    row[`patient_hc_times: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+
                 }
             }
 
