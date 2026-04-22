@@ -12,18 +12,19 @@ export const GET_TCCC_RESULTS = gql`
 `;
 
 export function TCCC({ evalDate }) {
-    const { loading: loadingTcccResults, error: errorTcccResults, data: dataTcccResults } = useQuery(GET_TCCC_RESULTS, {variables: {eval: evalDate}})
-
+    const { loading: loadingfilteredTcccData , error: errorfilteredTcccData , data: filteredTcccData } = useQuery(GET_TCCC_RESULTS, {variables: {eval: evalDate}})
+    const { loading: loadingallTcccData, error: errorallTcccData, data: allTcccData } = useQuery(GET_TCCC_RESULTS)
+    
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [HEADERS, setHeaders] = React.useState([]);
 
     React.useEffect(() => {
-        if (!dataTcccResults) {
+        if (!filteredTcccData || !allTcccData) {
             return
         }
 
-        const dataResults = dataTcccResults.getTcccResults.map(doc => {
+        const allDataResults = allTcccData.getTcccResults.map(doc => {
             const row = { 'pid': doc.pid }
             if (doc.tccc_analysis) {
                 for (const [key, val] of Object.entries(doc.tccc_analysis)) {
@@ -32,6 +33,7 @@ export function TCCC({ evalDate }) {
                     }
                     row[`tccc_analysis: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
                 
+                }
             }
 
             if (doc.ordered_tagging) {
@@ -41,8 +43,8 @@ export function TCCC({ evalDate }) {
                     }
                     row[`ordered_tagging: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
                 }
-                }
             }
+            
            
             if (doc.interaction_time) {
                 for (const [key, val] of Object.entries(doc.interaction_time)) {
@@ -67,15 +69,61 @@ export function TCCC({ evalDate }) {
             return row
         })
 
-        if (dataResults.length > 0) {
-            setFormattedData(dataResults)
-            setFilteredData(dataResults)
-            setHeaders(Array.from(new Set(dataResults.map(row => Object.keys(row)).flat())))
-        }
-    }, [dataTcccResults]);
+        const filteredDataResults = filteredTcccData.getTcccResults.map(doc => {
+            const row = { 'pid': doc.pid }
+            if (doc.tccc_analysis) {
+                for (const [key, val] of Object.entries(doc.tccc_analysis)) {
+                    if (key === 'File Name' || key === 'PID') {
+                        continue
+                    }
+                    row[`tccc_analysis: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+                
+                    }
+            }
 
-    if (loadingTcccResults) return <p>Loading...</p>;
-    if (errorTcccResults) return <p>Error :</p>;
+            if (doc.ordered_tagging) {
+                for (const [key, val] of Object.entries(doc.ordered_tagging)) {
+                    if (key === 'Participant') {
+                        continue
+                    }
+                    row[`ordered_tagging: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+                    }
+            }
+            
+           
+            if (doc.interaction_time) {
+                for (const [key, val] of Object.entries(doc.interaction_time)) {
+                    if (key === 'PID') {
+                        continue
+                    }
+                    row[`interaction_time: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+                
+                }
+            }
+
+            if (doc.patient_hc_times) {
+                for (const [key, val] of Object.entries(doc.patient_hc_times)) {
+                    if (key === 'PID') {
+                        continue
+                    }
+                    row[`patient_hc_times: ${key}`] = val == '' || val == '-'|| val == 'N/A' || val == 'None' ? null : val
+
+                }
+            }
+
+            return row
+        })
+
+        if (filteredDataResults.length > 0 || allDataResults.length > 0) {
+            console.log(filteredData.length, formattedData.length)
+            setFormattedData(allDataResults)
+            setFilteredData(filteredDataResults)
+            setHeaders(Array.from(new Set(allDataResults.map(row => Object.keys(row)).flat())))
+        }
+    }, [filteredTcccData, allTcccData]);
+
+    if (loadingallTcccData) return <p>Loading...</p>;
+    if (errorallTcccData) return <p>Error :</p>;
 
     return (
         <>
