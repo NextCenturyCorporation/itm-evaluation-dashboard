@@ -144,12 +144,35 @@ export function getAlignments(evalNum, textResults, pid) {
     const textResultsForPID = textResults.filter((data) => data.evalNumber === evalNum && data.participantID === pid);
     const alignments = [];
     const distanceAlignments = [];
+    const eval16Alignments = {};
     let addedMJ = false;
     for (const textRes of textResultsForPID) {
         // adept
         if (Object.keys(textRes).includes('combinedSessionId')) {
-            if (!addedMJ || evalNum === 15) {
-                if (textRes['mostLeastAligned']) {
+            if (!addedMJ || evalNum === 15 || evalNum === 16) {
+                if (evalNum === 16) {
+                    const sourceMap = {
+                        'AF-PS': 'AF-PS_mostLeastAligned',
+                        'MF-PS': 'MF-PS_mostLeastAligned',
+                        'AF': 'combinedMostLeastAligned',
+                        'MF': 'combinedMostLeastAligned',
+                    };
+                    const combinedFilter = { 'AF': 'affiliation', 'MF': 'merit' };
+                    for (const [attr, key] of Object.entries(sourceMap)) {
+                        if (textRes[key] && !eval16Alignments[attr]) {
+                            const atts = [];
+                            for (const attSet of textRes[key]) {
+                                if (combinedFilter[attr] && attSet.target !== combinedFilter[attr]) continue;
+                                for (const att of attSet.response) {
+                                    for (const k of Object.keys(att)) {
+                                        atts.push({ 'target': k, 'score': att[k] });
+                                    }
+                                }
+                            }
+                            eval16Alignments[attr] = atts;
+                        }
+                    }
+                } else if (textRes['mostLeastAligned']) {
                     const atts = [];
                     for (const attSet of textRes['mostLeastAligned']) {
                         for (const att of attSet.response) {
@@ -183,7 +206,7 @@ export function getAlignments(evalNum, textResults, pid) {
             }
         }
     }
-    return { textResultsForPID, alignments, distanceAlignments };
+    return { textResultsForPID, alignments, distanceAlignments, eval16Alignments };
 }
 
 function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
@@ -270,7 +293,6 @@ export function getEval89Attributes(target, scenarioIndex) {
 
     return target;
 }
-
 const ALIGNED_TYPES = new Set([
     'misaligned', 'aligned',
     'low-affiliation-high-merit', 'high-affiliation-high-merit',
@@ -295,7 +317,6 @@ const DATASOURCE = {
     10: 'P2E_Sept_2025',
     4: 'DRE',
 };
-
 
 function findMatchingPages(evalNum, results, entry, t, logData, st_scenario, ad_scenario) {
     const ta2Author = entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD';
@@ -375,18 +396,15 @@ function matchEval16(obj, entry, t, results) {
     }
     if (!attributeMatch) return false;
 
-    // Comparison pages
     if (t === 'comparison') return obj['pageType'] === 'comparison';
     if (obj['pageType'] !== 'singleMedic') return false;
-
-    // 2D blocks (AF-PS, MF-PS) baseline identified by OutlinesBaseline in admName
     if (entry['Attribute'] === 'AF-PS' || entry['Attribute'] === 'MF-PS') {
         if (t === 'baseline') return obj['admName']?.includes('OutlinesBaseline');
         if (t === 'aligned') return !obj['admName']?.includes('OutlinesBaseline');
         return false; // no misaligned in 2D blocks
     }
 
-    // Oracle blocks (AF, MF) use comparison page metadata to determine roles
+    // Oracle blocks (AF, MF): use comparison page metadata to determine roles
     const compPage = Object.values(results).find(p =>
         p['pageType'] === 'comparison' && (p['scenarioIndex'] ?? '') === si
     );
@@ -408,6 +426,13 @@ function findMatchingADM(admData, page, evalNum) {
     if (evalNum === 12) {
         const scenario = page['scenarioIndex']?.includes('IO') ? page['scenarioIndex'].replace('IO', 'MJ') : page['scenarioIndex'];
         return admData.find((adm) => adm.adm_name === page['admName'] && adm.alignment_target === page['admTarget'] && adm.scenario === scenario);
+    }
+    // Eval 16: admMedics collection has flat structure (admName, target, scenarioIndex, alignmentScore)
+    if (evalNum === 16) {
+        return admData.find((medic) =>
+            medic.admName === page['admName']
+            && medic.target === page['admTarget']
+            && medic.scenarioIndex === page['scenarioIndex']);
     }
     return admData.find((adm) =>
         adm.evaluation?.adm_name?.includes(page['admName'])
@@ -441,7 +466,6 @@ function resolveAttribute(targetStr, baselineTarget, scenarioIndex) {
     }
 }
 
-
 function handleStandardComparison(evalNum, page, entryObj, allObjs) {
     const adms = page['pageName'].split(' vs ');
     const alignedAdm = (evalNum === 15 || evalNum === 16) ? adms[0] : adms[1];
@@ -469,16 +493,19 @@ function handleStandardComparison(evalNum, page, entryObj, allObjs) {
         if (!row) break;
         switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
             case 'aligned':
+            case 'AlignedSS':
                 row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
                 if (misalignedAdm) row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
                 row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, alignedAdm);
                 if (misalignedAdm) row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, alignedAdm);
                 break;
             case 'baseline':
+            case 'AlignedOS':
                 row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
                 row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, baselineAdm);
                 break;
             case 'misaligned':
+            case 'Misaligned':
                 row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
                 row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, misalignedAdm);
                 break;
@@ -486,8 +513,6 @@ function handleStandardComparison(evalNum, page, entryObj, allObjs) {
     }
 }
 
-
-// uk row duplication
 function postProcessVolRows(allObjs, volRowIndices, comparisons) {
     for (const volIndex of volRowIndices) {
         const volRow = allObjs[volIndex];
@@ -507,21 +532,22 @@ function postProcessVolRows(allObjs, volRowIndices, comparisons) {
     }
 }
 
-function buildEntryRow(ctx) {
+function buildEntryRow(context) {
     const {
         evalNum, isPhase2, pid, logData, entry, page, t,
         wrong_del_materials, orderLog, trial_num,
         ad_scenario, st_scenario, populationHeader,
-        admData, comparisons, simData, alignments, distanceAlignments,
+        admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments,
         textResultsForPID, res, fullSetOnly, includeDreServer, calibrationScores,
         allObjs
-    } = ctx;
+    } = context;
 
     const popPrefix = populationHeader ? 'P1E/Population ' : '';
     const isAdept = entry['TA1'] === 'Adept';
     const ta2Author = entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD';
     const entryObj = {};
 
+    // --- Identity & demographics ---
     entryObj['Delegator ID'] = pid;
     entryObj['ADM Order'] = wrong_del_materials.includes(pid) ? 1 : logData['ADMOrder'];
     entryObj['Datasource'] = DATASOURCE[evalNum]
@@ -549,11 +575,20 @@ function buildEntryRow(ctx) {
     entryObj['Scenario'] = isAdept ? ad_scenario : st_scenario;
     entryObj['TA2_Name'] = entry['TA2'];
     entryObj['ADM_Type'] = t === 'comparison' ? 'comparison' : evalNum === 10 ? 'aligned' : ALIGNED_TYPES.has(t) ? 'aligned' : 'baseline';
-    entryObj['Target'] = (evalNum >= 8 && evalNum != 12 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
+    if (evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF') && t !== 'comparison')
+        entryObj['ADM_Type'] = 'Oracle';
+    entryObj['Target'] = (evalNum >= 8 && evalNum != 12 && evalNum !== 16 && t === 'baseline') ? '-' : (page['admTarget'] ?? '-');
 
     const foundADM = findMatchingADM(admData, page, evalNum);
-    const alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
-    const distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
+    let alignment, distance_alignment;
+    if (evalNum === 16) {
+        // admMedics has flat alignmentScore, no history array
+        alignment = foundADM?.alignmentScore ?? '-';
+        distance_alignment = '-';
+    } else {
+        alignment = foundADM?.history[foundADM.history.length - 1]?.response?.score ?? '-';
+        distance_alignment = foundADM?.history[foundADM.history.length - 1]?.response?.distance_based_score ?? '-';
+    }
     const admTargetScore = (evalNum === 12 && ['IO', 'MJ'].includes(entryObj['Attribute'])) ? distance_alignment : alignment;
 
     entryObj[popPrefix + 'Alignment score (ADM|target)'] = admTargetScore;
@@ -564,7 +599,7 @@ function buildEntryRow(ctx) {
         entryObj['P1E/Population Alignment score (ADM|target)'] = isAdept ? page.ph1AdmAlignment : entryObj['P1E/Population Alignment score (ADM|target)'];
     }
 
-    // sim
+    // --- Sim alignment ---
     if (evalNum === 12) {
         const simComp = comparisons.find(x => x['sim_scenario'] === 'DryRunEval-MJ4-eval' && x['pid'] === pid && x['adm_alignment_target'] === page['admTarget'] && x['adm_scenario'] === 'DryRunEval-MJ2-eval');
         entryObj['Alignment score (Participant_sim|Observed_ADM(target))'] = simComp?.distance_based_score ?? '-';
@@ -578,7 +613,11 @@ function buildEntryRow(ctx) {
             x['adm_alignment']?.includes(entryObj['ADM_Type']) && x['adm_target'] === page['admTarget'])?.score ?? '-';
     }
 
-    entryObj[popPrefix + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target === page['admTarget']?.replaceAll('.', '') || a.target === page['admTarget'])?.score ?? '-';
+    if (evalNum === 16) {
+        entryObj[popPrefix + 'Alignment score (Delegator|target)'] = eval16Alignments[entry['Attribute']]?.find(a => a.target === page['admTarget'])?.score ?? '-';
+    } else {
+        entryObj[popPrefix + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target === page['admTarget']?.replaceAll('.', '') || a.target === page['admTarget'])?.score ?? '-';
+    }
     const txt_distance = distanceAlignments.find((a) => a.target === page['admTarget'] || ((evalNum === 5 || evalNum === 6) && a.target === page['admTarget']?.replace('.', '')))?.score ?? '-';
     if (evalNum === 5 || evalNum === 6)
         entryObj['DRE/Distance Alignment score (Delegator|target)'] = isAdept ? txt_distance : entryObj['P1E/Population Alignment score (Delegator|target)'];
@@ -589,6 +628,8 @@ function buildEntryRow(ctx) {
 
     entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(isAdept ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[isAdept ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
     entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'comparison' ? '-' : t;
+    if (evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF') && t !== 'comparison')
+        entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'aligned' ? 'AlignedSS' : t === 'baseline' ? 'AlignedOS' : 'Misaligned';
 
     const choiceProcess = (isPhase2 && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
         ? determineChoiceProcessJune2025(textResultsForPID, page, t)
@@ -601,10 +642,10 @@ function buildEntryRow(ctx) {
         entryObj['ADM Loading'] = isAdept ? page.ph1ChoiceProcess : entryObj['ADM Loading'];
     }
 
-    if (evalNum === 15) entryObj['Kitware Model'] = page['admName']?.replace('ALIGN-ADM-', '') ?? '-';
+    if (evalNum === 15 || evalNum === 16) entryObj['Kitware Model'] = page['admName']?.replace('ALIGN-ADM-', '') ?? '-';
     entryObj['Competence Error'] = (evalNum === 5 || evalNum === 6) && entry['TA2'] === 'Kitware' && entryObj['ADM_Type'] === 'aligned' && PH1_COMPETENCE[entryObj['Scenario']].includes(entryObj['Target']) ? 1 : 0;
 
-    // Comparison entry & delegator|observed_ADM alignment
+    // --- Comparison entry & delegator|observed_ADM alignment ---
     let comparison_entry;
     if (evalNum < 8) {
         comparison_entry = comparisons?.find((x) => x['ph1_server'] !== true && x['dre_server'] !== true && x['adm_type'] === t && x['pid'] === pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] === 'Parallax' && x['adm_author'] === 'TAD') || (entry['TA2'] === 'Kitware' && x['adm_author'] === 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
@@ -643,9 +684,10 @@ function buildEntryRow(ctx) {
         entryObj['P1E Alignment score (ADM|target)'] = entryObj['P1E/Population Alignment score (ADM|target)'];
     }
 
+
     if (evalNum >= 8) {
-        entryObj['Alignment score (ADM|target)'] = (t === 'baseline' && evalNum !== 12) ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
-        entryObj['Alignment score (Delegator|target)'] = (t === 'baseline' && evalNum !== 12) ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
+        entryObj['Alignment score (ADM|target)'] = (t === 'baseline' && evalNum !== 12 && evalNum !== 16) ? '-' : entryObj['P1E/Population Alignment score (ADM|target)'];
+        entryObj['Alignment score (Delegator|target)'] = (t === 'baseline' && evalNum !== 12 && evalNum !== 16) ? '-' : entryObj['P1E/Population Alignment score (Delegator|target)'];
         entryObj['Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
 
         // Resolve attribute from target/scenario (not eval 15/16 — attributes come from admOrderMapping)
@@ -656,7 +698,7 @@ function buildEntryRow(ctx) {
 
         // Probe sets
         entryObj['Probe Set Assessment'] = page['scenarioIndex'].includes('PS-AF') ? logData['PS-AF-text-scenario'] : logData['AF-text-scenario'];
-        if (evalNum === 15 || evalNum === 16) {
+        if (evalNum === 15) {
             const match = page['scenarioIndex']?.match(/(\d+)-observe$/);
             entryObj['Probe Set Observation'] = match ? parseInt(match[1]) : '-';
         } else if (evalNum !== 10) {
@@ -669,7 +711,7 @@ function buildEntryRow(ctx) {
             entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData['PS-AF-text-scenario'], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
         }
 
-        // server session ID for phase 2
+        // Override server session ID for phase 2
         if (evalNum === 15) {
             if (page['scenarioIndex'] === 'Feb2026-MF3-observe') {
                 entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
@@ -688,9 +730,9 @@ function buildEntryRow(ctx) {
         }
     }
 
+    // --- Truncation error ---
     entryObj['Truncation Error'] = comparison_entry?.truncation_error ? 1 : 0;
 
-    // dre + ph1 edge case
     if (evalNum === 4 && fullSetOnly) {
         const ph1_comparison_entry = comparisons?.find((x) => x['ph1_server'] === true && x['adm_type'] === t && x['pid'] === pid && getDelEnvMapping(res.results.surveyVersion)[entryObj['Scenario']].includes(x['adm_scenario']) && ((entry['TA2'] === 'Parallax' && x['adm_author'] === 'TAD') || (entry['TA2'] === 'Kitware' && x['adm_author'] === 'kitware')) && x['adm_scenario']?.toLowerCase().includes(entryObj['Attribute']?.toLowerCase()));
         entryObj['DRE/Distance Alignment score (Delegator|Observed_ADM (target))'] = entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'];
@@ -698,14 +740,14 @@ function buildEntryRow(ctx) {
             entryObj['P1E/Population Alignment score (Delegator|Observed_ADM (target))'] = ph1_comparison_entry?.score ?? '-';
     }
 
-    // ratings from survey
+    // --- Survey ratings ---
     const ratingQ = (suffix) => page['pageType'] === 'singleMedic' ? page['questions']?.[page['pageName'] + suffix]?.['response'] ?? '-' : '-';
     entryObj['Trust_Rating'] = RATING_MAP[ratingQ(': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it')];
     entryObj['Trustworthy_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': this medic is trustworthy' : ': This medic is trustworthy')];
     entryObj['Agreement_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': Do you agree with the decision that this medic made?' : ': Do you agree with the decisions that this medic made?')];
     entryObj['SRAlign_Rating'] = RATING_MAP[ratingQ(': The way this medic makes medical decisions is how I make decisions')];
 
-    // del pref
+    // --- Delegation preferences ---
     if (t === 'comparison') {
         const adms = page['pageName'].split(' vs ');
         if (evalNum == 10 && adms.length === 2) handlePSAFPreferences(res.results, page, entryObj, allObjs);
@@ -752,7 +794,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
         if (!logData || textCount < TEXT_COUNT_NEEDED) continue;
         if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < TEXT_COUNT_NEEDED || logData.simEntryCount < SIM_ENTRY_COUNT_NEEDED)) continue;
 
-        const { textResultsForPID, alignments, distanceAlignments } = getAlignments(evalNum, textResults, pid);
+        const { textResultsForPID, alignments, distanceAlignments, eval16Alignments } = getAlignments(evalNum, textResults, pid);
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
 
         // ADM order override
@@ -781,7 +823,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         evalNum, isPhase2, pid, logData, entry, page, t,
                         wrong_del_materials, orderLog, trial_num,
                         ad_scenario, st_scenario, populationHeader,
-                        admData, comparisons, simData, alignments, distanceAlignments,
+                        admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments,
                         textResultsForPID, res, fullSetOnly, includeDreServer, calibrationScores,
                         allObjs
                     });
