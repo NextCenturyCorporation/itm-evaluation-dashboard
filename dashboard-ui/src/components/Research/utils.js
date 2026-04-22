@@ -654,7 +654,7 @@ function buildEntryRow(context) {
         comparison_entry = comparisons?.find((x) => x['pid'] === pid && x['adm_type'] === t && x['adm_alignment_target'] === page['admTarget'] && x['adm_scenario'] === scenarioForComparison);
     } else {
         comparison_entry = comparisons?.find((x) =>
-            (evalNum === 10 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget'] &&
+            (evalNum === 10 || evalNum === 16 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget'] &&
             (evalNum !== 10 || x['text_scenario'].includes(entryObj['Attribute'])) &&
             (page['scenarioIndex']?.includes('PS-AF') ? x['text_scenario']?.includes('PS-AF') : !x['text_scenario']?.includes('PS-AF')));
     }
