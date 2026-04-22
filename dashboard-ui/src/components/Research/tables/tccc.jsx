@@ -3,7 +3,10 @@ import React from "react";
 import { DownloadButtons } from "./download-buttons";
 import { useQuery } from "react-apollo";
 import '../../../css/resultsTable.css';
-
+import tcccDefinitionXLFile from '../variables/Variable Definitions TCCC.xlsx';
+import { RQDefinitionTable } from "../variables/rq-variables";
+import { Modal } from "@mui/material";
+import CloseIcon from '@material-ui/icons/Close';
 
 export const GET_TCCC_RESULTS = gql`
     query getTcccResults($eval: String) {
@@ -18,6 +21,10 @@ export function TCCC({ evalDate }) {
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [HEADERS, setHeaders] = React.useState([]);
+    const [showDefinitions, setShowDefinitions] = React.useState(false);
+
+    const openModal = () => setShowDefinitions(true);
+    const closeModal = () => setShowDefinitions(false);
 
     React.useEffect(() => {
         if (!filteredTcccData || !allTcccData) {
@@ -135,6 +142,7 @@ export function TCCC({ evalDate }) {
                     filteredData={filteredData}
                     HEADERS={HEADERS}
                     fileName={evalDate ? `tccc_${evalDate}` : 'tccc'}
+                    extraAction={openModal}
                 />
             </section>
         
@@ -154,6 +162,15 @@ export function TCCC({ evalDate }) {
                     </tbody>
                 </table>
             </div>
+            <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
+                <div className='modal-body'>
+                    <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
+                    <RQDefinitionTable
+                        downloadName={`Definitions_TCCC.xlsx`}
+                        xlFile={tcccDefinitionXLFile}
+                    />
+                </div>
+            </Modal>
         </>
     )
 }
