@@ -122,7 +122,6 @@ export function TCCC({ evalDate }) {
         })
 
         if (filteredDataResults.length > 0 || allDataResults.length > 0) {
-            console.log(filteredData.length, formattedData.length)
             setFormattedData(allDataResults)
             setFilteredData(filteredDataResults)
             setHeaders(Array.from(new Set(allDataResults.map(row => Object.keys(row)).flat())))
