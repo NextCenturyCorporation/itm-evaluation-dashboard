@@ -36,6 +36,11 @@ const GET_ADM_DATA_BY_EVAL = gql`
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
 
+const GET_MEDICS_BY_EVAL = gql`
+    query GetMedicsByEval($evalNumber: Float!) {
+        getMedicsByEval(evalNumber: $evalNumber)
+    }`;
+
 const GET_COMPARISON_DATA_BY_EVAL_ARRAY = gql`
     query getHumanToADMComparisonByEvalArray($evalNumbers: [Float!]!) {
         getHumanToADMComparisonByEvalArray(evalNumbers: $evalNumbers)
@@ -134,7 +139,12 @@ export function RQ134({ evalNum, tableTitle }) {
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA_BY_EVAL, {
-        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) },
+        skip: evalNum === 16
+    });
+    const { loading: loadingMedics, error: errorMedics, data: dataMedics } = useQuery(GET_MEDICS_BY_EVAL, {
+        variables: { evalNumber: evalNum },
+        skip: evalNum !== 16
     });
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA_BY_EVAL, { variables: { "evalNumber": evalNum } });
     // Queries fetched by eval number
@@ -243,7 +253,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
-        if (evalNum === 15) {
+        if (evalNum === 15 || evalNum === 16) {
             currentHeaders = [...HEADERS_PH2_FEB_2026]
         }
         if ([8, 9].includes(evalNum)) {
@@ -269,7 +279,7 @@ export function RQ134({ evalNum, tableTitle }) {
             surveyData.length > 0 &&
             dataParticipantLog?.getParticipantLog &&
             textResultsData.length > 0 &&
-            dataADMs?.getAllHistoryByEvalNumber &&
+            (evalNum === 16 ? dataMedics?.getMedicsByEval : dataADMs?.getAllHistoryByEvalNumber) &&
             comparisonData.length > 0 &&
             dataSim?.getAllSimAlignmentByEval &&
             (!needsDre || (dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval)) &&
@@ -277,7 +287,10 @@ export function RQ134({ evalNum, tableTitle }) {
             (!needsJune || (juneAdms?.getAllHistoryByEvalNumber && juneSim?.getAllSimAlignmentByEval)) &&
             (!needsJuly || (julyAdms?.getAllHistoryByEvalNumber && julySim?.getAllSimAlignmentByEval))
         ) {
-            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim);
+            const admDataForEval = evalNum === 16
+                ? { getAllHistoryByEvalNumber: dataMedics?.getMedicsByEval ?? [] }
+                : dataADMs;
+            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, admDataForEval, comparisonData, dataSim);
             console.log(data)
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -344,7 +357,8 @@ export function RQ134({ evalNum, tableTitle }) {
         needsDre,
         needsJan,
         needsJune,
-        needsJuly
+        needsJuly,
+        dataMedics
     ]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
@@ -485,8 +499,8 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorMedics || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
         <h2 className='rq134-header'>{tableTitle}
