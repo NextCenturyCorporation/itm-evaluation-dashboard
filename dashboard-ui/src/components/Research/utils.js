@@ -657,10 +657,19 @@ function buildEntryRow(context) {
     if (evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF') && t !== 'comparison')
         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'aligned' ? 'AlignedSS' : t === 'baseline' ? 'AlignedOS' : 'Misaligned';
 
+    
     const choiceProcess = (isPhase2 && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
-        ? determineChoiceProcessJune2025(textResultsForPID, page, t)
+        ? (evalNum === 16
+            ? determineChoiceProcessEval16(eval16Alignments, entry, page, t)
+            : determineChoiceProcessJune2025(textResultsForPID, page, t))
         : page['admChoiceProcess'];
-    entryObj['ADM Loading'] = t === 'comparison' ? '-' : t === 'baseline' ? 'normal' : ['least aligned', 'most aligned'].includes(choiceProcess) ? 'normal' : 'exemption';
+
+    const isOracle = evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
+
+    entryObj['ADM Loading'] = t === 'comparison' ? '-' : 
+        (t === 'baseline' && !isOracle) ? 'normal' : 
+        (choiceProcess === 'exemption') ? 'exemption' : 'normal';
+
     if (evalNum === 5 || evalNum === 6)
         entryObj['DRE ADM Loading'] = isAdept ? page.dreChoiceProcess : entryObj['ADM Loading'];
     if (evalNum === 4 && fullSetOnly && includeDreServer) {
@@ -1053,4 +1062,65 @@ export function getEvalOptionsForPage(page) {
     }
     dropdownOptions.reverse();
     return dropdownOptions;
+}
+
+function matchesAttribute(attr, target) {
+    const hasAF = target.includes('AF');
+    const hasMF = target.includes('MF');
+    const hasPS = target.includes('PS');
+
+    if (attr === 'AF-PS') return hasAF && hasPS;
+    if (attr === 'MF-PS') return hasMF && hasPS;
+
+    if (attr === 'AF') return hasAF && !hasMF && !hasPS;
+    if (attr === 'MF') return hasMF && !hasAF && !hasPS;
+    if (attr === 'PS') return hasPS && !hasAF && !hasMF;
+
+    return false;
+}
+
+function determineChoiceProcessEval16(eval16Alignments, entry, page, t) {
+    const attr = entry['Attribute'];
+    const target = page['admTarget'];
+    const isOracle = attr === 'AF' || attr === 'MF';
+
+    const atts = eval16Alignments[attr];
+    if (!atts || atts.length === 0) return 'exemption';
+
+    const filtered = atts.filter(a => matchesAttribute(attr, a.target));
+
+    if (filtered.length === 0) return 'exemption';
+
+    let mostAligned = filtered[0];
+    let leastAligned = filtered[0];
+
+    for (const a of filtered) {
+        if (a.score > mostAligned.score) mostAligned = a;
+        if (a.score < leastAligned.score) leastAligned = a;
+    }
+
+    const selectedTarget =
+        (t === 'aligned' || (isOracle && t === 'baseline'))
+            ? mostAligned.target
+            : t === 'misaligned'
+                ? leastAligned.target
+                : null;
+
+            
+    if (!selectedTarget) return 'exemption';
+
+    if (selectedTarget !== target) {
+        console.log('[Eval16 Alignment Exemption]', {
+            attribute: attr,
+            expectedTarget: selectedTarget,
+            actualTarget: target,
+            type: t,
+            mostAligned,
+            leastAligned
+        });
+    }
+
+    return selectedTarget === target
+        ? (t === 'aligned' ? 'most aligned' : 'least aligned')
+        : 'exemption';
 }
