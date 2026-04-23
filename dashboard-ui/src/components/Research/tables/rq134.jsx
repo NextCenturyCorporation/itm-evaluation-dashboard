@@ -11,6 +11,7 @@ import ph2DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2.xls
 import ukDefinitionXLFile from '../variables/Variable Definitions RQ134_UK.xlsx'
 import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
 import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb.xlsx';
+import aprilDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_April.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -773,6 +774,7 @@ export function RQ134({ evalNum, tableTitle }) {
 }
 
 const DEFINITION_FILE_MAP = {
+    16: aprilDefinitionXLFile,
     15: febDefinitionXLFile,
     12: ukDefinitionXLFile,
     10: septemberDefinitionXLFile,
