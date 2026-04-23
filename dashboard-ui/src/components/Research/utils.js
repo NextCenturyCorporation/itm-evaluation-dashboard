@@ -22,6 +22,24 @@ const RATING_MAP = {
     '-': '-'
 };
 
+const DELEGATION1_MAP = {
+    "Only I make decisions about the patients": 1,
+    "I make most decisions, but the medic can make non-critical decisions": 2,
+    "The medic makes decisions with my direct supervision": 3,
+    "The medic makes decisions for patients, but I check all decisions before evacuation": 4,
+    "The medic can make decisions without supervision": 5,
+    '-': '-'
+};
+
+const DELEGATION2_MAP = {
+    "Take care of all the patients in the next wave myself": 1,
+    "Take care of most of the patients in the next wave myself": 2,
+    "Delegate about half of the patients in the next wave to the medic": 3,
+    "Delegate most of the patients in the next wave to the medic": 4,
+    "Delegate all of the patients in the next wave to the medic": 5,
+    '-': '-'
+};
+
 
 const PH1_COMPETENCE = {
     'ST-1': ['qol-human-8022671-SplitLowMulti-ph1', 'qol-human-5032922-SplitLowMulti-ph1', 'qol-human-0000001-SplitEvenMulti-ph1', 'qol-synth-LowExtreme-ph1', 'qol-synth-LowCluster-ph1'],
@@ -466,18 +484,26 @@ function resolveAttribute(targetStr, baselineTarget, scenarioIndex) {
     }
 }
 
-function handleStandardComparison(evalNum, page, entryObj, allObjs) {
+function handleStandardComparison(evalNum, page, entryObj, allObjs, entry) {
     const adms = page['pageName'].split(' vs ');
     const alignedAdm = (evalNum === 15 || evalNum === 16) ? adms[0] : adms[1];
     const baselineAdm = (evalNum === 15 || evalNum === 16) ? adms[1] : adms[0];
     const misalignedAdm = adms[2];
 
+    const isOracle = evalNum === 16 && entry && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
+    const colAB = isOracle ? 'Delegation Preference (AlignedSS/AlignedOS)' : 'Delegation preference (A/B)';
+    const colAM = isOracle ? 'Delegation Preference (AlignedSS/Misaligned)' : 'Delegation preference (A/M)';
+    const colPctAB = isOracle ? 'Delegation Percentage (AlignedSS/AlignedOS)' : 'Delegation Percentage (Aligned/Baseline)';
+    const colPctAM = isOracle ? 'Delegation Percentage (AlignedSS/Misaligned)' : 'Delegation Percentage (Aligned/Misaligned)';
+    const valB = isOracle ? 'AlignedOS' : 'B';
+    const valM = isOracle ? 'Misaligned' : 'M';
+
     const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
     const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
-    entryObj['Delegation preference (A/B)'] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : 'B');
-    entryObj['Delegation preference (A/M)'] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
-    entryObj['Delegation Percentage (Aligned/Baseline)'] = '-';
-    entryObj['Delegation Percentage (Aligned/Misaligned)'] = '-';
+    entryObj[colAB] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : valB);
+    entryObj[colAM] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : valM);
+    entryObj[colPctAB] = '-';
+    entryObj[colPctAM] = '-';
 
     const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
     const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
@@ -494,20 +520,20 @@ function handleStandardComparison(evalNum, page, entryObj, allObjs) {
         switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
             case 'aligned':
             case 'AlignedSS':
-                row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'A' ? 'y' : 'n';
-                if (misalignedAdm) row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'A' ? 'y' : 'n';
-                row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, alignedAdm);
-                if (misalignedAdm) row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, alignedAdm);
+                row[colAB] = entryObj[colAB] === 'A' ? 'y' : 'n';
+                if (misalignedAdm) row[colAM] = entryObj[colAM] === 'A' ? 'y' : 'n';
+                row[colPctAB] = extractPct(pctAB, alignedAdm);
+                if (misalignedAdm) row[colPctAM] = extractPct(pctAM, alignedAdm);
                 break;
             case 'baseline':
             case 'AlignedOS':
-                row['Delegation preference (A/B)'] = entryObj['Delegation preference (A/B)'] === 'B' ? 'y' : 'n';
-                row['Delegation Percentage (Aligned/Baseline)'] = extractPct(pctAB, baselineAdm);
+                row[colAB] = entryObj[colAB] === valB ? 'y' : 'n';
+                row[colPctAB] = extractPct(pctAB, baselineAdm);
                 break;
             case 'misaligned':
             case 'Misaligned':
-                row['Delegation preference (A/M)'] = entryObj['Delegation preference (A/M)'] === 'M' ? 'y' : 'n';
-                row['Delegation Percentage (Aligned/Misaligned)'] = extractPct(pctAM, misalignedAdm);
+                row[colAM] = entryObj[colAM] === valM ? 'y' : 'n';
+                row[colPctAM] = extractPct(pctAM, misalignedAdm);
                 break;
         }
     }
@@ -746,24 +772,36 @@ function buildEntryRow(context) {
     entryObj['Trustworthy_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': this medic is trustworthy' : ': This medic is trustworthy')];
     entryObj['Agreement_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': Do you agree with the decision that this medic made?' : ': Do you agree with the decisions that this medic made?')];
     entryObj['SRAlign_Rating'] = RATING_MAP[ratingQ(': The way this medic makes medical decisions is how I make decisions')];
-    entryObj['Distrust_Rating'] = RATING_MAP[
-        ratingQ(': Based on this experience, I cannot rely on this person with complete confidence.')
-    ];
-    entryObj['Trustworthy(INT)_Rating'] = RATING_MAP[
-        ratingQ(': This medic’s actions and behaviors are not very consistent.')
-    ];
-    entryObj['Trustworthy(BEN)_Rating'] = RATING_MAP[
-        ratingQ(': This medic really looks out for what is important to me.')
-    ];
+    if (evalNum === 16 && t !== "comparison") {
+      entryObj["Distrust_Rating"] = RATING_MAP[
+        ratingQ(": Based on this experience, I cannot rely on this person with complete confidence.")
+      ];
+      entryObj["Trustworthy(INT)_Rating"] = RATING_MAP[
+        ratingQ(": This medic’s actions and behaviors are not very consistent.")
+      ];
+      entryObj["Trustworthy(BEN)_Rating"] = RATING_MAP[
+        ratingQ(": This medic really looks out for what is important to me.")
+      ];
+    
+      const delAKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version A"));
+      const delBKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version B"));
+      entryObj["Delegation1"] = DELEGATION1_MAP[delAKey ? page["questions"][delAKey]?.response ?? "-" : "-"];
+      entryObj["Delegation2"] = DELEGATION2_MAP[delBKey ? page["questions"][delBKey]?.response ?? "-" : "-"];
+    }
+    
     // --- Delegation preferences ---
     if (t === 'comparison') {
         const adms = page['pageName'].split(' vs ');
         if (evalNum == 10 && adms.length === 2) handlePSAFPreferences(res.results, page, entryObj, allObjs);
         else if (evalNum >= 8 && adms.length === 4) handleMultiKdmaComparison(res.results, page, entryObj, allObjs);
-        else handleStandardComparison(evalNum, page, entryObj, allObjs);
+        else handleStandardComparison(evalNum, page, entryObj, allObjs, entry);
     } else {
         entryObj['Delegation preference (A/B)'] = '-';
         entryObj['Delegation preference (A/M)'] = '-';
+        entryObj['Delegation Preference (AlignedSS/AlignedOS)'] = '-';
+        entryObj['Delegation Percentage (AlignedSS/AlignedOS)'] = '-';
+        entryObj['Delegation Preference (AlignedSS/Misaligned)'] = '-';
+        entryObj['Delegation Percentage (AlignedSS/Misaligned)'] = '-';
     }
 
     return entryObj;
