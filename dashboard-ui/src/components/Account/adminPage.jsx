@@ -69,13 +69,19 @@ const UPDATE_EXPERIMENTER_USER = gql`
 
 const UPDATE_ADEPT_USER = gql`
     mutation updateAdeptUser($caller: JSON!, $username: String!, $isAdeptUser: Boolean!) {
-        updateAdeptUser(caller: $caller, username: $username, isAdeptUser: $isAdeptUser) 
+        updateAdeptUser(caller: $caller, username: $username, isAdeptUser: $isAdeptUser)
+    }
+`;
+
+const UPDATE_TA3_USER = gql`
+    mutation updateTa3User($caller: JSON!, $username: String!, $isTa3User: Boolean!) {
+        updateTa3User(caller: $caller, username: $username, isTa3User: $isTa3User)
     }
 `;
 
 const UPDATE_USER_APPROVAL = gql`
-    mutation updateUserApproval($caller: JSON!, $username: String!, $isApproved: Boolean!, $isRejected: Boolean!, $isAdmin: Boolean!, $isEvaluator: Boolean!, $isExperimenter: Boolean!, $isAdeptUser: Boolean!) {
-        updateUserApproval(caller: $caller, username: $username, isApproved: $isApproved, isRejected: $isRejected, isAdmin: $isAdmin, isEvaluator: $isEvaluator, isExperimenter: $isExperimenter, isAdeptUser: $isAdeptUser)
+    mutation updateUserApproval($caller: JSON!, $username: String!, $isApproved: Boolean!, $isRejected: Boolean!, $isAdmin: Boolean!, $isEvaluator: Boolean!, $isExperimenter: Boolean!, $isAdeptUser: Boolean!, $isTa3User: Boolean!) {
+        updateUserApproval(caller: $caller, username: $username, isApproved: $isApproved, isRejected: $isRejected, isAdmin: $isAdmin, isEvaluator: $isEvaluator, isExperimenter: $isExperimenter, isAdeptUser: $isAdeptUser, isTa3User: $isTa3User)
     }
 `;
 
@@ -348,6 +354,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                 isEvaluator: user.evaluator ?? false,
                 isExperimenter: user.experimenter ?? false,
                 isAdeptUser: user.adeptUser ?? false,
+                isTa3User: user.ta3User ?? false,
                 isRejected: false
             }
         });
@@ -368,6 +375,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                 isEvaluator: false,
                 isExperimenter: false,
                 isAdeptUser: false,
+                isTa3User: false,
                 isRejected: true
             }
         });
@@ -398,6 +406,9 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                             <th className='switch-header'>
                                 ADEPT
                             </th>
+                            <th className='switch-header'>
+                                TA3
+                            </th>
                             <th className='action-header'>
                                 Action
                             </th>
@@ -413,6 +424,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'evaluator', e)} /></td>
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'experimenter', e)} /></td>
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'adeptUser', e)} /></td>
+                                    <td><Switch onChange={(e) => updateUserStatus(user._id, 'ta3User', e)} /></td>
                                     <td>
                                         <IconButton title='Approve' onClick={() => approveUser(user._id)} children={<CheckCircleIcon className='green-btn' />} />
                                         <IconButton title='Deny' onClick={() => denyUser(user._id)} children={<CancelIcon className='red-btn' />} /></td>
@@ -1028,12 +1040,13 @@ function AdminPage({ currentUser, updateUserHandler }) {
                             if (loading) return <div className="loading">Loading ...</div>;
                             if (error) return <div className="error">Error: {error.message}</div>;
 
-                            const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [] };
+                            const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [], 'ta3': [] };
 
                             let adminSelectedOptions = [];
                             let evaluatorSelectedOptions = [];
                             let experimenterSelectedOptions = [];
                             let adeptSelectedOptions = [];
+                            let ta3SelectedOptions = [];
 
                             const users = data[getUsersQueryName].filter((x) => x.approved);
                             for (let i = 0; i < users.length; i++) {
@@ -1055,6 +1068,10 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                 if (users[i].adeptUser) {
                                     adeptSelectedOptions.push(users[i].username);
                                 }
+
+                                if (users[i].ta3User) {
+                                    ta3SelectedOptions.push(users[i].username);
+                                }
                             }
 
                             return (
@@ -1062,6 +1079,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                     <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                     <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                     <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['ta3']} selectedOptions={ta3SelectedOptions} mutation={UPDATE_TA3_USER} param={'isTa3User'} header={'TA3'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                     <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                 </>
                             );
