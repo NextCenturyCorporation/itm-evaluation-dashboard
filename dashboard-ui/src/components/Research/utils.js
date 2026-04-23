@@ -450,7 +450,8 @@ function findMatchingADM(admData, page, evalNum) {
         return admData.find((medic) =>
             medic.admName === page['admName']
             && medic.target === page['admTarget']
-            && medic.scenarioIndex === page['scenarioIndex']);
+            && medic.scenarioIndex === page['scenarioIndex']
+            && (page['subpop'] == null || medic.subpop === page['subpop']));
     }
     return admData.find((adm) =>
         adm.evaluation?.adm_name?.includes(page['admName'])
@@ -696,7 +697,8 @@ function buildEntryRow(context) {
         comparison_entry = comparisons?.find((x) =>
             (evalNum === 10 || evalNum === 16 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget'] &&
             (evalNum !== 10 || x['text_scenario'].includes(entryObj['Attribute'])) &&
-            (page['scenarioIndex']?.includes('PS-AF') ? x['text_scenario']?.includes('PS-AF') : !x['text_scenario']?.includes('PS-AF')));
+            (page['scenarioIndex']?.includes('PS-AF') ? x['text_scenario']?.includes('PS-AF') : !x['text_scenario']?.includes('PS-AF')) &&
+            (page['subpop'] == null || x['oracle_subpop'] === page['subpop']));
     }
 
     // Alignment comparison score
