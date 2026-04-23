@@ -558,6 +558,11 @@ function postProcessVolRows(allObjs, volRowIndices, comparisons) {
     }
 }
 
+function checkDemoForMil(demoEntry) {
+    const served = demoEntry?.results?.['Post-Scenario Measures']?.['Served in Military'];
+    return isDefined(served) && served !== 'Never Served' ? 'yes' : 'no';
+}
+
 function buildEntryRow(context) {
     const {
         evalNum, isPhase2, pid, logData, entry, page, t,
@@ -565,7 +570,7 @@ function buildEntryRow(context) {
         ad_scenario, st_scenario, populationHeader,
         admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments,
         textResultsForPID, res, fullSetOnly, includeDreServer, calibrationScores,
-        allObjs
+        allObjs, demoEntry
     } = context;
 
     const popPrefix = populationHeader ? 'P1E/Population ' : '';
@@ -588,7 +593,7 @@ function buildEntryRow(context) {
         entryObj['Delegator_mil'] = roles?.includes('Military Background') || pid === '202409102' ? 'yes' : 'no';
     } else {
         const served = res.results?.['Post-Scenario Measures']?.questions?.['Served in Military']?.['response'];
-        entryObj['Delegator_mil'] = isDefined(served) ? served == 'Never Served' ? 'no' : 'yes' : null;
+        entryObj['Delegator_mil'] = isDefined(served) ? served == 'Never Served' ? 'no' : 'yes' : checkDemoForMil(demoEntry);
     }
     entryObj['Delegator_Role'] = roles ?? '-';
     if (Array.isArray(entryObj['Delegator_Role'])) {
@@ -816,7 +821,7 @@ function buildEntryRow(context) {
     return entryObj;
 }
 
-export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false) {
+export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false, demoData = null) {
     const isPhase2 = [8, 9, 10, 15, 16].includes(evalNum);
     const surveyResults = Array.isArray(surveyData) ? surveyData : surveyData?.getAllSurveyResults ?? [];
     const participantLog = dataParticipantLog.getParticipantLog;
@@ -836,7 +841,6 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
 
     const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10, 12, 15, 16].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const wrong_del_materials = evalNum === 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
-
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
         // Skip incomplete surveys from participants who have a complete survey
@@ -851,6 +855,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
 
         const { textResultsForPID, alignments, distanceAlignments, eval16Alignments } = getAlignments(evalNum, textResults, pid);
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
+        const demoEntry = demoData?.find(entry => entry.surveyId === pid) ?? null;
 
         // ADM order override
         if (isPhase2) logData['ADMOrder'] = evalNum == 10 ? 6 : evalNum == 15 ? 8 : evalNum == 16 ? 9 : 5;
@@ -880,7 +885,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         ad_scenario, st_scenario, populationHeader,
                         admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments,
                         textResultsForPID, res, fullSetOnly, includeDreServer, calibrationScores,
-                        allObjs
+                        allObjs, demoEntry
                     });
 
                     // Accumulators — push original entry['Attribute'] to match original behavior

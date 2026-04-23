@@ -41,6 +41,12 @@ const GET_MEDICS_BY_EVAL = gql`
         getMedicsByEval(evalNumber: $evalNumber)
     }`;
 
+const GET_DEMO_DATA = gql`
+    query GetDemographicsByEval($evalNumber: Float!) {
+        getDemographicsByEval(evalNumber: $evalNumber)
+    }`
+
+
 const GET_COMPARISON_DATA_BY_EVAL_ARRAY = gql`
     query getHumanToADMComparisonByEvalArray($evalNumbers: [Float!]!) {
         getHumanToADMComparisonByEvalArray(evalNumbers: $evalNumbers)
@@ -147,6 +153,12 @@ export function RQ134({ evalNum, tableTitle }) {
         variables: { evalNumber: evalNum },
         skip: evalNum !== 16
     });
+
+    const { loading: loadingDemo, error: errorDemo, data: dataDemo } = useQuery(GET_DEMO_DATA, {
+        variables: { evalNumber: evalNum },
+        skip: evalNum < 16
+    });
+
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA_BY_EVAL, { variables: { "evalNumber": evalNum } });
     // Queries fetched by eval number
     const {
@@ -286,6 +298,7 @@ export function RQ134({ evalNum, tableTitle }) {
             (evalNum === 16 ? dataMedics?.getMedicsByEval : dataADMs?.getAllHistoryByEvalNumber) &&
             comparisonData.length > 0 &&
             dataSim?.getAllSimAlignmentByEval &&
+            (evalNum < 16 || dataDemo?.getDemographicsByEval) &&
             (!needsDre || (dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval)) &&
             (!needsJan || janSim?.getAllSimAlignmentByEval) &&
             (!needsJune || (juneAdms?.getAllHistoryByEvalNumber && juneSim?.getAllSimAlignmentByEval)) &&
@@ -294,8 +307,7 @@ export function RQ134({ evalNum, tableTitle }) {
             const admDataForEval = evalNum === 16
                 ? { getAllHistoryByEvalNumber: dataMedics?.getMedicsByEval ?? [] }
                 : dataADMs;
-            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, admDataForEval, comparisonData, dataSim);
-            console.log(data)
+            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, admDataForEval, comparisonData, dataSim, false, true, false, dataDemo?.getDemographicsByEval);
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
                     ...obj,
@@ -362,7 +374,8 @@ export function RQ134({ evalNum, tableTitle }) {
         needsJan,
         needsJune,
         needsJuly,
-        dataMedics
+        dataMedics,
+        dataDemo
     ]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
