@@ -1,4 +1,5 @@
 import React from "react";
+import { useVirtualizer } from '@tanstack/react-virtual';
 import '../../css/resultsTable.css'
 import { Modal, Autocomplete, TextField, ToggleButton, ToggleButtonGroup, Alert, Stack } from "@mui/material";
 import { isDefined } from "../AggregateResults/DataFunctions";
@@ -299,6 +300,18 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
         }
 
+        const pLogMap = new Map(
+            pLog.filter(log => log['Type'] !== 'Test').map(log => [String(log['ParticipantID']), log])
+        );
+        const comparisonIndex = new Map();
+        if (comparisonData) {
+            for (const cEntry of comparisonData) {
+                const key = `${cEntry.pid}|${cEntry.adm_type}|${cEntry.adm_scenario}`;
+                if (!comparisonIndex.has(key)) comparisonIndex.set(key, []);
+                comparisonIndex.get(key).push(cEntry);
+            }
+        }
+
         for (let entry of data) {
             const obj = {};
             // not shown in table, just for filters
@@ -332,9 +345,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 continue;
             }
 
-            const logData = pLog.find(
-                log => String(log['ParticipantID']) === pid && log['Type'] !== 'Test'
-            );
+            const logData = pLogMap.get(pid);
             if ((version >= 4 || !version) && !logData) {
                 continue;
             }
@@ -506,12 +517,14 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
                         obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
                         if (exploratory) {
+                            const cKey = `${pid}|${page.admAlignment}|${page['scenarioIndex']}`;
+                            const cCandidates = comparisonIndex.get(cKey) ?? [];
                             if (!showPh2) {
-                                obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
-                                obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                                obj[`B${block}_DM${dm}_DRE_Delegator|Observed_ADM`] = cCandidates.findLast((x) => searchForDreComparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                                obj[`B${block}_DM${dm}_P1E_Delegator|Observed_ADM`] = cCandidates.findLast((x) => searchForPh1Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
                             }
                             else {
-                                obj[`B${block}_DM${dm}_Delegator|Observed_ADM`] = comparisonData.findLast((x) => searchForPh2Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
+                                obj[`B${block}_DM${dm}_Delegator|Observed_ADM`] = cCandidates.findLast((x) => searchForPh2Comparison(x, pid, page.admAlignment, page['scenarioIndex']))?.['score'];
                             }
                         }
 
@@ -686,8 +699,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         }
     }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters, getUsedHeaders]);
 
-    const refineData = (origData) => {
-        // remove unwanted headers from download
+    const refineData = React.useCallback((origData) => {
         const updatedData = structuredClone(origData);
         const usedHeaders = getUsedHeaders(updatedData);
         updatedData.map((x) => {
@@ -699,7 +711,19 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             return x;
         });
         return updatedData;
-    };
+    }, [getUsedHeaders]);
+
+    const refinedFormattedData = React.useMemo(() => refineData(formattedData), [refineData, formattedData]);
+    const refinedFilteredData  = React.useMemo(() => refineData(filteredData),  [refineData, filteredData]);
+
+    const tableContainerRef = React.useRef(null);
+
+    const rowVirtualizer = useVirtualizer({
+        count: filteredData.length,
+        getScrollElement: () => tableContainerRef.current,
+        estimateSize: () => 36,
+        overscan: 10,
+    });
 
     const toggleDataType = (event, newDataType) => {
         if (newDataType !== null) {
@@ -880,7 +904,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 </ToggleButtonGroup>}
             </div>
 
-            <DownloadButtons formattedData={refineData(formattedData)} filteredData={refineData(filteredData)} HEADERS={headers} fileName={exploratory ? 'Delegation Data By Block' : 'Survey Results'} extraAction={openModal} />
+            <DownloadButtons formattedData={refinedFormattedData} filteredData={refinedFilteredData} HEADERS={headers} fileName={exploratory ? 'Delegation Data By Block' : 'Survey Results'} extraAction={openModal} />
         </section>
         {isFiltered() && (
             <Stack
@@ -967,7 +991,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
         )}
 
-        <div className='resultTableSection'>
+        <div className='resultTableSection' ref={tableContainerRef} style={{ overflowY: 'auto', maxHeight: '75vh' }}>
             {isLoading ? (
                 <table className='itm-table'>
                     <tbody>
@@ -976,7 +1000,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             Loading survey results...
                             <LinearProgress />
                     </TableCell>
-                </TableRow>  
+                </TableRow>
                     </tbody>
                 </table>
 
@@ -994,18 +1018,34 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredData.map((dataSet, index) => (
-                                <tr key={dataSet['Participant ID'] + '-' + index}>
-                                    {headers.map((val) => {
-                                        const cellValue = dataSet[val] ?? '-';
-                                        return (
-                                            <td key={dataSet['Participant ID'] + '-' + val + '-' + index} className='participant'>
-                                                <TruncatedCell text={cellValue} maxLength={100} />
-                                            </td>
-                                        )
-                                    })}
+                            {rowVirtualizer.getTotalSize() > 0 && (
+                                <tr style={{ height: rowVirtualizer.getVirtualItems()[0]?.start ?? 0 }}>
+                                    <td />
                                 </tr>
-                            ))}
+                            )}
+                            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                                const dataSet = filteredData[virtualRow.index];
+                                return (
+                                    <tr key={dataSet['Participant ID'] + '-' + virtualRow.index} data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
+                                        {headers.map((val) => {
+                                            const cellValue = dataSet[val] ?? '-';
+                                            return (
+                                                <td key={dataSet['Participant ID'] + '-' + val + '-' + virtualRow.index} className='participant'>
+                                                    <TruncatedCell text={cellValue} maxLength={100} />
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
+                            {rowVirtualizer.getTotalSize() > 0 && (() => {
+                                const items = rowVirtualizer.getVirtualItems();
+                                const lastItem = items[items.length - 1];
+                                const paddingBottom = lastItem
+                                    ? rowVirtualizer.getTotalSize() - (lastItem.start + lastItem.size)
+                                    : 0;
+                                return paddingBottom > 0 ? <tr style={{ height: paddingBottom }}><td /></tr> : null;
+                            })()}
                         </tbody>
                     </table>
                 )}
