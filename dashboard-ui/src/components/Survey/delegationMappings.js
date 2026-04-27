@@ -61,7 +61,13 @@ export const admOrderMapping = {
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF-SS", "admName": "Mistral-7B-Instruct-v0.3_01_26" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS", "admName": "Mistral-7B-Instruct-v0.3_01_12" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS", "admName": "spectrum-Llama-3.1-8B-v1_01_12" },
-]
+    ],
+    9: [
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF-PS" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
+    ]
 }
 
 export const getKitwareBaselineMapping = (sv) => {

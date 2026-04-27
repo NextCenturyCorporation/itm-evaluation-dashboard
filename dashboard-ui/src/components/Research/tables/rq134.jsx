@@ -11,6 +11,7 @@ import ph2DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2.xls
 import ukDefinitionXLFile from '../variables/Variable Definitions RQ134_UK.xlsx'
 import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
 import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb.xlsx';
+import aprilDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_April.xlsx';
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -36,6 +37,17 @@ const GET_ADM_DATA_BY_EVAL = gql`
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
 
+const GET_MEDICS_BY_EVAL = gql`
+    query GetMedicsByEval($evalNumber: Float!) {
+        getMedicsByEval(evalNumber: $evalNumber)
+    }`;
+
+const GET_DEMO_DATA = gql`
+    query GetDemographicsByEval($evalNumber: Float!) {
+        getDemographicsByEval(evalNumber: $evalNumber)
+    }`
+
+
 const GET_COMPARISON_DATA_BY_EVAL_ARRAY = gql`
     query getHumanToADMComparisonByEvalArray($evalNumbers: [Float!]!) {
         getHumanToADMComparisonByEvalArray(evalNumbers: $evalNumbers)
@@ -51,6 +63,7 @@ const HEADERS_PH1 = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp',
 const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Delegation (A/HH)', 'Delegation (A/HL)', 'Delegation (A/LH)', 'Delegation (A/LL)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Server Session ID (Delegator)', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation Preference (PSAF-1/PSAF-2)', 'Delegation Preference (PSAF-1/PSAF-3)', 'Delegation Preference (PSAF-1/PSAF-4)', 'Delegation Preference (PSAF-2/PSAF-3)', 'Delegation Preference (PSAF-2/PSAF-4)', 'Delegation Preference (PSAF-3/PSAF-4)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_FEB_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Probe Set Observation', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation preference (A/M)', 'Delegation Percentage (Aligned/Misaligned)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
+const HEADERS_PH2_APRIL_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation Preference (AlignedSS/AlignedOS)', 'Delegation Percentage (AlignedSS/AlignedOS)','Delegation Preference (AlignedSS/Misaligned)', 'Delegation Percentage (AlignedSS/Misaligned)'];
 
 export function RQ134({ evalNum, tableTitle }) {
     // -------------------------- State: filters, toggles, and table data --------------------------
@@ -134,8 +147,19 @@ export function RQ134({ evalNum, tableTitle }) {
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
     const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA_BY_EVAL, {
-        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) }
+        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) },
+        skip: evalNum === 16
     });
+    const { loading: loadingMedics, error: errorMedics, data: dataMedics } = useQuery(GET_MEDICS_BY_EVAL, {
+        variables: { evalNumber: evalNum },
+        skip: evalNum !== 16
+    });
+
+    const { loading: loadingDemo, error: errorDemo, data: dataDemo } = useQuery(GET_DEMO_DATA, {
+        variables: { evalNumber: evalNum },
+        skip: evalNum < 16
+    });
+
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_SIM_DATA_BY_EVAL, { variables: { "evalNumber": evalNum } });
     // Queries fetched by eval number
     const {
@@ -243,6 +267,9 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
+        if (evalNum === 16) {
+            currentHeaders = [...HEADERS_PH2_APRIL_2026]
+        }
         if (evalNum === 15) {
             currentHeaders = [...HEADERS_PH2_FEB_2026]
         }
@@ -269,16 +296,19 @@ export function RQ134({ evalNum, tableTitle }) {
             surveyData.length > 0 &&
             dataParticipantLog?.getParticipantLog &&
             textResultsData.length > 0 &&
-            dataADMs?.getAllHistoryByEvalNumber &&
+            (evalNum === 16 ? dataMedics?.getMedicsByEval : dataADMs?.getAllHistoryByEvalNumber) &&
             comparisonData.length > 0 &&
             dataSim?.getAllSimAlignmentByEval &&
+            (evalNum < 16 || dataDemo?.getDemographicsByEval) &&
             (!needsDre || (dreAdms?.getAllHistoryByEvalNumber && dreSim?.getAllSimAlignmentByEval)) &&
             (!needsJan || janSim?.getAllSimAlignmentByEval) &&
             (!needsJune || (juneAdms?.getAllHistoryByEvalNumber && juneSim?.getAllSimAlignmentByEval)) &&
             (!needsJuly || (julyAdms?.getAllHistoryByEvalNumber && julySim?.getAllSimAlignmentByEval))
         ) {
-            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim);
-            console.log(data)
+            const admDataForEval = evalNum === 16
+                ? { getAllHistoryByEvalNumber: dataMedics?.getMedicsByEval ?? [] }
+                : dataADMs;
+            const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, admDataForEval, comparisonData, dataSim, false, true, false, dataDemo?.getDemographicsByEval);
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
                     ...obj,
@@ -344,7 +374,9 @@ export function RQ134({ evalNum, tableTitle }) {
         needsDre,
         needsJan,
         needsJune,
-        needsJuly
+        needsJuly,
+        dataMedics,
+        dataDemo
     ]);
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
@@ -485,8 +517,8 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim) return <p>Loading...</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorMedics || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
         <h2 className='rq134-header'>{tableTitle}
@@ -742,6 +774,7 @@ export function RQ134({ evalNum, tableTitle }) {
 }
 
 const DEFINITION_FILE_MAP = {
+    16: aprilDefinitionXLFile,
     15: febDefinitionXLFile,
     12: ukDefinitionXLFile,
     10: septemberDefinitionXLFile,
