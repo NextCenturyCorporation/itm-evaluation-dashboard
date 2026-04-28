@@ -496,16 +496,17 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             const isMFAF = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
                             const isCombined = page.scenarioIndex.includes('combined');
                             const isPSAF = page.scenarioIndex.includes('PS-AF');
-
-                            if (!isPSAF) {
-                                obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
-                                    (isMFAF || isCombined) ? adjustScenarioNumber(textScenario, 3) : textScenario, 3
-                                );
-                            } else {
-                                const psAFScenario = logData['PS-AF-text-scenario']
-                                obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
-                                    psAFScenario, 2
-                                );
+                            if (obj['eval'] !== 16) {
+                                if (!isPSAF) {
+                                    obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
+                                        (isMFAF || isCombined) ? adjustScenarioNumber(textScenario, 3) : textScenario, 3
+                                    );
+                                } else {
+                                    const psAFScenario = logData['PS-AF-text-scenario']
+                                    obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
+                                        psAFScenario, 2
+                                    );
+                                }
                             }
                         }
 
@@ -519,7 +520,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
                         // new trust questions from eval 16
                         obj[`B${block}_DM${dm}_Distrust`] = TRUST_MAP[page.questions?.[cleanPageName + ': Based on this experience, I cannot rely on this person with complete confidence.']?.response];
-                        obj[`B${block}_DM${dm}_Trustworthy(INT)`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic\'s actions and behaviors are not very consistent.']?.response];
+                        obj[`B${block}_DM${dm}_Trustworthy(INT)`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic’s actions and behaviors are not very consistent.']?.response];
                         obj[`B${block}_DM${dm}_Trustworthy(BEN)`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic really looks out for what is important to me.']?.response];
 
                         // new delegation question from eval 16
