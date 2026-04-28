@@ -524,7 +524,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_Trustworthy(BEN)`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic really looks out for what is important to me.']?.response];
 
                         // new delegation question from eval 16
-                        obj[`B${block}_DM${dm}_Delegation`] = page.questions?.[cleanPageName + ': Del Version A (in-person)']?.response ?? page.questions?.[cleanPageName + ': Del Version B (in-person)']?.response;
+                        const delKey = Object.keys(page.questions ?? {}).find(k => k.startsWith(cleanPageName + ': Del Version'));
+                        obj[`B${block}_DM${dm}_Delegation`] = delKey ? page.questions[delKey]?.response : undefined;
 
                         if (exploratory) {
                             const cKey = `${pid}|${page.admAlignment}|${page['scenarioIndex']}`;
