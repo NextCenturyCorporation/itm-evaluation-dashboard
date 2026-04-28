@@ -40,6 +40,24 @@ const DELEGATION2_MAP = {
     '-': '-'
 };
 
+const DELEGATION1_MAP = {
+    "Only I make decisions about the patients": 1,
+    "I make most decisions, but the medic can make non-critical decisions": 2,
+    "The medic makes decisions with my direct supervision": 3,
+    "The medic makes decisions for patients, but I check all decisions before evacuation": 4,
+    "The medic can make decisions without supervision": 5,
+    '-': '-'
+};
+
+const DELEGATION2_MAP = {
+    "Take care of all the patients in the next wave myself": 1,
+    "Take care of most of the patients in the next wave myself": 2,
+    "Delegate about half of the patients in the next wave to the medic": 3,
+    "Delegate most of the patients in the next wave to the medic": 4,
+    "Delegate all of the patients in the next wave to the medic": 5,
+    '-': '-'
+};
+
 
 const PH1_COMPETENCE = {
     'ST-1': ['qol-human-8022671-SplitLowMulti-ph1', 'qol-human-5032922-SplitLowMulti-ph1', 'qol-human-0000001-SplitEvenMulti-ph1', 'qol-synth-LowExtreme-ph1', 'qol-synth-LowCluster-ph1'],
@@ -1087,8 +1105,7 @@ function matchesAttribute(attr, target) {
     return false;
 }
 
-function determineChoiceProcessEval16(eval16Alignments, entry, page, t, pid) {
-    console.log(pid)
+function determineChoiceProcessEval16(eval16Alignments, entry, page, t) {
     const attr = entry['Attribute'];
     const target = page['admTarget'];
     const isOracle = attr === 'AF' || attr === 'MF';
@@ -1125,8 +1142,7 @@ function determineChoiceProcessEval16(eval16Alignments, entry, page, t, pid) {
             actualTarget: target,
             type: t,
             mostAligned,
-            leastAligned,
-            eval16Alignments
+            leastAligned
         });
     }
 

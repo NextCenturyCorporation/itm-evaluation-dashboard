@@ -510,7 +510,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 textThreshold = 5;
             }
 
-            const delThreshold = isUK ? 3 : (isPH2OrUK && dataSet['_evalNumber'] !== 10) ? 5 : 4;
+            const delThreshold = isUK ? 3 : (isPH2OrUK && ![10, 16].includes(dataSet['_evalNumber'])) ? 5 : 4;
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val == textThreshold) ||
                 (header === 'Sim Count' && (val === 4 || (isPH2OrUK && val === 2)))) {

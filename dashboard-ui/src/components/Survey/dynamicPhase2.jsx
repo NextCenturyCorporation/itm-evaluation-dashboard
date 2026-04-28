@@ -76,24 +76,6 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
         return currentOptions !== prevOptions;
     };
 
-    const renderSupplies = () => {
-        if (!supplies || supplies.length === 0) return null;
-
-        return (
-            <div className="supplies-section">
-                <h5 className="supplies-title">Supplies</h5>
-                <div className="supplies-grid">
-                    {supplies.map((supply, index) => (
-                        <div key={index} className="supply-item">
-                            <span className="supply-name">{supply.type}</span>
-                            <span className="supply-quantity">Qty: {supply.quantity}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
     const scenarioStripTexts = [
         'There are two patients, Patient A and Patient B, and you only have time to treat one of them.',
     ];
@@ -127,9 +109,6 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
     return (
         <Container className="py-4" style={{ maxWidth: '1200px', width: '100%' }}>
             {renderInstructions()}
-            {/*
-            {renderSupplies()}
-            */}
 
             <Table className="table-borderless decision-table">
                 <thead>
@@ -148,7 +127,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                         const showGroupHeader = isNewGroup(index);
                         const groupPrompt = row.trailingKey ? trailingTextMap[row.trailingKey] : null;
 
-                        // 🔹 apply transformation here
+                        // apply transformation here
                         const cleanedRowText = transformRowText(row.strippedDescription, groupPrompt);
 
                         return (

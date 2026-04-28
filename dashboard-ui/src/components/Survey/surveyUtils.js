@@ -1944,7 +1944,7 @@ const haveSameResponses = (page1, page2) => {
         Object.keys(responses1).every(k => responses1[k] === responses2[k]);
 };
 
-export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delVersion) => {
+export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delVersion, onlineOnly=false) => {
     const subpop = textResults.find(result => result.scenario_id === 'April2026-subpopulation')?.subPopResult;
     if (!subpop) { console.warn("Couldn't find subpopulation group in text result documents " + textResults); }
 
@@ -2030,11 +2030,21 @@ export const createScenarioBlockv11 = (scenarioType, allPages, textResults, delV
     }
 
     // enforce delVersion
+    // also updates question text if online only version
     const removeVersion = delVersion === 'A' ? 'Del Version B' : 'Del Version A';
+    const keepVersion = `Del Version ${delVersion}`;
+
     admPages.forEach(page => {
-        if (page?.elements) {
-            page.elements = page.elements.filter(el => !el.name?.includes(removeVersion));
-        }
+        if (!page?.elements) return;
+
+        page.elements = page.elements.filter(el => {
+            if (el.name?.includes(removeVersion)) return false;
+            if (onlineOnly && el.name?.includes(keepVersion)) {
+                el.title = onlineOnlyTitles[delVersion];
+                el.name = el.name.replace('(in-person)', '(online)');
+            }
+            return true;
+        });
     });
 
     return {
@@ -2128,4 +2138,9 @@ const genComparisonPagev11 = (primary, secondary, leastAligned, isOracle = false
     }
 
     return metadata;
+}
+
+const onlineOnlyTitles = {
+    'A': 'If you had to triage a similar scenario with 18-20 patients, how would you allocate decision-making responsibilities with the medic above?',
+    'B': 'Waves of 8-10 patients are being discovered, requiring medical assistance. If you had to triage the next wave of patients, knowing there are more coming, and the medic above was available, how would you allocate responsibilities?'
 }
