@@ -1,5 +1,5 @@
 import React from 'react';
-import { isUserElevated } from '.';
+import { isUserElevated, isUserTa3 } from '.';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -31,7 +31,7 @@ export function Header({ currentUser, logout }) {
                     )}
                 </NavDropdown>
             )}
-            {isUserElevated(currentUser) && (
+            {(isUserElevated(currentUser)) && (
                 <>
                     <NavDropdown title="Human Evaluation Segments">
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
@@ -74,6 +74,11 @@ export function Header({ currentUser, logout }) {
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
                             Exploratory Analysis
                         </NavDropdown.Item>
+                        {isUserTa3(currentUser) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/tccc">
+                                        TCCC
+                                    </NavDropdown.Item>
+                            )}
                     </NavDropdown>
                 </>
             )}

@@ -27,6 +27,7 @@ import { RQ1 } from '../Research/RQ1';
 import { RQ2 } from '../Research/RQ2';
 import { RQ3 } from '../Research/RQ3';
 import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis';
+import { TcccAnalysis } from '../Research/TcccAnalysis';
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
@@ -112,7 +113,11 @@ const GET_ALL_TEXT_BASED_IMAGES = gql`
 `;
 
 export function isUserElevated(currentUser) {
-    return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser;
+    return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser || currentUser?.ta3User;
+}
+
+export function isUserTa3(currentUser) {
+    return currentUser?.ta3User || currentUser?.admin
 }
 
 export function App() {
@@ -519,6 +524,7 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
+                        {isUserTa3(currentUser) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.
                             Otherwise, send to homepage */}
