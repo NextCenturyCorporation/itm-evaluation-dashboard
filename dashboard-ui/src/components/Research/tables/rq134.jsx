@@ -753,7 +753,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 </thead>
                 <tbody>
                     {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Delegator ID'] + '-' + index}>
+                        return (<tr key={dataSet['Delegator ID'] + '-' + index} className={index % 2 === 0 ? 'row-even' : 'row-odd'}>
                             {headers.map((val) => {
                                 return (!columnsToHide.includes(val) && <td key={dataSet['Delegator ID'] + '-' + val}>
                                     {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}

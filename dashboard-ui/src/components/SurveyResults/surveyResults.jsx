@@ -28,6 +28,11 @@ const GET_PARTICIPANT_LOG = gql`
         getParticipantLog
     }`;
 
+const GET_DEMO_DATA = gql`
+    query GetDemographicsByEval($evalNumber: Float!) {
+        getDemographicsByEval(evalNumber: $evalNumber)
+    }`;
+
 const VIZ_PANEL_OPTIONS = {
     allowHideQuestions: false,
     defaultChartType: "bar",
@@ -41,6 +46,7 @@ const VIZ_PANEL_OPTIONS = {
 export function SurveyResults() {
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'network-only' });
     const { data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const { data: dataDemo } = useQuery(GET_DEMO_DATA, { variables: { evalNumber: 16 } });
     const [scenarioIndices, setScenarioIndices] = React.useState(null);
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
@@ -232,7 +238,7 @@ export function SurveyResults() {
             {error && <p>Error</p>}
 
             {data?.getAllSurveyResults && dataParticipantLog?.getParticipantLog &&
-                <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} />
+                <ResultsTable data={data?.getAllSurveyResults} pLog={dataParticipantLog?.getParticipantLog} demographicsData={dataDemo?.getDemographicsByEval} />
             }
 
             {showScrollButton && (
