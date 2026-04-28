@@ -27,7 +27,8 @@ const EVAL_MAP = {
     10: 'PH2 September',
     12: "UK PH1",
     13: 'PH2 October',
-    15: 'PH2 February'
+    15: 'PH2 February',
+    16: 'PH2 April 2026'
 }
 
 const TRUST_MAP = {
@@ -163,7 +164,6 @@ function formatTimeMMSS(seconds, includeHours = false) {
 
 function formatTimeMinutes(seconds) {
     const minutes = (seconds / 60).toFixed(3);
-    // if trailing zeroes just do a whole number
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
@@ -183,10 +183,9 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     );
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }, { 'value': '16', 'label': '16 - PH2 April 2026' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
-    const [filteredData, setFilteredData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
     const [evalFilters, setEvalFilters] = React.useState(evalNumbers);
     const [roles, setRoles] = React.useState([]);
@@ -204,7 +203,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
     const searchForDreComparison = (comparisonEntry, pid, admType, scenario) => {
         const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
-        // we don't care about servers when it comes to ST. check for DRE server for 5&6, and NOT ph1 server for 4
         const dreCheck = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
             ([5, 6].includes(comparisonEntry['evalNumber']) && comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] === 4 && !comparisonEntry['ph1_server']);
         return basicChecks && dreCheck;
@@ -212,7 +210,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
     const searchForPh1Comparison = (comparisonEntry, pid, admType, scenario) => {
         const basicChecks = comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
-        // we don't care about servers when it comes to ST. check for PH1 server for 4, and NOT dre server for 5&6
         const ph1Check = (!scenario.includes('adept') && !scenario.includes('DryRunEval')) ||
             ([5, 6].includes(comparisonEntry['evalNumber']) && !comparisonEntry['dre_server']) || (comparisonEntry['evalNumber'] === 4 && comparisonEntry['ph1_server']);
         return basicChecks && ph1Check;
@@ -221,6 +218,18 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const searchForPh2Comparison = (comparisonEntry, pid, admType, scenario) => {
         return comparisonEntry['pid'] === pid && comparisonEntry['adm_type'] === admType && comparisonEntry['adm_scenario'] === scenario;
     }
+
+    // iterate rows×keys once to build a Set
+    const getUsedHeaders = React.useCallback((data) => {
+        if (data.length === 0) return [];
+        const definedKeys = new Set();
+        for (const datapoint of data) {
+            for (const key of Object.keys(datapoint)) {
+                if (isDefined(datapoint[key])) definedKeys.add(key);
+            }
+        }
+        return origHeaderSet.filter(h => definedKeys.has(h));
+    }, [origHeaderSet]);
 
     const formatData = React.useCallback((data) => {
         const allObjs = [];
@@ -237,8 +246,15 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         } else {
             ALLOWED_ROLES = ALLOWED_ROLES_PH1;
         }
-        // set up block headers
-        let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Attribute', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat(['Name', 'Time', 'Time (mm:ss)', (showPh2 ? 'Probe_Set_Observation' : 'Scenario'), 'Agreement', 'SRAlign', 'Trustworthy', 'Trust']);
+
+        // set up block subheaders
+        let subheaders = (showLegacy ? [] : showPh2 ? ['Type', 'Attribute', 'Target'] : ['TA1', 'TA2', 'Type', 'Target']).concat([
+            'Name', 'ADMName', 'Subpop', 'Time', 'Time (mm:ss)',
+            (showPh2 ? 'Probe_Set_Observation' : 'Scenario'),
+            'Agreement', 'SRAlign', 'Trustworthy',
+            'Trust', 'Distrust', 'Trustworthy(INT)', 'Trustworthy(BEN)',
+            'Delegation'
+        ]);
         if (exploratory) {
             subheaders = subheaders.concat(showPh2 ? ['Delegator|Observed_ADM'] : ['DRE_Delegator|Observed_ADM', 'P1E_Delegator|Observed_ADM']);
         }
@@ -252,7 +268,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
                 }
             }
-            const legacyCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC1_Differences'];
             const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
             if (showPh2) {
                 nonExploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
@@ -272,10 +287,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 for (let dm = 1; dm <= 4; dm++) {
                     updatedHeaders.push(`B${block}_Compare_DM${dm}`);
                 }
-
                 updatedHeaders.push(`B${block}_Compare_Time`);
                 updatedHeaders.push(`B${block}_Compare_Time (mm:ss)`);
-
                 for (let fc = 1; fc <= 6; fc++) {
                     updatedHeaders.push(`B${block}_Compare_FC${fc}_Alignment`);
                     updatedHeaders.push(`B${block}_Compare_FC${fc}`);
@@ -286,7 +299,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
         }
         if (showLegacy) {
-            // add omnibus columns
             for (let block = 5; block < 7; block++) {
                 for (let omni = 1; omni < 3; omni++) {
                     for (let subhead of subheaders) {
@@ -314,16 +326,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
         for (let entry of data) {
             const obj = {};
-            // not shown in table, just for filters
             obj['eval'] = entry.evalNumber ?? entry.results?.evalNumber;
 
-            // clean up data, only showing relevant entries
             entry = entry.results ?? entry;
-            if (!entry) {
-                continue;
-            }
+            if (!entry) continue;
 
-            // ignore invalid versions
             const version = entry.surveyVersion;
             const effectiveVersion = version ?? (obj['eval'] === 13 ? 6 : obj['eval'] === 9 ? 7 : null);
             
@@ -335,39 +342,31 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 continue;
             }
 
-            // ignore invalid pids
             let pid = entry['Participant ID']?.questions['Participant ID']?.response ?? entry['Participant ID Page']?.questions['Participant ID']?.response ?? entry['pid'];
-            if (!pid) {
-                continue;
-            }
+            if (!pid) continue;
 
-            if (obj['eval'] === 3 && pid.slice(0, 4) !== '2024') {
-                continue;
-            }
+            if (obj['eval'] === 3 && pid.slice(0, 4) !== '2024') continue;
 
             const logData = pLogMap.get(pid);
-            if ((version >= 4 || !version) && !logData) {
-                continue;
-            }
+            if ((version >= 4 || !version) && !logData) continue;
 
             let lastPage = entry['Post-Scenario Measures'];
-            if (showLegacy && !lastPage) {
-                // don't ignore those without last page in versions 4 & 5 bc of 12/10 collection problem
-                continue;
+            let demoPage = null;
+            if (obj['eval'] === 16 && demographicsData) {
+                const demoEntry = demographicsData?.find(d => d.surveyId === pid) ?? null;
+                demoPage = demoEntry?.results?.['Post-Scenario Measures'] ?? null;
+                if (!lastPage) lastPage = demoPage;
             }
+            if (showLegacy && !lastPage) continue;
 
             if (entry['surveyVersion'] === 1.3) {
                 obj['April 2025'] = entry['evalNumber'] === 8 ? 1 : 0;
                 obj['Condition'] = entry['Participant ID']?.questions['Condition']?.response ?? '-'
             }
 
-            // add data to filter options
             allEvals.push(obj['eval']);
-
-            // add data to filter options
             allVersions.push(version);
 
-            // add data to table
             obj['Participant ID'] = pid;
             obj['Survey Version'] = version;
             obj['Start Time'] = entry.startTime ? new Date(entry.startTime)?.toLocaleString() : null;
@@ -379,9 +378,15 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 obj['Post-Scenario Measures - Time Taken (Minutes)'] = formatTimeMinutes(lastPage.timeSpentOnPage);
                 obj['Post-Scenario Measures - Time Taken (mm:ss)'] = formatTimeMMSS(lastPage.timeSpentOnPage);
             }
+            // For eval 16, merge demo fields (survey data takes priority)
+            if (demoPage && demoPage !== lastPage && lastPage) {
+                const surveyFlat = Object.fromEntries(
+                    Object.entries(lastPage.questions ?? lastPage).map(([q, v]) => [q, v?.response ?? v])
+                );
+                lastPage = { ...demoPage, ...surveyFlat };
+            }
             if (lastPage) {
                 for (const q of Object.keys(lastPage.questions ?? lastPage)) {
-                    // different format for demographic quesitons only
                     const response = lastPage.questions?.[q]?.response ?? lastPage[q]
                     if (q == 'question7') {
                         obj['Specify specialty, level, year or other specific information about your role'] = response?.toString();
@@ -391,30 +396,21 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                     else {
                         const roles = response?.toString();
-                        
-                        if (!roles) {
-                            continue
-                        }
-                        
+                        if (!roles) continue;
                         const rolesArray = roles.split(',');
-                        
                         const mappedRoles = rolesArray.map(role => {
                             const trimmedRole = role.trim()
                             return ALLOWED_ROLES.includes(trimmedRole) ? trimmedRole : 'Other';
                         })
-
                         const uniqueRoles = [...new Set(mappedRoles)]
                         allRoles = [...allRoles, ...uniqueRoles];
                         obj[q] = roles.replaceAll(',', '; ');
-
                         obj[q + '_filter'] = uniqueRoles.join('; ');
                     }
                 }
             }
 
-            if (!entry['Note page'] && version < 6) {
-                continue;
-            }
+            if (!entry['Note page'] && version < 6) continue;
 
             if (entry['VR Page']) {
                 obj["VR Experience Level"] = entry['VR Page']?.questions?.['VR Experience Level']?.response?.slice(0, 1);
@@ -433,12 +429,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 obj["Note Page - Time Taken (mm:ss)"] = formatTimeMMSS(entry['Note page'].timeSpentOnPage);
             }
 
-            // get blocks of dms
             let block = 1;
             let dm = 1;
             if (!showLegacy && entry['orderLog']) {
                 const pagesByScenario = {}
-                // group pages into blocks using scenarioIndex
                 for (const pageName in entry) {
                     const page = entry[pageName]
                     if (page && typeof page === 'object' && page.scenarioIndex && (page.pageType === 'singleMedic' || page.pageType === 'comparison')) {
@@ -449,7 +443,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                 }
 
-                //use order log to determine order of blocks
                 const orderedScenarios = []
                 for (const pageName of entry.orderLog) {
                     const page = entry[pageName.trimEnd()];
@@ -458,7 +451,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     }
                 }
 
-                //add data
                 for (const scenario of orderedScenarios) {
                     const blockPages = pagesByScenario[scenario];
                     if (!blockPages) continue;
@@ -475,7 +467,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
                         if (showPh2) {
-                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget): getEval89Attributes(page.admTarget, page.scenarioIndex);
+                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget) : getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
                             if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
@@ -490,6 +482,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             obj[`B${block}_DM${dm}_Target`] = page.admTarget;
                         }
                         obj[`B${block}_DM${dm}_Name`] = cleanPageName;
+
+                        obj[`B${block}_DM${dm}_ADMName`] = page.admName;
+                        obj[`B${block}_DM${dm}_Subpop`] = page.subpop;
+
                         obj[`B${block}_DM${dm}_Time`] = formatTimeMinutes(page.timeSpentOnPage);
                         obj[`B${block}_DM${dm}_Time (mm:ss)`] = formatTimeMMSS(page.timeSpentOnPage);
                         if (!showPh2) {
@@ -498,7 +494,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         else {
                             const textScenario = logData["AF-text-scenario"];
                             const isMFAF = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
-                            const isCombined = page.scenarioIndex.includes('combined')
+                            const isCombined = page.scenarioIndex.includes('combined');
                             const isPSAF = page.scenarioIndex.includes('PS-AF');
 
                             if (!isPSAF) {
@@ -512,10 +508,23 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                 );
                             }
                         }
+
+                        // legacy trust questions
                         obj[`B${block}_DM${dm}_Agreement`] = TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decisions that this medic made?']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': Do you agree with the decision that this medic made?']?.response];
                         obj[`B${block}_DM${dm}_SRAlign`] = TRUST_MAP[page.questions?.[cleanPageName + ': The way this medic makes medical decisions is how I make decisions']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName]?.response];
                         obj[`B${block}_DM${dm}_Trustworthy`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic is trustworthy']?.response] ?? TRUST_MAP[page.questions?.[cleanPageName + ': this medic is trustworthy']?.response];
+
+                        // Trust — present in all evals
                         obj[`B${block}_DM${dm}_Trust`] = TRUST_MAP[page.questions?.[cleanPageName + ': I would be comfortable allowing this medic to execute medical triage, even if I could not monitor it']?.response];
+
+                        // new trust questions from eval 16
+                        obj[`B${block}_DM${dm}_Distrust`] = TRUST_MAP[page.questions?.[cleanPageName + ': Based on this experience, I cannot rely on this person with complete confidence.']?.response];
+                        obj[`B${block}_DM${dm}_Trustworthy(INT)`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic\'s actions and behaviors are not very consistent.']?.response];
+                        obj[`B${block}_DM${dm}_Trustworthy(BEN)`] = TRUST_MAP[page.questions?.[cleanPageName + ': This medic really looks out for what is important to me.']?.response];
+
+                        // new delegation question from eval 16
+                        obj[`B${block}_DM${dm}_Delegation`] = page.questions?.[cleanPageName + ': Del Version A (in-person)']?.response ?? page.questions?.[cleanPageName + ': Del Version B (in-person)']?.response;
+
                         if (exploratory) {
                             const cKey = `${pid}|${page.admAlignment}|${page['scenarioIndex']}`;
                             const cCandidates = comparisonIndex.get(cKey) ?? [];
@@ -569,7 +578,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             totalComparisonTime += page.timeSpentOnPage;
 
                             if (pageName.includes(' vs ')) {
-
                                 const forcedChoiceKeys = Object.keys(page.questions).filter(key =>
                                     key.endsWith(': Forced Choice') || key.endsWith(': Percent Delegation')
                                 );
@@ -595,11 +603,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                         obj[`B${block}_Compare_FC${fcIndex}`] = response;
                                         obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
                                         obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
-
                                         if (percentDelegation) {
                                             obj[`B${block}_Compare_FC${fcIndex}_Percent`] = percentDelegation;
                                         }
-
                                         fcIndex++;
                                     }
                                 } else {
@@ -618,11 +624,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                     obj[`B${block}_Compare_FC${fcIndex}`] = response;
                                     obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
                                     obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
-
                                     if (percentDelegation) {
                                         obj[`B${block}_Compare_FC${fcIndex}_Percent`] = percentDelegation;
                                     }
-
                                     fcIndex++;
                                 }
                             }
@@ -636,48 +640,24 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
             allObjs.push(obj);
         }
-        // prep filters and data (sort by pid)
+
         allObjs.sort((a, b) => a['Participant ID'] - b['Participant ID']);
         setEvals(Array.from(new Set(allEvals)).filter((x) => isDefined(x)).map((x) => { return { 'value': x.toString(), 'label': x + ' - ' + EVAL_MAP[x] } }));
         setVersions(Array.from(new Set(allVersions)).filter((x) => isDefined(x)).map((x) => x.toString()));
-        setFormattedData(allObjs);
-        setFilteredData(allObjs);
-        setHeaders(updatedHeaders);
         setRoles(Array.from(new Set(allRoles)));
         setOrigHeaderSet(updatedHeaders);
-    }, [pLog, showLegacy, showPh2, exploratory, comparisonData]);
 
-    const getUsedHeaders = React.useCallback((data) => {
-        const usedHeaders = [];
-        for (let x of origHeaderSet) {
-            for (let datapoint of data) {
-                if (isDefined(datapoint[x])) {
-                    usedHeaders.push(x);
-                    break;
-                }
-            }
-        }
-        return usedHeaders;
-    }, [origHeaderSet]);
+        const usedHeaders = getUsedHeaders(allObjs);
+        setHeaders(usedHeaders.length > 0 ? usedHeaders : updatedHeaders);
 
-    React.useEffect(() => {
-        if (data) {
-            formatData(data);
-        }
-    }, [data, pLog, showLegacy, showPh2, formatData]);
+        setFormattedData(allObjs);
+        setIsLoading(false);
+    }, [pLog, showLegacy, showPh2, exploratory, comparisonData, demographicsData, getUsedHeaders]);
 
-    React.useEffect(() => {
-        if (exploratory) {
-            setEvalFilters(evalNumbers);
-            setShowPh2((evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false));
-        }
-    }, [evalNumbers, exploratory]);
-
-    React.useEffect(() => {
-        if (formattedData.length === 0) {
-            return
-        }
-        const filtered = formattedData.filter((x) =>
+    // filteredData derived w useMemo 
+    const filteredData = React.useMemo(() => {
+        if (formattedData.length === 0) return [];
+        return formattedData.filter((x) =>
             (versionFilters.length === 0 || versionFilters.includes(x['Survey Version']?.toString())) &&
             (evalFilters.length === 0 || evalFilters.map((y) => y.value).includes(x['eval']?.toString())) &&
             (roleFilters.length === 0 || roleFilters.some((filter) => x[(showPh2 ? 'What is your current role' : 'What is your current role (choose all that apply):') + '_filter']?.split('; ').includes(filter))) &&
@@ -690,31 +670,45 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     (!milFilters?.includes('Yes') || x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background')) &&
                     (!milFilters?.includes('No') || !x['What is your current role (choose all that apply):']?.split('; ').includes('Military Background'))))
         );
-        setIsLoading(false)
-        setFilteredData(filtered);
-        // remove extra headers that have no data
-        if (formattedData.length > 0) {
-            const usedHeaders = getUsedHeaders(filtered);
-            setHeaders(usedHeaders);
+    }, [formattedData, versionFilters, evalFilters, roleFilters, statusFilters, milFilters, showPh2]);
+
+    React.useEffect(() => {
+        if (data) {
+            formatData(data);
         }
-    }, [versionFilters, evalFilters, formattedData, statusFilters, roleFilters, milFilters, getUsedHeaders]);
+    }, [data, pLog, showLegacy, showPh2, formatData]);
+
+    React.useEffect(() => {
+        if (filteredData.length > 0 && origHeaderSet.length > 0) {
+            setHeaders(getUsedHeaders(filteredData));
+        }
+    }, [filteredData, origHeaderSet, getUsedHeaders]);
+
+    React.useEffect(() => {
+        if (exploratory) {
+            setEvalFilters(evalNumbers);
+            setShowPh2((evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false));
+        }
+    }, [evalNumbers, exploratory]);
 
     const refineData = React.useCallback((origData) => {
-        const updatedData = structuredClone(origData);
-        const usedHeaders = getUsedHeaders(updatedData);
-        updatedData.map((x) => {
-            delete x.eval;
-            for (const h of Object.keys(x)) {
-                if (!usedHeaders.includes(h))
-                    delete x[h];
+        if (origData.length === 0) return [];
+        const usedHeaders = getUsedHeaders(origData);
+        const usedHeaderSet = new Set(usedHeaders);
+        return origData.map((x) => {
+            const cleaned = {};
+            for (const key of Object.keys(x)) {
+                if (key !== 'eval' && usedHeaderSet.has(key)) {
+                    cleaned[key] = x[key];
+                }
             }
-            return x;
+            return cleaned;
         });
-        return updatedData;
     }, [getUsedHeaders]);
 
-    const refinedFormattedData = React.useMemo(() => refineData(formattedData), [refineData, formattedData]);
-    const refinedFilteredData  = React.useMemo(() => refineData(filteredData),  [refineData, filteredData]);
+    // Memoized so refineData is not called on every render for the download buttons
+    const refinedFormattedData = React.useMemo(() => refineData(formattedData), [formattedData, refineData]);
+    const refinedFilteredData = React.useMemo(() => refineData(filteredData), [filteredData, refineData]);
 
     const tableContainerRef = React.useRef(null);
 
@@ -729,7 +723,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         if (newDataType !== null) {
             setShowLegacy(newDataType === 'Legacy');
             setShowPh2(newDataType === 'PH2');
-            setFilteredData(formattedData);
             setEvalFilters([]);
             setMilFilters(null);
             setRoleFilters([]);
@@ -740,7 +733,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     };
 
     const clearFilters = () => {
-        setFilteredData(formattedData);
         setEvalFilters([]);
         setMilFilters(null);
         setRoleFilters([]);
@@ -781,7 +773,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
             }
             else {
                 name = 'Survey Delegation Variables - PH2.xlsx';
-
                 xlFile = definitionXLFilePH2;
                 pdfFile = definitionXLFilePH2;
             }
@@ -908,147 +899,130 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         </section>
         {isFiltered() && (
             <Stack
-            direction="row"
-            spacing={2}
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mb: 2, px: 1.5}}
+                direction="row"
+                spacing={2}
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 2, px: 1.5}}
             >
-                <Box
-                className="status-bar"
-                >
+                <Box className="status-bar">
                     {versionFilters.length > 0 && (
-                        <Box
-                        className="status-bar"
-                        >
-                        <Typography>
-                            Version:
-                        </Typography>
-                        {versionFilters.map((e) =>
-                        <Chip
-                        key={e}
-                        label={e}
-                        size="small"
-                        onDelete={() => {
-                            const updated = versionFilters.filter(item => item !== e)
-                            setVersionFilters(updated)
-                        }}
-                        />
-                    )}
+                        <Box className="status-bar">
+                            <Typography>Version:</Typography>
+                            {versionFilters.map((e) =>
+                                <Chip
+                                    key={e}
+                                    label={e}
+                                    size="small"
+                                    onDelete={() => {
+                                        const updated = versionFilters.filter(item => item !== e)
+                                        setVersionFilters(updated)
+                                    }}
+                                />
+                            )}
                         </Box>
-                    )} 
-                    {evalFilters.length > 0 && (
-                        <Box
-                        className="status-bar"
-                        >
-                        <Typography>
-                            Evals:
-                        </Typography>
-                        {evalFilters.map((e) =>
-                        <Chip
-                        key={e.label}
-                        label={e.label}
-                        size="small"
-                        onDelete={() => {
-                            const updated = evalFilters.filter(item => item.label !== e.label)
-                            setEvalFilters(updated)
-                        }}
-                        />
                     )}
-                    </Box>
+                    {evalFilters.length > 0 && (
+                        <Box className="status-bar">
+                            <Typography>Evals:</Typography>
+                            {evalFilters.map((e) =>
+                                <Chip
+                                    key={e.label}
+                                    label={e.label}
+                                    size="small"
+                                    onDelete={() => {
+                                        const updated = evalFilters.filter(item => item.label !== e.label)
+                                        setEvalFilters(updated)
+                                    }}
+                                />
+                            )}
+                        </Box>
                     )}
                     {roleFilters.length > 0 && (
-                        <Box
-                        className="status-bar"
-                        >
-                            <Typography>
-                                Roles:
-                            </Typography>
-                        {roleFilters && (
-                            roleFilters.map((e) =>
-                            <Chip
-                            key={e}
-                            label={e}
-                            size="small"
-                            onDelete={() => {
-                                const updated = roleFilters.filter(item => item !== e)
-                                setRoleFilters(updated)
-                            }}
-                            />
-                    ))}
-                    </Box>
+                        <Box className="status-bar">
+                            <Typography>Roles:</Typography>
+                            {roleFilters.map((e) =>
+                                <Chip
+                                    key={e}
+                                    label={e}
+                                    size="small"
+                                    onDelete={() => {
+                                        const updated = roleFilters.filter(item => item !== e)
+                                        setRoleFilters(updated)
+                                    }}
+                                />
+                            )}
+                        </Box>
                     )}
-
                 </Box>
-            
-                <Typography
-                    onClick={clearFilters}
-                    className="clear-btn"
-                    >
-                        Clear
+                <Typography onClick={clearFilters} className="clear-btn">
+                    Clear
                 </Typography>
             </Stack>
-
         )}
 
         <div className='resultTableSection' ref={tableContainerRef} style={{ overflowY: 'auto', maxHeight: '75vh' }}>
             {isLoading ? (
                 <table className='itm-table'>
                     <tbody>
-                      <TableRow>
+                        <TableRow>
                             <TableCell>
-                            Loading survey results...
-                            <LinearProgress />
-                    </TableCell>
-                </TableRow>
+                                Loading survey results...
+                                <LinearProgress />
+                            </TableCell>
+                        </TableRow>
                     </tbody>
                 </table>
-
-            ): filteredData.length === 0 ? (
-                    <Alert severity="info">No data available</Alert>
-                ) : (
-                    <table className='itm-table'>
-                        <thead>
-                            <tr>
-                                {headers.map((val, index) => (
-                                    <th key={'header-' + index}>
-                                        {val}
-                                    </th>
-                                ))}
+            ) : filteredData.length === 0 ? (
+                <Alert severity="info">No data available</Alert>
+            ) : (
+                <table className='itm-table'>
+                    <thead>
+                        <tr>
+                            {headers.map((val, index) => (
+                                <th key={'header-' + index}>
+                                    {val}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rowVirtualizer.getTotalSize() > 0 && (
+                            <tr style={{ height: rowVirtualizer.getVirtualItems()[0]?.start ?? 0 }}>
+                                <td />
                             </tr>
-                        </thead>
-                        <tbody>
-                            {rowVirtualizer.getTotalSize() > 0 && (
-                                <tr style={{ height: rowVirtualizer.getVirtualItems()[0]?.start ?? 0 }}>
-                                    <td />
+                        )}
+                        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                            const dataSet = filteredData[virtualRow.index];
+                            return (
+                                <tr
+                                    key={dataSet['Participant ID'] + '-' + virtualRow.index}
+                                    data-index={virtualRow.index}
+                                    ref={rowVirtualizer.measureElement}
+                                    className={virtualRow.index % 2 === 0 ? 'row-even' : 'row-odd'}
+                                >
+                                    {headers.map((val) => {
+                                        const cellValue = dataSet[val] ?? '-';
+                                        return (
+                                            <td key={dataSet['Participant ID'] + '-' + val + '-' + virtualRow.index} className='participant'>
+                                                <TruncatedCell text={cellValue} maxLength={100} />
+                                            </td>
+                                        );
+                                    })}
                                 </tr>
-                            )}
-                            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                                const dataSet = filteredData[virtualRow.index];
-                                return (
-                                    <tr key={dataSet['Participant ID'] + '-' + virtualRow.index} data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
-                                        {headers.map((val) => {
-                                            const cellValue = dataSet[val] ?? '-';
-                                            return (
-                                                <td key={dataSet['Participant ID'] + '-' + val + '-' + virtualRow.index} className='participant'>
-                                                    <TruncatedCell text={cellValue} maxLength={100} />
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                );
-                            })}
-                            {rowVirtualizer.getTotalSize() > 0 && (() => {
-                                const items = rowVirtualizer.getVirtualItems();
-                                const lastItem = items[items.length - 1];
-                                const paddingBottom = lastItem
-                                    ? rowVirtualizer.getTotalSize() - (lastItem.start + lastItem.size)
-                                    : 0;
-                                return paddingBottom > 0 ? <tr style={{ height: paddingBottom }}><td /></tr> : null;
-                            })()}
-                        </tbody>
-                    </table>
-                )}
+                            );
+                        })}
+                        {rowVirtualizer.getTotalSize() > 0 && (() => {
+                            const items = rowVirtualizer.getVirtualItems();
+                            const lastItem = items[items.length - 1];
+                            const paddingBottom = lastItem
+                                ? rowVirtualizer.getTotalSize() - (lastItem.start + lastItem.size)
+                                : 0;
+                            return paddingBottom > 0 ? <tr style={{ height: paddingBottom }}><td /></tr> : null;
+                        })()}
+                    </tbody>
+                </table>
+            )}
         </div>
 
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
