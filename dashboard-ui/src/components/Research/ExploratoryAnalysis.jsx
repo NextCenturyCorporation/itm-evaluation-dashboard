@@ -4,6 +4,7 @@ import './dre-rq.css';
 import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
 import { PH2RQ8 } from "./tables/ph2_rq8";
+import { PH2RQ8Apr26} from "./tables/ph2_rq8_apr26";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
@@ -24,6 +25,8 @@ export function ExploratoryAnalysis() {
     // Extract all evaluation values that have an RQ1 page to conditionally render RQ4 content 
     const rq1Values = evalRQ1Options.map(option => option.value); 
     const hasRQ1Page = rq1Values.includes(selectedEval);
+    const rq8Map = { 16: PH2RQ8Apr26 };
+    const RQ8Component = rq8Map[selectedEval]
     return (<div className="researchQuestion">
         <div className="rq-selection-section">
             <Select
@@ -153,10 +156,10 @@ export function ExploratoryAnalysis() {
         </div>
 
         <div className="section-container">
-            {selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
+            {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
         </div>
 
-        {selectedEval !== 15 && ( 
+        {selectedEval !== 15 && selectedEval !== 16 && ( 
             <>
                 <div className="section-container">
                     <BlockedTable evalNum={selectedEval} />
