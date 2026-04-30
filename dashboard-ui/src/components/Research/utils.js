@@ -664,9 +664,10 @@ function buildEntryRow(context) {
         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'aligned' ? 'AlignedSS' : t === 'baseline' ? 'AlignedOS' : 'Misaligned';
 
     
-    const choiceProcess = (isPhase2 && t !== 'comparison' && t !== 'baseline' && !page['admChoiceProcess'])
+    const isOracleBlock = evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
+    const choiceProcess = (isPhase2 && t !== 'comparison' && (t !== 'baseline' || isOracleBlock) && !page['admChoiceProcess'])
         ? (evalNum === 16
-            ? determineChoiceProcessEval16(eval16Alignments, entry, page, t)
+            ? determineChoiceProcessEval16(eval16Alignments, entry, page, t, pid)
             : determineChoiceProcessJune2025(textResultsForPID, page, t))
         : page['admChoiceProcess'];
 
