@@ -159,7 +159,7 @@ export function ExploratoryAnalysis() {
             {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
         </div>
 
-        {selectedEval !== 15 && ( 
+        {selectedEval !== 15 && selectedEval !== 16 && ( 
             <>
                 <div className="section-container">
                     <BlockedTable evalNum={selectedEval} />
