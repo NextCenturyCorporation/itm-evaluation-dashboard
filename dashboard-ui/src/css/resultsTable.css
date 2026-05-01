@@ -52,12 +52,12 @@
     border-right: 3px solid black;
 }
 
-.itm-table tr:nth-child(2n) td {
-    background-color: lightgrey;
+.itm-table tr.row-even td {
+    background-color: white;
 }
 
-.itm-table tr:nth-child(2n+1) td {
-    background-color: white;
+.itm-table tr.row-odd td {
+    background-color: lightgrey;
 }
 
 .tableHeader {
