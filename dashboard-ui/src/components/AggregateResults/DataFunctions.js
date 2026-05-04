@@ -143,7 +143,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12, 15];
+export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12, 15, 16];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -1644,6 +1644,7 @@ function populateDataSetP2(data) {
         processedPids.add(pid);
 
         const scenarios = scenariosByPid[pid];
+        console.log(scenarios)
 
         if (scenarios.length > 0) {
             row['Date'] = new Date(safeGet(scenarios[0], ['startTime'], ['timeComplete'])).toLocaleDateString();
@@ -1655,14 +1656,7 @@ function populateDataSetP2(data) {
         row['PS_KDMA_Text'] = null;
         row['SS_KDMA_Text'] = null;
 
-        const isEval15 = data.getAllScenarioResultsByEval[0]?.evalNumber === 15;
-
-        if (isEval15) {
-            row['AF_intercept'] = row['AF_medical'] = row['AF_attribute'] = null;
-            row['MF_intercept'] = row['MF_medical'] = row['MF_attribute'] = null;
-            row['PS_intercept'] = row['PS_medical'] = row['PS_attribute'] = null;
-            row['SS_intercept'] = row['SS_medical'] = row['SS_attribute'] = null;
-        }
+        const is15orMore = data.getAllScenarioResultsByEval[0]?.evalNumber >= 15;
 
         if (data.getAllScenarioResultsByEval[0]?.evalNumber === 10) {
             row['PS_Multi_KDMA_Text'] = null;
@@ -1670,7 +1664,13 @@ function populateDataSetP2(data) {
         }
 
         for (const scenario of scenarios) {
-            if (isEval15 && scenario?.kdmas?.length) {
+            if (is15orMore) {
+
+                //eval 16 subpop 
+                if (scenario?.scenario_id.includes('subpopulation')) {
+                    row['Subpopulation'] = scenario.subPopResult
+                }
+
                 const KDMA_PREFIX_MAP = {
                     'affiliation': 'AF',
                     'merit': 'MF',
@@ -1678,19 +1678,27 @@ function populateDataSetP2(data) {
                     'search': 'SS'
                 };
 
-                for (const kdma of scenario.kdmas) {
-                    const prefix = KDMA_PREFIX_MAP[kdma.kdma];
-                    if (!prefix) continue;
+                // eval 16 stores in combinedKdmas
+                // eval 15 stores in scenario.kdmas
+                const kdmaSource = scenario?.combinedKdmas?.length
+                    ? scenario.combinedKdmas
+                    : scenario?.kdmas;
 
-                    const params = kdma.parameters || [];
-                    for (const p of params) {
-                        if (p.name === 'intercept') row[`${prefix}_intercept`] = p.value;
-                        if (p.name === 'medical_weight') row[`${prefix}_medical`] = p.value;
-                        if (p.name === 'attr_weight') row[`${prefix}_attribute`] = p.value;
+                if (kdmaSource?.length) {
+                    for (const kdma of kdmaSource) {
+                        const prefix = KDMA_PREFIX_MAP[kdma.kdma];
+                        if (!prefix) continue;
+
+                        const params = kdma.parameters || [];
+                        for (const p of params) {
+                            if (p.name === 'intercept') row[`${prefix}_intercept`] = p.value;
+                            if (p.name === 'medical_weight') row[`${prefix}_medical`] = p.value;
+                            if (p.name === 'attr_weight') row[`${prefix}_attribute`] = p.value;
+                        }
                     }
                 }
 
-                continue; // do NOT do eval 8/9/10 processing on eval 15
+                continue; // do NOT do eval 8/9/10 processing
             }
 
             if (scenario['kdmas']) {
