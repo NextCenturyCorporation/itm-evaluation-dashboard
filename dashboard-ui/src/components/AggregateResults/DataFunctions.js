@@ -1644,7 +1644,6 @@ function populateDataSetP2(data) {
         processedPids.add(pid);
 
         const scenarios = scenariosByPid[pid];
-        console.log(scenarios)
 
         if (scenarios.length > 0) {
             row['Date'] = new Date(safeGet(scenarios[0], ['startTime'], ['timeComplete'])).toLocaleDateString();
