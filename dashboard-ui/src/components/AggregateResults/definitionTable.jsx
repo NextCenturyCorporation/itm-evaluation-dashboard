@@ -7,11 +7,13 @@ import ph1XlFile from './Variable Definitions/PH1_Variables.xlsx'
 import ph2XlFile from './Variable Definitions/PH2_Variables.xlsx'
 import ukXlFile from './Variable Definitions/UK_Variables.xlsx'
 import ph2FebXlFile from './Variable Definitions/PH2_Feb_Variables.xlsx'
+import ph2AprilXlFile from './Variable Definitions/PH2_April_Variables.xlsx'
 const getDefinitionFile = (evalNumber) => {
     if (evalNumber === 4) return { file: dreXlFile, prefix: 'dre_' };
     if (evalNumber === 5) return { file: ph1XlFile, prefix: 'ph1_' };
     if (evalNumber === 12) return { file: ukXlFile, prefix: 'uk_'};
     if (evalNumber === 15) return { file: ph2FebXlFile, prefix: 'ph2_feb_' };
+    if (evalNumber === 16) return {file: ph2AprilXlFile, prefix: 'ph2_april'};
     if (evalNumber >= 8) return { file: ph2XlFile, prefix: 'ph2_' };
     return { file: mreXlFile, prefix: 'mre_' };
 };
