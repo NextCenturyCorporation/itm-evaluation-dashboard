@@ -26,11 +26,6 @@ const OW_ADM_SESSIONS = {
     }
 };
 
-const OW_EVAL_NAMES = {
-    8: 'Phase 2 June 2025 Open World Experiment',
-    15: 'Phase 2 Feb 2026 Open World Experiment'
-};
-
 const HEADERS = [
     'Trial_ID', 'OW Scenario', 'Target', 'ADM Name', 'Aligned Server Session ID', 'Aligned ADM Alignment score (ADM|target)',
     'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'
@@ -69,7 +64,6 @@ export function PH2RQ8OWPart1() {
         for (const currentEvalNum of OW_EVALS) {
             const rawData = dataByEval[currentEvalNum];
             const sessions = OW_ADM_SESSIONS[currentEvalNum];
-            const evalName = OW_EVAL_NAMES[currentEvalNum];
             const grouped = {};
             for (const adm of rawData) {
                 const admName = adm.evaluation.adm_name;
