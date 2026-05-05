@@ -1664,10 +1664,9 @@ function populateDataSetP2(data) {
 
         for (const scenario of scenarios) {
             if (is15orMore) {
-
-                //eval 16 subpop 
+                // eval 16 subpop
                 if (scenario?.scenario_id.includes('subpopulation')) {
-                    row['Subpopulation'] = scenario.subPopResult
+                    row['Subpopulation'] = scenario.subPopResult;
                 }
 
                 const KDMA_PREFIX_MAP = {
@@ -1677,27 +1676,36 @@ function populateDataSetP2(data) {
                     'search': 'SS'
                 };
 
-                // eval 16 stores in combinedKdmas
-                // eval 15 stores in scenario.kdmas
-                const kdmaSource = scenario?.combinedKdmas?.length
-                    ? scenario.combinedKdmas
-                    : scenario?.kdmas;
-
-                if (kdmaSource?.length) {
-                    for (const kdma of kdmaSource) {
+                // helper to write KDMA params into the row with a given prefix suffix
+                const writeKdmaParams = (kdmaArray, prefixSuffix = '') => {
+                    for (const kdma of kdmaArray) {
                         const prefix = KDMA_PREFIX_MAP[kdma.kdma];
                         if (!prefix) continue;
 
                         const params = kdma.parameters || [];
                         for (const p of params) {
-                            if (p.name === 'intercept') row[`${prefix}_intercept`] = p.value;
-                            if (p.name === 'medical_weight') row[`${prefix}_medical`] = p.value;
-                            if (p.name === 'attr_weight') row[`${prefix}_attribute`] = p.value;
+                            if (p.name === 'intercept') row[`${prefix}${prefixSuffix}_intercept`] = p.value;
+                            if (p.name === 'medical_weight') row[`${prefix}${prefixSuffix}_medical`] = p.value;
+                            if (p.name === 'attr_weight') row[`${prefix}${prefixSuffix}_attribute`] = p.value;
                         }
                     }
+                };
+
+                // primary: eval 16 uses combinedKdmas, eval 15 uses scenario.kdmas
+                const primarySource = scenario?.combinedKdmas?.length
+                    ? scenario.combinedKdmas
+                    : scenario?.kdmas;
+
+                if (primarySource?.length) {
+                    writeKdmaParams(primarySource);
                 }
 
-                continue; // do NOT do eval 8/9/10 processing
+                // secondary: otherSubKDMA (eval 16 only, secondary subpopulation)
+                if (scenario?.otherSubKDMA?.length) {
+                    writeKdmaParams(scenario.otherSubKDMA, '_OtherSub');
+                }
+
+                continue;
             }
 
             if (scenario['kdmas']) {
