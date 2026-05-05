@@ -5,6 +5,7 @@ import { RQ5 } from "./tables/rq5";
 import { RQ8 } from "./tables/rq8";
 import { PH2RQ8 } from "./tables/ph2_rq8";
 import { PH2RQ8Apr26} from "./tables/ph2_rq8_apr26";
+import { PH2RQ8OWPart1 } from "./tables/ph2_rq8_ow_part1";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
@@ -158,6 +159,13 @@ export function ExploratoryAnalysis() {
         <div className="section-container">
             {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
         </div>
+
+        {selectedEval === 16 &&
+            <div className="section-container">
+                <h2>Open World Part 1</h2>
+                <PH2RQ8OWPart1 />
+            </div>
+        }
 
         {selectedEval !== 15 && selectedEval !== 16 && ( 
             <>
