@@ -9,13 +9,13 @@ import ukXlFile from './Variable Definitions/UK_Variables.xlsx'
 import ph2FebXlFile from './Variable Definitions/PH2_Feb_Variables.xlsx'
 import ph2AprilXlFile from './Variable Definitions/PH2_April_Variables.xlsx'
 const getDefinitionFile = (evalNumber) => {
-    if (evalNumber === 4) return { file: dreXlFile, prefix: 'dre_' };
-    if (evalNumber === 5) return { file: ph1XlFile, prefix: 'ph1_' };
-    if (evalNumber === 12) return { file: ukXlFile, prefix: 'uk_'};
-    if (evalNumber === 15) return { file: ph2FebXlFile, prefix: 'ph2_feb_' };
-    if (evalNumber === 16) return {file: ph2AprilXlFile, prefix: 'ph2_april'};
-    if (evalNumber >= 8) return { file: ph2XlFile, prefix: 'ph2_' };
-    return { file: mreXlFile, prefix: 'mre_' };
+    if (evalNumber === 4) return { file: dreXlFile, filename: 'DRE_Variables.xlsx' };
+    if (evalNumber === 5) return { file: ph1XlFile, filename: 'PH1_Variables.xlsx' };
+    if (evalNumber === 12) return { file: ukXlFile, filename: 'UK_Variables.xlsx' };
+    if (evalNumber === 15) return { file: ph2FebXlFile, filename: 'PH2_Feb_Variables.xlsx' };
+    if (evalNumber === 16) return { file: ph2AprilXlFile, filename: 'PH2_April_Variables.xlsx' };
+    if (evalNumber >= 8) return { file: ph2XlFile, filename: 'PH2_Variables.xlsx' };
+    return { file: mreXlFile, filename: 'MRE_Variables.xlsx' };
 };
 
 export function DefinitionTable({ evalNumber }) {
@@ -46,8 +46,8 @@ export function DefinitionTable({ evalNumber }) {
     }, [evalNumber]);
 
     const exportWordDoc = () => {
-        const { file: xlFile, prefix } = getDefinitionFile(evalNumber);
-        FileSaver.saveAs(xlFile, prefix + 'Definitions.xlsx');
+        const { file: xlFile, filename } = getDefinitionFile(evalNumber);
+        FileSaver.saveAs(xlFile, filename);
     };
 
     return (<>
