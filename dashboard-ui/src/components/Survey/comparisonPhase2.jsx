@@ -5,7 +5,6 @@ import '../../css/template.css';
 import DynamicPhase2 from "./dynamicPhase2";
 const CUSTOM_TYPE = "comparison-phase-2";
 
-
 export class ComparisonPhase2Model extends Question {
     getType() {
         return CUSTOM_TYPE;
@@ -93,7 +92,6 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
         // get shared data from the first decision-maker
         const firstDmData = decisionMakers.length > 0 ? this.getDecisionMakerData(decisionMakers[0]) : null;
         const sharedScenarioDescription = firstDmData?.scenarioDescription;
-        const sharedSupplies = firstDmData?.supplies;
         
         return (
             <div className="comparison-container">
@@ -107,21 +105,6 @@ export class ComparisonPhase2 extends SurveyQuestionElementBase {
                                 {sharedScenarioDescription}
                             </p>
                         </div>
-
-
-                        {sharedSupplies && sharedSupplies.length > 0 && (
-                            <div className="supplies-section">
-                                <h5 className="supplies-title">Supplies</h5>
-                                <div className="supplies-grid">
-                                    {sharedSupplies.map((supply, index) => (
-                                        <div key={index} className="supply-item">
-                                            <span className="supply-name">{supply.type}</span>
-                                            <span className="supply-quantity">Qty: {supply.quantity}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
 
