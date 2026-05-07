@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
 import { Query, useQuery, useMutation, useLazyQuery } from 'react-apollo';
 import gql from 'graphql-tag';

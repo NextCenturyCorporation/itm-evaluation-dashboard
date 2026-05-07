@@ -60,6 +60,14 @@
     background-color: lightgrey;
 }
 
+.itm-table tbody tr:nth-child(even) td {
+    background-color: white;
+}
+
+.itm-table tbody tr:nth-child(odd) td {
+    background-color: lightgrey;
+}
+
 .tableHeader {
     display: flex;
     flex-direction: row;
