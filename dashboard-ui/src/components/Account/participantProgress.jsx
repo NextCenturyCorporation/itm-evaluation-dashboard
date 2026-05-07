@@ -457,10 +457,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                         {isComplete && <CheckCircle style={{ fontSize: '14px', color: '#2e7d32' }} />}
                         {isMissing && <Error style={{ fontSize: '14px', color: '#e65100' }} />}
                         <span>{val ?? '-'}</span>
-                        {isMissing && isAdmin && (
+                        {(isMissing || isComplete) && isAdmin && (
                             <button
                                 className="repair-align-btn"
-                                title={`Repair: ${status?.missingScenarios?.join(', ')}`}
+                                title={isMissing ? `Repair: ${status?.missingScenarios?.join(', ')}` : 'Re-run alignment'}
                                 onClick={() => setRepairModal({ open: true, pid, status })}
                             >
                                 <Build style={{ fontSize: '14px' }} />
