@@ -28,6 +28,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON @complexity(value: 10)
     getAllHistory(id: ID): [JSON] @complexity(value: 150)
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
+    getAdmHistoryByScenario(evalNumber: Float, scenarioID: ID): [JSON] @complexity(value: 75)
     getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
     getAllEvalData: [JSON] @complexity(value: 10)
     getEvalIdsForAllHistory: [JSON] @complexity(value: 10)
@@ -733,6 +734,45 @@ const resolvers = {
       }
     }
   },
+    getAdmHistoryByScenario: async (obj, args, context, inflow) => {
+      const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"], "evaluation.scenario_id": { $in: args["scenarioID"] } }, {
+        projection: {
+          "synthetic": 1,
+          "probe_ids": 1,
+          "probes": 1,
+          "scenario": 1,
+          "alignment_target": 1,
+          "evaluation": 1,
+          "results": 1,
+          "adm_name": 1,
+          "oracle_alignment": 1,
+          "history.parameters.adm_name": 1,
+          "history.response.id": 1,
+          "history.parameters.target_id": 1,
+          "history.response.kdma_values.value": 1,
+          "history.parameters.target_id": 1,
+          "history.response.score": 1,
+          "history.response.distance_based_score": 1,
+          "history.response.dre_alignment.score": 1,
+          "history.parameters.session_id": 1,
+          "history.parameters.dreSessionId": 1,
+          "history.command": 1,
+          "history.parameters.probe_id": 1
+        }
+      }).toArray();
+      return docs.map(doc => {
+        if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
+          if (doc.probes?.length > 0) {
+              doc.probe_ids = doc.probes.map(p => p.probe_id);
+          } else {
+              doc.probe_ids = (doc.history || [])
+                  .filter(h => h.command === 'Respond to TA1 Probe')
+                  .map(h => h.parameters?.probe_id);
+          }
+      }
+        return doc;
+      });
+    },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
       const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
