@@ -11,8 +11,8 @@ import owPart1Defs from '../variables/Variable Definitions RQ8_OW_Part1.xlsx';
 
 
 const getAdmData = gql`
-    query getAdmHistoryByScenario($evalNumber: Float!, $scenarioIDs: [ID]){
-        getAdmHistoryByScenario(evalNumber: $evalNumber, scenarioIDs: $scenarioIDs)
+    query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
+        getAllOWData(evalNumber: $evalNumber, scenarioIDs: $scenarioIDs)
     }`;
 
 const OW_ADM_SESSIONS = {
@@ -53,13 +53,13 @@ export function PH2RQ8OWPart1() {
     const closeModal = () => setShowDefinitions(false);
 
     React.useEffect(() => {
-        if (!data8?.getAdmHistoryByScenario || !data15?.getAdmHistoryByScenario) return;
+        if (!data8?.getAllOWData || !data15?.getAllOWData) return;
         const allObjs = [];
         const allOwScenarios = [];
         const allTargets = [];
         const dataByEval = {
-            8: data8.getAdmHistoryByScenario,
-            15: data15.getAdmHistoryByScenario
+            8: data8.getAllOWData,
+            15: data15.getAllOWData
         };
         for (const currentEvalNum of OW_EVALS) {
             const rawData = dataByEval[currentEvalNum];
