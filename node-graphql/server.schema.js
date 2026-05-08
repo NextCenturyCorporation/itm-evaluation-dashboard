@@ -28,7 +28,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON @complexity(value: 10)
     getAllHistory(id: ID): [JSON] @complexity(value: 150)
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
-    getAdmHistoryByScenario(evalNumber: Float, scenarioID: ID): [JSON] @complexity(value: 75)
+    getAdmHistoryByScenario(evalNumber: Float, scenarioIDs: [ID]): [JSON] @complexity(value: 75)
     getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
     getAllEvalData: [JSON] @complexity(value: 10)
     getEvalIdsForAllHistory: [JSON] @complexity(value: 10)
@@ -732,10 +732,9 @@ const resolvers = {
       else {
         return await context.db.collection('tcccResults').find().toArray().then(result => { return result; });
       }
-    }
-  },
+    },
     getAdmHistoryByScenario: async (obj, args, context, inflow) => {
-      const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"], "evaluation.scenario_id": { $in: args["scenarioID"] } }, {
+      const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"], "evaluation.scenario_id": { $in: args["scenarioIDs"] } }, {
         projection: {
           "synthetic": 1,
           "probe_ids": 1,
@@ -772,7 +771,8 @@ const resolvers = {
       }
         return doc;
       });
-    },
+    }
+  },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
       const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
