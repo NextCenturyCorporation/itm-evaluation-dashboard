@@ -118,8 +118,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     const getCompletionOptions = () => {
         const textThreshold = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1' ? 4 : 5;
-        const delThreshold = selectedPhase === 'Phase 2' ? 5 : selectedPhase === 'UK Phase 1' ? 3 : 4;
-        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', `Delegation (${delThreshold})`, 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
+        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', 'Complete Delegation', 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
 
         if (selectedPhase === 'Phase 1') {
             // phase 1 option
@@ -553,7 +552,9 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     React.useEffect(() => {
         if (formattedData.length > 0) {
             const textThreshold = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1' ? 4 : 5;
-            const delThreshold = selectedPhase === 'Phase 2' ? 5 : selectedPhase === 'UK Phase 1' ? 3 : 4;
+            const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
+            const isUK = selectedPhase === 'UK Phase 1';
+            const getDelThreshold = (x) => isUK ? 3 : (isPH2OrUK && ![10, 16].includes(x['_evalNumber'])) ? 5 : 4;
 
             setFilteredData(formattedData.filter((x) => {
                 const participantPhase = getParticipantPhase(x);
@@ -568,7 +569,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     (evalFilters.length === 0 || evalFilters.includes(x['Evaluation'])) &&
                     (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
                     (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
-                    (!completionFilters.includes(`Delegation (${delThreshold})`) || x['Delegation'] >= delThreshold) &&
+                    (!completionFilters.includes('Complete Delegation') || x['Delegation'] >= getDelThreshold(x)) &&
                     (!completionFilters.includes('No Delegation') || x['Delegation'] === 0) &&
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
                     (!completionFilters.includes('Any Sim') || x['Sim Count'] >= 1) &&
