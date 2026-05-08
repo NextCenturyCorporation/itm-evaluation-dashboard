@@ -291,7 +291,7 @@ export function PH2RQ8({ evalNum }) {
                 }
 
                 if (mode === "feb26") {
-                    valueMap["AF_Intercept_Text"] =
+                    valueMap["AF_intercept_Text"] =
                         textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
                     valueMap["AF_medical_Text"] =
                         textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
@@ -318,6 +318,20 @@ export function PH2RQ8({ evalNum }) {
                         textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
                     valueMap["SS_attribute_Text"] =
                         textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
+
+                    valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
+                    valueMap["AF_medical_Desert"] = getKdmaParam(desertKdmas, "affiliation", "medical_weight");
+                    valueMap["AF_attribute_Desert"] = getKdmaParam(desertKdmas, "affiliation", "attr_weight");
+                    valueMap["MF_intercept_Desert"] = getKdmaParam(desertKdmas, "merit", "intercept");
+                    valueMap["MF_medical_Desert"] = getKdmaParam(desertKdmas, "merit", "medical_weight");
+                    valueMap["MF_attribute_Desert"] = getKdmaParam(desertKdmas, "merit", "attr_weight");
+                    valueMap["AF_intercept_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "intercept");
+                    valueMap["AF_medical_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "medical_weight");
+                    valueMap["AF_attribute_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "attr_weight");
+                    valueMap["MF_intercept_Urban"] = getKdmaParam(urbanKdmas, "merit", "intercept");
+                    valueMap["MF_medical_Urban"] = getKdmaParam(urbanKdmas, "merit", "medical_weight");
+                    valueMap["MF_attribute_Urban"] = getKdmaParam(urbanKdmas, "merit", "attr_weight");
+
                 }
 
                 for (const field of definitionFields) {
