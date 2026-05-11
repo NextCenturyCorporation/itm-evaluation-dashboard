@@ -11,8 +11,8 @@ import owPart1Defs from '../variables/Variable Definitions RQ8_OW_Part1.xlsx';
 
 
 const getAdmData = gql`
-    query getAllHistoryByEvalNumber($evalNumber: Float!){
-        getAllHistoryByEvalNumber(evalNumber: $evalNumber)
+    query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
+        getAllOWData(evalNumber: $evalNumber, scenarioIDs: $scenarioIDs)
     }`;
 
 const OW_ADM_SESSIONS = {
@@ -39,8 +39,8 @@ const getOWScenario = (scenarioId, evalNum) => {
 };
 
 export function PH2RQ8OWPart1() {
-    const { loading: loading8, error: error8, data: data8 } = useQuery(getAdmData, { variables: { evalNumber: 8 } });
-    const { loading: loading15, error: error15, data: data15 } = useQuery(getAdmData, { variables: { evalNumber: 15 } });
+    const { loading: loading8, error: error8, data: data8 } = useQuery(getAdmData, { variables: { evalNumber: 8, scenarioIDs: ["June2025-OW_desert", "June2025-OW_urban"] } });
+    const { loading: loading15, error: error15, data: data15 } = useQuery(getAdmData, { variables: { evalNumber: 15, scenarioIDs: ["Feb2026-OW_desert", "Feb2026-OW_urban"] } });
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -53,13 +53,13 @@ export function PH2RQ8OWPart1() {
     const closeModal = () => setShowDefinitions(false);
 
     React.useEffect(() => {
-        if (!data8?.getAllHistoryByEvalNumber || !data15?.getAllHistoryByEvalNumber) return;
+        if (!data8?.getAllOWData || !data15?.getAllOWData) return;
         const allObjs = [];
         const allOwScenarios = [];
         const allTargets = [];
         const dataByEval = {
-            8: data8.getAllHistoryByEvalNumber,
-            15: data15.getAllHistoryByEvalNumber
+            8: data8.getAllOWData,
+            15: data15.getAllOWData
         };
         for (const currentEvalNum of OW_EVALS) {
             const rawData = dataByEval[currentEvalNum];
