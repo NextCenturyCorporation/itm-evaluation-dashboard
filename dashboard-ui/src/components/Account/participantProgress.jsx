@@ -9,10 +9,9 @@ import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
-import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
+import { setScenarioCompletion, SCENARIO_HEADERS, checkAlignmentStatus } from "./progressUtils";
 import { accountsClient } from "../../services/accountsService";
 import AdmInfoModal from "./admInfoModal";
-import { checkAlignmentStatus } from "./progressUtils";
 import RepairAlignmentModal from "./repairAlignmentModal";
 
 
@@ -517,7 +516,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             }
             return 'white-cell';
         };
-        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val, dataSet) + ' ' + (header.length < 5 ? 'small-column ' : ' ') + (header.length > 17 ? 'large-column' : '')}>
+        return (<td key={dataSet['Participant ID'] + '-' + header} className={getClassName(header, val, dataSet) + ' ' + (header.length < 5 ? 'small-column ' : ' ') + (header.length > 17 ? 'large-column' : '')}>
             {header === 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
         </td>);
     };
@@ -652,7 +651,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     };
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error :</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error loading data</p>;
 
     return (<>
         <h2 className='progress-header'>Participant Progress</h2>
@@ -800,7 +799,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                             </td>
                         </tr>
                         : filteredData.map((dataSet, index) => {
-                            return (<tr key={dataSet['Participant_ID'] + '-' + index}>
+                            return (<tr key={dataSet['Participant ID'] + '-' + index}>
                                 {HEADERS.map((val) => {
                                     return !columnsToHide.includes(val) && formatCell(val, dataSet);
                                 })}
