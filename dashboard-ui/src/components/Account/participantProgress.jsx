@@ -63,6 +63,17 @@ const formatDateTime = (date) => {
         : undefined;
 };
 
+const getParticipantPhase = (participant) => {
+    const evalNumber = participant['_evalNumber'];
+    if (evalNumber === 12) return 'UK1';
+    return participant['_phase'] || 1;
+};
+
+const participantMatchesPhase = (participant, phase) => {
+    const participantPhase = getParticipantPhase(participant);
+    return phase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
+};
+
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
     if (val === 'most aligned' || val === 'least aligned') return 'Normal';
@@ -131,14 +142,6 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         }
 
         return baseOptions;
-    };
-
-    const getParticipantPhase = (participant) => {
-        const evalNumber = participant['_evalNumber'];
-        if (evalNumber === 12) {
-            return 'UK1';
-        }
-        return participant['_phase'] || 1;
     };
 
     const [popupInfo, setPopupInfo] = React.useState({
@@ -535,17 +538,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         return evals.filter(evaluation => {
             const participant = formattedData.find(p => p['Evaluation'] === evaluation);
             if (!participant) return false;
-
-            const participantPhase = getParticipantPhase(participant);
-            return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
+            return participantMatchesPhase(participant, selectedPhase);
         });
     }, [evals, selectedPhase, formattedData]);
 
     const getTypesForPhase = useCallback(() => {
-        const phaseParticipants = formattedData.filter(participant => {
-            const participantPhase = getParticipantPhase(participant);
-            return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-        });
+        const phaseParticipants = formattedData.filter(participant => participantMatchesPhase(participant, selectedPhase));
 
         const phaseTypes = phaseParticipants
             .map(participant => participant['Participant Type'])
@@ -562,10 +560,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             const getDelThreshold = (x) => isUK ? 3 : (isPH2OrUK && ![10, 16].includes(x['_evalNumber'])) ? 5 : 4;
 
             setFilteredData(formattedData.filter((x) => {
-                const participantPhase = getParticipantPhase(x);
-                const shouldShowInPhase = selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-
-                if (!shouldShowInPhase) return false;
+                if (!participantMatchesPhase(x, selectedPhase)) return false;
 
                 const sims = [x['Sim-1'], x['Sim-2'], x['Sim-3'], x['Sim-4']];
                 const didAdept = sims.filter((s) => s?.includes('MJ')).length > 0;
@@ -680,10 +675,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             </div>
         </section>
         {(() => {
-            const currentPhaseData = formattedData.filter((x) => {
-                const participantPhase = getParticipantPhase(x);
-                return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-            });
+            const currentPhaseData = formattedData.filter((x) => participantMatchesPhase(x, selectedPhase));
             return filteredData.length < currentPhaseData.length && (
                 <p className='filteredText'>Showing {filteredData.length} of {currentPhaseData.length} rows based on filters</p>
             );
@@ -770,10 +762,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
             <DownloadButtons
-                formattedData={refineData(formattedData.filter((x) => {
-                    const participantPhase = getParticipantPhase(x);
-                    return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-                }))}
+                formattedData={refineData(formattedData.filter((x) => participantMatchesPhase(x, selectedPhase)))}
                 filteredData={refineData(filteredData)}
                 HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x) && x !== 'Delete')}
                 fileName={'Participant_Progress'}
@@ -797,7 +786,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 <tbody>
                     {isRefreshing ?
                         <tr className='refreshing-row'>
-                            <td colSpan={9}>
+                            <td colSpan={HEADERS.filter(h => !columnsToHide.includes(h)).length}>
                                 <div className='refreshing-td'>
                                     <Spinner animation="border" role="status" variant="dark" className='refresh-spinner' size="large" />
                                     <span className='refreshing-label'>Fetching Data...</span>

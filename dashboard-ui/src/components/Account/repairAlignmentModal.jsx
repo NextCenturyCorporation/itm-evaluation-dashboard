@@ -7,14 +7,21 @@ const RepairAlignmentModal = ({open, onClose, pid, alignmentStatus, textResults,
     const [repairing, setRepairing] = React.useState(false);
     const [confirmInput, setConfirmInput] = React.useState('');
     const [error, setError] = React.useState(null);
+    const [progressLog, setProgressLog] = React.useState([]);
+    const progressEndRef = React.useRef(null);
 
     React.useEffect(() => {
         if (!open) {
             setConfirmInput('');
             setRepairing(false);
             setError(null);
+            setProgressLog([]);
         }
     }, [open]);
+
+    React.useEffect(() => {
+        progressEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [progressLog]);
 
     const handleRepair = async () => {
         if (confirmInput !== pid || !alignmentStatus) return;
@@ -26,7 +33,8 @@ const RepairAlignmentModal = ({open, onClose, pid, alignmentStatus, textResults,
             const result = await repairAlignment(
                 alignmentStatus.missingScenarios,
                 participantResults,
-                updateScenarioResult
+                updateScenarioResult,
+                (msg) => setProgressLog(prev => [...prev, msg])
             );
 
             if (!result.success) {
@@ -92,6 +100,16 @@ const RepairAlignmentModal = ({open, onClose, pid, alignmentStatus, textResults,
                         <Typography variant="caption" sx={{ mt: 1, display: 'block', textAlign: 'center', fontWeight: 600 }}>
                             Computing alignment and updating records...
                         </Typography>
+                        {progressLog.length > 0 && (
+                            <Box sx={{ mt: 1, maxHeight: 100, overflowY: 'auto', bgcolor: '#f5f5f5', borderRadius: 1, p: 1 }}>
+                                {progressLog.map((msg, i) => (
+                                    <Typography key={i} variant="caption" sx={{ display: 'block', color: '#555' }}>
+                                        {msg}
+                                    </Typography>
+                                ))}
+                                <div ref={progressEndRef} />
+                            </Box>
+                        )}
                     </Box>
                 )}
 
