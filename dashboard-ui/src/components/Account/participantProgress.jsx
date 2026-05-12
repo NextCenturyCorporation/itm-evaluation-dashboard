@@ -57,6 +57,12 @@ const HEADERS_UK_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluatio
 const HEADERS_UK_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
 
 
+const formatDateTime = (date) => {
+    return String(date) !== 'Invalid Date'
+        ? `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} - ${date.toLocaleTimeString('en-US', { hour12: false })}`
+        : undefined;
+};
+
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
     if (val === 'most aligned' || val === 'least aligned') return 'Normal';
@@ -322,7 +328,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     }
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
-                obj['Sim Date-Time'] = String(sim_date) !== 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Sim Date-Time'] = formatDateTime(sim_date);
                 obj['Sim Count'] = res['simEntryCount'] || 0;
                 obj['Sim-1'] = sims[0]?.scenario_id;
                 obj['Sim-2'] = sims[1]?.scenario_id;
@@ -340,8 +346,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
                 obj['Unformatted Delegation Start'] = survey_start_date;
                 obj['Unformatted Delegation End'] = survey_end_date;
-                obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                obj['Del End Date-Time'] = String(survey_end_date) !== 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Del Start Date-Time'] = formatDateTime(survey_start_date);
+                obj['Del End Date-Time'] = formatDateTime(survey_end_date);
                 const delScenarios = surveyToUse?.results?.evalNumber < 10 ? surveyToUse?.results?.orderLog?.filter((x) => x.includes(' vs ')) : findPagesV10(surveyToUse);
                 if (delScenarios) {
                     obj['Del-1'] = surveyToUse?.results?.[delScenarios[0]]?.scenarioIndex;
@@ -369,8 +375,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 const text_end_date = new Date(lastScenario?.timeComplete);
                 obj['Unformatted Text Start'] = text_start_date;
                 obj['Unformatted Text End'] = text_end_date;
-                obj['Text Start Date-Time'] = String(text_start_date) !== 'Invalid Date' ? `${text_start_date?.getMonth() + 1}/${text_start_date?.getDate()}/${text_start_date?.getFullYear()} - ${text_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                obj['Text End Date-Time'] = String(text_end_date) !== 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Text Start Date-Time'] = formatDateTime(text_start_date);
+                obj['Text End Date-Time'] = formatDateTime(text_end_date);
                 obj['Text'] = scenarios.length;
 
                 if (!evalNumber && lastScenario?.evalNumber) {
