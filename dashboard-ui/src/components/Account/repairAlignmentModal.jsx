@@ -30,8 +30,11 @@ const RepairAlignmentModal = ({open, onClose, pid, alignmentStatus, textResults,
 
         try {
             const participantResults = textResults.filter(r => r.participantID === pid);
+            const scenariosToRepair = alignmentStatus.missingScenarios?.length > 0
+                ? alignmentStatus.missingScenarios
+                : participantResults.map(r => r.scenario_id);
             const result = await repairAlignment(
-                alignmentStatus.missingScenarios,
+                scenariosToRepair,
                 participantResults,
                 updateScenarioResult,
                 (msg) => setProgressLog(prev => [...prev, msg])
@@ -62,13 +65,19 @@ const RepairAlignmentModal = ({open, onClose, pid, alignmentStatus, textResults,
                 </Typography>
 
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                    Participant <b>{pid}</b> is missing alignment data for <b>{alignmentStatus.missingCount}</b> scenario(s).
+                    {alignmentStatus.missingCount > 0
+                        ? <>Participant <b>{pid}</b> is missing alignment data for <b>{alignmentStatus.missingCount}</b> scenario(s).</>
+                        : <>Participant <b>{pid}</b> has complete alignment data. Re-running will recompute all scenarios.</>
+                    }
                 </Typography>
 
                 <Divider />
 
                 <div className="scenario-badge-container">
-                    {alignmentStatus.missingScenarios?.map((id) => (
+                    {(alignmentStatus.missingScenarios?.length > 0
+                        ? alignmentStatus.missingScenarios
+                        : alignmentStatus.scenarioDetails?.map(d => d.scenario_id) ?? []
+                    ).map((id) => (
                         <span key={id} className="scenario-badge">
                             {id}
                         </span>
