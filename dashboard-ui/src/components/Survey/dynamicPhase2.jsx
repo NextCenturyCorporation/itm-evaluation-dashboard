@@ -89,6 +89,19 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
         `Choice ${String.fromCharCode(65 + i)}`
     );
 
+    // grid stays consistent whether scenarios have 2 or 3 choices.
+    const maxChoices = orderedRows.reduce((max, row) => {
+        const rowOptions = row.options || options || [];
+        return Math.max(max, rowOptions.length);
+    }, 2);
+
+    //row number + description + choice columns
+    const totalColumns = 2 + maxChoices;
+
+    const choiceLabels = Array.from({ length: maxChoices }, (_, i) =>
+        `Choice ${String.fromCharCode(65 + i)}`
+    );
+
     const isNewGroup = (index) => {
         if (index === 0) return true;
         const currentOptions = JSON.stringify(orderedRows[index].options || options);
