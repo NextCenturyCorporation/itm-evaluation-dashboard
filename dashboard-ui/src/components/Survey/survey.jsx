@@ -12,7 +12,7 @@ import { AdeptComparison } from "./adeptComparison";
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11 } from './surveyUtils';
+import { generateComparisonPagev4_5, getKitwareAdms, getOrderedAdeptTargets, getParallaxAdms, getUID, shuffle, survey3_0_groups, surveyVersion_x_0, orderLog13, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11, createScenarioBlockv12} from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -66,6 +66,7 @@ const ADD_PARTICIPANT = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
+    "12.0": {evalName: 'June 2026 Evaluation', evalNumber: 17},
     "11.0": { evalName: 'April 2026 Evaluation', evalNumber: 16 },
     "10.0": { evalName: 'February 2026 Evaluation', evalNumber: 15 },
     "9.0": { evalName: 'Eval 12 UK Phase 1', evalNumber: 12 },
@@ -647,6 +648,31 @@ class SurveyPage extends Component {
             this.setState({ orderLog: finalPages.map(page => page.name) });
 
             return {};
+        }
+        else if (this.state.surveyVersion === "12.0") {
+            const allPages = this.surveyConfigClone.pages;
+            const introPages = [...allPages.slice(0, 4)];
+            const participantTextResults = this.props.textResults.filter(
+                (res) => String(res['participantID']) === this.state.pid
+            )
+
+            const blockTypes = shuffle([{'attr': 'AF', 'type': 'tri'}, {'attr': 'AF', 'type': 'bi'}, 
+                {'attr': 'PS', 'type': 'tri'},{'attr': 'PS', 'type': 'bi'}, {'attr': 'AF-SS', 'type': '2D'},
+            ])
+
+            const allBlocks = blockTypes.map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults)).filter(Boolean)
+            
+            const finalPages = [...introPages, allBlocks.flatMap(block => block.pages)]
+            const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
+            if (postScenarioPage) {
+                finalPages.push(postScenarioPage);
+            }
+
+            console.log(finalPages)
+            this.surveyConfigClone.pages = finalPages;
+            this.setState({ orderLog: finalPages.map(page => page.name) });
+
+            return {}
         }
     }
 
