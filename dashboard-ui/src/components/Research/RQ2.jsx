@@ -11,10 +11,10 @@ import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
 import { MultiKDMA_RQ23 as MultiKdmaRq23 } from './tables/rq23_multiKDMA';
 import { PH2RQ2223 } from './tables/ph2_rq22-rq23';
-import { PAGES, getEvalOptionsForPage } from './utils';
+import { getAllEvals} from './utils';
 
 export function RQ2() {
-    const evalOptions = getEvalOptionsForPage(PAGES.RQ2);
+    const evalOptions = getAllEvals();
 
     const [rq21CodeShowing, setRQ21CodeShowing] = React.useState(false);
     const [rq2CodeShowing, setRQ2CodeShowing] = React.useState(false);

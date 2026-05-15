@@ -12,10 +12,10 @@ import { RQ5_PH1 } from './tables/rq5_ph1';
 import { HumanVariability } from './tables/humanVariability';
 import { BlockedTable } from './tables/BlockedTable';
 import { CalibrationData } from './tables/CalibrationData';
-import { PAGES, getEvalOptionsForPage } from './utils';
+import { PAGES, getAllEvals, getEvalOptionsForPage } from './utils';
 
 export function ExploratoryAnalysis() {
-    const evalOptions = getEvalOptionsForPage(PAGES.EXPLORATORY_ANALYSIS);
+    const evalOptions = getAllEvals();
     const evalRQ1Options = getEvalOptionsForPage(PAGES.RQ1); 
 
     const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
@@ -157,7 +157,7 @@ export function ExploratoryAnalysis() {
         </div>
 
         <div className="section-container">
-            {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
+            {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval}/>}
         </div>
 
         {selectedEval === 16 &&

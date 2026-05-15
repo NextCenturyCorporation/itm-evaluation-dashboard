@@ -351,6 +351,8 @@ export function PH2RQ8Apr26({ evalNum }) {
                 </p>
             )}
 
+            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation</p> : 
+            <>
             <section className="tableHeader">
                 <div className="filters"></div>
                 <DownloadButtons
@@ -384,6 +386,8 @@ export function PH2RQ8Apr26({ evalNum }) {
                     </tbody>
                 </table>
             </div>
+            </>
+            }
 
             <Modal className="table-modal" open={showDefinitions} onClose={closeModal}>
                 <div className="modal-body">

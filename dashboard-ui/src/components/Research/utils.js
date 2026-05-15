@@ -1072,6 +1072,15 @@ export function getEvalOptionsForPage(page) {
     return dropdownOptions;
 }
 
+export function getAllEvals() {
+    const dropdownOptions = [];
+    for (const evalData of store.getState()?.configs?.evals) {
+        dropdownOptions.push({ value: evalData.evalNumber, label: evalData.evalName });
+    }
+    dropdownOptions.reverse();
+    return dropdownOptions;
+}
+
 function matchesAttribute(attr, target) {
     const hasAF = target.includes('AF');
     const hasMF = target.includes('MF');

@@ -546,6 +546,8 @@ export function RQ134({ evalNum, tableTitle }) {
                 <span className='reset-btn' onClick={clearFilters}>(Reset Filters)</span>
             </p>
         }
+        {formattedData.length === 0 ? <p>This table is not available for the selected evaluation</p> :
+        <>
         <section className='tableHeader'>
             <div className='complexHeader'>
                 <div className="too-many-filters">
@@ -764,6 +766,8 @@ export function RQ134({ evalNum, tableTitle }) {
                 </tbody>
             </table>
         </div>
+        </>
+        }
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>

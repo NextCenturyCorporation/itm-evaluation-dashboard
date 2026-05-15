@@ -8,10 +8,10 @@ import rq31CodeDre from './rcode/code_for_dashboard_RQ31_and_RQ33_dre.R';
 import rq32CodePh1 from './rcode/code_for_dashboard_RQ32_ph1.R';
 import rq31CodePh1 from './rcode/code_for_dashboard_RQ31_and_RQ33_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
-import { PAGES, getEvalOptionsForPage } from './utils';
+import { getAllEvals} from './utils';
 
 export function RQ3() {
-    const evalOptions = getEvalOptionsForPage(PAGES.RQ3);
+    const evalOptions = getAllEvals();
 
     const [rq32CodeShowing, setRQ32CodeShowing] = React.useState(false);
     const [rq31CodeShowing, setRQ31CodeShowing] = React.useState(false);

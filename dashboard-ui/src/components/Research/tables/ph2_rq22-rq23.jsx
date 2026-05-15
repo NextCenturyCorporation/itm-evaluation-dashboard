@@ -116,6 +116,7 @@ export function PH2RQ2223({ evalNum }) {
         setSetFilters([])
         setTargetTypeFilters([])
         setAdmNamesFilters([])
+        setFormattedData([])
     }, [evalNum])
 
     React.useEffect(() => {
@@ -414,10 +415,7 @@ export function PH2RQ2223({ evalNum }) {
             if (allObjs.length > 0) {
                 setFormattedData(allObjs);
                 setFilteredData(allObjs);
-            } else {
-                setFormattedData([{ 'Trial_ID': '-' }]);
-                setFilteredData([{ 'Trial_ID': '-' }]);
-            }
+            } 
 
             setAdmNames(Array.from(new Set(allAdmNames)));
             setAttributes(Array.from(new Set(allAttributes)));
@@ -459,7 +457,8 @@ export function PH2RQ2223({ evalNum }) {
                         Showing {filteredData.length} of {formattedData.length} rows based on filters
                     </p>
             }
-
+            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation</p> :
+            <>
             <section className='tableHeader'>
                 <div className="filters">
                     <Autocomplete
@@ -568,6 +567,8 @@ export function PH2RQ2223({ evalNum }) {
                     </tbody>
                 </table>
             </div>
+            </>
+            }
 
             <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
                 <div className='modal-body'>

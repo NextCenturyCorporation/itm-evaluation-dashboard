@@ -6,10 +6,10 @@ import rq1CodeDre from './rcode/code_for_dashboard_RQ1_dre.R';
 import rq1CodePh1 from './rcode/code_for_dashboard_RQ1_ph1.R';
 import { Button, Modal } from 'react-bootstrap';
 import { RCodeModal } from "./rcode/RcodeModal";
-import { PAGES, getEvalOptionsForPage } from './utils';
+import { getAllEvals } from './utils';
 
 export function RQ1() {
-    const evalOptions = getEvalOptionsForPage(PAGES.RQ1);
+    const evalOptions = getAllEvals();
 
     const [rq1CodeShowing, setRQ1CodeShowing] = React.useState(false);
 

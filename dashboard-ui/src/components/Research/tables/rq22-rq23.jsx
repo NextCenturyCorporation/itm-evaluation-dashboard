@@ -172,10 +172,7 @@ export function RQ2223({ evalNum }) {
                 setFormattedData(allObjs);
                 setFilteredData(allObjs);
             }
-            else {
-                setFormattedData([{ 'Trial_ID': '-' }]);
-                setFilteredData([{ 'Trial_ID': '-' }]);
-            }
+
             setTA1s(Array.from(new Set(allTA1s)));
             setTA2s(Array.from(new Set(allTA2s)));
             setAttributes(Array.from(new Set(allAttributes)));
@@ -203,6 +200,8 @@ export function RQ2223({ evalNum }) {
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {formattedData.length === 0 ? <p>This table is not available for the selected evaluation</p> :
+        <>
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -317,6 +316,8 @@ export function RQ2223({ evalNum }) {
                 </tbody>
             </table>
         </div>
+        </>
+        }
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
