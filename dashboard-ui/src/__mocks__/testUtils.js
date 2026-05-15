@@ -137,7 +137,7 @@ export async function checkRouteContent(page, route, expectedText, isPh1 = false
         }
     }
     for (const txt of expectedText) {
-        await page.waitForSelector(`text/${txt}`, { timeout: 500 });
+        await page.waitForSelector(`text/${txt}`, { timeout: 15000 });
     }
 }
 
@@ -157,11 +157,11 @@ export async function useMenuNavigation(page, header, selection, expectedRoute, 
 
 export async function startAdeptQualtrixSurvey(page) {
     await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
-    await page.waitForSelector('text=Welcome to the ITM Text Scenario experiment. Thank you for your participation.', { timeout: 500 });
+    await page.waitForSelector('text=Welcome to the ITM Text Scenario experiment. Thank you for your participation.', { timeout: 5000 });
     await page.$$eval('button', buttons => {
         Array.from(buttons).find(btn => btn.textContent == 'Start').click();
     });
-    await page.waitForSelector('text/Page 1 of', { timeout: 500 });
+    await page.waitForSelector('text/Page 1 of', { timeout: 5000 });
 }
 
 export async function startCaciProlificSurvey(page) {

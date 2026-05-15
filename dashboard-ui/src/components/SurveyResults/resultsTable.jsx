@@ -966,9 +966,16 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         <div className='resultTableSection' ref={tableContainerRef} style={{ overflowY: 'auto', maxHeight: '75vh' }}>
             {isLoading ? (
                 <table className='itm-table'>
+                    <thead>
+                        <tr>
+                            {headers.map((val, index) => (
+                                <th key={'header-' + index}>{val}</th>
+                            ))}
+                        </tr>
+                    </thead>
                     <tbody>
                         <TableRow>
-                            <TableCell>
+                            <TableCell colSpan={headers.length}>
                                 Loading survey results...
                                 <LinearProgress />
                             </TableCell>
