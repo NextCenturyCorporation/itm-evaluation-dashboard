@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
+import unfetch from 'unfetch';
+const mongoose = require('mongoose');
 import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
 import { AdmLog, ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults, EvalData} from './__mocks__/mockDbSchema.js';
 import { admMocks, surveyResultMock, surveyV5, surveyV7, textConfigMocks, userScenarioResultMock, evalDataMock } from './__mocks__/mockData.js';
-import unfetch from 'unfetch';
-const mongoose = require('mongoose');
 
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');

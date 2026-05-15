@@ -102,27 +102,6 @@ describe('Verify content on page matches expectation for route', () => {
     it('Check /admin route content', async () => {
         await checkRouteContent(page, '/admin', ['Admin Dashboard', 'Please confirm your identity before continuing', 'Username: admin']);
     });
-    it('Check /participant-progress-table route content', async () => {
-        await checkRouteContent(page, '/participant-progress-table', ['Participant Progress', 'Prolific ID']);
-    });
-    it('Check /pid-lookup route content', async () => {
-        await checkRouteContent(page, '/pid-lookup', ['Find Participant ID', 'Find PID', 'To get the participant\'s PID, enter their email address']);
-    });
-    it('Check /participantTextTester route content', async () => {
-        await checkRouteContent(page, '/participantTextTester', ['Text Scenario Login', 'Home', 'Start Text Scenario', 'The experimenters will not have access to your email']);
-    });
-    it('Check /remote-text-survey route content', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
-        await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Consent Form', { timeout: 15000 });
-        await page.$$eval('button', btns => {
-            Array.from(btns).find(btn => btn.innerText?.trim() === 'I Agree')?.click();
-        });
-        const expectedText = ['Instructions', 'Welcome to the ITM Text Scenario experiment', 'Guidelines:', 'Choose the option that best matches how you would triage the scenario'];
-        for (const txt of expectedText) {
-            await page.waitForSelector(`text/${txt}`, { timeout: 15000 });
-        }
-    }, 30000);
 
     it('Admin Dashboard should require confirmation', async () => {
         page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
@@ -148,5 +127,26 @@ describe('Verify content on page matches expectation for route', () => {
         });
         await page.waitForSelector(`.error-message`, { timeout: 500 });
     }, 15000);
+    it('Check /participant-progress-table route content', async () => {
+        await checkRouteContent(page, '/participant-progress-table', ['Participant Progress', 'Prolific ID']);
+    });
+    it('Check /pid-lookup route content', async () => {
+        await checkRouteContent(page, '/pid-lookup', ['Find Participant ID', 'Find PID', 'To get the participant\'s PID, enter their email address']);
+    });
+    it('Check /participantTextTester route content', async () => {
+        await checkRouteContent(page, '/participantTextTester', ['Text Scenario Login', 'Home', 'Start Text Scenario', 'The experimenters will not have access to your email']);
+    });
+    it('Check /remote-text-survey route content', async () => {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        await page.waitForSelector(FOOTER_TEXT);
+        await page.waitForSelector('text/Consent Form', { timeout: 15000 });
+        await page.$$eval('button', btns => {
+            Array.from(btns).find(btn => btn.innerText?.trim() === 'I Agree')?.click();
+        });
+        const expectedText = ['Instructions', 'Welcome to the ITM Text Scenario experiment', 'Guidelines:', 'Choose the option that best matches how you would triage the scenario'];
+        for (const txt of expectedText) {
+            await page.waitForSelector(`text/${txt}`, { timeout: 15000 });
+        }
+    }, 30000);
 
 });
