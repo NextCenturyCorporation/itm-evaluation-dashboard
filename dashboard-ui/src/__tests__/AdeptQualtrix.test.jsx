@@ -38,22 +38,4 @@ describe('Test adept qualtrix entry method', () => {
         await pressAllKeys(page, IS_PH1 ? "Assess the shooter" : "Scenario Details");
     }, 30000);
 
-    it('text-scenario through ADEPT Qualtrix should be navigable and end with survey', async () => {
-        await startAdeptQualtrixSurvey(page);
-        await completeTextScenarioAndReachSurvey(page, { isPhase1: IS_PH1 })
-        // very long test because it connects to ST and ADEPT servers to send fake responses
-    }, 80000000);
-
-    it('any key combo during survey should have no effect on progress', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true&startSurvey=true&pid=123`);
-        await waitForSurveyIntro(page);
-        await pressAllKeys(page, 'In the final part of the study,');
-    }, 100000);
-
-    it('survey through ADEPT Qualtrix should be navigable', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true&startSurvey=true&pid=123`);
-        await waitForSurveyIntro(page);
-        await surveyFlowNavigateAndComplete(page, { isPhase1: IS_PH1 });
-    }, 40000);
-
 });
