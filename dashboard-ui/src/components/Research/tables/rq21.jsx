@@ -191,7 +191,7 @@ export function RQ21({ evalNum }) {
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
-        {formattedData.length === 0 ? <p>This table is not available for the selected evaluation</p> :
+        {formattedData.length === 0 ? <p>This table is not available for the selected evaluation.</p> :
         <>
         <section className='tableHeader'>
             <div className="filters">

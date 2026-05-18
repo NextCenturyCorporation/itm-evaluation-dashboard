@@ -420,7 +420,7 @@ export function PH2RQ8({ evalNum }) {
                     Showing {filteredData.length} of {formattedData.length} rows based on filters
                 </p>
             )}
-            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation</p> :
+            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation.</p> :
             <>
             <section className="tableHeader">
                 <div className="filters"></div>

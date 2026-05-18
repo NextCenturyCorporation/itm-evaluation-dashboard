@@ -351,7 +351,7 @@ export function PH2RQ8Apr26({ evalNum }) {
                 </p>
             )}
 
-            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation</p> : 
+            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation.</p> : 
             <>
             <section className="tableHeader">
                 <div className="filters"></div>
