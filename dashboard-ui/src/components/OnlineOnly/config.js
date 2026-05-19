@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { shuffle } from '../Survey/surveyUtils';
 export const evalNameToNumber = {
+    'Phase 2 June 2026 Evaluation': 17,
     'Phase 2 April 2026 Evaluation': 16,
     'Phase 2 February 2026 Evaluation': 15,
     'Phase 2 October 2025 Collaboration': 13,
@@ -201,6 +202,30 @@ export const aprilParticipantData = (currentSearchParams, hashedEmail, newPid, t
         /*
         We are using PS2 and SS2. There is only one AF and oen MF so I am putting 2 just for consistency
         */
+        "AF-text-scenario": 2,
+        "MF-text-scenario": 2,
+        "PS-text-scenario": 2,
+        "SS-text-scenario": 2,
+    };
+};
+
+export const juneParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
+    //TODO - edit this once I have the YAMLs ingested
+    const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
+    const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
+    const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
+
+    return {
+        "ParticipantID": newPid,
+        "Type": type,
+        "prolificId": prolificId,
+        "contactId": contactId,
+        "claimed": true,
+        "simEntryCount": 0,
+        "surveyEntryCount": 0,
+        "textEntryCount": 0,
+        "hashedEmail": email,
+        'evalNum': evalNum,
         "AF-text-scenario": 2,
         "MF-text-scenario": 2,
         "PS-text-scenario": 2,

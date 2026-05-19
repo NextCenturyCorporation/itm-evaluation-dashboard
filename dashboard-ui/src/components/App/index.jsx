@@ -33,7 +33,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
 
 // CSS and Image Stuff 
@@ -356,11 +356,11 @@ export function App() {
             return;
         } else {
             let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
-                !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
                 x.ParticipantID >= lowPid && x.ParticipantID <= highPid
             ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
             const participantDataFunctions = {
+                17: juneParticipantData,
                 16: aprilParticipantData,
                 15: febParticipantData,
                 13: octoberParticipantData,
