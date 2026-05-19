@@ -15,7 +15,7 @@ import alignmentIDs from './alignmentID.json';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { shuffle } from '../Survey/surveyUtils';
-import { createBrowserHistory } from 'history';
+import history from '../App/history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
@@ -24,8 +24,6 @@ import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
 import ScenarioProgress from './scenarioProgress';
-
-const history = createBrowserHistory({ forceRefresh: true });
 
 const UPLOAD_DEMOGRAPHICS = gql`
   mutation UploadDemographics($surveyId: String, $results: JSON) {

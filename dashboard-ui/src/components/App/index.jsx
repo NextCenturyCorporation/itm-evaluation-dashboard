@@ -1,7 +1,7 @@
 import React from 'react';
 import { Router, Switch, Route, Redirect } from 'react-router-dom';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
-import { createBrowserHistory } from 'history';
+import history from './history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore, setEvalDataInStore } from './setupUtils';
@@ -45,11 +45,6 @@ import 'material-design-icons/iconfont/material-icons.css';
 import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
 import store from '../../store/store';
-
-// Create and set a basename for the routes if the user is accesing with /dev/.
-const basename = window.location.pathname.startsWith("/dev") ? "/dev" : "";
-// Add the basename as a prefix to the routes
-const history = createBrowserHistory({ basename });
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {
@@ -263,7 +258,11 @@ export function App() {
 
         if (!tokens) {
             setIsSetup(true);
-            history.push('/login');
+
+            if (window.location.pathname !== `${history.createHref({ pathname: '/login' })}`) {
+                history.push('/login');
+            }
+
             return;
         }
 

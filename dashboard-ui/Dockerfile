@@ -41,6 +41,9 @@ FROM base AS build
 ARG PUBLIC_URL=/
 ENV PUBLIC_URL=$PUBLIC_URL
 
+ARG REACT_APP_ROUTER_BASENAME=
+ENV REACT_APP_ROUTER_BASENAME=$REACT_APP_ROUTER_BASENAME
+
 # Select config file at build time
 ARG CONFIG_PATH=public/configs/prod/config.js
 RUN test -f "$CONFIG_PATH"

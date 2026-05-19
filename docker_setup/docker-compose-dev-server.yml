@@ -22,6 +22,7 @@ services:
       target: runtime
       args:
         PUBLIC_URL: /dev
+        REACT_APP_ROUTER_BASENAME: /dev
         CONFIG_PATH: public/configs/dev-server/config.js
         USE_CORP_CA: "false"
     image: dashboard-ui:dev-server
