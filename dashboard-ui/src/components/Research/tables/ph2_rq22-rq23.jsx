@@ -29,6 +29,7 @@ export function PH2RQ2223({ evalNum }) {
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    const dataRef = React.useRef(null);
 
     const [attributes, setAttributes] = React.useState([]);
     const [admNames, setAdmNames] = React.useState([]);
@@ -116,7 +117,6 @@ export function PH2RQ2223({ evalNum }) {
         setSetFilters([])
         setTargetTypeFilters([])
         setAdmNamesFilters([])
-        setFormattedData([])
     }, [evalNum])
 
     React.useEffect(() => {
@@ -412,10 +412,9 @@ export function PH2RQ2223({ evalNum }) {
                 return a.Trial_ID - b.Trial_ID;
             });
 
-            if (allObjs.length > 0) {
-                setFormattedData(allObjs);
-                setFilteredData(allObjs);
-            } 
+            setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            
 
             setAdmNames(Array.from(new Set(allAdmNames)));
             setAttributes(Array.from(new Set(allAttributes)));
@@ -438,7 +437,7 @@ export function PH2RQ2223({ evalNum }) {
         }
     }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters, setConstructionFilters, admNamesFilters]);
 
-    if (loading) return <p>Loading...</p>;
+    if (loading || (data?.getAllHistoryByEvalNumber?.length > 0 && formattedData.length === 0)) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
     //eval 15 at least one filter before rendering rows due to dataset size

@@ -52,6 +52,7 @@ export function PH2RQ8({ evalNum }) {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [definitionFields, setDefinitionFields] = React.useState([]);
     const [HEADERS, setHeaders] = React.useState([]);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
     const mode = React.useMemo(() => {
         return FEB26_EVALS.includes(evalNum) ? "feb26" : "legacy";
@@ -380,6 +381,7 @@ export function PH2RQ8({ evalNum }) {
         setHeaders(filteredHeaders);
         setFormattedData(filteredObjs);
         setFilteredData(filteredObjs);
+        setProcessedForEval(evalNum);
     }, [
         dataSim,
         dataTextResults,
@@ -408,7 +410,7 @@ export function PH2RQ8({ evalNum }) {
         setShowDefinitions(false);
     };
 
-    if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
+    if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
 
     return (
@@ -420,7 +422,7 @@ export function PH2RQ8({ evalNum }) {
                     Showing {filteredData.length} of {formattedData.length} rows based on filters
                 </p>
             )}
-            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation.</p> :
+            {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?            
             <>
             <section className="tableHeader">
                 <div className="filters"></div>
@@ -456,8 +458,8 @@ export function PH2RQ8({ evalNum }) {
                 </table>
             </div>
             </>
+            : null
             }
-
             <Modal className="table-modal" open={showDefinitions} onClose={closeModal}>
                 <div className="modal-body">
                     <span className="close-icon" onClick={closeModal}>

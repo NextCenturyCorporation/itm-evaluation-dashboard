@@ -44,6 +44,7 @@ export function PH2RQ8Apr26({ evalNum }) {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [definitionFields, setDefinitionFields] = React.useState([]);
     const [HEADERS, setHeaders] = React.useState([]);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
     const definitionFile = ph2Apr26DefinitionXLFile
 
@@ -315,6 +316,7 @@ export function PH2RQ8Apr26({ evalNum }) {
         setHeaders(filteredHeaders);
         setFormattedData(filteredObjs);
         setFilteredData(filteredObjs);
+        setProcessedForEval(evalNum);
     }, [
         dataSim,
         dataTextResults,
@@ -338,7 +340,7 @@ export function PH2RQ8Apr26({ evalNum }) {
         setShowDefinitions(false);
     };
 
-    if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
+    if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
 
     return (
@@ -351,7 +353,7 @@ export function PH2RQ8Apr26({ evalNum }) {
                 </p>
             )}
 
-            {formattedData.length === 0 ? <p>This table is not available for the selected evaluation.</p> : 
+            {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ? 
             <>
             <section className="tableHeader">
                 <div className="filters"></div>
@@ -387,6 +389,7 @@ export function PH2RQ8Apr26({ evalNum }) {
                 </table>
             </div>
             </>
+            : null
             }
 
             <Modal className="table-modal" open={showDefinitions} onClose={closeModal}>
