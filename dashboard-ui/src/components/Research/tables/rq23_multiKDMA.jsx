@@ -92,6 +92,7 @@ export function MultiKDMA_RQ23({ evalNum = 7 }) {
     const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
     const [onlyShowCompletedSurveys, setOnlyShowCompletedSurveys] = React.useState(false);
     const [pidsWithCompleteSurveys, setPidsWithCompleteSurveys] = React.useState([]);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
     React.useEffect(() => {
         setAdmNameFilters([]); setScenarioFilters([]); setTargetTypeFilters([]);
@@ -123,8 +124,9 @@ export function MultiKDMA_RQ23({ evalNum = 7 }) {
         }, []);
 
         allObjs.sort((a, b) => a['ADM Name'].localeCompare(b['ADM Name']) || String(a['PID']).localeCompare(String(b['PID'])));
-        setFormattedData(allObjs.length ? allObjs : [{ 'ADM Name': '-' }]);
-        setFilteredData(allObjs.length ? allObjs : [{ 'ADM Name': '-' }]);
+        setFormattedData(allObjs);
+        setFilteredData(allObjs);
+        setProcessedForEval(evalNum);
         setAdmNames([...new Set(allAdmNames)]);
     }, [data, dataEval11, dataSurvey, dataLog, dataText, evalNum, config.fieldMap]);
 
@@ -141,7 +143,7 @@ export function MultiKDMA_RQ23({ evalNum = 7 }) {
     const isLoading = (evalNum === 7 ? loading : loadingEval11) || loadingLog || loadingSurvey || loadingText;
     const hasError = (evalNum === 7 ? error : errorEval11) || errorLog || errorSurvey || errorText;
 
-    if (isLoading) return <p>Loading...</p>;
+    if (isLoading || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (hasError) return <p>Error :</p>;
 
     return (<>
@@ -149,6 +151,8 @@ export function MultiKDMA_RQ23({ evalNum = 7 }) {
             <div><FormControlLabel control={<Checkbox value={onlyShowCompletedSurveys} onChange={e => setOnlyShowCompletedSurveys(e.target.checked)} />} label="Only Show Participants with Survey Data" /></div>
         </h2>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?
+        <>
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete style={{ minWidth: '300px' }} multiple options={admNames} filterSelectedOptions size="small"
@@ -166,6 +170,9 @@ export function MultiKDMA_RQ23({ evalNum = 7 }) {
                 <tbody>{filteredData.map((row, i) => <tr key={`${row['ADM Name']}-${row['PID']}-${i}`}>{HEADERS.map(h => <td key={h}>{row[h] ?? '-'}</td>)}</tr>)}</tbody>
             </table>
         </div>
+        </>
+        : null
+    }
         <Modal className='table-modal' open={showDefinitions} onClose={() => setShowDefinitions(false)}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={() => setShowDefinitions(false)}><CloseIcon /></span>

@@ -111,6 +111,7 @@ export function RQ134({ evalNum, tableTitle }) {
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
     const [headers, setHeaders] = React.useState([]);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
     // Set evals to be rendered by number
     const evalNumbers = React.useMemo(() => {
@@ -350,6 +351,7 @@ export function RQ134({ evalNum, tableTitle }) {
             setProbeSetAssessments(Array.from(new Set(data.allProbeSetAssessment)))
             setProbeSetObservations(Array.from(new Set(data.allProbeSetObservation)))
             setTargets(Array.from(new Set(data.allTargets)));
+            setProcessedForEval(evalNum);
         }
     }, [
         dataParticipantLog,
@@ -378,6 +380,19 @@ export function RQ134({ evalNum, tableTitle }) {
         dataMedics,
         dataDemo
     ]);
+
+    const allFetched = fetchedSurveyEvals.includes(evalNum) &&
+                   fetchedScenarioEvals.includes(evalNum) &&
+                   fetchedComparisonEvals.includes(evalNum);
+
+    const allLoaded = !loadingParticipantLog && !loadingSurveyResults && !loadingTextResults &&
+                  !loadingADMs && !loadingMedics && !loadingComparisonData && !loadingSim;
+
+    React.useEffect(() =>{
+        if (allFetched && allLoaded && processedForEval !== evalNum) {
+            setProcessedForEval(evalNum)
+        }
+    }, [allFetched, allLoaded, evalNum, processedForEval])
 
     const includeExtraData = (data, evalToAdd, simData, admsToUse) => {
         const addedData = getRQ134Data(evalToAdd, surveyData, dataParticipantLog, textResultsData, admsToUse, comparisonData, simData, evalToAdd == 4);
@@ -517,7 +532,7 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim) return <p>Loading...</p>;
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim || formattedData.length === 0 && processedForEval !== evalNum) return <p>Loading...</p>;
     if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorMedics || errorComparisonData || errorSim) return <p>Error :</p>;
 
     return (<>
@@ -546,6 +561,8 @@ export function RQ134({ evalNum, tableTitle }) {
                 <span className='reset-btn' onClick={clearFilters}>(Reset Filters)</span>
             </p>
         }
+        {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?
+        <>
         <section className='tableHeader'>
             <div className='complexHeader'>
                 <div className="too-many-filters">
@@ -764,6 +781,9 @@ export function RQ134({ evalNum, tableTitle }) {
                 </tbody>
             </table>
         </div>
+        </>
+        :null
+        }
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
@@ -772,7 +792,6 @@ export function RQ134({ evalNum, tableTitle }) {
         </Modal>
     </>);
 }
-
 const DEFINITION_FILE_MAP = {
     16: aprilDefinitionXLFile,
     15: febDefinitionXLFile,

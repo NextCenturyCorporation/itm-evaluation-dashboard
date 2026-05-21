@@ -34,8 +34,7 @@ const DELETE_EVAL = gql`
 
 const pagePaths = [
     '/', '/text-based-results', '/humanSimParticipant', '/humanProbeData',
-    '/human-results', '/results', '/adm-results', '/adm-probe-responses',
-    '/rq1', '/rq2', '/rq3', '/exploratory-analysis'
+    '/human-results', '/results', '/adm-results', '/adm-probe-responses'
 ];
 
 export function EditEvals({ caller }) {
@@ -159,9 +158,10 @@ export function EditEvals({ caller }) {
             "evalNumber": parseInt(evalNumber),
             "evalName": evalName,
             "pages": {
-                "rq1": selectedPages.includes('/rq1'),
-                "rq2": selectedPages.includes('/rq2'),
-                "rq3": selectedPages.includes('/rq3'),
+                // Setting these to be true as a place holder until all toggles are removed
+                "rq1": true, 
+                "rq2": true,
+                "rq3": true,
                 "exploratoryAnalysis": selectedPages.includes('/exploratory-analysis'),
                 "admProbeResponses": selectedPages.includes('/adm-probe-responses'),
                 "admAlignment": selectedPages.includes('/adm-results'),
@@ -247,18 +247,6 @@ export function EditEvals({ caller }) {
                                 <th className='switch-header' title='adm probe responses'>
                                     /adm-probe-responses
                                 </th>
-                                <th className='switch-header' title='rq1'>
-                                    /rq1
-                                </th>
-                                <th className='switch-header' title='rq2'>
-                                    /rq2
-                                </th>
-                                <th className='switch-header' title='rq3'>
-                                    /rq3
-                                </th>
-                                <th className='switch-header' title='exploratory analysis'>
-                                    /exploratory-analysis
-                                </th>
                                 <th className='action-header' title='only deletes the entry from the evalData collection'>
                                     Delete
                                 </th>
@@ -278,10 +266,6 @@ export function EditEvals({ caller }) {
                                         <td><Switch color='primary' checked={evaluation.pages.admResults} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'admResults', e)} /></td>
                                         <td><Switch color='primary' checked={evaluation.pages.admAlignment} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'admAlignment', e)} /></td>
                                         <td><Switch color='primary' checked={evaluation.pages.admProbeResponses} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'admProbeResponses', e)} /></td>
-                                        <td><Switch color='primary' checked={evaluation.pages.rq1} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'rq1', e)} /></td>
-                                        <td><Switch color='primary' checked={evaluation.pages.rq2} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'rq2', e)} /></td>
-                                        <td><Switch color='primary' checked={evaluation.pages.rq3} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'rq3', e)} /></td>
-                                        <td><Switch color='primary' checked={evaluation.pages.exploratoryAnalysis} onChange={(e) => updateEvalPagePermissions(evaluation._id, 'exploratoryAnalysis', e)} /></td>
                                         <td><IconButton title='Delete' onClick={() => startDeleteProcess(evaluation)} children={<DeleteIcon className='delete-eval-btn' />} /></td>
                                     </tr>);
                             })}
@@ -358,34 +342,6 @@ export function EditEvals({ caller }) {
                                 </td>
                                 <td className="table-value">
                                     <Switch color='primary' checked={modalEval.pages?.admProbeResponses} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'admProbeResponses', e)} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="table-label">
-                                    /rq1
-                                </td>
-                                <td className="table-value">
-                                    <Switch color='primary' checked={modalEval.pages?.rq1} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'rq1', e)} />
-                                </td>
-                                <td className="table-label">
-                                    /rq2
-                                </td>
-                                <td className="table-value">
-                                    <Switch color='primary' checked={modalEval.pages?.rq2} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'rq2', e)} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="table-label">
-                                    /rq3
-                                </td>
-                                <td className="table-value">
-                                    <Switch color='primary' checked={modalEval.pages?.rq3} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'rq3', e)} />
-                                </td>
-                                <td className="table-label">
-                                    /exploratory-analysis
-                                </td>
-                                <td className="table-value">
-                                    <Switch color='primary' checked={modalEval.pages?.exploratoryAnalysis} onChange={(e) => updateEvalPagePermissions(modalEval._id, 'exploratoryAnalysis', e)} />
                                 </td>
                             </tr>
                         </tbody>

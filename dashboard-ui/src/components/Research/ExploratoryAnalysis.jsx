@@ -12,15 +12,19 @@ import { RQ5_PH1 } from './tables/rq5_ph1';
 import { HumanVariability } from './tables/humanVariability';
 import { BlockedTable } from './tables/BlockedTable';
 import { CalibrationData } from './tables/CalibrationData';
-import { PAGES, getEvalOptionsForPage } from './utils';
+import { PAGES, getAllEvals, getEvalOptionsForPage } from './utils';
+import { useSelector, useDispatch } from 'react-redux'
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 export function ExploratoryAnalysis() {
-    const evalOptions = getEvalOptionsForPage(PAGES.EXPLORATORY_ANALYSIS);
-    const evalRQ1Options = getEvalOptionsForPage(PAGES.RQ1); 
+    const evalOptions = getAllEvals();
+    const evalRQ1Options = getEvalOptionsForPage(PAGES.RQ1);
+    const dispatch = useDispatch()
+    const storedEval = useSelector(state => state.configs.selectedResearchEval)  
 
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const selectedEval = storedEval ?? evalOptions[0].value;
     function selectEvaluation(target) {
-        setSelectedEval(target.value);
+        dispatch(setSelectedResearchEval(target.value))
     }
 
     // Extract all evaluation values that have an RQ1 page to conditionally render RQ4 content 
@@ -157,7 +161,7 @@ export function ExploratoryAnalysis() {
         </div>
 
         <div className="section-container">
-            {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval} />}
+            {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval}/>}
         </div>
 
         {selectedEval === 16 &&

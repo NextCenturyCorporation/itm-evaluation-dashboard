@@ -59,6 +59,7 @@ export function RQ5({ evalNum }) {
     const [filteredData, setFilteredData] = React.useState([]);
     const [includeDRE, setIncludeDRE] = React.useState(false);
     const [includeJAN, setIncludeJAN] = React.useState(false);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
     React.useEffect(() => {
         // reset toggles on render
@@ -200,6 +201,7 @@ export function RQ5({ evalNum }) {
             });
             setFormattedData(allObjs);
             setFilteredData(allObjs);
+            setProcessedForEval(evalNum);
             setTA1s(Array.from(new Set(allTA1s)));
             setTA2s(Array.from(new Set(allTA2s)));
             setAttributes(Array.from(new Set(allAttributes)));
@@ -278,7 +280,7 @@ export function RQ5({ evalNum }) {
         }
     }
 
-    if (loadingParticipantLog || loadingTextResults || loadingComparisonData) return <p>Loading...</p>;
+    if (loadingParticipantLog || loadingTextResults || loadingComparisonData || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (errorParticipantLog || errorTextResults || errorComparisonData) return <p>Error :</p>;
 
     return (<>
@@ -290,6 +292,8 @@ export function RQ5({ evalNum }) {
                 </div>}
         </h2>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?
+        <>
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -389,6 +393,9 @@ export function RQ5({ evalNum }) {
                 </tbody>
             </table>
         </div>
+        </>
+        : null
+    }
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
