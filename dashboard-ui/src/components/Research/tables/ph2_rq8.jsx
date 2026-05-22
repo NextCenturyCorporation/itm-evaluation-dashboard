@@ -52,6 +52,7 @@ export function PH2RQ8({ evalNum }) {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [definitionFields, setDefinitionFields] = React.useState([]);
     const [HEADERS, setHeaders] = React.useState([]);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
     const mode = React.useMemo(() => {
         return FEB26_EVALS.includes(evalNum) ? "feb26" : "legacy";
@@ -291,7 +292,7 @@ export function PH2RQ8({ evalNum }) {
                 }
 
                 if (mode === "feb26") {
-                    valueMap["AF_Intercept_Text"] =
+                    valueMap["AF_intercept_Text"] =
                         textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
                     valueMap["AF_medical_Text"] =
                         textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
@@ -318,6 +319,20 @@ export function PH2RQ8({ evalNum }) {
                         textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
                     valueMap["SS_attribute_Text"] =
                         textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
+
+                    valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
+                    valueMap["AF_medical_Desert"] = getKdmaParam(desertKdmas, "affiliation", "medical_weight");
+                    valueMap["AF_attribute_Desert"] = getKdmaParam(desertKdmas, "affiliation", "attr_weight");
+                    valueMap["MF_intercept_Desert"] = getKdmaParam(desertKdmas, "merit", "intercept");
+                    valueMap["MF_medical_Desert"] = getKdmaParam(desertKdmas, "merit", "medical_weight");
+                    valueMap["MF_attribute_Desert"] = getKdmaParam(desertKdmas, "merit", "attr_weight");
+                    valueMap["AF_intercept_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "intercept");
+                    valueMap["AF_medical_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "medical_weight");
+                    valueMap["AF_attribute_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "attr_weight");
+                    valueMap["MF_intercept_Urban"] = getKdmaParam(urbanKdmas, "merit", "intercept");
+                    valueMap["MF_medical_Urban"] = getKdmaParam(urbanKdmas, "merit", "medical_weight");
+                    valueMap["MF_attribute_Urban"] = getKdmaParam(urbanKdmas, "merit", "attr_weight");
+
                 }
 
                 for (const field of definitionFields) {
@@ -366,6 +381,7 @@ export function PH2RQ8({ evalNum }) {
         setHeaders(filteredHeaders);
         setFormattedData(filteredObjs);
         setFilteredData(filteredObjs);
+        setProcessedForEval(evalNum);
     }, [
         dataSim,
         dataTextResults,
@@ -394,7 +410,7 @@ export function PH2RQ8({ evalNum }) {
         setShowDefinitions(false);
     };
 
-    if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
+    if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
 
     return (
@@ -406,7 +422,8 @@ export function PH2RQ8({ evalNum }) {
                     Showing {filteredData.length} of {formattedData.length} rows based on filters
                 </p>
             )}
-
+            {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?            
+            <>
             <section className="tableHeader">
                 <div className="filters"></div>
                 <DownloadButtons
@@ -440,7 +457,9 @@ export function PH2RQ8({ evalNum }) {
                     </tbody>
                 </table>
             </div>
-
+            </>
+            : null
+            }
             <Modal className="table-modal" open={showDefinitions} onClose={closeModal}>
                 <div className="modal-body">
                     <span className="close-icon" onClick={closeModal}>

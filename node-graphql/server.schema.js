@@ -28,6 +28,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON @complexity(value: 10)
     getAllHistory(id: ID): [JSON] @complexity(value: 150)
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
+    getAllOWData(evalNumber: Float, scenarioIDs: [ID]): [JSON] @complexity(value: 75)
     getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
     getAllEvalData: [JSON] @complexity(value: 10)
     getEvalIdsForAllHistory: [JSON] @complexity(value: 10)
@@ -731,6 +732,17 @@ const resolvers = {
       else {
         return await context.db.collection('tcccResults').find().toArray().then(result => { return result; });
       }
+    },
+    getAllOWData: async (obj, args, context, inflow) => {
+      const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"], "evaluation.scenario_id": { $in: args["scenarioIDs"] } }, {
+        projection: {
+          "evaluation": 1,
+          "results": 1,
+          "adm_name": 1,
+        }
+      }).toArray();
+      
+      return docs
     }
   },
   Mutation: {

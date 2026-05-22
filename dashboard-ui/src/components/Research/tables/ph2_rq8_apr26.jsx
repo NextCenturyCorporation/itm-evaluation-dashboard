@@ -44,6 +44,7 @@ export function PH2RQ8Apr26({ evalNum }) {
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [definitionFields, setDefinitionFields] = React.useState([]);
     const [HEADERS, setHeaders] = React.useState([]);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
     const definitionFile = ph2Apr26DefinitionXLFile
 
@@ -119,6 +120,12 @@ export function PH2RQ8Apr26({ evalNum }) {
 
         return result;
     }, []);
+
+    const getKdmaParam = React.useCallback((kdmas, kdmaName, paramName) => {
+        const k = kdmas?.find((x) => x?.kdma === kdmaName);
+        return k?.parameters?.find((p) => p?.name === paramName)?.value;
+    }, []);
+
 
     React.useEffect(() => {
         async function fetchDefinitionFields() {
@@ -200,6 +207,9 @@ export function PH2RQ8Apr26({ evalNum }) {
                     x?.scenario_id?.toLowerCase().includes("urban")
                 );
 
+                const desertKdmas = desertEntry?.data?.alignment?.kdmas
+                const urbanKdmas = urbanEntry?.data?.alignment?.kdmas
+
                 buildProbeFieldsFromEntry(desertEntry, "Desert");
                 buildProbeFieldsFromEntry(urbanEntry, "Urban");
 
@@ -212,7 +222,7 @@ export function PH2RQ8Apr26({ evalNum }) {
                     : logData["AF-text-scenario"];
 
 
-                valueMap["AF_Intercept_Text"] =
+                valueMap["AF_intercept_Text"] =
                     textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
                 valueMap["AF_medical_Text"] =
                     textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
@@ -239,7 +249,26 @@ export function PH2RQ8Apr26({ evalNum }) {
                     textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
                 valueMap["SS_attribute_Text"] =
                     textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
-                
+
+                valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
+                valueMap["AF_medical_Desert"] = getKdmaParam(desertKdmas, "affiliation", "medical_weight");
+                valueMap["AF_attribute_Desert"] = getKdmaParam(desertKdmas, "affiliation", "attr_weight");
+                valueMap["MF_intercept_Desert"] = getKdmaParam(desertKdmas, "merit", "intercept");
+                valueMap["MF_medical_Desert"] = getKdmaParam(desertKdmas, "merit", "medical_weight");
+                valueMap["MF_attribute_Desert"] = getKdmaParam(desertKdmas, "merit", "attr_weight");
+                valueMap["AF_intercept_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "intercept");
+                valueMap["AF_medical_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "medical_weight");
+                valueMap["AF_attribute_Urban"] = getKdmaParam(urbanKdmas, "affiliation", "attr_weight");
+                valueMap["MF_intercept_Urban"] = getKdmaParam(urbanKdmas, "merit", "intercept");
+                valueMap["MF_medical_Urban"] = getKdmaParam(urbanKdmas, "merit", "medical_weight");
+                valueMap["MF_attribute_Urban"] = getKdmaParam(urbanKdmas, "merit", "attr_weight");
+
+                valueMap["AF Alignment_Desert"] = desertEntry?.alignment_scores?.["AF Alignment_Desert"];
+                valueMap["MF Alignment_Desert"] = desertEntry?.alignment_scores?.["MF Alignment_Desert"];
+                valueMap["AF Alignment_Urban"] = urbanEntry?.alignment_scores?.["AF Alignment_Urban"];
+                valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
+
+
 
                 for (const field of definitionFields) {
                     if (field === "Participant_ID" || field === "Probe Set Assessment") continue;
@@ -287,6 +316,7 @@ export function PH2RQ8Apr26({ evalNum }) {
         setHeaders(filteredHeaders);
         setFormattedData(filteredObjs);
         setFilteredData(filteredObjs);
+        setProcessedForEval(evalNum);
     }, [
         dataSim,
         dataTextResults,
@@ -310,7 +340,7 @@ export function PH2RQ8Apr26({ evalNum }) {
         setShowDefinitions(false);
     };
 
-    if (loadingSim || loadingTextResults || loadingParticipantLog) return <p>Loading...</p>;
+    if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
 
     return (
@@ -323,6 +353,8 @@ export function PH2RQ8Apr26({ evalNum }) {
                 </p>
             )}
 
+            {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ? 
+            <>
             <section className="tableHeader">
                 <div className="filters"></div>
                 <DownloadButtons
@@ -356,6 +388,9 @@ export function PH2RQ8Apr26({ evalNum }) {
                     </tbody>
                 </table>
             </div>
+            </>
+            : null
+            }
 
             <Modal className="table-modal" open={showDefinitions} onClose={closeModal}>
                 <div className="modal-body">

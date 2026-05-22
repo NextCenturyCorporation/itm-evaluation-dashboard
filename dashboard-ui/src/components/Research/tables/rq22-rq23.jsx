@@ -26,6 +26,7 @@ export function RQ2223({ evalNum }) {
     });
     const [formattedData, setFormattedData] = React.useState([]);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
     // all options for filters
     const [ta1s, setTA1s] = React.useState([]);
     const [ta2s, setTA2s] = React.useState([]);
@@ -167,20 +168,16 @@ export function RQ2223({ evalNum }) {
                 // If attribute is equal, compare Trial_ID
                 return a.Trial_ID - b.Trial_ID;
             });
-
-            if (allObjs.length > 0) {
-                setFormattedData(allObjs);
-                setFilteredData(allObjs);
-            }
-            else {
-                setFormattedData([{ 'Trial_ID': '-' }]);
-                setFilteredData([{ 'Trial_ID': '-' }]);
-            }
+    
+            setFormattedData(allObjs);
+            setFilteredData(allObjs);
+            
             setTA1s(Array.from(new Set(allTA1s)));
             setTA2s(Array.from(new Set(allTA2s)));
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
             setTargets(Array.from(new Set(allTargets)));
+            setProcessedForEval(evalNum);
         }
     }, [data, evalNum]);
 
@@ -198,11 +195,13 @@ export function RQ2223({ evalNum }) {
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, targetTypeFilters]);
 
 
-    if (loading) return <p>Loading...</p>;
+    if (loading || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (error) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?
+        <>
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -317,6 +316,9 @@ export function RQ2223({ evalNum }) {
                 </tbody>
             </table>
         </div>
+        </>
+        : null
+        }
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>

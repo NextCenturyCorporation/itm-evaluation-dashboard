@@ -9,10 +9,9 @@ import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { Spinner } from 'react-bootstrap';
-import { setScenarioCompletion, SCENARIO_HEADERS } from "./progressUtils";
+import { setScenarioCompletion, SCENARIO_HEADERS, checkAlignmentStatus } from "./progressUtils";
 import { accountsClient } from "../../services/accountsService";
 import AdmInfoModal from "./admInfoModal";
-import { checkAlignmentStatus } from "./progressUtils";
 import RepairAlignmentModal from "./repairAlignmentModal";
 
 
@@ -57,6 +56,23 @@ const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Eva
 const HEADERS_UK_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
 const HEADERS_UK_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
 
+
+const formatDateTime = (date) => {
+    return String(date) !== 'Invalid Date'
+        ? `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} - ${date.toLocaleTimeString('en-US', { hour12: false })}`
+        : undefined;
+};
+
+const getParticipantPhase = (participant) => {
+    const evalNumber = participant['_evalNumber'];
+    if (evalNumber === 12) return 'UK1';
+    return participant['_phase'] || 1;
+};
+
+const participantMatchesPhase = (participant, phase) => {
+    const participantPhase = getParticipantPhase(participant);
+    return phase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
+};
 
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
@@ -118,8 +134,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     const getCompletionOptions = () => {
         const textThreshold = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1' ? 4 : 5;
-        const delThreshold = selectedPhase === 'Phase 2' ? 5 : selectedPhase === 'UK Phase 1' ? 3 : 4;
-        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', `Delegation (${delThreshold})`, 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
+        const baseOptions = [`All Text (${textThreshold})`, 'Missing Text', 'Complete Delegation', 'No Delegation', 'All Sim (4)', 'Any Sim', 'No Sim'];
 
         if (selectedPhase === 'Phase 1') {
             // phase 1 option
@@ -127,14 +142,6 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         }
 
         return baseOptions;
-    };
-
-    const getParticipantPhase = (participant) => {
-        const evalNumber = participant['_evalNumber'];
-        if (evalNumber === 12) {
-            return 'UK1';
-        }
-        return participant['_phase'] || 1;
     };
 
     const [popupInfo, setPopupInfo] = React.useState({
@@ -324,7 +331,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     }
                 }
                 const sim_date = new Date(sims[0]?.timestamp);
-                obj['Sim Date-Time'] = String(sim_date) !== 'Invalid Date' ? `${sim_date?.getMonth() + 1}/${sim_date?.getDate()}/${sim_date?.getFullYear()} - ${sim_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Sim Date-Time'] = formatDateTime(sim_date);
                 obj['Sim Count'] = res['simEntryCount'] || 0;
                 obj['Sim-1'] = sims[0]?.scenario_id;
                 obj['Sim-2'] = sims[1]?.scenario_id;
@@ -342,8 +349,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
                 obj['Unformatted Delegation Start'] = survey_start_date;
                 obj['Unformatted Delegation End'] = survey_end_date;
-                obj['Del Start Date-Time'] = String(survey_start_date) !== 'Invalid Date' ? `${survey_start_date?.getMonth() + 1}/${survey_start_date?.getDate()}/${survey_start_date?.getFullYear()} - ${survey_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                obj['Del End Date-Time'] = String(survey_end_date) !== 'Invalid Date' ? `${survey_end_date?.getMonth() + 1}/${survey_end_date?.getDate()}/${survey_end_date?.getFullYear()} - ${survey_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Del Start Date-Time'] = formatDateTime(survey_start_date);
+                obj['Del End Date-Time'] = formatDateTime(survey_end_date);
                 const delScenarios = surveyToUse?.results?.evalNumber < 10 ? surveyToUse?.results?.orderLog?.filter((x) => x.includes(' vs ')) : findPagesV10(surveyToUse);
                 if (delScenarios) {
                     obj['Del-1'] = surveyToUse?.results?.[delScenarios[0]]?.scenarioIndex;
@@ -371,8 +378,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 const text_end_date = new Date(lastScenario?.timeComplete);
                 obj['Unformatted Text Start'] = text_start_date;
                 obj['Unformatted Text End'] = text_end_date;
-                obj['Text Start Date-Time'] = String(text_start_date) !== 'Invalid Date' ? `${text_start_date?.getMonth() + 1}/${text_start_date?.getDate()}/${text_start_date?.getFullYear()} - ${text_start_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
-                obj['Text End Date-Time'] = String(text_end_date) !== 'Invalid Date' ? `${text_end_date?.getMonth() + 1}/${text_end_date?.getDate()}/${text_end_date?.getFullYear()} - ${text_end_date?.toLocaleTimeString('en-US', { hour12: false })}` : undefined;
+                obj['Text Start Date-Time'] = formatDateTime(text_start_date);
+                obj['Text End Date-Time'] = formatDateTime(text_end_date);
                 obj['Text'] = scenarios.length;
 
                 if (!evalNumber && lastScenario?.evalNumber) {
@@ -457,10 +464,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                         {isComplete && <CheckCircle style={{ fontSize: '14px', color: '#2e7d32' }} />}
                         {isMissing && <Error style={{ fontSize: '14px', color: '#e65100' }} />}
                         <span>{val ?? '-'}</span>
-                        {isMissing && isAdmin && (
+                        {(isMissing || isComplete) && isAdmin && (
                             <button
                                 className="repair-align-btn"
-                                title={`Repair: ${status?.missingScenarios?.join(', ')}`}
+                                title={isMissing ? `Repair: ${status?.missingScenarios?.join(', ')}` : 'Re-run alignment'}
                                 onClick={() => setRepairModal({ open: true, pid, status })}
                             >
                                 <Build style={{ fontSize: '14px' }} />
@@ -518,7 +525,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             }
             return 'white-cell';
         };
-        return (<td key={dataSet['Participant_ID'] + '-' + header} className={getClassName(header, val, dataSet) + ' ' + (header.length < 5 ? 'small-column ' : ' ') + (header.length > 17 ? 'large-column' : '')}>
+        return (<td key={dataSet['Participant ID'] + '-' + header} className={getClassName(header, val, dataSet) + ' ' + (header.length < 5 ? 'small-column ' : ' ') + (header.length > 17 ? 'large-column' : '')}>
             {header === 'Survey Link' && val ? <button onClick={() => copyLink(val)} className='downloadBtn'>Copy Link</button> : <span>{val ?? '-'}</span>}
         </td>);
     };
@@ -531,17 +538,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         return evals.filter(evaluation => {
             const participant = formattedData.find(p => p['Evaluation'] === evaluation);
             if (!participant) return false;
-
-            const participantPhase = getParticipantPhase(participant);
-            return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
+            return participantMatchesPhase(participant, selectedPhase);
         });
     }, [evals, selectedPhase, formattedData]);
 
     const getTypesForPhase = useCallback(() => {
-        const phaseParticipants = formattedData.filter(participant => {
-            const participantPhase = getParticipantPhase(participant);
-            return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-        });
+        const phaseParticipants = formattedData.filter(participant => participantMatchesPhase(participant, selectedPhase));
 
         const phaseTypes = phaseParticipants
             .map(participant => participant['Participant Type'])
@@ -553,13 +555,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     React.useEffect(() => {
         if (formattedData.length > 0) {
             const textThreshold = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1' ? 4 : 5;
-            const delThreshold = selectedPhase === 'Phase 2' ? 5 : selectedPhase === 'UK Phase 1' ? 3 : 4;
+            const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
+            const isUK = selectedPhase === 'UK Phase 1';
+            const getDelThreshold = (x) => isUK ? 3 : (isPH2OrUK && ![10, 16].includes(x['_evalNumber'])) ? 5 : 4;
 
             setFilteredData(formattedData.filter((x) => {
-                const participantPhase = getParticipantPhase(x);
-                const shouldShowInPhase = selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-
-                if (!shouldShowInPhase) return false;
+                if (!participantMatchesPhase(x, selectedPhase)) return false;
 
                 const sims = [x['Sim-1'], x['Sim-2'], x['Sim-3'], x['Sim-4']];
                 const didAdept = sims.filter((s) => s?.includes('MJ')).length > 0;
@@ -568,7 +569,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     (evalFilters.length === 0 || evalFilters.includes(x['Evaluation'])) &&
                     (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
                     (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
-                    (!completionFilters.includes(`Delegation (${delThreshold})`) || x['Delegation'] >= delThreshold) &&
+                    (!completionFilters.includes('Complete Delegation') || x['Delegation'] >= getDelThreshold(x)) &&
                     (!completionFilters.includes('No Delegation') || x['Delegation'] === 0) &&
                     (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
                     (!completionFilters.includes('Any Sim') || x['Sim Count'] >= 1) &&
@@ -651,7 +652,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     };
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error :</p>;
+    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error loading data</p>;
 
     return (<>
         <h2 className='progress-header'>Participant Progress</h2>
@@ -674,10 +675,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             </div>
         </section>
         {(() => {
-            const currentPhaseData = formattedData.filter((x) => {
-                const participantPhase = getParticipantPhase(x);
-                return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-            });
+            const currentPhaseData = formattedData.filter((x) => participantMatchesPhase(x, selectedPhase));
             return filteredData.length < currentPhaseData.length && (
                 <p className='filteredText'>Showing {filteredData.length} of {currentPhaseData.length} rows based on filters</p>
             );
@@ -764,10 +762,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
             <DownloadButtons
-                formattedData={refineData(formattedData.filter((x) => {
-                    const participantPhase = getParticipantPhase(x);
-                    return selectedPhase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-                }))}
+                formattedData={refineData(formattedData.filter((x) => participantMatchesPhase(x, selectedPhase)))}
                 filteredData={refineData(filteredData)}
                 HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x) && x !== 'Delete')}
                 fileName={'Participant_Progress'}
@@ -791,7 +786,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 <tbody>
                     {isRefreshing ?
                         <tr className='refreshing-row'>
-                            <td colSpan={9}>
+                            <td colSpan={HEADERS.filter(h => !columnsToHide.includes(h)).length}>
                                 <div className='refreshing-td'>
                                     <Spinner animation="border" role="status" variant="dark" className='refresh-spinner' size="large" />
                                     <span className='refreshing-label'>Fetching Data...</span>
@@ -799,7 +794,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                             </td>
                         </tr>
                         : filteredData.map((dataSet, index) => {
-                            return (<tr key={dataSet['Participant_ID'] + '-' + index}>
+                            return (<tr key={dataSet['Participant ID'] + '-' + index}>
                                 {HEADERS.map((val) => {
                                     return !columnsToHide.includes(val) && formatCell(val, dataSet);
                                 })}

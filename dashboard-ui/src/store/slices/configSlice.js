@@ -8,6 +8,7 @@ const configSlice = createSlice({
         currentSurveyVersion: null,
         currentTextEval: null,
         currentStyle: null,
+        selectedResearchEval: null,
         evals: [],
         pidBounds: {
             lowPid: null,
@@ -41,10 +42,13 @@ const configSlice = createSlice({
         },
         setShowDemographics: (state, action) => {  
             state.showDemographics = action.payload;
+        },
+        setSelectedResearchEval: (state, action) => {
+            state.selectedResearchEval = action.payload
         }
     }
 });
 
-export const { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentTextEval, setCurrentStyle, setEvals, setPidBounds, setShowDemographics } = configSlice.actions;
+export const { addConfig, addTextBasedConfig, setCurrentSurveyVersion, setCurrentTextEval, setCurrentStyle, setEvals, setPidBounds, setShowDemographics, setSelectedResearchEval } = configSlice.actions;
 export default configSlice.reducer;
 
