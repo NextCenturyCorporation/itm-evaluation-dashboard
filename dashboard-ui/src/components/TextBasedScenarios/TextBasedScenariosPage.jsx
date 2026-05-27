@@ -411,10 +411,33 @@ class TextBasedScenariosPage extends Component {
         }
 
         const evalProcessors = {
-            17: () => this.processGroupedAdeptScenario(scenario, {
-                getGroupKey: (id) => id.includes('trinary') ? 'trinary' : 'regular',
-                getGroupSize: (key) => key === 'trinary' ? 2 : 4,
-            }),
+            17: async () => {
+                // doing the AF-SS group inline since it doesn't fit into my generic logic
+                const id = scenario.scenario_id;
+                if (!id.includes('trinary') && (id.includes('AF') || id.includes('SS'))) {
+                    const url = this.getAdeptUrl();
+                    const current = this.state.adeptGroupState['AF-SS-multi'] || { scenarios: [], sessionId: null };
+                    const sessionId = current.sessionId || await createAdeptSession(url);
+                    await this.submitResponses(scenario, id, url, sessionId);
+                    const updated = [...current.scenarios, scenario];
+                    await new Promise(resolve => this.setState(prevState => ({
+                        adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId } }
+                    }), resolve));
+                    if (updated.length === 2) {
+                        const mla = await this.mostLeastAligned(sessionId, 'adept', url, updated[0], true, false, true);
+                        const kdmas = await this.attachKdmaValue(sessionId, url);
+                        for (const s of updated) {
+                            s['AF-SS_sessionId'] = sessionId;
+                            s['AF-SS_mostLeastAligned'] = mla;
+                            s['AF-SS_kdmas'] = kdmas;
+                        }
+                    }
+                }
+                await this.processGroupedAdeptScenario(scenario, {
+                    getGroupKey: (id) => id.includes('trinary') ? 'trinary' : 'regular',
+                    getGroupSize: (key) => key === 'trinary' ? 2 : 4,
+                });
+            },
             16: () => this.processEval16Scenario(scenario),
             15: () => this.processGroupedAdeptScenario(scenario, {
                 getGroupKey: (id) => (id.includes('PS') || id.includes('AF')) ? 'PS-AF' : 'MF-SS',
@@ -717,7 +740,7 @@ class TextBasedScenariosPage extends Component {
         return getKdmaProfile(sessionId, url, enable_subpop);
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false) => {
+    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false, allowMultiattributeTargets = false) => {
         const evalNumber = evalNameToNumber[this.props.currentTextEval];
         if (ta1 === 'soartech') {
             // SoarTech still uses its own logic
@@ -737,7 +760,7 @@ class TextBasedScenariosPage extends Component {
                 return [];
             }
         }
-        return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop);
+        return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop, allowMultiattributeTargets);
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
