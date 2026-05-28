@@ -304,6 +304,5 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
         shuffle(scenarios);
     }
     
-    console.log(scenarios)
     return scenarios;
 };
