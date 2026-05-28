@@ -42,6 +42,7 @@ export function RQ21({ evalNum }) {
     const [groupTargetFilters, setGroupTargetFilters] = React.useState([]);
     const [decisionMakerFilters, setDecisionMakerFilters] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const [processedForEval, setProcessedForEval] = React.useState(null);
 
 
     React.useEffect(() => {
@@ -150,24 +151,16 @@ export function RQ21({ evalNum }) {
             textObjs.sort((a, b) => a['Decision_Maker'] - b['Decision_Maker']);
             allObjs = allObjs.concat(textObjs);
 
-            if (allObjs.length > 0) {
-                setFormattedData(allObjs);
-                setFilteredData(allObjs);
-            }
-            else {
-                setFormattedData([{ 'TA1_Name': null }]);
-                setFilteredData([{ 'TA1_Name': '-' }])
-            }
+            setFormattedData(allObjs);
+            setFilteredData(allObjs);
+
             setTA1s(Array.from(new Set(allTA1s)));
             setTA2s(Array.from(new Set(allTA2s)));
+            setProcessedForEval(evalNum);
             setAttributes(Array.from(new Set(allAttributes)));
             setScenarios(Array.from(new Set(allScenarios)));
             setGroupTargets(Array.from(new Set(allGroupTargets)));
             setDecisionMakers(Array.from(new Set(allDecisionMakers)));
-        }
-        else {
-            setFormattedData([{ 'TA1_Name': '-' }]);
-            setFilteredData([{ 'TA1_Name': '-' }])
         }
     }, [dataAdms, dataTextResults, evalNum]);
 
@@ -193,11 +186,13 @@ export function RQ21({ evalNum }) {
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters, decisionMakerFilters]);
 
-    if (loadingAdms || loadingTextResults) return <p>Loading...</p>;
+    if (loadingAdms || loadingTextResults || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
     if (errorAdms || errorTextResults) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}
+        {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?
+        <>
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -312,6 +307,9 @@ export function RQ21({ evalNum }) {
                 </tbody>
             </table>
         </div>
+        </>
+        : null
+        }
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>

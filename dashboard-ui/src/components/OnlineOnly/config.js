@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { shuffle } from '../Survey/surveyUtils';
 export const evalNameToNumber = {
     'Phase 2 June 2026 Evaluation': 17,
+    'Phase 2 June 2026 Evaluation': 17,
     'Phase 2 April 2026 Evaluation': 16,
     'Phase 2 February 2026 Evaluation': 15,
     'Phase 2 October 2025 Collaboration': 13,
