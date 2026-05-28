@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import { shuffle } from '../Survey/surveyUtils';
 export const evalNameToNumber = {
     'Phase 2 June 2026 Evaluation': 17,
-    'Phase 2 June 2026 Evaluation': 17,
     'Phase 2 April 2026 Evaluation': 16,
     'Phase 2 February 2026 Evaluation': 15,
     'Phase 2 October 2025 Collaboration': 13,
@@ -211,7 +210,6 @@ export const aprilParticipantData = (currentSearchParams, hashedEmail, newPid, t
 };
 
 export const juneParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
-    //TODO - edit this once I have the YAMLs ingested
     const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
     const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
     const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
