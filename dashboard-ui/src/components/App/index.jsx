@@ -145,7 +145,6 @@ export function App() {
     const [isSetup, setIsSetup] = React.useState(false);
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
     const [isTextEvalDataLoaded, setIsTextEvalDataLoaded] = React.useState(false);
-    const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
     const { data: demographicsData } = useQuery(GET_SHOW_DEMOGRAPHICS, { fetchPolicy: 'no-cache' });
     const [isDemographicsDataLoaded, setIsDemographicsDataLoaded] = React.useState(false);
     const [surveyConfigsLoaded, setSurveyConfigsLoaded] = React.useState(false);
@@ -207,7 +206,7 @@ export function App() {
     }, [textEvalData])
 
     // Load survey configs when version is available
-    const { data: surveyConfigData, loading: surveyConfigLoading } = useQuery(
+    const { data: surveyConfigData } = useQuery(
         GET_SURVEY_CONFIG_BY_VERSION,
         {
             skip: !versionData?.getCurrentSurveyVersion,
@@ -216,7 +215,7 @@ export function App() {
         }
     );
 
-    const { data: textConfigData, loading: textConfigLoading } = useQuery(
+    const { data: textConfigData } = useQuery(
         GET_TEXT_CONFIG_BY_EVAL,
         {
             skip: !textEvalData?.getCurrentTextEval,
@@ -232,7 +231,6 @@ export function App() {
                 getAllTextBasedImages: textImagesData?.getAllTextBasedImages ?? []
             };
             setupConfigWithImages(configDataToProcess);
-            setSurveyConfigsLoaded(true);
         }
     }, [surveyConfigData, textImagesData]);
 
@@ -244,16 +242,8 @@ export function App() {
                 getAllTextBasedImages: textImagesData?.getAllTextBasedImages ?? []
             };
             setupTextBasedConfig(configDataToProcess);
-            setTextConfigsLoaded(true);
         }
     }, [textConfigData, textImagesData]);
-
-
-    React.useEffect(() => {
-        if (surveyConfigsLoaded && textConfigsLoaded) {
-            setIsConfigDataLoaded(true);
-        }
-    }, [surveyConfigsLoaded, textConfigsLoaded]);
 
     const setup = async () => {
         // refresh the session to get a new accessToken if expired
@@ -493,7 +483,6 @@ export function App() {
 
     // show error message if an participantLog Error occurs
     if (versionError) {
-        console.log(versionError);
         return(
             <QueryErrorMessage error={versionError}></QueryErrorMessage>
         );
@@ -505,7 +494,7 @@ export function App() {
 
     return (
         <Router history={history}>
-            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isConfigDataLoaded && isStyleDataLoaded && isDemographicsDataLoaded && <div className="itm-app">
+            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isStyleDataLoaded && isDemographicsDataLoaded && <div className="itm-app">
                 {currentUser?.approved &&
                     <Header currentUser={currentUser} logout={logout} />
                 }
