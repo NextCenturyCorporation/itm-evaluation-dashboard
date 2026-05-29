@@ -566,7 +566,17 @@ export const SurveyPageWrapper = (props) => {
         return <QueryErrorMessage errors={errors} />;
     }
 
-    if (loadingParticipantLog || loadingEvalData || !surveyConfigs) return <p>Loading...</p>;
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorEvalData,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        return <QueryErrorMessage errors={errors} />;
+    }
+
+    if (loadingParticipantLog || loadingEvalData || !surveyConfigs || !surveyConfigs['delegation_v' + currentSurveyVersion]) return <p>Loading...</p>;
     if (errorParticipantLog || errorEvalData) return <p>Error :</p>;
 
     return (
