@@ -552,7 +552,7 @@ export const SurveyPageWrapper = (props) => {
     });
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
 
-    if (loadingParticipantLog || loadingEvalData || !surveyConfigs) return <p>Loading...</p>;
+    if (loadingParticipantLog || loadingEvalData || !surveyConfigs || !surveyConfigs['delegation_v' + currentSurveyVersion]) return <p>Loading...</p>;
     if (errorParticipantLog || errorEvalData) return <p>Error :</p>;
 
     return (
