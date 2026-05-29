@@ -1,5 +1,5 @@
 import React from 'react';
-import { isUserElevated, isUserTa3 } from '.';
+import { isUserElevated, isUserTa3, isUserAdminOrEval} from '.';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -19,12 +19,12 @@ export function Header({ currentUser, logout }) {
                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
                         Take Delegation Survey
                     </NavDropdown.Item>
-                    {(currentUser.admin === true || currentUser.evaluator) && (
+                    {(isUserAdminOrEval(currentUser)) && (
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
                             Review Text Scenarios
                         </NavDropdown.Item>
                     )}
-                    {(currentUser.admin === true || currentUser.evaluator) && (
+                    {(isUserAdminOrEval(currentUser)) && (
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
                             Review Delegation Survey
                         </NavDropdown.Item>

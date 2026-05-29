@@ -120,6 +120,11 @@ export function isUserTa3(currentUser) {
     return currentUser?.ta3User || currentUser?.admin
 }
 
+// helper function for conditional checking admin privileges
+export function isUserAdminOrEval(currentUser) {
+    return currentUser?.admin  || currentUser?.evaluator
+}
+
 export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
