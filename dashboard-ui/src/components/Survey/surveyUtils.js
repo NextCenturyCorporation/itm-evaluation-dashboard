@@ -1,30 +1,3 @@
-export const renderSituation = (situation) => {
-    if (Array.isArray(situation)) {
-        return situation.map((detail, index) => (
-            <p key={`detail-${index}`}>{detail}</p>
-        ));
-    }
-    return <p>{situation}</p>;
-};
-
-export const orderLog13 = (pages) => {
-    let orderLog = []
-    for (const page of pages) {
-        if (page.name.includes("Medic") && !page.name.toLowerCase().includes("vs")) {
-            if (!page.name.includes("Omnibus")) {
-                orderLog.push(page.name)
-            } else {
-                let log = page.name + ":"
-                for (const medic of page.elements[0]['decisionMakers']) {
-                    log += " " + medic
-                }
-                orderLog.push(log)
-            }
-        }
-    }
-    return orderLog
-}
-
 export function getUID() {
     return Date.now().toString(36)
 }
@@ -39,17 +12,6 @@ export function shuffle(array) {
     }
     return array;
 }
-
-export const survey3_0_groups = [
-    ['kitware', 'Adept Urban'],
-    ['TAD', 'Adept Urban'],
-    ['kitware', 'SoarTech Urban'],
-    ['TAD', 'SoarTech Urban'],
-    ['TAD', 'SoarTech Submarine'],
-    ['kitware', 'SoarTech Submarine'],
-    ['TAD', 'Adept Submarine'],
-    ['kitware', 'Adept Submarine']
-]
 
 export function surveyVersion_x_0(surveyVersion) {
     if (surveyVersion.toString().endsWith('.0')) {
@@ -245,13 +207,6 @@ export function generateComparisonPagev4_5(baselineAdm, alignedAdm, misalignedAd
         "elements": elements,
         "alignment": secondName === '' ? "baseline vs aligned vs misaligned" : ("baseline vs " + (secondName === aname ? "aligned" : "misaligned"))
     };
-}
-
-export function getOrderedAdeptTargets(adeptList) {
-    // takes in the list of adept targets and returns the sorted groups from greatest to least for IO and MJ
-    const ios = adeptList.filter((x) => x.target.includes('Ingroup')).sort((a, b) => b.score - a.score);
-    const mjs = adeptList.filter((x) => x.target.includes('Moral')).sort((a, b) => b.score - a.score);
-    return { 'Ingroup': ios, 'Moral': mjs };
 }
 
 function getValidADM(allTargets, targets, cols1to3, set1, set2, set3) {
@@ -2143,4 +2098,12 @@ const genComparisonPagev11 = (primary, secondary, leastAligned, isOracle = false
 const onlineOnlyTitles = {
     'A': 'If you had to triage a similar scenario with 18-20 patients, how would you allocate decision-making responsibilities with the medic above?',
     'B': 'Waves of 8-10 patients are being discovered, requiring medical assistance. If you had to triage the next wave of patients, knowing there are more coming, and the medic above was available, how would you allocate responsibilities?'
+}
+
+export const createScenarioBlockv12 = (scenarioType, allPages, textResults) => {
+
+}
+
+const genComparisonPagev12 = (aligned, baseline, misaligned) => {
+
 }
