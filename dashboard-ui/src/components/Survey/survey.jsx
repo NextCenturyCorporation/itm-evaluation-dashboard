@@ -542,6 +542,7 @@ class SurveyPage extends Component {
 export const SurveyPageWrapper = (props) => {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
+    const surveyConfigs = useSelector(state => state?.configs?.surveyConfigs)
     const evalNumber = SURVEY_VERSION_DATA[currentSurveyVersion]?.evalNumber;
 
     const { loading: loadingEvalData, error: errorEvalData, data: dataEvalData } = useQuery(GET_EVAL_DATA, {
@@ -551,7 +552,7 @@ export const SurveyPageWrapper = (props) => {
     });
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
 
-    if (loadingParticipantLog || loadingEvalData) return <p>Loading...</p>;
+    if (loadingParticipantLog || loadingEvalData || !surveyConfigs) return <p>Loading...</p>;
     if (errorParticipantLog || errorEvalData) return <p>Error :</p>;
 
     return (
