@@ -1,5 +1,5 @@
 import React from 'react';
-import { isUserElevated, isUserTa3, isUserAdminOrEval} from '.';
+import { isUserElevated, isUserTa3, hasAccess } from '.';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -19,12 +19,12 @@ export function Header({ currentUser, logout }) {
                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
                         Take Delegation Survey
                     </NavDropdown.Item>
-                    {(isUserAdminOrEval(currentUser)) && (
+                    {(hasAccess(currentUser, ['evaluator', 'admin'])) && (
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
                             Review Text Scenarios
                         </NavDropdown.Item>
                     )}
-                    {(isUserAdminOrEval(currentUser)) && (
+                    {(hasAccess(currentUser, ['evaluator', 'admin'])) && (
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
                             Review Delegation Survey
                         </NavDropdown.Item>
@@ -118,12 +118,12 @@ function UserMenu({ currentUser, logout }) {
                         Progress Table
                     </Link>
                 )}
-                {(currentUser.experimenter === true || currentUser.admin === true) && (
+                {(hasAccess(currentUser, ['experimenter', 'admin'])) && (
                     <Link className="dropdown-item" to="/pid-lookup" onClick={handleToggle}>
                         PID Lookup
                     </Link>
                 )}
-                {(currentUser.experimenter === true || currentUser.admin === true) && (
+                {(hasAccess(currentUser, ['experimenter', 'admin'])) && (
                     <Link className="dropdown-item" to="/participantTextTester" onClick={handleToggle}>
                         Test Text Scenario
                     </Link>

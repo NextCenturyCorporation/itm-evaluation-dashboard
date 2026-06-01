@@ -120,9 +120,10 @@ export function isUserTa3(currentUser) {
     return currentUser?.ta3User || currentUser?.admin
 }
 
-// helper function for conditional checking admin privileges
-export function isUserAdminOrEval(currentUser) {
-    return currentUser?.admin  || currentUser?.evaluator
+// helper function for conditional checking of user privileges
+export function hasAccess(currentUser, allowedRoles) {
+    console.log(currentUser); // just to see what the object CurrentUser looks like
+    return allowedRoles.some(role => currentUser[role] === true);
 }
 
 export function App() {
