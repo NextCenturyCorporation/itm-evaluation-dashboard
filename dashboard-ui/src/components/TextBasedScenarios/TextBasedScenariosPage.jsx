@@ -409,7 +409,7 @@ class TextBasedScenariosPage extends Component {
                         adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId } }
                     }), resolve));
                     if (updated.length === 2) {
-                        const mla = await this.mostLeastAligned(sessionId, 'adept', url, updated[0], true, false, true);
+                        const mla = await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
                         const kdmas = await this.attachKdmaValue(sessionId, url);
                         for (const s of updated) {
                             s['AF-SS_sessionId'] = sessionId;
@@ -510,7 +510,7 @@ class TextBasedScenariosPage extends Component {
                 const indSessionId = await createAdeptSession(url);
                 await this.submitResponses(scenario, scenarioId, url, indSessionId);
                 scenario.individualSessionId = indSessionId;
-                scenario.individualMostLeastAligned = await this.mostLeastAligned(indSessionId, 'adept', url, scenario);
+                scenario.individualMostLeastAligned = await this.mostLeastAligned(indSessionId, url, scenario);
                 scenario.individualKdmas = await this.attachKdmaValue(indSessionId, url);
             } catch (e) {
                 console.error(`Error in individual scoring for ${scenarioId}:`, e);
@@ -540,7 +540,7 @@ class TextBasedScenariosPage extends Component {
 
         if (updatedScenarios.length === getGroupSize(groupKey)) {
             try {
-                const combinedMostLeastAligned = await this.mostLeastAligned(sessionId, 'adept', url, updatedScenarios[0], true);
+                const combinedMostLeastAligned = await this.mostLeastAligned(sessionId, url, updatedScenarios[0], true);
                 const combinedKdmas = await this.attachKdmaValue(sessionId, url);
 
                 for (const s of updatedScenarios) {
@@ -721,7 +721,7 @@ class TextBasedScenariosPage extends Component {
         return getKdmaProfile(sessionId, url, enable_subpop);
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false, allowMultiattributeTargets = false) => {
+    mostLeastAligned = async (sessionId, url, scenario, skipKdmaFilter = false, enableSubpop = false, allowMultiattributeTargets = false) => {
         const evalNumber = evalNameToNumber[this.props.currentTextEval];
         return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop, allowMultiattributeTargets);
     }
