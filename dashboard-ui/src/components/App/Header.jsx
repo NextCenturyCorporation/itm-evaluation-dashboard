@@ -14,7 +14,7 @@ export function Header({ currentUser, logout }) {
             <li className="nav-item">
                 <Link className="nav-link" to="/">Home</Link>
             </li>
-            {(isUserElevated(currentUser) &&
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) &&
                 <NavDropdown title="Data Collection">
                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
                         Take Delegation Survey
@@ -31,7 +31,7 @@ export function Header({ currentUser, logout }) {
                     )}
                 </NavDropdown>
             )}
-            {(isUserElevated(currentUser)) && (
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) && (
                 <>
                     <NavDropdown title="Human Evaluation Segments">
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
@@ -74,7 +74,7 @@ export function Header({ currentUser, logout }) {
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
                             Exploratory Analysis
                         </NavDropdown.Item>
-                        {isUserTa3(currentUser) && (
+                        {hasAccess(currentUser, ['admin', 'ta3User']) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/tccc">
                                         TCCC
                                     </NavDropdown.Item>
@@ -113,7 +113,7 @@ function UserMenu({ currentUser, logout }) {
                         Administrator
                     </Link>
                 )}
-                {isUserElevated(currentUser) && (
+                {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
                     <Link className="dropdown-item" to="/participant-progress-table" onClick={handleToggle}>
                         Progress Table
                     </Link>

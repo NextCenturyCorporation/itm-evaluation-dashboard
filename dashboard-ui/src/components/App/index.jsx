@@ -409,7 +409,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.admin === true) {
+            if (hasAccess(currentUser, ['admin'])) {
                 return <AdminPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
                 return <Redirect push to="/" />;
@@ -455,7 +455,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.admin === true || currentUser.evaluator) {
+            if (hasAccess(currentUser, ['admin', 'evaluator'])) {
                 return <ReviewTextBasedPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
                 return <Home />;
@@ -467,7 +467,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.admin === true || currentUser.evaluator) {
+            if (hasAccess(currentUser, ['admin', 'evaluator'])) {
                 return <ReviewDelegationPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
                 return <Home />;
@@ -510,7 +510,7 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/humanSimParticipant">
                             <AggregateResults type="HumanSimParticipant" />
                         </Route>}
-                        {(currentUser?.admin || currentUser?.experimenter) && <Route path="/participantTextTester">
+                        {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
                             <Login participantTextLogin={true} testerLogin={true} />
                         </Route>}
                         {isUserElevated(currentUser) && <Route path="/admin" component={Admin} />}
@@ -530,7 +530,7 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
-                        {isUserTa3(currentUser) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
+                        {hasAccess(currentUser, ['admin', 'ta3User']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.
                             Otherwise, send to homepage */}
