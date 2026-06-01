@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { shuffle } from '../Survey/surveyUtils';
 export const evalNameToNumber = {
+    'Phase 2 June 2026 Evaluation': 17,
     'Phase 2 April 2026 Evaluation': 16,
     'Phase 2 February 2026 Evaluation': 15,
     'Phase 2 October 2025 Collaboration': 13,
@@ -208,10 +209,36 @@ export const aprilParticipantData = (currentSearchParams, hashedEmail, newPid, t
     };
 };
 
+export const juneParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
+    const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
+    const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
+    const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
+
+    return {
+        "ParticipantID": newPid,
+        "Type": type,
+        "prolificId": prolificId,
+        "contactId": contactId,
+        "claimed": true,
+        "simEntryCount": 0,
+        "surveyEntryCount": 0,
+        "textEntryCount": 0,
+        "hashedEmail": email,
+        'evalNum': evalNum
+    };
+};
+
 export const scenarioIdsFromLog = (participantLog, currentEval) => {
     const num = evalNameToNumber[currentEval];
 
     const configs = {
+        17: { 
+            prefix: 'June2026', 
+            types: ['AF', 'MF', 'PS', 'SS'],
+            noDigitTypes: ['AF', 'MF', 'PS', 'SS'],
+            tri: ['AF', 'PS'], 
+            suffix: 'assess'
+        },
         16: {
             prefix: 'April2026',
             types: ['AF', 'MF', 'PS', 'SS'],
@@ -225,10 +252,11 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
         8:  { prefix: 'June2025', types: ['AF', 'MF', 'PS', 'SS'], suffix: 'eval' },
     };
 
-    const buildId = (config, type) => {
+    const buildId = (config, type, tri) => {
         const prefix = config.prefixOverrides?.[type] || config.prefix;
         const digit = config.noDigitTypes?.includes(type) ? '' : participantLog[`${type}-text-scenario`];
-        return `${prefix}-${type}${digit}-${config.suffix}`;
+        const suffix = tri ? `${config.suffix}-trinary` : config.suffix 
+        return `${prefix}-${type}${digit}-${suffix}`;
     };
 
     // paired ordering, return early to skip general shuffle
@@ -247,6 +275,7 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
 
     if (configs[num]) {
         scenarios = configs[num].types.map(type => buildId(configs[num], type));
+        if (configs[num].tri) scenarios.push(...configs[num].tri.map(type => buildId(configs[num], type, true)))
     } else if (num === 5) {
         scenarios = [
             ...(p1Mappings[participantLog['Text-1']] || []),
@@ -273,6 +302,6 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
     if (num >= 8 && num !== 13) {
         shuffle(scenarios);
     }
-
+    
     return scenarios;
 };

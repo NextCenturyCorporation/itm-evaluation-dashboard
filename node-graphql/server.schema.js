@@ -18,6 +18,7 @@ const typeDefs = gql`
     experimenter: Boolean
     adeptUser: Boolean
     ta3User: Boolean
+    externalSimResearcher: Boolean
     approved: Boolean
     rejected: Boolean
   }
@@ -90,7 +91,8 @@ const typeDefs = gql`
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
     updateTa3User(caller: JSON, username: String, isTa3User: Boolean): JSON,
-    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean, isTa3User: Boolean): JSON,
+    updateExternalSimResearcher(caller: JSON, username: String, isExternalSimResearcher: Boolean): JSON,
+    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean, isTa3User: Boolean, isExternalSimResearcher: Boolean): JSON,
     updateEvalData(caller: JSON, dataToUpdate: JSON): JSON,
     addNewEval(caller: JSON, newEval: JSON): JSON,
     deleteEval(caller: JSON, evalId: String): JSON,
@@ -821,6 +823,21 @@ const resolvers = {
         });
       }
     },
+    updateExternalSimResearcher: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await context.db.collection('users').update(
+          { "username": args["username"] },
+          { $set: { "externalSimResearcher": args["isExternalSimResearcher"] } }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update External Sim Researcher status.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
     updateUserApproval: async (obj, args, context, inflow) => {
       const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
       const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
@@ -835,6 +852,7 @@ const resolvers = {
               "experimenter": args["isExperimenter"],
               "evaluator": args["isEvaluator"],
               "ta3User": args["isTa3User"],
+              "externalSimResearcher": args["isExternalSimResearcher"],
               "admin": args["isAdmin"]
             }
           }

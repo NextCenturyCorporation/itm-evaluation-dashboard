@@ -1,5 +1,5 @@
 import React from 'react';
-import { isUserElevated, isUserTa3 } from '.';
+import { isUserElevated, isUserTa3, isUserExternalSimResearcher } from '.';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -61,27 +61,45 @@ export function Header({ currentUser, logout }) {
                             ADM Probe Responses
                         </NavDropdown.Item>
                     </NavDropdown>
-                    <NavDropdown title="Data Analysis">
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
+                </>
+            )}
+            {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && (
+                <>
+                <NavDropdown title="Data Analysis">
+                        {isUserElevated(currentUser) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
                             RQ1
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
+                            </NavDropdown.Item>
+                        )}
+                        {isUserElevated(currentUser) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
                             RQ2
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
+                            </NavDropdown.Item>
+                        )}
+                        {isUserElevated(currentUser) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
                             RQ3
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
-                            Exploratory Analysis
-                        </NavDropdown.Item>
-                        {isUserTa3(currentUser) && (
+                            </NavDropdown.Item>
+                        )}
+                        {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world">
+                            Open World
+                            </NavDropdown.Item>
+                        )}
+                        {isUserElevated(currentUser) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world-adms">
+                            Open World ADMs
+                            </NavDropdown.Item>
+                        )}
+                        {(isUserTa3(currentUser) || isUserExternalSimResearcher(currentUser)) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/tccc">
                                         TCCC
                                     </NavDropdown.Item>
                             )}
                     </NavDropdown>
                 </>
-            )}
+            )
+        }
         </ul>
         <ul className="navbar-nav ml-auto">
             <li className="login-user">

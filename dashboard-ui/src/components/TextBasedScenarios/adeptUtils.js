@@ -33,7 +33,7 @@ export const submitResponses = async (scenario, scenarioID, urlBase, sessionID) 
     }
 };
 
-export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, skipKdmaFilter = false, enable_subpop = false) => {
+export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, skipKdmaFilter = false, enable_subpop = false, allow_multiattribute_targets = false) => {
     const endpoint = '/api/v1/get_ordered_alignment';
 
     const getTargets = () => {
@@ -62,6 +62,7 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
             const params = { session_id: sessionId };
             if (target) params.kdma_id = target;
             if (enable_subpop) params.enable_subpop = enable_subpop
+            if (allow_multiattribute_targets) params.allow_multiattribute_targets = allow_multiattribute_targets
 
             const response = await axios.get(`${url}${endpoint}`, { params });
             const filteredData = response.data.filter(obj =>

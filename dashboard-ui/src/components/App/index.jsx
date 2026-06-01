@@ -26,14 +26,15 @@ import HumanResults from '../HumanResults/humanResults';
 import { RQ1 } from '../Research/RQ1';
 import { RQ2 } from '../Research/RQ2';
 import { RQ3 } from '../Research/RQ3';
-import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis';
+import { OpenWorld } from '../Research/OpenWorld';
 import { TcccAnalysis } from '../Research/TcccAnalysis';
+import { OpenWorldADMs } from '../Research/OpenWorldADMs';
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
 
 // CSS and Image Stuff 
@@ -118,6 +119,10 @@ export function isUserElevated(currentUser) {
 
 export function isUserTa3(currentUser) {
     return currentUser?.ta3User || currentUser?.admin
+}
+
+export function isUserExternalSimResearcher(currentUser) {
+    return currentUser?.externalSimResearcher || currentUser?.admin
 }
 
 export function App() {
@@ -356,11 +361,11 @@ export function App() {
             return;
         } else {
             let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
-                !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
                 x.ParticipantID >= lowPid && x.ParticipantID <= highPid
             ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
             const participantDataFunctions = {
+                17: juneParticipantData,
                 16: aprilParticipantData,
                 15: febParticipantData,
                 13: octoberParticipantData,
@@ -523,8 +528,9 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq1" component={RQ1} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
-                        {isUserTa3(currentUser) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
+                        {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
+                        {(isUserTa3(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
+                        {isUserElevated(currentUser) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.
                             Otherwise, send to homepage */}
