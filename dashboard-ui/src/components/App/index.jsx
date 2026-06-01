@@ -433,7 +433,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.experimenter === true || currentUser.admin === true) {
+            if (hasAccess(currentUser, ['admin', 'experimenter'])) {
                 return <PidLookup />
             } else {
                 return <Redirect push to="/" />;

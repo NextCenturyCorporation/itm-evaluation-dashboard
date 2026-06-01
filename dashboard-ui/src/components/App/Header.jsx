@@ -108,7 +108,7 @@ function UserMenu({ currentUser, logout }) {
                 <Link className="dropdown-item" to="/myaccount" onClick={handleToggle}>
                     My Account
                 </Link>
-                {currentUser.admin === true && (
+                {hasAccess(currentUser, ['admin']) && (
                     <Link className="dropdown-item" to="/admin" onClick={handleToggle}>
                         Administrator
                     </Link>
