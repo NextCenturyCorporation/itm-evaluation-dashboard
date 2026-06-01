@@ -47,14 +47,27 @@ const UPDATE_SCENARIO_RESULT = gql`
     }
 `;
 
-const HEADERS_PHASE1_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
-const HEADERS_PHASE1_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
+const PROLIFIC_COLUMNS = ['Prolific ID', 'Contact ID', 'Survey Link'];
 
-const HEADERS_PHASE2_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'Alignment Status', 'Subpop', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
-const HEADERS_PHASE2_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'Alignment Status', 'Subpop', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
+const HEADERS_PHASE1 = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4'];
 
-const HEADERS_UK_NO_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
-const HEADERS_UK_WITH_PROLIFIC = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
+const HEADERS_PHASE2 = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'Alignment Status', 'Subpop', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
+
+const HEADERS_UK = ['Participant ID', 'Participant Type', 'Evaluation', 'Prolific ID', 'Contact ID', 'Survey Link', 'Sim Date-Time', 'Sim Count', 'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'Del Start Date-Time', 'Del End Date-Time', 'Delegation', 'Del-1', 'Del-2', 'Del-3', 'Text Start Date-Time', 'Text End Date-Time', 'Text', 'IO1', 'MJ1', 'MJ5', 'VOL2'];
+
+// Eval-specific text thresholds; unlisted evals use phase-based defaults (Phase 2/UK: 4, Phase 1: 5)
+const TEXT_THRESHOLD_BY_EVAL = { 13: 12, 17: 6 };
+// Phase 2 evals that use a delegation threshold of 4 instead of 5
+const DEL_THRESHOLD_4_EVALS = new Set([10, 16]);
+
+const computeTextThreshold = (evalNumber, isPH2OrUK) =>
+    TEXT_THRESHOLD_BY_EVAL[evalNumber] ?? (isPH2OrUK ? 4 : 5);
+
+const computeDelThreshold = (evalNumber, isUK, isPH2OrUK) => {
+    if (isUK) return 3;
+    if (isPH2OrUK && !DEL_THRESHOLD_4_EVALS.has(evalNumber)) return 5;
+    return 4;
+};
 
 
 const formatDateTime = (date) => {
@@ -114,19 +127,13 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
 
     const getHeaders = () => {
-        let headers = [];
-        if (selectedPhase === 'Phase 2') {
-            headers = canViewProlific ? [...HEADERS_PHASE2_WITH_PROLIFIC] : [...HEADERS_PHASE2_NO_PROLIFIC];
-        }
-        else if (selectedPhase === 'UK Phase 1') {
-            headers = canViewProlific ? [...HEADERS_UK_WITH_PROLIFIC] : [...HEADERS_UK_NO_PROLIFIC];
-        }
-        else {
-            headers = canViewProlific ? [...HEADERS_PHASE1_WITH_PROLIFIC] : [...HEADERS_PHASE1_NO_PROLIFIC];
-        }
-        if (isAdmin) {
-            headers.splice(3, 0, "Delete");
-        }
+        let headers;
+        if (selectedPhase === 'Phase 2') headers = [...HEADERS_PHASE2];
+        else if (selectedPhase === 'UK Phase 1') headers = [...HEADERS_UK];
+        else headers = [...HEADERS_PHASE1];
+
+        if (!canViewProlific) headers = headers.filter(h => !PROLIFIC_COLUMNS.includes(h));
+        if (isAdmin) headers.splice(3, 0, "Delete");
         return headers;
     };
 
@@ -505,19 +512,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             }
             const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
             const isUK = selectedPhase === 'UK Phase 1';
-            const isEval13 = dataSet['_evalNumber'] === 13;
-
-            // phase dependent
-            let textThreshold;
-            if (isEval13) {
-                textThreshold = 12;
-            } else if (isPH2OrUK) {
-                textThreshold = 4;
-            } else {
-                textThreshold = 5;
-            }
-
-            const delThreshold = isUK ? 3 : (isPH2OrUK && ![10, 16].includes(dataSet['_evalNumber'])) ? 5 : 4;
+            const textThreshold = computeTextThreshold(dataSet['_evalNumber'], isPH2OrUK);
+            const delThreshold = computeDelThreshold(dataSet['_evalNumber'], isUK, isPH2OrUK);
             if ((header === 'Delegation' && val >= delThreshold) ||
                 (header === 'Text' && val == textThreshold) ||
                 (header === 'Sim Count' && (val === 4 || (isPH2OrUK && val === 2)))) {
@@ -554,10 +550,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
-            const textThreshold = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1' ? 4 : 5;
             const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
             const isUK = selectedPhase === 'UK Phase 1';
-            const getDelThreshold = (x) => isUK ? 3 : (isPH2OrUK && ![10, 16].includes(x['_evalNumber'])) ? 5 : 4;
+            const textThreshold = isPH2OrUK ? 4 : 5;
+            const getDelThreshold = (x) => computeDelThreshold(x['_evalNumber'], isUK, isPH2OrUK);
 
             setFilteredData(formattedData.filter((x) => {
                 if (!participantMatchesPhase(x, selectedPhase)) return false;
