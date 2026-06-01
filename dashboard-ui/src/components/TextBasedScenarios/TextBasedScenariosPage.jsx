@@ -109,28 +109,7 @@ class TextBasedScenariosPage extends Component {
             demographicsUploadData: null,
             isDemographicsUploadEnabled: false,
             demographicsStartTime: null,
-            eval13Groups: {
-                AF: [],
-                MF: [],
-                PS: [],
-                SS: []
-            },
-            eval13CombinedSessions: {
-                AF: null,
-                MF: null,
-                PS: null,
-                SS: null
-            },
-            // Eval 15: PS+AF share one session, MF+SS share another session
-            // MF also gets individual scoring
-            eval15Groups: {
-                'PS-AF': [],  // PS and AF share a session
-                'MF-SS': []   // MF and SS share a session
-            },
-            eval15CombinedSessions: {
-                'PS-AF': null,
-                'MF-SS': null
-            },
+            adeptGroupState: {},
             showConsentForm: false,
             consentGiven: false,
             eval16CombinedSessionId: null,
@@ -432,9 +411,44 @@ class TextBasedScenariosPage extends Component {
         }
 
         const evalProcessors = {
+            17: async () => {
+                // doing the AF-SS group inline since it doesn't fit into my generic logic
+                const id = scenario.scenario_id;
+                if (!id.includes('trinary') && (id.includes('AF') || id.includes('SS'))) {
+                    const url = this.getAdeptUrl();
+                    const current = this.state.adeptGroupState['AF-SS-multi'] || { scenarios: [], sessionId: null };
+                    const sessionId = current.sessionId || await createAdeptSession(url);
+                    await this.submitResponses(scenario, id, url, sessionId);
+                    const updated = [...current.scenarios, scenario];
+                    await new Promise(resolve => this.setState(prevState => ({
+                        adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId } }
+                    }), resolve));
+                    if (updated.length === 2) {
+                        const mla = await this.mostLeastAligned(sessionId, 'adept', url, updated[0], true, false, true);
+                        const kdmas = await this.attachKdmaValue(sessionId, url);
+                        for (const s of updated) {
+                            s['AF-SS_sessionId'] = sessionId;
+                            s['AF-SS_mostLeastAligned'] = mla;
+                            s['AF-SS_kdmas'] = kdmas;
+                        }
+                    }
+                }
+                await this.processGroupedAdeptScenario(scenario, {
+                    getGroupKey: (id) => id.includes('trinary') ? 'trinary' : 'regular',
+                    getGroupSize: (key) => key === 'trinary' ? 2 : 4,
+                });
+            },
             16: () => this.processEval16Scenario(scenario),
-            15: () => this.processEval15Scenario(scenario),
-            13: () => this.processEval13Scenario(scenario),
+            15: () => this.processGroupedAdeptScenario(scenario, {
+                getGroupKey: (id) => (id.includes('PS') || id.includes('AF')) ? 'PS-AF' : 'MF-SS',
+                getGroupSize: () => 2,
+                needsIndividualScoring: (id) => id.includes('MF'),
+            }),
+            13: () => this.processGroupedAdeptScenario(scenario, {
+                getGroupKey: (id) => { const m = id.match(/-(AF|MF|PS|SS)\d+-/); return m ? m[1] : null; },
+                getGroupSize: () => 3,
+                needsIndividualScoring: () => true,
+            }),
         };
 
         // Eval 10 PS-AF gets isolated session
@@ -494,6 +508,74 @@ class TextBasedScenariosPage extends Component {
             }
         } catch (e) {
             console.error('Error creating isolated session:', e);
+        }
+    }
+
+    // refactored a lot of similar logic into generic group session id handling
+    processGroupedAdeptScenario = async (scenario, { getGroupKey, getGroupSize, needsIndividualScoring }) => {
+        const url = this.getAdeptUrl();
+        const scenarioId = scenario.scenario_id;
+        const groupKey = getGroupKey(scenarioId);
+
+        if (!groupKey) {
+            console.error('Could not determine group for scenario:', scenarioId);
+            return;
+        }
+
+        if (needsIndividualScoring?.(scenarioId)) {
+            try {
+                const indSessionId = await createAdeptSession(url);
+                await this.submitResponses(scenario, scenarioId, url, indSessionId);
+                scenario.individualSessionId = indSessionId;
+                scenario.individualMostLeastAligned = await this.mostLeastAligned(indSessionId, 'adept', url, scenario);
+                scenario.individualKdmas = await this.attachKdmaValue(indSessionId, url);
+            } catch (e) {
+                console.error(`Error in individual scoring for ${scenarioId}:`, e);
+                scenario.individualSessionId = null;
+                scenario.individualMostLeastAligned = null;
+                scenario.individualKdmas = null;
+                scenario.individualScoringError = e.message;
+            }
+        }
+
+        const currentGroup = this.state.adeptGroupState[groupKey] || { scenarios: [], sessionId: null };
+        let sessionId = currentGroup.sessionId;
+
+        if (!sessionId) {
+            sessionId = await createAdeptSession(url);
+        }
+
+        await this.submitResponses(scenario, scenarioId, url, sessionId);
+
+        const updatedScenarios = [...currentGroup.scenarios, scenario];
+        await new Promise(resolve => this.setState(prevState => ({
+            adeptGroupState: {
+                ...prevState.adeptGroupState,
+                [groupKey]: { scenarios: updatedScenarios, sessionId }
+            }
+        }), resolve));
+
+        if (updatedScenarios.length === getGroupSize(groupKey)) {
+            try {
+                const combinedMostLeastAligned = await this.mostLeastAligned(sessionId, 'adept', url, updatedScenarios[0], true);
+                const combinedKdmas = await this.attachKdmaValue(sessionId, url);
+
+                for (const s of updatedScenarios) {
+                    s.combinedSessionId = sessionId;
+                    s.combinedMostLeastAligned = combinedMostLeastAligned;
+                    s.combinedKdmas = combinedKdmas;
+                    await this.uploadSingleScenario(s);
+                }
+            } catch (e) {
+                console.error(`Error in ${groupKey} group completion:`, e);
+                for (const s of updatedScenarios) {
+                    s.combinedSessionId = sessionId;
+                    s.combinedMostLeastAligned = null;
+                    s.combinedKdmas = null;
+                    s.combinedScoringError = e.message;
+                    await this.uploadSingleScenario(s);
+                }
+            }
         }
     }
 
@@ -589,190 +671,6 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    processEval15Scenario = async (scenario) => {
-        const url = this.getAdeptUrl();
-        const sessionEndpoint = '/api/v1/new_session';
-        const scenarioId = scenario.scenario_id;
-
-        let groupKey = null;
-        if (scenarioId.includes('PS') || scenarioId.includes('AF')) {
-            groupKey = 'PS-AF';
-        } else if (scenarioId.includes('MF') || scenarioId.includes('SS')) {
-            groupKey = 'MF-SS';
-        }
-
-        if (!groupKey) {
-            console.error('Could not determine group for eval 15 scenario:', scenarioId);
-            return;
-        }
-
-        // ind processing of MF
-        if (scenarioId.includes('MF')) {
-            try {
-                const individualSession = await axios.post(`${url}${sessionEndpoint}`);
-                if (individualSession.status === 200) {
-                    const individualSessionId = individualSession.data;
-
-                    await this.submitResponses(scenario, scenarioId, url, individualSessionId);
-
-                    scenario.individualSessionId = individualSessionId;
-                    scenario.individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, scenario);
-                    scenario.individualKdmas = await this.attachKdmaValue(individualSessionId, url);
-                }
-            } catch (e) {
-                console.error('Error processing eval 15 individual MF scoring:', e);
-                scenario.individualSessionId = null;
-                scenario.individualMostLeastAligned = null;
-                scenario.individualKdmas = null;
-                scenario.individualScoringError = e.message;
-            }
-        }
-
-        const updatedGroup = [...this.state.eval15Groups[groupKey], scenario];
-        this.setState({
-            eval15Groups: { ...this.state.eval15Groups, [groupKey]: updatedGroup }
-        });
-
-        // when both scenarios in the pair are done, submit probes and score
-        if (updatedGroup.length === 2) {
-            await this.processEval15GroupCompletion(groupKey, updatedGroup);
-        }
-    }
-
-    processEval15GroupCompletion = async (groupKey, groupScenarios) => {
-        const url = this.getAdeptUrl();
-        const sessionEndpoint = '/api/v1/new_session';
-
-        try {
-            const combinedSession = await axios.post(`${url}${sessionEndpoint}`);
-            if (combinedSession.status === 200) {
-                const combinedSessionId = combinedSession.data;
-
-                for (const scenario of groupScenarios) {
-                    await this.submitResponses(scenario, scenario.scenario_id, url, combinedSessionId);
-                }
-
-                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, groupScenarios[0], true);
-                const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
-
-                this.setState({
-                    eval15CombinedSessions: { ...this.state.eval15CombinedSessions, [groupKey]: combinedSessionId }
-                });
-
-                for (const scenario of groupScenarios) {
-                    scenario.combinedSessionId = combinedSessionId;
-                    scenario.mostLeastAligned = combinedMostLeastAligned;
-                    scenario.kdmas = combinedKdmas;
-                    await this.uploadSingleScenario(scenario);
-                }
-            }
-        } catch (e) {
-            console.error('Error in eval 15 group completion:', e);
-            for (const scenario of groupScenarios) {
-                scenario.combinedSessionId = null;
-                scenario.mostLeastAligned = null;
-                scenario.kdmas = null;
-                scenario.combinedScoringError = e.message;
-                await this.uploadSingleScenario(scenario);
-            }
-        }
-    }
-
-    // handles individual and combined scoring (when all 3 scenarios for an attribute are complete)
-    processEval13Scenario = async (scenario) => {
-        const url = this.getAdeptUrl();
-        const sessionEndpoint = '/api/v1/new_session';
-
-        //"July2025-AF1-eval" -> "AF"
-        const groupMatch = scenario.scenario_id.match(/-(AF|MF|PS|SS)\d+-/);
-        if (!groupMatch) {
-            console.error('Could not determine group for scenario:', scenario.scenario_id);
-            return;
-        }
-        const groupPrefix = groupMatch[1];
-
-        try {
-            // individual scoring
-            const individualSession = await axios.post(`${url}${sessionEndpoint}`);
-            if (individualSession.status === 200) {
-                const individualSessionId = individualSession.data;
-
-                await this.submitResponses(scenario, scenario.scenario_id, url, individualSessionId);
-
-                const individualMostLeastAligned = await this.mostLeastAligned(individualSessionId, 'adept', url, scenario);
-                const individualKdmas = await this.attachKdmaValue(individualSessionId, url);
-
-                scenario.sessionId = individualSessionId;
-                scenario.mostLeastAligned = individualMostLeastAligned;
-                scenario.kdmas = individualKdmas;
-            }
-        } catch (e) {
-            console.error('Error processing eval 13 scenario:', e);
-            scenario.sessionId = null;
-            scenario.mostLeastAligned = null;
-            scenario.kdmas = null;
-            scenario.scoringError = e.message;
-        }
-
-        //add to attr group
-        const updatedGroup = [...this.state.eval13Groups[groupPrefix], scenario];
-        const updatedGroups = {
-            ...this.state.eval13Groups,
-            [groupPrefix]: updatedGroup
-        };
-
-        this.setState({ eval13Groups: updatedGroups });
-
-        if (updatedGroup.length === 3) {
-            // attr group done
-            await this.processEval13GroupCompletion(groupPrefix, updatedGroup);
-        }
-    }
-
-    processEval13GroupCompletion = async (groupPrefix, groupScenarios) => {
-        const url = this.getAdeptUrl();
-        const sessionEndpoint = '/api/v1/new_session';
-
-        try {
-            // combined scoring
-            const combinedSession = await axios.post(`${url}${sessionEndpoint}`);
-            if (combinedSession.status === 200) {
-                const combinedSessionId = combinedSession.data;
-
-                for (const scenario of groupScenarios) {
-                    await this.submitResponses(scenario, scenario.scenario_id, url, combinedSessionId);
-                }
-
-                const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, groupScenarios[0]);
-                const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url);
-
-                const updatedCombinedSessions = {
-                    ...this.state.eval13CombinedSessions,
-                    [groupPrefix]: combinedSessionId
-                };
-                this.setState({ eval13CombinedSessions: updatedCombinedSessions });
-
-                for (const scenario of groupScenarios) {
-                    scenario.combinedSessionId = combinedSessionId;
-                    scenario.combinedMostLeastAligned = combinedMostLeastAligned;
-                    scenario.combinedKdmas = combinedKdmas;
-
-                    await this.uploadSingleScenario(scenario);
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            for (const scenario of groupScenarios) {
-                scenario.combinedSessionId = null;
-                scenario.combinedMostLeastAligned = null;
-                scenario.combinedKdmas = null;
-                scenario.combinedScoringError = e.message || 'Failed to communicate with ADEPT server for combined scoring';
-
-                await this.uploadSingleScenario(scenario);
-            }
-        }
-    }
-
     uploadSingleScenario = async (scenario) => {
         const sanitizedData = this.sanitizeKeys(scenario);
 
@@ -842,7 +740,7 @@ class TextBasedScenariosPage extends Component {
         return getKdmaProfile(sessionId, url, enable_subpop);
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false) => {
+    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false, allowMultiattributeTargets = false) => {
         const evalNumber = evalNameToNumber[this.props.currentTextEval];
         if (ta1 === 'soartech') {
             // SoarTech still uses its own logic
@@ -862,7 +760,7 @@ class TextBasedScenariosPage extends Component {
                 return [];
             }
         }
-        return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop);
+        return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop, allowMultiattributeTargets);
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
