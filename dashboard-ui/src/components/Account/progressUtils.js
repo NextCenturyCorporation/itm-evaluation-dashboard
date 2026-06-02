@@ -15,7 +15,7 @@ const PHASE1_SCENARIOS = {
     VOL4: ['vol-ph1-eval-4']
 };
 
-const PHASE2_SCENARIO_KEYS = ['Subpop', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
+const PHASE2_SCENARIO_KEYS = ['Subpop', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2', 'AF-Bi', 'AF-Tri', 'MF-Bi', 'PS-Bi', 'PS-Tri', 'SS-Bi'];
 
 export const SCENARIO_HEADERS = [
     'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4',
@@ -23,11 +23,20 @@ export const SCENARIO_HEADERS = [
     ...PHASE2_SCENARIO_KEYS
 ];
 
+// Eval 17 (June 2026) uses no-digit IDs with binary/trinary variants
+const EVAL17_SCENARIO_TO_COL = {
+    'June2026-AF-assess': 'AF-Bi',
+    'June2026-AF-assess-trinary': 'AF-Tri',
+    'June2026-MF-assess': 'MF-Bi',
+    'June2026-PS-assess': 'PS-Bi',
+    'June2026-PS-assess-trinary': 'PS-Tri',
+    'June2026-SS-assess': 'SS-Bi',
+};
+
 const isPhase2Scenario = (scenarioId, targetKey) => {
-    //subpop check
-    if (scenarioId.includes('subpop') && targetKey === 'Subpop') return true
-    // for april 2026 we use PS2 and SS2 (only one AF and MF)
-    // so for consistency I am gonna mark these as AF2 and MF2 even though they are rlly labeled as AF-assess and MF-assess
+    if (scenarioId.includes('subpop') && targetKey === 'Subpop') return true;
+    if (EVAL17_SCENARIO_TO_COL[scenarioId] === targetKey) return true;
+    // april 2026: only one AF and MF so no digit — map to AF2/MF2 for consistency
     if (targetKey === 'AF2' && scenarioId.endsWith('April2026-AF-assess')) return true;
     if (targetKey === 'MF2' && scenarioId.endsWith('April2026-MF-assess')) return true;
     return scenarioId.endsWith(`2025-${targetKey}-eval`) || scenarioId.endsWith(`2026-${targetKey}-assess`);
