@@ -112,18 +112,12 @@ const GET_ALL_TEXT_BASED_IMAGES = gql`
     }
 `;
 
-export function isUserElevated(currentUser) {
-    return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser || currentUser?.ta3User;
-}
-
-export function isUserTa3(currentUser) {
-    return currentUser?.ta3User || currentUser?.admin
-}
-
-// helper function for conditional checking of user privileges
+// helper function for conditional checking of user privileges and access to certain dashboard pages 
 export function hasAccess(currentUser, allowedRoles) {
-    console.log(currentUser); // just to see what the object CurrentUser looks like
-    return allowedRoles.some(role => currentUser[role] === true);
+    // protect against null values
+    if (!currentUser) return false;
+
+    return allowedRoles.some(role => currentUser[role] === true); // get current user access attributes 
 }
 
 export function App() {
@@ -421,7 +415,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (isUserElevated(currentUser)) {
+            if (hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) {
                 return <ParticipantProgressTable canViewProlific={currentUser.adeptUser || currentUser.admin} isAdmin={currentUser.admin} currentUser={currentUser} />
             } else {
                 return <Redirect push to="/" />;
@@ -442,7 +436,7 @@ export function App() {
     };
 
     const Survey = () => {
-        if (isUserElevated(currentUser)) {
+        if (hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) {
             return <SurveyPageWrapper currentUser={currentUser} />;
         }
         else {
@@ -504,32 +498,32 @@ export function App() {
                         <Route path="/remote-text-survey" component={StartOnline} />
                         <Route path="/text-based" component={TextBasedScenariosPageWrapper} />
                         <Route path="/myaccount" component={MyAccount} />
-                        {isUserElevated(currentUser) && <Route exact path="/results" component={ResultsPage} />}
-                        {isUserElevated(currentUser) && <Route exact path="/adm-results" component={ADMChartPage} />}
-                        {isUserElevated(currentUser) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
-                        {isUserElevated(currentUser) && <Route exact path="/humanSimParticipant">
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
                             <AggregateResults type="HumanSimParticipant" />
                         </Route>}
                         {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
                             <Login participantTextLogin={true} testerLogin={true} />
                         </Route>}
-                        {isUserElevated(currentUser) && <Route path="/admin" component={Admin} />}
-                        {isUserElevated(currentUser) && <Route path="/participant-progress-table" component={ProgressTable} />}
-                        {isUserElevated(currentUser) && <Route path="/pid-lookup" component={PidLookupPage} />}
-                        {isUserElevated(currentUser) && <Route path="/survey" component={Survey} />}
-                        {isUserElevated(currentUser) && <Route path="/survey-results" component={SurveyResults} />}
-                        {isUserElevated(currentUser) && <Route path="/review-text-based" component={ReviewTextBased} />}
-                        {isUserElevated(currentUser) && <Route path="/review-delegation" component={ReviewDelegation} />}
-                        {isUserElevated(currentUser) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
-                        {isUserElevated(currentUser) && <Route path="/humanProbeData">
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/admin" component={Admin} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/pid-lookup" component={PidLookupPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey" component={Survey} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
                             <AggregateResults type="HumanProbeData" />
                         </Route>}
 
-                        {isUserElevated(currentUser) && <Route exact path="/human-results" component={HumanResults} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq1" component={RQ1} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
                         {hasAccess(currentUser, ['admin', 'ta3User']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.

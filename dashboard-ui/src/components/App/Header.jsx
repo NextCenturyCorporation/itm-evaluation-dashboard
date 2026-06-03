@@ -1,5 +1,5 @@
 import React from 'react';
-import { isUserElevated, isUserTa3, hasAccess } from '.';
+import { hasAccess } from '.';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import NavDropdown from 'react-bootstrap/NavDropdown';
