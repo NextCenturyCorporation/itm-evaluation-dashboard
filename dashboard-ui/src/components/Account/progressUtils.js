@@ -75,6 +75,14 @@ const hasMLA = (scenarioResult) => {
         }
     }
 
+    // check af-ss for eval 17
+    if (scenarioResult?.evalNumber === 17) {
+        const sid = scenarioResult.scenario_id;
+        if (!sid.includes('trinary') && (sid.includes('AF') || sid.includes('SS'))) {
+            if (!scenarioResult['AF-SS_mostLeastAligned']) return false;
+        }
+    }
+
     return true;
 };
 
