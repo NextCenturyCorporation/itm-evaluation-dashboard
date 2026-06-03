@@ -17,6 +17,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import { shuffle } from '../Survey/surveyUtils';
 import { createBrowserHistory } from 'history';
 import { SurveyPageWrapper } from '../Survey/survey';
+import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
 import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import consentPdf from '../OnlineOnly/consent.pdf';
@@ -64,8 +65,16 @@ export function TextBasedScenariosPageWrapper(props) {
     // server side time stamps
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
+    // show loading screen
     if (participantLogLoading) return <p>Loading...</p>;
-    if (participantLogError) return <p>Error</p>;
+
+    // show error modal IFF an participantLogError occurs
+    if (participantLogError) {
+        console.log('Apollo Error:', participantLogError); // debug
+        return(
+            <QueryErrorMessage error={participantLogError}></QueryErrorMessage>
+        );
+    }
 
     return <TextBasedScenariosPage
         {...props}
