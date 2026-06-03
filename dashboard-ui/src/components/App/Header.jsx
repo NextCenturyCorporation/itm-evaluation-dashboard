@@ -1,5 +1,6 @@
 import React from 'react';
 import { hasAccess } from '.';
+import { isUserElevated, isUserTa3, isUserExternalSimResearcher } from '.';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -31,6 +32,7 @@ export function Header({ currentUser, logout }) {
                     )}
                 </NavDropdown>
             )}
+            
             {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) && (
                 <>
                     <NavDropdown title="Human Evaluation Segments">
@@ -61,27 +63,46 @@ export function Header({ currentUser, logout }) {
                             ADM Probe Responses
                         </NavDropdown.Item>
                     </NavDropdown>
-                    <NavDropdown title="Data Analysis">
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
+                </>
+            )}
+
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+                <>
+                <NavDropdown title="Data Analysis">
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
                             RQ1
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
+                            </NavDropdown.Item>
+                        )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
                             RQ2
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
+                            </NavDropdown.Item>
+                        )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
                             RQ3
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
-                            Exploratory Analysis
-                        </NavDropdown.Item>
-                        {hasAccess(currentUser, ['admin', 'ta3User']) && (
+                            </NavDropdown.Item>
+                        )}
+                        {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world">
+                            Open World
+                            </NavDropdown.Item>
+                        )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world-adms">
+                            Open World ADMs
+                            </NavDropdown.Item>
+                        )}
+                        {(hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher'])) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/tccc">
                                         TCCC
                                     </NavDropdown.Item>
                             )}
                     </NavDropdown>
                 </>
-            )}
+            )
+        }
         </ul>
         <ul className="navbar-nav ml-auto">
             <li className="login-user">
