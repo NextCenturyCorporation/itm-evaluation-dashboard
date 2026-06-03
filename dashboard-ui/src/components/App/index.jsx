@@ -115,10 +115,10 @@ const GET_ALL_TEXT_BASED_IMAGES = gql`
 
 // helper function for conditional checking of user privileges and access to certain dashboard pages 
 export function hasAccess(currentUser, allowedRoles) {
-    // protect against null values
+    // protect against a null user object
     if (!currentUser) return false;
 
-    return allowedRoles.some(role => currentUser[role] === true); // get current user access attributes 
+    return allowedRoles.some(role => currentUser[role] === true); // true if user has any required role flag enabled
 }
 
 export function App() {
