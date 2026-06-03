@@ -121,10 +121,6 @@ export function hasAccess(currentUser, allowedRoles) {
     return allowedRoles.some(role => currentUser[role] === true); // get current user access attributes 
 }
 
-export function isUserExternalSimResearcher(currentUser) {
-    return currentUser?.externalSimResearcher || currentUser?.admin
-}
-
 export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
     const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
