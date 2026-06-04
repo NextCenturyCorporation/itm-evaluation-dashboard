@@ -3,12 +3,10 @@ import { Table, Container } from 'react-bootstrap';
 import '../../css/dynamicPhase2.css';
 
 const trailingTextMap = {
-    'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?':
-        'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?',
-    'Which patient do you treat?':
-        'There are two patients, Patient A and Patient B, and you only have time to treat one of them. Which patient do you treat?',
-    'Do you stay with your current patient, or do you leave?':
-        'You arrive at the scene where you know there may be multiple casualties. Do you stay with your current patient, or do you leave?',
+    'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?': 'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?',
+    'Which patient do you treat?': 'There are two patients, Patient A and Patient B, and you only have time to treat one of them. Which patient do you treat?',
+    'Do you stay with your current patient, or do you leave?': 'You arrive at the scene where you know there may be multiple casualties. Do you stay with your current patient, or do you leave?',
+    'Do you move to treat one of the casualties now, or wait in your current location?': 'Do you move to treat one of the casualties now, or wait in your current location?'
 };
 
 const TARGET_PROMPT = 'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?';
