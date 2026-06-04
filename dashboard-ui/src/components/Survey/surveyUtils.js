@@ -2132,9 +2132,7 @@ export const createScenarioBlockv12 = (scenarioType, allPages, textResults) => {
     const ordered = (entry?.response || []).filter(o => keyMatches(Object.keys(o)[0]));
     if (!ordered.length) { console.warn(`No alignment targets for v12 block ${blockKey}`); return null; }
 
-    const mostAlignedTarget = Object.keys(ordered[0])[0];
-    const leastAlignedTarget = Object.keys(ordered.at(-1))[0];
-
+    const pageForEntry = o => findPage(Object.keys(o)[0]);
     const findPage = (target, baseline = false) => allPages.find(page =>
         config.indexMatch(page.scenarioIndex) &&
         (baseline
@@ -2142,12 +2140,35 @@ export const createScenarioBlockv12 = (scenarioType, allPages, textResults) => {
             : (!page.admName?.includes('Baseline') && page.target === target))
     );
 
-    const alignedAdm = findPage(mostAlignedTarget);
+    // baseline is always the baseline
     const baselineAdm = findPage(null, true);
-    const misalignedAdm = includeMisaligned ? findPage(leastAlignedTarget) : null;
+    if (!baselineAdm) { console.warn(`Missing baseline ADM page for v12 block ${blockKey}`); return null; }
 
-    if (!alignedAdm || !baselineAdm || (includeMisaligned && !misalignedAdm)) {
-        console.warn(`Missing ADM pages for v12 block ${blockKey} - aligned:${!!alignedAdm} baseline:${!!baselineAdm} misaligned:${!!misalignedAdm}`);
+    // most aligned: walk down from the top until we find one that doesn't
+    // behave identically to the baseline
+    let alignedAdm = null;
+    for (const o of ordered) {
+        const candidate = pageForEntry(o);
+        if (candidate && !haveSameResponses(candidate, baselineAdm)) { alignedAdm = candidate; break; }
+    }
+
+    // least aligned: walk up from the bottom until we find one that doesn't
+    // overlap with either the most aligned or the baseline
+    let misalignedAdm = null;
+    if (includeMisaligned) {
+        for (let i = ordered.length - 1; i >= 0; i--) {
+            const candidate = pageForEntry(ordered[i]);
+            if (candidate &&
+                !haveSameResponses(candidate, alignedAdm) &&
+                !haveSameResponses(candidate, baselineAdm)) {
+                misalignedAdm = candidate;
+                break;
+            }
+        }
+    }
+
+    if (!alignedAdm || (includeMisaligned && !misalignedAdm)) {
+        console.warn(`Missing ADM pages for v12 block ${blockKey} - aligned:${!!alignedAdm} misaligned:${!!misalignedAdm}`);
         return null;
     }
 
