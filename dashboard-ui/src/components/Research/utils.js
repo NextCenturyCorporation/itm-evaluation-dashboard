@@ -219,7 +219,7 @@ export function getAlignments(evalNum, textResults, pid) {
             // st
             if (textRes['alignmentData']) {
                 alignments.push(...textRes['alignmentData'])
-            } else {
+            } else if (textRes['mostLeastAligned']) {
                 alignments.push(...textRes['mostLeastAligned'])
             }
         }
