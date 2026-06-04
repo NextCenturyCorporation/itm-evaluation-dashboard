@@ -186,6 +186,7 @@ class SurveyPage extends Component {
             const finalPages = [...introPages, ...blocks.flatMap(getPages)];
             if (postScenarioPage) finalPages.push(postScenarioPage);
             this.surveyConfigClone.pages = finalPages;
+            console.log(finalPages)
             this.setState({ orderLog: finalPages.map(page => page.name) });
         };
 

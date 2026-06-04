@@ -2101,9 +2101,68 @@ const onlineOnlyTitles = {
 }
 
 export const createScenarioBlockv12 = (scenarioType, allPages, textResults) => {
+    const { attr, type } = scenarioType;
+    const blockKey = `${attr}-${type}`;
 
-}
+    const configs = {
+        'AF-tri':   { scenarioId: 'June2026-AF-assess-trinary', field: 'combinedMostLeastAligned', include: ['AF'], exclude: ['MF', 'PS', 'SS'], indexMatch: idx => idx?.includes('AF') && idx?.includes('trinary') },
+        'AF-bi':    { scenarioId: 'June2026-AF-assess',         field: 'combinedMostLeastAligned', include: ['AF'], exclude: ['MF', 'PS', 'SS'], indexMatch: idx => idx?.includes('AF') && !idx?.includes('trinary') && !idx?.includes('SS') },
+        'PS-tri':   { scenarioId: 'June2026-PS-assess-trinary', field: 'combinedMostLeastAligned', include: ['PS'], exclude: ['MF', 'AF', 'SS'], indexMatch: idx => idx?.includes('PS') && idx?.includes('trinary') },
+        'PS-bi':    { scenarioId: 'June2026-PS-assess',         field: 'combinedMostLeastAligned', include: ['PS'], exclude: ['MF', 'AF', 'SS'], indexMatch: idx => idx?.includes('PS') && !idx?.includes('trinary') },
+        'AF-SS-2D': { scenarioId: 'June2026-AF-assess',         field: 'AF-SS_mostLeastAligned',   include: ['AF', 'SS'], exclude: ['MF', 'PS'], indexMatch: idx => idx?.includes('AF') && idx?.includes('SS') },
+    };
 
-const genComparisonPagev12 = (aligned, baseline, misaligned) => {
+    const config = configs[blockKey];
+    if (!config) { console.warn(`Unknown v12 block: ${blockKey}`); return null; }
 
-}
+    // AF-SS loads aligned + baseline only
+    const includeMisaligned = attr !== 'AF-SS';
+
+    const doc = textResults.find(r => r.scenario_id === config.scenarioId);
+    if (!doc) { console.warn(`No text document ${config.scenarioId} for v12 block ${blockKey}`); return null; }
+
+    const entry = doc[config.field]?.find(o => o.target === null) ?? doc[config.field]?.[0];
+
+    const isGroupKey = key => key.split('-').pop().includes('_');
+    const keyMatches = key =>
+        !isGroupKey(key) &&
+        config.include.every(c => key.includes(c)) &&
+        config.exclude.every(c => !key.includes(c));
+
+    const ordered = (entry?.response || []).filter(o => keyMatches(Object.keys(o)[0]));
+    if (!ordered.length) { console.warn(`No alignment targets for v12 block ${blockKey}`); return null; }
+
+    const mostAlignedTarget = Object.keys(ordered[0])[0];
+    const leastAlignedTarget = Object.keys(ordered.at(-1))[0];
+
+    const findPage = (target, baseline = false) => allPages.find(page =>
+        config.indexMatch(page.scenarioIndex) &&
+        (baseline
+            ? page.admName?.includes('Baseline')
+            : (!page.admName?.includes('Baseline') && page.target === target))
+    );
+
+    const alignedAdm = findPage(mostAlignedTarget);
+    const baselineAdm = findPage(null, true);
+    const misalignedAdm = includeMisaligned ? findPage(leastAlignedTarget) : null;
+
+    if (!alignedAdm || !baselineAdm || (includeMisaligned && !misalignedAdm)) {
+        console.warn(`Missing ADM pages for v12 block ${blockKey} - aligned:${!!alignedAdm} baseline:${!!baselineAdm} misaligned:${!!misalignedAdm}`);
+        return null;
+    }
+
+    Object.assign(alignedAdm, { alignment: 'aligned', admChoiceProcess: 'most aligned' });
+    baselineAdm.alignment = 'baseline';
+    if (misalignedAdm) Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
+
+    const admPages = [alignedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
+
+    return {
+        type: blockKey,
+        pages: [...shuffle(admPages), genComparisonPagev12(alignedAdm, baselineAdm, misalignedAdm)]
+    };
+};
+
+// same logic as version 10
+const genComparisonPagev12 = (aligned, baseline, misaligned) =>
+    genComparisonPagev10(aligned, baseline, misaligned);
