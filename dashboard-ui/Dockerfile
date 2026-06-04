@@ -56,7 +56,7 @@ RUN npm run build
 RUN npm i -g serve
 
 # ---------- RUNTIME TARGET (nginx serves build output) ----------
-FROM nginx:alpine AS runtime
+FROM nginx:latest AS runtime
 
 # Optional SPA config (recommended)
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
