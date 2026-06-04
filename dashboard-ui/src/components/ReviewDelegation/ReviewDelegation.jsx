@@ -33,6 +33,7 @@ const CONFIG_METADATA = [
     { key: 'uk', version: 'delegation_v9.0', title: 'UK Collaboration', isPhase2: false, useScenarioIndex: true },
     { key: 'ph2_feb', version: 'delegation_v10.0', title: 'Phase 2 February 2026 Collaboration', isPhase2: true },
     { key: 'ph2_april', version: 'delegation_v11.0', title: 'Phase 2 April 2026 Collaboration', isPhase2: true },
+    { key: 'ph2_june_2026', version: 'delegation_v12.0', title: 'Phase 2 June 2026 Collaboration', isPhase2: true}
 ];
 
 
