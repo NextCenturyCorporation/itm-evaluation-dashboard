@@ -1,0 +1,19 @@
+secrets:
+  corp_ca:
+    file: ./certs/ca-bundle.crt
+
+services:
+  dashboard-ui:
+    build:
+      secrets:
+        - corp_ca
+      args:
+        USE_CORP_CA: "true"
+
+  dashboard-server:
+    build:
+      context: ../node-graphql
+      secrets:
+        - corp_ca
+      args:
+        USE_CORP_CA: "true"
