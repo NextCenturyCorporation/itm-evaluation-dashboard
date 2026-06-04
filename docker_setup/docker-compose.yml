@@ -22,8 +22,13 @@ services:
       - dashboard-net
 
   dashboard-server:
-    container_name: dashboard-graphql
     image: dashboard-graphql:prod
+    build:
+      context: ../node-graphql
+      dockerfile: Dockerfile
+      args:
+        USE_CORP_CA: "false"
+    container_name: dashboard-graphql
     restart: always
     volumes:
       - ../dashboard-ui/public/configs/prod/graphql-config.js:/usr/src/app/config.js
