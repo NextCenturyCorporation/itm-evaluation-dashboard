@@ -1,80 +1,92 @@
-import {React, useState, useEffect} from 'react';
-import { Button, Modal } from 'react-bootstrap';
+import { React } from 'react';
+import { Card } from 'react-bootstrap';
 
 
 
-export function QueryErrorMessage({error}) {
-    // all variables, properties, and modal handling functions
-    const [show, setShow] = useState(false);
-    const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
+export function QueryErrorMessage({error, errors=[]}) {
+    // instantiate all necessary variables
+    // an array to hold one or more Apollo Error objects
+    const allErrors = [...(error ? [error] : []),
+                        ...(errors.filter(Boolean)),
+                    ];
+    // arrays for each type of error
+    const networkErrors = []; 
+    const graphQLErrors = [];
 
-    // open the modal when any error occurs
-    useEffect(() => {
-        if(error) {
-            handleShow();
-        }
-    }, [error])
+    // do not render the errors message if error is null
+    if(allErrors.length === 0) {
+        return null;
+    }
 
     // define graphql and network error messages from Apollo object
-    const networkErrorMessage = (error && error.networkError) ? error.networkError.message : null;
-    const graphQLErrorMessages =  error && error.graphQLErrors
-      ? error.graphQLErrors.map((e, index) => ({
-          id: index,
-          message: e.message,
-          code: e.extensions && e.extensions.code,
-        }))
-      : [];
+    allErrors.forEach((apolloError, errorIndex) => {
+        // get the network error message
+        if(apolloError?.networkError?.message) {
+            networkErrors.push({
+                id: errorIndex,
+                message: apolloError.networkError.message,
+            })
+        }
 
+        // get the standard apollo graphQL errors 
+        if (apolloError?.graphQLErrors?.length > 0) {
+            apolloError.graphQLErrors.forEach((err, index) => {
+                graphQLErrors.push({
+                    id: `graphql-${errorIndex}-${index}`,
+                    message: err.message,
+                    code: err.extensions?.code,
+                });
+            });
+        }
+
+        // get the graphQL errors that are hidden and nested within network error results 
+        if (apolloError?.networkError?.result?.errors?.length > 0) {
+            apolloError.networkError.result.errors.forEach((err, index) => {
+                graphQLErrors.push({
+                    id: `network-graphql-${errorIndex}-${index}`,
+                    message: err.message,
+                    code: err.extensions?.code,
+                });
+            });
+        }
+    });
+    // debug 
+    console.log("GraphQL Errors:", graphQLErrors);
+    console.log("Network Errors:", networkErrors);
     return (
         <>
-            <Modal show={show} onHide={handleClose}>
-                <Modal.Header closeButton>
-                <Modal.Title>GraphQL Query Error</Modal.Title>
-                </Modal.Header>
+                <Card bg="light" border="dark" className="home-container query-alert mt-4" >
+                    <Card.Header> QUERY ERROR </Card.Header>
+                    <Card.Body>
+                        {/*Network Error Message */}
 
-                <Modal.Body>
-                {/*Network Error Message */}
+                        {networkErrors.length > 0 && (
+                        <div className="mb-0">
+                            <h6><strong>Network Errors</strong></h6>
+                            <p>{networkErrors[0].message}</p>
+                        </div>
+                        )}
 
-                {networkErrorMessage && (
-                <div style={{ marginBottom: '1rem' }}>
-                    <h6>Network Error</h6>
-                    <p>{networkErrorMessage}</p>
-                </div>
-                )}
+                        {/*GraphQL Error Message */}
+                    
+                        {graphQLErrors.length > 0 && (
+                        <div>
+                            <h6><strong>GraphQL Errors</strong></h6>
+                            <ul className="mb-0">
+                                {graphQLErrors.map(err => (
+                                <li key={err.id}>
+                                <strong>{err.code || 'ERROR'}:</strong> {err.message}
+                                </li>
+                            ))}
+                            </ul>
+                        </div>
+                        )}
 
-                {/*GraphQL Error Message */}
-              
-                {graphQLErrorMessages.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                    <h6>GraphQL Errors</h6>
-                    <ul>
-                        {graphQLErrorMessages.map(err => (
-                        <li key={err.id}>
-                        <strong>{err.code || 'ERROR'}:</strong> {err.message}
-                        </li>
-                    ))}
-                    </ul>
-                </div>
-                )}
-
-                {!networkErrorMessage && graphQLErrorMessages.length === 0 && (
-                <p>Unknown error occurred.</p>
-                )}
-                </Modal.Body>
-
-                <Modal.Footer>
-                {/* NEXT STEP IDEAS:
-                    - add retry button (refetch query)
-                    - add "go back" navigation
-                    - add refresh page button
-                */}
-                <Button variant="secondary" onClick={handleClose}>
-                    Close
-                </Button>
-                </Modal.Footer>
-            </Modal>      
+                        {!networkErrors.length === 0 && graphQLErrors.length === 0 && (
+                        <p className="mb-0">Unknown error occurred.</p>
+                        )}
+                    </Card.Body>
+                </Card>
         </>
-
     );
 }

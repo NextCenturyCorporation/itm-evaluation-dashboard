@@ -10,16 +10,17 @@ import MenuItem from '@mui/material/MenuItem';
 import { RQ1Graphs } from "./Graphs/RQ1_Graphs";
 import RQ2Graphs from "./Graphs/RQ2_Graphs";
 import RQ3Graphs from "./Graphs/RQ3_Graphs";
+import { QueryErrorMessage } from '../../ErrorHandling/QueryErrorMessage';
 
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
-        getParticipantLog
+        getParticipantLogDOESNOTEXIST
     }`;
 
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults {
-        getAllSurveyResults
+        getAllSurveyResults_GET_TYPE
     }`;
 
 const GET_TEXT_RESULTS = gql`
@@ -140,7 +141,21 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
     }, [data, fullData, dreDataForPh1, evalNumber]);
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
+
+    const errors = [
+        errorParticipantLog,
+        errorSurveyResults,
+        errorTextResults,
+        errorADMs,
+        errorComparisonData,
+        errorSim,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+
+        return <QueryErrorMessage errors={errors} />;
+    }
 
     return (<div className='accordion-homepage'>
         <Accordion defaultActiveKey={["1", "2", "3"]} alwaysOpen>
