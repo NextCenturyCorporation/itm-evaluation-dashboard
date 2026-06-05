@@ -3,16 +3,23 @@ import { Table, Container } from 'react-bootstrap';
 import '../../css/dynamicPhase2.css';
 
 const trailingTextMap = {
-    'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?':
-        'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?',
-    'Which patient do you treat?':
-        'There are two patients, Patient A and Patient B, and you only have time to treat one of them. Which patient do you treat?',
-    'Do you stay with your current patient, or do you leave?':
-        'You arrive at the scene where you know there may be multiple casualties. Do you stay with your current patient, or do you leave?',
+    'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?': 'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?',
+    'Which patient do you treat?': 'There are two patients, Patient A and Patient B, and you only have time to treat one of them. Which patient do you treat?',
+    'Do you stay with your current patient, or do you leave?': 'You arrive at the scene where you know there may be multiple casualties. Do you stay with your current patient, or do you leave?',
+    'Do you move to treat one of the casualties now, or wait in your current location?': 'Do you move to treat one of the casualties now, or wait in your current location?'
 };
 
 const TARGET_PROMPT = 'You are currently in a location with cover. Do you move to treat the casualty now, or wait in your current location?';
 const WARFIGHTER_TEXT = 'They are a warfighter in the same military unit as you.';
+const TREAT_PATIENT_KEY = 'Which patient do you treat?';
+const TRINARY_TREAT_PROMPT = 'There are three patients, Patient A, Patient B, and Patient C, and you only have time to treat one of them. Which patient do you treat?';
+
+const getGroupPrompt = (trailingKey, opts) => {
+    if (trailingKey === TREAT_PATIENT_KEY && opts && opts.length >= 3) {
+        return TRINARY_TREAT_PROMPT;
+    }
+    return trailingTextMap[trailingKey];
+};
 
 const transformRowText = (text, groupPrompt) => {
     if (groupPrompt === TARGET_PROMPT) {
@@ -143,7 +150,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                     {orderedRows.map((row, index) => {
                         const optionsToUse = row.options || options;
                         const showGroupHeader = isNewGroup(index);
-                        const groupPrompt = row.trailingKey ? trailingTextMap[row.trailingKey] : null;
+                        const groupPrompt = row.trailingKey ? getGroupPrompt(row.trailingKey, optionsToUse) : null;
                         const cleanedRowText = transformRowText(row.strippedDescription, groupPrompt);
 
                         // fewer choices than the table's max (keeps grid aligned).

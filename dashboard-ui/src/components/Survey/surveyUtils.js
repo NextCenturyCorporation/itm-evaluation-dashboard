@@ -2100,10 +2100,98 @@ const onlineOnlyTitles = {
     'B': 'Waves of 8-10 patients are being discovered, requiring medical assistance. If you had to triage the next wave of patients, knowing there are more coming, and the medic above was available, how would you allocate responsibilities?'
 }
 
-export const createScenarioBlockv12 = (scenarioType, allPages, textResults) => {
+export const createScenarioBlockv12 = (scenarioType, allPages, textResults, delVersion) => {
+    const { attr, type } = scenarioType;
+    const blockKey = `${attr}-${type}`;
 
-}
+    const configs = {
+        'AF-tri':   { scenarioId: 'June2026-AF-assess-trinary', field: 'combinedMostLeastAligned', include: ['AF'], exclude: ['MF', 'PS', 'SS'], indexMatch: idx => idx?.includes('AF') && idx?.includes('trinary') },
+        'AF-bi':    { scenarioId: 'June2026-AF-assess',         field: 'combinedMostLeastAligned', include: ['AF'], exclude: ['MF', 'PS', 'SS'], indexMatch: idx => idx?.includes('AF') && !idx?.includes('trinary') && !idx?.includes('SS') },
+        'PS-tri':   { scenarioId: 'June2026-PS-assess-trinary', field: 'combinedMostLeastAligned', include: ['PS'], exclude: ['MF', 'AF', 'SS'], indexMatch: idx => idx?.includes('PS') && idx?.includes('trinary') },
+        'PS-bi':    { scenarioId: 'June2026-PS-assess',         field: 'combinedMostLeastAligned', include: ['PS'], exclude: ['MF', 'AF', 'SS'], indexMatch: idx => idx?.includes('PS') && !idx?.includes('trinary') },
+        'AF-SS-2D': { scenarioId: 'June2026-AF-assess',         field: 'AF-SS_mostLeastAligned',   include: ['AF', 'SS'], exclude: ['MF', 'PS'], indexMatch: idx => idx?.includes('AF') && idx?.includes('SS') },
+    };
 
-const genComparisonPagev12 = (aligned, baseline, misaligned) => {
+    const config = configs[blockKey];
+    if (!config) { console.warn(`Unknown v12 block: ${blockKey}`); return null; }
 
-}
+    // AF-SS loads aligned + baseline only
+    const includeMisaligned = attr !== 'AF-SS';
+
+    const doc = textResults.find(r => r.scenario_id === config.scenarioId);
+    if (!doc) { console.warn(`No text document ${config.scenarioId} for v12 block ${blockKey}`); return null; }
+
+    const entry = doc[config.field]?.find(o => o.target === null) ?? doc[config.field]?.[0];
+
+    const isGroupKey = key => key.split('-').pop().includes('_');
+    const keyMatches = key =>
+        !isGroupKey(key) &&
+        config.include.every(c => key.includes(c)) &&
+        config.exclude.every(c => !key.includes(c));
+
+    const ordered = (entry?.response || []).filter(o => keyMatches(Object.keys(o)[0]));
+    if (!ordered.length) { console.warn(`No alignment targets for v12 block ${blockKey}`); return null; }
+
+    const pageForEntry = o => findPage(Object.keys(o)[0]);
+    const findPage = (target, baseline = false) => allPages.find(page =>
+        config.indexMatch(page.scenarioIndex) &&
+        (baseline
+            ? page.admName?.includes('Baseline')
+            : (!page.admName?.includes('Baseline') && page.target === target))
+    );
+
+    // baseline is always the baseline
+    const baselineAdm = findPage(null, true);
+    if (!baselineAdm) { console.warn(`Missing baseline ADM page for v12 block ${blockKey}`); return null; }
+
+    // most aligned: walk down from the top until we find one that doesn't
+    // behave identically to the baseline
+    let alignedAdm = null;
+    for (const o of ordered) {
+        const candidate = pageForEntry(o);
+        if (candidate && !haveSameResponses(candidate, baselineAdm)) { alignedAdm = candidate; break; }
+    }
+
+    // least aligned: walk up from the bottom until we find one that doesn't
+    // overlap with either the most aligned or the baseline
+    let misalignedAdm = null;
+    if (includeMisaligned) {
+        for (let i = ordered.length - 1; i >= 0; i--) {
+            const candidate = pageForEntry(ordered[i]);
+            if (candidate &&
+                !haveSameResponses(candidate, alignedAdm) &&
+                !haveSameResponses(candidate, baselineAdm)) {
+                misalignedAdm = candidate;
+                break;
+            }
+        }
+    }
+
+    if (!alignedAdm || (includeMisaligned && !misalignedAdm)) {
+        console.warn(`Missing ADM pages for v12 block ${blockKey} - aligned:${!!alignedAdm} misaligned:${!!misalignedAdm}`);
+        return null;
+    }
+
+    Object.assign(alignedAdm, { alignment: 'aligned', admChoiceProcess: 'most aligned' });
+    baselineAdm.alignment = 'baseline';
+    if (misalignedAdm) Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
+
+    const admPages = [alignedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
+
+    // enforce delVersion
+    const removeVersion = delVersion === 'A' ? 'Del Version B' : 'Del Version A';
+    admPages.forEach(page => {
+        if (!page?.elements) return;
+        page.elements = page.elements.filter(el => !el.name?.includes(removeVersion));
+    });
+
+    return {
+        type: blockKey,
+        delVersion,
+        pages: [...shuffle(admPages), genComparisonPagev12(alignedAdm, baselineAdm, misalignedAdm)]
+    };
+};
+
+// same logic as version 10
+const genComparisonPagev12 = (aligned, baseline, misaligned) =>
+    genComparisonPagev10(aligned, baseline, misaligned);
