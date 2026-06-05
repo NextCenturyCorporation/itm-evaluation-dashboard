@@ -230,13 +230,16 @@ class SurveyPage extends Component {
                 .filter(Boolean);
             finalize(shuffle(allBlocks));
         } else if (version === "12.0") {
+            const isEven = parseInt(this.state.pid, 10) % 2 === 0;
+            const group1 = new Set(['PS-tri', 'AF-bi']);
+            const getVersion = (attr, type) => group1.has(`${attr}-${type}`) === isEven ? 'A' : 'B';
             const blockTypes = shuffle([
                 { attr: 'AF', type: 'tri' }, { attr: 'AF', type: 'bi' },
                 { attr: 'PS', type: 'tri' }, { attr: 'PS', type: 'bi' },
                 { attr: 'AF-SS', type: '2D' },
             ]);
             const allBlocks = blockTypes
-                .map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults))
+                .map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults, getVersion(blockType.attr, blockType.type)))
                 .filter(Boolean);
             finalize(allBlocks);
         }

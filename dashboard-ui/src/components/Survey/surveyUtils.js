@@ -2100,7 +2100,7 @@ const onlineOnlyTitles = {
     'B': 'Waves of 8-10 patients are being discovered, requiring medical assistance. If you had to triage the next wave of patients, knowing there are more coming, and the medic above was available, how would you allocate responsibilities?'
 }
 
-export const createScenarioBlockv12 = (scenarioType, allPages, textResults) => {
+export const createScenarioBlockv12 = (scenarioType, allPages, textResults, delVersion) => {
     const { attr, type } = scenarioType;
     const blockKey = `${attr}-${type}`;
 
@@ -2178,8 +2178,16 @@ export const createScenarioBlockv12 = (scenarioType, allPages, textResults) => {
 
     const admPages = [alignedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
 
+    // enforce delVersion
+    const removeVersion = delVersion === 'A' ? 'Del Version B' : 'Del Version A';
+    admPages.forEach(page => {
+        if (!page?.elements) return;
+        page.elements = page.elements.filter(el => !el.name?.includes(removeVersion));
+    });
+
     return {
         type: blockKey,
+        delVersion,
         pages: [...shuffle(admPages), genComparisonPagev12(alignedAdm, baselineAdm, misalignedAdm)]
     };
 };
