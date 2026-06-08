@@ -251,6 +251,8 @@ export function ParticipantDemographics() {
                                 formattedData.map(row => Object.fromEntries(headers.map(h => [h, row[h]]))),
                                 headers
                             )}
+                            disabled={formattedData.length === 0}
+                            style={{ opacity: formattedData.length === 0 ? 0.5 : 1, cursor: formattedData.length === 0 ? 'not-allowed' : 'pointer' }}
                         >
                             Download Current Eval
                         </button>
