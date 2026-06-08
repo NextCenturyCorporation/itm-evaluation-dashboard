@@ -7,9 +7,9 @@ import { Link } from 'react-router-dom';
 
 export function Header({ currentUser, logout }) {
     return (<nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
-        <a className="navbar-brand" href="/">
+        <Link className="navbar-brand" to="/">
             <img className="nav-brand-itm" src={brandImage} alt="" />ITM
-        </a>
+        </Link>
         <ul className="navbar-nav custom-nav">
             <li className="nav-item">
                 <Link className="nav-link" to="/">Home</Link>
@@ -89,6 +89,11 @@ export function Header({ currentUser, logout }) {
                         {isUserElevated(currentUser) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world-adms">
                             Open World ADMs
+                            </NavDropdown.Item>
+                        )}
+                        {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/participant-demographics">
+                                Participant Demographics
                             </NavDropdown.Item>
                         )}
                         {(isUserTa3(currentUser) || isUserExternalSimResearcher(currentUser)) && (

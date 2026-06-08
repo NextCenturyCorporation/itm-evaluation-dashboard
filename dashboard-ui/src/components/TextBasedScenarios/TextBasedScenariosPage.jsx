@@ -7,15 +7,13 @@ import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
 import axios from 'axios';
-import { MedicalScenario } from './medicalScenario';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
-import { Card, Container, Row, Col, ListGroup, Spinner, Button, Modal } from 'react-bootstrap';
-import alignmentIDs from './alignmentID.json';
+import { Card, Container, Row, Col, Spinner, Button, Modal } from 'react-bootstrap';
 import { withRouter } from 'react-router-dom';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import { shuffle } from '../Survey/surveyUtils';
-import { createBrowserHistory } from 'history';
+import history from '../App/history';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
 import { NavigationGuard } from '../Survey/survey';
@@ -25,8 +23,6 @@ import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
 import ScenarioProgress from './scenarioProgress';
-
-const history = createBrowserHistory({ forceRefresh: true });
 
 const UPLOAD_DEMOGRAPHICS = gql`
   mutation UploadDemographics($surveyId: String, $results: JSON) {
@@ -106,7 +102,6 @@ class TextBasedScenariosPage extends Component {
             combinedSessionId: '',
             adeptScenarios: [],
             uploadedScenarios: 0,
-            moderated: true,
             startSurvey: true,
             updatePLog: false,
             startCount: 0,
@@ -297,8 +292,6 @@ class TextBasedScenariosPage extends Component {
         if (matchedParticipantLog) {
             this.setState({
                 allScenariosCompleted: true,
-                sim1: simNameMappings[matchedParticipantLog['Sim-1']],
-                sim2: simNameMappings[matchedParticipantLog['Sim-2']],
             });
         } else {
             this.setState({ allScenariosCompleted: true });
@@ -324,12 +317,12 @@ class TextBasedScenariosPage extends Component {
 
             if (isDefined(adeptQualtrix) || isDefined(caciProlific)) {
                 if (startSurvey === 'true') {
-                    this.setState({ moderated: false, onlineOnly: true, skipText: true });
+                    this.setState({ onlineOnly: true, skipText: true });
                 } else {
-                    this.setState({ moderated: false, onlineOnly: true, startSurvey: false });
+                    this.setState({ onlineOnly: true, startSurvey: false });
                 }
             } else {
-                this.setState({ moderated: false, startSurvey: false });
+                this.setState({ startSurvey: false });
             }
         } else {
             history.push('/');
@@ -383,24 +376,16 @@ class TextBasedScenariosPage extends Component {
             });
         });
 
-        scenarioData.scenarioOrder = evalNameToNumber[this.props.currentTextEval] >= 8 ?
-            this.state.scenarios.map(scenario => scenario.scenario_id) :
-            [this.state.matchedParticipantLog['Text-1'], this.state.matchedParticipantLog['Text-2']]
+        scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id)
         scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
         scenarioData.evalName = (this.props.currentTextEval).replace(/Phase 2\s*/g, '')
         await this.getAlignmentScore(scenarioData)
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
-        const scenarioId = currentScenario.scenario_id;
-
         this.setState({
             uploadData: true,
             sanitizedData,
             isUploadButtonEnabled: true
-        }, () => {
-            if (this.uploadButtonRef.current && currentScenario.author !== 'ADEPT' && !adeptList.some(term => scenarioId.includes(term))) {
-                this.uploadButtonRef.current.click();
-            }
         });
 
         this.surveyData = {};
@@ -413,9 +398,7 @@ class TextBasedScenariosPage extends Component {
         const isAdept = scenario.author === 'ADEPT' || adeptList.some(term => scenario.scenario_id.includes(term));
 
         if (!isAdept) {
-            await this.calcScore(scenario, 'soartech');
-            const kdma_data = await this.attachKdmaValue(scenario.serverSessionId, process.env.REACT_APP_SOARTECH_URL);
-            scenario.kdmas = kdma_data;
+            console.error("Unknown scenario: ADEPT not recognized as the author")
             return;
         }
 
@@ -433,7 +416,7 @@ class TextBasedScenariosPage extends Component {
                         adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId } }
                     }), resolve));
                     if (updated.length === 2) {
-                        const mla = await this.mostLeastAligned(sessionId, 'adept', url, updated[0], true, false, true);
+                        const mla = await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
                         const kdmas = await this.attachKdmaValue(sessionId, url);
                         for (const s of updated) {
                             s['AF-SS_sessionId'] = sessionId;
@@ -483,10 +466,8 @@ class TextBasedScenariosPage extends Component {
         const updatedAdeptScenarios = [...this.state.adeptScenarios, scenario];
         const completedCount = this.state.adeptSessionsCompleted + 1;
 
-        // Phase 1/Jan/DRE: 3, Sept/UK: 3, June/July/Feb/April: 4
-        const expectedScenarios = evalNum >= 8
-            ? ([10, 12].includes(evalNum) ? 3 : 4)
-            : 3;
+        // Sept/UK: 3, otherwise: 4
+        const expectedScenarios = [10, 12].includes(evalNum) ? 3 : 4;
 
         this.setState({
             adeptSessionsCompleted: completedCount,
@@ -507,7 +488,7 @@ class TextBasedScenariosPage extends Component {
                 const sessionId = session.data;
 
                 await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
-                const mostLeastAligned = await this.mostLeastAligned(sessionId, 'adept', url, scenario);
+                const mostLeastAligned = await this.mostLeastAligned(sessionId, url, scenario);
 
                 scenario.combinedSessionId = sessionId;
                 scenario.mostLeastAligned = mostLeastAligned;
@@ -536,7 +517,7 @@ class TextBasedScenariosPage extends Component {
                 const indSessionId = await createAdeptSession(url);
                 await this.submitResponses(scenario, scenarioId, url, indSessionId);
                 scenario.individualSessionId = indSessionId;
-                scenario.individualMostLeastAligned = await this.mostLeastAligned(indSessionId, 'adept', url, scenario);
+                scenario.individualMostLeastAligned = await this.mostLeastAligned(indSessionId, url, scenario);
                 scenario.individualKdmas = await this.attachKdmaValue(indSessionId, url);
             } catch (e) {
                 console.error(`Error in individual scoring for ${scenarioId}:`, e);
@@ -566,7 +547,7 @@ class TextBasedScenariosPage extends Component {
 
         if (updatedScenarios.length === getGroupSize(groupKey)) {
             try {
-                const combinedMostLeastAligned = await this.mostLeastAligned(sessionId, 'adept', url, updatedScenarios[0], true);
+                const combinedMostLeastAligned = await this.mostLeastAligned(sessionId, url, updatedScenarios[0], true);
                 const combinedKdmas = await this.attachKdmaValue(sessionId, url);
 
                 for (const s of updatedScenarios) {
@@ -639,7 +620,7 @@ class TextBasedScenariosPage extends Component {
         if (updatedScenarios.length === 4) {
             // enable subpop passed for combined session
             const subPopValue = this.state.eval16SubPopResult;
-            const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, 'adept', url, null, false, subPopValue);
+            const combinedMostLeastAligned = await this.mostLeastAligned(combinedSessionId, url, null, false, subPopValue);
             const combinedKdmas = await this.attachKdmaValue(combinedSessionId, url, subPopValue);
 
             for (const s of updatedScenarios) {
@@ -661,7 +642,7 @@ class TextBasedScenariosPage extends Component {
                 await this.submitResponses(scenario, scenario.scenario_id, url, groupSessionId);
             }
 
-            const groupMostLeastAligned = await this.mostLeastAligned(groupSessionId, 'adept', url, groupScenarios[0], true);
+            const groupMostLeastAligned = await this.mostLeastAligned(groupSessionId, url, groupScenarios[0], true);
             const groupKdmas = await this.attachKdmaValue(groupSessionId, url);
 
             for (const scenario of groupScenarios) {
@@ -704,9 +685,8 @@ class TextBasedScenariosPage extends Component {
         try {
             const session = await axios.post(`${url}${sessionEndpoint}`);
             if (session.status === 200) {
-                const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
                 this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
+                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
                 })
             }
         } catch (e) {
@@ -716,14 +696,13 @@ class TextBasedScenariosPage extends Component {
 
     continueRunningSession = async (scenario) => {
         const url = this.getAdeptUrl();
-        const scenarioId = evalNameToNumber[this.props.currentTextEval] >= 8 ? scenario.scenario_id : adeptScenarioIdMap[scenario.scenario_id]
-        await this.submitResponses(scenario, scenarioId, url, this.state.combinedSessionId)
+        await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
     }
 
     uploadAdeptScenarios = async (scenarios) => {
         const url = this.getAdeptUrl();
 
-        const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, 'adept', url, null)
+        const combinedMostLeastAligned = await this.mostLeastAligned(this.state.combinedSessionId, url, null)
 
         for (let scenario of scenarios) {
             scenario.combinedSessionId = this.state.combinedSessionId
@@ -749,90 +728,13 @@ class TextBasedScenariosPage extends Component {
         return getKdmaProfile(sessionId, url, enable_subpop);
     }
 
-    mostLeastAligned = async (sessionId, ta1, url, scenario, skipKdmaFilter = false, enableSubpop = false, allowMultiattributeTargets = false) => {
+    mostLeastAligned = async (sessionId, url, scenario, skipKdmaFilter = false, enableSubpop = false, allowMultiattributeTargets = false) => {
         const evalNumber = evalNameToNumber[this.props.currentTextEval];
-        if (ta1 === 'soartech') {
-            // SoarTech still uses its own logic
-            const endpoint = '/api/v1/get_ordered_alignment';
-            const target = scenario.scenario_id.includes('qol')
-                ? 'QualityOfLife'
-                : 'PerceivedQuantityOfLivesSaved';
-            const params = { session_id: sessionId, kdma_id: target };
-            try {
-                const response = await axios.get(`${url}${endpoint}`, { params });
-                const filteredData = response.data.filter(obj =>
-                    !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
-                );
-                return [{ target, response: filteredData }];
-            } catch (err) {
-                console.error(err);
-                return [];
-            }
-        }
         return getMostLeastAligned(sessionId, url, scenario, evalNumber, skipKdmaFilter, enableSubpop, allowMultiattributeTargets);
     }
 
     submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
         return sharedSubmitResponses(scenario, scenarioID, urlBase, sessionID);
-    }
-
-    getAlignmentData = async (targetId, url, alignmentEndpoint, sessionId, alignmentType) => {
-        const response = await axios.get(`${url}${alignmentEndpoint}`, {
-            params: {
-                session_id: sessionId,
-                target_id: targetId,
-                ...(alignmentType === 'adept' ? { population: false } : {})
-            }
-        });
-
-        let result;
-        if (typeof response.data === 'string') {
-            result = JSON.parse(response.data.replace(/\bNaN\b/g, "null"));
-        } else {
-            result = response.data;
-        }
-        return { "target": response.config.params.target_id, "score": result.score }
-    };
-
-    calcScore = async (scenario, alignmentType) => {
-        // function should now only be called on soartech scenarios because of change to ADEPT server
-        if (alignmentType !== 'soartech') {
-            console.error('function should only be called on alignment type soartech but was called on ' + alignmentType)
-            return
-        }
-
-        const url = process.env.REACT_APP_SOARTECH_URL;
-        const sessionEndpoint = '/api/v1/new_session?user_id=default_user';
-        const alignmentEndpoint = '/api/v1/alignment/session';
-        const scenario_id = scenario.scenario_id
-
-        try {
-            const session = await axios.post(`${url}${sessionEndpoint}`);
-            if (session.status === 201) {
-                const sessionId = session.data;
-                await this.submitResponses(scenario, scenario_id, url, sessionId);
-                let targetArray;
-                if (scenario.scenario_id.includes('qol')) {
-                    targetArray = alignmentIDs.stQOL;
-                } else if (scenario.scenario_id.includes('vol')) {
-                    targetArray = alignmentIDs.stVOL;
-                } else {
-                    throw new Error('Invalid SoarTech scenario type');
-                }
-
-                scenario.alignmentData = await Promise.all(
-                    targetArray.map(targetId => this.getAlignmentData(targetId, url, alignmentEndpoint, sessionId, 'soartech'))
-                );
-
-                scenario.alignmentData.sort((a, b) => b.score - a.score);
-                const mostLeastAligned = await this.mostLeastAligned(sessionId, 'soartech', url, scenario)
-                scenario.mostLeastAligned = mostLeastAligned
-                scenario.serverSessionId = sessionId;
-            }
-
-        } catch (error) {
-            console.error(`Error in ${alignmentType} alignment:`, error);
-        }
     }
 
     onSurveyComplete = (survey) => {
@@ -852,9 +754,8 @@ class TextBasedScenariosPage extends Component {
             pages: [...scenarioConfigs[0].pages]
         };
 
-        // randomize probe order for phase 2 (non narrative). Keep order intact for phase 1
         const evalNum = evalNameToNumber[this.props.currentTextEval];
-        if (evalNum >= 8 && evalNum !== 12) {
+        if (evalNum !== 12) {
             config.pages = shuffle([...config.pages])
         }
 
@@ -947,7 +848,7 @@ class TextBasedScenariosPage extends Component {
                             />
                         )}
                         <NavigationGuard surveyComplete={this.state.allScenariosCompleted && (!this.state.showDemographics || this.state.demographicsCompleted)} />
-                        {!this.state.skipText && !this.state.moderated && !this.state.startSurvey && (
+                        {!this.state.skipText && !this.state.startSurvey && (
                             <div className="text-instructions">
                                 <h2>Instructions</h2>
                                 <p><b>Welcome to the ITM Text Scenario experiment. Thank you for your participation.</b>
@@ -1058,9 +959,6 @@ class TextBasedScenariosPage extends Component {
                         )}
                         {(this.state.skipText || (this.state.allScenariosCompleted && this.state.uploadedScenarios === this.state.scenarios.length && (!this.state.showDemographics || this.state.demographicsCompleted))) && (
                             <ScenarioCompletionScreen
-                                sim1={this.state.sim1}
-                                sim2={this.state.sim2}
-                                moderatorExists={this.state.moderated}
                                 toDelegation={this.state.onlineOnly}
                                 participantID={this.state.participantID}
                                 evalNumber={evalNameToNumber[this.props.currentTextEval]}
@@ -1075,8 +973,7 @@ class TextBasedScenariosPage extends Component {
 
 export default withRouter(TextBasedScenariosPage);
 
-const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, participantID, evalNumber }) => {
-    const allScenarios = [...(sim1 || []), ...(sim2 || [])];
+const ScenarioCompletionScreen = ({ moderatorExists, toDelegation, participantID, evalNumber }) => {
     const customColor = "#b15e2f";
 
     const history = useHistory();
@@ -1114,39 +1011,16 @@ const ScenarioCompletionScreen = ({ sim1, sim2, moderatorExists, toDelegation, p
                                     <Card.Body className="text-center p-5">
                                         <h1 className="display-4 mb-4">Thank you for completing the scenarios</h1>
                                         <h3 className="display-4 mb-4">Your Participant ID is {participantID?.slice(-3)}</h3>
-                                        {moderatorExists ?
-                                            <>
-                                                <p className="lead mb-5">Please ask the session moderator to advance the screen</p>
-                                                <Card bg="light" className="p-4">
-                                                    <Card.Title as="h2" className="mb-4" style={{ color: customColor }}>
-                                                        Participant should complete the following scenarios in VR:
-                                                    </Card.Title>
-                                                    <Card.Subtitle className="mb-3 text-muted">
-                                                        Please complete the scenarios in the order listed below:
-                                                    </Card.Subtitle>
-                                                    <ListGroup variant="flush" className="border rounded">
-                                                        {allScenarios.map((scenario, index) => (
-                                                            <ListGroup.Item
-                                                                key={index}
-                                                                className="py-3 d-flex align-items-center"
-                                                            >
-                                                                <span className="mr-3 fs-5 fw-bold" style={{ color: customColor }}>{index + 1}.</span>
-                                                                <span className="fs-5">{scenario}</span>
-                                                            </ListGroup.Item>
-                                                        ))}
-                                                    </ListGroup>
-                                                </Card>
-                                                <p className="mt-3 text-muted">Moderator: Press 'M' to start a new session</p>
-                                            </> : <><p className="mb-4">You may now close the browser</p>
-                                                <Button
-                                                    variant="primary"
-                                                    size="lg"
-                                                    onClick={handleReturnToLogin}
-                                                    style={{ backgroundColor: customColor, borderColor: customColor }}
-                                                >
-                                                    Return to Login
-                                                </Button></>
-                                        }
+                                        <p className="mb-4">You may now close the browser</p>
+                                        <Button
+                                            variant="primary"
+                                            size="lg"
+                                            onClick={handleReturnToLogin}
+                                            style={{ backgroundColor: customColor, borderColor: customColor }}
+                                        >
+                                            Return to Login
+                                        </Button>
+
                                     </Card.Body>
                                 </Card>
                             </Col>
@@ -1188,35 +1062,10 @@ const LoadingSpinner = ({ message, fullScreen = true }) => {
     );
 };
 
-ReactQuestionFactory.Instance.registerQuestion("medicalScenario", (props) => {
-    return React.createElement(MedicalScenario, props)
-})
-
 
 ReactQuestionFactory.Instance.registerQuestion("phase2Text", (props) => {
     return React.createElement(Phase2Text, props)
 })
-
-export const simNameMappings = {
-    'AD-1': ['Eval_Adept_Urban'],
-    'AD-2': ['Eval_Adept_Jungle'],
-    'AD-3': ['Eval-Adept_Desert'],
-    'ST-1': ['stq2_ph1', 'stv2_ph1'],
-    'ST-2': ['stq3_ph1', 'stv3_ph1'],
-    'ST-3': ['stq4_ph1', 'stv4_ph1'],
-}
-
-/* 
-    I needed to save these configs separately from the dre configs despite the fact they have the same ids.
-    Using this mapping to get id that matches up with ADEPT ta1 server for server calls
-*/
-const adeptScenarioIdMap = {
-    'phase1-adept-eval-MJ2': 'DryRunEval-MJ2-eval',
-    'phase1-adept-eval-MJ4': 'DryRunEval-MJ4-eval',
-    'phase1-adept-eval-MJ5': 'DryRunEval-MJ5-eval',
-    'phase1-adept-train-MJ1': 'DryRunEval.MJ1',
-    'phase1-adept-train-IO1': 'DryRunEval.IO1'
-}
 
 // used to stop premature uploads/duplicate uploads
 const adeptList = ['adept', '2025', '2026', 'DryRun'];

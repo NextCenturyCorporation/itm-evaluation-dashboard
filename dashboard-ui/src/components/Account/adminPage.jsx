@@ -9,14 +9,12 @@ import '../../css/admin-page.css';
 import { evalNameToNumber } from '../OnlineOnly/config';
 import { setSurveyVersion, setupConfigWithImages, setupTextBasedConfig, setTextEval as setTextEvalInStore, setPidBoundsInStore, setCurrentUIStyle, setShowDemographicsInStore } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
-import { createBrowserHistory } from 'history';
+import history from '../App/history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
 import { FaInfoCircle } from 'react-icons/fa'
 import { EditEvals } from './editEvals';
-
-const history = createBrowserHistory({ forceRefresh: true });
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {

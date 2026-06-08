@@ -1,10 +1,8 @@
 import React from 'react';
 import { Button, Card } from 'react-bootstrap';
 import './login.css';
-import { createBrowserHistory } from 'history';
 import { accountsClient } from '../../services/accountsService';
-
-const history = createBrowserHistory({ forceRefresh: true });
+import history from '../App/history';
 
 export function WaitingPage({ rejected }) {
 
