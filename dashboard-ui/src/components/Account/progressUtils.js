@@ -301,6 +301,60 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
                 } } });
                 if (missingScenarioIds.includes(scenario.scenario_id)) repaired++;
             }
+        } else if (evalNumber === 17) {
+            // 4 binary together, 2 tri, AF+SS bi scored together
+            const eval17Scenarios = allParticipantResults.filter(r => r.evalNumber === 17);
+            const regular = eval17Scenarios.filter(r => !r.scenario_id.includes('trinary'));
+            const trinary = eval17Scenarios.filter(r => r.scenario_id.includes('trinary'));
+            const afSS = regular.filter(r => r.scenario_id.includes('AF') || r.scenario_id.includes('SS'));
+
+            const markRepaired = (scenarios) => {
+                for (const s of scenarios) {
+                    if (missingScenarioIds.includes(s.scenario_id)) repaired++;
+                }
+            };
+
+            // Combined-session scoring for a group (regular or trinary)
+            const scoreCombinedGroup = async (scenarios, label) => {
+                if (scenarios.length === 0) return;
+                onProgress?.(`Eval 17: scoring ${label} group (${scenarios.length} scenarios)...`);
+                const sessionId = await createAdeptSession(url);
+                for (const scenario of scenarios) {
+                    await submitResponses(scenario, scenario.scenario_id, url, sessionId);
+                }
+                const combinedMostLeastAligned = await getMostLeastAligned(sessionId, url, scenarios[0], evalNumber, true);
+                const combinedKdmas = await getKdmaProfile(sessionId, url);
+                for (const scenario of scenarios) {
+                    const docId = scenario._id?.$oid || scenario._id;
+                    await updateMutation({ variables: { id: docId, updates: {
+                        combinedSessionId: sessionId,
+                        combinedMostLeastAligned,
+                        combinedKdmas
+                    } } });
+                }
+                markRepaired(scenarios);
+            };
+
+            await scoreCombinedGroup(regular, 'regular (binary)');
+            await scoreCombinedGroup(trinary, 'trinary');
+
+            if (afSS.length === 2) {
+                onProgress?.('Eval 17: scoring AF-SS multi-attribute group...');
+                const afSSsid = await createAdeptSession(url);
+                for (const scenario of afSS) {
+                    await submitResponses(scenario, scenario.scenario_id, url, afSSsid);
+                }
+                const afSSmla = await getMostLeastAligned(afSSsid, url, afSS[0], evalNumber, true, false, true);
+                const afSSkdmas = await getKdmaProfile(afSSsid, url);
+                for (const scenario of afSS) {
+                    const docId = scenario._id?.$oid || scenario._id;
+                    await updateMutation({ variables: { id: docId, updates: {
+                        'AF-SS_sessionId': afSSsid,
+                        'AF-SS_mostLeastAligned': afSSmla,
+                        'AF-SS_kdmas': afSSkdmas
+                    } } });
+                }
+            }
         } else {
             // Default: all ADEPT scenarios share one combined session
             const adeptScenarios = allParticipantResults.filter(r =>
