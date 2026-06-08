@@ -12,6 +12,18 @@ ENV PORT=$PORT_ARG
 # where available (npm@5+)
 COPY package*.json ./
 
+# Optional corporate CA bundle for npm (local dev only).
+# Safely skipped on dev-server and production if not present.
+ARG USE_CORP_CA=false
+
+RUN --mount=type=secret,id=corp_ca \
+    if [ "$USE_CORP_CA" = "true" ] && [ -f /run/secrets/corp_ca ]; then \
+      cp /run/secrets/corp_ca /usr/local/share/ca-bundle.crt && \
+      npm config set cafile /usr/local/share/ca-bundle.crt; \
+    else \
+      echo "No corporate CA bundle (skipping)"; \
+    fi
+
 RUN npm install
 # If you are building your code for production
 # RUN npm ci --only=production
