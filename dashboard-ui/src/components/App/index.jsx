@@ -29,6 +29,7 @@ import { RQ3 } from '../Research/RQ3';
 import { OpenWorld } from '../Research/OpenWorld';
 import { TcccAnalysis } from '../Research/TcccAnalysis';
 import { OpenWorldADMs } from '../Research/OpenWorldADMs';
+import { ParticipantDemographics } from '../Research/ParticipantDemographics';
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
@@ -530,8 +531,10 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
                         {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
+                        {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
                         {(isUserTa3(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
+
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.
                             Otherwise, send to homepage */}
