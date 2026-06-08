@@ -15,12 +15,12 @@ import { QueryErrorMessage } from '../../ErrorHandling/QueryErrorMessage';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
-        getParticipantLogDOESNOTEXIST
+        getParticipantLog
     }`;
 
 const GET_SURVEY_RESULTS = gql`
     query GetAllResults {
-        getAllSurveyResults_GET_TYPE
+        getAllSurveyResults
     }`;
 
 const GET_TEXT_RESULTS = gql`
@@ -141,7 +141,8 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
     }, [data, fullData, dreDataForPh1, evalNumber]);
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
-
+    
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
     const errors = [
         errorParticipantLog,
         errorSurveyResults,
@@ -153,7 +154,6 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
 
     if (errors.length > 0) {
         console.log(errors);
-
         return <QueryErrorMessage errors={errors} />;
     }
 

@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import gql from "graphql-tag";
 import { useQuery } from 'react-apollo'
 import { simNameMappings } from "../TextBasedScenarios/TextBasedScenariosPage";
+import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -59,7 +60,15 @@ export function PidLookup() {
     };
 
     if (loadingParticipantLog) return <p>Loading Participant Log...</p>;
-    if (errorParticipantLog) return <p>Error loading participant log:</p>;
+
+    // show error message if an participantLog Error occurs
+    if (errorParticipantLog) {
+        console.log(errorParticipantLog);
+        return(
+            <QueryErrorMessage error={errorParticipantLog}></QueryErrorMessage>
+        );
+    }
+
 
     return (<div className="row justify-content-center align-items-center h-100 center-container">
 

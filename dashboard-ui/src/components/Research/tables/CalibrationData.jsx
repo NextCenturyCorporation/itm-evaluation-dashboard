@@ -9,6 +9,7 @@ import calibrationDefinitions from '../variables/Variable Definitions Calibratio
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 
 const GET_PARTICIPANT_LOG = gql`
@@ -275,7 +276,21 @@ export function CalibrationData({ evalNum }) {
     };
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorComparisonData || errorSim) return <p>Error :</p>;
+       
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorSurveyResults,
+        errorTextResults,
+        errorADMs,
+        errorComparisonData,
+        errorSim,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+        return <QueryErrorMessage errors={errors} />;
+    }
 
     return (<>
         <h2 className='rq134-header'>Calibration Scores

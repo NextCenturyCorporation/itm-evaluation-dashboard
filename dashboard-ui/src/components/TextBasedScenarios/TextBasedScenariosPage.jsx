@@ -68,9 +68,9 @@ export function TextBasedScenariosPageWrapper(props) {
     // show loading screen
     if (participantLogLoading) return <p>Loading...</p>;
 
-    // show error modal IFF an participantLogError occurs
+    // show error message if an participantLogError occurs
     if (participantLogError) {
-        console.log('Apollo Error:', participantLogError); // debug
+        console.log(participantLogError); 
         return(
             <QueryErrorMessage error={participantLogError}></QueryErrorMessage>
         );
