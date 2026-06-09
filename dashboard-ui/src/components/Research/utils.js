@@ -1006,28 +1006,34 @@ function handleMultiKdmaComparison(survey, page, entryObj, allObjs) {
     }
 }
 
-export function determineChoiceProcessJune2025(textResults, page, t) {
+export function determineChoiceProcessJune2025(textResults, page, t, preFilteredTargets = null) {
     const target = page['admTarget']
-    const mostLeastAligned = textResults[0]['mostLeastAligned']
 
-    // no overlap in multi kdma
-    if (target.includes('affiliation') && target.includes('merit')) {
-        return 'most aligned'
+    let filteredTargets = preFilteredTargets
+    if (!filteredTargets) {
+        const mostLeastAligned = textResults[0]['mostLeastAligned']
+
+        // no overlap in multi kdma
+        if (target.includes('affiliation') && target.includes('merit')) {
+            return 'most aligned'
+        }
+
+        const matchingTarget = ['affiliation', 'merit', 'personal_safety', 'search']
+            .find(t => target.includes(t))
+
+        if (!matchingTarget) return 'exemption'
+
+        const targetObj = mostLeastAligned.find(obj => obj.target === matchingTarget)
+        if (!targetObj) return 'exemption'
+
+        // remove multi kdma targets
+        filteredTargets = targetObj['response'].filter(obj => {
+            const key = Object.keys(obj)[0]
+            return !(key.includes('affiliation') && key.includes('merit'))
+        })
     }
 
-    const matchingTarget = ['affiliation', 'merit', 'personal_safety', 'search']
-        .find(t => target.includes(t))
-
-    if (!matchingTarget) return 'exemption'
-
-    const targetObj = mostLeastAligned.find(obj => obj.target === matchingTarget)
-    if (!targetObj) return 'exemption'
-
-    // remove multi kdma targets
-    const filteredTargets = targetObj['response'].filter(obj => {
-        const key = Object.keys(obj)[0]
-        return !(key.includes('affiliation') && key.includes('merit'))
-    })
+    if (!filteredTargets.length) return 'exemption'
 
     // first el if aligned, last el if misaligned
     const selectedTarget = t === 'aligned'
