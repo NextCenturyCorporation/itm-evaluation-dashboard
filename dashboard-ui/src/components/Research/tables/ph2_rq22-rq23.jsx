@@ -85,6 +85,35 @@ export function PH2RQ2223({ evalNum }) {
         return baseHeaders;
     }, [evalNum]);
 
+    const getEval15Attribute = (parsed) =>
+        ['AF', 'MF', 'PS', 'SS'].filter(a => parsed[a] !== '').join('-');
+
+    const getEval17Attribute = (target) => {
+        const t = String(target ?? '');
+        const has = (s) => t.includes(s);
+
+        if (has('AF') && has('SS')) return 'AF-SS';
+
+        const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : null;
+        const variant = /tri/i.test(t) ? 'tri' : /bi/i.test(t) ? 'bi' : null;
+
+        return prefix && variant ? `${prefix}-${variant}` : prefix ?? '-';
+    };
+
+    const getLegacyAttribute = (scenario) => {
+        if (scenario.includes('AF') && scenario.includes('MF')) return 'AF-MF';
+        if (scenario.includes('MF')) return 'MF';
+        if (scenario.includes('AF')) return 'AF';
+        if (scenario.includes('SS')) return 'SS';
+        return 'PS';
+    };
+
+    const resolveAttribute = (evalNum, { target, parsed, scenario }) => {
+        if (evalNum === 15) return getEval15Attribute(parsed);
+        if (evalNum === 17) return getEval17Attribute(target);
+        return getLegacyAttribute(scenario);
+    };
+
     const parseEval15Target = (target) => {
         const targets = {'AF': '', 'MF': '', 'PS': '', 'SS': ''}
         const regexp = /([A-Z]+)-?(\d+)/g
@@ -99,7 +128,9 @@ export function PH2RQ2223({ evalNum }) {
     }
 
     const ALIGNED_PREFIXES = ['ALIGN', 'ADM', 'Ph2', 'BertRelevance', 'DirectRegression', 'ComparativeRegression'];
+    const MODEL_KEYWORDS = ['Distill-Llama', 'Mistral', 'spectrum-Llama', 'spectrum-Qwen3'];
 
+    const modelKeyword = (admName) => MODEL_KEYWORDS.find(k => admName.includes(k)) ?? null;
     const getModelSuffix = (admName) => {
         const parts = admName.split('-');
         let i = 0;
@@ -216,12 +247,7 @@ export function PH2RQ2223({ evalNum }) {
                     const parsed = evalNum === 15 ? parseEval15Target(target) : null;
 
 
-                    const attribute = evalNum === 15
-                        ? ['AF', 'MF', 'PS', 'SS'].filter(a => parsed[a] !== '').join('-')
-                        : actualScenario.includes('MF') && actualScenario.includes('AF') ? 'AF-MF' :
-                        actualScenario.includes('MF') ? 'MF' :
-                        actualScenario.includes('AF') ? 'AF' :
-                        actualScenario.includes('SS') ? 'SS' : 'PS';
+                    const attribute = resolveAttribute(evalNum, { target, parsed, scenario: actualScenario });
 
                     const derivedSetConstruction = (evalNum === 15 && !setConstruction)
                         ? (attribute.includes('-') ? '2D' : '1D')
@@ -239,6 +265,15 @@ export function PH2RQ2223({ evalNum }) {
                                     : rawSuffix.replace(/_\d+(_\d+)*$/, '');
 
                                 baselineMap[suffix] = targets[target][admName];
+                            }
+                        }
+                    } else if (evalNum === 17) {
+                        for (const admName of Object.keys(targets[target])) {
+                            if (admName.includes('OutlinesBaseline')) {
+                                const keyword = modelKeyword(admName);
+                                if (keyword) {
+                                    baselineMap[keyword] = targets[target][admName];
+                                }
                             }
                         }
                     }
@@ -327,7 +362,11 @@ export function PH2RQ2223({ evalNum }) {
                     let baseline = null;
                     if (evalNum === 15) {
                         baseline = baselineMap[getModelSuffix(aligned.name)] || null;
-                    } else {
+                    } else if (evalNum === 17) {
+                        const keyword = modelKeyword(aligned.name);
+                        baseline = keyword ? baselineMap[keyword] || null : null;
+                    }
+                     else {
                         for (const admName of Object.keys(targets[target])) {
                             if (admName.includes('OutlinesBaseline')) {
                                 baseline = targets[target][admName];
