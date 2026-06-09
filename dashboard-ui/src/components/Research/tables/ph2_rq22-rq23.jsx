@@ -57,8 +57,11 @@ export function PH2RQ2223({ evalNum }) {
             'Target',
         ];
 
-        if (evalNum === 15) {
+        if (evalNum === 15 || evalNum === 17) {
             baseHeaders.push('ADM Name')
+        }
+
+        if (evalNum === 15) {
             baseHeaders.push('AF Target')
             baseHeaders.push('MF Target')
             baseHeaders.push('PS Target')
@@ -86,7 +89,7 @@ export function PH2RQ2223({ evalNum }) {
         const targets = {'AF': '', 'MF': '', 'PS': '', 'SS': ''}
         const regexp = /([A-Z]+)-?(\d+)/g
 
-        const matchedTargets = [...target.matchAll(regexp)]
+        const matchedTargets = [...String(target ?? '').matchAll(regexp)]
 
         matchedTargets.forEach(match => {
             targets[match[1]] = match[2]
@@ -183,10 +186,13 @@ export function PH2RQ2223({ evalNum }) {
                 const isRandom = scenarioName.includes('Random');
                 const setMatch = scenarioName.match(/(\d{1,3})\D*$/);
 
+                const usesScenarioNameAsSet = evalNum === 14 || evalNum === 15 || evalNum === 17;
+
+
                 // exclude full runs (not sets)
-                if (!setMatch) { continue; }
+                if (!usesScenarioNameAsSet && !setMatch) { continue; }
                 if (evalNum === 14 && !isRandom) { continue; }
-                const scenarioSet = evalNum === 14 || evalNum === 15
+                const scenarioSet = usesScenarioNameAsSet
                     ? scenarioName
                     : isRandom
                         ? `P2${evalToName[evalNum]} Dynamic Set ${setMatch[1]}`
@@ -259,7 +265,13 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['SS Target'] = parsed.SS
                         entryObj['Oracle Alignment'] = aligned.adm.oracle_alignment
                     }
-
+                    else if (evalNum === 17) {
+                        entryObj['Target'] = target.replace('Jun2026-', '');
+                        allTargets.push(target.replace('Jun2026-', ''));
+                        const admDisplayName = aligned.name.split('__')[0];
+                        entryObj['ADM Name'] = admDisplayName;
+                        allAdmNames.push(admDisplayName);
+                    }
                     else {
                         const sliceNum = attribute === 'AF-MF' ? -7 : -3;
                         entryObj['Target'] = target.slice(sliceNum);
@@ -414,7 +426,7 @@ export function PH2RQ2223({ evalNum }) {
 
             setFormattedData(allObjs);
             setFilteredData(allObjs);
-            
+            dataRef.current = evalNum;
 
             setAdmNames(Array.from(new Set(allAdmNames)));
             setAttributes(Array.from(new Set(allAttributes)));
@@ -437,7 +449,7 @@ export function PH2RQ2223({ evalNum }) {
         }
     }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters, setConstructionFilters, admNamesFilters]);
 
-    if (loading || (data?.getAllHistoryByEvalNumber?.length > 0 && formattedData.length === 0)) return <p>Loading...</p>;
+    if (loading || (dataRef.current !== evalNum && data?.getAllHistoryByEvalNumber?.length > 0)) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
     //eval 15 at least one filter before rendering rows due to dataset size
