@@ -30,6 +30,7 @@ import { OpenWorld } from '../Research/OpenWorld';
 import { TcccAnalysis } from '../Research/TcccAnalysis';
 import { OpenWorldADMs } from '../Research/OpenWorldADMs';
 import { ParticipantDemographics } from '../Research/ParticipantDemographics';
+import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis'  
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
@@ -530,6 +531,7 @@ export function App() {
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq1" component={RQ1} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
                         {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
+                        {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
                         {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
                         {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
                         {(isUserTa3(currentUser) || isUserExternalSimResearcher(currentUser)) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}

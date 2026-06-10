@@ -91,6 +91,11 @@ export function Header({ currentUser, logout }) {
                             Open World ADMs
                             </NavDropdown.Item>
                         )}
+                        {isUserElevated(currentUser) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
+                            Exploratory Analysis
+                            </NavDropdown.Item>
+                        )}
                         {(isUserElevated(currentUser) || isUserExternalSimResearcher(currentUser)) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/participant-demographics">
                                 Participant Demographics
