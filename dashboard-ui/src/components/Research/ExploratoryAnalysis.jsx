@@ -5,20 +5,19 @@ import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
 import { HumanVariability } from './tables/humanVariability';
-import { BlockedTable } from './tables/BlockedTable';
 import { CalibrationData } from './tables/CalibrationData';
 import { getAllEvals } from './utils';
 import { useSelector, useDispatch } from 'react-redux'
 import { setSelectedResearchEval } from '../../store/slices/configSlice';
-import { Alert } from "@mui/material";
 
 
 export function ExploratoryAnalysis() {
+    const noDataList = [8, 9, 10, 11, 12, 14, 15, 16, 17]
     const evalOptions = getAllEvals();
     const dispatch = useDispatch()
     const storedEval = useSelector(state => state.configs.selectedResearchEval)  
     const selectedEval = storedEval ?? evalOptions[0].value;
-    const hasData = selectedEval !== 15 && selectedEval !== 16 && selectedEval !== 17
+    const hasData = !noDataList.includes(selectedEval)
     function selectEvaluation(target) {
         dispatch(setSelectedResearchEval(target.value))
     }
@@ -106,9 +105,6 @@ export function ExploratoryAnalysis() {
 
         {selectedEval !== 15 && selectedEval !== 16 && ( 
             <>
-                <div className="section-container">
-                    <BlockedTable evalNum={selectedEval} />
-                </div>
                 {selectedEval > 4 && selectedEval < 8 &&
                     <div className="section-container">
                         <CalibrationData evalNum={selectedEval} />
@@ -117,9 +113,9 @@ export function ExploratoryAnalysis() {
             </>
         )}
         </>
-        : <Alert 
-        style={{marginTop: '10px'}}
-        severity="info">No data available</Alert>
+        : <p
+        style={{marginTop: '10px', marginLeft: '30px'}}
+        >No data available for the selected evaluation.</p>
     }
     </div>);
 }
