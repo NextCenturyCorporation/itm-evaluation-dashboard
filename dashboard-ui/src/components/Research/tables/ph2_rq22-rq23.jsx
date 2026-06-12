@@ -42,7 +42,6 @@ export function PH2RQ2223({ evalNum }) {
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [setFilters, setSetFilters] = React.useState([]);
     const [setConstructionFilters, setSetConstructionFilters] = React.useState([]);
-    const [targetTypeFilters, setTargetTypeFilters] = React.useState([]);
 
     const [filteredData, setFilteredData] = React.useState([]);
 
@@ -149,7 +148,6 @@ export function PH2RQ2223({ evalNum }) {
         setAttributeFilters([])
         setTargetFilters([])
         setSetFilters([])
-        setTargetTypeFilters([])
         setAdmNamesFilters([])
     }, [evalNum])
 
@@ -319,10 +317,8 @@ export function PH2RQ2223({ evalNum }) {
                         allSetConstructions.push(setConstruction)
                     }
 
-                    if (aligned) {
-                        entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
-                        entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-'
-                    } 
+                    entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
+                    entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-';
 
                     const mapKey = evalNum === 14 
                         ? `${actualScenario}_${setConstruction}_${target}_${aligned?.alignment}`
@@ -486,7 +482,7 @@ export function PH2RQ2223({ evalNum }) {
 
             ));
         }
-    }, [formattedData, attributeFilters, targetFilters, setFilters, targetTypeFilters, setConstructionFilters, admNamesFilters]);
+    }, [formattedData, attributeFilters, targetFilters, setFilters, setConstructionFilters, admNamesFilters]);
 
     if (loading || (dataRef.current !== evalNum && data?.getAllHistoryByEvalNumber?.length > 0)) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
@@ -598,20 +594,11 @@ export function PH2RQ2223({ evalNum }) {
                     <tbody>
                         {shouldRenderRows && filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`}>
-                                {PH2_HEADERS.map((val) => {
-                                    if (val === 'Probe IDs') {
-                                        return (
-                                            <td key={`cell-${index}-probe`}>
-                                                {dataSet['Probe IDs'] ?? '-'}
-                                            </td>
-                                        );
-                                    }
-                                    return (
-                                        <td key={`cell-${index}-${val}`}>
-                                            {dataSet[val] ?? '-'}
-                                        </td>
-                                    );
-                                })}
+                                {PH2_HEADERS.map((val) => (
+                                    <td key={`cell-${index}-${val}`}>
+                                        {dataSet[val] ?? '-'}
+                                    </td>
+                                ))}
                             </tr>
                         ))}
                     </tbody>
