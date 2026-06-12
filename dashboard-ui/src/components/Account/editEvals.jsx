@@ -162,7 +162,7 @@ export function EditEvals({ caller }) {
                 "rq1": true, 
                 "rq2": true,
                 "rq3": true,
-                "exploratoryAnalysis": selectedPages.includes('/exploratory-analysis'),
+                "exploratoryAnalysis": true,
                 "admProbeResponses": selectedPages.includes('/adm-probe-responses'),
                 "admAlignment": selectedPages.includes('/adm-results'),
                 "admResults": selectedPages.includes('/results'),
