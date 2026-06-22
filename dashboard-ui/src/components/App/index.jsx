@@ -30,6 +30,7 @@ import { OpenWorld } from '../Research/OpenWorld';
 import { TcccAnalysis } from '../Research/TcccAnalysis';
 import { OpenWorldADMs } from '../Research/OpenWorldADMs';
 import { ParticipantDemographics } from '../Research/ParticipantDemographics';
+import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis'  
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
