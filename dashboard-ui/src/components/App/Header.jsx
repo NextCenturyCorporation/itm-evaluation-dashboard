@@ -7,9 +7,9 @@ import { Link } from 'react-router-dom';
 
 export function Header({ currentUser, logout }) {
     return (<nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
-        <a className="navbar-brand" href="/">
+        <Link className="navbar-brand" to="/">
             <img className="nav-brand-itm" src={brandImage} alt="" />ITM
-        </a>
+        </Link>
         <ul className="navbar-nav custom-nav">
             <li className="nav-item">
                 <Link className="nav-link" to="/">Home</Link>

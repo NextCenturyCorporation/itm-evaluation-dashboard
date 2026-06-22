@@ -15,7 +15,7 @@ const PHASE1_SCENARIOS = {
     VOL4: ['vol-ph1-eval-4']
 };
 
-const PHASE2_SCENARIO_KEYS = ['Subpop', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2'];
+const PHASE2_SCENARIO_KEYS = ['Subpop', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3', 'PS-AF1', 'PS-AF2', 'AF-Bi', 'AF-Tri', 'MF-Bi', 'PS-Bi', 'PS-Tri', 'SS-Bi'];
 
 export const SCENARIO_HEADERS = [
     'Sim-1', 'Sim-2', 'Sim-3', 'Sim-4',
@@ -23,13 +23,22 @@ export const SCENARIO_HEADERS = [
     ...PHASE2_SCENARIO_KEYS
 ];
 
+// Eval 17 (June 2026) uses no-digit IDs with binary/trinary variants
+const EVAL17_SCENARIO_TO_COL = {
+    'June2026-AF-assess': 'AF-Bi',
+    'June2026-AF-assess-trinary': 'AF-Tri',
+    'June2026-MF-assess': 'MF-Bi',
+    'June2026-PS-assess': 'PS-Bi',
+    'June2026-PS-assess-trinary': 'PS-Tri',
+    'June2026-SS-assess': 'SS-Bi',
+};
+
 const isPhase2Scenario = (scenarioId, targetKey) => {
-    //subpop check
-    if (scenarioId.includes('subpop') && targetKey === 'Subpop') return true
-    // for april 2026 we use PS2 and SS2 (only one AF and MF)
-    // so for consistency I am gonna mark these as AF2 and MF2 even though they are rlly labeled as AF-assess and MF-assess
-    if (targetKey === 'AF2' && scenarioId.endsWith('2026-AF-assess')) return true;
-    if (targetKey === 'MF2' && scenarioId.endsWith('2026-MF-assess')) return true;
+    if (scenarioId.includes('subpop') && targetKey === 'Subpop') return true;
+    if (EVAL17_SCENARIO_TO_COL[scenarioId] === targetKey) return true;
+    // april 2026: only one AF and MF so no digit — map to AF2/MF2 for consistency
+    if (targetKey === 'AF2' && scenarioId.endsWith('April2026-AF-assess')) return true;
+    if (targetKey === 'MF2' && scenarioId.endsWith('April2026-MF-assess')) return true;
     return scenarioId.endsWith(`2025-${targetKey}-eval`) || scenarioId.endsWith(`2026-${targetKey}-assess`);
 };
 
@@ -63,6 +72,14 @@ const hasMLA = (scenarioResult) => {
         }
         if (sid.includes('MF') || sid.includes('PS')) {
             if (!scenarioResult['MF-PS_mostLeastAligned']) return false;
+        }
+    }
+
+    // check af-ss for eval 17
+    if (scenarioResult?.evalNumber === 17) {
+        const sid = scenarioResult.scenario_id;
+        if (!sid.includes('trinary') && (sid.includes('AF') || sid.includes('SS'))) {
+            if (!scenarioResult['AF-SS_mostLeastAligned']) return false;
         }
     }
 
@@ -283,6 +300,60 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
                     combinedKdmas
                 } } });
                 if (missingScenarioIds.includes(scenario.scenario_id)) repaired++;
+            }
+        } else if (evalNumber === 17) {
+            // 4 binary together, 2 tri, AF+SS bi scored together
+            const eval17Scenarios = allParticipantResults.filter(r => r.evalNumber === 17);
+            const regular = eval17Scenarios.filter(r => !r.scenario_id.includes('trinary'));
+            const trinary = eval17Scenarios.filter(r => r.scenario_id.includes('trinary'));
+            const afSS = regular.filter(r => r.scenario_id.includes('AF') || r.scenario_id.includes('SS'));
+
+            const markRepaired = (scenarios) => {
+                for (const s of scenarios) {
+                    if (missingScenarioIds.includes(s.scenario_id)) repaired++;
+                }
+            };
+
+            // Combined-session scoring for a group (regular or trinary)
+            const scoreCombinedGroup = async (scenarios, label) => {
+                if (scenarios.length === 0) return;
+                onProgress?.(`Eval 17: scoring ${label} group (${scenarios.length} scenarios)...`);
+                const sessionId = await createAdeptSession(url);
+                for (const scenario of scenarios) {
+                    await submitResponses(scenario, scenario.scenario_id, url, sessionId);
+                }
+                const combinedMostLeastAligned = await getMostLeastAligned(sessionId, url, scenarios[0], evalNumber, true);
+                const combinedKdmas = await getKdmaProfile(sessionId, url);
+                for (const scenario of scenarios) {
+                    const docId = scenario._id?.$oid || scenario._id;
+                    await updateMutation({ variables: { id: docId, updates: {
+                        combinedSessionId: sessionId,
+                        combinedMostLeastAligned,
+                        combinedKdmas
+                    } } });
+                }
+                markRepaired(scenarios);
+            };
+
+            await scoreCombinedGroup(regular, 'regular (binary)');
+            await scoreCombinedGroup(trinary, 'trinary');
+
+            if (afSS.length === 2) {
+                onProgress?.('Eval 17: scoring AF-SS multi-attribute group...');
+                const afSSsid = await createAdeptSession(url);
+                for (const scenario of afSS) {
+                    await submitResponses(scenario, scenario.scenario_id, url, afSSsid);
+                }
+                const afSSmla = await getMostLeastAligned(afSSsid, url, afSS[0], evalNumber, true, false, true);
+                const afSSkdmas = await getKdmaProfile(afSSsid, url);
+                for (const scenario of afSS) {
+                    const docId = scenario._id?.$oid || scenario._id;
+                    await updateMutation({ variables: { id: docId, updates: {
+                        'AF-SS_sessionId': afSSsid,
+                        'AF-SS_mostLeastAligned': afSSmla,
+                        'AF-SS_kdmas': afSSkdmas
+                    } } });
+                }
             }
         } else {
             // Default: all ADEPT scenarios share one combined session
