@@ -143,7 +143,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12, 15, 16];
+export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12, 15, 16, 17];
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -1687,6 +1687,8 @@ function populateDataSetP2(data) {
                             if (p.name === 'intercept') row[`${prefix}${prefixSuffix}_intercept`] = p.value;
                             if (p.name === 'medical_weight') row[`${prefix}${prefixSuffix}_medical`] = p.value;
                             if (p.name === 'attr_weight') row[`${prefix}${prefixSuffix}_attribute`] = p.value;
+                            if (p.name === 'optA') row[`${prefix}${prefixSuffix}_optA`] = p.value;
+                            if (p.name === 'optB') row[`${prefix}${prefixSuffix}_optB`] = p.value;
                         }
                     }
                 };
@@ -1696,8 +1698,11 @@ function populateDataSetP2(data) {
                     ? scenario.combinedKdmas
                     : scenario?.kdmas;
 
+                // eval 17 trinary scenarios share KDMAs (AF/PS) with their binary counterparts, so write them to separate _Tri columns to avoid collision
+                const primarySuffix = scenario?.scenario_id?.includes('trinary') ? '_Tri' : '';
+
                 if (primarySource?.length) {
-                    writeKdmaParams(primarySource);
+                    writeKdmaParams(primarySource, primarySuffix);
                 }
 
                 // secondary: otherSubKDMA (eval 16 only, secondary subpopulation)
