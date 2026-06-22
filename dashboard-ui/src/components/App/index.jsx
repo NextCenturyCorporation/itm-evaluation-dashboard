@@ -508,7 +508,7 @@ export function App() {
                         {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
                             <Login participantTextLogin={true} testerLogin={true} />
                         </Route>}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/admin" component={Admin} />}
+                        {hasAccess(currentUser, ['admin']) && <Route path="/admin" component={Admin} />}
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/pid-lookup" component={PidLookupPage} />}
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey" component={Survey} />}
