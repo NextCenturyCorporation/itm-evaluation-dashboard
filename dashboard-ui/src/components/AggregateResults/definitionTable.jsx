@@ -8,12 +8,14 @@ import ph2XlFile from './Variable Definitions/PH2_Variables.xlsx'
 import ukXlFile from './Variable Definitions/UK_Variables.xlsx'
 import ph2FebXlFile from './Variable Definitions/PH2_Feb_Variables.xlsx'
 import ph2AprilXlFile from './Variable Definitions/PH2_April_Variables.xlsx'
+import ph2JuneXlFile from './Variable Definitions/PH2_June_Variables.xlsx'
 const getDefinitionFile = (evalNumber) => {
     if (evalNumber === 4) return { file: dreXlFile, filename: 'DRE_Variables.xlsx' };
     if (evalNumber === 5) return { file: ph1XlFile, filename: 'PH1_Variables.xlsx' };
     if (evalNumber === 12) return { file: ukXlFile, filename: 'UK_Variables.xlsx' };
     if (evalNumber === 15) return { file: ph2FebXlFile, filename: 'PH2_Feb_Variables.xlsx' };
     if (evalNumber === 16) return { file: ph2AprilXlFile, filename: 'PH2_April_Variables.xlsx' };
+    if (evalNumber === 17) return { file: ph2JuneXlFile, filename: 'PH2_June_Variables.xlsx' };
     if (evalNumber >= 8) return { file: ph2XlFile, filename: 'PH2_Variables.xlsx' };
     return { file: mreXlFile, filename: 'MRE_Variables.xlsx' };
 };
