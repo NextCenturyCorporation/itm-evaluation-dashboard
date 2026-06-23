@@ -11,7 +11,7 @@ import ph2AprilXlFile from './Variable Definitions/PH2_April_Variables.xlsx'
 import ph2JuneXlFile from './Variable Definitions/PH2_June_Variables.xlsx'
 const getDefinitionFile = (evalNumber) => {
     if (evalNumber === 4) return { file: dreXlFile, filename: 'DRE_Variables.xlsx' };
-    if (evalNumber === 5) return { file: ph1XlFile, filename: 'PH1_Variables.xlsx' };
+    if (evalNumber === 5 || evalNumber === 6) return { file: ph1XlFile, filename: 'PH1_Variables.xlsx' };
     if (evalNumber === 12) return { file: ukXlFile, filename: 'UK_Variables.xlsx' };
     if (evalNumber === 15) return { file: ph2FebXlFile, filename: 'PH2_Feb_Variables.xlsx' };
     if (evalNumber === 16) return { file: ph2AprilXlFile, filename: 'PH2_April_Variables.xlsx' };
@@ -20,21 +20,37 @@ const getDefinitionFile = (evalNumber) => {
     return { file: mreXlFile, filename: 'MRE_Variables.xlsx' };
 };
 
+// parses variable defs sheet
+export const loadDefinitionsSheet = (evalNumber) => new Promise((resolve, reject) => {
+    const { file: xlFile } = getDefinitionFile(evalNumber);
+    const oReq = new XMLHttpRequest();
+    oReq.open("GET", xlFile, true);
+    oReq.responseType = "arraybuffer";
+    oReq.onload = () => {
+        try {
+            const wb = XLSX.read(oReq.response, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            resolve(XLSX.utils.sheet_to_json(ws, { header: 1 }));
+        } catch (err) {
+            reject(err);
+        }
+    };
+    oReq.onerror = reject;
+    oReq.send();
+});
+
+// grabs just the headers from parsed sheet
+export const getDefinitionHeaders = (defs) =>
+    (defs?.[0] ?? []).slice(1).filter((h) => h !== undefined && h !== null && h !== '' && h !== '-');
+
 export function DefinitionTable({ evalNumber }) {
     const [defs, setDefs] = React.useState(null);
 
     React.useEffect(() => {
-        const { file: xlFile } = getDefinitionFile(evalNumber);
-        const oReq = new XMLHttpRequest();
-        oReq.open("GET", xlFile, true);
-        oReq.responseType = "arraybuffer";
-
-        oReq.onload = function () {
-            var arraybuffer = oReq.response;
-            const wb = XLSX.read(arraybuffer, { type: 'array' });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-            const maxLen = data[0].length
+        let cancelled = false;
+        loadDefinitionsSheet(evalNumber).then((data) => {
+            if (cancelled) return;
+            const maxLen = data[0].length;
             for (let i = 0; i < data.length; i++) {
                 for (let j = 0; j < maxLen; j++) {
                     if (data[i][j] === undefined) {
@@ -43,8 +59,8 @@ export function DefinitionTable({ evalNumber }) {
                 }
             }
             setDefs(data);
-        };
-        oReq.send();
+        }).catch(() => { /* leave defs null on failure */ });
+        return () => { cancelled = true; };
     }, [evalNumber]);
 
     const exportWordDoc = () => {
