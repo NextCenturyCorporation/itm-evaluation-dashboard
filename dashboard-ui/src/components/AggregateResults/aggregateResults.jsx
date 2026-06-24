@@ -7,10 +7,10 @@ import * as FileSaver from 'file-saver';
 import '../../css/aggregateResults.css';
 import ProgramQuestions from './HomePages/programQuestions';
 import { Modal } from "@mui/material";
-import { DefinitionTable } from './definitionTable';
+import { DefinitionTable, loadDefinitionsSheet, getDefinitionHeaders } from './definitionTable';
 import CloseIcon from '@material-ui/icons/Close';
 import Select from 'react-select';
-import { HEADER, HEADER_SIM_DATA, ADEPT_HEADERS_DRE } from './aggregateHeaders';
+import { HEADER_SIM_DATA, ADEPT_HEADERS_DRE } from './aggregateHeaders';
 import { PAGES, getEvalOptionsForPage } from '../Research/utils';
 
 
@@ -38,6 +38,7 @@ export default function AggregateResults({ type }) {
     const [iframeLink, setIframeLink] = React.useState(null);
     const [showIframe, setShowIframe] = React.useState(false);
     const [iframeTitle, setIframeTitle] = React.useState(null);
+    const [definitionHeaders, setDefinitionHeaders] = React.useState([]);
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
         variables: { "evalNumber": selectedEval }
@@ -80,7 +81,7 @@ export default function AggregateResults({ type }) {
     }, [data, error, loading, selectedEval]);
 
     const exportToExcel = async () => {
-        const headersToInclude = HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval];
+        const headersToInclude = definitionHeaders;
         const dataCopy = structuredClone(fullData);
         const filteredData = dataCopy.map(row => {
             const filteredRow = {};
@@ -105,6 +106,17 @@ export default function AggregateResults({ type }) {
         FileSaver.saveAs(data, (selectedEval === 12 ? 'uk_' : selectedEval >= 8 ? 'ph2_' : selectedEval === 3 ? 'mre_' : selectedEval === 4 ? 'dre_' : 'ph1_') + 'participant_data' + fileExtension);
 
     };
+
+    // read headers from xlsx using helpers in definitionTable.jsx
+    React.useEffect(() => {
+        if (type !== 'HumanSimParticipant') return;
+        let cancelled = false;
+        setDefinitionHeaders([])
+        loadDefinitionsSheet(selectedEval)
+            .then((defs) => { if (!cancelled) setDefinitionHeaders(getDefinitionHeaders(defs)); })
+            .catch(() => { if (!cancelled) setDefinitionHeaders([]); });
+        return () => { cancelled = true; };
+    }, [type, selectedEval]);
 
     const exportHumanSimToExcel = async () => {
         if (selectedEval !== 4 && selectedEval !== 5 && selectedEval !== 6) {
@@ -274,31 +286,34 @@ export default function AggregateResults({ type }) {
                             }}
                         />
                     </div>
-                    <div className='resultTableSection'>
-                        <table className='itm-table'>
-                            <thead>
-                                <tr>
-                                    {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
-                                        return (<th key={'header-' + index}>
-                                            {val}
-                                        </th>);
-                                    })}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {fullData.map((dataSet, index) => {
-                                    return (<tr key={dataSet['ParticipantID'] + '-' + index}>
-                                        {HEADER[selectedEval === 6 ? 5 : selectedEval === 9 ? 8 : selectedEval]?.map((val, index) => {
-                                            return (<td key={dataSet['ParticipantID'] + '-' + val}>
-                                                {formatData(dataSet, val)}
-                                            </td>);
+                    {definitionHeaders.length > 0 ?
+                        <div className='resultTableSection'>
+                            <table className='itm-table'>
+                                <thead>
+                                    <tr>
+                                        {definitionHeaders.map((val, index) => {
+                                            return (<th key={'header-' + index}>
+                                                {val}
+                                            </th>);
                                         })}
-                                    </tr>);
-                                })}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {fullData.map((dataSet, index) => {
+                                        return (<tr key={dataSet['ParticipantID'] + '-' + index}>
+                                            {definitionHeaders.map((val, index) => {
+                                                return (<td key={dataSet['ParticipantID'] + '-' + val}>
+                                                    {formatData(dataSet, val)}
+                                                </td>);
+                                            })}
+                                        </tr>);
+                                    })}
 
-                            </tbody>
-                        </table>
-                    </div>
+                                </tbody>
+                            </table>
+                        </div>
+                        : <div className='resultTableSection'>Loading Variables...</div>
+                    }
                 </div>
             }
 

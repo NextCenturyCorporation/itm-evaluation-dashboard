@@ -7,7 +7,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import '../../css/humanResults.css';
 import Select from 'react-select';
-import { POST_MRE_EVALS } from "../AggregateResults/DataFunctions";
+import { isPostMreEval } from "../AggregateResults/DataFunctions";
 import { PAGES, getEvalOptionsForPage } from "../Research/utils";
 
 
@@ -163,10 +163,10 @@ export default function HumanResults() {
                                 break;
                             }
                         }
-                        if ((soartech_start !== -1 && soartech_end === -1) || (POST_MRE_EVALS.includes(version) && (scene.includes('qol') || scene.includes('vol')))) {
+                        if ((soartech_start !== -1 && soartech_end === -1) || (isPostMreEval(version) && (scene.includes('qol') || scene.includes('vol')))) {
                             entry['soartech'].push(action);
                         }
-                        if ((adept_start !== -1 && adept_end === -1) || (POST_MRE_EVALS.includes(version) && scene.includes('DryRunEval'))) {
+                        if ((adept_start !== -1 && adept_end === -1) || (isPostMreEval(version) && scene.includes('DryRunEval'))) {
                             entry['adept'].push(action);
                         }
                         if (freeform_start !== -1) {
