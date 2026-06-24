@@ -163,7 +163,41 @@ export function getAlignments(evalNum, textResults, pid) {
     const alignments = [];
     const distanceAlignments = [];
     const eval16Alignments = {};
+    const eval17Alignments = {};
     let addedMJ = false;
+
+    if (evalNum === 17) {
+        // keyed by attribute block (AF-Bi, AF-Tri, PS-Bi, PS-Tri, AF-SS); bi/tri docs each carry
+        // their group's combinedMostLeastAligned; the AF/SS binary docs also carry AF-SS_mostLeastAligned
+        const collect = (mlaField) => {
+            const atts = [];
+            for (const attSet of mlaField ?? []) {
+                for (const att of attSet.response ?? []) {
+                    for (const k of Object.keys(att)) {
+                        atts.push({ 'target': k, 'score': att[k] });
+                    }
+                }
+            }
+            return atts;
+        };
+        for (const textRes of textResultsForPID) {
+            const sid = textRes.scenario_id ?? '';
+            const isTrinary = sid.includes('trinary');
+            for (const attr of ['AF', 'PS']) {
+                if (!sid.includes(attr)) continue;
+                const blockKey = `${attr}-${isTrinary ? 'Tri' : 'Bi'}`;
+                if (!eval17Alignments[blockKey]) {
+                    const pattern = `${attr}-${isTrinary ? 'trinomial' : 'binomial'}`;
+                    eval17Alignments[blockKey] = collect(textRes['combinedMostLeastAligned']).filter(a => a.target.includes(pattern));
+                }
+            }
+            if (!isTrinary && textRes['AF-SS_mostLeastAligned'] && !eval17Alignments['AF-SS']) {
+                eval17Alignments['AF-SS'] = collect(textRes['AF-SS_mostLeastAligned']).filter(a => a.target.includes('AF') && a.target.includes('SS'));
+            }
+        }
+        return { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments };
+    }
+
     for (const textRes of textResultsForPID) {
         // adept
         if (Object.keys(textRes).includes('combinedSessionId')) {
@@ -224,7 +258,7 @@ export function getAlignments(evalNum, textResults, pid) {
             }
         }
     }
-    return { textResultsForPID, alignments, distanceAlignments, eval16Alignments };
+    return { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments };
 }
 
 function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
@@ -327,6 +361,7 @@ const ATTR_IDX_EVAL_10 = { AF: 0, MF: 1, PS: 2, 'PS-AF': 3, PSAF: 4 };
 const TYPES_EVAL_16 = ['baseline', 'aligned', 'misaligned', 'comparison'];
 
 const DATASOURCE = {
+    17: 'P2E_June_2026',
     16: 'P2E_April_2026',
     15: 'P2E_Feb_2026',
     12: 'UK_2025',
@@ -335,6 +370,10 @@ const DATASOURCE = {
     10: 'P2E_Sept_2025',
     4: 'DRE',
 };
+
+// TODO: confirm the field that marks trinary-session
+const isTrinaryComparison = (x) =>
+    x['session_type'] === 'trinary' || x['text_scenario']?.includes('trinary') === true;
 
 function findMatchingPages(evalNum, results, entry, t, logData, st_scenario, ad_scenario) {
     const ta2Author = entry['TA2'] === 'Kitware' ? 'kitware' : 'TAD';
