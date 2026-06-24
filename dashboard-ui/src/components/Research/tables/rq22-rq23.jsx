@@ -3,6 +3,7 @@ import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_DRE.xlsx';
@@ -194,9 +195,15 @@ export function RQ2223({ evalNum }) {
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, targetTypeFilters]);
 
+    // show error message if an error occurs
+    if (error) {
+        console.log(error);
+        return(
+            <QueryErrorMessage error={error}></QueryErrorMessage>
+        );
+    }
 
     if (loading || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
-    if (error) return <p>Error :</p>;
 
     return (<>
         {filteredData.length < formattedData.length && <p className='filteredText'>Showing {filteredData.length} of {formattedData.length} rows based on filters</p>}

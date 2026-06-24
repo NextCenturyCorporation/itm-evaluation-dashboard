@@ -48,8 +48,6 @@ export function PidLookup() {
         setEmail(target.value);
     };
 
-    if (loadingParticipantLog) return <p>Loading Participant Log...</p>;
-
     // show error message if an participantLog Error occurs
     if (errorParticipantLog) {
         console.log(errorParticipantLog);
@@ -57,6 +55,10 @@ export function PidLookup() {
             <QueryErrorMessage error={errorParticipantLog}></QueryErrorMessage>
         );
     }
+
+    if (loadingParticipantLog) return <p>Loading Participant Log...</p>;
+
+
 
 
     return (<div className="row justify-content-center align-items-center h-100 center-container">

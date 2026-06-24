@@ -140,8 +140,6 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
         }
     }, [data, fullData, dreDataForPh1, evalNumber]);
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
-    
     // catch any errors that return true and save in an array to display in the QueryErrorMessage component
     const errors = [
         errorParticipantLog,
@@ -157,6 +155,8 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
         return <QueryErrorMessage errors={errors} />;
     }
 
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
+    
     return (<div className='accordion-homepage'>
         <Accordion defaultActiveKey={["1", "2", "3"]} alwaysOpen>
             <Accordion.Item eventKey="1" id='rq1'>

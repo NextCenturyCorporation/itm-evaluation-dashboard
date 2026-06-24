@@ -275,8 +275,6 @@ export function CalibrationData({ evalNum }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
-       
     // catch any errors that return true and save in an array to display in the QueryErrorMessage component
     const errors = [
         errorParticipantLog,
@@ -291,6 +289,8 @@ export function CalibrationData({ evalNum }) {
         console.log(errors);
         return <QueryErrorMessage errors={errors} />;
     }
+
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;
 
     return (<>
         <h2 className='rq134-header'>Calibration Scores

@@ -61,9 +61,6 @@ export function TextBasedScenariosPageWrapper(props) {
     // server side time stamps
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
-    // show loading screen
-    if (participantLogLoading) return <p>Loading...</p>;
-
     // show error message if an participantLogError occurs
     if (participantLogError) {
         console.log(participantLogError); 
@@ -71,6 +68,9 @@ export function TextBasedScenariosPageWrapper(props) {
             <QueryErrorMessage error={participantLogError}></QueryErrorMessage>
         );
     }
+
+    // show loading screen
+    if (participantLogLoading) return <p>Loading...</p>;
 
     return <TextBasedScenariosPage
         {...props}

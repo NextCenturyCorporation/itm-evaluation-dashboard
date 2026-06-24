@@ -12,6 +12,7 @@ import ukDefinitionXLFile from '../variables/Variable Definitions RQ134_UK.xlsx'
 import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
 import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb.xlsx';
 import aprilDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_April.xlsx';
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -532,8 +533,24 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorSurveyResults,
+        errorTextResults,
+        errorADMs,
+        errorMedics,
+        errorComparisonData,
+        errorSim,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+        return <QueryErrorMessage errors={errors} />;
+    }
+    
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim || formattedData.length === 0 && processedForEval !== evalNum) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorMedics || errorComparisonData || errorSim) return <p>Error :</p>;
+
 
     return (<>
         <h2 className='rq134-header'>{tableTitle}
