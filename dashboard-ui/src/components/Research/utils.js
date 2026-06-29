@@ -371,7 +371,6 @@ const DATASOURCE = {
     4: 'DRE',
 };
 
-// TODO: confirm the field that marks trinary-session
 const isTrinaryComparison = (x) =>
     x['session_type'] === 'trinary' || x['text_scenario']?.includes('trinary') === true;
 
