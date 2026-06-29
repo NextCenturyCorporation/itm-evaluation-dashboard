@@ -805,18 +805,20 @@ function buildEntryRow(context) {
         }
 
         // Probe sets
-        entryObj['Probe Set Assessment'] = page['scenarioIndex'].includes('PS-AF') ? logData['PS-AF-text-scenario'] : logData['AF-text-scenario'];
-        if (evalNum === 15) {
-            const match = page['scenarioIndex']?.match(/(\d+)-observe$/);
-            entryObj['Probe Set Observation'] = match ? parseInt(match[1]) : '-';
-        } else if (evalNum !== 10) {
-            const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
-            entryObj['Probe Set Observation'] = adjustScenarioNumber(
-                isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
-        } else {
-            const isMultiKdma = page['scenarioIndex'].includes('PS-AF');
-            const isCombined = page['scenarioIndex'].includes('PSAF');
-            entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData['PS-AF-text-scenario'], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
+        if (evalNum !== 17) {
+            entryObj['Probe Set Assessment'] = page['scenarioIndex'].includes('PS-AF') ? logData['PS-AF-text-scenario'] : logData['AF-text-scenario'];
+            if (evalNum === 15) {
+                const match = page['scenarioIndex']?.match(/(\d+)-observe$/);
+                entryObj['Probe Set Observation'] = match ? parseInt(match[1]) : '-';
+            } else if (evalNum !== 10) {
+                const isMultiKdma = entryObj['Target'].includes('affiliation') && entryObj['Target'].includes('merit');
+                entryObj['Probe Set Observation'] = adjustScenarioNumber(
+                    isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
+            } else {
+                const isMultiKdma = page['scenarioIndex'].includes('PS-AF');
+                const isCombined = page['scenarioIndex'].includes('PSAF');
+                entryObj['Probe Set Observation'] = isMultiKdma ? adjustScenarioNumber(logData['PS-AF-text-scenario'], 2) : adjustScenarioNumber(isMultiKdma ? adjustScenarioNumber(entryObj['Probe Set Assessment'], 3) : entryObj['Probe Set Assessment'], 3);
+            }
         }
 
         // Override server session ID for phase 2
