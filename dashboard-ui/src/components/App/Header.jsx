@@ -98,6 +98,11 @@ export function Header({ currentUser, logout }) {
                             Open World ADMs
                             </NavDropdown.Item>
                         )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
+                                Exploratory Analysis
+                            </NavDropdown.Item>
+                        )}
                         {(hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher'])) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/tccc">
                                         TCCC
