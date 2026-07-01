@@ -136,13 +136,15 @@ const getKdmaTargets = (doc) => {
 const getKdmaParameter = (data, kdmaName, parameterName) => {
     const kdmas = data?.results?.kdmas;
     if (!kdmas || kdmas.length === 0) return '-';
-    
+
     const matchingKdma = kdmas.find(kdma => kdma.kdma.toLowerCase() === kdmaName.toLowerCase());
     if (!matchingKdma?.parameters) return '-';
-    
+
     const param = matchingKdma.parameters.find(p => p.name === parameterName);
     return param?.value ?? '-';
 };
+
+const kdmaHasParam = (kdma, paramName) => kdma.parameters?.some(p => p.name === paramName);
 
 export const ADMProbeResponses = (props) => {
     const evalOptions = getEvalOptionsForPage(PAGES.ADM_PROBE_RESPONSES);
@@ -365,7 +367,9 @@ export const ADMProbeResponses = (props) => {
             const kdmas = data?.results?.kdmas || [];
             kdmas.forEach(kdma => {
                 const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
-                row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                if (kdmaHasParam(kdma, 'intercept')) row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                if (kdmaHasParam(kdma, 'optA')) row[`${kdmaName}-optA`] = getKdmaParameter(data, kdma.kdma, 'optA');
+                if (kdmaHasParam(kdma, 'optB')) row[`${kdmaName}-optB`] = getKdmaParameter(data, kdma.kdma, 'optB');
                 row[`${kdmaName}-Attr`] = getKdmaParameter(data, kdma.kdma, 'attr_weight');
                 row[`${kdmaName}-Medical`] = getKdmaParameter(data, kdma.kdma, 'medical_weight');
             });
@@ -413,12 +417,13 @@ export const ADMProbeResponses = (props) => {
                 row['MJ KDMA'] = kdmaValues.mj;
                 row['IO KDMA'] = kdmaValues.io;
             } else if (currentEval >= 15) {
-                // Handle eval 15 parameters format
                 row['Alignment Score'] = data?.results?.alignment_score ?? '-';
                 const kdmas = data?.results?.kdmas || [];
                 kdmas.forEach(kdma => {
                     const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
-                    row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                    if (kdmaHasParam(kdma, 'intercept')) row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                    if (kdmaHasParam(kdma, 'optA')) row[`${kdmaName}-optA`] = getKdmaParameter(data, kdma.kdma, 'optA');
+                    if (kdmaHasParam(kdma, 'optB')) row[`${kdmaName}-optB`] = getKdmaParameter(data, kdma.kdma, 'optB');
                     row[`${kdmaName}-Attr`] = getKdmaParameter(data, kdma.kdma, 'attr_weight');
                     row[`${kdmaName}-Medical`] = getKdmaParameter(data, kdma.kdma, 'medical_weight');
                 });
@@ -655,11 +660,13 @@ export const ADMProbeResponses = (props) => {
                                                                                     const kdmas = firstData?.results?.kdmas || [];
                                                                                     return kdmas.flatMap(kdma => {
                                                                                         const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
-                                                                                        return [
-                                                                                            <th key={`${kdmaName}-Intercept`}>{kdmaName}-Intercept</th>,
-                                                                                            <th key={`${kdmaName}-Attr`}>{kdmaName}-Attr</th>,
-                                                                                            <th key={`${kdmaName}-Medical`}>{kdmaName}-Medical</th>
-                                                                                        ];
+                                                                                        const headers = [];
+                                                                                        if (kdmaHasParam(kdma, 'intercept')) headers.push(<th key={`${kdmaName}-Intercept`}>{kdmaName}-Intercept</th>);
+                                                                                        if (kdmaHasParam(kdma, 'optA')) headers.push(<th key={`${kdmaName}-optA`}>{kdmaName}-optA</th>);
+                                                                                        if (kdmaHasParam(kdma, 'optB')) headers.push(<th key={`${kdmaName}-optB`}>{kdmaName}-optB</th>);
+                                                                                        headers.push(<th key={`${kdmaName}-Attr`}>{kdmaName}-Attr</th>);
+                                                                                        headers.push(<th key={`${kdmaName}-Medical`}>{kdmaName}-Medical</th>);
+                                                                                        return headers;
                                                                                     });
                                                                                 })()}
                                                                             </>
@@ -690,11 +697,15 @@ export const ADMProbeResponses = (props) => {
                                                                                     <td>{data?.results?.alignment_score ?? '-'}</td>
                                                                                     {(() => {
                                                                                         const kdmas = data?.results?.kdmas || [];
-                                                                                        return kdmas.flatMap(kdma => [
-                                                                                            <td key={`${kdma.kdma}-intercept`}>{getKdmaParameter(data, kdma.kdma, 'intercept')}</td>,
-                                                                                            <td key={`${kdma.kdma}-attr`}>{getKdmaParameter(data, kdma.kdma, 'attr_weight')}</td>,
-                                                                                            <td key={`${kdma.kdma}-medical`}>{getKdmaParameter(data, kdma.kdma, 'medical_weight')}</td>
-                                                                                        ]);
+                                                                                        return kdmas.flatMap(kdma => {
+                                                                                            const cells = [];
+                                                                                            if (kdmaHasParam(kdma, 'intercept')) cells.push(<td key={`${kdma.kdma}-intercept`}>{getKdmaParameter(data, kdma.kdma, 'intercept')}</td>);
+                                                                                            if (kdmaHasParam(kdma, 'optA')) cells.push(<td key={`${kdma.kdma}-optA`}>{getKdmaParameter(data, kdma.kdma, 'optA')}</td>);
+                                                                                            if (kdmaHasParam(kdma, 'optB')) cells.push(<td key={`${kdma.kdma}-optB`}>{getKdmaParameter(data, kdma.kdma, 'optB')}</td>);
+                                                                                            cells.push(<td key={`${kdma.kdma}-attr`}>{getKdmaParameter(data, kdma.kdma, 'attr_weight')}</td>);
+                                                                                            cells.push(<td key={`${kdma.kdma}-medical`}>{getKdmaParameter(data, kdma.kdma, 'medical_weight')}</td>);
+                                                                                            return cells;
+                                                                                        });
                                                                                     })()}
                                                                                 </>
                                                                             ) : (
