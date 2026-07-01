@@ -412,7 +412,7 @@ export const ADMProbeResponses = (props) => {
                 const kdmaValues = getKdmaTargets(data);
                 row['MJ KDMA'] = kdmaValues.mj;
                 row['IO KDMA'] = kdmaValues.io;
-            } else if (currentEval === 15) {
+            } else if (currentEval >= 15) {
                 // Handle eval 15 parameters format
                 row['Alignment Score'] = data?.results?.alignment_score ?? '-';
                 const kdmas = data?.results?.kdmas || [];
@@ -442,7 +442,7 @@ export const ADMProbeResponses = (props) => {
         const formattedData = formatTableData(data.getAllTestDataForADM, adm);
         setAllTableData(prev => ({
             ...prev,
-            [adm]: currentEval === 15 ? {
+            [adm]: currentEval >= 15 ? {
                 formattedData: formattedData,
                 originalData: data.getAllTestDataForADM,
                 adm: adm
@@ -526,7 +526,7 @@ export const ADMProbeResponses = (props) => {
                                 <button
                                     className='aggregateDownloadBtn'
                                     onClick={() => downloadAsExcel(
-                                        currentEval === 15 
+                                        currentEval >= 15 
                                             ? Object.fromEntries(
                                                 Object.entries(allTableData).map(([key, val]) => [key, val.formattedData || val])
                                             )
@@ -537,7 +537,7 @@ export const ADMProbeResponses = (props) => {
                                 >
                                     Download All
                                 </button>
-                                {currentEval === 15 && (
+                                {currentEval >= 15 && (
                                     <button
                                         className='aggregateDownloadBtn'
                                         onClick={() => downloadKdmaOnly(allTableData, null, true)}
@@ -579,7 +579,7 @@ export const ADMProbeResponses = (props) => {
                                                         >
                                                             Download
                                                         </button>
-                                                        {currentEval === 15 && (
+                                                        {currentEval >= 15 && (
                                                             <button
                                                                 className="aggregateDownloadBtn"
                                                                 onClick={() => downloadKdmaOnly(data?.getAllTestDataForADM || [], adm)}
@@ -647,7 +647,7 @@ export const ADMProbeResponses = (props) => {
                                                                                 <th>MJ KDMA Target</th>
                                                                                 <th>IO KDMA Target</th>
                                                                             </>
-                                                                        ) : currentEval === 15 ? (
+                                                                        ) : currentEval >= 15 ? (
                                                                             <>
                                                                                 <th>Alignment Score</th>
                                                                                 {(() => {
@@ -685,7 +685,7 @@ export const ADMProbeResponses = (props) => {
                                                                                     <td>{getKdmaTargets(data).mj}</td>
                                                                                     <td>{getKdmaTargets(data).io}</td>
                                                                                 </>
-                                                                            ) : currentEval === 15 ? (
+                                                                            ) : currentEval >= 15 ? (
                                                                                 <>
                                                                                     <td>{data?.results?.alignment_score ?? '-'}</td>
                                                                                     {(() => {
