@@ -1,6 +1,6 @@
 import React from 'react';
 import AggregateResults from '../AggregateResults/aggregateResults';
-import { isUserElevated } from '../App';
+import { hasAccess } from '../App';
 
 class HomePage extends React.Component {
     constructor(props) {
@@ -10,7 +10,7 @@ class HomePage extends React.Component {
     render() {
         return (
             <>
-                {isUserElevated(this.props.currentUser) && (
+                {hasAccess(this.props.currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
                     <div className="home-container">
                         <div className="home-navigation-container">
                             <div className="evaluation-selector-container">
@@ -20,7 +20,7 @@ class HomePage extends React.Component {
                         <AggregateResults type="Program" />
                     </div>
                 )}
-                {!isUserElevated(this.props.currentUser) && (
+                {!hasAccess(this.props.currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
                     <div className="home-container">
                         <div className="home-navigation-container">
                             <div className="evaluation-selector-container">

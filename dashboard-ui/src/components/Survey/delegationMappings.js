@@ -67,6 +67,13 @@ export const admOrderMapping = {
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
+    ],
+    10: [
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-Bi" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-Tri" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-Bi" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-Tri" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-SS" },
     ]
 }
 
