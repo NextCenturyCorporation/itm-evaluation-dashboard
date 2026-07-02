@@ -3,6 +3,7 @@ import './dre-rq.css';
 import { RQ8 } from "./tables/rq8";
 import { PH2RQ8 } from "./tables/ph2_rq8";
 import { PH2RQ8Apr26} from "./tables/ph2_rq8_apr26";
+import { PH2RQ8June26 } from './tables/ph2_rq8_june26';
 import Select from 'react-select';
 import { getAllEvals } from './utils';
 import { useSelector, useDispatch } from 'react-redux'
@@ -23,7 +24,7 @@ export function OpenWorld() {
         dispatch(setSelectedResearchEval(target.value))
     }
 
-    const rq8Map = { 16: PH2RQ8Apr26 };
+    const rq8Map = { 16: PH2RQ8Apr26, 17: PH2RQ8June26 };
     const RQ8Component = rq8Map[selectedEval]
     return (<div className="researchQuestion">
         <div className="rq-selection-section">
