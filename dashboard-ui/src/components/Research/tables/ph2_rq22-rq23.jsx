@@ -48,7 +48,6 @@ export function PH2RQ2223({ evalNum }) {
     const openModal = () => setShowDefinitions(true);
     const closeModal = () => setShowDefinitions(false);
 
-    // only eval 14 needs the set construction header
     const PH2_HEADERS = React.useMemo(() => {
         const baseHeaders = [
             'Trial_ID',
@@ -136,9 +135,8 @@ export function PH2RQ2223({ evalNum }) {
         while (i < parts.length && ALIGNED_PREFIXES.includes(parts[i])) i++;
         const raw = parts.slice(i).join('-');
         if (raw.includes('__')) return raw.split('__')[0];
-            return raw.replace(/_\d+(_\d+)*$/, '');
-
-
+        
+        return raw.replace(/_\d+(_\d+)*$/, '');
     };
 
 
@@ -207,7 +205,6 @@ export function PH2RQ2223({ evalNum }) {
             const groupedEntries = {};
 
             for (const scenarioKey of Object.keys(organized_adms)) {
-                const setAdmName = organized_adms[scenarioKey].admName
                 const scenarioName = organized_adms[scenarioKey].scenarioName;
                 const setConstruction = organized_adms[scenarioKey].setConstruction;
                 const targets = organized_adms[scenarioKey].targets;
@@ -544,7 +541,7 @@ export function PH2RQ2223({ evalNum }) {
                     />
                     }
 
-                    {evalNum === 15 && 
+                    {evalNum >= 15 && 
                         <Autocomplete
                         className='large-box'
                         multiple
