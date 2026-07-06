@@ -8,6 +8,7 @@ import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_PH2.xlsx';
 import eval14Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval14.xlsx';
 import eval15Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval15.xlsx';
+import eval17Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval17.xlsx';
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 
@@ -21,6 +22,12 @@ const evalToName = {
     8: 'June',
     9: 'July'
 }
+
+const DEFINITION_XL_FILES_BY_EVAL = {
+    14: eval14Defs,
+    15: eval15Defs,
+    17: eval17Defs,
+};
 
 export function PH2RQ2223({ evalNum }) {
     const { loading, error, data } = useQuery(getAdmData, {
@@ -48,7 +55,6 @@ export function PH2RQ2223({ evalNum }) {
     const openModal = () => setShowDefinitions(true);
     const closeModal = () => setShowDefinitions(false);
 
-    // only eval 14 needs the set construction header
     const PH2_HEADERS = React.useMemo(() => {
         const baseHeaders = [
             'Trial_ID',
@@ -93,7 +99,7 @@ export function PH2RQ2223({ evalNum }) {
 
         if (has('AF') && has('SS')) return 'AF-SS';
 
-        const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : null;
+        const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : has('MF') ? 'MF' : has('SS') ? 'SS' : null;
         const variant = /tri/i.test(t) ? 'tri' : /bi/i.test(t) ? 'bi' : null;
 
         return prefix && variant ? `${prefix}-${variant}` : prefix ?? '-';
@@ -136,9 +142,8 @@ export function PH2RQ2223({ evalNum }) {
         while (i < parts.length && ALIGNED_PREFIXES.includes(parts[i])) i++;
         const raw = parts.slice(i).join('-');
         if (raw.includes('__')) return raw.split('__')[0];
-            return raw.replace(/_\d+(_\d+)*$/, '');
 
-
+        return raw.replace(/_\d+(_\d+)*$/, '');
     };
 
 
@@ -207,7 +212,6 @@ export function PH2RQ2223({ evalNum }) {
             const groupedEntries = {};
 
             for (const scenarioKey of Object.keys(organized_adms)) {
-                const setAdmName = organized_adms[scenarioKey].admName
                 const scenarioName = organized_adms[scenarioKey].scenarioName;
                 const setConstruction = organized_adms[scenarioKey].setConstruction;
                 const targets = organized_adms[scenarioKey].targets;
@@ -277,139 +281,139 @@ export function PH2RQ2223({ evalNum }) {
                     }
 
                     for (const aligned of alignedAdms) {
-                         const entryObj = {};
-                         entryObj['Attribute'] = attribute;
+                        const entryObj = {};
+                        entryObj['Attribute'] = attribute;
                         allAttributes.push(attribute);
 
-                    entryObj['Set'] = scenarioSet;
-                    allSets.push(scenarioSet);
+                        entryObj['Set'] = scenarioSet;
+                        allSets.push(scenarioSet);
 
-                    if (evalNum === 15) {
-                        entryObj['Target'] = target.replace('Feb2026-', '')
-                        allTargets.push(target.replace('Feb2026-', ''))
-                        entryObj['ADM Name'] = aligned.name
-                        allAdmNames.push(aligned.name)
-                        entryObj['Set Construction'] = derivedSetConstruction || '-';
-                        allSetConstructions.push(derivedSetConstruction)
+                        if (evalNum === 15) {
+                            entryObj['Target'] = target.replace('Feb2026-', '')
+                            allTargets.push(target.replace('Feb2026-', ''))
+                            entryObj['ADM Name'] = aligned.name
+                            allAdmNames.push(aligned.name)
+                            entryObj['Set Construction'] = derivedSetConstruction || '-';
+                            allSetConstructions.push(derivedSetConstruction)
 
-                        entryObj['AF Target'] = parsed.AF
-                        entryObj['MF Target'] = parsed.MF
-                        entryObj['PS Target'] = parsed.PS
-                        entryObj['SS Target'] = parsed.SS
-                        entryObj['Oracle Alignment'] = aligned.adm.oracle_alignment
-                    }
-                    else if (evalNum === 17) {
-                        entryObj['Target'] = target.replace('Jun2026-', '');
-                        allTargets.push(target.replace('Jun2026-', ''));
-                        const admDisplayName = aligned.name.split('__')[0];
-                        entryObj['ADM Name'] = admDisplayName;
-                        allAdmNames.push(admDisplayName);
-                    }
-                    else {
-                        const sliceNum = attribute === 'AF-MF' ? -7 : -3;
-                        entryObj['Target'] = target.slice(sliceNum);
-                        allTargets.push(target.slice(sliceNum));
-                    }
-
-                    // only applicable for eval 14
-                    if (evalNum === 14) {
-                        entryObj['Set Construction'] = setConstruction || '-';
-                        allSetConstructions.push(setConstruction)
-                    }
-
-                    entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
-                    entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-';
-
-                    const mapKey = evalNum === 14 
-                        ? `${actualScenario}_${setConstruction}_${target}_${aligned?.alignment}`
-                        : `${actualScenario}_${target}_${aligned?.alignment}`;
-                    const rawProbes = probeMap[mapKey] || [];
-                    
-
-                    const formatted = rawProbes.map(raw => {
-                        let attr = entryObj['Attribute'];
-                        let number;
-
-                        if (raw.includes('.Probe')) {
-                            const [prefix, probePart] = raw.split('.Probe');
-                            number = parseInt(probePart.trim());
-
-                            const parts = prefix.split('-');
-                            if (parts.length >= 2) attr = parts[1];
+                            entryObj['AF Target'] = parsed.AF
+                            entryObj['MF Target'] = parsed.MF
+                            entryObj['PS Target'] = parsed.PS
+                            entryObj['SS Target'] = parsed.SS
+                            entryObj['Oracle Alignment'] = aligned.adm.oracle_alignment
+                        }
+                        else if (evalNum === 17) {
+                            entryObj['Target'] = target.replace('Jun2026-', '');
+                            allTargets.push(target.replace('Jun2026-', ''));
+                            const admDisplayName = aligned.name.split('__')[0];
+                            entryObj['ADM Name'] = admDisplayName;
+                            allAdmNames.push(admDisplayName);
                         }
                         else {
-                            const m = raw.match(/Probe\s*(\d+)/);
-                            number = m ? parseInt(m[1]) : NaN;
+                            const sliceNum = attribute === 'AF-MF' ? -7 : -3;
+                            entryObj['Target'] = target.slice(sliceNum);
+                            allTargets.push(target.slice(sliceNum));
                         }
 
-                        return { attr, number };
-                    })
-                        .filter(x => !isNaN(x.number))
-                        .sort((a, b) => {
-                            const cmp = a.attr.localeCompare(b.attr);
-                            if (cmp !== 0) return cmp;
-                            return a.number - b.number;
+                        // only applicable for eval 14
+                        if (evalNum === 14) {
+                            entryObj['Set Construction'] = setConstruction || '-';
+                            allSetConstructions.push(setConstruction)
+                        }
+
+                        entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
+                        entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-';
+
+                        const mapKey = evalNum === 14 
+                            ? `${actualScenario}_${setConstruction}_${target}_${aligned?.alignment}`
+                            : `${actualScenario}_${target}_${aligned?.alignment}`;
+                        const rawProbes = probeMap[mapKey] || [];
+
+
+                        const formatted = rawProbes.map(raw => {
+                            let attr = entryObj['Attribute'];
+                            let number;
+
+                            if (raw.includes('.Probe')) {
+                                const [prefix, probePart] = raw.split('.Probe');
+                                number = parseInt(probePart.trim());
+
+                                const parts = prefix.split('-');
+                                if (parts.length >= 2) attr = parts[1];
+                            }
+                            else {
+                                const m = raw.match(/Probe\s*(\d+)/);
+                                number = m ? parseInt(m[1]) : NaN;
+                            }
+
+                            return { attr, number };
                         })
-                        .map(x => `Probe-${x.attr}-${x.number}`)
-                        .join(', ');
+                            .filter(x => !isNaN(x.number))
+                            .sort((a, b) => {
+                                const cmp = a.attr.localeCompare(b.attr);
+                                if (cmp !== 0) return cmp;
+                                return a.number - b.number;
+                            })
+                            .map(x => `Probe-${x.attr}-${x.number}`)
+                            .join(', ');
 
-                    entryObj['Probe IDs'] = formatted;
+                        entryObj['Probe IDs'] = formatted;
 
-                    let baseline = null;
-                    if (evalNum === 15) {
-                        baseline = baselineMap[getModelSuffix(aligned.name)] || null;
-                    } else if (evalNum === 17) {
-                        const keyword = modelKeyword(aligned.name);
-                        baseline = keyword ? baselineMap[keyword] || null : null;
-                    }
-                     else {
-                        for (const admName of Object.keys(targets[target])) {
-                            if (admName.includes('OutlinesBaseline')) {
-                                baseline = targets[target][admName];
-                                break;
+                        let baseline = null;
+                        if (evalNum === 15) {
+                            baseline = baselineMap[getModelSuffix(aligned.name)] || null;
+                        } else if (evalNum === 17) {
+                            const keyword = modelKeyword(aligned.name);
+                            baseline = keyword ? baselineMap[keyword] || null : null;
+                        }
+                        else {
+                            for (const admName of Object.keys(targets[target])) {
+                                if (admName.includes('OutlinesBaseline')) {
+                                    baseline = targets[target][admName];
+                                    break;
+                                }
                             }
                         }
-                    }
 
 
-                    if (baseline) {
-                        entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline.alignment;
-                        entryObj['Baseline Server Session ID'] = baseline.adm?.results?.ta1_session_id ?? '-';
+                        if (baseline) {
+                            entryObj['Baseline ADM Alignment score (ADM|target)'] = baseline.alignment;
+                            entryObj['Baseline Server Session ID'] = baseline.adm?.results?.ta1_session_id ?? '-';
 
-                    } else {
-                        entryObj['Baseline ADM Alignment score (ADM|target)'] = '-';
-                        entryObj['Baseline Server Session ID'] = '-';
-                    }
-
-                    const groupKey = evalNum === 14 || evalNum === 15
-                        ? `${attribute}_${derivedSetConstruction}_${scenarioSet}`
-                        : `${attribute}_${scenarioSet}`;
-                    if (!groupedEntries[groupKey]) {
-                        groupedEntries[groupKey] = [];
-                    }
-                    groupedEntries[groupKey].push(entryObj);
-                    if (evalNum === 15 && attribute.includes('-') && aligned.adm?.results?.attribute_data?.length > 0) {
-                        for (const attrEntry of aligned.adm.results.attribute_data) {
-                            const attrKey = Object.keys(attrEntry)[0];
-                            const attrData = attrEntry[attrKey];
-
-                            const attr1DObj = { ...entryObj };
-                            attr1DObj['Attribute'] = attrKey;
-                            attr1DObj['Aligned ADM Alignment score (ADM|target)'] = attrData.alignment_score;
-                            attr1DObj['Aligned Server Session ID'] = attrData.ta1_session_id ?? '-';
-                            attr1DObj['Probe IDs'] = (attrData.probes ?? []).map(p => p.probe_id).join(', ');
-
-                            allAttributes.push(attrKey);
-
-                            const attrGroupKey = `${attrKey}_${derivedSetConstruction}_${scenarioSet}`
-                            if (!groupedEntries[attrGroupKey]) groupedEntries[attrGroupKey] = [];
-                            groupedEntries[attrGroupKey].push(attr1DObj);
+                        } else {
+                            entryObj['Baseline ADM Alignment score (ADM|target)'] = '-';
+                            entryObj['Baseline Server Session ID'] = '-';
                         }
-                    }
 
+                        const groupKey = evalNum === 14 || evalNum === 15
+                            ? `${attribute}_${derivedSetConstruction}_${scenarioSet}`
+                            : `${attribute}_${scenarioSet}`;
+                        if (!groupedEntries[groupKey]) {
+                            groupedEntries[groupKey] = [];
+                        }
+                        groupedEntries[groupKey].push(entryObj);
+                        if (evalNum === 15 && attribute.includes('-') && aligned.adm?.results?.attribute_data?.length > 0) {
+                            for (const attrEntry of aligned.adm.results.attribute_data) {
+                                const attrKey = Object.keys(attrEntry)[0];
+                                const attrData = attrEntry[attrKey];
+
+                                const attr1DObj = { ...entryObj };
+                                attr1DObj['Attribute'] = attrKey;
+                                attr1DObj['Aligned ADM Alignment score (ADM|target)'] = attrData.alignment_score;
+                                attr1DObj['Aligned Server Session ID'] = attrData.ta1_session_id ?? '-';
+                                attr1DObj['Probe IDs'] = (attrData.probes ?? []).map(p => p.probe_id).join(', ');
+
+                                allAttributes.push(attrKey);
+
+                                const attrGroupKey = `${attrKey}_${derivedSetConstruction}_${scenarioSet}`
+                                if (!groupedEntries[attrGroupKey]) groupedEntries[attrGroupKey] = [];
+                                groupedEntries[attrGroupKey].push(attr1DObj);
+                            }
+                        }
+
+                    }
                 }
             }
-        }
             for (const groupKey of Object.keys(groupedEntries)) {
                 const entries = groupedEntries[groupKey];
 
@@ -544,7 +548,7 @@ export function PH2RQ2223({ evalNum }) {
                     />
                     }
 
-                    {evalNum === 15 && 
+                    {evalNum >= 15 &&
                         <Autocomplete
                         className='large-box'
                         multiple
@@ -612,7 +616,7 @@ export function PH2RQ2223({ evalNum }) {
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                     <RQDefinitionTable
                         downloadName={`Definitions_RQ22_23_PH2.xlsx`}
-                        xlFile={evalNum === 14 ? eval14Defs : evalNum === 15 ? eval15Defs : ph2DefinitionXLFile}
+                        xlFile={DEFINITION_XL_FILES_BY_EVAL[evalNum] ?? ph2DefinitionXLFile}
                     />
                 </div>
             </Modal>
