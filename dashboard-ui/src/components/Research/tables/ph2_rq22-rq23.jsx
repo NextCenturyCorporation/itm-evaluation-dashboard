@@ -8,6 +8,7 @@ import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_PH2.xlsx';
 import eval14Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval14.xlsx';
 import eval15Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval15.xlsx';
+import eval17Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval17.xlsx';
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 
@@ -21,6 +22,12 @@ const evalToName = {
     8: 'June',
     9: 'July'
 }
+
+const DEFINITION_XL_FILES_BY_EVAL = {
+    14: eval14Defs,
+    15: eval15Defs,
+    17: eval17Defs,
+};
 
 export function PH2RQ2223({ evalNum }) {
     const { loading, error, data } = useQuery(getAdmData, {
@@ -609,7 +616,7 @@ export function PH2RQ2223({ evalNum }) {
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                     <RQDefinitionTable
                         downloadName={`Definitions_RQ22_23_PH2.xlsx`}
-                        xlFile={evalNum === 14 ? eval14Defs : evalNum === 15 ? eval15Defs : ph2DefinitionXLFile}
+                        xlFile={DEFINITION_XL_FILES_BY_EVAL[evalNum] ?? ph2DefinitionXLFile}
                     />
                 </div>
             </Modal>
