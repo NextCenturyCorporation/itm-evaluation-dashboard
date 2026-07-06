@@ -93,7 +93,7 @@ export function PH2RQ2223({ evalNum }) {
 
         if (has('AF') && has('SS')) return 'AF-SS';
 
-        const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : null;
+        const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : has('MF') ? 'MF' : has('SS') ? 'SS' : null;
         const variant = /tri/i.test(t) ? 'tri' : /bi/i.test(t) ? 'bi' : null;
 
         return prefix && variant ? `${prefix}-${variant}` : prefix ?? '-';
