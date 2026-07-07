@@ -187,7 +187,7 @@ export function PH2RQ2223({ evalNum }) {
 
                 probeMap[mapKey] = adm.probe_ids || [];
 
-                if (!isDefined(alignment)) continue;
+                if (!isDefined(alignment) || alignment === 'Not requested') continue;
 
                 if (!organized_adms[scenarioKey]) {
                     organized_adms[scenarioKey] = {
