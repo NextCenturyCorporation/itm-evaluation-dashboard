@@ -40,7 +40,7 @@ import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septe
 import { useSelector } from 'react-redux';
 import { checkAlignmentStatus } from '../Account/progressUtils';
 import { computeTextThreshold } from '../Account/participantProgress';
-import { alreadyCompleteModal } from '../TextBasedResults/alreadyCompleteModal'
+import { alreadyCompleteModal } from '../TextBasedScenarios/alreadyCompleteModal'
 // CSS and Image Stuff 
 import '../../css/app.css';
 import 'rc-slider/assets/index.css';
@@ -367,14 +367,14 @@ export function App() {
         const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
 
         if (foundParticipant) {
-            const pid = foundParticipant['ParticipantID'];
+            const participantId = foundParticipant['ParticipantID'];
             if (foundParticipant['textEntryCount'] >= computeTextThreshold(evalNum, true)) {
                 setAlreadyComplete({
-                    open=true,
-                    pid=pid
+                    open:true,
+                    pid:participantId
                 })
             } else {
-                history.push("/text-based?pid=" + pid);
+                history.push("/text-based?pid=" + participantId);
             }
             return;
         } else {
@@ -566,7 +566,7 @@ export function App() {
                 <AlreadyCompleteModal
                     open={alreadyComplete.open}
                     onClose={closePopup}
-                    pid={alreadyComplete.pid}
+                    participantId={alreadyComplete.pid}
                 />
 
                 <div className="itm-footer">
