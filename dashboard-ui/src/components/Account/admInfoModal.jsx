@@ -203,12 +203,15 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                         const aligned = getMedicByAlignment("aligned");
                         const misaligned = getMedicByAlignment("misaligned");
 
+                        const getLoading = (page, align) =>
+                            page ? formatLoading(determineChoiceProcessJune2025(null, page, align, filteredArr)) : "N/A";
+
                         medicData = [
                             { type: "Baseline", admName: baselineName || "-", target: "N/A", loading: "N/A" },
-                            { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: getAdmLoading(aligned) },
+                            { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: getLoading(aligned, "aligned") },
                         ];
                         if (misalignedTarget) {
-                            medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: getAdmLoading(misaligned) });
+                            medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: getLoading(misaligned, "misaligned") });
                         }
 
                         leftContent = {

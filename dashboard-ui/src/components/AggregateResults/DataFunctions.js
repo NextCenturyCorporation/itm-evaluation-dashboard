@@ -143,7 +143,7 @@ const ATTRIBUTE_MAP = {
 const TEXT_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_MEDIAN_ALIGNMENT_VALUES = {};
 const SIM_ORDER = {};
-export const POST_MRE_EVALS = [4, 5, 6, 8, 9, 10, 12, 15, 16];
+export const isPostMreEval = (evalNumber) => evalNumber > 3;
 const AGGREGATED_DATA = { 'PropTrust': { 'total': 0, 'count': 0 }, 'Delegation': { 'total': 0, 'count': 0 }, 'Trust': { 'total': 0, 'count': 0 } };
 
 // get text alignment scores for every participant, and the median value of those scores
@@ -465,7 +465,7 @@ function getOverallDelRate(res) {
     // gets the overall delegation rate (1=delegated, 0=no delegation) for a participant
     let val = 0;
     let tally = 0;
-    if (!POST_MRE_EVALS.includes(res.results.evalNumber)) {
+    if (!isPostMreEval(res.results.evalNumber)) {
         const st = getStDelRate(res);
         const ad = getAdDelRate(res);
         val = st['val'] + ad['val'];
@@ -494,7 +494,7 @@ function getOverallTrust(res) {
     // gets the overall trust level of a participant
     let val = 0;
     let tally = 0;
-    if (!POST_MRE_EVALS.includes(res.results.evalNumber)) {
+    if (!isPostMreEval(res.results.evalNumber)) {
         const adMedics = ['Medic-AD1', 'Medic-AD2', 'Medic-AD3', 'Medic-AD4', 'Medic-AD5', 'Medic-AD6', 'Medic-AD7', 'Medic-AD8'];
         const stMedics = ['Medic-ST1', 'Medic-ST2', 'Medic-ST3', 'Medic-ST4', 'Medic-ST5', 'Medic-ST6', 'Medic-ST7', 'Medic-ST8'];
 
@@ -603,7 +603,7 @@ function populateHumanDataRow(rowObject, version) {
             }
         }
     }
-    else if (POST_MRE_EVALS.includes(version)) {
+    else if (isPostMreEval(version)) {
         returnObj = {
             "Participant": rowObject[0].pid
         };
@@ -686,7 +686,7 @@ function populateHumanDataRow(rowObject, version) {
 function getGroupKey(row, selectedEval) {
     if (selectedEval === 3) {
         return row.SimEnv;
-    } else if (POST_MRE_EVALS.includes(selectedEval)) {
+    } else if (isPostMreEval(selectedEval)) {
         const adeptName = adept_dre_names[row.ADEPT_Scenario] || row.ADEPT_Scenario;
         const stName = st_dre_names[row.ST_Scenario] || row.ST_Scenario;
         return `${adeptName}_${stName}`;
@@ -702,7 +702,7 @@ function formatCellData(data) {
 
 function sortedObjectKeys(objectKeys, selectedEval) {
     // sorting tables for humanProbeData, compare adept, if same, then compare st
-    if (POST_MRE_EVALS.includes(selectedEval)) {
+    if (isPostMreEval(selectedEval)) {
         return objectKeys.sort((a, b) => {
             const [aAdept, aSoarTech] = a.split('_');
             const [bAdept, bSoarTech] = b.split('_');
@@ -747,7 +747,7 @@ function populateDataSet(data) {
             }
         });
         // for version 4, we will only separate by ADEPT, since they have different probes and we want to combine ST and Adept into one row per participant
-        if (POST_MRE_EVALS.includes(version)) {
+        if (isPostMreEval(version)) {
             tempGroupHumanSimData = Object.values(tempGroupHumanSimData).flat();
             const adept_mapping = { 1: ["DryRunEval-MJ2-eval"], 2: ["DryRunEval-MJ4-eval"], 3: ["DryRunEval-MJ5-eval"] }
             tempGroupHumanSimData = Object.groupBy(tempGroupHumanSimData, ({ ADEPT_Scenario }) => adept_mapping[ADEPT_Scenario]);
@@ -773,7 +773,7 @@ function populateDataSet(data) {
                 // ignore some pids
                 continue;
             }
-            if (POST_MRE_EVALS.includes(res.results.evalNumber)) {
+            if (isPostMreEval(res.results.evalNumber)) {
                 const valid_id = data?.getParticipantLog?.filter((x) => x?.ParticipantID?.toString() === pid && x['Type'] !== 'Test');
                 if (valid_id.length === 0) {
                     // only include valid ids for survey version 4 & 5
@@ -845,7 +845,7 @@ function populateDataSet(data) {
             const textOrder = TEXT_BASED_MAP[safeGet(res, ['results', 'Participant ID Page', 'questions', 'Have you completed the text-based scenarios', 'response'], ['results', 'Participant ID', 'questions', 'Have you completed the text-based scenarios', 'response'])];
 
 
-            if (POST_MRE_EVALS.includes(res.results.evalNumber)) {
+            if (isPostMreEval(res.results.evalNumber)) {
                 tmpSet['AD_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('adept'))] ?? '-';
                 tmpSet['QOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('qol'))] ?? '-';
                 tmpSet['VOL_Scenario_Sim'] = SIM_MAP[SIM_ORDER[pid]?.find((x) => x.includes('vol'))] ?? '-';
@@ -893,7 +893,7 @@ function populateDataSet(data) {
             }
 
 
-            if (!POST_MRE_EVALS.includes(res.results.evalNumber)) {
+            if (!isPostMreEval(res.results.evalNumber)) {
                 // get order of text based
                 tmpSet['TextOrder'] = textOrder;
 
@@ -1687,6 +1687,8 @@ function populateDataSetP2(data) {
                             if (p.name === 'intercept') row[`${prefix}${prefixSuffix}_intercept`] = p.value;
                             if (p.name === 'medical_weight') row[`${prefix}${prefixSuffix}_medical`] = p.value;
                             if (p.name === 'attr_weight') row[`${prefix}${prefixSuffix}_attribute`] = p.value;
+                            if (p.name === 'optA') row[`${prefix}${prefixSuffix}_optA`] = p.value;
+                            if (p.name === 'optB') row[`${prefix}${prefixSuffix}_optB`] = p.value;
                         }
                     }
                 };
@@ -1696,8 +1698,11 @@ function populateDataSetP2(data) {
                     ? scenario.combinedKdmas
                     : scenario?.kdmas;
 
+                // eval 17 trinary scenarios share KDMAs (AF/PS) with their binary counterparts, so write them to separate _Tri columns to avoid collision
+                const primarySuffix = scenario?.scenario_id?.includes('trinary') ? '_Tri' : '';
+
                 if (primarySource?.length) {
-                    writeKdmaParams(primarySource);
+                    writeKdmaParams(primarySource, primarySuffix);
                 }
 
                 // secondary: otherSubKDMA (eval 16 only, secondary subpopulation)
