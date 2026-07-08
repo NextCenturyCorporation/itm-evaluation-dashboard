@@ -7,6 +7,14 @@ Run all Docker Compose commands from the `docker_setup` directory.
 
 For local development:
 
+Before building the local development environment, make sure the corporate CA cert exists at:
+
+```text
+docker_setup/certs/ca-bundle.crt
+```
+
+Then run:
+
 ```bash
 cd docker_setup
 docker compose -f docker-compose-dev.yml up -d --build
@@ -56,14 +64,14 @@ For development:
 
 ```bash
 cd docker_setup
-docker compose -f docker-compose-dev.yml up -d --build --force-recreate dashboard-graphql dashboard-ui
+docker compose -f docker-compose-dev.yml up -d --build --force-recreate dashboard-server dashboard-ui
 ```
 
 For production:
 
 ```bash
 cd docker_setup
-docker compose -f docker-compose.yml up -d --build --force-recreate dashboard-graphql dashboard-ui
+docker compose -f docker-compose.yml up -d --build --force-recreate dashboard-server dashboard-ui
 ```
 
 # Helpful Command to Rebuild Nginx
