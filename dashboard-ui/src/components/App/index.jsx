@@ -10,6 +10,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import { SurveyPageWrapper } from '../Survey/survey';
+import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
@@ -473,11 +474,16 @@ export function App() {
         }
     };
 
+    // show error message if an participantLog Error occurs
+    if (versionError) {
+        console.log(versionError);
+        return(
+            <QueryErrorMessage error={versionError}></QueryErrorMessage>
+        );
+    }
+    
     if (versionLoading || surveyConfigLoading || textConfigLoading) {
         return <div>Loading...</div>;
-    }
-    if (versionError) {
-        return <div>Error fetching survey version data</div>;
     }
 
     return (

@@ -6,6 +6,7 @@ import { Modal, Autocomplete, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ5_DRE.xlsx';
 import janDefinitionXLFile from '../variables/Variable Definitions RQ5_JAN.xlsx';
 import { useQuery } from 'react-apollo'
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { getAlignments } from "../utils";
@@ -279,9 +280,21 @@ export function RQ5({ evalNum }) {
             return '-';
         }
     }
+    
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorComparisonData,
+        errorTextResults,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+        return <QueryErrorMessage errors={errors} />;
+    }
 
     if (loadingParticipantLog || loadingTextResults || loadingComparisonData || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
-    if (errorParticipantLog || errorTextResults || errorComparisonData) return <p>Error :</p>;
+    
 
     return (<>
         <h2 className='rq134-header'>RQ5 Data
