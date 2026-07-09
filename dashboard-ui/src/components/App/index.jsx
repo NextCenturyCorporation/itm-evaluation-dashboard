@@ -38,9 +38,7 @@ import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
 import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
-import { checkAlignmentStatus } from '../Account/progressUtils';
 import { computeTextThreshold } from '../Account/participantProgress';
-import { alreadyCompleteModal } from '../TextBasedScenarios/alreadyCompleteModal'
 // CSS and Image Stuff 
 import '../../css/app.css';
 import 'rc-slider/assets/index.css';

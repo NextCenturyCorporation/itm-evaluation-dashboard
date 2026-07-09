@@ -189,13 +189,14 @@ class TextBasedScenariosPage extends Component {
             // This should not be possible
             console.error("Error grabbing participant data")
             history.push('/login')
+            return
         }
 
         const allScenarios = this.scenariosFromLog(matchedLog);
 
         // logic for resuming a partial run. filter out completed scenarios to avoid duplicates
         const completedIds = this.props.completedScenarioIds || [];
-        const scenarios = completedIds.length > 0
+        let scenarios = completedIds.length > 0
             ? allScenarios.filter(config => !completedIds.includes(config.scenario_id))
             : allScenarios;
 
