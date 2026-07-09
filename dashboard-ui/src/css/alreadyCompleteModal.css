@@ -84,3 +84,13 @@
     .acp-body { padding: 1.5rem 1.25rem 1.25rem; }
     .acp-title { font-size: 1.2rem; }
 }
+
+.acp-icon svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: currentColor;      /* inherits #b15e2f from .acp-icon's color */
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
