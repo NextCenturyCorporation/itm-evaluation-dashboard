@@ -10,6 +10,8 @@ import CloseIcon from '@material-ui/icons/Close';
 import { RQDefinitionTable } from './variables/rq-variables';
 import ph1File from './variables/Variable Definitions Demographics_PH1.xlsx'
 import ph2File from './variables/Variable Definitions Demographics_PH2.xlsx'
+import { useSelector, useDispatch } from 'react-redux'
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 const PH1_DEFINITION_FILE = ph1File
 const PH2_DEFINITION_FILE = ph2File
@@ -172,8 +174,11 @@ function buildRowsForEval(evalNum, surveyData, demoData, isDemoCollection) {
 
 export function ParticipantDemographics() {
     const evalOptions = getAllEvals()
+    const dispatch = useDispatch();
+    const storedEval = useSelector(state => state.configs.selectedResearchEval);
+    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0]?.value ?? null)
+
     const client = useApolloClient()
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0]?.value ?? null)
     const [formattedData, setFormattedData] = React.useState([])
     const [headers, setHeaders] = React.useState([])
     const [showDefinitions, setShowDefinitions] = React.useState(false);
@@ -231,7 +236,7 @@ export function ParticipantDemographics() {
         <div className="researchQuestion">
             <div className="rq-selection-section">
                 <Select
-                    onChange={(opt) => setSelectedEval(opt.value)}
+                    onChange={(opt) => { setSelectedEval(opt.value); dispatch(setSelectedResearchEval(opt.value)); }}
                     options={evalOptions}
                     defaultValue={evalOptions[0]}
                     placeholder="Select Evaluation"
