@@ -14,7 +14,7 @@ import { setScenarioCompletion, SCENARIO_HEADERS, checkAlignmentStatus } from ".
 import { accountsClient } from "../../services/accountsService";
 import AdmInfoModal from "./admInfoModal";
 import RepairAlignmentModal from "./repairAlignmentModal";
-
+import { evalNameToNumber } from "../OnlineOnly/config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -69,6 +69,11 @@ const computeDelThreshold = (evalNumber, isUK, isPH2OrUK) => {
     if (isPH2OrUK && !DEL_THRESHOLD_4_EVALS.has(evalNumber)) return 5;
     return 4;
 };
+
+// basically reverses the evalNameToNumber dict
+const numberToEvalName = Object.fromEntries(
+    Object.entries(evalNameToNumber).map(([name, num]) => [num, name])
+);
 
 
 const formatDateTime = (date) => {
@@ -415,6 +420,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                         obj['_phase'] = 1;
                         obj['_evalNumber'] = 1;
                     }
+                }
+
+                // for eval numbers not in the map (e.g. legacy Phase 1 records).
+                const canonicalEvalName = numberToEvalName[obj['_evalNumber']];
+                if (canonicalEvalName) {
+                    obj['Evaluation'] = canonicalEvalName.replace(/Phase 2\s*/g, '');
                 }
 
                 // set scenario completions using utility function
