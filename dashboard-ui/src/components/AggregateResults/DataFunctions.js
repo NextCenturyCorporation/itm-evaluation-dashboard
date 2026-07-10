@@ -1613,6 +1613,7 @@ function getRatingsBySelectionStatus(data) {
 
 
 function populateDataSetP2(data) {
+    AGGREGATED_DATA["groupedSim"] = {};
     const pLog = data.getParticipantLog;
     const demographicsData = data.getDemographicsByEval ?? [];
     const results = [];

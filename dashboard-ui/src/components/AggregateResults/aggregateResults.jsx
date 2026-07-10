@@ -11,7 +11,9 @@ import { DefinitionTable, loadDefinitionsSheet, getDefinitionHeaders } from './d
 import CloseIcon from '@material-ui/icons/Close';
 import Select from 'react-select';
 import { HEADER_SIM_DATA, ADEPT_HEADERS_DRE } from './aggregateHeaders';
-import { PAGES, getEvalOptionsForPage } from '../Research/utils';
+import { getAllEvals } from '../Research/utils';
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 
 const EXCLUDED_EVALS_HUMAN_PROBES = [8, 9, 10, 12];
@@ -27,7 +29,9 @@ const GET_SURVEY_RESULTS = gql`
 
 
 export default function AggregateResults({ type }) {
-    let evalOptions = type == 'HumanProbeData' ? getEvalOptionsForPage(PAGES.HUMAN_SIM_PROBES) : getEvalOptionsForPage(PAGES.PARTICIPANT_LEVEL_DATA);
+    let evalOptions = getAllEvals()
+    const dispatch = useDispatch();
+    const storedEval = useSelector(state => state.configs.selectedResearchEval);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const fileExtension = '.xlsx';
 
@@ -40,16 +44,18 @@ export default function AggregateResults({ type }) {
     const [iframeTitle, setIframeTitle] = React.useState(null);
     const [definitionHeaders, setDefinitionHeaders] = React.useState([]);
 
+
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
         variables: { "evalNumber": selectedEval }
         // only pulls from network, never cached
         //fetchPolicy: 'network-only',
     });
-
+    
     React.useEffect(() => {
-        evalOptions = type == 'HumanProbeData' ? getEvalOptionsForPage(PAGES.HUMAN_SIM_PROBES) : getEvalOptionsForPage(PAGES.PARTICIPANT_LEVEL_DATA);
-        setSelectedEval(evalOptions[0].value);
+        evalOptions = getAllEvals()
+        setSelectedEval(storedEval ?? evalOptions[0].value);
     }, [type]);
+
 
 
     React.useEffect(() => {
@@ -173,9 +179,12 @@ export default function AggregateResults({ type }) {
 
     function selectEvaluation(target) {
         setSelectedEval(target.value);
+        dispatch(setSelectedResearchEval(target.value));
     }
 
+
     const getHeadersEval4 = (headers, adeptScenario) => {
+        headers = headers ?? [];
         if (type == 'HumanProbeData' && EXCLUDED_EVALS_HUMAN_PROBES.includes(selectedEval)) {
             return [];
         }
@@ -286,7 +295,7 @@ export default function AggregateResults({ type }) {
                             }}
                         />
                     </div>
-                    {definitionHeaders.length > 0 ?
+                    {definitionHeaders.length > 0 ? (fullData.length === 0 ? <div className='resultTableSection'><p>This page is not available for the selected evaluation.</p></div> :
                         <div className='resultTableSection'>
                             <table className='itm-table'>
                                 <thead>
@@ -311,7 +320,7 @@ export default function AggregateResults({ type }) {
 
                                 </tbody>
                             </table>
-                        </div>
+                        </div>)
                         : <div className='resultTableSection'>Loading Variables...</div>
                     }
                 </div>
@@ -344,7 +353,9 @@ export default function AggregateResults({ type }) {
                         />
                     </div>
 
-                    {aggregateData["groupedSim"] !== undefined && sortedObjectKeys(Object.keys(aggregateData["groupedSim"]), selectedEval).map((objectKey, key) => {
+                    {Object.keys(aggregateData["groupedSim"] || {}).length === 0 ? <p style={{ marginLeft: '1.5rem' }}>This page is not available for the selected evaluation.</p> :
+                        sortedObjectKeys(Object.keys(aggregateData["groupedSim"]), selectedEval).map((objectKey, key) => {
+    
                         const headers = selectedEval === 3 ? HEADER_SIM_DATA[selectedEval === 6 ? 5 : selectedEval] : getHeadersEval4(HEADER_SIM_DATA[selectedEval === 6 ? 5 : selectedEval], objectKey.split('_')[0]);
                         const filteredHeaders = headers?.filter(header => hasDataInColumn(aggregateData["groupedSim"][objectKey], header));
 
