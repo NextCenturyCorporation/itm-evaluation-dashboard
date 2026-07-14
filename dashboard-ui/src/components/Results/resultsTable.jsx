@@ -33,7 +33,9 @@ import {
   extractKdmaPairsFromHistory,
   kdmaAcronym
 } from './utils';
-import { PAGES, getEvalOptionsForPage } from '../Research/utils';
+import { getAllEvals } from '../Research/utils';
+import store from '../../store/store';
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
 const getPerformerADMByScenarioName = "getPerformerADMsForScenario";
@@ -111,13 +113,14 @@ function AutoFitText({ text, max = 16, min = 11, className = '' }) {
 
 class ResultsTable extends React.Component {
   constructor(props) {
-    const evalOptions = getEvalOptionsForPage(PAGES.ADM_RESULTS);
+    const evalOptions = getAllEvals();
+    const storedEval = store.getState()?.configs?.selectedResearchEval;
     super(props);
     this.state = {
       adm: "",
       scenario: "",
       evalOptions: evalOptions,
-      evalNumber: evalOptions[0].value,
+      evalNumber: storedEval ?? evalOptions[0].value,
       ADMQueryString: "history.parameters.adm_name",
       showScrollButton: false,
       alignmentTarget: null,
@@ -132,6 +135,7 @@ class ResultsTable extends React.Component {
       inspectorRoot: null,
       inspectorPath: [],
       inspectorRootLabel: 'Root',
+      noScenariosForEval: false,
     }
   }
 
@@ -172,8 +176,10 @@ class ResultsTable extends React.Component {
       scenario: "",
       ADMQueryString: target < 3 ? "history.parameters.ADM Name" : "history.parameters.adm_name",
       alignmentTarget: null,
-      selectedIndex: 0
+      selectedIndex: 0,
+      noScenariosForEval: false
     });
+    store.dispatch(setSelectedResearchEval(target));
   }
 
   setScenario(target) {
@@ -509,7 +515,8 @@ class ResultsTable extends React.Component {
                   <span className="nav-header-text">Scenario</span>
                 </div>
                 <div className="nav-menu">
-                  <Query query={scenario_names_aggregation} variables={{ "evalNumber": this.state.evalNumber }}>
+                  <Query query={scenario_names_aggregation} variables={{ "evalNumber": this.state.evalNumber }} 
+                  onCompleted={(data) => this.setState({ noScenariosForEval: data[getScenarioNamesQueryName].length === 0 })}>
                     {
                       ({ loading, error, data }) => {
                         if (loading) return <div>Loading ...</div>
@@ -800,9 +807,13 @@ class ResultsTable extends React.Component {
                   }
                 }
               </Query> :
-              <>
-                {this.renderRq2()}
-              </>
+              this.state.noScenariosForEval ? (
+                <p>This page is not available for the selected evaluation.</p>
+              ) : (
+                <>
+                  {this.renderRq2()}
+                </>
+              )
             }
           </div>
         </div>
