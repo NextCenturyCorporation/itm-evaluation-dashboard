@@ -28,7 +28,8 @@ const EVAL_MAP = {
     12: "UK PH1",
     13: 'PH2 October',
     15: 'PH2 February',
-    16: 'PH2 April 2026'
+    16: 'PH2 April 2026',
+    17: 'PH2 June 2026'
 }
 
 const TRUST_MAP = {
@@ -183,7 +184,7 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     );
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }, { 'value': '16', 'label': '16 - PH2 April 2026' }] }) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }, { 'value': '16', 'label': '16 - PH2 April 2026' }, { 'value': '17', 'label': '17 - PH2 June 2026' }] }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
@@ -352,7 +353,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             let lastPage = entry['Post-Scenario Measures'];
             let demoPage = null;
-            if (obj['eval'] === 16 && demographicsData) {
+            if (obj['eval'] >= 16 && demographicsData) {
                 const demoEntry = demographicsData?.find(d => d.surveyId === pid) ?? null;
                 demoPage = demoEntry?.results?.['Post-Scenario Measures'] ?? null;
                 if (!lastPage) lastPage = demoPage;
