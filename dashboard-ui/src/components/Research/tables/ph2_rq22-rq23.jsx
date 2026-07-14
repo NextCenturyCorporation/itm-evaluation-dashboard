@@ -11,7 +11,7 @@ import eval15Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval15.x
 import eval17Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval17.xlsx';
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
-
+import { getEval17Attribute } from "../utils";
 const getAdmData = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
@@ -92,18 +92,6 @@ export function PH2RQ2223({ evalNum }) {
 
     const getEval15Attribute = (parsed) =>
         ['AF', 'MF', 'PS', 'SS'].filter(a => parsed[a] !== '').join('-');
-
-    const getEval17Attribute = (target) => {
-        const t = String(target ?? '');
-        const has = (s) => t.includes(s);
-
-        if (has('AF') && has('SS')) return 'AF-SS';
-
-        const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : has('MF') ? 'MF' : has('SS') ? 'SS' : null;
-        const variant = /tri/i.test(t) ? 'tri' : /bi/i.test(t) ? 'bi' : null;
-
-        return prefix && variant ? `${prefix}-${variant}` : prefix ?? '-';
-    };
 
     const getLegacyAttribute = (scenario) => {
         if (scenario.includes('AF') && scenario.includes('MF')) return 'AF-MF';

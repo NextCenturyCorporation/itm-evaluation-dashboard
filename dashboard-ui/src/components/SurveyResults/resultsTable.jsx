@@ -14,7 +14,7 @@ import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf'
 import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
 import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
-import { getEval89Attributes, getEval12Attributes } from "../Research/utils";
+import { getEval89Attributes, getEval12Attributes, getEval17Attribute } from "../Research/utils";
 import { Box, Chip, LinearProgress, TableCell, TableRow, Typography } from "@material-ui/core";
 
 const EVAL_MAP = {
@@ -468,7 +468,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
                         if (showPh2) {
-                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget) : getEval89Attributes(page.admTarget, page.scenarioIndex);
+                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget) : obj['eval'] === 17 ? getEval17Attribute(page.admTarget) : getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
                             if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
@@ -497,7 +497,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             const isMFAF = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
                             const isCombined = page.scenarioIndex.includes('combined');
                             const isPSAF = page.scenarioIndex.includes('PS-AF');
-                            if (obj['eval'] !== 16) {
+                            if (obj['eval'] < 16) {
                                 if (!isPSAF) {
                                     obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
                                         (isMFAF || isCombined) ? adjustScenarioNumber(textScenario, 3) : textScenario, 3

@@ -312,6 +312,18 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
+export const getEval17Attribute = (target) => {
+    const t = String(target ?? '');
+    const has = (s) => t.includes(s);
+
+    if (has('AF') && has('SS')) return 'AF-SS';
+
+    const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : has('MF') ? 'MF' : has('SS') ? 'SS' : null;
+    const variant = /tri/i.test(t) ? 'Tri' : /bi/i.test(t) ? 'Bi' : null;
+
+    return prefix && variant ? `${prefix}-${variant}` : prefix ?? '-';
+};
+
 export function getEval12Attributes(target) {
     if (target.includes('vol')) return 'VOL'
     else if (target.includes('Moral')) return 'MJ'
@@ -717,7 +729,7 @@ function buildEntryRow(context) {
     if (evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF') && t !== 'comparison')
         entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'aligned' ? 'AlignedSS' : t === 'baseline' ? 'AlignedOS' : 'Misaligned';
 
-    
+
     const isOracleBlock = evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
     const choiceProcess = evalNum === 17
         ? ((t === 'aligned' || t === 'misaligned')
@@ -731,9 +743,9 @@ function buildEntryRow(context) {
 
     const isOracle = evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
 
-    entryObj['ADM Loading'] = t === 'comparison' ? '-' : 
-        (t === 'baseline' && !isOracle) ? 'normal' : 
-        (choiceProcess === 'exemption') ? 'exemption' : 'normal';
+    entryObj['ADM Loading'] = t === 'comparison' ? '-' :
+        (t === 'baseline' && !isOracle) ? 'normal' :
+            (choiceProcess === 'exemption') ? 'exemption' : 'normal';
 
     if (evalNum === 5 || evalNum === 6)
         entryObj['DRE ADM Loading'] = isAdept ? page.dreChoiceProcess : entryObj['ADM Loading'];
@@ -754,7 +766,7 @@ function buildEntryRow(context) {
         comparison_entry = comparisons?.find((x) => x['pid'] === pid && x['adm_type'] === t && x['adm_alignment_target'] === page['admTarget'] && x['adm_scenario'] === scenarioForComparison);
     } else {
         comparison_entry = comparisons?.find((x) =>
-            (evalNum === 10 || evalNum === 16 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget'] && 
+            (evalNum === 10 || evalNum === 16 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget'] &&
             (evalNum !== 17 || !isTrinaryComparison(x)) &&
             (evalNum !== 10 || x['text_scenario'].includes(entryObj['Attribute'])) &&
             (page['scenarioIndex']?.includes('PS-AF') ? x['text_scenario']?.includes('PS-AF') : !x['text_scenario']?.includes('PS-AF')) &&
@@ -798,7 +810,7 @@ function buildEntryRow(context) {
             entryObj['Alignment score (DelegatorTRI|Observed_ADM (target))'] = tri_entry?.score ?? '-';
         }
         // Resolve attribute from target/scenario (not eval 15/16/17 — attributes come from admOrderMapping)
-        if (evalNum < 15 ) {
+        if (evalNum < 15) {
             const resolved = resolveAttribute(entryObj['Target'], page['baselineTarget'], page['scenarioIndex']);
             if (resolved) entryObj['Attribute'] = resolved;
         }
@@ -865,22 +877,22 @@ function buildEntryRow(context) {
     entryObj['Agreement_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': Do you agree with the decision that this medic made?' : ': Do you agree with the decisions that this medic made?')];
     entryObj['SRAlign_Rating'] = RATING_MAP[ratingQ(': The way this medic makes medical decisions is how I make decisions')];
     if ((evalNum === 16 || evalNum === 17) && t !== "comparison") {
-      entryObj["Distrust_Rating"] = RATING_MAP[
-        ratingQ(": Based on this experience, I cannot rely on this person with complete confidence.")
-      ];
-      entryObj["Trustworthy(INT)_Rating"] = RATING_MAP[
-        ratingQ(": This medic’s actions and behaviors are not very consistent.")
-      ];
-      entryObj["Trustworthy(BEN)_Rating"] = RATING_MAP[
-        ratingQ(": This medic really looks out for what is important to me.")
-      ];
-    
-      const delAKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version A"));
-      const delBKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version B"));
-      entryObj["Delegation1"] = DELEGATION1_MAP[delAKey ? page["questions"][delAKey]?.response ?? "-" : "-"];
-      entryObj["Delegation2"] = DELEGATION2_MAP[delBKey ? page["questions"][delBKey]?.response ?? "-" : "-"];
+        entryObj["Distrust_Rating"] = RATING_MAP[
+            ratingQ(": Based on this experience, I cannot rely on this person with complete confidence.")
+        ];
+        entryObj["Trustworthy(INT)_Rating"] = RATING_MAP[
+            ratingQ(": This medic’s actions and behaviors are not very consistent.")
+        ];
+        entryObj["Trustworthy(BEN)_Rating"] = RATING_MAP[
+            ratingQ(": This medic really looks out for what is important to me.")
+        ];
+
+        const delAKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version A"));
+        const delBKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version B"));
+        entryObj["Delegation1"] = DELEGATION1_MAP[delAKey ? page["questions"][delAKey]?.response ?? "-" : "-"];
+        entryObj["Delegation2"] = DELEGATION2_MAP[delBKey ? page["questions"][delBKey]?.response ?? "-" : "-"];
     }
-    
+
     // --- Delegation preferences ---
     if (t === 'comparison') {
         const adms = page['pageName'].split(' vs ');
@@ -931,7 +943,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
         if (!logData || textCount < TEXT_COUNT_NEEDED) continue;
         if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < TEXT_COUNT_NEEDED || logData.simEntryCount < SIM_ENTRY_COUNT_NEEDED)) continue;
 
-        const { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments} = getAlignments(evalNum, textResults, pid);
+        const { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments } = getAlignments(evalNum, textResults, pid);
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         const demoEntry = demoData?.find(entry => entry.surveyId === pid) ?? null;
 
@@ -1204,7 +1216,7 @@ function determineChoiceProcessEval16(eval16Alignments, entry, page, t) {
                 ? leastAligned.target
                 : null;
 
-            
+
     if (!selectedTarget) return 'exemption';
 
     if (selectedTarget !== target) {
