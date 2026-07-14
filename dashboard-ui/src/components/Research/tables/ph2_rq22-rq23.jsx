@@ -12,6 +12,7 @@ import eval17Defs from '../variables/Variable Definitions RQ2.2_2.3_PH2_eval17.x
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 import { getEval17Attribute } from "../utils";
+
 const getAdmData = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
