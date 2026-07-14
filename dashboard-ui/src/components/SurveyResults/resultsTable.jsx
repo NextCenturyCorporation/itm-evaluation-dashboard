@@ -184,7 +184,12 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     );
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }, { 'value': '16', 'label': '16 - PH2 April 2026' }, { 'value': '17', 'label': '17 - PH2 June 2026' }] }) {
+const DEFAULT_EVAL_NUMBERS = [8, 9, 10, 12, 13, 15, 16, 17].map((v) => ({
+    value: String(v),
+    label: `${v} - ${EVAL_MAP[v]}`
+}));
+
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = DEFAULT_EVAL_NUMBERS}) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
