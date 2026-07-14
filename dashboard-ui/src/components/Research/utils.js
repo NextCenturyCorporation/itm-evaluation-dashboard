@@ -1145,7 +1145,7 @@ export const PAGES = {
 export function getEvalOptionsForPage(page) {
     const dropdownOptions = [];
     for (const evalData of store.getState()?.configs?.evals) {
-        if (evalData.pages[page]) {
+        if (evalData.pages?.[page]) {
             dropdownOptions.push({ value: evalData.evalNumber, label: evalData.evalName });
         }
     }

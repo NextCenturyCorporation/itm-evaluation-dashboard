@@ -93,6 +93,9 @@ export function EditEvals({ caller }) {
         const newEval = {
             "evalNumber": parseInt(evalNumber),
             "evalName": evalName,
+            "pages": {
+                "programQuestions": true
+            }
         }
 
         try {
