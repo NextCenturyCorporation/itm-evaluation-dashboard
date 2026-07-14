@@ -61,7 +61,7 @@ const TEXT_THRESHOLD_BY_EVAL = { 13: 12, 17: 6 };
 // Phase 2 evals that use a delegation threshold of 4 instead of 5
 const DEL_THRESHOLD_4_EVALS = new Set([10, 16]);
 
-const computeTextThreshold = (evalNumber, isPH2OrUK) =>
+export const computeTextThreshold = (evalNumber, isPH2OrUK) =>
     TEXT_THRESHOLD_BY_EVAL[evalNumber] ?? (isPH2OrUK ? 4 : 5);
 
 const computeDelThreshold = (evalNumber, isUK, isPH2OrUK) => {

@@ -1,0 +1,96 @@
+.acp-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 460px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    outline: none;
+}
+
+.acp-accent {
+    height: 8px;
+    background: linear-gradient(135deg, #b15e2f 0%, #d67a4c 100%);
+}
+
+.acp-body {
+    padding: 2rem 2rem 1.75rem;
+    text-align: center;
+}
+
+.acp-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 1.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(177, 94, 47, 0.12);
+    color: #b15e2f;
+}
+
+.acp-icon svg { width: 30px; height: 30px; }
+
+.acp-title {
+    margin: 0 0 0.75rem;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.acp-message {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #495057;
+}
+
+.acp-pid {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    background: rgba(177, 94, 47, 0.08);
+    border: 1px solid rgba(177, 94, 47, 0.2);
+    font-size: 0.95rem;
+    color: #495057;
+}
+
+.acp-pid strong { color: #b15e2f; font-weight: 700; }
+
+.acp-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #b15e2f 0%, #d67a4c 100%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(177, 94, 47, 0.3);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.acp-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(177, 94, 47, 0.4); }
+.acp-btn:active { transform: translateY(0); }
+
+@media (max-width: 480px) {
+    .acp-body { padding: 1.5rem 1.25rem 1.25rem; }
+    .acp-title { font-size: 1.2rem; }
+}
+
+.acp-icon svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: currentColor;      /* inherits #b15e2f from .acp-icon's color */
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
