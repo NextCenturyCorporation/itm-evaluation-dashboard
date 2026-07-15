@@ -10,7 +10,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { RQ1Graphs } from "./Graphs/RQ1_Graphs";
 import RQ2Graphs from "./Graphs/RQ2_Graphs";
 import RQ3Graphs from "./Graphs/RQ3_Graphs";
-import { QueryErrorMessage } from '../../ErrorHandling/QueryErrorMessage';
+import { AppErrorMessage } from '../../ErrorHandling/AppErrorMessage';
 
 
 const GET_PARTICIPANT_LOG = gql`
@@ -140,7 +140,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
         }
     }, [data, fullData, dreDataForPh1, evalNumber]);
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorSurveyResults,
@@ -152,7 +152,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        return <AppErrorMessage errors={errors} />;
     }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;

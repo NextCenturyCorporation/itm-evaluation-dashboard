@@ -3,7 +3,7 @@ import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ2.2_2.3_DRE.xlsx';
@@ -199,7 +199,7 @@ export function RQ2223({ evalNum }) {
     if (error) {
         console.log(error);
         return(
-            <QueryErrorMessage error={error}></QueryErrorMessage>
+            <AppErrorMessage error={error}></AppErrorMessage>
         );
     }
 

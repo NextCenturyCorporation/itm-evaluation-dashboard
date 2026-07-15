@@ -5,7 +5,7 @@ import { Survey, ReactQuestionFactory } from "survey-react-ui"
 import surveyTheme from './surveyTheme.json';
 import { DynamicTemplatePhase2 } from "./dynamicTemplatePhase2";
 import gql from "graphql-tag";
-import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
 import { getUID, shuffle, surveyVersion_x_0, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11, createScenarioBlockv12} from './surveyUtils';
@@ -556,7 +556,7 @@ export const SurveyPageWrapper = (props) => {
     });
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorEvalData,
@@ -564,7 +564,7 @@ export const SurveyPageWrapper = (props) => {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        return <AppErrorMessage errors={errors} />;
     }
 
     if (loadingParticipantLog || loadingEvalData) return <p>Loading...</p>;

@@ -1,5 +1,5 @@
 import React from "react";
-import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "./AppErrorMessage";
 
 export class ErrorBoundary extends React.Component {
 
@@ -34,7 +34,7 @@ export class ErrorBoundary extends React.Component {
         if (this.state.hasError) {
 
             return (
-                <QueryErrorMessage
+                <AppErrorMessage
                     error={this.state.error}
                 />
             );

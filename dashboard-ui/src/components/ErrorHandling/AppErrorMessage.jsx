@@ -3,7 +3,7 @@ import { Card, Button, Collapse } from 'react-bootstrap';
 
 
 
-export function QueryErrorMessage({error, errors=[]}) {
+export function AppErrorMessage({error, errors=[]}) {
     // instantiate all necessary variables
     // an array to hold one or more Apollo Error objects
     const allErrors = [...(error ? [error] : []),
@@ -12,6 +12,7 @@ export function QueryErrorMessage({error, errors=[]}) {
     // arrays for each type of error
     const networkErrors = []; 
     const graphQLErrors = [];
+    const jsErrors = [];
     
     // collapse state to show error details
     const [showErrors, setShowErrors] = useState(false);
@@ -21,23 +22,56 @@ export function QueryErrorMessage({error, errors=[]}) {
         return null;
     }
 
-    // define graphql and network error messages from Apollo object
-    allErrors.forEach((apolloError, errorIndex) => {
-        // get the network error message
-        if(apolloError?.networkError?.message) {
-            const message = apolloError.networkError.message; // get the first error message
+    // iterate through all errors in the array
+    allErrors.forEach((currentError, errorIndex) => {
+
+       // ---------------------------------
+       // Get Java Script Error Messages
+       // ---------------------------------
+
+        // ensure the error is an instance of a javascript 
+        const isApolloError = currentError?.networkError || currentError?.graphQLErrors;
+        
+        if (!isApolloError && currentError instanceof Error) {
+
+            if ( 
+                !jsErrors.some(
+                    err => err.message === currentError.message
+                )
+            ) { // populate jsError Array
+                jsErrors.push({
+                    id: `js-${errorIndex}`,
+                    name: currentError.name,
+                    message: currentError.message,
+                    stack: currentError.stack,
+                });
+            }
+
+            // once found + jsErrors array is populated, exit out of function 
+            return;
+        }
+       
+       // ---------------------------------
+       // Get Network Error Messages
+       // ---------------------------------
+
+        if(currentError?.networkError?.message) {
+            const message = currentError.networkError.message; // get the first error message
 
             if(!networkErrors.some(err => err.message === message)) { // only add unique network errors
                 networkErrors.push({
                     id: errorIndex,
-                    message: apolloError.networkError.message,
+                    message: currentError.networkError.message,
                 })
             }
         }
 
-        // get the standard apollo graphQL errors 
-        if (apolloError?.graphQLErrors?.length > 0) {
-            apolloError.graphQLErrors.forEach((err, index) => {
+       // ---------------------------------
+       // Get GraphQL Error Messages
+       // ---------------------------------
+       
+        if (currentError?.graphQLErrors?.length > 0) {
+            currentError.graphQLErrors.forEach((err, index) => {
                 // only add graphQL error to array if it does not already exist
                 if(!graphQLErrors.some(gqlErr => gqlErr.message === err.message)) {
                     graphQLErrors.push({
@@ -49,9 +83,12 @@ export function QueryErrorMessage({error, errors=[]}) {
             });
         }
 
-        // get the graphQL errors that are hidden and nested within network error results 
-        if (apolloError?.networkError?.result?.errors?.length > 0) {
-            apolloError.networkError.result.errors.forEach((err, index) => {
+        // ---------------------------------
+        // Get Hidden GraphQLError Messages
+        // ---------------------------------
+        
+        if (currentError?.networkError?.result?.errors?.length > 0) {
+            currentError.networkError.result.errors.forEach((err, index) => {
                 // only add nested graphQL error messages to array if it does not already exist
                 if(!graphQLErrors.some(gqlErr => gqlErr.message === err.message)) {
                     graphQLErrors.push({
@@ -67,7 +104,7 @@ export function QueryErrorMessage({error, errors=[]}) {
     return (
         <>
                 <Card bg="light" border="dark" className="error-message" >
-                    <Card.Header> <h4>QUERY ERROR</h4> </Card.Header>
+                    <Card.Header> <h4>APPLICATION ERROR</h4> </Card.Header>
                     <Card.Body>
                         <p>Please try reloading the page. If the problem persists, contact an administrator.</p>
                         
@@ -84,6 +121,22 @@ export function QueryErrorMessage({error, errors=[]}) {
                         <Collapse in={showErrors}>
                         <div id="error-details" className="mt-3">
                             <Card body style={{ maxWidth: '100%' }}>
+
+                                {/* Javascript Error Message */}
+                                {javascriptErrors.length > 0 && (
+                                    <div className="mb-3">
+                                        <h6><strong>Application Errors</strong></h6>
+                                        <ul>
+                                            {javascriptErrors.map(err => (
+                                                <li key={err.id}>
+                                                    <strong>{err.name}:</strong>{" "}
+                                                    {err.message}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 {/*Network Error Message */}
                                 {networkErrors.length > 0 && (
                                 <div className="mb-0">
@@ -112,7 +165,7 @@ export function QueryErrorMessage({error, errors=[]}) {
                                 </div>
                                 )}
 
-                                {networkErrors.length === 0 && graphQLErrors.length === 0 && (
+                                {networkErrors.length === 0 && graphQLErrors.length === 0 && jsErrors.length === 0 && (
                                 <p className="mb-0">Unknown error occurred.</p>
                                 )}
                             </Card>

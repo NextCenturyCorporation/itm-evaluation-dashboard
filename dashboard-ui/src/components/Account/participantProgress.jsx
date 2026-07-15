@@ -8,7 +8,7 @@ import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
-import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS, checkAlignmentStatus } from "./progressUtils";
 import { accountsClient } from "../../services/accountsService";
@@ -659,7 +659,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         setSearchPid(event.target.value);
     };
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorSurveyResults,
@@ -669,7 +669,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     if (errors.length > 0) {
         console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        return <AppErrorMessage errors={errors} />;
     }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;

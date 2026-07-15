@@ -10,7 +10,8 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import { SurveyPageWrapper } from '../Survey/survey';
-import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
+import { AppErrorMessage } from '../ErrorHandling/AppErrorMessage';
+import { ErrorBoundary } from '../ErrorHandling/ErrorBoundaries';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
@@ -450,7 +451,7 @@ export function App() {
             return <Redirect push to="/login" />;
         } else {
             if (hasAccess(currentUser, ['admin', 'experimenter'])) {
-                return <PidLookup />
+                return <ErrorBoundary> <PidLookup/> </ErrorBoundary>
             } else {
                 return <Redirect push to="/" />;
             }
@@ -495,7 +496,7 @@ export function App() {
     if (versionError) {
         console.log(versionError);
         return(
-            <QueryErrorMessage error={versionError}></QueryErrorMessage>
+            <AppErrorMessage error={versionError}></AppErrorMessage>
         );
     }
     

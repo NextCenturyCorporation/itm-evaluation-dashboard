@@ -1,7 +1,7 @@
 import React from "react";
 import '../../../css/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ8_DRE.xlsx';
@@ -245,7 +245,7 @@ export function RQ8({ evalNum }) {
         ));
     }, [ta1Filters, scenarioFilters, attributeFilters, formattedData]);
     
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorTextResults,
@@ -254,7 +254,7 @@ export function RQ8({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        return <AppErrorMessage errors={errors} />;
     }
 
     if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;

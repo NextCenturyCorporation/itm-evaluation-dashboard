@@ -12,7 +12,7 @@ import ukDefinitionXLFile from '../variables/Variable Definitions RQ134_UK.xlsx'
 import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
 import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb.xlsx';
 import aprilDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_April.xlsx';
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import june2026DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_June2026.xlsx'
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
@@ -537,7 +537,7 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorSurveyResults,
@@ -550,7 +550,7 @@ export function RQ134({ evalNum, tableTitle }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        return <AppErrorMessage errors={errors} />;
     }
     
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim || formattedData.length === 0 && processedForEval !== evalNum) return <p>Loading...</p>;
