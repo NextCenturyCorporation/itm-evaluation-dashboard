@@ -343,7 +343,7 @@ export function getEval89Attributes(target, scenarioIndex) {
         return "PS";
     }
     else if (scenario.includes("ss")) {
-        return "SS";
+        return scenario.includes("mf") ? "MF-SS" : "SS";
     }
     else if (scenario.includes("af")) {
         if (scenario.includes("mf")) {

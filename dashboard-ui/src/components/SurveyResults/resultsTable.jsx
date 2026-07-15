@@ -480,7 +480,8 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                 target = page.admTarget;
                             }
                             else {
-                                target = MULTI_KDMA_MAP[att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1)];
+                                const targetKey = att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1);
+                                target = MULTI_KDMA_MAP[targetKey] ?? page.admTarget;
                             }
                             obj[`B${block}_DM${dm}_Target`] = target;
                         }
