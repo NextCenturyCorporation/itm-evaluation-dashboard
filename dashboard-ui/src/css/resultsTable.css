@@ -52,19 +52,21 @@
     border-right: 3px solid black;
 }
 
-.itm-table tr.row-even td {
-    background-color: white;
-}
-
-.itm-table tr.row-odd td {
-    background-color: lightgrey;
-}
-
+/* used by non-virtualized tables */
 .itm-table tbody tr:nth-child(even) td {
     background-color: white;
 }
 
 .itm-table tbody tr:nth-child(odd) td {
+    background-color: lightgrey;
+}
+
+/*Used by virtualized tables */
+table.itm-table tbody tr.row-even td {
+    background-color: white;
+}
+
+table.itm-table tbody tr.row-odd td {
     background-color: lightgrey;
 }
 

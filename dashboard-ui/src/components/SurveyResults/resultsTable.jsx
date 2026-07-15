@@ -41,14 +41,14 @@ const TRUST_MAP = {
 };
 
 const ALLOWED_ROLES_PH2 = [
-  'Medical student',
-  'Resident',
-  'Physician',
-  "Physician's Assistant",
-  'Nurse',
-  'EMT',
-  'Paramedic',
-  'Military Medicine'
+    'Medical student',
+    'Resident',
+    'Physician',
+    "Physician's Assistant",
+    'Nurse',
+    'EMT',
+    'Paramedic',
+    'Military Medicine'
 ];
 
 const ALLOWED_ROLES_PH1 = [
@@ -168,15 +168,15 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-const TruncatedCell = ({text, maxLength = 100}) => {
+const TruncatedCell = ({ text, maxLength = 100 }) => {
     const str = String(text);
-    
+
     if (typeof text === 'number' || str.length <= maxLength) {
         return <span>{str}</span>;
     }
-    
+
     const truncated = str.substring(0, maxLength) + '...';
-    
+
     return (
         <span className="itm-tooltip" data-tooltip={str}>
             {truncated}
@@ -189,7 +189,7 @@ const DEFAULT_EVAL_NUMBERS = [8, 9, 10, 12, 13, 15, 16, 17].map((v) => ({
     label: `${v} - ${EVAL_MAP[v]}`
 }));
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = DEFAULT_EVAL_NUMBERS}) {
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = DEFAULT_EVAL_NUMBERS }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
@@ -244,7 +244,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
         let ALLOWED_ROLES;
-        
+
         if (showLegacy) {
             ALLOWED_ROLES = ALLOWED_ROLES_LEGACY;
         } else if (showPh2) {
@@ -339,11 +339,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             const version = entry.surveyVersion;
             const effectiveVersion = version ?? (obj['eval'] === 13 ? 6 : obj['eval'] === 9 ? 7 : null);
-            
-            if (!effectiveVersion || 
-                (showLegacy && effectiveVersion >= 4) || 
-                (!showLegacy && effectiveVersion < 4) || 
-                (showPh2 && effectiveVersion < 6) || 
+
+            if (!effectiveVersion ||
+                (showLegacy && effectiveVersion >= 4) ||
+                (!showLegacy && effectiveVersion < 4) ||
+                (showPh2 && effectiveVersion < 6) ||
                 (!showPh2 && effectiveVersion >= 6)) {
                 continue;
             }
@@ -886,10 +886,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     </ToggleButton>
                 </ToggleButtonGroup>
 
-                {!exploratory && <ToggleButtonGroup 
-                    className='simple-toggles' 
-                    exclusive 
-                    value={dataType} 
+                {!exploratory && <ToggleButtonGroup
+                    className='simple-toggles'
+                    exclusive
+                    value={dataType}
                     onChange={toggleDataType}>
                     <ToggleButton value="Legacy" label=" Legacy" className='custom-toggle'>
                         Legacy
@@ -911,7 +911,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 spacing={2}
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ mb: 2, px: 1.5}}
+                sx={{ mb: 2, px: 1.5 }}
             >
                 <Box className="status-bar">
                     {versionFilters.length > 0 && (
@@ -1002,9 +1002,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         </tr>
                     </thead>
                     <tbody>
-                        {rowVirtualizer.getTotalSize() > 0 && (
-                            <tr style={{ height: rowVirtualizer.getVirtualItems()[0]?.start ?? 0 }}>
-                                <td />
+                        {(rowVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                            <tr style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
+                                <td style={{ padding: 0, border: 0 }} />
                             </tr>
                         )}
                         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
