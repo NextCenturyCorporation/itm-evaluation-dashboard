@@ -543,49 +543,87 @@ function handleStandardComparison(evalNum, page, entryObj, allObjs, entry) {
     const baselineAdm = (evalNum === 15 || evalNum === 16 || evalNum === 17) ? adms[1] : adms[0];
     const misalignedAdm = adms[2];
 
-    const isOracle = evalNum === 16 && entry && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
-    const colAB = isOracle ? 'Delegation Preference (AlignedSS/AlignedOS)' : 'Delegation preference (A/B)';
-    const colAM = isOracle ? 'Delegation Preference (AlignedSS/Misaligned)' : 'Delegation preference (A/M)';
-    const colPctAB = isOracle ? 'Delegation Percentage (AlignedSS/AlignedOS)' : 'Delegation Percentage (Aligned/Baseline)';
-    const colPctAM = isOracle ? 'Delegation Percentage (AlignedSS/Misaligned)' : 'Delegation Percentage (Aligned/Misaligned)';
-    const valB = isOracle ? 'AlignedOS' : 'B';
-    const valM = isOracle ? 'Misaligned' : 'M';
-
-    const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
-    const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
-    entryObj[colAB] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : valB);
-    entryObj[colAM] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : valM);
-    entryObj[colPctAB] = '-';
-    entryObj[colPctAM] = '-';
-
-    const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
-    const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
-
     const extractPct = (response, medicName) => {
         if (response === '-' || !response) return '-';
         const match = response.match(new RegExp(medicName + '\\s+(\\d+%)'));
         return match ? match[1] : '0%';
     };
 
+    const isOracle = evalNum === 16 && entry && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
+
+    if (isOracle) {
+        // April 2026 subpopulations came out flipped vs survey time, this logic accounts for that
+        const ssAdm = baselineAdm;
+        const osAdm = alignedAdm;
+
+        // SS vs OS
+        const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
+        const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
+        entryObj['Delegation Preference (AlignedSS/AlignedOS)'] = qAB === '-' ? '-' : (qAB === ssAdm ? 'AlignedSS' : 'AlignedOS');
+        entryObj['Delegation Percentage (AlignedSS/AlignedOS)'] = '-';
+
+        // OS vs Misaligned (the survey-aligned medic is really OS)
+        const qOM = misalignedAdm ? page.questions[osAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-' : '-';
+        const pctOM = misalignedAdm ? page.questions[osAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
+        entryObj['Delegation Preference (AlignedOS/Misaligned)'] = qOM === '-' ? '-' : (qOM === osAdm ? 'AlignedOS' : 'Misaligned');
+        entryObj['Delegation Percentage (AlignedOS/Misaligned)'] = '-';
+
+        for (let i = 0; i < 3; i++) {
+            const row = allObjs[allObjs.length - 1 - i];
+            if (!row) break;
+            switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                case 'AlignedSS':
+                    row['Delegation Preference (AlignedSS/AlignedOS)'] = entryObj['Delegation Preference (AlignedSS/AlignedOS)'] === 'AlignedSS' ? 'y' : 'n';
+                    row['Delegation Percentage (AlignedSS/AlignedOS)'] = extractPct(pctAB, ssAdm);
+                    break;
+                case 'AlignedOS':
+                    row['Delegation Preference (AlignedSS/AlignedOS)'] = entryObj['Delegation Preference (AlignedSS/AlignedOS)'] === 'AlignedOS' ? 'y' : 'n';
+                    row['Delegation Percentage (AlignedSS/AlignedOS)'] = extractPct(pctAB, osAdm);
+                    if (misalignedAdm) {
+                        row['Delegation Preference (AlignedOS/Misaligned)'] = entryObj['Delegation Preference (AlignedOS/Misaligned)'] === 'AlignedOS' ? 'y' : 'n';
+                        row['Delegation Percentage (AlignedOS/Misaligned)'] = extractPct(pctOM, osAdm);
+                    }
+                    break;
+                case 'Misaligned':
+                    row['Delegation Preference (AlignedOS/Misaligned)'] = entryObj['Delegation Preference (AlignedOS/Misaligned)'] === 'Misaligned' ? 'y' : 'n';
+                    row['Delegation Percentage (AlignedOS/Misaligned)'] = extractPct(pctOM, misalignedAdm);
+                    break;
+            }
+        }
+        return;
+    }
+
+    const colAB = 'Delegation preference (A/B)';
+    const colAM = 'Delegation preference (A/M)';
+    const colPctAB = 'Delegation Percentage (Aligned/Baseline)';
+    const colPctAM = 'Delegation Percentage (Aligned/Misaligned)';
+
+    const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
+    const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
+    entryObj[colAB] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : 'B');
+    entryObj[colAM] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
+    entryObj[colPctAB] = '-';
+    entryObj[colPctAM] = '-';
+
+    const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
+    const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
+
     for (let i = 0; i < 3; i++) {
         const row = allObjs[allObjs.length - 1 - i];
         if (!row) break;
         switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
             case 'aligned':
-            case 'AlignedSS':
                 row[colAB] = entryObj[colAB] === 'A' ? 'y' : 'n';
                 if (misalignedAdm) row[colAM] = entryObj[colAM] === 'A' ? 'y' : 'n';
                 row[colPctAB] = extractPct(pctAB, alignedAdm);
                 if (misalignedAdm) row[colPctAM] = extractPct(pctAM, alignedAdm);
                 break;
             case 'baseline':
-            case 'AlignedOS':
-                row[colAB] = entryObj[colAB] === valB ? 'y' : 'n';
+                row[colAB] = entryObj[colAB] === 'B' ? 'y' : 'n';
                 row[colPctAB] = extractPct(pctAB, baselineAdm);
                 break;
             case 'misaligned':
-            case 'Misaligned':
-                row[colAM] = entryObj[colAM] === valM ? 'y' : 'n';
+                row[colAM] = entryObj[colAM] === 'M' ? 'y' : 'n';
                 row[colPctAM] = extractPct(pctAM, misalignedAdm);
                 break;
         }
@@ -900,8 +938,8 @@ function buildEntryRow(context) {
         entryObj['Delegation preference (A/M)'] = '-';
         entryObj['Delegation Preference (AlignedSS/AlignedOS)'] = '-';
         entryObj['Delegation Percentage (AlignedSS/AlignedOS)'] = '-';
-        entryObj['Delegation Preference (AlignedSS/Misaligned)'] = '-';
-        entryObj['Delegation Percentage (AlignedSS/Misaligned)'] = '-';
+        entryObj['Delegation Preference (AlignedOS/Misaligned)'] = '-';
+        entryObj['Delegation Percentage (AlignedOS/Misaligned)'] = '-';
     }
 
     return entryObj;
