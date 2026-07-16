@@ -5,20 +5,17 @@ services:
     expose:
       - "27017"
     healthcheck:
-      test:
-        - CMD
-        - mongo
-        - --quiet
-        - --eval
-        - db.adminCommand('ping').ok
+      test: ["CMD", "mongo", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s
       timeout: 5s
       retries: 20
 
   tests:
     image: dashboard-tests:local
+    user: "${TEST_UID:-1000}:${TEST_GID:-1000}"
     working_dir: /workspace
     environment:
+      HOME: /tmp/test-home
       NODE_ENV: test
       REACT_APP_TESTING: "true"
       TEST_MONGO_URL: mongodb://mongo:27017
@@ -27,6 +24,8 @@ services:
       CHROME_BIN: /usr/bin/chromium
     volumes:
       - ../..:/workspace
+    tmpfs:
+      - /tmp/test-home
     shm_size: "2gb"
     depends_on:
       mongo:

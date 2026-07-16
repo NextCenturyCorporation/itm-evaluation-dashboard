@@ -31,8 +31,14 @@ RUN apt-get update && \
       xdg-utils && \
     rm -rf /var/lib/apt/lists/*
 
+RUN useradd --create-home --uid 1001 ciuser && \
+    mkdir -p /workspace && \
+    chown -R ciuser:ciuser /workspace
+
 WORKDIR /workspace
 
 ENV NODE_ENV=test
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV CHROME_BIN=/usr/bin/chromium
+
+USER ciuser
