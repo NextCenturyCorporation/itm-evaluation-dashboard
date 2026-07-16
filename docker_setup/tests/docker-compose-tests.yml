@@ -1,0 +1,22 @@
+services:
+  tests:
+    build:
+      context: ../..
+      dockerfile: docker_setup/tests/Dockerfile
+    working_dir: /workspace
+    environment:
+      NODE_ENV: test
+      REACT_APP_TESTING: "true"
+      MONGOMS_SYSTEM_BINARY: /opt/mongodb/bin/mongod
+      NODE_OPTIONS: --max-old-space-size=8192
+    volumes:
+      - ../..:/workspace
+      - /home/ec2-user/test-tools/mongodb-4.0.27:/opt/mongodb:ro
+    shm_size: "2gb"
+    command:
+      - bash
+      - -lc
+      - |
+        /opt/mongodb/bin/mongod --version
+        npm run setup-tests
+        npm run test
