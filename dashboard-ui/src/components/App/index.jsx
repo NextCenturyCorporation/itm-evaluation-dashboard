@@ -147,8 +147,6 @@ export function App() {
     const [isTextEvalDataLoaded, setIsTextEvalDataLoaded] = React.useState(false);
     const { data: demographicsData } = useQuery(GET_SHOW_DEMOGRAPHICS, { fetchPolicy: 'no-cache' });
     const [isDemographicsDataLoaded, setIsDemographicsDataLoaded] = React.useState(false);
-    const [surveyConfigsLoaded, setSurveyConfigsLoaded] = React.useState(false);
-    const [textConfigsLoaded, setTextConfigsLoaded] = React.useState(false);
     // modal for warning a participant they already compelted the text based portion of the experiment
     const [alreadyComplete, setAlreadyComplete] = React.useState({
         open: false,
@@ -488,7 +486,7 @@ export function App() {
         );
     }
     
-    if (versionLoading || surveyConfigLoading || textConfigLoading) {
+    if (versionLoading) {
         return <div>Loading...</div>;
     }
 
