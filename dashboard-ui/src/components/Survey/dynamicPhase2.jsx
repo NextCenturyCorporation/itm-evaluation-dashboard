@@ -143,6 +143,10 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
     const descriptionColumnWidth = maxChoices === 2 ? 56 : 40;
     const choiceColumnWidth = (100 - numberColumnWidth - descriptionColumnWidth) / maxChoices;
 
+    const numberColumnWidth = 4;
+    const descriptionColumnWidth = maxChoices === 2 ? 56 : 40;
+    const choiceColumnWidth = (100 - numberColumnWidth - descriptionColumnWidth) / maxChoices;
+
     return (
         <Container className="py-4" style={{ maxWidth: '1200px', width: '100%' }}>
             {renderInstructions()}
@@ -150,6 +154,13 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
             <Table className="table-borderless decision-table">
                 <thead>
                     <tr>
+                        <th className="table-header table-header-number" style={{ width: `${numberColumnWidth}%` }}></th>
+                        <th className='table-header table-header-description' style={{ width: `${descriptionColumnWidth}%` }}></th>
+                        {choiceLabels.map((label, i) => (
+                            <th key={i} className="table-header table-header-patient" style={{ width: `${choiceColumnWidth}%` }}>
+                                {label}
+                            </th>
+                        ))}
                         <th className="table-header table-header-number" style={{ width: `${numberColumnWidth}%` }}></th>
                         <th className='table-header table-header-description' style={{ width: `${descriptionColumnWidth}%` }}></th>
                         {choiceLabels.map((label, i) => (
@@ -165,6 +176,9 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                         const showGroupHeader = isNewGroup(index);
                         const groupPrompt = row.trailingKey ? getGroupPrompt(row.trailingKey, optionsToUse) : null;
                         const cleanedRowText = transformRowText(row.strippedDescription, groupPrompt);
+
+                        // fewer choices than the table's max (keeps grid aligned).
+                        const fillerCount = maxChoices - optionsToUse.length;
 
                         // fewer choices than the table's max (keeps grid aligned).
                         const fillerCount = maxChoices - optionsToUse.length;
@@ -185,6 +199,7 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                                 {showGroupHeader && groupPrompt && (
                                     <tr className="group-prompt-row">
                                         <td colSpan={totalColumns}>
+                                        <td colSpan={totalColumns}>
                                             <div className="group-prompt">
                                                 <span className="group-prompt-text">{groupPrompt}</span>
                                             </div>
@@ -196,6 +211,33 @@ const DynamicPhase2 = ({ rows, scenarioDescription, supplies, options }) => {
                                         {index + 1}
                                     </td>
                                     <td className="patient-cell">{cleanedRowText}</td>
+                                    {optionsToUse.map((optionText, optionIndex) => {
+                                        const selected = isChoiceSelected(row['choice'], optionIndex, optionsToUse);
+                                        return (
+                                            <td
+                                                key={optionIndex}
+                                                className={`patient-cell ${selected ? 'patient-cell-selected' : 'patient-cell-default'}`}
+                                            >
+                                                <div className="badge-container">
+                                                    {selected ? (
+                                                        <div className="selected-badge">
+                                                            ✓ SELECTED
+                                                        </div>
+                                                    ) : (
+                                                        <div className="badge-spacer"></div>
+                                                    )}
+                                                </div>
+                                                <div className="patient-description">
+                                                    {optionText}
+                                                </div>
+                                            </td>
+                                        );
+                                    })}
+                                    {/* Filler cells for rows with fewer choices than the table max,
+                                        keeps the table grid aligned across mixed-choice-count groups */}
+                                    {Array.from({ length: fillerCount }).map((_, i) => (
+                                        <td key={`filler-${i}`} className="patient-cell patient-cell-filler" />
+                                    ))}
                                     {optionsToUse.map((optionText, optionIndex) => {
                                         const selected = isChoiceSelected(row['choice'], optionIndex, optionsToUse);
                                         return (

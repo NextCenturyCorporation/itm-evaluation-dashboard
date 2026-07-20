@@ -174,6 +174,7 @@ class SurveyPage extends Component {
         if (this.inSurveyVersionData() && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
             return;
+            return;
         }
 
         const allPages = this.surveyConfigClone.pages;
@@ -183,6 +184,16 @@ class SurveyPage extends Component {
         );
         const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
 
+        const allPages = this.surveyConfigClone.pages;
+        const introPages = [...allPages.slice(0, 4)];
+        const participantTextResults = this.props.textResults.filter(
+            (res) => String(res['participantID']) === this.state.pid
+        );
+        const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
+
+        const finalize = (blocks, getPages = block => block.pages) => {
+            const finalPages = [...introPages, ...blocks.flatMap(getPages)];
+            if (postScenarioPage) finalPages.push(postScenarioPage);
         const finalize = (blocks, getPages = block => block.pages) => {
             const finalPages = [...introPages, ...blocks.flatMap(getPages)];
             if (postScenarioPage) finalPages.push(postScenarioPage);
