@@ -5,6 +5,7 @@ import { Survey, ReactQuestionFactory } from "survey-react-ui"
 import surveyTheme from './surveyTheme.json';
 import { DynamicTemplatePhase2 } from "./dynamicTemplatePhase2";
 import gql from "graphql-tag";
+import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
 import { getUID, shuffle, surveyVersion_x_0, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11, createScenarioBlockv12} from './surveyUtils';
@@ -173,7 +174,15 @@ class SurveyPage extends Component {
         if (this.inSurveyVersionData() && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
             return;
+            return;
         }
+
+        const allPages = this.surveyConfigClone.pages;
+        const introPages = [...allPages.slice(0, 4)];
+        const participantTextResults = this.props.textResults.filter(
+            (res) => String(res['participantID']) === this.state.pid
+        );
+        const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
 
         const allPages = this.surveyConfigClone.pages;
         const introPages = [...allPages.slice(0, 4)];
@@ -185,7 +194,11 @@ class SurveyPage extends Component {
         const finalize = (blocks, getPages = block => block.pages) => {
             const finalPages = [...introPages, ...blocks.flatMap(getPages)];
             if (postScenarioPage) finalPages.push(postScenarioPage);
+        const finalize = (blocks, getPages = block => block.pages) => {
+            const finalPages = [...introPages, ...blocks.flatMap(getPages)];
+            if (postScenarioPage) finalPages.push(postScenarioPage);
             this.surveyConfigClone.pages = finalPages;
+            console.log(finalPages)
             this.setState({ orderLog: finalPages.map(page => page.name) });
         };
 
@@ -229,13 +242,16 @@ class SurveyPage extends Component {
                 .filter(Boolean);
             finalize(shuffle(allBlocks));
         } else if (version === "12.0") {
+            const isEven = parseInt(this.state.pid, 10) % 2 === 0;
+            const group1 = new Set(['PS-tri', 'AF-bi']);
+            const getVersion = (attr, type) => group1.has(`${attr}-${type}`) === isEven ? 'A' : 'B';
             const blockTypes = shuffle([
                 { attr: 'AF', type: 'tri' }, { attr: 'AF', type: 'bi' },
                 { attr: 'PS', type: 'tri' }, { attr: 'PS', type: 'bi' },
                 { attr: 'AF-SS', type: '2D' },
             ]);
             const allBlocks = blockTypes
-                .map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults))
+                .map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults, getVersion(blockType.attr, blockType.type)))
                 .filter(Boolean);
             finalize(allBlocks);
         }
@@ -552,8 +568,18 @@ export const SurveyPageWrapper = (props) => {
     });
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
 
-    if (loadingParticipantLog || loadingEvalData || !surveyConfigs || !surveyConfigs['delegation_v' + currentSurveyVersion]) return <p>Loading...</p>;
-    if (errorParticipantLog || errorEvalData) return <p>Error :</p>;
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorEvalData,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+        return <QueryErrorMessage errors={errors} />;
+    }
+
+    if (loadingParticipantLog || loadingEvalData) return <p>Loading...</p>;
 
     return (
         <SurveyPage

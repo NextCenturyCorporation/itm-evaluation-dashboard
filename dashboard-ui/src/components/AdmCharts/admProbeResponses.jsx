@@ -8,7 +8,9 @@ import { saveAs } from 'file-saver';
 import '../../css/results-page.css';
 import '../../css/aggregateResults.css';
 import { multiSort } from '../Results/utils';
-import { PAGES, getEvalOptionsForPage } from '../Research/utils';
+import { getAllEvals } from '../Research/utils';
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 const scenario_names_aggregation = gql`
     query getScenarioNamesByEval($evalNumber: Float!) {
@@ -136,18 +138,22 @@ const getKdmaTargets = (doc) => {
 const getKdmaParameter = (data, kdmaName, parameterName) => {
     const kdmas = data?.results?.kdmas;
     if (!kdmas || kdmas.length === 0) return '-';
-    
+
     const matchingKdma = kdmas.find(kdma => kdma.kdma.toLowerCase() === kdmaName.toLowerCase());
     if (!matchingKdma?.parameters) return '-';
-    
+
     const param = matchingKdma.parameters.find(p => p.name === parameterName);
     return param?.value ?? '-';
 };
 
-export const ADMProbeResponses = (props) => {
-    const evalOptions = getEvalOptionsForPage(PAGES.ADM_PROBE_RESPONSES);
+const kdmaHasParam = (kdma, paramName) => kdma.parameters?.some(p => p.name === paramName);
 
-    const [currentEval, setCurrentEval] = useState(evalOptions[0].value);
+export const ADMProbeResponses = (props) => {
+    const evalOptions = getAllEvals()
+    const dispatch = useDispatch();
+    const storedEval = useSelector(state => state.configs.selectedResearchEval);
+    const [currentEval, setCurrentEval] = useState(storedEval ?? evalOptions[0].value);
+
     const [currentScenario, setCurrentScenario] = useState("");
     const [queryString, setQueryString] = useState("adm_name");
     const [queryData, setQueryData] = useState({});
@@ -261,9 +267,11 @@ export const ADMProbeResponses = (props) => {
 
     const setEval = (target) => {
         setCurrentEval(target);
+        dispatch(setSelectedResearchEval(target));
         setCurrentScenario("");
         setQueryString("adm_name");
     };
+
 
     const formatScenarioString = (id) => {
         if (currentEval === 3) {
@@ -294,6 +302,8 @@ export const ADMProbeResponses = (props) => {
     const sortedScenarios = scenarioData?.getScenarioNamesByEval
         ?.filter(s => ![14, 11].includes(currentEval) || !s._id.id.toLowerCase().includes('af-mf'))
         ?.sort((a, b) => formatScenarioString(a._id.id).localeCompare(formatScenarioString(b._id.id)));
+
+    const noScenariosForEval = !scenarioLoading && !scenarioError && sortedScenarios?.length === 0;
 
     const getCurrentScenarioName = () => {
         const currentScenarioObj = sortedScenarios?.find(s => s._id.id === currentScenario);
@@ -365,7 +375,9 @@ export const ADMProbeResponses = (props) => {
             const kdmas = data?.results?.kdmas || [];
             kdmas.forEach(kdma => {
                 const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
-                row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                if (kdmaHasParam(kdma, 'intercept')) row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                if (kdmaHasParam(kdma, 'optA')) row[`${kdmaName}-optA`] = getKdmaParameter(data, kdma.kdma, 'optA');
+                if (kdmaHasParam(kdma, 'optB')) row[`${kdmaName}-optB`] = getKdmaParameter(data, kdma.kdma, 'optB');
                 row[`${kdmaName}-Attr`] = getKdmaParameter(data, kdma.kdma, 'attr_weight');
                 row[`${kdmaName}-Medical`] = getKdmaParameter(data, kdma.kdma, 'medical_weight');
             });
@@ -412,13 +424,14 @@ export const ADMProbeResponses = (props) => {
                 const kdmaValues = getKdmaTargets(data);
                 row['MJ KDMA'] = kdmaValues.mj;
                 row['IO KDMA'] = kdmaValues.io;
-            } else if (currentEval === 15) {
-                // Handle eval 15 parameters format
+            } else if (currentEval >= 15) {
                 row['Alignment Score'] = data?.results?.alignment_score ?? '-';
                 const kdmas = data?.results?.kdmas || [];
                 kdmas.forEach(kdma => {
                     const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
-                    row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                    if (kdmaHasParam(kdma, 'intercept')) row[`${kdmaName}-Intercept`] = getKdmaParameter(data, kdma.kdma, 'intercept');
+                    if (kdmaHasParam(kdma, 'optA')) row[`${kdmaName}-optA`] = getKdmaParameter(data, kdma.kdma, 'optA');
+                    if (kdmaHasParam(kdma, 'optB')) row[`${kdmaName}-optB`] = getKdmaParameter(data, kdma.kdma, 'optB');
                     row[`${kdmaName}-Attr`] = getKdmaParameter(data, kdma.kdma, 'attr_weight');
                     row[`${kdmaName}-Medical`] = getKdmaParameter(data, kdma.kdma, 'medical_weight');
                 });
@@ -442,7 +455,7 @@ export const ADMProbeResponses = (props) => {
         const formattedData = formatTableData(data.getAllTestDataForADM, adm);
         setAllTableData(prev => ({
             ...prev,
-            [adm]: currentEval === 15 ? {
+            [adm]: currentEval >= 15 ? {
                 formattedData: formattedData,
                 originalData: data.getAllTestDataForADM,
                 adm: adm
@@ -514,9 +527,12 @@ export const ADMProbeResponses = (props) => {
                 {!currentScenario && currentEval && (
                     <div className="test-overview-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <div style={{ textAlign: 'center', color: '#666' }}>
+                            {noScenariosForEval ? (
+                            <h3>This page is not available for the selected evaluation</h3>
+                        ) : (
                             <h3>Please select a scenario to view probe responses</h3>
-                            <p>Choose from the available scenarios in the left panel</p>
-                        </div>
+                        )}
+                       </div>
                     </div>
                 )}
                 {currentScenario && (
@@ -526,7 +542,7 @@ export const ADMProbeResponses = (props) => {
                                 <button
                                     className='aggregateDownloadBtn'
                                     onClick={() => downloadAsExcel(
-                                        currentEval === 15 
+                                        currentEval >= 15 
                                             ? Object.fromEntries(
                                                 Object.entries(allTableData).map(([key, val]) => [key, val.formattedData || val])
                                             )
@@ -537,7 +553,7 @@ export const ADMProbeResponses = (props) => {
                                 >
                                     Download All
                                 </button>
-                                {currentEval === 15 && (
+                                {currentEval >= 15 && (
                                     <button
                                         className='aggregateDownloadBtn'
                                         onClick={() => downloadKdmaOnly(allTableData, null, true)}
@@ -579,7 +595,7 @@ export const ADMProbeResponses = (props) => {
                                                         >
                                                             Download
                                                         </button>
-                                                        {currentEval === 15 && (
+                                                        {currentEval >= 15 && (
                                                             <button
                                                                 className="aggregateDownloadBtn"
                                                                 onClick={() => downloadKdmaOnly(data?.getAllTestDataForADM || [], adm)}
@@ -647,7 +663,7 @@ export const ADMProbeResponses = (props) => {
                                                                                 <th>MJ KDMA Target</th>
                                                                                 <th>IO KDMA Target</th>
                                                                             </>
-                                                                        ) : currentEval === 15 ? (
+                                                                        ) : currentEval >= 15 ? (
                                                                             <>
                                                                                 <th>Alignment Score</th>
                                                                                 {(() => {
@@ -655,11 +671,13 @@ export const ADMProbeResponses = (props) => {
                                                                                     const kdmas = firstData?.results?.kdmas || [];
                                                                                     return kdmas.flatMap(kdma => {
                                                                                         const kdmaName = kdma.kdma.charAt(0).toUpperCase() + kdma.kdma.slice(1);
-                                                                                        return [
-                                                                                            <th key={`${kdmaName}-Intercept`}>{kdmaName}-Intercept</th>,
-                                                                                            <th key={`${kdmaName}-Attr`}>{kdmaName}-Attr</th>,
-                                                                                            <th key={`${kdmaName}-Medical`}>{kdmaName}-Medical</th>
-                                                                                        ];
+                                                                                        const headers = [];
+                                                                                        if (kdmaHasParam(kdma, 'intercept')) headers.push(<th key={`${kdmaName}-Intercept`}>{kdmaName}-Intercept</th>);
+                                                                                        if (kdmaHasParam(kdma, 'optA')) headers.push(<th key={`${kdmaName}-optA`}>{kdmaName}-optA</th>);
+                                                                                        if (kdmaHasParam(kdma, 'optB')) headers.push(<th key={`${kdmaName}-optB`}>{kdmaName}-optB</th>);
+                                                                                        headers.push(<th key={`${kdmaName}-Attr`}>{kdmaName}-Attr</th>);
+                                                                                        headers.push(<th key={`${kdmaName}-Medical`}>{kdmaName}-Medical</th>);
+                                                                                        return headers;
                                                                                     });
                                                                                 })()}
                                                                             </>
@@ -685,16 +703,20 @@ export const ADMProbeResponses = (props) => {
                                                                                     <td>{getKdmaTargets(data).mj}</td>
                                                                                     <td>{getKdmaTargets(data).io}</td>
                                                                                 </>
-                                                                            ) : currentEval === 15 ? (
+                                                                            ) : currentEval >= 15 ? (
                                                                                 <>
                                                                                     <td>{data?.results?.alignment_score ?? '-'}</td>
                                                                                     {(() => {
                                                                                         const kdmas = data?.results?.kdmas || [];
-                                                                                        return kdmas.flatMap(kdma => [
-                                                                                            <td key={`${kdma.kdma}-intercept`}>{getKdmaParameter(data, kdma.kdma, 'intercept')}</td>,
-                                                                                            <td key={`${kdma.kdma}-attr`}>{getKdmaParameter(data, kdma.kdma, 'attr_weight')}</td>,
-                                                                                            <td key={`${kdma.kdma}-medical`}>{getKdmaParameter(data, kdma.kdma, 'medical_weight')}</td>
-                                                                                        ]);
+                                                                                        return kdmas.flatMap(kdma => {
+                                                                                            const cells = [];
+                                                                                            if (kdmaHasParam(kdma, 'intercept')) cells.push(<td key={`${kdma.kdma}-intercept`}>{getKdmaParameter(data, kdma.kdma, 'intercept')}</td>);
+                                                                                            if (kdmaHasParam(kdma, 'optA')) cells.push(<td key={`${kdma.kdma}-optA`}>{getKdmaParameter(data, kdma.kdma, 'optA')}</td>);
+                                                                                            if (kdmaHasParam(kdma, 'optB')) cells.push(<td key={`${kdma.kdma}-optB`}>{getKdmaParameter(data, kdma.kdma, 'optB')}</td>);
+                                                                                            cells.push(<td key={`${kdma.kdma}-attr`}>{getKdmaParameter(data, kdma.kdma, 'attr_weight')}</td>);
+                                                                                            cells.push(<td key={`${kdma.kdma}-medical`}>{getKdmaParameter(data, kdma.kdma, 'medical_weight')}</td>);
+                                                                                            return cells;
+                                                                                        });
                                                                                     })()}
                                                                                 </>
                                                                             ) : (

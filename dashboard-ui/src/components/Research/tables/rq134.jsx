@@ -12,6 +12,8 @@ import ukDefinitionXLFile from '../variables/Variable Definitions RQ134_UK.xlsx'
 import septemberDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_September.xlsx';
 import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb.xlsx';
 import aprilDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_April.xlsx';
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
+import june2026DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_June2026.xlsx'
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -64,7 +66,7 @@ const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'D
 const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Server Session ID (Delegator)', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation Preference (PSAF-1/PSAF-2)', 'Delegation Preference (PSAF-1/PSAF-3)', 'Delegation Preference (PSAF-1/PSAF-4)', 'Delegation Preference (PSAF-2/PSAF-3)', 'Delegation Preference (PSAF-2/PSAF-4)', 'Delegation Preference (PSAF-3/PSAF-4)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_FEB_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Probe Set Observation', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation preference (A/M)', 'Delegation Percentage (Aligned/Misaligned)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_APRIL_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation Preference (AlignedSS/AlignedOS)', 'Delegation Percentage (AlignedSS/AlignedOS)','Delegation Preference (AlignedSS/Misaligned)', 'Delegation Percentage (AlignedSS/Misaligned)'];
-
+const HEADERS_PH2_JUNE_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation preference (A/M)', 'Delegation Percentage (Aligned/Misaligned)', 'Alignment score (DelegatorTRI|Observed_ADM (target))'];
 export function RQ134({ evalNum, tableTitle }) {
     // -------------------------- State: filters, toggles, and table data --------------------------
     const [formattedData, setFormattedData] = React.useState([]);
@@ -268,6 +270,9 @@ export function RQ134({ evalNum, tableTitle }) {
 
     React.useEffect(() => {
         let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
+        if (evalNum === 17) {
+            currentHeaders = [...HEADERS_PH2_JUNE_2026]
+        }
         if (evalNum === 16) {
             currentHeaders = [...HEADERS_PH2_APRIL_2026]
         }
@@ -532,8 +537,24 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorSurveyResults,
+        errorTextResults,
+        errorADMs,
+        errorMedics,
+        errorComparisonData,
+        errorSim,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+        return <QueryErrorMessage errors={errors} />;
+    }
+    
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim || formattedData.length === 0 && processedForEval !== evalNum) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorADMs || errorMedics || errorComparisonData || errorSim) return <p>Error :</p>;
+
 
     return (<>
         <h2 className='rq134-header'>{tableTitle}
@@ -793,6 +814,7 @@ export function RQ134({ evalNum, tableTitle }) {
     </>);
 }
 const DEFINITION_FILE_MAP = {
+    17: june2026DefinitionXLFile,
     16: aprilDefinitionXLFile,
     15: febDefinitionXLFile,
     12: ukDefinitionXLFile,

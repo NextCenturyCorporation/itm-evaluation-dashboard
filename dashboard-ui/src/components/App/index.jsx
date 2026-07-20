@@ -1,7 +1,7 @@
 import React from 'react';
 import { Router, Switch, Route, Redirect } from 'react-router-dom';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
-import { createBrowserHistory } from 'history';
+import history from './history';
 import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore, setEvalDataInStore } from './setupUtils';
@@ -10,6 +10,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import { SurveyPageWrapper } from '../Survey/survey';
+import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
@@ -26,8 +27,11 @@ import HumanResults from '../HumanResults/humanResults';
 import { RQ1 } from '../Research/RQ1';
 import { RQ2 } from '../Research/RQ2';
 import { RQ3 } from '../Research/RQ3';
-import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis';
+import { OpenWorld } from '../Research/OpenWorld';
 import { TcccAnalysis } from '../Research/TcccAnalysis';
+import { OpenWorldADMs } from '../Research/OpenWorldADMs';
+import { ParticipantDemographics } from '../Research/ParticipantDemographics';
+import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis'  
 import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
@@ -35,7 +39,7 @@ import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
 import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
-
+import { computeTextThreshold } from '../Account/participantProgress';
 // CSS and Image Stuff 
 import '../../css/app.css';
 import 'rc-slider/assets/index.css';
@@ -44,9 +48,7 @@ import 'material-design-icons/iconfont/material-icons.css';
 import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
 import store from '../../store/store';
-
-
-const history = createBrowserHistory();
+import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {
@@ -112,12 +114,12 @@ const GET_ALL_TEXT_BASED_IMAGES = gql`
     }
 `;
 
-export function isUserElevated(currentUser) {
-    return currentUser?.admin || currentUser?.evaluator || currentUser?.experimenter || currentUser?.adeptUser || currentUser?.ta3User;
-}
+// helper function for conditional checking of user privileges and access to certain dashboard pages 
+export function hasAccess(currentUser, allowedRoles) {
+    // protect against a null user object
+    if (!currentUser) return false;
 
-export function isUserTa3(currentUser) {
-    return currentUser?.ta3User || currentUser?.admin
+    return allowedRoles.some(role => currentUser[role] === true); // true if user has any required role flag enabled
 }
 
 export function App() {
@@ -145,6 +147,17 @@ export function App() {
     const [isTextEvalDataLoaded, setIsTextEvalDataLoaded] = React.useState(false);
     const { data: demographicsData } = useQuery(GET_SHOW_DEMOGRAPHICS, { fetchPolicy: 'no-cache' });
     const [isDemographicsDataLoaded, setIsDemographicsDataLoaded] = React.useState(false);
+    const [surveyConfigsLoaded, setSurveyConfigsLoaded] = React.useState(false);
+    const [textConfigsLoaded, setTextConfigsLoaded] = React.useState(false);
+    // modal for warning a participant they already compelted the text based portion of the experiment
+    const [alreadyComplete, setAlreadyComplete] = React.useState({
+        open: false,
+        pid: null
+    })
+
+    const closePopup = () => {
+        setAlreadyComplete({ open: false, pid: null });
+    };
 
     // grab upper and lower bounds for new participant pids from mongo and set them in redux
     const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, {
@@ -244,7 +257,11 @@ export function App() {
 
         if (!tokens) {
             setIsSetup(true);
-            history.push('/login');
+
+            if (window.location.pathname !== `${history.createHref({ pathname: '/login' })}`) {
+                history.push('/login');
+            }
+
             return;
         }
 
@@ -339,8 +356,15 @@ export function App() {
         const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
 
         if (foundParticipant) {
-            const pid = foundParticipant['ParticipantID'];
-            history.push("/text-based?pid=" + pid);
+            const participantId = foundParticipant['ParticipantID'];
+            if (foundParticipant['textEntryCount'] >= computeTextThreshold(evalNum, true)) {
+                setAlreadyComplete({
+                    open:true,
+                    pid:participantId
+                })
+            } else {
+                history.push("/text-based?pid=" + participantId);
+            }
             return;
         } else {
             let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
@@ -391,7 +415,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.admin === true) {
+            if (hasAccess(currentUser, ['admin'])) {
                 return <AdminPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
                 return <Redirect push to="/" />;
@@ -403,7 +427,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (isUserElevated(currentUser)) {
+            if (hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) {
                 return <ParticipantProgressTable canViewProlific={currentUser.adeptUser || currentUser.admin} isAdmin={currentUser.admin} currentUser={currentUser} />
             } else {
                 return <Redirect push to="/" />;
@@ -415,7 +439,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.experimenter === true || currentUser.admin === true) {
+            if (hasAccess(currentUser, ['admin', 'experimenter'])) {
                 return <PidLookup />
             } else {
                 return <Redirect push to="/" />;
@@ -424,7 +448,7 @@ export function App() {
     };
 
     const Survey = () => {
-        if (isUserElevated(currentUser)) {
+        if (hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) {
             return <SurveyPageWrapper currentUser={currentUser} />;
         }
         else {
@@ -437,7 +461,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.admin === true || currentUser.evaluator) {
+            if (hasAccess(currentUser, ['admin', 'evaluator'])) {
                 return <ReviewTextBasedPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
                 return <Home />;
@@ -449,7 +473,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (currentUser.admin === true || currentUser.evaluator) {
+            if (hasAccess(currentUser, ['admin', 'evaluator'])) {
                 return <ReviewDelegationPage currentUser={currentUser} updateUserHandler={userLoginHandler} />
             } else {
                 return <Home />;
@@ -457,11 +481,16 @@ export function App() {
         }
     };
 
-    if (versionLoading) {
-        return <div>Loading...</div>;
-    }
+    // show error message if an participantLog Error occurs
     if (versionError) {
-        return <div>Error fetching survey version data</div>;
+        console.log(versionError);
+        return(
+            <QueryErrorMessage error={versionError}></QueryErrorMessage>
+        );
+    }
+    
+    if (versionLoading || surveyConfigLoading || textConfigLoading) {
+        return <div>Loading...</div>;
     }
 
     return (
@@ -486,33 +515,36 @@ export function App() {
                         <Route path="/remote-text-survey" component={StartOnline} />
                         <Route path="/text-based" component={TextBasedScenariosPageWrapper} />
                         <Route path="/myaccount" component={MyAccount} />
-                        {isUserElevated(currentUser) && <Route exact path="/results" component={ResultsPage} />}
-                        {isUserElevated(currentUser) && <Route exact path="/adm-results" component={ADMChartPage} />}
-                        {isUserElevated(currentUser) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
-                        {isUserElevated(currentUser) && <Route exact path="/humanSimParticipant">
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
                             <AggregateResults type="HumanSimParticipant" />
                         </Route>}
-                        {(currentUser?.admin || currentUser?.experimenter) && <Route path="/participantTextTester">
+                        {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
                             <Login participantTextLogin={true} testerLogin={true} />
                         </Route>}
-                        {isUserElevated(currentUser) && <Route path="/admin" component={Admin} />}
-                        {isUserElevated(currentUser) && <Route path="/participant-progress-table" component={ProgressTable} />}
-                        {isUserElevated(currentUser) && <Route path="/pid-lookup" component={PidLookupPage} />}
-                        {isUserElevated(currentUser) && <Route path="/survey" component={Survey} />}
-                        {isUserElevated(currentUser) && <Route path="/survey-results" component={SurveyResults} />}
-                        {isUserElevated(currentUser) && <Route path="/review-text-based" component={ReviewTextBased} />}
-                        {isUserElevated(currentUser) && <Route path="/review-delegation" component={ReviewDelegation} />}
-                        {isUserElevated(currentUser) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
-                        {isUserElevated(currentUser) && <Route path="/humanProbeData">
+                        {hasAccess(currentUser, ['admin']) && <Route path="/admin" component={Admin} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/pid-lookup" component={PidLookupPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey" component={Survey} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
                             <AggregateResults type="HumanProbeData" />
                         </Route>}
 
-                        {isUserElevated(currentUser) && <Route exact path="/human-results" component={HumanResults} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq1" component={RQ1} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq2" component={RQ2} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/rq3" component={RQ3} />}
-                        {isUserElevated(currentUser) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
-                        {isUserTa3(currentUser) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
+                        {hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.
                             Otherwise, send to homepage */}
@@ -525,6 +557,11 @@ export function App() {
 
                     </Switch>
                 </div>
+                <AlreadyCompleteModal
+                    open={alreadyComplete.open}
+                    onClose={closePopup}
+                    participantId={alreadyComplete.pid}
+                />
 
                 <div className="itm-footer">
                     <div className="footer-text">This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.</div>

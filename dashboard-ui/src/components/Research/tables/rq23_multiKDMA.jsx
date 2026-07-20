@@ -3,6 +3,7 @@ import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { RQDefinitionTable } from "../variables/rq-variables";
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import CloseIcon from '@material-ui/icons/Close';
 import { Autocomplete, TextField, Modal } from "@mui/material";
 import ph2DefinitionXLFile from '../variables/Variable Definitions RQ2.3_MultiKDMA.xlsx';
@@ -143,8 +144,15 @@ export function MultiKDMA_RQ23({ evalNum = 7 }) {
     const isLoading = (evalNum === 7 ? loading : loadingEval11) || loadingLog || loadingSurvey || loadingText;
     const hasError = (evalNum === 7 ? error : errorEval11) || errorLog || errorSurvey || errorText;
 
+    // show error message if an error occurs
+    if (hasError) {
+        console.log(hasError);
+        return(
+            <QueryErrorMessage error={hasError}></QueryErrorMessage>
+        );
+    }
+
     if (isLoading || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
-    if (hasError) return <p>Error :</p>;
 
     return (<>
         <h2 className='rq134-header'>RQ 2.3 Data

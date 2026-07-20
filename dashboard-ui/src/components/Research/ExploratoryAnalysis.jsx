@@ -1,37 +1,27 @@
 import React from 'react';
-import { RQ134 } from "./tables/rq134";
 import './dre-rq.css';
 import { RQ5 } from "./tables/rq5";
-import { RQ8 } from "./tables/rq8";
-import { PH2RQ8 } from "./tables/ph2_rq8";
-import { PH2RQ8Apr26} from "./tables/ph2_rq8_apr26";
-import { PH2RQ8OWPart1 } from "./tables/ph2_rq8_ow_part1";
 import { RQ6 } from "./tables/rq6";
 import Select from 'react-select';
 import { RQ5_PH1 } from './tables/rq5_ph1';
 import { HumanVariability } from './tables/humanVariability';
-import { BlockedTable } from './tables/BlockedTable';
 import { CalibrationData } from './tables/CalibrationData';
-import { PAGES, getAllEvals, getEvalOptionsForPage } from './utils';
+import { getAllEvals } from './utils';
 import { useSelector, useDispatch } from 'react-redux'
 import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
+
 export function ExploratoryAnalysis() {
+    const noDataList = [8, 9, 10, 11, 12, 14, 15, 16, 17]
     const evalOptions = getAllEvals();
-    const evalRQ1Options = getEvalOptionsForPage(PAGES.RQ1);
     const dispatch = useDispatch()
     const storedEval = useSelector(state => state.configs.selectedResearchEval)  
-
     const selectedEval = storedEval ?? evalOptions[0].value;
+    const hasData = !noDataList.includes(selectedEval)
     function selectEvaluation(target) {
         dispatch(setSelectedResearchEval(target.value))
     }
 
-    // Extract all evaluation values that have an RQ1 page to conditionally render RQ4 content 
-    const rq1Values = evalRQ1Options.map(option => option.value); 
-    const hasRQ1Page = rq1Values.includes(selectedEval);
-    const rq8Map = { 16: PH2RQ8Apr26 };
-    const RQ8Component = rq8Map[selectedEval]
     return (<div className="researchQuestion">
         <div className="rq-selection-section">
             <Select
@@ -46,45 +36,13 @@ export function ExploratoryAnalysis() {
                 }}
             />
         </div>
+        {hasData ?
+        <>
         {selectedEval === 13 &&
             <div className="section-container">
                 <HumanVariability evalNum={selectedEval} />
             </div>
         }
-        {(hasRQ1Page && selectedEval !== 15) && ( 
-            <>
-            <div className="section-container">
-            <h2>RQ4: Does alignment score predict perceived alignment?</h2>
-            <p className='indented'>
-                <b>H<sub>1</sub></b> = Alignment score calculated between the responses of one human on attribute-driven
-                decision making and responses of an observed decision maker should predict that human's ratings of self-reported
-                alignment on the observed decision maker
-            </p>
-            <p className='indented'>
-                <b>H<sub>0</sub></b> = Alignment score does not predict self-reported alignment ratings
-            </p>
-            <p>We test this hypothesis by calculating the alignment score between decisions of a human
-                decision maker and the decisions of an observed decision maker and then regressing it
-                onto the self-reported alignment ratings given to the observed decision maker by the human.
-            </p>
-            <p>
-                <b>Independent variable (calculated):</b> Alignment score <br />
-                <b>Dependent variable:</b> Self-reported alignment rating on each observed DM
-            </p>
-        </div>
-        
-        <div className="section-container">
-            <RQ134 evalNum={selectedEval} tableTitle={'RQ4 Data'} />
-            <p>
-                <b>Variables used from dataset:</b>
-            </p>
-            <ul>
-                <li>Participant ID</li>
-                <li>Alignment Score (Delegator | Observed_ADM (target))</li>
-                <li>SRAlign_Rating</li>
-            </ul>
-        </div>
-        </>)}
 
         {selectedEval < 8 &&
             <>
@@ -145,37 +103,8 @@ export function ExploratoryAnalysis() {
             </>
         }
 
-        <div className="section-container">
-            <h2>RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?</h2>
-            <p className='indented'>
-                <b>H<sub>1</sub></b> = KDMA assessments predict behavior in an open world medical triage scenario.
-            </p>
-            <p className='indented'>
-                <b>H<sub>0</sub></b> = KDMA assessments do not predict behavior in an open world medical triage scenario.
-            </p>
-            <p>
-                <b>Independent variable (calculated):</b> KDMA measurement (ADEPT) or Alignment score to selected target (ST) <br />
-                <b>Dependent variables:</b> Number of assessment actions per patient and total; Number of treatment actions per patient and total;
-                tagging accuracy; use of expectant tag (yes/no); time per patient; number of visits per patient; triage time total; evacuation patients
-            </p>
-        </div>
-
-        <div className="section-container">
-            {RQ8Component ? <RQ8Component evalNum={selectedEval} /> : selectedEval < 8 ? <RQ8 evalNum={selectedEval} /> : <PH2RQ8 evalNum={selectedEval}/>}
-        </div>
-
-        {selectedEval === 16 &&
-            <div className="section-container">
-                <h2>Open World Part 1</h2>
-                <PH2RQ8OWPart1 />
-            </div>
-        }
-
         {selectedEval !== 15 && selectedEval !== 16 && ( 
             <>
-                <div className="section-container">
-                    <BlockedTable evalNum={selectedEval} />
-                </div>
                 {selectedEval > 4 && selectedEval < 8 &&
                     <div className="section-container">
                         <CalibrationData evalNum={selectedEval} />
@@ -183,6 +112,10 @@ export function ExploratoryAnalysis() {
                 }
             </>
         )}
-
+        </>
+        : <p
+        style={{marginTop: '10px', marginLeft: '30px'}}
+        >No data available for the selected evaluation.</p>
+    }
     </div>);
 }

@@ -7,8 +7,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import '../../css/humanResults.css';
 import Select from 'react-select';
-import { POST_MRE_EVALS } from "../AggregateResults/DataFunctions";
-import { PAGES, getEvalOptionsForPage } from "../Research/utils";
+import { isPostMreEval } from "../AggregateResults/DataFunctions";
+import { getAllEvals } from "../Research/utils";
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 
 const GET_HUMAN_RESULTS = gql`
@@ -70,13 +72,18 @@ const EVAL_CONFIG = {
     8: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
     9: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
     10: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
+    12: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
+    16: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
 };
 
-const USE_OPEN_WORLD = [8, 9, 10];
+const USE_OPEN_WORLD = [8, 9, 10, 12, 16];
 
 export default function HumanResults() {
-    const evalOptions = getEvalOptionsForPage(PAGES.HUMAN_SIM_PLAY_BY_PLAY);
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const evalOptions = getAllEvals();
+    const dispatch = useDispatch();
+    const storedEval = useSelector(state => state.configs.selectedResearchEval);
+    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0].value);
+
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         variables: { evalNumber: selectedEval },
@@ -104,7 +111,7 @@ export default function HumanResults() {
                     continue;
                 }
                 const version = entry.evalNumber;
-                const scene = USE_OPEN_WORLD.includes(version) ? entry?._id?.split('june2025-')[1] : version === 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
+                const scene = USE_OPEN_WORLD.includes(version) ? entry?._id?.match(/[a-z]+-openworld$/)?.[0] : version === 3 ? entry.data?.configData?.scene : entry.data?.configData?.narrative?.narrativeDescription.split(' ')[0];
                 const pid = entry.data?.participantId;
                 if (scene && pid && entry.data?.actionList) {
                     const probes = simAlignment.filter((x) => !x.openWorld && pid === x.pid && (version === 3 ? MRE_ENV_MAP[scene].toLowerCase() === x.env : scene === x.scenario_id));
@@ -163,10 +170,10 @@ export default function HumanResults() {
                                 break;
                             }
                         }
-                        if ((soartech_start !== -1 && soartech_end === -1) || (POST_MRE_EVALS.includes(version) && (scene.includes('qol') || scene.includes('vol')))) {
+                        if ((soartech_start !== -1 && soartech_end === -1) || (isPostMreEval(version) && (scene.includes('qol') || scene.includes('vol')))) {
                             entry['soartech'].push(action);
                         }
-                        if ((adept_start !== -1 && adept_end === -1) || (POST_MRE_EVALS.includes(version) && scene.includes('DryRunEval'))) {
+                        if ((adept_start !== -1 && adept_end === -1) || (isPostMreEval(version) && scene.includes('DryRunEval'))) {
                             entry['adept'].push(action);
                         }
                         if (freeform_start !== -1) {
@@ -202,10 +209,15 @@ export default function HumanResults() {
     };
 
     function selectEvaluation(target) {
-        setSelectedEval(target.value);
-        setSelectedScene(null);
-        setSelectedPID(null);
+    setSelectedEval(target.value);
+    dispatch(setSelectedResearchEval(target.value));
+    setSelectedScene(null);
+    setSelectedPID(null);
+
     }
+
+
+    const noDataForEval = dataByScene && Object.keys(dataByScene).length === 0;
 
     return (<div className="human-results">
         <div className="hr-nav">
@@ -347,7 +359,8 @@ export default function HumanResults() {
                     </table>
                 </div>
             </div>
-            : <h2 className="not-found">Please select {evalConfig?.type === 'MRE' ? "an environment" : "a scenario"} and participant to view results</h2>
+            : noDataForEval ? <p>This page is not available for the selected evaluation.</p>
+                : <h2 className="not-found">Please select {evalConfig?.type === 'MRE' ? "an environment" : "a scenario"} and participant to view results</h2>
         }
     </div>);
 }

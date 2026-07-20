@@ -1,12 +1,12 @@
 import React from 'react';
 import AdmCharts from './admCharts';
-import { PAGES, getEvalOptionsForPage } from '../Research/utils';
+import { getAllEvals } from '../Research/utils';
 
 class ADMChartPage extends React.Component {
 
     render() {
 
-        const evalOptions = getEvalOptionsForPage(PAGES.ADM_ALIGNMENT);
+        const evalOptions = getAllEvals();
 
         return (
             <AdmCharts evaluationOptions={evalOptions} />

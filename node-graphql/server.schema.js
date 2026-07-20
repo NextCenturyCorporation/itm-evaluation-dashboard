@@ -18,6 +18,7 @@ const typeDefs = gql`
     experimenter: Boolean
     adeptUser: Boolean
     ta3User: Boolean
+    externalSimResearcher: Boolean
     approved: Boolean
     rejected: Boolean
   }
@@ -82,6 +83,7 @@ const typeDefs = gql`
     getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
     getMedicsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
     getTcccResults(eval: String):  [JSON] @complexity(value:100)
+    getCompletedTextScenarios(pid: String): [String] @complexity(value: 10)
   }
 
   type Mutation {
@@ -90,7 +92,8 @@ const typeDefs = gql`
     updateExperimenterUser(caller: JSON, username: String, isExperimenter: Boolean): JSON,
     updateAdeptUser(caller: JSON, username: String, isAdeptUser: Boolean): JSON,
     updateTa3User(caller: JSON, username: String, isTa3User: Boolean): JSON,
-    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean, isTa3User: Boolean): JSON,
+    updateExternalSimResearcher(caller: JSON, username: String, isExternalSimResearcher: Boolean): JSON,
+    updateUserApproval(caller: JSON, username: String, isApproved: Boolean, isRejected: Boolean, isAdmin: Boolean, isEvaluator: Boolean, isExperimenter: Boolean, isAdeptUser: Boolean, isTa3User: Boolean, isExternalSimResearcher: Boolean): JSON,
     updateEvalData(caller: JSON, dataToUpdate: JSON): JSON,
     addNewEval(caller: JSON, newEval: JSON): JSON,
     deleteEval(caller: JSON, evalId: String): JSON,
@@ -106,7 +109,8 @@ const typeDefs = gql`
     updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
     updateShowDemographics(showDemographics: Boolean!): JSON,
     deleteDataByPID(caller: JSON, pid: String): JSON,
-    updateScenarioResult(id: String!, updates: JSON!): JSON
+    updateScenarioResult(id: String!, updates: JSON!): JSON,
+    upsertScenarioResult(result: JSON): JSON,
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
@@ -515,6 +519,13 @@ const resolvers = {
         "participantID": { $not: /test/i }
       }).toArray().then(result => { return result; });
     },
+    getCompletedTextScenarios: async (obj, args, context, inflow) => {
+      if (!args.pid) return [];
+      const docs = await context.db.collection('userScenarioResults')
+        .find({ participantID: args.pid }, { projection: { scenario_id: 1 } })
+        .toArray();
+      return docs.map(d => d.scenario_id).filter(Boolean);
+    },
     getAllScenarioResultsByEval: async (obj, args, context, inflow) => {
       return await context.db.collection('userScenarioResults').find({
         "participantID": { $not: /test/i },
@@ -821,6 +832,21 @@ const resolvers = {
         });
       }
     },
+    updateExternalSimResearcher: async (obj, args, context, inflow) => {
+      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
+      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
+      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
+        return await context.db.collection('users').update(
+          { "username": args["username"] },
+          { $set: { "externalSimResearcher": args["isExternalSimResearcher"] } }
+        );
+      }
+      else {
+        throw new GraphQLError('Users outside of the admin group cannot update External Sim Researcher status.', {
+          extensions: { code: '404' }
+        });
+      }
+    },
     updateUserApproval: async (obj, args, context, inflow) => {
       const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
       const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
@@ -835,6 +861,7 @@ const resolvers = {
               "experimenter": args["isExperimenter"],
               "evaluator": args["isEvaluator"],
               "ta3User": args["isTa3User"],
+              "externalSimResearcher": args["isExternalSimResearcher"],
               "admin": args["isAdmin"]
             }
           }
@@ -937,6 +964,16 @@ const resolvers = {
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await context.db.collection('userScenarioResults').insertOne(result)
       }
+    },
+    upsertScenarioResult: async (obj, args, context, inflow) => {
+      const result = args.result;
+      if (!result || !result.participantID) return null;
+      if (result.participantID.toLowerCase().includes('test')) { return null; }
+      return await context.db.collection('userScenarioResults').updateOne(
+        { participantID: result.participantID, scenario_id: result.scenario_id, evalNumber: result.evalNumber },
+        { $set: result },
+        { upsert: true }
+      );
     },
     updatePidBounds: async (obj, args, context, info) => {
       const res = await context.db.collection('surveyVersion').findOneAndUpdate(

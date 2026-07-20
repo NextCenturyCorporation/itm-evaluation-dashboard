@@ -9,14 +9,12 @@ import '../../css/admin-page.css';
 import { evalNameToNumber } from '../OnlineOnly/config';
 import { setSurveyVersion, setupConfigWithImages, setupTextBasedConfig, setTextEval as setTextEvalInStore, setPidBoundsInStore, setCurrentUIStyle, setShowDemographicsInStore } from '../App/setupUtils';
 import { accountsClient, accountsPassword } from '../../services/accountsService';
-import { createBrowserHistory } from 'history';
+import history from '../App/history';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import { IconButton, Switch } from '@material-ui/core';
 import { FaInfoCircle } from 'react-icons/fa'
 import { EditEvals } from './editEvals';
-
-const history = createBrowserHistory({ forceRefresh: true });
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {
@@ -79,9 +77,15 @@ const UPDATE_TA3_USER = gql`
     }
 `;
 
+const UPDATE_EXTERNAL_SIM_RESEARCHER = gql`
+    mutation updateExternalSimResearcher($caller: JSON!, $username: String!, $isExternalSimResearcher: Boolean!) {
+        updateExternalSimResearcher(caller: $caller, username: $username, isExternalSimResearcher: $isExternalSimResearcher)
+    }
+`;
+
 const UPDATE_USER_APPROVAL = gql`
-    mutation updateUserApproval($caller: JSON!, $username: String!, $isApproved: Boolean!, $isRejected: Boolean!, $isAdmin: Boolean!, $isEvaluator: Boolean!, $isExperimenter: Boolean!, $isAdeptUser: Boolean!, $isTa3User: Boolean!) {
-        updateUserApproval(caller: $caller, username: $username, isApproved: $isApproved, isRejected: $isRejected, isAdmin: $isAdmin, isEvaluator: $isEvaluator, isExperimenter: $isExperimenter, isAdeptUser: $isAdeptUser, isTa3User: $isTa3User)
+    mutation updateUserApproval($caller: JSON!, $username: String!, $isApproved: Boolean!, $isRejected: Boolean!, $isAdmin: Boolean!, $isEvaluator: Boolean!, $isExperimenter: Boolean!, $isAdeptUser: Boolean!, $isTa3User: Boolean!, $isExternalSimResearcher: Boolean!) {
+        updateUserApproval(caller: $caller, username: $username, isApproved: $isApproved, isRejected: $isRejected, isAdmin: $isAdmin, isEvaluator: $isEvaluator, isExperimenter: $isExperimenter, isAdeptUser: $isAdeptUser, isTa3User: $isTa3User, isExternalSimResearcher: $isExternalSimResearcher)
     }
 `;
 
@@ -355,6 +359,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                 isExperimenter: user.experimenter ?? false,
                 isAdeptUser: user.adeptUser ?? false,
                 isTa3User: user.ta3User ?? false,
+                isExternalSimResearcher: user.externalSimResearcher ?? false,
                 isRejected: false
             }
         });
@@ -376,6 +381,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                 isExperimenter: false,
                 isAdeptUser: false,
                 isTa3User: false,
+                isExternalSimResearcher: user.externalSimResearcher ?? false,
                 isRejected: true
             }
         });
@@ -409,6 +415,9 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                             <th className='switch-header'>
                                 TA3
                             </th>
+                            <th className='switch-header'>
+                                ExternalSimResearcher
+                            </th>
                             <th className='action-header'>
                                 Action
                             </th>
@@ -425,6 +434,7 @@ function ApprovalTable({ unapproved, updateUnapproved, caller }) {
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'experimenter', e)} /></td>
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'adeptUser', e)} /></td>
                                     <td><Switch onChange={(e) => updateUserStatus(user._id, 'ta3User', e)} /></td>
+                                    <td><Switch onChange={(e) => updateUserStatus(user._id, 'externalSimResearcher', e)} /></td>
                                     <td>
                                         <IconButton title='Approve' onClick={() => approveUser(user._id)} children={<CheckCircleIcon className='green-btn' />} />
                                         <IconButton title='Deny' onClick={() => denyUser(user._id)} children={<CancelIcon className='red-btn' />} /></td>
@@ -1040,13 +1050,14 @@ function AdminPage({ currentUser, updateUserHandler }) {
                             if (loading) return <div className="loading">Loading ...</div>;
                             if (error) return <div className="error">Error: {error.message}</div>;
 
-                            const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [], 'ta3': [] };
+                            const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [], 'ta3': [], 'externalSimResearcher': [] };
 
                             let adminSelectedOptions = [];
                             let evaluatorSelectedOptions = [];
                             let experimenterSelectedOptions = [];
                             let adeptSelectedOptions = [];
                             let ta3SelectedOptions = [];
+                            let externalSimResearcherSelectedOptions = [];
 
                             const users = data[getUsersQueryName].filter((x) => x.approved);
                             for (let i = 0; i < users.length; i++) {
@@ -1072,6 +1083,9 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                 if (users[i].ta3User) {
                                     ta3SelectedOptions.push(users[i].username);
                                 }
+                                if (users[i].externalSimResearcher) {
+                                    externalSimResearcherSelectedOptions.push(users[i].username);
+                                }
                             }
 
                             return (
@@ -1081,6 +1095,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                                     <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                     <InputBox options={nonSelected['ta3']} selectedOptions={ta3SelectedOptions} mutation={UPDATE_TA3_USER} param={'isTa3User'} header={'TA3'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                     <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['externalSimResearcher']} selectedOptions={externalSimResearcherSelectedOptions} mutation={UPDATE_EXTERNAL_SIM_RESEARCHER} param={'isExternalSimResearcher'} header={'External Sim Researcher'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
                                 </>
                             );
                         }}

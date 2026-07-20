@@ -1,5 +1,5 @@
 import React from 'react';
-import { isUserElevated, isUserTa3 } from '.';
+import { hasAccess } from '.';
 import brandImage from '../../img/itm-logo.png';
 import userImage from '../../img/account_icon.png';
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -7,31 +7,32 @@ import { Link } from 'react-router-dom';
 
 export function Header({ currentUser, logout }) {
     return (<nav className="navbar navbar-expand-lg navbar-light bg-light itm-navbar">
-        <a className="navbar-brand" href="/">
+        <Link className="navbar-brand" to="/">
             <img className="nav-brand-itm" src={brandImage} alt="" />ITM
-        </a>
+        </Link>
         <ul className="navbar-nav custom-nav">
             <li className="nav-item">
                 <Link className="nav-link" to="/">Home</Link>
             </li>
-            {(isUserElevated(currentUser) &&
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) &&
                 <NavDropdown title="Data Collection">
                     <NavDropdown.Item as={Link} className="dropdown-item" to="/survey">
                         Take Delegation Survey
                     </NavDropdown.Item>
-                    {(currentUser.admin === true || currentUser.evaluator) && (
+                    {(hasAccess(currentUser, ['evaluator', 'admin'])) && (
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/review-text-based">
                             Review Text Scenarios
                         </NavDropdown.Item>
                     )}
-                    {(currentUser.admin === true || currentUser.evaluator) && (
+                    {(hasAccess(currentUser, ['evaluator', 'admin'])) && (
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/review-delegation">
                             Review Delegation Survey
                         </NavDropdown.Item>
                     )}
                 </NavDropdown>
             )}
-            {(isUserElevated(currentUser)) && (
+            
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) && (
                 <>
                     <NavDropdown title="Human Evaluation Segments">
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
@@ -61,27 +62,56 @@ export function Header({ currentUser, logout }) {
                             ADM Probe Responses
                         </NavDropdown.Item>
                     </NavDropdown>
-                    <NavDropdown title="Data Analysis">
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
+                </>
+            )}
+
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+                <>
+                <NavDropdown title="Data Analysis">
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
                             RQ1
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
+                            </NavDropdown.Item>
+                        )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
                             RQ2
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
+                            </NavDropdown.Item>
+                        )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
                             RQ3
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
-                            Exploratory Analysis
-                        </NavDropdown.Item>
-                        {isUserTa3(currentUser) && (
+                            </NavDropdown.Item>
+                        )}
+                        {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world">
+                            Open World
+                            </NavDropdown.Item>
+                        )}
+                        {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/participant-demographics">
+                                Participant Demographics
+                            </NavDropdown.Item>
+                        )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world-adms">
+                            Open World ADMs
+                            </NavDropdown.Item>
+                        )}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                            <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
+                                Exploratory Analysis
+                            </NavDropdown.Item>
+                        )}
+                        {(hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher'])) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/tccc">
                                         TCCC
                                     </NavDropdown.Item>
                             )}
                     </NavDropdown>
                 </>
-            )}
+            )
+        }
         </ul>
         <ul className="navbar-nav ml-auto">
             <li className="login-user">
@@ -108,22 +138,22 @@ function UserMenu({ currentUser, logout }) {
                 <Link className="dropdown-item" to="/myaccount" onClick={handleToggle}>
                     My Account
                 </Link>
-                {currentUser.admin === true && (
+                {hasAccess(currentUser, ['admin']) && (
                     <Link className="dropdown-item" to="/admin" onClick={handleToggle}>
                         Administrator
                     </Link>
                 )}
-                {isUserElevated(currentUser) && (
+                {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
                     <Link className="dropdown-item" to="/participant-progress-table" onClick={handleToggle}>
                         Progress Table
                     </Link>
                 )}
-                {(currentUser.experimenter === true || currentUser.admin === true) && (
+                {(hasAccess(currentUser, ['experimenter', 'admin'])) && (
                     <Link className="dropdown-item" to="/pid-lookup" onClick={handleToggle}>
                         PID Lookup
                     </Link>
                 )}
-                {(currentUser.experimenter === true || currentUser.admin === true) && (
+                {(hasAccess(currentUser, ['experimenter', 'admin'])) && (
                     <Link className="dropdown-item" to="/participantTextTester" onClick={handleToggle}>
                         Test Text Scenario
                     </Link>

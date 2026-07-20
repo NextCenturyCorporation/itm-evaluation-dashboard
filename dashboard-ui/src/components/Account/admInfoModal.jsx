@@ -23,6 +23,33 @@ function extractKDMACode(scenarioId) {
     return '';
 }
 
+function filterAlignments(arr, include, exclude) {
+    return (arr || []).filter(o => {
+        const key = Object.keys(o)[0];
+        if (key.split("-").pop().includes("_")) return false;
+        return include.every(c => key.includes(c)) && !exclude.some(c => key.includes(c));
+    });
+}
+
+function renderKDMAList(kdmas, labels, source) {
+    return (
+        <div className="adm-info-block-value adm-kdma-params">
+            {kdmas.map((name, i) => {
+                const e = source?.find(k => k.kdma === name);
+                if (!e) return null;
+                if (e.parameters?.length) return (
+                    <div key={name} style={{ marginBottom: '0.5rem' }}>
+                        <strong>{labels[i]}:</strong>
+                        {e.parameters.map(p => <div key={p.name} style={{ marginLeft: '0.75rem' }}>{p.name}: {p.value.toFixed(4)}</div>)}
+                    </div>
+                );
+                if (e.value !== undefined) return <div key={name}>{labels[i]}: {e.value.toFixed(3)}</div>;
+                return null;
+            })}
+        </div>
+    );
+}
+
 export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextResults, dataSurveyResults, KDMA_MAP, formatLoading }) {
     return (
         <Modal open={open} onClose={onClose}>
@@ -47,6 +74,11 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                     const medicIds = cmpPage.pageName.split(" vs ");
                     const getMedicPage = id => surveyEntry.results?.[id];
                     const getMedicByAlignment = align => getMedicPage(medicIds.find(id => getMedicPage(id)?.admAlignment === align));
+                    const getAdmLoading = (page) => {
+                        if (!page) return "N/A";
+                        if (page?.admChoiceProcess) return formatLoading(page.admChoiceProcess);
+                        return "Normal";
+                    };
 
                     let doc = null, filteredArr = [], medicData = [], leftContent = {};
 
@@ -78,47 +110,24 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                         const mlaSource = doc?.[`${multiKey}_mostLeastAligned`] || doc?.mostLeastAligned;
                         const kdmaSource = doc?.[`${multiKey}_kdmas`] || doc?.kdmas;
                         const entry = mlaSource?.find(o => o.target === null);
-                        filteredArr = (entry?.response || []).filter(o => {
-                            const key = Object.keys(o)[0];
-                            if (key.split("-").pop().includes("_")) return false;
-                            const allCodes = ['MF', 'SS', 'AF', 'PS'];
-                            const requiredCodes = multiKDMA.kdmas.map(k => k === 'merit' ? 'MF' : k === 'search' ? 'SS' : k === 'affiliation' ? 'AF' : 'PS');
-                            const excludedCodes = allCodes.filter(c => !requiredCodes.includes(c));
-                            return requiredCodes.every(c => key.includes(c)) && !excludedCodes.some(c => key.includes(c));
-                        });
+                        const allCodes = ['MF', 'SS', 'AF', 'PS'];
+                        const requiredCodes = multiKDMA.kdmas.map(k => k === 'merit' ? 'MF' : k === 'search' ? 'SS' : k === 'affiliation' ? 'AF' : 'PS');
+                        filteredArr = filterAlignments(entry?.response, requiredCodes, allCodes.filter(c => !requiredCodes.includes(c)));
 
                         const { alignedTarget, baselineTarget, misalignedTarget } = cmpPage;
                         const aligned = getMedicPage(medicIds.find(id => getMedicPage(id)?.admTarget === alignedTarget));
                         const baseline = getMedicPage(medicIds.find(id => getMedicPage(id)?.admTarget === baselineTarget));
                         const misaligned = misalignedTarget ? getMedicPage(medicIds.find(id => getMedicPage(id)?.admTarget === misalignedTarget)) : null;
-                        const getMultiLoading = (page) => {
-                            if (!page) return "N/A";
-                            if (page?.admChoiceProcess) return formatLoading(page.admChoiceProcess);
-                            return "Normal";
-                        };
 
                         medicData = [
                             { type: "Baseline", admName: baseline?.admName || "-", target: baselineTarget || "N/A", loading: "N/A" },
-                            { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: getMultiLoading(aligned) },
+                            { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: getAdmLoading(aligned) },
                         ];
-                        if (misalignedTarget) medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: getMultiLoading(misaligned) });
+                        if (misalignedTarget) medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: getAdmLoading(misaligned) });
 
                         leftContent = {
                             label: multiKDMA.labels.join(' + '), labelKey: "Attribute",
-                            kdmaDisplay: <div className="adm-info-block-value adm-kdma-params">
-                                {multiKDMA.kdmas.map((name, i) => {
-                                    const e = kdmaSource?.find(k => k.kdma === name);
-                                    if (!e) return null;
-                                    if (e.parameters?.length) return (
-                                        <div key={name} style={{ marginBottom: '0.5rem' }}>
-                                            <strong>{multiKDMA.labels[i]}:</strong>
-                                            {e.parameters.map(p => <div key={p.name} style={{ marginLeft: '0.75rem' }}>{p.name}: {p.value.toFixed(4)}</div>)}
-                                        </div>
-                                    );
-                                    if (e.value !== undefined) return <div key={name}>{multiKDMA.labels[i]}: {e.value.toFixed(3)}</div>;
-                                    return null;
-                                })}
-                            </div>,
+                            kdmaDisplay: renderKDMAList(multiKDMA.kdmas, multiKDMA.labels, kdmaSource),
                             kdmaLabel: "KDMA Parameters"
                         };
 
@@ -134,20 +143,14 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                         const combinedIdx = attrCode === 'AF' ? 0 : 1;
                         const entry = doc.combinedMostLeastAligned?.[combinedIdx];
                         const otherCodes = ['MF', 'SS', 'AF', 'PS'].filter(c => c !== attrCode);
-                        filteredArr = (entry?.response || []).filter(o => {
-                            const key = Object.keys(o)[0];
-                            if (key.split("-").pop().includes("_")) return false;
-                            return key.includes(attrCode) && !otherCodes.some(c => key.includes(c));
-                        });
+                        filteredArr = filterAlignments(entry?.response, [attrCode], otherCodes);
 
                         const mostAlignedTarget = filteredArr.length > 0 ? Object.keys(filteredArr[0])[0] : null;
                         const leastAlignedTarget = filteredArr.length > 0 ? Object.keys(filteredArr[filteredArr.length - 1])[0] : null;
 
                         const getOracleLoading = (idx, admTarget) => {
-                            if (idx === 0) return admTarget === mostAlignedTarget ? 'Normal' : 'Exemption';
-                            if (idx === 1) return admTarget === mostAlignedTarget ? 'Normal' : 'Exemption';
-                            if (idx === 2) return admTarget === leastAlignedTarget ? 'Normal' : 'Exemption';
-                            return 'Exemption';
+                            const ref = idx === 2 ? leastAlignedTarget : mostAlignedTarget;
+                            return admTarget === ref ? 'Normal' : 'Exemption';
                         };
 
                         medicData = medicIds.map((id, idx) => {
@@ -175,7 +178,50 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                             ) : <div>No KDMA data</div>
                         };
 
-                    } else {
+                    } else if (scenarioId.startsWith('June2026-')) {
+                        // June 2026 single-attribute binary/trinary (AF, PS) + AF-SS 2D
+                        const isAFSS = scenarioId.includes('AF') && scenarioId.includes('SS');
+                        const isTrinary = scenarioId.includes('trinary');
+                        const attrCode = isAFSS ? 'AF-SS'
+                            : scenarioId.includes('AF') ? 'AF'
+                                : scenarioId.includes('PS') ? 'PS'
+                                    : scenarioId.includes('MF') ? 'MF' : 'SS';
+
+                        const v17Configs = {
+                            'AF': { doc: isTrinary ? 'June2026-AF-assess-trinary' : 'June2026-AF-assess', field: 'combinedMostLeastAligned', kdmaField: 'combinedKdmas', include: ['AF'], exclude: ['MF', 'PS', 'SS'], kdmas: ['affiliation'], labels: ['Affiliation'] },
+                            'PS': { doc: isTrinary ? 'June2026-PS-assess-trinary' : 'June2026-PS-assess', field: 'combinedMostLeastAligned', kdmaField: 'combinedKdmas', include: ['PS'], exclude: ['MF', 'AF', 'SS'], kdmas: ['personal_safety'], labels: ['Personal Safety'] },
+                            'AF-SS': { doc: 'June2026-AF-assess', field: 'AF-SS_mostLeastAligned', kdmaField: 'AF-SS_kdmas', include: ['AF', 'SS'], exclude: ['MF', 'PS'], kdmas: ['affiliation', 'search'], labels: ['Affiliation', 'Search'] },
+                        };
+                        const config = v17Configs[attrCode];
+                        doc = docs.find(d => d.scenario_id === config.doc);
+                        if (!doc) return <p>No alignment data found for {config.doc}</p>;
+
+                        const entry = doc[config.field]?.find(o => o.target === null) ?? doc[config.field]?.[0];
+                        filteredArr = filterAlignments(entry?.response, config.include, config.exclude);
+
+                        const { baselineName, alignedTarget, baselineTarget, misalignedTarget } = cmpPage;
+                        const aligned = getMedicByAlignment("aligned");
+                        const misaligned = getMedicByAlignment("misaligned");
+
+                        const getLoading = (page, align) =>
+                            page ? formatLoading(determineChoiceProcessJune2025(null, page, align, filteredArr)) : "N/A";
+
+                        medicData = [
+                            { type: "Baseline", admName: baselineName || "-", target: "N/A", loading: "N/A" },
+                            { type: "Aligned", admName: aligned?.admName || "-", target: alignedTarget || "-", loading: getLoading(aligned, "aligned") },
+                        ];
+                        if (misalignedTarget) {
+                            medicData.push({ type: "Misaligned", admName: misaligned?.admName || "-", target: misalignedTarget || "-", loading: getLoading(misaligned, "misaligned") });
+                        }
+
+                        leftContent = {
+                            label: config.labels.join(' + '),
+                            labelKey: config.labels.length > 1 ? 'Attributes' : 'Attribute',
+                            kdmaLabel: 'KDMA Parameters',
+                            kdmaDisplay: renderKDMAList(config.kdmas, config.labels, doc[config.kdmaField])
+                        };
+                    }
+                    else {
                         // Single-attribute
                         const derivedCode = extractKDMACode(scenarioId);
                         const target_ = KDMA_MAP[derivedCode] || derivedCode.toLowerCase();
@@ -189,11 +235,7 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                         const arr = entry.response || [];
                         if (!arr.length) return <p>No alignments.</p>;
                         const otherCodes = ['MF', 'SS', 'AF', 'PS'].filter(c => c !== derivedCode);
-                        filteredArr = arr.filter(o => {
-                            const key = Object.keys(o)[0];
-                            if (key.split("-").pop().includes("_")) return false;
-                            return !otherCodes.some(c => key.includes(c));
-                        });
+                        filteredArr = filterAlignments(arr, [], otherCodes);
 
                         const { baselineName, alignedTarget, misalignedTarget } = cmpPage;
                         const aligned = getMedicByAlignment("aligned"), misaligned = getMedicByAlignment("misaligned");
