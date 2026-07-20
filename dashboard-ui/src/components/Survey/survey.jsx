@@ -184,16 +184,6 @@ class SurveyPage extends Component {
         );
         const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
 
-        const allPages = this.surveyConfigClone.pages;
-        const introPages = [...allPages.slice(0, 4)];
-        const participantTextResults = this.props.textResults.filter(
-            (res) => String(res['participantID']) === this.state.pid
-        );
-        const postScenarioPage = allPages.find(page => page.name === "Post-Scenario Measures");
-
-        const finalize = (blocks, getPages = block => block.pages) => {
-            const finalPages = [...introPages, ...blocks.flatMap(getPages)];
-            if (postScenarioPage) finalPages.push(postScenarioPage);
         const finalize = (blocks, getPages = block => block.pages) => {
             const finalPages = [...introPages, ...blocks.flatMap(getPages)];
             if (postScenarioPage) finalPages.push(postScenarioPage);
@@ -566,16 +556,6 @@ export const SurveyPageWrapper = (props) => {
         skip: !evalNumber
     });
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP)
-
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
-    const errors = [
-        errorParticipantLog,
-        errorEvalData,
-    ].filter(Boolean);
-
-    if (errors.length > 0) {
-        return <QueryErrorMessage errors={errors} />;
-    }
 
     // catch any errors that return true and save in an array to display in the QueryErrorMessage component
     const errors = [
