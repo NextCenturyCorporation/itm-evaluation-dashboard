@@ -123,11 +123,11 @@ export function AppErrorMessage({error, errors=[]}) {
                             <Card body style={{ maxWidth: '100%' }}>
 
                                 {/* Javascript Error Message */}
-                                {javascriptErrors.length > 0 && (
+                                {jsErrors.length > 0 && (
                                     <div className="mb-3">
                                         <h6><strong>Application Errors</strong></h6>
                                         <ul>
-                                            {javascriptErrors.map(err => (
+                                            {jsErrors.map(err => (
                                                 <li key={err.id}>
                                                     <strong>{err.name}:</strong>{" "}
                                                     {err.message}

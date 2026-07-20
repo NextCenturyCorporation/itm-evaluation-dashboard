@@ -8,7 +8,7 @@ export class ErrorBoundary extends React.Component {
 
         this.state = {
             hasError: false,
-            error: null
+            errors: []
         };
     }
 
@@ -16,7 +16,7 @@ export class ErrorBoundary extends React.Component {
 
         return {
             hasError: true,
-            error
+            errors: Array.isArray(error) ? error : [error]
         };
 
     }
@@ -34,9 +34,9 @@ export class ErrorBoundary extends React.Component {
         if (this.state.hasError) {
 
             return (
-                <AppErrorMessage
-                    error={this.state.error}
-                />
+                <div className="error-boundary-container">
+                    <AppErrorMessage errors={this.state.errors}/>
+                </div>
             );
 
         }

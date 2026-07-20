@@ -15,7 +15,7 @@ import { AppErrorMessage } from '../../ErrorHandling/AppErrorMessage';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
-        getParticipantLog
+        getParticipantLogLALLALALA
     }`;
 
 const GET_SURVEY_RESULTS = gql`
@@ -151,8 +151,7 @@ export default function DreHomePage({ fullData, admAlignment, evalNumber }) {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;

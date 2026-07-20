@@ -668,8 +668,8 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        console.log(errors)
+        throw errors;
     }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
