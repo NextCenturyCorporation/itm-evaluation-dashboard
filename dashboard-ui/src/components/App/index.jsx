@@ -483,7 +483,6 @@ export function App() {
 
     // show error message if an participantLog Error occurs
     if (versionError) {
-        console.log(versionError);
         return(
             <QueryErrorMessage error={versionError}></QueryErrorMessage>
         );
