@@ -312,6 +312,18 @@ function findWrongDelMaterials(evalNum, participantLog, surveyResults) {
     return bad_pids;
 }
 
+export const getEval17Attribute = (target) => {
+    const t = String(target ?? '');
+    const has = (s) => t.includes(s);
+
+    if (has('AF') && has('SS')) return 'AF-SS';
+
+    const prefix = has('AF') ? 'AF' : has('PS') ? 'PS' : has('MF') ? 'MF' : has('SS') ? 'SS' : null;
+    const variant = /tri/i.test(t) ? 'Tri' : /bi/i.test(t) ? 'Bi' : null;
+
+    return prefix && variant ? `${prefix}-${variant}` : prefix ?? '-';
+};
+
 export function getEval12Attributes(target) {
     if (target.includes('vol')) return 'VOL'
     else if (target.includes('Moral')) return 'MJ'
@@ -331,7 +343,7 @@ export function getEval89Attributes(target, scenarioIndex) {
         return "PS";
     }
     else if (scenario.includes("ss")) {
-        return "SS";
+        return scenario.includes("mf") ? "MF-SS" : "SS";
     }
     else if (scenario.includes("af")) {
         if (scenario.includes("mf")) {
