@@ -83,6 +83,7 @@ const typeDefs = gql`
     getTextBasedConfigByEval(evalName: String!): [JSON] @complexity(value: 50)
     getMedicsByEval(evalNumber: Float): [JSON] @complexity(value: 100)
     getTcccResults(eval: String):  [JSON] @complexity(value:100)
+    getCompletedTextScenarios(pid: String): [String] @complexity(value: 10)
   }
 
   type Mutation {
@@ -108,7 +109,8 @@ const typeDefs = gql`
     updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
     updateShowDemographics(showDemographics: Boolean!): JSON,
     deleteDataByPID(caller: JSON, pid: String): JSON,
-    updateScenarioResult(id: String!, updates: JSON!): JSON
+    updateScenarioResult(id: String!, updates: JSON!): JSON,
+    upsertScenarioResult(result: JSON): JSON,
   }
 
   directive @complexity(value: Int) on FIELD_DEFINITION
@@ -516,6 +518,13 @@ const resolvers = {
       return await context.db.collection('userScenarioResults').find({
         "participantID": { $not: /test/i }
       }).toArray().then(result => { return result; });
+    },
+    getCompletedTextScenarios: async (obj, args, context, inflow) => {
+      if (!args.pid) return [];
+      const docs = await context.db.collection('userScenarioResults')
+        .find({ participantID: args.pid }, { projection: { scenario_id: 1 } })
+        .toArray();
+      return docs.map(d => d.scenario_id).filter(Boolean);
     },
     getAllScenarioResultsByEval: async (obj, args, context, inflow) => {
       return await context.db.collection('userScenarioResults').find({
@@ -958,6 +967,16 @@ const resolvers = {
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await context.db.collection('userScenarioResults').insertOne(result)
       }
+    },
+    upsertScenarioResult: async (obj, args, context, inflow) => {
+      const result = args.result;
+      if (!result || !result.participantID) return null;
+      if (result.participantID.toLowerCase().includes('test')) { return null; }
+      return await context.db.collection('userScenarioResults').updateOne(
+        { participantID: result.participantID, scenario_id: result.scenario_id, evalNumber: result.evalNumber },
+        { $set: result },
+        { upsert: true }
+      );
     },
     updatePidBounds: async (obj, args, context, info) => {
       const res = await context.db.collection('surveyVersion').findOneAndUpdate(

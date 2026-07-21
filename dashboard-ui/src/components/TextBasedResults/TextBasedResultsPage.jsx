@@ -14,7 +14,9 @@ import XLSX from 'sheetjs-style';
 import Select from 'react-select';
 import NoSelection from './NoSelection';
 import { shortenAnswer, p2Attributes } from './util';
-import { PAGES, getEvalOptionsForPage } from '../Research/utils';
+import { getAllEvals } from '../Research/utils';
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 const GET_SCENARIO_RESULTS_BY_EVAL = gql`
     query getAllScenarioResultsByEval($evalNumber: Float!){
@@ -449,8 +451,10 @@ export default function TextBasedResultsPage() {
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const evalOptions = getEvalOptionsForPage(PAGES.TEXT_RESULTS);
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const evalOptions = getAllEvals()
+    const dispatch = useDispatch();
+    const storedEval = useSelector(state => state.configs.selectedResearchEval);
+    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0].value);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const { data: allTextBasedConfigsData, loading: configsLoading } = useQuery(GET_ALL_TEXT_BASED_CONFIGS, {
         fetchPolicy: 'cache-first'
@@ -689,12 +693,16 @@ export default function TextBasedResultsPage() {
 
     function selectEvaluation(option) {
         setSelectedEval(option.value);
+        dispatch(setSelectedResearchEval(option.value));
         setScenario(null);
     }
+
 
     if (configsLoading) {
         return <div>Loading configurations...</div>;
     }
+
+    const noDataForEval = !loading && !error && scenarioOptions.length === 0;
 
     return (<div className='text-results'>
         <div className='sidebar-options'>
@@ -741,7 +749,9 @@ export default function TextBasedResultsPage() {
                     </ToggleButtonGroup>
                 </div>
                 {dataFormat === 'text' ? <TextResultsSection /> : dataFormat === 'participants' ? <ParticipantView data={scenarioChosen && participantBased ? participantBased[scenarioChosen] : []} scenarioName={scenarioChosen} textBasedConfigs={filteredTextBasedConfigs} selectedEval={selectedEval} participantBased={participantBased} scenarioOptions={scenarioOptions} participantLog={participantLog} /> : <ChartedResultsSection />}
-            </div>) : (
+            </div>) : noDataForEval ? (
+            <p>This page is not available for the selected evaluation.</p>
+        ) : (
             <NoSelection />
         )}
     </div>);
