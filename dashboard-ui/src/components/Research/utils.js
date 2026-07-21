@@ -543,49 +543,87 @@ function handleStandardComparison(evalNum, page, entryObj, allObjs, entry) {
     const baselineAdm = (evalNum === 15 || evalNum === 16 || evalNum === 17) ? adms[1] : adms[0];
     const misalignedAdm = adms[2];
 
-    const isOracle = evalNum === 16 && entry && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
-    const colAB = isOracle ? 'Delegation Preference (AlignedSS/AlignedOS)' : 'Delegation preference (A/B)';
-    const colAM = isOracle ? 'Delegation Preference (AlignedSS/Misaligned)' : 'Delegation preference (A/M)';
-    const colPctAB = isOracle ? 'Delegation Percentage (AlignedSS/AlignedOS)' : 'Delegation Percentage (Aligned/Baseline)';
-    const colPctAM = isOracle ? 'Delegation Percentage (AlignedSS/Misaligned)' : 'Delegation Percentage (Aligned/Misaligned)';
-    const valB = isOracle ? 'AlignedOS' : 'B';
-    const valM = isOracle ? 'Misaligned' : 'M';
-
-    const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
-    const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
-    entryObj[colAB] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : valB);
-    entryObj[colAM] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : valM);
-    entryObj[colPctAB] = '-';
-    entryObj[colPctAM] = '-';
-
-    const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
-    const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
-
     const extractPct = (response, medicName) => {
         if (response === '-' || !response) return '-';
         const match = response.match(new RegExp(medicName + '\\s+(\\d+%)'));
         return match ? match[1] : '0%';
     };
 
+    const isOracle = evalNum === 16 && entry && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
+
+    if (isOracle) {
+        // April 2026 subpopulations came out flipped vs survey time, this logic accounts for that
+        const ssAdm = baselineAdm;
+        const osAdm = alignedAdm;
+
+        // SS vs OS
+        const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
+        const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
+        entryObj['Delegation Preference (AlignedSS/AlignedOS)'] = qAB === '-' ? '-' : (qAB === ssAdm ? 'AlignedSS' : 'AlignedOS');
+        entryObj['Delegation Percentage (AlignedSS/AlignedOS)'] = '-';
+
+        // OS vs Misaligned (the survey-aligned medic is really OS)
+        const qOM = misalignedAdm ? page.questions[osAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-' : '-';
+        const pctOM = misalignedAdm ? page.questions[osAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
+        entryObj['Delegation Preference (AlignedOS/Misaligned)'] = qOM === '-' ? '-' : (qOM === osAdm ? 'AlignedOS' : 'Misaligned');
+        entryObj['Delegation Percentage (AlignedOS/Misaligned)'] = '-';
+
+        for (let i = 0; i < 3; i++) {
+            const row = allObjs[allObjs.length - 1 - i];
+            if (!row) break;
+            switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
+                case 'AlignedSS':
+                    row['Delegation Preference (AlignedSS/AlignedOS)'] = entryObj['Delegation Preference (AlignedSS/AlignedOS)'] === 'AlignedSS' ? 'y' : 'n';
+                    row['Delegation Percentage (AlignedSS/AlignedOS)'] = extractPct(pctAB, ssAdm);
+                    break;
+                case 'AlignedOS':
+                    row['Delegation Preference (AlignedSS/AlignedOS)'] = entryObj['Delegation Preference (AlignedSS/AlignedOS)'] === 'AlignedOS' ? 'y' : 'n';
+                    row['Delegation Percentage (AlignedSS/AlignedOS)'] = extractPct(pctAB, osAdm);
+                    if (misalignedAdm) {
+                        row['Delegation Preference (AlignedOS/Misaligned)'] = entryObj['Delegation Preference (AlignedOS/Misaligned)'] === 'AlignedOS' ? 'y' : 'n';
+                        row['Delegation Percentage (AlignedOS/Misaligned)'] = extractPct(pctOM, osAdm);
+                    }
+                    break;
+                case 'Misaligned':
+                    row['Delegation Preference (AlignedOS/Misaligned)'] = entryObj['Delegation Preference (AlignedOS/Misaligned)'] === 'Misaligned' ? 'y' : 'n';
+                    row['Delegation Percentage (AlignedOS/Misaligned)'] = extractPct(pctOM, misalignedAdm);
+                    break;
+            }
+        }
+        return;
+    }
+
+    const colAB = 'Delegation preference (A/B)';
+    const colAM = 'Delegation preference (A/M)';
+    const colPctAB = 'Delegation Percentage (Aligned/Baseline)';
+    const colPctAM = 'Delegation Percentage (Aligned/Misaligned)';
+
+    const qAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Forced Choice']?.response ?? '-';
+    const qAM = page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Forced Choice']?.response ?? '-';
+    entryObj[colAB] = qAB === '-' ? '-' : (qAB === alignedAdm ? 'A' : 'B');
+    entryObj[colAM] = qAM === '-' ? '-' : (qAM === alignedAdm ? 'A' : 'M');
+    entryObj[colPctAB] = '-';
+    entryObj[colPctAM] = '-';
+
+    const pctAB = page.questions[alignedAdm + ' vs ' + baselineAdm + ': Percent Delegation']?.response ?? '-';
+    const pctAM = misalignedAdm ? page.questions[alignedAdm + ' vs ' + misalignedAdm + ': Percent Delegation']?.response ?? '-' : '-';
+
     for (let i = 0; i < 3; i++) {
         const row = allObjs[allObjs.length - 1 - i];
         if (!row) break;
         switch (row['ADM_Aligned_Status (Baseline/Misaligned/Aligned)']) {
             case 'aligned':
-            case 'AlignedSS':
                 row[colAB] = entryObj[colAB] === 'A' ? 'y' : 'n';
                 if (misalignedAdm) row[colAM] = entryObj[colAM] === 'A' ? 'y' : 'n';
                 row[colPctAB] = extractPct(pctAB, alignedAdm);
                 if (misalignedAdm) row[colPctAM] = extractPct(pctAM, alignedAdm);
                 break;
             case 'baseline':
-            case 'AlignedOS':
-                row[colAB] = entryObj[colAB] === valB ? 'y' : 'n';
+                row[colAB] = entryObj[colAB] === 'B' ? 'y' : 'n';
                 row[colPctAB] = extractPct(pctAB, baselineAdm);
                 break;
             case 'misaligned':
-            case 'Misaligned':
-                row[colAM] = entryObj[colAM] === valM ? 'y' : 'n';
+                row[colAM] = entryObj[colAM] === 'M' ? 'y' : 'n';
                 row[colPctAM] = extractPct(pctAM, misalignedAdm);
                 break;
         }
@@ -714,10 +752,18 @@ function buildEntryRow(context) {
 
     entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID.find((r) => r.scenario_id.includes(isAdept ? 'MJ' : (entryObj['Target'].includes('qol') ? 'qol' : 'vol')))?.[isAdept ? 'combinedSessionId' : 'serverSessionId'] ?? '-';
     entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'comparison' ? '-' : t;
-    if (evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF') && t !== 'comparison')
-        entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = t === 'aligned' ? 'AlignedSS' : t === 'baseline' ? 'AlignedOS' : 'Misaligned';
+    if (evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF') && t !== 'comparison') {
+        if (t === 'misaligned') {
+            entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = 'Misaligned';
+        } else {
+            // CHECKS UPDATED SUBPOP, IGNORES OLD SCORING
+            const participantSubpop = textResultsForPID.find(r => r.scenario_id === 'April2026-subpopulation')?.subPopResult;
+            entryObj['ADM_Aligned_Status (Baseline/Misaligned/Aligned)'] = page['subpop'] === participantSubpop ? 'AlignedSS' : 'AlignedOS';
+        }
+    }
 
-    
+
+
     const isOracleBlock = evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
     const choiceProcess = evalNum === 17
         ? ((t === 'aligned' || t === 'misaligned')
@@ -731,9 +777,9 @@ function buildEntryRow(context) {
 
     const isOracle = evalNum === 16 && (entry['Attribute'] === 'AF' || entry['Attribute'] === 'MF');
 
-    entryObj['ADM Loading'] = t === 'comparison' ? '-' : 
-        (t === 'baseline' && !isOracle) ? 'normal' : 
-        (choiceProcess === 'exemption') ? 'exemption' : 'normal';
+    entryObj['ADM Loading'] = t === 'comparison' ? '-' :
+        (t === 'baseline' && !isOracle) ? 'normal' :
+            (choiceProcess === 'exemption') ? 'exemption' : 'normal';
 
     if (evalNum === 5 || evalNum === 6)
         entryObj['DRE ADM Loading'] = isAdept ? page.dreChoiceProcess : entryObj['ADM Loading'];
@@ -754,7 +800,7 @@ function buildEntryRow(context) {
         comparison_entry = comparisons?.find((x) => x['pid'] === pid && x['adm_type'] === t && x['adm_alignment_target'] === page['admTarget'] && x['adm_scenario'] === scenarioForComparison);
     } else {
         comparison_entry = comparisons?.find((x) =>
-            (evalNum === 10 || evalNum === 16 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget'] && 
+            (evalNum === 10 || evalNum === 16 || x['adm_type'] === t) && x['pid'] === pid && x['adm_scenario'] === page['scenarioIndex'] && x['adm_alignment_target'] === page['admTarget'] &&
             (evalNum !== 17 || !isTrinaryComparison(x)) &&
             (evalNum !== 10 || x['text_scenario'].includes(entryObj['Attribute'])) &&
             (page['scenarioIndex']?.includes('PS-AF') ? x['text_scenario']?.includes('PS-AF') : !x['text_scenario']?.includes('PS-AF')) &&
@@ -798,7 +844,7 @@ function buildEntryRow(context) {
             entryObj['Alignment score (DelegatorTRI|Observed_ADM (target))'] = tri_entry?.score ?? '-';
         }
         // Resolve attribute from target/scenario (not eval 15/16/17 — attributes come from admOrderMapping)
-        if (evalNum < 15 ) {
+        if (evalNum < 15) {
             const resolved = resolveAttribute(entryObj['Target'], page['baselineTarget'], page['scenarioIndex']);
             if (resolved) entryObj['Attribute'] = resolved;
         }
@@ -865,22 +911,22 @@ function buildEntryRow(context) {
     entryObj['Agreement_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': Do you agree with the decision that this medic made?' : ': Do you agree with the decisions that this medic made?')];
     entryObj['SRAlign_Rating'] = RATING_MAP[ratingQ(': The way this medic makes medical decisions is how I make decisions')];
     if ((evalNum === 16 || evalNum === 17) && t !== "comparison") {
-      entryObj["Distrust_Rating"] = RATING_MAP[
-        ratingQ(": Based on this experience, I cannot rely on this person with complete confidence.")
-      ];
-      entryObj["Trustworthy(INT)_Rating"] = RATING_MAP[
-        ratingQ(": This medic’s actions and behaviors are not very consistent.")
-      ];
-      entryObj["Trustworthy(BEN)_Rating"] = RATING_MAP[
-        ratingQ(": This medic really looks out for what is important to me.")
-      ];
-    
-      const delAKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version A"));
-      const delBKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version B"));
-      entryObj["Delegation1"] = DELEGATION1_MAP[delAKey ? page["questions"][delAKey]?.response ?? "-" : "-"];
-      entryObj["Delegation2"] = DELEGATION2_MAP[delBKey ? page["questions"][delBKey]?.response ?? "-" : "-"];
+        entryObj["Distrust_Rating"] = RATING_MAP[
+            ratingQ(": Based on this experience, I cannot rely on this person with complete confidence.")
+        ];
+        entryObj["Trustworthy(INT)_Rating"] = RATING_MAP[
+            ratingQ(": This medic’s actions and behaviors are not very consistent.")
+        ];
+        entryObj["Trustworthy(BEN)_Rating"] = RATING_MAP[
+            ratingQ(": This medic really looks out for what is important to me.")
+        ];
+
+        const delAKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version A"));
+        const delBKey = Object.keys(page["questions"] ?? {}).find(k => k.includes("Del Version B"));
+        entryObj["Delegation1"] = DELEGATION1_MAP[delAKey ? page["questions"][delAKey]?.response ?? "-" : "-"];
+        entryObj["Delegation2"] = DELEGATION2_MAP[delBKey ? page["questions"][delBKey]?.response ?? "-" : "-"];
     }
-    
+
     // --- Delegation preferences ---
     if (t === 'comparison') {
         const adms = page['pageName'].split(' vs ');
@@ -892,8 +938,8 @@ function buildEntryRow(context) {
         entryObj['Delegation preference (A/M)'] = '-';
         entryObj['Delegation Preference (AlignedSS/AlignedOS)'] = '-';
         entryObj['Delegation Percentage (AlignedSS/AlignedOS)'] = '-';
-        entryObj['Delegation Preference (AlignedSS/Misaligned)'] = '-';
-        entryObj['Delegation Percentage (AlignedSS/Misaligned)'] = '-';
+        entryObj['Delegation Preference (AlignedOS/Misaligned)'] = '-';
+        entryObj['Delegation Percentage (AlignedOS/Misaligned)'] = '-';
     }
 
     return entryObj;
@@ -931,7 +977,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
         if (!logData || textCount < TEXT_COUNT_NEEDED) continue;
         if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < TEXT_COUNT_NEEDED || logData.simEntryCount < SIM_ENTRY_COUNT_NEEDED)) continue;
 
-        const { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments} = getAlignments(evalNum, textResults, pid);
+        const { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments } = getAlignments(evalNum, textResults, pid);
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         const demoEntry = demoData?.find(entry => entry.surveyId === pid) ?? null;
 
@@ -1204,7 +1250,7 @@ function determineChoiceProcessEval16(eval16Alignments, entry, page, t) {
                 ? leastAligned.target
                 : null;
 
-            
+
     if (!selectedTarget) return 'exemption';
 
     if (selectedTarget !== target) {
