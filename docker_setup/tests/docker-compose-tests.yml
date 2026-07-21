@@ -25,6 +25,7 @@ services:
       REACT_APP_TESTING: "true"
       TEST_MONGO_URL: mongodb://mongo:27017
       NODE_OPTIONS: --max-old-space-size=8192
+      JEST_TEST_TIMEOUT: "30000"
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
       CHROME_BIN: /usr/bin/chromium
     volumes:

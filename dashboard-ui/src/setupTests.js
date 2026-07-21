@@ -6,30 +6,20 @@ import { ApolloServer } from 'apollo-server';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 import { typeDefs, resolvers } from '../../node-graphql/server.schema.js';
-import {
-    AdmLog,
-    ParticipantLog,
-    SessionConfig,
-    SurveyConfig,
-    SurveyResults,
-    SurveyVersion,
-    TextBasedConfig,
-    UiStyle,
-    UserScenarioResults,
-    EvalData
-} from './__mocks__/mockDbSchema.js';
-import {
-    admMocks,
-    surveyResultMock,
-    surveyV5,
-    surveyV7,
-    textConfigMocks,
-    userScenarioResultMock,
-    evalDataMock
-} from './__mocks__/mockData.js';
+import { AdmLog, ParticipantLog, SessionConfig, SurveyConfig, SurveyResults, SurveyVersion, TextBasedConfig, UiStyle, UserScenarioResults, EvalData} from './__mocks__/mockDbSchema.js';
+import { admMocks, surveyResultMock, surveyV5, surveyV7, textConfigMocks, userScenarioResultMock, evalDataMock } from './__mocks__/mockData.js';
 
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
+
+// Browser-driven tests can run more slowly in Linux CI than on a developer workstation.
+// Keep the local default reasonable while allowing CI to override it through Compose.
+const configuredTestTimeout = Number(process.env.JEST_TEST_TIMEOUT);
+jest.setTimeout(
+    Number.isFinite(configuredTestTimeout) && configuredTestTimeout > 0
+        ? configuredTestTimeout
+        : 30000
+);
 
 let mongoServer;
 let graphqlServer;
@@ -72,11 +62,10 @@ beforeAll(async () => {
         }
 
         const uiStyle = new UiStyle({
-            version: 'updated'
+            version: 'updated',
         });
 
         await uiStyle.save();
-
         const surveyNum = process.env.REACT_APP_TEST_SURVEY_VERSION;
 
         const surveyToTextMap = {
@@ -98,58 +87,51 @@ beforeAll(async () => {
         const surveyConfig4 = new SurveyConfig({
             _id: 'delegation_v4.0',
             survey: {
-                pages: [
-                    {
-                        name: 'Participant ID Page',
-                        elements: [
-                            {
-                                type: 'text',
-                                name: 'Participant ID',
-                                title: 'Enter Participant ID:',
-                                isRequired: true
-                            }
-                        ]
-                    }
-                ]
+                pages: [{
+                    name: "Participant ID Page",
+                    elements: [
+                        {
+                            type: "text",
+                            name: "Participant ID",
+                            title: "Enter Participant ID:",
+                            isRequired: true
+                        }]
+                }]
             }
         });
-
         const surveyConfig5 = new SurveyConfig(surveyV5);
         const surveyConfig7 = new SurveyConfig(surveyV7);
-
         await surveyConfig4.save();
         await surveyConfig5.save();
         await surveyConfig7.save();
-
         const { ObjectId } = require('mongodb');
 
         const sessionConfig = new SessionConfig({
-            _id: new ObjectId('67991d239acd0b5980ffbf69'),
-            userId: '67991d239acd0b1b94ffbf64',
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM',
+            _id: new ObjectId("67991d239acd0b5980ffbf69"),
+            userId: "67991d239acd0b1b94ffbf64",
+            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM",
             valid: true
         });
-
         await sessionConfig.save();
 
         const participantLog = new ParticipantLog({
-            Type: 'Mil',
-            ParticipantID: 202409101,
-            'Text-1': 'AD-1',
-            'Text-2': 'ST-1',
-            'Sim-1': 'AD-2',
-            'Sim-2': 'ST-2',
-            'Del-1': 'AD-3',
-            'Del-2': 'ST-3',
-            ADMOrder: 1,
-            claimed: true,
-            simEntryCount: 4,
-            surveyEntryCount: 1,
-            textEntryCount: 5,
-            hashedEmail: '595c55a027391bd9e55844e769594dd102002f9e846704568261ddbeabc19662'
+            "Type": "Mil",
+            "ParticipantID": 202409101,
+            "Text-1": "AD-1",
+            "Text-2": "ST-1",
+            "Sim-1": "AD-2",
+            "Sim-2": "ST-2",
+            "Del-1": "AD-3",
+            "Del-2": "ST-3",
+            "ADMOrder": 1,
+            "claimed": true,
+            "simEntryCount": 4,
+            "surveyEntryCount": 1,
+            "textEntryCount": 5,
+            "hashedEmail": "595c55a027391bd9e55844e769594dd102002f9e846704568261ddbeabc19662"
         });
 
-        await participantLog.save();
+        await participantLog.save()
 
         const evalData = new EvalData(evalDataMock);
 
@@ -160,13 +142,8 @@ beforeAll(async () => {
         await userScenarioResults.save();
 
         jest.mock('@accounts/graphql-api', () => {
-            const {
-                testUsers,
-                usernamesToIgnoreWarnings
-            } = require('./__mocks__/mockUsers.js');
-
+            const { testUsers, usernamesToIgnoreWarnings } = require('./__mocks__/mockUsers.js');
             let lastAuthenticatedUser = null;
-
             return {
                 AccountsModule: {
                     forRoot: jest.fn(() => ({
@@ -217,6 +194,7 @@ beforeAll(async () => {
                                 password: String!
                             }
 
+
                             type AuthPayload {
                                 tokens: Token
                                 user: User
@@ -225,14 +203,8 @@ beforeAll(async () => {
 
                             type Mutation {
                                 createUser(user: CreateUserInput!): User
-                                authenticate(
-                                    params: AuthenticateParamsInput!,
-                                    serviceName: String
-                                ): AuthPayload
-                                refreshTokens(
-                                    accessToken: String,
-                                    refreshToken: String
-                                ): AuthPayload
+                                authenticate(params: AuthenticateParamsInput!, serviceName: String): AuthPayload
+                                refreshTokens(accessToken: String, refreshToken: String): AuthPayload
                                 logout: Boolean
                             }
 
@@ -242,108 +214,59 @@ beforeAll(async () => {
                         `,
                         resolvers: {
                             Mutation: {
-                                authenticate: jest.fn(
-                                    (parent, { params, serviceName }) => {
-                                        const foundUser = testUsers.find(
-                                            (user) =>
-                                                params.user?.username?.toLowerCase() ==
-                                                    user.username.toLowerCase() ||
-                                                params.user?.email?.toLowerCase() ==
-                                                    user.email.toLowerCase()
-                                        );
-
-                                        if (foundUser?.password != params.password) {
-                                            return null;
-                                        }
-
-                                        lastAuthenticatedUser = foundUser;
-
-                                        return {
-                                            sessionId: '67991d239acd0b5980ffbf69',
-                                            tokens: {
-                                                refreshToken:
-                                                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM',
-                                                accessToken:
-                                                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRva2VuIjoiYTljMTBkYjJhOTMxN2RmZDA1NjM5MDIwYTc2N2Y5ZDYyNWJjZmFmM2Q3NjhmYTk0NGEzMmM1N2YxYWI5MjNmZGU0ZGNkZTM1NTlmMmVkMDczMzYyYTEiLCJpc0ltcGVyc29uYXRlZCI6ZmFsc2UsInVzZXJJZCI6IjY3OTkxZDIzOWFjZDBiMWI5NGZmYmY2NCJ9LCJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODA5MzExNX0.w1x-lWGwqW2hVRNwTl3sQyaxqeyZsJJirn_qkT04ljo'
-                                            },
-                                            user: {
-                                                id: '67991d239acd0b1b94ffbf64',
-                                                emails: [
-                                                    {
-                                                        address: params.user.email,
-                                                        verified: false
-                                                    }
-                                                ],
-                                                username: 'tester1',
-                                                admin: foundUser.admin,
-                                                evaluator: foundUser.evaluator,
-                                                experimenter: foundUser.experimenter,
-                                                adeptUser: foundUser.adeptUser,
-                                                ta3User: foundUser.ta3User,
-                                                externalSimResearcher:
-                                                    foundUser.externalSimResearcher,
-                                                approved: foundUser.approved,
-                                                rejected: foundUser.rejected
-                                            }
-                                        };
-                                    }
-                                ),
-
-                                createUser: jest.fn(async (parent, { user }) => {
-                                    const foundUser = testUsers.find(
-                                        (testUser) =>
-                                            testUser.username.toLowerCase() ==
-                                            user.username.toLowerCase()
-                                    );
-
-                                    if (!foundUser) {
-                                        if (
-                                            usernamesToIgnoreWarnings.find(
-                                                (username) =>
-                                                    username.toLowerCase() ==
-                                                    user.username.toLowerCase()
-                                            ) == null
-                                        ) {
-                                            // Do not warn if this failure is expected.
-                                            console.warn(
-                                                `Error creating user with username ${user.username}. ` +
-                                                'Please check the mockUsers.js file and ensure you have entered the information correctly.'
-                                            );
-                                        }
-
+                                authenticate: jest.fn((parent, { params, serviceName }) => {
+                                    const foundUser = testUsers.find((user) => params.user?.username?.toLowerCase() == user.username.toLowerCase() || params.user?.email?.toLowerCase() == user.email.toLowerCase());
+                                    if (foundUser?.password != params.password) {
                                         return null;
                                     }
-
-                                    const {
-                                        User
-                                    } = require('./__mocks__/mockDbSchema.js');
-
+                                    lastAuthenticatedUser = foundUser;
+                                    return {
+                                        "sessionId": "67991d239acd0b5980ffbf69",
+                                        "tokens": {
+                                            "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM",
+                                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRva2VuIjoiYTljMTBkYjJhOTMxN2RmZDA1NjM5MDIwYTc2N2Y5ZDYyNWJjZmFmM2Q3NjhmYTk0NGEzMmM1N2YxYWI5MjNmZGU0ZGNkZTM1NTlmMmVkMDczMzYyYTEiLCJpc0ltcGVyc29uYXRlZCI6ZmFsc2UsInVzZXJJZCI6IjY3OTkxZDIzOWFjZDBiMWI5NGZmYmY2NCJ9LCJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODA5MzExNX0.w1x-lWGwqW2hVRNwTl3sQyaxqeyZsJJirn_qkT04ljo",
+                                        },
+                                        "user": {
+                                            "id": "67991d239acd0b1b94ffbf64",
+                                            "emails": [
+                                                {
+                                                    "address": params.user.email,
+                                                    "verified": false,
+                                                }
+                                            ],
+                                            "username": "tester1",
+                                            "admin": foundUser.admin,
+                                            "evaluator": foundUser.evaluator,
+                                            "experimenter": foundUser.experimenter,
+                                            "adeptUser": foundUser.adeptUser,
+                                            "approved": foundUser.approved,
+                                            "rejected": foundUser.rejected,
+                                        },
+                                    }
+                                }),
+                                createUser: jest.fn(async (parent, { user }) => {
+                                    const foundUser = testUsers.find((testUser) => testUser.username.toLowerCase() == user.username.toLowerCase());
+                                    if (!foundUser) {
+                                        if (usernamesToIgnoreWarnings.find((uname) => uname.toLowerCase() == user.username.toLowerCase()) == null) {
+                                            // do not warn if we are expecting this to fail. 
+                                            console.warn(`Error creating user with username ${user.username}. Please check the mockUsers.js file and ensure you have entered the information correctly.`);
+                                        }
+                                        return null;
+                                    }
+                                    const { User } = require('./__mocks__/mockDbSchema.js');
                                     const userData = {
                                         username: user.username,
-                                        emails: [
-                                            {
-                                                address: user.email,
-                                                verified: false
-                                            }
-                                        ],
+                                        emails: [{ address: user.email, verified: false }],
                                         admin: foundUser.admin,
                                         evaluator: foundUser.evaluator,
                                         experimenter: foundUser.experimenter,
                                         adeptUser: foundUser.adeptUser,
-                                        ta3User: foundUser.ta3User,
-                                        externalSimResearcher:
-                                            foundUser.externalSimResearcher,
                                         approved: foundUser.approved,
                                         rejected: foundUser.rejected
                                     };
-
                                     const { ObjectId } = require('mongodb');
-
-                                    if (user.username == 'admin') {
-                                        userData._id = new ObjectId(
-                                            '67991d239acd0b1b94ffbf64'
-                                        );
-                                    }
+                                    if (user.username == 'admin')
+                                        userData['_id'] = new ObjectId("67991d239acd0b1b94ffbf64");
 
                                     const newUser = new User(userData);
 
@@ -354,73 +277,46 @@ beforeAll(async () => {
                                         loginResult: null
                                     };
                                 }),
-
-                                refreshTokens: jest.fn(
-                                    (parent, { accessToken, refreshToken }) => {
-                                        return {
-                                            sessionId:
-                                                '67991d239acd0b5980ffbf69',
-                                            tokens: {
-                                                refreshToken,
-                                                accessToken
-                                            }
-                                        };
-                                    }
-                                ),
-
+                                refreshTokens: jest.fn((parent, { accessToken, refreshToken }) => {
+                                    return {
+                                        "sessionId": "67991d239acd0b5980ffbf69",
+                                        "tokens": {
+                                            "refreshToken": refreshToken,
+                                            "accessToken": accessToken,
+                                        },
+                                    };
+                                }),
                                 logout: jest.fn(() => {
                                     lastAuthenticatedUser = null;
                                     return true;
                                 })
                             },
-
                             Query: {
                                 getUser: jest.fn(() => {
-                                    if (lastAuthenticatedUser == null) {
+                                    if (lastAuthenticatedUser == null)
                                         return null;
-                                    }
-
                                     return {
                                         id: 'mock-user-id',
-                                        username:
-                                            lastAuthenticatedUser.username,
-                                        emails: [
-                                            {
-                                                address:
-                                                    lastAuthenticatedUser.email
-                                            }
-                                        ],
+                                        username: lastAuthenticatedUser.username,
+                                        emails: [{ address: lastAuthenticatedUser.email }],
                                         admin: lastAuthenticatedUser.admin,
-                                        evaluator:
-                                            lastAuthenticatedUser.evaluator,
-                                        adeptUser:
-                                            lastAuthenticatedUser.adeptUser,
-                                        experimenter:
-                                            lastAuthenticatedUser.experimenter,
-                                        ta3User:
-                                            lastAuthenticatedUser.ta3User,
-                                        externalSimResearcher:
-                                            lastAuthenticatedUser.externalSimResearcher,
-                                        approved:
-                                            lastAuthenticatedUser.approved,
-                                        rejected:
-                                            lastAuthenticatedUser.rejected
+                                        evaluator: lastAuthenticatedUser.evaluator,
+                                        adeptUser: lastAuthenticatedUser.adeptUser,
+                                        experimenter: lastAuthenticatedUser.experimenter,
+                                        approved: lastAuthenticatedUser.approved,
+                                        rejected: lastAuthenticatedUser.rejected
                                     };
-                                })
-                            }
+                                }),
+                            },
                         },
-
                         context: jest.fn(() => {
                             return {
-                                user: {
-                                    id: 'mock-user-id',
-                                    username: 'mock-username',
-                                    email: 'mock-email'
-                                },
-                                sessionId: 'mock-session-id'
-                            };
+
+                                user: { id: 'mock-user-id', username: 'mock-username', email: 'mock-email' },
+                                sessionId: 'mock-session-id',
+                            }
                         })
-                    }))
+                    })),
                 }
             };
         });
@@ -429,39 +325,27 @@ beforeAll(async () => {
         const { AccountsModule } = require('@accounts/graphql-api');
         const accountsGraphQL = AccountsModule.forRoot();
 
-        const mergedTypeDefs = mergeTypeDefs([
-            typeDefs,
-            accountsGraphQL.typeDefs
-        ]);
-
-        const mergedResolvers = mergeResolvers([
-            resolvers,
-            accountsGraphQL.resolvers
-        ]);
+        const mergedTypeDefs = mergeTypeDefs([typeDefs, accountsGraphQL.typeDefs]);
+        const mergedResolvers = mergeResolvers([resolvers, accountsGraphQL.resolvers]);
 
         graphqlServer = new ApolloServer({
             typeDefs: mergedTypeDefs,
             resolvers: mergedResolvers,
             context: ({ req }) => {
-                return {
-                    db: mongoose.connection.db,
-                    req
-                };
+                return { db: mongoose.connection.db, req: req };
             }
         });
 
-        await graphqlServer.listen({
-            port: process.env.REACT_APP_GRAPHQL_TEST_PORT
-        });
+        // Start the server on port 4000
+        await graphqlServer.listen({ port: process.env.REACT_APP_GRAPHQL_TEST_PORT });
     } catch (error) {
-        console.error('Error in beforeAll:', error);
+        console.error("Error in beforeAll:", error);
         throw error;
     }
 });
 
 afterEach(() => {
-    // Reset mock function calls and state.
-    jest.clearAllMocks();
+    jest.clearAllMocks(); // Resets mock function calls and state
 });
 
 afterAll(async () => {
@@ -471,10 +355,7 @@ afterAll(async () => {
         }
 
         if (mongoose.connection.readyState !== 0) {
-            if (
-                process.env.TEST_MONGO_URL &&
-                mongoose.connection.db
-            ) {
+            if (process.env.TEST_MONGO_URL && mongoose.connection.db) {
                 await mongoose.connection.db.dropDatabase();
             }
 
@@ -485,6 +366,6 @@ afterAll(async () => {
             await mongoServer.stop();
         }
     } catch (error) {
-        console.error('Error in afterAll:', error);
+        console.error("Error in afterAll:", error);
     }
 });
