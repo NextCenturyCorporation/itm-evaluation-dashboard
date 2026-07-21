@@ -8,7 +8,9 @@ import { saveAs } from 'file-saver';
 import '../../css/results-page.css';
 import '../../css/aggregateResults.css';
 import { multiSort } from '../Results/utils';
-import { PAGES, getEvalOptionsForPage } from '../Research/utils';
+import { getAllEvals } from '../Research/utils';
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 const scenario_names_aggregation = gql`
     query getScenarioNamesByEval($evalNumber: Float!) {
@@ -147,9 +149,11 @@ const getKdmaParameter = (data, kdmaName, parameterName) => {
 const kdmaHasParam = (kdma, paramName) => kdma.parameters?.some(p => p.name === paramName);
 
 export const ADMProbeResponses = (props) => {
-    const evalOptions = getEvalOptionsForPage(PAGES.ADM_PROBE_RESPONSES);
+    const evalOptions = getAllEvals()
+    const dispatch = useDispatch();
+    const storedEval = useSelector(state => state.configs.selectedResearchEval);
+    const [currentEval, setCurrentEval] = useState(storedEval ?? evalOptions[0].value);
 
-    const [currentEval, setCurrentEval] = useState(evalOptions[0].value);
     const [currentScenario, setCurrentScenario] = useState("");
     const [queryString, setQueryString] = useState("adm_name");
     const [queryData, setQueryData] = useState({});
@@ -263,9 +267,11 @@ export const ADMProbeResponses = (props) => {
 
     const setEval = (target) => {
         setCurrentEval(target);
+        dispatch(setSelectedResearchEval(target));
         setCurrentScenario("");
         setQueryString("adm_name");
     };
+
 
     const formatScenarioString = (id) => {
         if (currentEval === 3) {
@@ -296,6 +302,8 @@ export const ADMProbeResponses = (props) => {
     const sortedScenarios = scenarioData?.getScenarioNamesByEval
         ?.filter(s => ![14, 11].includes(currentEval) || !s._id.id.toLowerCase().includes('af-mf'))
         ?.sort((a, b) => formatScenarioString(a._id.id).localeCompare(formatScenarioString(b._id.id)));
+
+    const noScenariosForEval = !scenarioLoading && !scenarioError && sortedScenarios?.length === 0;
 
     const getCurrentScenarioName = () => {
         const currentScenarioObj = sortedScenarios?.find(s => s._id.id === currentScenario);
@@ -519,9 +527,12 @@ export const ADMProbeResponses = (props) => {
                 {!currentScenario && currentEval && (
                     <div className="test-overview-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <div style={{ textAlign: 'center', color: '#666' }}>
+                            {noScenariosForEval ? (
+                            <h3>This page is not available for the selected evaluation</h3>
+                        ) : (
                             <h3>Please select a scenario to view probe responses</h3>
-                            <p>Choose from the available scenarios in the left panel</p>
-                        </div>
+                        )}
+                       </div>
                     </div>
                 )}
                 {currentScenario && (

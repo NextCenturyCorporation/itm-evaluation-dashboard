@@ -10,6 +10,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import { SurveyPageWrapper } from '../Survey/survey';
+import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
 import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
@@ -38,7 +39,7 @@ import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
 import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
-
+import { computeTextThreshold } from '../Account/participantProgress';
 // CSS and Image Stuff 
 import '../../css/app.css';
 import 'rc-slider/assets/index.css';
@@ -47,6 +48,7 @@ import 'material-design-icons/iconfont/material-icons.css';
 import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
 import store from '../../store/store';
+import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {
@@ -148,6 +150,15 @@ export function App() {
     const [isDemographicsDataLoaded, setIsDemographicsDataLoaded] = React.useState(false);
     const [surveyConfigsLoaded, setSurveyConfigsLoaded] = React.useState(false);
     const [textConfigsLoaded, setTextConfigsLoaded] = React.useState(false);
+    // modal for warning a participant they already compelted the text based portion of the experiment
+    const [alreadyComplete, setAlreadyComplete] = React.useState({
+        open: false,
+        pid: null
+    })
+
+    const closePopup = () => {
+        setAlreadyComplete({ open: false, pid: null });
+    };
 
     // grab upper and lower bounds for new participant pids from mongo and set them in redux
     const { data: pidBoundsData } = useQuery(GET_PID_BOUNDS, {
@@ -355,8 +366,15 @@ export function App() {
         const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
 
         if (foundParticipant) {
-            const pid = foundParticipant['ParticipantID'];
-            history.push("/text-based?pid=" + pid);
+            const participantId = foundParticipant['ParticipantID'];
+            if (foundParticipant['textEntryCount'] >= computeTextThreshold(evalNum, true)) {
+                setAlreadyComplete({
+                    open:true,
+                    pid:participantId
+                })
+            } else {
+                history.push("/text-based?pid=" + participantId);
+            }
             return;
         } else {
             let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
@@ -473,11 +491,16 @@ export function App() {
         }
     };
 
+    // show error message if an participantLog Error occurs
+    if (versionError) {
+        console.log(versionError);
+        return(
+            <QueryErrorMessage error={versionError}></QueryErrorMessage>
+        );
+    }
+    
     if (versionLoading || surveyConfigLoading || textConfigLoading) {
         return <div>Loading...</div>;
-    }
-    if (versionError) {
-        return <div>Error fetching survey version data</div>;
     }
 
     return (
@@ -544,6 +567,11 @@ export function App() {
 
                     </Switch>
                 </div>
+                <AlreadyCompleteModal
+                    open={alreadyComplete.open}
+                    onClose={closePopup}
+                    participantId={alreadyComplete.pid}
+                />
 
                 <div className="itm-footer">
                     <div className="footer-text">This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.</div>

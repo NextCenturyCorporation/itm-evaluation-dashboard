@@ -15,6 +15,7 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import { shuffle } from '../Survey/surveyUtils';
 import history from '../App/history';
 import { SurveyPageWrapper } from '../Survey/survey';
+import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
 import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import consentPdf from '../OnlineOnly/consent.pdf';
@@ -22,6 +23,11 @@ import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
 import ScenarioProgress from './scenarioProgress';
+
+const UPSERT_SCENARIO_RESULT = gql`
+    mutation upsertScenarioResult($result: JSON) {
+        upsertScenarioResult(result: $result)
+    }`;
 
 const UPLOAD_DEMOGRAPHICS = gql`
   mutation UploadDemographics($surveyId: String, $results: JSON) {
@@ -49,6 +55,10 @@ const UPDATE_PARTICIPANT_LOG = gql`
         updateParticipantLog(pid: $pid, updates: $updates) 
     }`;
 
+const GET_COMPLETED_SCENARIOS = gql`
+    query GetCompletedTextScenarios($pid: String) {
+        getCompletedTextScenarios(pid: $pid)
+    }`;
 
 export function TextBasedScenariosPageWrapper(props) {
     const currentTextEval = useSelector(state => state.configs.currentTextEval)
@@ -56,12 +66,28 @@ export function TextBasedScenariosPageWrapper(props) {
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
     const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
         { fetchPolicy: 'no-cache' });
+    
+    // finding participant data if this is resuming a partial run
+    const pid = new URLSearchParams(window.location.search).get('pid');
+    const { data: completedData } = useQuery(GET_COMPLETED_SCENARIOS, {
+        variables: { pid },
+        skip: !pid,
+        fetchPolicy: 'no-cache'
+    });
 
     // server side time stamps
     const [getServerTimestamp] = useMutation(GET_SERVER_TIMESTAMP);
 
+    // show error message if an participantLogError occurs
+    if (participantLogError) {
+        console.log(participantLogError); 
+        return(
+            <QueryErrorMessage error={participantLogError}></QueryErrorMessage>
+        );
+    }
+
+    // show loading screen
     if (participantLogLoading) return <p>Loading...</p>;
-    if (participantLogError) return <p>Error</p>;
 
     return <TextBasedScenariosPage
         {...props}
@@ -70,6 +96,7 @@ export function TextBasedScenariosPageWrapper(props) {
         participantLogs={participantLogData}
         getServerTimestamp={getServerTimestamp}
         showDemographics={showDemographics}
+        completedScenarioIds={completedData?.getCompletedTextScenarios || []}
     />;
 }
 
@@ -86,8 +113,6 @@ class TextBasedScenariosPage extends Component {
             sanitizedData: null,
             matchedParticipantLog: null,
             allScenariosCompleted: false,
-            sim1: null,
-            sim2: null,
             isUploadButtonEnabled: false,
             adeptSessionsCompleted: 0,
             combinedSessionId: '',
@@ -114,6 +139,7 @@ class TextBasedScenariosPage extends Component {
                 'MF-PS': [],
             },
             eval16SubPopResult: null,
+            resumedSubpop: false
         };
 
         this.surveyData = {};
@@ -122,6 +148,7 @@ class TextBasedScenariosPage extends Component {
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefDemographics = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
+        this.upsertButtonRef = React.createRef();
         this.shouldBlockNavigation = true;
     }
 
@@ -168,17 +195,33 @@ class TextBasedScenariosPage extends Component {
         }
 
         if (!matchedLog) {
-            // If no match found, create default scenario set
-            const scenarioSet = Math.floor(Math.random() * 2) + 1;
-            matchedLog = {
-                'AF-text-scenario': scenarioSet,
-                'MF-text-scenario': scenarioSet,
-                'PS-text-scenario': scenarioSet,
-                'SS-text-scenario': scenarioSet
-            };
+            // This should not be possible
+            console.error("Error grabbing participant data")
+            history.push('/login')
+            return
         }
 
-        const scenarios = this.scenariosFromLog(matchedLog);
+        const allScenarios = this.scenariosFromLog(matchedLog);
+
+        // logic for resuming a partial run. filter out completed scenarios to avoid duplicates
+        const completedIds = this.props.completedScenarioIds || [];
+        let scenarios = completedIds.length > 0
+            ? allScenarios.filter(config => !completedIds.includes(config.scenario_id))
+            : allScenarios;
+
+        const evalNum = evalNameToNumber[this.props.currentTextEval];
+        if (evalNum === 16) {
+            const subpopId = 'April2026-subpopulation';
+            const regularsRemain = scenarios.some(c => c.scenario_id !== subpopId);
+            const subpopMissingFromRun = !scenarios.some(c => c.scenario_id === subpopId);
+            if (regularsRemain && subpopMissingFromRun && completedIds.includes(subpopId)) {
+                const subpopConfig = allScenarios.find(c => c.scenario_id === subpopId);
+                if (subpopConfig) {
+                    scenarios = [subpopConfig, ...scenarios];  
+                    this.setState({ resumedSubpop: true });
+                }
+            }
+        }
 
         this.setState({
             scenarios,
@@ -188,6 +231,8 @@ class TextBasedScenariosPage extends Component {
         }, () => {
             if (this.state.scenarios.length > 0) {
                 this.loadNextScenario();
+            } else {
+                this.handleAllScenariosCompleted()
             }
         });
     };
@@ -577,7 +622,7 @@ class TextBasedScenariosPage extends Component {
 
                 scenario.combinedSessionId = combinedSessionId;
                 scenario.subPopResult = subPopResult;
-                await this.uploadSingleScenario(scenario);
+                await this.uploadSingleScenario(scenario, this.state.resumedSubpop);
             } catch (e) {
                 console.error('Error processing eval 16 subpopulation:', e);
             }
@@ -652,7 +697,7 @@ class TextBasedScenariosPage extends Component {
         }
     }
 
-    uploadSingleScenario = async (scenario) => {
+    uploadSingleScenario = async (scenario, overwrite=false) => {
         const sanitizedData = this.sanitizeKeys(scenario);
 
         return new Promise(resolve => {
@@ -661,8 +706,9 @@ class TextBasedScenariosPage extends Component {
                 sanitizedData,
                 isUploadButtonEnabled: true,
             }, () => {
-                if (this.uploadButtonRef.current) {
-                    this.uploadButtonRef.current.click();
+                const ref = overwrite ? this.upsertButtonRef : this.uploadButtonRef
+                if (ref.current) {
+                    ref.current.click();
                 }
                 resolve();
             });
@@ -916,6 +962,22 @@ class TextBasedScenariosPage extends Component {
                                                 uploadSurveyResults({
                                                     variables: { results: this.state.sanitizedData }
                                                 })
+                                            }
+                                        }}></button>
+                                    </div>
+                                )}
+                            </Mutation>
+                        )}
+                        {!this.state.skipText && this.state.uploadData && (
+                            <Mutation mutation={UPSERT_SCENARIO_RESULT}>
+                                {(upsertScenarioResult) => (
+                                    <div style={{ display: 'none' }}>
+                                        <button ref={this.upsertButtonRef} disabled={!this.state.isUploadButtonEnabled} onClick={(e) => {
+                                            e.preventDefault();
+                                            if (this.state.isUploadButtonEnabled) {
+                                                upsertScenarioResult({
+                                                    variables: { result: this.state.sanitizedData }
+                                                });
                                             }
                                         }}></button>
                                     </div>

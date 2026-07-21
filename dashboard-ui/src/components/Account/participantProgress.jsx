@@ -8,12 +8,13 @@ import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS, checkAlignmentStatus } from "./progressUtils";
 import { accountsClient } from "../../services/accountsService";
 import AdmInfoModal from "./admInfoModal";
 import RepairAlignmentModal from "./repairAlignmentModal";
-
+import { evalNameToNumber } from "../OnlineOnly/config";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
@@ -60,7 +61,7 @@ const TEXT_THRESHOLD_BY_EVAL = { 13: 12, 17: 6 };
 // Phase 2 evals that use a delegation threshold of 4 instead of 5
 const DEL_THRESHOLD_4_EVALS = new Set([10, 16]);
 
-const computeTextThreshold = (evalNumber, isPH2OrUK) =>
+export const computeTextThreshold = (evalNumber, isPH2OrUK) =>
     TEXT_THRESHOLD_BY_EVAL[evalNumber] ?? (isPH2OrUK ? 4 : 5);
 
 const computeDelThreshold = (evalNumber, isUK, isPH2OrUK) => {
@@ -68,6 +69,11 @@ const computeDelThreshold = (evalNumber, isUK, isPH2OrUK) => {
     if (isPH2OrUK && !DEL_THRESHOLD_4_EVALS.has(evalNumber)) return 5;
     return 4;
 };
+
+// basically reverses the evalNameToNumber dict
+const numberToEvalName = Object.fromEntries(
+    Object.entries(evalNameToNumber).map(([name, num]) => [num, name])
+);
 
 
 const formatDateTime = (date) => {
@@ -416,6 +422,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     }
                 }
 
+                // for eval numbers not in the map (e.g. legacy Phase 1 records).
+                const canonicalEvalName = numberToEvalName[obj['_evalNumber']];
+                if (canonicalEvalName) {
+                    obj['Evaluation'] = canonicalEvalName.replace(/Phase 2\s*/g, '');
+                }
+
                 // set scenario completions using utility function
                 setScenarioCompletion(obj, completedScenarios);
                 // Check alignment status for phase 2 participants
@@ -647,8 +659,20 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         setSearchPid(event.target.value);
     };
 
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorSurveyResults,
+        errorTextResults,
+        errorSim,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+        return <QueryErrorMessage errors={errors} />;
+    }
+
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
-    if (errorParticipantLog || errorSurveyResults || errorTextResults || errorSim) return <p>Error loading data</p>;
 
     return (<>
         <h2 className='progress-header'>Participant Progress</h2>

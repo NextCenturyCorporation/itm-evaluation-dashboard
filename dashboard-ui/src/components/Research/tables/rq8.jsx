@@ -1,6 +1,7 @@
 import React from "react";
 import '../../../css/resultsTable.css';
 import { RQDefinitionTable } from "../variables/rq-variables";
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ8_DRE.xlsx';
@@ -243,9 +244,20 @@ export function RQ8({ evalNum }) {
             (attributeFilters.length === 0 || attributeFilters.includes(x['Attribute']))
         ));
     }, [ta1Filters, scenarioFilters, attributeFilters, formattedData]);
+    
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    const errors = [
+        errorParticipantLog,
+        errorTextResults,
+        errorSim,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        console.log(errors);
+        return <QueryErrorMessage errors={errors} />;
+    }
 
     if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
-    if (errorSim || errorTextResults || errorParticipantLog) return <p>Error :</p>;
 
     return (<>
         <h2 className='rq134-header'>RQ8 Data

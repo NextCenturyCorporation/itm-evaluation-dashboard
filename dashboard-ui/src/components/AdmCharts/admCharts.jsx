@@ -3,6 +3,8 @@ import ScoreChart from './scoreChart';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 import Select from 'react-select';
+import store from '../../store/store';
+import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 const getScenarioNamesQueryName = "getScenarioNamesByEval";
 
@@ -15,8 +17,11 @@ class AdmCharts extends React.Component {
 
     constructor(props) {
         super();
+        const storedEval = store.getState()?.configs?.selectedResearchEval;
+        const initialEval = props.evaluationOptions.find(o => o.value === storedEval) ?? props.evaluationOptions[0];
         this.state = {
-            currentEval: props.evaluationOptions[0],
+            currentEval: initialEval,
+
         }
 
         this.selectEvaluation = this.selectEvaluation.bind(this);
@@ -26,6 +31,7 @@ class AdmCharts extends React.Component {
         this.setState({
             currentEval: target
         });
+        store.dispatch(setSelectedResearchEval(target.value));
     }
 
     getHeaderLabel(id, name) {
@@ -85,7 +91,7 @@ class AdmCharts extends React.Component {
 
                                 return (
                                     <div className="home-container">
-                                        {
+                                        {scenariosArray.length === 0 ? <p>This page is not available for the selected evaluation.</p> :
                                             scenariosArray.map(scenario =>
                                                 <div className='chart-home-container' key={"id_" + scenario.id}>
                                                     <div className='chart-header'>
