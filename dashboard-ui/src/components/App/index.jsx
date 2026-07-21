@@ -12,8 +12,25 @@ import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedSc
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
+import StartOnline from '../OnlineOnly/OnlineOnly';
+import { ParticipantProgressTable } from '../Account/participantProgress';
+import { WaitingPage } from '../Account/waitingPage';
+import { Header } from './Header';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
+import { useSelector } from 'react-redux';
+import { computeTextThreshold } from '../Account/participantProgress';
+import '../../css/app.css';
+import 'rc-slider/assets/index.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'material-design-icons/iconfont/material-icons.css';
+import 'react-dropdown/style.css';
+import 'react-dual-listbox/lib/react-dual-listbox.css';
+import store from '../../store/store';
+import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
 
-// Lazy load components that are very expensive or only reachable via admin accounts
+// Lazy load components that are very expensive or only reachable via admin accounts.
+// React.lazy requires a module with a default export, so named exports are remapped below.
+// these must come AFTER all import statements above or eslint will get mad
 const ResultsPage = React.lazy(() => import('../Results/results'));
 const SurveyPageWrapper = React.lazy(() => import('../Survey/survey').then(m => ({ default: m.SurveyPageWrapper })));
 const ReviewTextBasedPage = React.lazy(() => import('../ReviewTextBased/ReviewTextBased').then(m => ({ default: m.ReviewTextBasedPage })));
@@ -34,22 +51,6 @@ const OpenWorldADMs = React.lazy(() => import('../Research/OpenWorldADMs').then(
 const ParticipantDemographics = React.lazy(() => import('../Research/ParticipantDemographics').then(m => ({ default: m.ParticipantDemographics })));
 const ExploratoryAnalysis = React.lazy(() => import('../Research/ExploratoryAnalysis').then(m => ({ default: m.ExploratoryAnalysis })));
 const PidLookup = React.lazy(() => import('../Account/pidLookup').then(m => ({ default: m.PidLookup })));
-import StartOnline from '../OnlineOnly/OnlineOnly';
-import { ParticipantProgressTable } from '../Account/participantProgress';
-import { WaitingPage } from '../Account/waitingPage';
-import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
-import { useSelector } from 'react-redux';
-import { computeTextThreshold } from '../Account/participantProgress';
-// CSS and Image Stuff 
-import '../../css/app.css';
-import 'rc-slider/assets/index.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'material-design-icons/iconfont/material-icons.css';
-import 'react-dropdown/style.css';
-import 'react-dual-listbox/lib/react-dual-listbox.css';
-import store from '../../store/store';
-import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {
