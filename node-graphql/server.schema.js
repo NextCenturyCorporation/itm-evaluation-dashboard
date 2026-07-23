@@ -749,7 +749,7 @@ const resolvers = {
         projection: {
           "evaluation": 1,
           "results": 1,
-          "adm_name": 1,
+          "actionAnalysis": 1
         }
       }).toArray();
       
