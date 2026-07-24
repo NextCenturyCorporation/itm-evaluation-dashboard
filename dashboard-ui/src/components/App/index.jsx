@@ -29,6 +29,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'material-design-icons/iconfont/material-icons.css';
 import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
+import '../../css/humanResults.css';
+import '../../css/surveyResults.css';
 import store from '../../store/store';
 import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
 
