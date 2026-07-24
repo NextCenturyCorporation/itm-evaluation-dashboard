@@ -21,15 +21,15 @@ const GET_PARTICIPANT_LOG = gql`
     }`;
 
 const GET_DEMO_DATA = gql`
-    query GetDemographicsByEval($evalNumber: Float!) {
-        getDemographicsByEval(evalNumber: $evalNumber)
+    query GetDemographicsByEval($evalNumbers: [Float]) {
+        getDemographicsByEval(evalNumbers: $evalNumbers)
     }`;
 
 
 export function SurveyResults() {
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'network-only' });
     const { data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { data: dataDemo } = useQuery(GET_DEMO_DATA, { variables: { evalNumber: 16 } });
+    const { data: dataDemo } = useQuery(GET_DEMO_DATA, { variables: { evalNumbers: [16, 17] } });
     const [selectedScenario, setSelectedScenario] = React.useState("");
     const [resultData, setResultData] = React.useState(null);
     const [filterBySurveyVersion, setVersionOption] = React.useState(parseInt(useSelector(state => state?.configs?.currentSurveyVersion)));

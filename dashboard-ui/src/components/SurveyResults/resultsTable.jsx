@@ -14,7 +14,7 @@ import definitionPDFFileLegacy from './Survey Delegation Variables - Legacy.pdf'
 import definitionXLFilePH2 from './Survey Delegation Variables - PH2.xlsx';
 import definitionXLFileExploratoryPH2 from './Exploratory Delegation Variables - PH2.xlsx';
 import { adjustScenarioNumber } from "../Survey/surveyUtils";
-import { getEval89Attributes, getEval12Attributes } from "../Research/utils";
+import { getEval89Attributes, getEval12Attributes, getEval17Attribute } from "../Research/utils";
 import { Box, Chip, LinearProgress, TableCell, TableRow, Typography } from "@material-ui/core";
 
 const EVAL_MAP = {
@@ -28,7 +28,8 @@ const EVAL_MAP = {
     12: "UK PH1",
     13: 'PH2 October',
     15: 'PH2 February',
-    16: 'PH2 April 2026'
+    16: 'PH2 April 2026',
+    17: 'PH2 June 2026'
 }
 
 const TRUST_MAP = {
@@ -40,14 +41,14 @@ const TRUST_MAP = {
 };
 
 const ALLOWED_ROLES_PH2 = [
-  'Medical student',
-  'Resident',
-  'Physician',
-  "Physician's Assistant",
-  'Nurse',
-  'EMT',
-  'Paramedic',
-  'Military Medicine'
+    'Medical student',
+    'Resident',
+    'Physician',
+    "Physician's Assistant",
+    'Nurse',
+    'EMT',
+    'Paramedic',
+    'Military Medicine'
 ];
 
 const ALLOWED_ROLES_PH1 = [
@@ -167,15 +168,15 @@ function formatTimeMinutes(seconds) {
     return minutes.endsWith('.000') ? minutes.slice(0, -4) : minutes;
 }
 
-const TruncatedCell = ({text, maxLength = 100}) => {
+const TruncatedCell = ({ text, maxLength = 100 }) => {
     const str = String(text);
-    
+
     if (typeof text === 'number' || str.length <= maxLength) {
         return <span>{str}</span>;
     }
-    
+
     const truncated = str.substring(0, maxLength) + '...';
-    
+
     return (
         <span className="itm-tooltip" data-tooltip={str}>
             {truncated}
@@ -183,7 +184,12 @@ const TruncatedCell = ({text, maxLength = 100}) => {
     );
 }
 
-export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = [{ 'value': '8', 'label': '8 - PH2 June' }, { 'value': '9', 'label': '9 - PH2 July' }, { 'value': '10', 'label': '10 - PH2 September' }, { 'value': '12', 'label': '12 - UK PH1' }, { 'value': '13', 'label': '13 - PH2 October' }, { 'value': '15', 'label': '15 - PH2 February' }, { 'value': '16', 'label': '16 - PH2 April 2026' }] }) {
+const DEFAULT_EVAL_NUMBERS = [8, 9, 10, 12, 13, 15, 16, 17].map((v) => ({
+    value: String(v),
+    label: `${v} - ${EVAL_MAP[v]}`
+}));
+
+export function ResultsTable({ data, pLog, exploratory = false, comparisonData = null, demographicsData = null, evalNumbers = DEFAULT_EVAL_NUMBERS }) {
     const [headers, setHeaders] = React.useState([...STARTING_HEADERS]);
     const [formattedData, setFormattedData] = React.useState([]);
     const [evals, setEvals] = React.useState([]);
@@ -238,7 +244,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         let allRoles = [];
         const updatedHeaders = [...STARTING_HEADERS];
         let ALLOWED_ROLES;
-        
+
         if (showLegacy) {
             ALLOWED_ROLES = ALLOWED_ROLES_LEGACY;
         } else if (showPh2) {
@@ -333,11 +339,11 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             const version = entry.surveyVersion;
             const effectiveVersion = version ?? (obj['eval'] === 13 ? 6 : obj['eval'] === 9 ? 7 : null);
-            
-            if (!effectiveVersion || 
-                (showLegacy && effectiveVersion >= 4) || 
-                (!showLegacy && effectiveVersion < 4) || 
-                (showPh2 && effectiveVersion < 6) || 
+
+            if (!effectiveVersion ||
+                (showLegacy && effectiveVersion >= 4) ||
+                (!showLegacy && effectiveVersion < 4) ||
+                (showPh2 && effectiveVersion < 6) ||
                 (!showPh2 && effectiveVersion >= 6)) {
                 continue;
             }
@@ -352,7 +358,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
 
             let lastPage = entry['Post-Scenario Measures'];
             let demoPage = null;
-            if (obj['eval'] === 16 && demographicsData) {
+            if (obj['eval'] >= 16 && demographicsData) {
                 const demoEntry = demographicsData?.find(d => d.surveyId === pid) ?? null;
                 demoPage = demoEntry?.results?.['Post-Scenario Measures'] ?? null;
                 if (!lastPage) lastPage = demoPage;
@@ -467,14 +473,15 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         obj[`B${block}_DM${dm}_TA2`] = page.admAuthor.replace('kitware', 'Kitware').replace('TAD', 'Parallax');
                         obj[`B${block}_DM${dm}_Type`] = page.admAlignment;
                         if (showPh2) {
-                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget) : getEval89Attributes(page.admTarget, page.scenarioIndex);
+                            const att = obj['eval'] === 12 ? getEval12Attributes(page.admTarget) : obj['eval'] === 17 ? getEval17Attribute(page.admTarget) : getEval89Attributes(page.admTarget, page.scenarioIndex);
                             obj[`B${block}_DM${dm}_Attribute`] = att;
                             let target = "";
                             if (att != "AF-MF" && att != "PS-AF" && !att.includes('Combined')) {
-                                target = att !== 'VOL' ? page.admTarget.split("-").slice(-1)[0] : page.admTarget;
+                                target = page.admTarget;
                             }
                             else {
-                                target = MULTI_KDMA_MAP[att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1)];
+                                const targetKey = att.includes('PS') ? page.admTarget : page.admTarget.split("-").slice(-1);
+                                target = MULTI_KDMA_MAP[targetKey] ?? page.admTarget;
                             }
                             obj[`B${block}_DM${dm}_Target`] = target;
                         }
@@ -496,7 +503,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             const isMFAF = page.admTarget.includes('affiliation') && page.admTarget.includes('merit');
                             const isCombined = page.scenarioIndex.includes('combined');
                             const isPSAF = page.scenarioIndex.includes('PS-AF');
-                            if (obj['eval'] !== 16) {
+                            if (obj['eval'] < 16) {
                                 if (!isPSAF) {
                                     obj[`B${block}_DM${dm}_Probe_Set_Observation`] = adjustScenarioNumber(
                                         (isMFAF || isCombined) ? adjustScenarioNumber(textScenario, 3) : textScenario, 3
@@ -880,10 +887,10 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                     </ToggleButton>
                 </ToggleButtonGroup>
 
-                {!exploratory && <ToggleButtonGroup 
-                    className='simple-toggles' 
-                    exclusive 
-                    value={dataType} 
+                {!exploratory && <ToggleButtonGroup
+                    className='simple-toggles'
+                    exclusive
+                    value={dataType}
                     onChange={toggleDataType}>
                     <ToggleButton value="Legacy" label=" Legacy" className='custom-toggle'>
                         Legacy
@@ -905,7 +912,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 spacing={2}
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ mb: 2, px: 1.5}}
+                sx={{ mb: 2, px: 1.5 }}
             >
                 <Box className="status-bar">
                     {versionFilters.length > 0 && (
@@ -996,9 +1003,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                         </tr>
                     </thead>
                     <tbody>
-                        {rowVirtualizer.getTotalSize() > 0 && (
-                            <tr style={{ height: rowVirtualizer.getVirtualItems()[0]?.start ?? 0 }}>
-                                <td />
+                        {(rowVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                            <tr style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
+                                <td style={{ padding: 0, border: 0 }} />
                             </tr>
                         )}
                         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
