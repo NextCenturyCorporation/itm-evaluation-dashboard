@@ -40,6 +40,10 @@ function getKdmaParam(parameters, paramName) {
     return parameters?.find(p => p?.name === paramName)?.value;
 }
 
+function rank(key) {
+    return key.startsWith('Desert') ? 1 : key.startsWith('Urban') ? 2 : 0
+}
+
 const EVAL_LABEL = { 8: 'June2025', 15: 'Feb2026', 16: 'April2026' };
 
 function getOWScenario(scenarioId, evalNum) {
@@ -91,7 +95,7 @@ export function PH2RQ8OWPart2() {
                 const row = {
                     'OW Scenario': owScenario,
                     'Target': cleanTarget,
-                    'ADM Name': admName,
+                    'ADM Name': admName.split('__')[0],
                     'Server Session ID': adm.results?.ta1_session_id ?? '-',
                     'Alignment score (ADM|target)': roundIfNumber(alignment),
                 };
@@ -155,6 +159,7 @@ export function PH2RQ8OWPart2() {
             .sort();
         const actionKeys = [...extra]
             .filter(k => !/_(intercept|attribute|medical)$/.test(k))
+            .sort((a, b) => rank(a) - rank(b))
         return [...LEAD, ...kdmaKeys, ...actionKeys];
     }, [formattedData]);
 
