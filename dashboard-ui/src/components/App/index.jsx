@@ -20,6 +20,10 @@ import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septe
 import { useSelector } from 'react-redux';
 import { computeTextThreshold } from '../Account/participantProgress';
 import '../../css/app.css';
+import '../../css/aggregateResults.css';
+import '../../css/humanResults.css';
+import 'survey-core/defaultV2.min.css';
+import 'survey-analytics/survey.analytics.min.css';
 import 'rc-slider/assets/index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'material-design-icons/iconfont/material-icons.css';
