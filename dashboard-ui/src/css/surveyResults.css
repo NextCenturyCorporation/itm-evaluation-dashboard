@@ -91,13 +91,6 @@
     overflow: visible;
 }
 
-.sa-toolbar {
-    display: none;
-}
-
-.sa-visualizer__toolbar {
-    display: none;
-}
 
 .sa-visualizer__footer {
     display: none;
