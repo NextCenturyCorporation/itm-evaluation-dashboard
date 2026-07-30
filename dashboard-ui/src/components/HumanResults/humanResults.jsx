@@ -325,6 +325,8 @@ export default function HumanResults() {
                                                     {isStringDefined(action.treatmentLocation) && <tr><td>Treatment Location:</td><td>{action.treatmentLocation}</td></tr>}
                                                     {isStringDefined(action.question) && <tr><td>Question:</td><td>{action.question}</td></tr>}
                                                     {isStringDefined(action.answer) && <tr><td>Answer:</td><td>{action.answer}</td></tr>}
+                                                    {action.answerChoice?.length > 0 && <tr><td>Answer:</td><td>{action.answerChoice.join(', ')}</td></tr>}
+                                                    {action.evacPatientIds?.length > 0 && <tr><td>Evacuated:</td><td>{action.evacPatientIds.join(', ')}</td></tr>}
                                                     {isStringDefined(action.breathing) && <tr><td>Breathing:</td><td>{action.breathing}</td></tr>}
                                                     {isStringDefined(action.pulse) && <tr><td>Pulse:</td><td>{action.pulse}</td></tr>}
                                                     {isStringDefined(action.SpO2) && <tr><td>SpO2:</td><td>{action.SpO2}</td></tr>}
