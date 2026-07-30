@@ -28,8 +28,23 @@ const OW_ADM_SESSIONS = {
 
 const HEADERS = [
     'Trial_ID', 'OW Scenario', 'Target', 'ADM Name', 'Aligned Server Session ID', 'Aligned ADM Alignment score (ADM|target)',
+
     'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'
 ];
+const KDMA_ORDER = ['affiliation', 'merit', 'personal_safety', 'search'];
+const KDMA_LABELS = {
+    affiliation: 'Affiliation',
+    merit: 'Merit',
+    personal_safety: 'Personal Safety',
+    search: 'Search'
+};
+const PARAM_ORDER = ['intercept', 'medical_weight', 'attr_weight'];
+const PARAM_LABELS = {
+    intercept: 'Intercept',
+    medical_weight: 'Medical Weight',
+    attr_weight: 'Attribute Weight'
+};
+const kdmaColLabel = (kdma, param) => `${KDMA_LABELS[kdma]} ${PARAM_LABELS[param]}`;
 
 const OW_EVALS = [8, 15];
 
@@ -43,6 +58,7 @@ export function PH2RQ8OWPart1() {
     const { loading: loading15, error: error15, data: data15 } = useQuery(getAdmData, { variables: { evalNumber: 15, scenarioIDs: ["Feb2026-OW_desert", "Feb2026-OW_urban"] } });
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
+    const [allHeaders, setAllHeaders] = React.useState(HEADERS);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [owScenarios, setOwScenarios] = React.useState([]);
     const [targets, setTargets] = React.useState([]);
@@ -57,6 +73,7 @@ export function PH2RQ8OWPart1() {
         const allObjs = [];
         const allOwScenarios = [];
         const allTargets = [];
+        const presentKdmas = new Set();
         const dataByEval = {
             8: data8.getAllOWData,
             15: data15.getAllOWData
@@ -78,7 +95,12 @@ export function PH2RQ8OWPart1() {
                 if (!grouped[key]) grouped[key] = { scenario, target, aligned: null, baseline: null };
 
                 if (admName === sessions.aligned) {
-                    grouped[key].aligned = { alignment, sessionId: adm.results?.ta1_session_id, admName };
+                    grouped[key].aligned = {
+                        alignment,
+                        sessionId: adm.results?.ta1_session_id,
+                        admName,
+                        kdmas: adm.results?.kdmas ?? []
+                    };
                 } else {
                     grouped[key].baseline = { alignment, sessionId: adm.results?.ta1_session_id, admName };
                 }
@@ -92,7 +114,7 @@ export function PH2RQ8OWPart1() {
                 allOwScenarios.push(owScenario);
                 allTargets.push(cleanTarget);
 
-                allObjs.push({
+                const rowObj = {
                     'OW Scenario': owScenario,
                     'Target': cleanTarget,
                     'ADM Name': aligned.admName,
@@ -100,7 +122,20 @@ export function PH2RQ8OWPart1() {
                     'Aligned ADM Alignment score (ADM|target)': aligned.alignment,
                     'Baseline ADM Alignment score (ADM|target)': baseline?.alignment ?? '-',
                     'Baseline Server Session ID': baseline?.sessionId ?? '-'
-                });
+                };
+
+                // Expand the aligned ADM's KDMA params into three columns per KDMA
+                for (const kdma of aligned.kdmas ?? []) {
+                    if (!KDMA_LABELS[kdma.kdma]) continue;
+                    presentKdmas.add(kdma.kdma);
+                    for (const p of kdma.parameters ?? []) {
+                        if (PARAM_LABELS[p.name]) {
+                            rowObj[kdmaColLabel(kdma.kdma, p.name)] = p.value;
+                        }
+                    }
+                }
+
+                allObjs.push(rowObj);
             }
 
         }
@@ -117,6 +152,23 @@ export function PH2RQ8OWPart1() {
             scenarioCounters[key] = (scenarioCounters[key] || 0) + 1;
             obj['Trial_ID'] = scenarioCounters[key];
         }
+
+        const kdmaHeaders = [];
+        for (const k of KDMA_ORDER) {
+            if (!presentKdmas.has(k)) continue;
+            for (const param of PARAM_ORDER) {
+                kdmaHeaders.push(kdmaColLabel(k, param));
+            }
+        }
+
+        // put kdmas right after alignemtn score
+        const alignedScoreIdx = HEADERS.indexOf('Aligned ADM Alignment score (ADM|target)');
+        const combinedHeaders = [
+            ...HEADERS.slice(0, alignedScoreIdx + 1),
+            ...kdmaHeaders,
+            ...HEADERS.slice(alignedScoreIdx + 1)
+        ];
+        setAllHeaders(combinedHeaders);
 
         if (allObjs.length > 0) {
             setFormattedData(allObjs);
@@ -178,7 +230,7 @@ export function PH2RQ8OWPart1() {
                 <DownloadButtons
                     formattedData={formattedData}
                     filteredData={filteredData}
-                    HEADERS={HEADERS}
+                    HEADERS={allHeaders}
                     fileName={'RQ8_OW_Part1_data'}
                     extraAction={openModal}
                 />
@@ -188,7 +240,7 @@ export function PH2RQ8OWPart1() {
                 <table className='itm-table'>
                     <thead>
                         <tr>
-                            {HEADERS.map((val, index) => (
+                            {allHeaders.map((val, index) => (
                                 <th key={'header-' + index}>{val}</th>
                             ))}
                         </tr>
@@ -196,7 +248,7 @@ export function PH2RQ8OWPart1() {
                     <tbody>
                         {filteredData.map((dataSet, index) => (
                             <tr key={`row-${index}`} className={index % 2 === 0 ? 'row-even' : 'row-odd'}>
-                                {HEADERS.map((val) => (
+                                {allHeaders.map((val) => (
                                     <td key={`cell-${index}-${val}`}>
                                         {dataSet[val] ?? '-'}
                                     </td>
