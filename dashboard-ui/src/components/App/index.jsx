@@ -450,7 +450,7 @@ export function App() {
             return <Redirect push to="/login" />;
         } else {
             if (hasAccess(currentUser, ['admin', 'experimenter'])) {
-                return <ErrorBoundary> <PidLookup/> </ErrorBoundary>
+                return <PidLookup/> 
             } else {
                 return <Redirect push to="/" />;
             }

@@ -15,7 +15,7 @@ import { AppErrorMessage } from '../../ErrorHandling/AppErrorMessage';
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
-        getParticipantLogLALLALALA
+        getParticipantLog
     }`;
 
 const GET_SURVEY_RESULTS = gql`

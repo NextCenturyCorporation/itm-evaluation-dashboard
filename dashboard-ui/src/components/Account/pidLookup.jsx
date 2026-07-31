@@ -9,7 +9,7 @@ import { simNameMappings } from "../TextBasedScenarios/TextBasedScenariosPage";
 
 const GET_PARTICIPANT_LOG = gql`
     query GetParticipantLog {
-        getParticipantLogBLAH
+        getParticipantLog
     }`;
 
 export function PidLookup() {

@@ -100,6 +100,8 @@ export function AppErrorMessage({error, errors=[]}) {
             });
         }
     });
+    console.log("PROP ERRORS", errors);
+    console.log("JS ERRORS", jsErrors);
 
     return (
         <>
