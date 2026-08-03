@@ -3,7 +3,7 @@ import '../../css/resultsTable.css';
 import '../../css/admInfo.css';
 import '../../css/repairAlignment.css';
 import { Autocomplete, TextField, Modal, Box, Snackbar, Alert } from "@mui/material";
-import {  VisibilityOff, Delete, Build, CheckCircle, Error } from '@material-ui/icons';
+import { VisibilityOff, Delete, Build, CheckCircle, Error } from '@material-ui/icons';
 import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
@@ -413,7 +413,11 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 }
 
                 if (!evalNumber) {
-                    if (pid > 202506100) {
+                    const loggedEvalNumber = res['evalNum'];
+                    if (loggedEvalNumber) {
+                        obj['_phase'] = loggedEvalNumber >= 8 ? 2 : 1;
+                        obj['_evalNumber'] = loggedEvalNumber;
+                    } else if (pid > 202506100) {
                         obj['_phase'] = 2;
                         obj['_evalNumber'] = 8;
                     } else {
@@ -462,7 +466,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             if (canDeleteData(dataSet)) {
                 return <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell delete-column'>
                     <button className="delete-btn" onClick={() => confirmDeletion(dataSet)}>
-                        <Delete/>
+                        <Delete />
                     </button>
                 </td>
             }
