@@ -12,19 +12,39 @@ import { admMocks, surveyResultMock, surveyV5, surveyV7, textConfigMocks, userSc
 global.fetch = unfetch;
 global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
 
+// Browser-driven tests can run more slowly in Linux CI than on a developer workstation.
+// Keep the local default reasonable while allowing CI to override it through Compose.
+const configuredTestTimeout = Number(process.env.JEST_TEST_TIMEOUT);
+jest.setTimeout(
+    Number.isFinite(configuredTestTimeout) && configuredTestTimeout > 0
+        ? configuredTestTimeout
+        : 30000
+);
+
 let mongoServer;
 let graphqlServer;
+let mongoUri;
 
 beforeAll(async () => {
     try {
-        // Set up MongoDB in-memory server
-        mongoServer = await MongoMemoryServer.create();
-        const uri = mongoServer.getUri();
-        console.log(uri);
+        const externalMongoUri = process.env.TEST_MONGO_URL;
 
-        // Connect to the in-memory MongoDB
-        await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-        // mongoose.set('debug', true);
+        if (externalMongoUri) {
+            const uniqueDatabaseName =
+                `dashboard-test-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+            mongoUri = `${externalMongoUri.replace(/\/$/, '')}/${uniqueDatabaseName}`;
+            console.log(`Using external test MongoDB: ${mongoUri}`);
+        } else {
+            mongoServer = await MongoMemoryServer.create();
+            mongoUri = mongoServer.getUri();
+            console.log(`Using MongoMemoryServer: ${mongoUri}`);
+        }
+
+        await mongoose.connect(mongoUri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
 
         const surveyResults = new SurveyResults(surveyResultMock);
 
@@ -330,10 +350,21 @@ afterEach(() => {
 
 afterAll(async () => {
     try {
-        // Clean up: Disconnect from DB and stop the GraphQL server
-        await mongoose.disconnect();
-        await mongoServer.stop();
-        await graphqlServer.stop();
+        if (graphqlServer) {
+            await graphqlServer.stop();
+        }
+
+        if (mongoose.connection.readyState !== 0) {
+            if (process.env.TEST_MONGO_URL && mongoose.connection.db) {
+                await mongoose.connection.db.dropDatabase();
+            }
+
+            await mongoose.disconnect();
+        }
+
+        if (mongoServer) {
+            await mongoServer.stop();
+        }
     } catch (error) {
         console.error("Error in afterAll:", error);
     }
