@@ -538,6 +538,15 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
+    // init virtualizer
+    const tableContainerRef = React.useRef(null);
+    const rowVirtualizer = useVirtualizer({
+        count: filteredData.length,
+        getScrollElement: () => tableContainerRef.current,
+        estimateSize: () => 36,
+        overscan: 10,
+    });
+
     // catch any errors that return true and save in an array to display in the QueryErrorMessage component
     const errors = [
         errorParticipantLog,
@@ -555,15 +564,6 @@ export function RQ134({ evalNum, tableTitle }) {
     }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim || formattedData.length === 0 && processedForEval !== evalNum) return <p>Loading...</p>;
-
-    // init virtualizer
-    const tableContainerRef = React.useRef(null);
-    const rowVirtualizer = useVirtualizer({
-        count: filteredData.length,
-        getScrollElement: () => tableContainerRef.current,
-        estimateSize: () => 36,
-        overscan: 10,
-    });
 
     return (<>
         <h2 className='rq134-header'>{tableTitle}
