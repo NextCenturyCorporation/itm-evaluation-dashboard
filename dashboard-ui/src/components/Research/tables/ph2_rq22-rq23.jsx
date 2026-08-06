@@ -595,6 +595,7 @@ export function PH2RQ2223({ evalNum }) {
                             </thead>
                             <tbody>
                                 {(rowVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                                    // spacer that accounts for where the user has scrolled to 
                                     <tr style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
                                         <td style={{ padding: 0, border: 0 }} />
                                     </tr>
