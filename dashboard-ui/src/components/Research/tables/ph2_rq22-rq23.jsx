@@ -1,4 +1,5 @@
 import React from "react";
+import { useVirtualizer } from '@tanstack/react-virtual';
 import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
@@ -109,7 +110,7 @@ export function PH2RQ2223({ evalNum }) {
     };
 
     const parseEval15Target = (target) => {
-        const targets = {'AF': '', 'MF': '', 'PS': '', 'SS': ''}
+        const targets = { 'AF': '', 'MF': '', 'PS': '', 'SS': '' }
         const regexp = /([A-Z]+)-?(\d+)/g
 
         const matchedTargets = [...String(target ?? '').matchAll(regexp)]
@@ -170,7 +171,7 @@ export function PH2RQ2223({ evalNum }) {
                 set constructions. So I needed to conditionally add more to the key for this eval
                 */
                 const scenarioKey = evalNum === 14 ? `${scenario}_${setConstruction}` : scenario;
-                const mapKey = evalNum === 14 
+                const mapKey = evalNum === 14
                     ? `${scenario}_${setConstruction}_${target}_${alignment}`
                     : `${scenario}_${target}_${alignment}`;
 
@@ -220,7 +221,7 @@ export function PH2RQ2223({ evalNum }) {
                         ? `P2${evalToName[evalNum]} Dynamic Set ${setMatch[1]}`
                         : `P2${evalToName[evalNum]} Observation Set ${setMatch[1]}`;
 
-                const actualScenario = evalNum === 14 && scenarioKey.includes('_') 
+                const actualScenario = evalNum === 14 && scenarioKey.includes('_')
                     ? scenarioKey.substring(0, scenarioKey.lastIndexOf('_'))
                     : scenarioKey;
 
@@ -228,11 +229,11 @@ export function PH2RQ2223({ evalNum }) {
                 for (const target of Object.keys(targets)) {
                     const alignedAdms = Object.keys(targets[target])
                         .filter(name => evalNum === 15
-                        ? !name.includes('OutlinesBaseline')
-                        : name.includes('aligned') || name.includes('ComparativeRegression') || name.includes('DirectRegression')
+                            ? !name.includes('OutlinesBaseline')
+                            : name.includes('aligned') || name.includes('ComparativeRegression') || name.includes('DirectRegression')
                         )
                         .map(name => ({ name, ...targets[target][name] }));
-                    
+
                     if (alignedAdms.length === 0) continue;
 
                     const parsed = evalNum === 15 ? parseEval15Target(target) : null;
@@ -244,15 +245,15 @@ export function PH2RQ2223({ evalNum }) {
                         ? (attribute.includes('-') ? '2D' : '1D')
                         : setConstruction;
 
-                    
+
                     let baselineMap = {};
                     if (evalNum === 15) {
                         for (const admName of Object.keys(targets[target])) {
                             if (admName.includes('OutlinesBaseline')) {
                                 const idx = admName.indexOf('OutlinesBaseline-');
                                 const rawSuffix = admName.slice(idx + 'OutlinesBaseline-'.length);
-                                const suffix = rawSuffix.includes('__') 
-                                    ? rawSuffix.split('__')[0] 
+                                const suffix = rawSuffix.includes('__')
+                                    ? rawSuffix.split('__')[0]
                                     : rawSuffix.replace(/_\d+(_\d+)*$/, '');
 
                                 baselineMap[suffix] = targets[target][admName];
@@ -313,7 +314,7 @@ export function PH2RQ2223({ evalNum }) {
                         entryObj['Aligned ADM Alignment score (ADM|target)'] = aligned.alignment;
                         entryObj['Aligned Server Session ID'] = aligned.adm?.results?.ta1_session_id ?? '-';
 
-                        const mapKey = evalNum === 14 
+                        const mapKey = evalNum === 14
                             ? `${actualScenario}_${setConstruction}_${target}_${aligned?.alignment}`
                             : `${actualScenario}_${target}_${aligned?.alignment}`;
                         const rawProbes = probeMap[mapKey] || [];
@@ -477,127 +478,156 @@ export function PH2RQ2223({ evalNum }) {
         }
     }, [formattedData, attributeFilters, targetFilters, setFilters, setConstructionFilters, admNamesFilters]);
 
-    if (loading || (dataRef.current !== evalNum && data?.getAllHistoryByEvalNumber?.length > 0)) return <p>Loading...</p>;
-    if (error) return <p>Error: {error.message}</p>;
-
     //eval 15 at least one filter before rendering rows due to dataset size
     const hasActiveFilters = attributeFilters.length > 0 || targetFilters.length > 0 ||
         setFilters.length > 0 || setConstructionFilters.length > 0 || admNamesFilters.length > 0;
     const shouldRenderRows = evalNum !== 15 || hasActiveFilters;
+
+    const tableContainerRef = React.useRef(null);
+    const rowVirtualizer = useVirtualizer({
+        count: shouldRenderRows ? filteredData.length : 0,
+        getScrollElement: () => tableContainerRef.current,
+        estimateSize: () => 36,
+        overscan: 10,
+    });
+
+    if (loading || (dataRef.current !== evalNum && data?.getAllHistoryByEvalNumber?.length > 0)) return <p>Loading...</p>;
+    if (error) return <p>Error: {error.message}</p>;
 
     return (
         <>
             {evalNum === 15 && !hasActiveFilters
                 ? <p className='filteredText'>
                     Select at least one filter to display results. Full data is available for download.
-                  </p>
+                </p>
                 : filteredData.length < formattedData.length &&
-                    <p className='filteredText'>
-                        Showing {filteredData.length} of {formattedData.length} rows based on filters
-                    </p>
+                <p className='filteredText'>
+                    Showing {filteredData.length} of {formattedData.length} rows based on filters
+                </p>
             }
             {formattedData.length === 0 ? <p>This table is not available for the selected evaluation.</p> :
-            <>
-            <section className='tableHeader'>
-                <div className="filters">
-                    <Autocomplete
-                        multiple
-                        options={attributes}
-                        value={attributeFilters}
-                        filterSelectedOptions
-                        size="small"
-                        renderInput={(params) => (
-                            <TextField {...params} label="Attributes" />
-                        )}
-                        onChange={(_, newVal) => setAttributeFilters(newVal)}
-                    />
+                <>
+                    <section className='tableHeader'>
+                        <div className="filters">
+                            <Autocomplete
+                                multiple
+                                options={attributes}
+                                value={attributeFilters}
+                                filterSelectedOptions
+                                size="small"
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Attributes" />
+                                )}
+                                onChange={(_, newVal) => setAttributeFilters(newVal)}
+                            />
 
-                    <Autocomplete
-                        multiple
-                        options={targets}
-                        value={targetFilters}
-                        filterSelectedOptions
-                        size="small"
-                        renderInput={(params) => (
-                            <TextField {...params} label="Targets" />
-                        )}
-                        onChange={(_, newVal) => setTargetFilters(newVal)}
-                    />
-                    {(evalNum === 14 || evalNum === 15) && 
-                        <Autocomplete
-                        multiple
-                        options={setConstructions}
-                        value={setConstructionFilters}
-                        filterSelectedOptions
-                        size="small"
-                        renderInput={(params) => (
-                            <TextField {...params} label="Set Construction" />
-                        )}
-                        onChange={(_, newVal) => setSetConstructionFilters(newVal)}
-                    />
-                    }
+                            <Autocomplete
+                                multiple
+                                options={targets}
+                                value={targetFilters}
+                                filterSelectedOptions
+                                size="small"
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Targets" />
+                                )}
+                                onChange={(_, newVal) => setTargetFilters(newVal)}
+                            />
+                            {(evalNum === 14 || evalNum === 15) &&
+                                <Autocomplete
+                                    multiple
+                                    options={setConstructions}
+                                    value={setConstructionFilters}
+                                    filterSelectedOptions
+                                    size="small"
+                                    renderInput={(params) => (
+                                        <TextField {...params} label="Set Construction" />
+                                    )}
+                                    onChange={(_, newVal) => setSetConstructionFilters(newVal)}
+                                />
+                            }
 
-                    {evalNum >= 15 &&
-                        <Autocomplete
-                        className='large-box'
-                        multiple
-                        options={admNames}
-                        value={admNamesFilters}
-                        filterSelectedOptions
-                        size="small"
-                        renderInput={(params) => (
-                            <TextField {...params} label="ADM Name" />
-                        )}
-                        onChange={(_, newVal) => setAdmNamesFilters(newVal)}
-                    />
-                    }
+                            {evalNum >= 15 &&
+                                <Autocomplete
+                                    className='large-box'
+                                    multiple
+                                    options={admNames}
+                                    value={admNamesFilters}
+                                    filterSelectedOptions
+                                    size="small"
+                                    renderInput={(params) => (
+                                        <TextField {...params} label="ADM Name" />
+                                    )}
+                                    onChange={(_, newVal) => setAdmNamesFilters(newVal)}
+                                />
+                            }
 
-                    <Autocomplete
-                        className='large-box'
-                        multiple
-                        options={sets}
-                        value={setFilters}
-                        filterSelectedOptions
-                        size="small"
-                        renderInput={(params) => (
-                            <TextField {...params} label="Set" />
-                        )}
-                        onChange={(_, newVal) => setSetFilters(newVal)}
-                    />
-                </div>
+                            <Autocomplete
+                                className='large-box'
+                                multiple
+                                options={sets}
+                                value={setFilters}
+                                filterSelectedOptions
+                                size="small"
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Set" />
+                                )}
+                                onChange={(_, newVal) => setSetFilters(newVal)}
+                            />
+                        </div>
 
-                <DownloadButtons
-                    formattedData={formattedData}
-                    filteredData={filteredData}
-                    HEADERS={PH2_HEADERS}
-                    fileName={'RQ-22_and_RQ-23_PH2_data'}
-                    extraAction={openModal}
-                />
-            </section>
+                        <DownloadButtons
+                            formattedData={formattedData}
+                            filteredData={filteredData}
+                            HEADERS={PH2_HEADERS}
+                            fileName={'RQ-22_and_RQ-23_PH2_data'}
+                            extraAction={openModal}
+                        />
+                    </section>
 
-            <div className='resultTableSection'>
-                <table className='itm-table'>
-                    <thead>
-                        <tr>
-                            {PH2_HEADERS.map((val, index) => (
-                                <th key={'header-' + index}>{val}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {shouldRenderRows && filteredData.map((dataSet, index) => (
-                            <tr key={`row-${index}`}>
-                                {PH2_HEADERS.map((val) => (
-                                    <td key={`cell-${index}-${val}`}>
-                                        {dataSet[val] ?? '-'}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            </>
+                    <div className='resultTableSection' ref={tableContainerRef}>
+                        <table className='itm-table'>
+                            <thead>
+                                <tr>
+                                    {PH2_HEADERS.map((val, index) => (
+                                        <th key={'header-' + index}>{val}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(rowVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                                    <tr style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
+                                        <td style={{ padding: 0, border: 0 }} />
+                                    </tr>
+                                )}
+                                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                                    const dataSet = filteredData[virtualRow.index];
+                                    return (
+                                        <tr
+                                            key={`row-${virtualRow.index}`}
+                                            data-index={virtualRow.index}
+                                            ref={rowVirtualizer.measureElement}
+                                            className={virtualRow.index % 2 === 0 ? 'row-even' : 'row-odd'}
+                                        >
+                                            {PH2_HEADERS.map((val) => (
+                                                <td key={`cell-${virtualRow.index}-${val}`}>
+                                                    {dataSet[val] ?? '-'}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    );
+                                })}
+                                {rowVirtualizer.getTotalSize() > 0 && (() => {
+                                    const items = rowVirtualizer.getVirtualItems();
+                                    const lastItem = items[items.length - 1];
+                                    const paddingBottom = lastItem
+                                        ? rowVirtualizer.getTotalSize() - (lastItem.start + lastItem.size)
+                                        : 0;
+                                    return paddingBottom > 0 ? <tr style={{ height: paddingBottom }}><td /></tr> : null;
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             }
 
             <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
