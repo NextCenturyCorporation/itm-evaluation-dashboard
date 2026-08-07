@@ -537,9 +537,6 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
-<<<<<<< HEAD
-    // catch any errors that return true and save in an array to display in the AppErrorMessage component
-=======
     // init virtualizer
     const tableContainerRef = React.useRef(null);
     const rowVirtualizer = useVirtualizer({
@@ -549,8 +546,7 @@ export function RQ134({ evalNum, tableTitle }) {
         overscan: 10,
     });
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
->>>>>>> development
+    // catch any errors that return true and save in an array to display in the App Error component
     const errors = [
         errorParticipantLog,
         errorSurveyResults,

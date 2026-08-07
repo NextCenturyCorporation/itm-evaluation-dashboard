@@ -7,7 +7,6 @@ import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore, setEvalDataInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import HomePage from '../Home/home';
-import { SurveyPageWrapper } from '../Survey/survey';
 import { ErrorBoundary } from '../ErrorHandling/ErrorBoundaries';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import LoginApp from '../Account/login';

@@ -563,12 +563,8 @@ export const SurveyPageWrapper = (props) => {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-<<<<<<< HEAD
         console.log(errors);
         throw errors;
-=======
-        return <QueryErrorMessage errors={errors} />;
->>>>>>> development
     }
 
     if (loadingParticipantLog || loadingEvalData || !surveyConfigs || !surveyConfigs['delegation_v' + currentSurveyVersion]) return <p>Loading...</p>;
