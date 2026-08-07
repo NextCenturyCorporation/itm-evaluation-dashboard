@@ -9,7 +9,6 @@ module.exports = {
         '<rootDir>/src/setupTests.js'
     ],
     transformIgnorePatterns: [
-        '/node_modules/(?!query-string)/',  // This will allow transformation of query-string
         "/node_modules/(?!@adobe/css-tools)/"
     ],
     moduleNameMapper: {

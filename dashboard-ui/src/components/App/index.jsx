@@ -6,33 +6,13 @@ import gql from "graphql-tag";
 import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore, setEvalDataInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
-// Components
-import ResultsPage from '../Results/results';
 import HomePage from '../Home/home';
 import { SurveyPageWrapper } from '../Survey/survey';
 import { ErrorBoundary } from '../ErrorHandling/ErrorBoundaries';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
-import { ReviewTextBasedPage } from '../ReviewTextBased/ReviewTextBased';
-import { ReviewDelegationPage } from '../ReviewDelegation/ReviewDelegation';
-import TextBasedResultsPage from '../TextBasedResults/TextBasedResultsPage';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
 import MyAccountPage from '../Account/myAccount';
-import AdminPage from '../Account/adminPage';
-import AggregateResults from '../AggregateResults/aggregateResults';
-import ADMChartPage from '../AdmCharts/admChartPage';
-import { ADMProbeResponses } from '../AdmCharts/admProbeResponses';
-import { SurveyResults } from '../SurveyResults/surveyResults';
-import HumanResults from '../HumanResults/humanResults';
-import { RQ1 } from '../Research/RQ1';
-import { RQ2 } from '../Research/RQ2';
-import { RQ3 } from '../Research/RQ3';
-import { OpenWorld } from '../Research/OpenWorld';
-import { TcccAnalysis } from '../Research/TcccAnalysis';
-import { OpenWorldADMs } from '../Research/OpenWorldADMs';
-import { ParticipantDemographics } from '../Research/ParticipantDemographics';
-import { ExploratoryAnalysis } from '../Research/ExploratoryAnalysis'  
-import { PidLookup } from '../Account/pidLookup';
 import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
@@ -40,15 +20,43 @@ import { Header } from './Header';
 import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
 import { computeTextThreshold } from '../Account/participantProgress';
-// CSS and Image Stuff 
 import '../../css/app.css';
+import '../../css/aggregateResults.css';
+import '../../css/humanResults.css';
+import 'survey-core/defaultV2.min.css';
+import 'survey-analytics/survey.analytics.min.css';
 import 'rc-slider/assets/index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'material-design-icons/iconfont/material-icons.css';
 import 'react-dropdown/style.css';
 import 'react-dual-listbox/lib/react-dual-listbox.css';
+import '../../css/surveyResults.css';
 import store from '../../store/store';
 import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
+
+// Lazy load components that are very expensive or only reachable via admin accounts.
+// React.lazy requires a module with a default export, so named exports are remapped below.
+// these must come AFTER all import statements above or eslint will get mad
+const ResultsPage = React.lazy(() => import('../Results/results'));
+const SurveyPageWrapper = React.lazy(() => import('../Survey/survey').then(m => ({ default: m.SurveyPageWrapper })));
+const ReviewTextBasedPage = React.lazy(() => import('../ReviewTextBased/ReviewTextBased').then(m => ({ default: m.ReviewTextBasedPage })));
+const ReviewDelegationPage = React.lazy(() => import('../ReviewDelegation/ReviewDelegation').then(m => ({ default: m.ReviewDelegationPage })));
+const TextBasedResultsPage = React.lazy(() => import('../TextBasedResults/TextBasedResultsPage'));
+const AdminPage = React.lazy(() => import('../Account/adminPage'));
+const AggregateResults = React.lazy(() => import('../AggregateResults/aggregateResults'));
+const ADMChartPage = React.lazy(() => import('../AdmCharts/admChartPage'));
+const ADMProbeResponses = React.lazy(() => import('../AdmCharts/admProbeResponses').then(m => ({ default: m.ADMProbeResponses })));
+const SurveyResults = React.lazy(() => import('../SurveyResults/surveyResults').then(m => ({ default: m.SurveyResults })));
+const HumanResults = React.lazy(() => import('../HumanResults/humanResults'));
+const RQ1 = React.lazy(() => import('../Research/RQ1').then(m => ({ default: m.RQ1 })));
+const RQ2 = React.lazy(() => import('../Research/RQ2').then(m => ({ default: m.RQ2 })));
+const RQ3 = React.lazy(() => import('../Research/RQ3').then(m => ({ default: m.RQ3 })));
+const OpenWorld = React.lazy(() => import('../Research/OpenWorld').then(m => ({ default: m.OpenWorld })));
+const TcccAnalysis = React.lazy(() => import('../Research/TcccAnalysis').then(m => ({ default: m.TcccAnalysis })));
+const OpenWorldADMs = React.lazy(() => import('../Research/OpenWorldADMs').then(m => ({ default: m.OpenWorldADMs })));
+const ParticipantDemographics = React.lazy(() => import('../Research/ParticipantDemographics').then(m => ({ default: m.ParticipantDemographics })));
+const ExploratoryAnalysis = React.lazy(() => import('../Research/ExploratoryAnalysis').then(m => ({ default: m.ExploratoryAnalysis })));
+const PidLookup = React.lazy(() => import('../Account/pidLookup').then(m => ({ default: m.PidLookup })));
 
 const GET_SHOW_DEMOGRAPHICS = gql`
     query GetShowDemographics {
@@ -145,11 +153,8 @@ export function App() {
     const [isSetup, setIsSetup] = React.useState(false);
     const [isVersionDataLoaded, setIsVersionDataLoaded] = React.useState(false);
     const [isTextEvalDataLoaded, setIsTextEvalDataLoaded] = React.useState(false);
-    const [isConfigDataLoaded, setIsConfigDataLoaded] = React.useState(false);
     const { data: demographicsData } = useQuery(GET_SHOW_DEMOGRAPHICS, { fetchPolicy: 'no-cache' });
     const [isDemographicsDataLoaded, setIsDemographicsDataLoaded] = React.useState(false);
-    const [surveyConfigsLoaded, setSurveyConfigsLoaded] = React.useState(false);
-    const [textConfigsLoaded, setTextConfigsLoaded] = React.useState(false);
     // modal for warning a participant they already compelted the text based portion of the experiment
     const [alreadyComplete, setAlreadyComplete] = React.useState({
         open: false,
@@ -207,7 +212,7 @@ export function App() {
     }, [textEvalData])
 
     // Load survey configs when version is available
-    const { data: surveyConfigData, loading: surveyConfigLoading } = useQuery(
+    const { data: surveyConfigData } = useQuery(
         GET_SURVEY_CONFIG_BY_VERSION,
         {
             skip: !versionData?.getCurrentSurveyVersion,
@@ -216,7 +221,7 @@ export function App() {
         }
     );
 
-    const { data: textConfigData, loading: textConfigLoading } = useQuery(
+    const { data: textConfigData } = useQuery(
         GET_TEXT_CONFIG_BY_EVAL,
         {
             skip: !textEvalData?.getCurrentTextEval,
@@ -232,7 +237,6 @@ export function App() {
                 getAllTextBasedImages: textImagesData?.getAllTextBasedImages ?? []
             };
             setupConfigWithImages(configDataToProcess);
-            setSurveyConfigsLoaded(true);
         }
     }, [surveyConfigData, textImagesData]);
 
@@ -244,16 +248,8 @@ export function App() {
                 getAllTextBasedImages: textImagesData?.getAllTextBasedImages ?? []
             };
             setupTextBasedConfig(configDataToProcess);
-            setTextConfigsLoaded(true);
         }
     }, [textConfigData, textImagesData]);
-
-
-    React.useEffect(() => {
-        if (surveyConfigsLoaded && textConfigsLoaded) {
-            setIsConfigDataLoaded(true);
-        }
-    }, [surveyConfigsLoaded, textConfigsLoaded]);
 
     const setup = async () => {
         // refresh the session to get a new accessToken if expired
@@ -496,53 +492,54 @@ export function App() {
        throw versionError;
     }
     
-    if (versionLoading || surveyConfigLoading || textConfigLoading) {
+    if (versionLoading) {
         return <div>Loading...</div>;
     }
 
     return (
         <Router history={history}>
-            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isConfigDataLoaded && isStyleDataLoaded && isDemographicsDataLoaded && <div className="itm-app">
+            {isSetup && isVersionDataLoaded && isTextEvalDataLoaded && isStyleDataLoaded && isDemographicsDataLoaded && <div className="itm-app">
                 {currentUser?.approved &&
                     <Header currentUser={currentUser} logout={logout} />
                 }
                 <div className="main-content">
                     <ErrorBoundary>
-                        <Switch>
-                            <Route exact path="/" component={Home} />
-                            <Route exact path="/awaitingApproval">
-                                <WaitingPageWrapper currentUser={currentUser} rejected={currentUser?.rejected} />
-                            </Route>
-                            <Route path="/login">
-                                <Login testerLogin={false} />
-                            </Route>
-                            <Route exact path="/participantText">
-                                <Login participantTextLogin={true} testerLogin={false} />
-                            </Route>
-                            <Route path="/reset-password/:token" component={ResetPassPage} />
-                            <Route path="/remote-text-survey" component={StartOnline} />
-                            <Route path="/text-based" component={TextBasedScenariosPageWrapper} />
-                            <Route path="/myaccount" component={MyAccount} />
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
-                                <AggregateResults type="HumanSimParticipant" />
-                            </Route>}
-                            {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
-                                <Login participantTextLogin={true} testerLogin={true} />
-                            </Route>}
-                            {hasAccess(currentUser, ['admin']) && <Route path="/admin" component={Admin} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/pid-lookup" component={PidLookupPage} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey" component={Survey} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
-                                <AggregateResults type="HumanProbeData" />
-                            </Route>}
+                    <React.Suspense fallback={<div>Loading...</div>}>
+                    <Switch>
+                        <Route exact path="/" component={Home} />
+                        <Route exact path="/awaitingApproval">
+                            <WaitingPageWrapper currentUser={currentUser} rejected={currentUser?.rejected} />
+                        </Route>
+                        <Route path="/login">
+                            <Login testerLogin={false} />
+                        </Route>
+                        <Route exact path="/participantText">
+                            <Login participantTextLogin={true} testerLogin={false} />
+                        </Route>
+                        <Route path="/reset-password/:token" component={ResetPassPage} />
+                        <Route path="/remote-text-survey" component={StartOnline} />
+                        <Route path="/text-based" component={TextBasedScenariosPageWrapper} />
+                        <Route path="/myaccount" component={MyAccount} />
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
+                            <AggregateResults type="HumanSimParticipant" />
+                        </Route>}
+                        {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
+                            <Login participantTextLogin={true} testerLogin={true} />
+                        </Route>}
+                        {hasAccess(currentUser, ['admin']) && <Route path="/admin" component={Admin} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/pid-lookup" component={PidLookupPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey" component={Survey} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
+                            <AggregateResults type="HumanProbeData" />
+                        </Route>}
 
                             {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
                             {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
@@ -563,7 +560,8 @@ export function App() {
                                 : <Route path="*" render={() => <Redirect to="/login" />} />
                             }
 
-                        </Switch>
+                    </Switch>
+                    </React.Suspense>
                     </ErrorBoundary>
                 </div>
                 <AlreadyCompleteModal

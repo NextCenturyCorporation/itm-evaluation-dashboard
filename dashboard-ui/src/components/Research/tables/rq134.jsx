@@ -1,4 +1,5 @@
 import React from "react";
+import { useVirtualizer } from '@tanstack/react-virtual';
 import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
@@ -64,7 +65,7 @@ const HEADERS_PH1 = ['Delegator ID', 'ADM Order', 'Datasource', 'Delegator_grp',
 const HEADERS_PH2_JUNE_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation preference (A/M)', 'Delegation (A/HH)', 'Delegation (A/HL)', 'Delegation (A/LH)', 'Delegation (A/LL)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Delegator_Role', 'Trial_ID', 'Attribute', 'Probe Set Assessment', 'Probe Set Observation', 'ADM_Type', 'Target', 'Server Session ID (Delegator)', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation Preference (PSAF-1/PSAF-2)', 'Delegation Preference (PSAF-1/PSAF-3)', 'Delegation Preference (PSAF-1/PSAF-4)', 'Delegation Preference (PSAF-2/PSAF-3)', 'Delegation Preference (PSAF-2/PSAF-4)', 'Delegation Preference (PSAF-3/PSAF-4)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_FEB_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Probe Set Observation', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation preference (A/M)', 'Delegation Percentage (Aligned/Misaligned)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
-const HEADERS_PH2_APRIL_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation Preference (AlignedSS/AlignedOS)', 'Delegation Percentage (AlignedSS/AlignedOS)','Delegation Preference (AlignedOS/Misaligned)', 'Delegation Percentage (AlignedOS/Misaligned)'];
+const HEADERS_PH2_APRIL_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation Preference (AlignedSS/AlignedOS)', 'Delegation Percentage (AlignedSS/AlignedOS)', 'Delegation Preference (AlignedOS/Misaligned)', 'Delegation Percentage (AlignedOS/Misaligned)'];
 const HEADERS_PH2_JUNE_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation preference (A/M)', 'Delegation Percentage (Aligned/Misaligned)', 'Alignment score (DelegatorTRI|Observed_ADM (target))'];
 export function RQ134({ evalNum, tableTitle }) {
     // -------------------------- State: filters, toggles, and table data --------------------------
@@ -386,13 +387,13 @@ export function RQ134({ evalNum, tableTitle }) {
     ]);
 
     const allFetched = fetchedSurveyEvals.includes(evalNum) &&
-                   fetchedScenarioEvals.includes(evalNum) &&
-                   fetchedComparisonEvals.includes(evalNum);
+        fetchedScenarioEvals.includes(evalNum) &&
+        fetchedComparisonEvals.includes(evalNum);
 
     const allLoaded = !loadingParticipantLog && !loadingSurveyResults && !loadingTextResults &&
-                  !loadingADMs && !loadingMedics && !loadingComparisonData && !loadingSim;
+        !loadingADMs && !loadingMedics && !loadingComparisonData && !loadingSim;
 
-    React.useEffect(() =>{
+    React.useEffect(() => {
         if (allFetched && allLoaded && processedForEval !== evalNum) {
             setProcessedForEval(evalNum)
         }
@@ -536,7 +537,20 @@ export function RQ134({ evalNum, tableTitle }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
+<<<<<<< HEAD
     // catch any errors that return true and save in an array to display in the AppErrorMessage component
+=======
+    // init virtualizer
+    const tableContainerRef = React.useRef(null);
+    const rowVirtualizer = useVirtualizer({
+        count: filteredData.length,
+        getScrollElement: () => tableContainerRef.current,
+        estimateSize: () => 36,
+        overscan: 10,
+    });
+
+    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+>>>>>>> development
     const errors = [
         errorParticipantLog,
         errorSurveyResults,
@@ -551,9 +565,8 @@ export function RQ134({ evalNum, tableTitle }) {
         console.log(errors);
         throw errors;
     }
-    
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim || formattedData.length === 0 && processedForEval !== evalNum) return <p>Loading...</p>;
 
+    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingMedics || loadingComparisonData || loadingSim || formattedData.length === 0 && processedForEval !== evalNum) return <p>Loading...</p>;
 
     return (<>
         <h2 className='rq134-header'>{tableTitle}
@@ -581,233 +594,254 @@ export function RQ134({ evalNum, tableTitle }) {
                 <span className='reset-btn' onClick={clearFilters}>(Reset Filters)</span>
             </p>
         }
-        {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ?
-        <>
-        <section className='tableHeader'>
-            <div className='complexHeader'>
-                <div className="too-many-filters">
-                    {evalNum < 8 && (
-                        <>
+        {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p> : formattedData.length > 0 ?
+            <>
+                <section className='tableHeader'>
+                    <div className='complexHeader'>
+                        <div className="too-many-filters">
+                            {evalNum < 8 && (
+                                <>
+                                    <Autocomplete
+                                        multiple
+                                        options={ta1s}
+                                        value={ta1Filters}
+                                        size="small"
+                                        limitTags={2}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="TA1"
+                                                placeholder=""
+                                            />
+                                        )}
+                                        onChange={(_, newVal) => setTA1Filters(newVal)}
+                                    />
+                                    <Autocomplete
+                                        multiple
+                                        options={ta2s}
+                                        value={ta2Filters}
+                                        size="small"
+                                        limitTags={2}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="TA2"
+                                                placeholder=""
+                                            />
+                                        )}
+                                        onChange={(_, newVal) => setTA2Filters(newVal)}
+                                    />
+                                    <Autocomplete
+                                        multiple
+                                        options={scenarios}
+                                        value={scenarioFilters}
+                                        size="small"
+                                        limitTags={2}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Scenarios"
+                                                placeholder=""
+                                            />
+                                        )}
+                                        onChange={(_, newVal) => setScenarioFilters(newVal)}
+                                    />
+                                </>
+                            )}
+                            {evalNum >= 8 && evalNum < 12 && (
+                                <>
+                                    <Autocomplete
+                                        multiple
+                                        options={probeSetAssessments.sort()}
+                                        value={probeSetAssessmentFilters}
+                                        size="small"
+                                        limitTags={2}
+                                        getOptionLabel={(option) => String(option)}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Probe Set Assessment"
+                                                placeholder=""
+                                            />
+                                        )}
+                                        onChange={(_, newVal) => setProbeSetAssessmentFilters(newVal)}
+                                    />
+                                    <Autocomplete
+                                        multiple
+                                        options={probeSetObservations.sort()}
+                                        value={probeSetObservationFilters}
+                                        size="small"
+                                        limitTags={2}
+                                        getOptionLabel={(option) => String(option)}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Probe Set Observation"
+                                                placeholder=""
+                                            />
+                                        )}
+                                        onChange={(_, newVal) => setProbeSetObservationFilters(newVal)}
+                                    />
+                                </>
+                            )}
                             <Autocomplete
                                 multiple
-                                options={ta1s}
-                                value={ta1Filters}
+                                options={targets}
+                                value={targetFilters}
                                 size="small"
                                 limitTags={2}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
-                                        label="TA1"
+                                        label="Targets"
                                         placeholder=""
                                     />
                                 )}
-                                onChange={(_, newVal) => setTA1Filters(newVal)}
+                                onChange={(_, newVal) => setTargetFilters(newVal)}
                             />
                             <Autocomplete
                                 multiple
-                                options={ta2s}
-                                value={ta2Filters}
+                                options={attributes}
+                                value={attributeFilters}
                                 size="small"
                                 limitTags={2}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
-                                        label="TA2"
+                                        label="Attributes"
                                         placeholder=""
                                     />
                                 )}
-                                onChange={(_, newVal) => setTA2Filters(newVal)}
+                                onChange={(_, newVal) => setAttributeFilters(newVal)}
                             />
                             <Autocomplete
                                 multiple
-                                options={scenarios}
-                                value={scenarioFilters}
+                                options={admTypes}
+                                value={admTypeFilters}
                                 size="small"
                                 limitTags={2}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
-                                        label="Scenarios"
+                                        label="ADM Types"
                                         placeholder=""
                                     />
                                 )}
-                                onChange={(_, newVal) => setScenarioFilters(newVal)}
-                            />
-                        </>
-                    )}
-                    {evalNum >= 8 && evalNum < 12 && (
-                        <>
-                            <Autocomplete
-                                multiple
-                                options={probeSetAssessments.sort()}
-                                value={probeSetAssessmentFilters}
-                                size="small"
-                                limitTags={2}
-                                getOptionLabel={(option) => String(option)}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Probe Set Assessment"
-                                        placeholder=""
-                                    />
-                                )}
-                                onChange={(_, newVal) => setProbeSetAssessmentFilters(newVal)}
+                                onChange={(_, newVal) => setAdmTypeFilters(newVal)}
                             />
                             <Autocomplete
                                 multiple
-                                options={probeSetObservations.sort()}
-                                value={probeSetObservationFilters}
+                                options={delGrps}
+                                value={delGrpFilters}
                                 size="small"
                                 limitTags={2}
-                                getOptionLabel={(option) => String(option)}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
-                                        label="Probe Set Observation"
+                                        label="Delegator_grp"
                                         placeholder=""
                                     />
                                 )}
-                                onChange={(_, newVal) => setProbeSetObservationFilters(newVal)}
+                                onChange={(_, newVal) => setDelGrpFilters(newVal)}
                             />
-                        </>
-                    )}
-                    <Autocomplete
-                        multiple
-                        options={targets}
-                        value={targetFilters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Targets"
-                                placeholder=""
+                            <Autocomplete
+                                multiple
+                                options={delMils}
+                                value={delMilFilters}
+                                size="small"
+                                limitTags={2}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Delegator_mil"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setDelMilFilters(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setTargetFilters(newVal)}
-                    />
-                    <Autocomplete
-                        multiple
-                        options={attributes}
-                        value={attributeFilters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Attributes"
-                                placeholder=""
+                        </div>
+                        <div className='largeInputs'>
+                            <Autocomplete
+                                multiple
+                                options={headers}
+                                size="small"
+                                limitTags={1}
+                                value={columnsToHide}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Hidden Columns"
+                                        placeholder=""
+                                    />
+                                )}
+                                onChange={(_, newVal) => setColumnsToHide(newVal)}
                             />
-                        )}
-                        onChange={(_, newVal) => setAttributeFilters(newVal)}
-                    />
-                    <Autocomplete
-                        multiple
-                        options={admTypes}
-                        value={admTypeFilters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="ADM Types"
-                                placeholder=""
-                            />
-                        )}
-                        onChange={(_, newVal) => setAdmTypeFilters(newVal)}
-                    />
-                    <Autocomplete
-                        multiple
-                        options={delGrps}
-                        value={delGrpFilters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Delegator_grp"
-                                placeholder=""
-                            />
-                        )}
-                        onChange={(_, newVal) => setDelGrpFilters(newVal)}
-                    />
-                    <Autocomplete
-                        multiple
-                        options={delMils}
-                        value={delMilFilters}
-                        size="small"
-                        limitTags={2}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Delegator_mil"
-                                placeholder=""
-                            />
-                        )}
-                        onChange={(_, newVal) => setDelMilFilters(newVal)}
-                    />
-                </div>
-                <div className='largeInputs'>
-                    <Autocomplete
-                        multiple
-                        options={headers}
-                        size="small"
-                        limitTags={1}
-                        value={columnsToHide}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Hidden Columns"
-                                placeholder=""
-                            />
-                        )}
-                        onChange={(_, newVal) => setColumnsToHide(newVal)}
-                    />
-                    <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
-                </div>
+                            <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
+                        </div>
 
-            </div>
+                    </div>
 
-            <DownloadButtons
-                formattedData={refineData(formattedData)}
-                filteredData={refineData(filteredData)}
-                HEADERS={getFilteredHeaders()}
-                fileName={'RQ-134 data'}
-                extraAction={openModal}
-            />
+                    <DownloadButtons
+                        formattedData={refineData(formattedData)}
+                        filteredData={refineData(filteredData)}
+                        HEADERS={getFilteredHeaders()}
+                        fileName={'RQ-134 data'}
+                        extraAction={openModal}
+                    />
 
-        </section>
-        <div className='resultTableSection'>
-            <table className='itm-table'>
-                <thead>
-                    <tr>
-                        {headers.map((val, index) => {
-                            return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val === headers.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
-                                {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
-                            </th>);
-                        })}
-                    </tr>
-                </thead>
-                <tbody>
-                    {filteredData.map((dataSet, index) => {
-                        return (<tr key={dataSet['Delegator ID'] + '-' + index} className={index % 2 === 0 ? 'row-even' : 'row-odd'}>
-                            {headers.map((val) => {
-                                return (!columnsToHide.includes(val) && <td key={dataSet['Delegator ID'] + '-' + val}>
-                                    {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
-                                </td>);
+                </section>
+                <div className='resultTableSection' ref={tableContainerRef}>
+                    <table className='itm-table'>
+                        <thead>
+                            <tr>
+                                {headers.map((val, index) => {
+                                    return (!columnsToHide.includes(val) && <th key={'header-' + index} className='rq134Header' style={{ zIndex: val === headers.filter((x) => !columnsToHide.includes(x))[0] ? 1 : 0 }}>
+                                        {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOffIcon size={'small'} /></button>
+                                    </th>);
+                                })}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(rowVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                                <tr style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
+                                    <td style={{ padding: 0, border: 0 }} />
+                                </tr>
+                            )}
+                            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                                const dataSet = filteredData[virtualRow.index];
+                                return (
+                                    <tr
+                                        key={dataSet['Delegator ID'] + '-' + virtualRow.index}
+                                        data-index={virtualRow.index}
+                                        ref={rowVirtualizer.measureElement}
+                                        className={virtualRow.index % 2 === 0 ? 'row-even' : 'row-odd'}
+                                    >
+                                        {headers.map((val) => {
+                                            return (!columnsToHide.includes(val) && <td key={dataSet['Delegator ID'] + '-' + val}>
+                                                {typeof dataSet[val] === 'string' ? dataSet[val]?.replaceAll('"', "") : dataSet[val] ?? '-'}
+                                            </td>);
+                                        })}
+                                    </tr>
+                                );
                             })}
-                        </tr>);
-                    })}
-                </tbody>
-            </table>
-        </div>
-        </>
-        :null
+                            {rowVirtualizer.getTotalSize() > 0 && (() => {
+                                const items = rowVirtualizer.getVirtualItems();
+                                const lastItem = items[items.length - 1];
+                                const paddingBottom = lastItem
+                                    ? rowVirtualizer.getTotalSize() - (lastItem.start + lastItem.size)
+                                    : 0;
+                                return paddingBottom > 0 ? <tr style={{ height: paddingBottom }}><td /></tr> : null;
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+            </>
+            : null
         }
         <Modal className='table-modal' open={showDefinitions} onClose={closeModal}>
             <div className='modal-body'>
                 <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
-                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={DEFINITION_FILE_MAP[evalNum] ?? dreDefinitionXLFile}  />
+                <RQDefinitionTable downloadName={`Definitions_RQ134_eval${evalNum}.xlsx`} xlFile={DEFINITION_FILE_MAP[evalNum] ?? dreDefinitionXLFile} />
             </div>
         </Modal>
     </>);

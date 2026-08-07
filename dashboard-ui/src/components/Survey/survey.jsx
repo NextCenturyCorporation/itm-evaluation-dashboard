@@ -173,6 +173,7 @@ class SurveyPage extends Component {
         if (this.inSurveyVersionData() && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
             return;
+            return;
         }
 
         const allPages = this.surveyConfigClone.pages;
@@ -186,7 +187,6 @@ class SurveyPage extends Component {
             const finalPages = [...introPages, ...blocks.flatMap(getPages)];
             if (postScenarioPage) finalPages.push(postScenarioPage);
             this.surveyConfigClone.pages = finalPages;
-            console.log(finalPages)
             this.setState({ orderLog: finalPages.map(page => page.name) });
         };
 
@@ -546,6 +546,7 @@ class SurveyPage extends Component {
 export const SurveyPageWrapper = (props) => {
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
+    const surveyConfigs = useSelector(state => state?.configs?.surveyConfigs)
     const evalNumber = SURVEY_VERSION_DATA[currentSurveyVersion]?.evalNumber;
 
     const { loading: loadingEvalData, error: errorEvalData, data: dataEvalData } = useQuery(GET_EVAL_DATA, {
@@ -562,11 +563,16 @@ export const SurveyPageWrapper = (props) => {
     ].filter(Boolean);
 
     if (errors.length > 0) {
+<<<<<<< HEAD
         console.log(errors);
         throw errors;
+=======
+        return <QueryErrorMessage errors={errors} />;
+>>>>>>> development
     }
 
-    if (loadingParticipantLog || loadingEvalData) return <p>Loading...</p>;
+    if (loadingParticipantLog || loadingEvalData || !surveyConfigs || !surveyConfigs['delegation_v' + currentSurveyVersion]) return <p>Loading...</p>;
+    if (errorParticipantLog || errorEvalData) return <p>Error :</p>;
 
     return (
         <SurveyPage
