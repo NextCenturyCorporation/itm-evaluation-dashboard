@@ -5,7 +5,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ2.1_DRE.xlsx';
 import ph1DefinitionXLFile from '../variables/Variable Definitions RQ2.1_PH1.xlsx';
-import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { ADM_NAME_MAP, getAlignments } from "../utils";
@@ -195,7 +194,7 @@ export function RQ21({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingAdms || loadingTextResults || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;

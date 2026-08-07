@@ -5,7 +5,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import definitionXLFile from '../variables/Variable Definitions RQ6.xlsx';
 import { useQuery } from 'react-apollo'
-import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import gql from "graphql-tag";
 import { getAlignments } from "../utils";
 import { DownloadButtons } from "./download-buttons";
@@ -197,7 +196,7 @@ export function RQ6({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingParticipantLog || loadingTextResults || loadingSim || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;

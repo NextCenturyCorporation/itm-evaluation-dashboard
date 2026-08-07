@@ -15,7 +15,6 @@ import { isDefined } from '../AggregateResults/DataFunctions';
 import { shuffle } from '../Survey/surveyUtils';
 import history from '../App/history';
 import { SurveyPageWrapper } from '../Survey/survey';
-import { AppErrorMessage } from '../ErrorHandling/AppErrorMessage';
 import { NavigationGuard } from '../Survey/survey';
 import { evalNameToNumber, scenarioIdsFromLog } from '../OnlineOnly/config';
 import consentPdf from '../OnlineOnly/consent.pdf';
@@ -81,9 +80,7 @@ export function TextBasedScenariosPageWrapper(props) {
     // show error message if an participantLogError occurs
     if (participantLogError) {
         console.log(participantLogError); 
-        return(
-            <AppErrorMessage error={participantLogError}></AppErrorMessage>
-        );
+        throw participantLogError;
     }
 
     // show loading screen

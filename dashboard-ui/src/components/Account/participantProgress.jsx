@@ -8,7 +8,6 @@ import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { DownloadButtons } from "../Research/tables/download-buttons";
 import { isDefined } from "../AggregateResults/DataFunctions";
-import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 import { Spinner } from 'react-bootstrap';
 import { setScenarioCompletion, SCENARIO_HEADERS, checkAlignmentStatus } from "./progressUtils";
 import { accountsClient } from "../../services/accountsService";

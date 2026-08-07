@@ -5,7 +5,6 @@ import { Survey, ReactQuestionFactory } from "survey-react-ui"
 import surveyTheme from './surveyTheme.json';
 import { DynamicTemplatePhase2 } from "./dynamicTemplatePhase2";
 import gql from "graphql-tag";
-import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
 import { getUID, shuffle, surveyVersion_x_0, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11, createScenarioBlockv12} from './surveyUtils';
@@ -564,7 +563,7 @@ export const SurveyPageWrapper = (props) => {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingParticipantLog || loadingEvalData) return <p>Loading...</p>;

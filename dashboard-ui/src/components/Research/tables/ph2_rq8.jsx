@@ -7,7 +7,6 @@ import ph2LegacyDefinitionXLFile from "../variables/Variable Definitions RQ8_PH2
 import ph2Feb26DefinitionXLFile from "../variables/Variable Definitions RQ8_PH2_FEB26.xlsx";
 import * as XLSX from "xlsx-js-style";
 import { useQuery } from "react-apollo";
-import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import gql from "graphql-tag";
 import { DownloadButtons } from "./download-buttons";
 
@@ -420,7 +419,7 @@ export function PH2RQ8({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;

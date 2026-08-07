@@ -9,7 +9,6 @@ import calibrationDefinitions from '../variables/Variable Definitions Calibratio
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
-import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 
 const GET_PARTICIPANT_LOG = gql`
@@ -287,7 +286,7 @@ export function CalibrationData({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;

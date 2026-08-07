@@ -10,7 +10,6 @@ import MenuItem from '@mui/material/MenuItem';
 import { RQ1Graphs } from "./Graphs/RQ1_Graphs";
 import RQ2Graphs from "./Graphs/RQ2_Graphs";
 import RQ3Graphs from "./Graphs/RQ3_Graphs";
-import { AppErrorMessage } from '../../ErrorHandling/AppErrorMessage';
 
 
 const GET_PARTICIPANT_LOG = gql`

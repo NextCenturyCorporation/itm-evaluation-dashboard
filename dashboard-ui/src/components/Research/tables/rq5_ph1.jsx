@@ -5,7 +5,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import ph1DefinitionXLFile from '../variables/Variable Definitions RQ5_PH1.xlsx';
 import { useQuery } from 'react-apollo'
-import { AppErrorMessage } from "../../ErrorHandling/AppErrorMessage";
 import gql from "graphql-tag";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { getAlignments } from "../utils";
@@ -281,7 +280,7 @@ export function RQ5_PH1({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <AppErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingParticipantLog || loadingTextResults || loadingComparisonData || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
