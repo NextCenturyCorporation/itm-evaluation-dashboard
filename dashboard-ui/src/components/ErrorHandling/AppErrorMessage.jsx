@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Collapse } from 'react-bootstrap';
 
-
-
 export function AppErrorMessage({error, errors=[]}) {
     // instantiate all necessary variables
     // an array to hold one or more Apollo Error objects
@@ -100,8 +98,6 @@ export function AppErrorMessage({error, errors=[]}) {
             });
         }
     });
-    console.log("PROP ERRORS", errors);
-    console.log("JS ERRORS", jsErrors);
 
     return (
         <>
