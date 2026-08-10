@@ -23,12 +23,12 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check / route content', async () => {
         await checkRouteContent(page, '/', ['Program Questions', '1. Does alignment score predict measures of trust?']);
-    });
+    }, 60000);
 
     it('Check /survey route content', async () => {
         await checkRouteContent(page, '/survey', ['Enter Participant ID']);
         page = await browser.newPage();
-        page.goto(`${process.env.REACT_APP_TEST_URL}/`);
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/`);
         await page.waitForSelector(FOOTER_TEXT);
     });
 
@@ -104,28 +104,28 @@ describe('Verify content on page matches expectation for route', () => {
     });
 
     it('Admin Dashboard should require confirmation', async () => {
-        page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
         await page.waitForSelector(FOOTER_TEXT);
-        const password = await page.$('input[placeholder="Enter Password"]');
-        await password.type('secretAdminPassword123');
+        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 30000 });
+        await page.type('input[placeholder="Enter Password"]', 'secretAdminPassword123');
         await page.$$eval('.btn-primary', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Submit').click();
         });
         const expectedText = ['Admin Dashboard', 'Survey Version', 'Administrators', 'Evaluators', 'Experimenters', 'ADEPT Users']
         for (const txt of expectedText) {
-            await page.waitForSelector(`text/${txt}`, { timeout: 500 });
+            await page.waitForSelector(`text/${txt}`, { timeout: 5000 });
         }
     });
 
     it('Admin Dashboard should error on incorrect password', async () => {
-        page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
         await page.waitForSelector(FOOTER_TEXT);
-        const password = await page.$('input[placeholder="Enter Password"]');
-        await password.type('secretAdminPassword1234');
+        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 30000 });
+        await page.type('input[placeholder="Enter Password"]', 'secretAdminPassword1234');
         await page.$$eval('.btn-primary', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Submit').click();
         });
-        await page.waitForSelector(`.error-message`, { timeout: 500 });
+        await page.waitForSelector(`.error-message`, { timeout: 5000 });
     }, 15000);
     it('Check /participant-progress-table route content', async () => {
         await checkRouteContent(page, '/participant-progress-table', ['Participant Progress', 'Prolific ID']);

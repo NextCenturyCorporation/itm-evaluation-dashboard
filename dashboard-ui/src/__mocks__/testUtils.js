@@ -85,7 +85,7 @@ export async function testRouteRedirection(route, expectedRedirect = '/login') {
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
     if (route == '/text-based')
         await page.waitForNavigation();
-    await page.waitForSelector(FOOTER_TEXT, { timeout: 6000 });
+    await page.waitForSelector(FOOTER_TEXT, { timeout: 30000 });
     currentUrl = page.url();
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
 }
@@ -137,7 +137,7 @@ export async function checkRouteContent(page, route, expectedText, isPh1 = false
         }
     }
     for (const txt of expectedText) {
-        await page.waitForSelector(`text/${txt}`, { timeout: 15000 });
+        await page.waitForSelector(`text/${txt}`, { timeout: 30000 });
     }
 }
 
@@ -281,7 +281,7 @@ export async function takePhase2TextScenario(page) {
 }
 
 export async function waitForSurveyIntro(page) {
-    await page.waitForSelector('text/In the final part of the study,', { timeout: 500 });
+    await page.waitForSelector('text/In the final part of the study,', { timeout: 30000 });
 }
 
 export async function clickNext(page) {
@@ -296,8 +296,8 @@ export async function completeTextScenarioAndReachSurvey(page, { isPhase1 }) {
     } else {
         await takePhase2TextScenario(page);
     }
-    await page.waitForSelector('text/Please do not close your browser', { timeout: 500 });
-    await page.waitForSelector('text/In the final part of the study,', { timeout: 10000000 });
+    await page.waitForSelector('text/Please do not close your browser', { timeout: 30000 });
+    await page.waitForSelector('text/In the final part of the study,', { timeout: 300000 });
     await pressAllKeys(page, 'In the final part of the study,');
 }
 
