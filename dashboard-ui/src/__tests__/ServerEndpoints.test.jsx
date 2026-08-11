@@ -25,26 +25,35 @@ describe('TA1 Server Tests', () => {
   describe('Response Submission', () => {
     if (!IS_PH1) {
       it('should submit responses to ADEPT server successfully', async () => {
-        const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
-        const sessionId = sessionResponse.data;
+        try {
+          const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
+          const sessionId = sessionResponse.data;
 
-        // dummy probe response for adept
-        const responsePayload = {
-          response: {
-            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
-            justification: 'justification',
-            probe_id: 'Probe 2',
-            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
-          },
-          session_id: sessionId
-        };
+          // dummy probe response for adept
+          const responsePayload = {
+            response: {
+              choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+              justification: 'justification',
+              probe_id: 'Probe 2',
+              scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+            },
+            session_id: sessionId
+          };
 
-        const response = await axios.post(
-          `${ADEPT_URL}/api/v1/response`,
-          responsePayload
-        );
+          const response = await axios.post(
+            `${ADEPT_URL}/api/v1/response`,
+            responsePayload
+          );
 
-        expect(response.status).toBe(200);
+          expect(response.status).toBe(200);
+        }
+        catch (error) {
+          console.error('ADEPT status:', error.response?.status);
+          console.error('ADEPT response:', error.response?.data);
+          console.error('ADEPT request URL:', error.config?.url);
+          console.error('ADEPT request data:', error.config?.data);
+          throw error;
+        }
       });
     }
   });

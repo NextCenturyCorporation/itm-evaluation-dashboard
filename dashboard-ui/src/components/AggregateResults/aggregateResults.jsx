@@ -48,15 +48,17 @@ export default function AggregateResults({ type }) {
 
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
-        variables: { "evalNumber": selectedEval }
+        variables: { "evalNumber": selectedEval },
+        skip: !isDefined(selectedEval)
         // only pulls from network, never cached
         //fetchPolicy: 'network-only',
     });
     
     React.useEffect(() => {
-        evalOptions = getAllEvals()
-        setSelectedEval(storedEval ?? evalOptions[0].value);
-    }, [type]);
+        evalOptions = getAllEvals() ?? [];
+        const nextEval = storedEval ?? evalOptions[0]?.value ?? null;
+        setSelectedEval(nextEval);
+    }, [type, storedEval]);
 
 
 
