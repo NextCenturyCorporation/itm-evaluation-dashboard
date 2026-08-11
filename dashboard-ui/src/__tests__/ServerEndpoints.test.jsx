@@ -4,7 +4,6 @@
 import axios from 'axios';
 
 const ADEPT_URL = process.env.REACT_APP_ADEPT_URL;
-const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 
 
 // Note: All Soartech tests have been removed 
@@ -23,7 +22,6 @@ describe('TA1 Server Tests', () => {
   });
 
   describe('Response Submission', () => {
-    if (!IS_PH1) {
       it('should submit responses to ADEPT server successfully', async () => {
         try {
           const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
@@ -32,10 +30,10 @@ describe('TA1 Server Tests', () => {
           // dummy probe response for adept
           const responsePayload = {
             response: {
-              choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+              choice: 'Response 1004-B',
               justification: 'justification',
-              probe_id: 'Probe 2',
-              scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+              probe_id: 'Probe 1004',
+              scenario_id: 'June2026-MF-assess'
             },
             session_id: sessionId
           };
@@ -55,21 +53,19 @@ describe('TA1 Server Tests', () => {
           throw error;
         }
       });
-    }
   });
 
   describe('KDMA Profile', () => {
-    if (!IS_PH1) {
       it('should fetch adept KDMA profile successfully', async () => {
         const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
         const sessionId = sessionResponse.data;
 
         const responsePayload = {
           response: {
-            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            choice: 'Response 1004-B',
             justification: 'justification',
-            probe_id: 'Probe 2',
-            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+            probe_id: 'Probe 1004',
+            scenario_id: 'June2026-MF-assess'
           },
           session_id: sessionId
         };
@@ -88,21 +84,19 @@ describe('TA1 Server Tests', () => {
         expect(response.status).toBe(200);
         expect(response.data).toBeTruthy();
       });
-    }
   });
 
   describe('Ordered Alignment', () => {
-    if (!IS_PH1) {
       it('should fetch adept ordered alignment data successfully', async () => {
         const sessionResponse = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
         const sessionId = sessionResponse.data;
 
         const responsePayload = {
           response: {
-            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            choice: 'Response 1004-B',
             justification: 'justification',
-            probe_id: 'Probe 2',
-            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+            probe_id: 'Probe 1004',
+            scenario_id: 'June2026-MF-assess'
           },
           session_id: sessionId
         };
@@ -118,7 +112,7 @@ describe('TA1 Server Tests', () => {
           {
             params: {
               session_id: sessionId,
-              kdma_id: IS_PH1 ? 'Moral judgement' : 'merit'
+              kdma_id: 'merit'
             }
           }
         );
@@ -126,11 +120,9 @@ describe('TA1 Server Tests', () => {
         expect(response.status).toBe(200);
         expect(Array.isArray(response.data)).toBeTruthy();
       });
-    }
   });
 
   describe('Full Workflow Test', () => {
-    if (!IS_PH1) {
       it('should complete a full workflow with ADEPT server', async () => {
         // starts adept sessions, responds to probe, gets kdma, and calls ordered alignment
         // checks each step as we go
@@ -140,10 +132,10 @@ describe('TA1 Server Tests', () => {
 
         const responsePayload = {
           response: {
-            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            choice: 'Response 1004-B',
             justification: 'justification',
-            probe_id: 'Probe 2',
-            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+            probe_id: 'Probe 1004',
+            scenario_id: 'June2026-MF-assess'
           },
           session_id: sessionId
         };
@@ -166,17 +158,15 @@ describe('TA1 Server Tests', () => {
           {
             params: {
               session_id: sessionId,
-              kdma_id: IS_PH1 ? 'Moral judgement' : 'merit'
+              kdma_id: 'merit'
             }
           }
         );
         expect(alignmentResponse.status).toBe(200);
       });
-    }
   });
 
   describe('Comparing Two Sessions', () => {
-    if (!IS_PH1) {
       it('Should compare two adept sessions using /compare_sessions', async () => {
         // start sessions
         const sessionResponse1 = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
@@ -190,10 +180,10 @@ describe('TA1 Server Tests', () => {
         // dummy probe responses
         const responsePayload = {
           response: {
-            choice: IS_PH1 ? 'Response 2B' : 'Response 2-B',
+            choice: 'Response 1004-B',
             justification: 'justification',
-            probe_id: 'Probe 2',
-            scenario_id: IS_PH1 ? 'DryRunEval-MJ2-eval' : 'July2025-MF-eval'
+            probe_id: 'Probe 1004',
+            scenario_id: 'June2026-MF-assess'
           }
         };
 
@@ -220,6 +210,5 @@ describe('TA1 Server Tests', () => {
         expect(response.status).toBe(200);
         expect(response.data).toBeTruthy();
       });
-    }
   });
 });
