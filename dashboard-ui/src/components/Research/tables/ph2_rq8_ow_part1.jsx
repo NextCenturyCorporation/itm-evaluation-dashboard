@@ -46,7 +46,7 @@ const kdmaColLabel = (kdma, param) => `${KDMA_LABELS[kdma]} ${PARAM_LABELS[param
 const valueColLabel = (kdma) => `${KDMA_LABELS[kdma]} Value`;
 
 const OW_EVALS = [8, 15, 16];
-const EVAL_LABEL = { 8: 'June2025', 15: 'Feb2026', 16: 'April2026' };
+export const EVAL_LABEL = { 8: 'June2025', 15: 'Feb2026', 16: 'April2026' };
 
 const getOWScenario = (scenarioId, evalNum) => {
     const env = scenarioId.split('OW_')[1] || scenarioId;
@@ -126,7 +126,7 @@ export function PH2RQ8OWPart1() {
                     'Baseline Server Session ID': baseline?.sessionId ?? '-'
                 };
 
-                // handles regression style (3 parameters) and scalar (single value) scoring
+                // handles regression style and scalar scoring
                 let hasParams = false;
                 let hasValue = false;
                 for (const kdma of aligned.kdmas ?? []) {
@@ -184,8 +184,7 @@ export function PH2RQ8OWPart1() {
         }
     }, [formattedData, owScenarioFilters, targetFilters, includeRegression]);
 
-    // Headers are derived from the rows currently shown, so the regression
-    // parameter columns only appear when regression rows are included.
+    // headers only exist when at least one row has a value for it
     const allHeaders = React.useMemo(() => {
         const valueKdmas = new Set();
         const paramKdmas = new Set();
