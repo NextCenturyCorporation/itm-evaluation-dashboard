@@ -88,7 +88,7 @@ export function PH2RQ8OWPart2() {
 
                 for (const k of (adm.results?.kdmas || [])) {
                     const short = KDMA_SHORT[k.kdma];
-                    if (!short) continue; 
+                    if (!short) continue;
 
                     // scalar kdma handling
                     if (!k.parameters) {
@@ -99,7 +99,7 @@ export function PH2RQ8OWPart2() {
 
                     row[`${short}_intercept`] = roundIfNumber(getKdmaParam(k.parameters, 'intercept'));
                     row[`${short}_attribute`] = roundIfNumber(getKdmaParam(k.parameters, 'attr_weight'));
-                    row[`${short}_medical`]   = roundIfNumber(getKdmaParam(k.parameters, 'medical_weight'));
+                    row[`${short}_medical`] = roundIfNumber(getKdmaParam(k.parameters, 'medical_weight'));
                     row['__scoringType'] = 'regression'
                 }
 
@@ -139,9 +139,9 @@ export function PH2RQ8OWPart2() {
     const openModal = () => setShowDefinitions(true);
     const closeModal = () => setShowDefinitions(false);
 
-        const HEADERS = React.useMemo(() => {
+    const HEADERS = React.useMemo(() => {
         const LEAD = ['Trial_ID', 'OW Scenario', 'Target', 'ADM Name',
-                    'Server Session ID', 'Alignment score (ADM|target)'];
+            'Server Session ID', 'Alignment score (ADM|target)'];
         const leadSet = new Set(LEAD);
         const extra = new Set();
         for (const row of filteredData) {
