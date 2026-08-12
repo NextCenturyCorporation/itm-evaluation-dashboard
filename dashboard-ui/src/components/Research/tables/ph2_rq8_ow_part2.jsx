@@ -8,7 +8,9 @@ import { DownloadButtons } from "./download-buttons";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import owPart2Defs from '../variables/Variable Definitions RQ8_OW_Part2.xlsx';
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import { EVAL_LABEL } from "./ph2_rq8_ow_part1";
+
 const getAdmData = gql`
     query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
         getAllOWData(evalNumber: $evalNumber, scenarioIDs: $scenarioIDs)
@@ -19,7 +21,7 @@ const OW_EVALS = [8, 15, 16]
 const KDMA_SHORT = { affiliation: 'AF', merit: 'MF', personal_safety: 'PS', search: 'SS' };
 
 function roundIfNumber(value) {
-    if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 100) / 100;
+    if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 1000) / 1000;
     return value;
 }
 function getKdmaParam(parameters, paramName) {
@@ -86,10 +88,19 @@ export function PH2RQ8OWPart2() {
 
                 for (const k of (adm.results?.kdmas || [])) {
                     const short = KDMA_SHORT[k.kdma];
-                    if (!short) continue;
+                    if (!short) continue; 
+
+                    // scalar kdma handling
+                    if (!k.parameters) {
+                        row[k.kdma] = roundIfNumber(k.value)
+                        row['__scoringType'] = 'scalar'
+                        continue
+                    }
+
                     row[`${short}_intercept`] = roundIfNumber(getKdmaParam(k.parameters, 'intercept'));
                     row[`${short}_attribute`] = roundIfNumber(getKdmaParam(k.parameters, 'attr_weight'));
                     row[`${short}_medical`]   = roundIfNumber(getKdmaParam(k.parameters, 'medical_weight'));
+                    row['__scoringType'] = 'regression'
                 }
 
                 Object.assign(row, adm.actionAnalysis ?? {})
@@ -128,14 +139,17 @@ export function PH2RQ8OWPart2() {
     const openModal = () => setShowDefinitions(true);
     const closeModal = () => setShowDefinitions(false);
 
-    const HEADERS = React.useMemo(() => {
+        const HEADERS = React.useMemo(() => {
         const LEAD = ['Trial_ID', 'OW Scenario', 'Target', 'ADM Name',
                     'Server Session ID', 'Alignment score (ADM|target)'];
         const leadSet = new Set(LEAD);
         const extra = new Set();
-        for (const row of formattedData) {
+        for (const row of filteredData) {
             for (const key of Object.keys(row)) {
-                if (!leadSet.has(key)) extra.add(key);
+                if (leadSet.has(key) || key.startsWith('__')) continue;
+                const v = row[key];
+                if (v == null || v === '-') continue;   // only if a row actually has a response
+                extra.add(key);
             }
         }
         const kdmaKeys = [...extra]
@@ -145,22 +159,30 @@ export function PH2RQ8OWPart2() {
             .filter(k => !/_(intercept|attribute|medical)$/.test(k))
             .sort((a, b) => rank(a) - rank(b))
         return [...LEAD, ...kdmaKeys, ...actionKeys];
-    }, [formattedData]);
+    }, [filteredData]);
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter(x =>
                 (owScenarioFilters.length === 0 || owScenarioFilters.includes(x['OW Scenario'])) &&
                 (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
-                (admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name']))
+                (admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name'])) &&
+                (includeRegression || x['__scoringType'] !== 'regression')
             ));
         }
-    }, [formattedData, owScenarioFilters, targetFilters, admNameFilters]);
+    }, [formattedData, owScenarioFilters, targetFilters, admNameFilters, includeRegression]);
+
+    const errors = [
+            error8,
+            error15,
+            error16
+        ].filter(Boolean);
+    
+        if (errors.length > 0) {
+            return <QueryErrorMessage errors={errors} />;
+        }
 
     if (loading8 || loading15 || loading16) return <p>Loading...</p>;
-    if (error8) return <p>Error: {error8.message}</p>;
-    if (error15) return <p>Error: {error15.message}</p>;
-    if (error16) return <p>Error: {error16.message}</p>;
 
     return (
         <>

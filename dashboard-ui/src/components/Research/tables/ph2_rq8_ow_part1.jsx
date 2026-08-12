@@ -15,7 +15,7 @@ const getAdmData = gql`
         getAllOWData(evalNumber: $evalNumber, scenarioIDs: $scenarioIDs)
     }`;
 
-const OW_SCENARIOS = [
+export const OW_SCENARIOS = [
     'April2026-OW_desert', 'April2026-OW_urban',
     'Feb2026-OW_desert', 'Feb2026-OW_urban',
     'June2025-OW_desert', 'June2025-OW_urban'
