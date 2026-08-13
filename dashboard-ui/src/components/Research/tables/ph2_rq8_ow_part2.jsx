@@ -2,12 +2,14 @@ import React from "react";
 import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo';
 import gql from "graphql-tag";
-import { Autocomplete, TextField, Modal } from "@mui/material";
+import { Autocomplete, TextField, Modal, FormControlLabel, Switch } from "@mui/material";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import owPart2Defs from '../variables/Variable Definitions RQ8_OW_Part2.xlsx';
+import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
+import { EVAL_LABEL, valueColLabel } from "./ph2_rq8_ow_part1";
 
 const getAdmData = gql`
     query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
@@ -16,24 +18,10 @@ const getAdmData = gql`
 
 const OW_EVALS = [8, 15, 16]
 
-const ADMS = ['ALIGN-ADM-OutlinesBaseline-Mistral-7B-Instruct-v0.3__82cd6afc-958b-4bda-b0d2-68ea2983f3fd',
-'ALIGN-ADM-OutlinesBaseline-Mistral-7B-Instruct-v0.3__a99adfbe-1a99-43a9-ae68-cc1f60a5e625',
-'ALIGN-ADM-OutlinesBaseline-Mistral-7B-Instruct-v0.3__20d46e91-cd3b-49bc-b7e7-f4d4c8e8151f',
-'ALIGN-ADM-Ph2-ComparativeRegression-Zeroshot-Mistral-7B-Instruct-v0.3__fb83ce00-3e39-4eb8-9832-fd01332ac387',
-'ALIGN-ADM-Ph2-ComparativeRegression-Zeroshot-Mistral-7B-Instruct-v0.3__8c01ff99-b1ad-4489-98fe-a85d2b76657f',
-'ALIGN-ADM-Ph2-ComparativeRegression-Zeroshot-Mistral-7B-Instruct-v0.3__ecdfd1cc-0f03-4c87-a82b-fc05205fa5fa',
-'ALIGN-ADM-Ph2-DirectRegression-Mistral-7B-Instruct-v0.3__93c4095c-6880-4132-ade7-85cae2097ed3',
-'ALIGN-ADM-Ph2-DirectRegression-Mistral-7B-Instruct-v0.3__aa033d7b-25cb-450a-aaea-57105cbbc0e7',
-'ALIGN-ADM-Ph2-DirectRegression-Mistral-7B-Instruct-v0.3__be21e5a4-410c-4052-a15b-12dbbc10b0e3',
-'ALIGN-ADM-Ph2-ComparativeRegression-Mistral-7B-Instruct-v0.3__b8756c48-f485-4307-892f-a4e4ef622a87',
-'ALIGN-ADM-Ph2-ComparativeRegression-Mistral-7B-Instruct-v0.3__23f4f6f0-b1c5-45e8-8887-61b41d22f4fe',
-'ALIGN-ADM-Ph2-ComparativeRegression-Mistral-7B-Instruct-v0.3__4c804b13-6e49-4d79-8d1c-271bb0426c32'
-]
-
 const KDMA_SHORT = { affiliation: 'AF', merit: 'MF', personal_safety: 'PS', search: 'SS' };
 
 function roundIfNumber(value) {
-    if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 100) / 100;
+    if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 1000) / 1000;
     return value;
 }
 function getKdmaParam(parameters, paramName) {
@@ -43,8 +31,6 @@ function getKdmaParam(parameters, paramName) {
 function rank(key) {
     return key.startsWith('Desert') ? 1 : key.startsWith('Urban') ? 2 : 0
 }
-
-const EVAL_LABEL = { 8: 'June2025', 15: 'Feb2026', 16: 'April2026' };
 
 function getOWScenario(scenarioId, evalNum) {
     const env = scenarioId.split('OW_')[1] || scenarioId;
@@ -64,6 +50,7 @@ export function PH2RQ8OWPart2() {
     const [owScenarioFilters, setOwScenarioFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [admNameFilters, setAdmNameFilters] = React.useState([]);
+    const [includeRegression, setIncludeRegression] = React.useState(false);
 
     React.useEffect(() => {
         if (!data8?.getAllOWData || !data15?.getAllOWData || !data16?.getAllOWData) return;
@@ -86,7 +73,6 @@ export function PH2RQ8OWPart2() {
                 const alignment = adm.results?.alignment_score;
 
                 if (!isDefined(alignment)) continue;
-                if (!ADMS.includes(admName)) continue;
 
                 const owScenario = getOWScenario(scenario, currentEvalNum);
                 const cleanTarget = (target || '')
@@ -103,9 +89,18 @@ export function PH2RQ8OWPart2() {
                 for (const k of (adm.results?.kdmas || [])) {
                     const short = KDMA_SHORT[k.kdma];
                     if (!short) continue;
+
+                    // scalar kdma handling
+                    if (!k.parameters) {
+                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
+                        row['__scoringType'] = 'scalar'
+                        continue
+                    }
+
                     row[`${short}_intercept`] = roundIfNumber(getKdmaParam(k.parameters, 'intercept'));
                     row[`${short}_attribute`] = roundIfNumber(getKdmaParam(k.parameters, 'attr_weight'));
-                    row[`${short}_medical`]   = roundIfNumber(getKdmaParam(k.parameters, 'medical_weight'));
+                    row[`${short}_medical`] = roundIfNumber(getKdmaParam(k.parameters, 'medical_weight'));
+                    row['__scoringType'] = 'regression'
                 }
 
                 Object.assign(row, adm.actionAnalysis ?? {})
@@ -146,12 +141,15 @@ export function PH2RQ8OWPart2() {
 
     const HEADERS = React.useMemo(() => {
         const LEAD = ['Trial_ID', 'OW Scenario', 'Target', 'ADM Name',
-                    'Server Session ID', 'Alignment score (ADM|target)'];
+            'Server Session ID', 'Alignment score (ADM|target)'];
         const leadSet = new Set(LEAD);
         const extra = new Set();
-        for (const row of formattedData) {
+        for (const row of filteredData) {
             for (const key of Object.keys(row)) {
-                if (!leadSet.has(key)) extra.add(key);
+                if (leadSet.has(key) || key.startsWith('__')) continue;
+                const v = row[key];
+                if (v == null || v === '-') continue;   // only if a row actually has a response
+                extra.add(key);
             }
         }
         const kdmaKeys = [...extra]
@@ -161,22 +159,30 @@ export function PH2RQ8OWPart2() {
             .filter(k => !/_(intercept|attribute|medical)$/.test(k))
             .sort((a, b) => rank(a) - rank(b))
         return [...LEAD, ...kdmaKeys, ...actionKeys];
-    }, [formattedData]);
+    }, [filteredData]);
 
     React.useEffect(() => {
         if (formattedData.length > 0) {
             setFilteredData(formattedData.filter(x =>
                 (owScenarioFilters.length === 0 || owScenarioFilters.includes(x['OW Scenario'])) &&
                 (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
-                (admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name']))
+                (admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name'])) &&
+                (includeRegression || x['__scoringType'] !== 'regression')
             ));
         }
-    }, [formattedData, owScenarioFilters, targetFilters, admNameFilters]);
+    }, [formattedData, owScenarioFilters, targetFilters, admNameFilters, includeRegression]);
+
+    const errors = [
+            error8,
+            error15,
+            error16
+        ].filter(Boolean);
+    
+        if (errors.length > 0) {
+            return <QueryErrorMessage errors={errors} />;
+        }
 
     if (loading8 || loading15 || loading16) return <p>Loading...</p>;
-    if (error8) return <p>Error: {error8.message}</p>;
-    if (error15) return <p>Error: {error15.message}</p>;
-    if (error16) return <p>Error: {error16.message}</p>;
 
     return (
         <>
@@ -185,7 +191,7 @@ export function PH2RQ8OWPart2() {
                     Showing {filteredData.length} of {formattedData.length} rows based on filters
                 </p>
             }
-            <section className='tableHeader'>
+            <section className='tableHeader d-flex align-items-center'>
                 <div className="filters">
                     <Autocomplete
                         multiple
@@ -206,6 +212,17 @@ export function PH2RQ8OWPart2() {
                         onChange={(_, newVal) => setTargetFilters(newVal)}
                     />
                 </div>
+                <FormControlLabel
+                    className="ms-auto"
+                    control={
+                        <Switch
+                            size="small"
+                            checked={includeRegression}
+                            onChange={(e) => setIncludeRegression(e.target.checked)}
+                        />
+                    }
+                    label="Include regression scoring"
+                />
                 <DownloadButtons
                     formattedData={formattedData}
                     filteredData={filteredData}
