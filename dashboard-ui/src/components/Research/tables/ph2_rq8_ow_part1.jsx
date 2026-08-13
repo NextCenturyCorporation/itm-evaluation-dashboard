@@ -43,7 +43,7 @@ const PARAM_LABELS = {
     attr_weight: 'Attribute Weight'
 };
 const kdmaColLabel = (kdma, param) => `${KDMA_LABELS[kdma]} ${PARAM_LABELS[param]}`;
-const valueColLabel = (kdma) => `${KDMA_LABELS[kdma]} Value`;
+export const valueColLabel = (kdma) => `${KDMA_LABELS[kdma]} Value`;
 
 const OW_EVALS = [8, 15, 16];
 export const EVAL_LABEL = { 8: 'June2025', 15: 'Feb2026', 16: 'April2026' };

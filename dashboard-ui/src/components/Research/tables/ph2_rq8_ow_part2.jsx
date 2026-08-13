@@ -9,7 +9,7 @@ import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import owPart2Defs from '../variables/Variable Definitions RQ8_OW_Part2.xlsx';
 import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
-import { EVAL_LABEL } from "./ph2_rq8_ow_part1";
+import { EVAL_LABEL, valueColLabel } from "./ph2_rq8_ow_part1";
 
 const getAdmData = gql`
     query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
@@ -92,7 +92,7 @@ export function PH2RQ8OWPart2() {
 
                     // scalar kdma handling
                     if (!k.parameters) {
-                        row[k.kdma] = roundIfNumber(k.value)
+                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
                         row['__scoringType'] = 'scalar'
                         continue
                     }
