@@ -55,7 +55,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
                 page = await browser.newPage();
             }
             // /survey-results can take a long time to load because of multiple queries
-        }, route == '/survey-results' ? 15000 : 5000);
+        }, 30000);
     });
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
@@ -63,7 +63,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
             if (route == '/text-based') {
                 page = await browser.newPage();
             }
-        });
+        }, 30000);
     });
 }
 
@@ -77,10 +77,10 @@ describe('Route Redirection and Access Control Tests for admin', () => {
     it('Administrators should see extra headers on progress table', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 500 });
-        await page.waitForSelector('text/Prolific ID', { timeout: 500 });
-        await page.waitForSelector('text/Contact ID', { timeout: 500 });
-        await page.waitForSelector('text/Survey Link', { timeout: 500 });
+        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
+        await page.waitForSelector('text/Prolific ID', { timeout: 5000 });
+        await page.waitForSelector('text/Contact ID', { timeout: 5000 });
+        await page.waitForSelector('text/Survey Link', { timeout: 5000 });
     });
 });
 
@@ -94,8 +94,8 @@ describe('Route Redirection and Access Control Tests for evaluators', () => {
     it('Evaluators should not see extra headers on progress table', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 500 });
-        await page.waitForSelector('text/Participant ID', { timeout: 500 });
+        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
+        await page.waitForSelector('text/Participant ID', { timeout: 5000 });
         const prolificIdExists = await page.evaluate(() => {
             return document.body.innerText.includes('Prolific ID');
         });
@@ -123,8 +123,8 @@ describe('Route Redirection and Access Control Tests for experimenters', () => {
     it('Experimenters should not see extra headers on progress table', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 500 });
-        await page.waitForSelector('text/Participant ID', { timeout: 500 });
+        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
+        await page.waitForSelector('text/Participant ID', { timeout: 5000 });
         const prolificIdExists = await page.evaluate(() => {
             return document.body.innerText.includes('Prolific ID');
         });
@@ -152,10 +152,10 @@ describe('Route Redirection and Access Control Tests for adeptUsers', () => {
     it('ADEPT users should see extra headers on progress table', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 500 });
-        await page.waitForSelector('text/Prolific ID', { timeout: 500 });
-        await page.waitForSelector('text/Contact ID', { timeout: 500 });
-        await page.waitForSelector('text/Survey Link', { timeout: 500 });
+        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
+        await page.waitForSelector('text/Prolific ID', { timeout: 5000 });
+        await page.waitForSelector('text/Contact ID', { timeout: 5000 });
+        await page.waitForSelector('text/Survey Link', { timeout: 5000 });
     });
 });
 

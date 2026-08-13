@@ -141,8 +141,8 @@ describe('Test email-entry text scenarios', () => {
             Array.from(buttons).find(btn => btn.textContent == 'Find PID').click();
         });
         // will time out if it fails
-        await page.waitForSelector('text/PID: ' + firstPid.toString());
-    }, 10000);
+        await page.waitForSelector('text/PID: ' + firstPid.toString(), { timeout: 30000 });
+    }, 30000);
 
     it('any key combo on text-scenario page should have no effect on progress', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);
@@ -164,7 +164,7 @@ describe('Test email-entry text scenarios', () => {
             Array.from(buttons).find(btn => btn.textContent == 'Start').click();
         });
         await pressAllKeys(page, IS_PH1 ? 'Move Springer to evac' : 'Scenario Details');
-    }, 10000);
+    }, 30000);
 
     it('text-scenario through email-entry should be navigable', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/participantText`);

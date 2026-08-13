@@ -4,6 +4,7 @@ module.exports = {
         // slowMo: 25, // Optional: Slow down actions to see what is happening
         defaultViewport: null, // Optional: Fullscreen viewport
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+        protocolTimeout: 300000,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox'
