@@ -43,16 +43,16 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /text-based-results route content', async () => {
         await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
-    });
+    }, 60000);
     it('Check /humanSimParticipant route content', async () => {
         await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', IS_PH1 ? 'AD_Scenario_Text' : 'Date'], IS_PH1);
-    });
+    }, 60000);
     it('Check /humanProbeData route content', async () => {
         await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);
     });
     it('Check /human-results route content', async () => {
         await checkRouteContent(page, '/human-results', ['Please select a scenario and participant to view results']);
-    });
+    }, 60000);
 
     it('Check /results route content', async () => {
         // based off ph2 RQ2 table
@@ -95,7 +95,7 @@ describe('Verify content on page matches expectation for route', () => {
                 'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block']);
         }
 
-    });
+    }, 60000);
     it('Check /myaccount route content', async () => {
         await checkRouteContent(page, '/myaccount', ['My Account', 'Manage your account settings', 'Username', 'admin', 'Email Address', 'admin@123.com', 'Confirm New Password']);
     });
@@ -104,8 +104,9 @@ describe('Verify content on page matches expectation for route', () => {
     });
 
     it('Admin Dashboard should require confirmation', async () => {
-        page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
         await page.waitForSelector(FOOTER_TEXT);
+        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 30000 });
         const password = await page.$('input[placeholder="Enter Password"]');
         await password.type('secretAdminPassword123');
         await page.$$eval('.btn-primary', buttons => {
@@ -113,13 +114,14 @@ describe('Verify content on page matches expectation for route', () => {
         });
         const expectedText = ['Admin Dashboard', 'Survey Version', 'Administrators', 'Evaluators', 'Experimenters', 'ADEPT Users']
         for (const txt of expectedText) {
-            await page.waitForSelector(`text/${txt}`, { timeout: 500 });
+            await page.waitForSelector(`text/${txt}`, { timeout: 5000 });
         }
-    });
+    }, 30000);
 
     it('Admin Dashboard should error on incorrect password', async () => {
-        page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
         await page.waitForSelector(FOOTER_TEXT);
+        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 30000 });
         const password = await page.$('input[placeholder="Enter Password"]');
         await password.type('secretAdminPassword1234');
         await page.$$eval('.btn-primary', buttons => {

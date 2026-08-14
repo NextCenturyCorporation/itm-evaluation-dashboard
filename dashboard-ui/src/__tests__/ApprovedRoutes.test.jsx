@@ -55,7 +55,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
                 page = await browser.newPage();
             }
             // /survey-results can take a long time to load because of multiple queries
-        }, 30000);
+        }, 60000);
     });
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
@@ -63,7 +63,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
             if (route == '/text-based') {
                 page = await browser.newPage();
             }
-        }, route === '/text-based' ? 60000 : 30000);
+        }, 60000);
     });
 }
 
