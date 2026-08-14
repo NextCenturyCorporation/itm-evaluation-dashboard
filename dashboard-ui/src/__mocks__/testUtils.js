@@ -81,13 +81,19 @@ export async function logout(page) {
 }
 
 export async function testRouteRedirection(route, expectedRedirect = '/login') {
-    let currentUrl = page.url();
+    const expectedUrl = `${process.env.REACT_APP_TEST_URL}${expectedRedirect}`;
+
     await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`);
-    if (route == '/text-based')
-        await page.waitForNavigation();
     await page.waitForSelector(FOOTER_TEXT, { timeout: 30000 });
-    currentUrl = page.url();
-    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRedirect}`);
+
+    await page.waitForFunction(
+        expectedUrl => window.location.href === expectedUrl,
+        { timeout: route === '/text-based' ? 60000 : 30000 },
+        expectedUrl
+    );
+
+    const currentUrl = page.url();
+    expect(currentUrl).toBe(expectedUrl);
 }
 
 export async function loginAdmin(page) {
