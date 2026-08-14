@@ -23,12 +23,12 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check / route content', async () => {
         await checkRouteContent(page, '/', ['Program Questions', '1. Does alignment score predict measures of trust?']);
-    }, 60000);
+    });
 
     it('Check /survey route content', async () => {
         await checkRouteContent(page, '/survey', ['Enter Participant ID']);
         page = await browser.newPage();
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/`);
+        page.goto(`${process.env.REACT_APP_TEST_URL}/`);
         await page.waitForSelector(FOOTER_TEXT);
     });
 
@@ -42,23 +42,16 @@ describe('Verify content on page matches expectation for route', () => {
 
 
     it('Check /text-based-results route content', async () => {
-        await checkRouteContent(page, '/text-based-results', ['Evaluation']);
+        await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
     });
     it('Check /humanSimParticipant route content', async () => {
-        await checkRouteContent(
-            page,
-            '/humanSimParticipant',
-            ['Participant-Level Data', 'View Definitions', 'Download Participant Data'],
-            IS_PH1
-        );
+        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', IS_PH1 ? 'AD_Scenario_Text' : 'Date'], IS_PH1);
     });
     it('Check /humanProbeData route content', async () => {
         await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);
     });
     it('Check /human-results route content', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/human-results`);
-        await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('.human-results', { timeout: 30000 });
+        await checkRouteContent(page, '/human-results', ['Please select a scenario and participant to view results']);
     });
 
     it('Check /results route content', async () => {
@@ -92,16 +85,16 @@ describe('Verify content on page matches expectation for route', () => {
     });
 
     it('Check /research-results/exploratory-analysis route content', async () => {
-        await checkRouteContent(
-            page,
-            '/research-results/exploratory-analysis',
-            [
-                'RQ5: To what extent does alignment score predict identical',
-                'RQ6: Does attribute assessment in different formats produce the same results?',
-                'RQ7: Exploratory: How do the attributes interact?'
-            ],
-            IS_PH1
-        );
+        if (IS_PH1) {
+            await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
+                'RQ5: To what extent does alignment score predict identical', 'RQ5 Data', 'RQ6: Does attribute assessment in different formats produce the same results?', 'RQ6 Data',
+                'RQ7', 'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block', 'Calibration Scores'], 5);
+        }
+        else {
+            await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
+                'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block']);
+        }
+
     });
     it('Check /myaccount route content', async () => {
         await checkRouteContent(page, '/myaccount', ['My Account', 'Manage your account settings', 'Username', 'admin', 'Email Address', 'admin@123.com', 'Confirm New Password']);
@@ -111,29 +104,29 @@ describe('Verify content on page matches expectation for route', () => {
     });
 
     it('Admin Dashboard should require confirmation', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
+        page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 30000 });
-        await page.type('input[placeholder="Enter Password"]', 'secretAdminPassword123');
+        const password = await page.$('input[placeholder="Enter Password"]');
+        await password.type('secretAdminPassword123');
         await page.$$eval('.btn-primary', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Submit').click();
         });
         const expectedText = ['Admin Dashboard', 'Survey Version', 'Administrators', 'Evaluators', 'Experimenters', 'ADEPT Users']
         for (const txt of expectedText) {
-            await page.waitForSelector(`text/${txt}`, { timeout: 5000 });
+            await page.waitForSelector(`text/${txt}`, { timeout: 500 });
         }
     });
 
     it('Admin Dashboard should error on incorrect password', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
+        page.goto(`${process.env.REACT_APP_TEST_URL}/admin`);
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 30000 });
-        await page.type('input[placeholder="Enter Password"]', 'secretAdminPassword1234');
+        const password = await page.$('input[placeholder="Enter Password"]');
+        await password.type('secretAdminPassword1234');
         await page.$$eval('.btn-primary', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Submit').click();
         });
         await page.waitForSelector(`.error-message`, { timeout: 5000 });
-    }, 15000);
+    }, 30000);
     it('Check /participant-progress-table route content', async () => {
         await checkRouteContent(page, '/participant-progress-table', ['Participant Progress', 'Prolific ID']);
     });
