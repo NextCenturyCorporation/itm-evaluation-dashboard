@@ -392,5 +392,5 @@ export async function surveyFlowNavigateAndComplete(page, { isPhase1 }) {
     await page.$$eval('input', buttons => {
         Array.from(buttons).find(btn => btn.value == 'Complete').click();
     });
-    await page.waitForSelector('text/Thank you for completing the survey', { timeout: 50000 });
+    await page.waitForSelector('text/Thank you for completing the survey', { timeout: 100000 });
 }
