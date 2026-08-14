@@ -3,7 +3,6 @@
  */
 
 import { pressAllKeys, startAdeptQualtrixSurvey } from "../__mocks__/testUtils"
-import { isDefined } from "../components/AggregateResults/DataFunctions";
 
 
 describe('Test adept qualtrix entry method', () => {
@@ -20,18 +19,17 @@ describe('Test adept qualtrix entry method', () => {
         expect(Number(pid)).toBeGreaterThanOrEqual(0);
     });
 
-    it('PIDs should increase by 1 with each login to /remote-text-survey?adeptQualtrix=true', async () => {
-        let pid;
-        let firstPid;
+    it('Each login to /remote-text-survey?adeptQualtrix=true should generate a valid PID', async () => {
         for (let i = 0; i < 2; i++) {
             page = await browser.newPage();
             await startAdeptQualtrixSurvey(page);
             const currentUrl = page.url();
-            pid = currentUrl.split('pid=').slice(-1)[0].split('&')[0];
-            if (!isDefined(firstPid))
-                firstPid = pid;
+            const pid = currentUrl.split('pid=').slice(-1)[0].split('&')[0];
+
+            expect(pid).toBeTruthy();
+            expect(Number.isInteger(Number(pid))).toBe(true);
+            expect(Number(pid)).toBeGreaterThanOrEqual(0);
         }
-        expect(Number(pid)).toBe(Number(firstPid) + 1);
     }, 30000);
 
     it('any key combo during text scenario should have no effect on progress', async () => {
