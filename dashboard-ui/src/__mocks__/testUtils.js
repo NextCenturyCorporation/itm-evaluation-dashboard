@@ -360,54 +360,47 @@ export async function fillVisibleSurveyQuestions(page) {
                 rect.height > 0;
         };
 
-        const getQuestionContainer = element =>
-            element.closest('.sd-question') ||
-            element.closest('.sv_qstn') ||
-            element.closest('[data-name]') ||
-            element.parentElement?.parentElement ||
-            element.parentElement;
+        const questionContainers = Array.from(
+            document.querySelectorAll('.sd-question, .sv_qstn')
+        ).filter(isVisible);
 
-        const getQuestionText = element =>
-            (getQuestionContainer(element)?.innerText || '').trim();
+        const getChoiceText = input => {
+            const label =
+                input.closest('label') ||
+                document.querySelector(`label[for="${input.id}"]`) ||
+                input.parentElement;
 
-        const clickChoiceByText = (questionContainer, preferredTexts = []) => {
-            if (!questionContainer) {
+            return (label?.innerText || label?.textContent || '').trim();
+        };
+
+        const chooseInput = (inputs, preferredTexts = []) => {
+            if (!inputs.length || inputs.some(input => input.checked)) {
                 return false;
             }
-
-            const candidates = Array.from(
-                questionContainer.querySelectorAll(
-                    'label, .sd-item, .sd-selectbase__label, .sv_q_radiogroup_label, .sv_q_checkbox_label'
-                )
-            ).filter(isVisible);
 
             let target = null;
 
             preferredTexts.forEach(preferredText => {
                 if (!target) {
-                    target = candidates.find(candidate =>
-                        (candidate.innerText || candidate.textContent || '').trim() === preferredText
+                    target = inputs.find(input =>
+                        getChoiceText(input) === preferredText
                     );
                 }
             });
 
-            target = target || candidates[0];
+            target = target || inputs[0];
 
             if (!target) {
                 return false;
             }
 
+            // Click the actual native input. SurveyJS tracks this event even
+            // when the input itself is visually hidden.
             target.click();
             return true;
         };
 
         let answered = 0;
-
-        // Work at the question-container level so SurveyJS custom choice labels
-        // are handled even when the underlying radio/checkbox inputs are hidden.
-        const questionContainers = Array.from(document.querySelectorAll(
-            '.sd-question, .sv_qstn, [data-name]'
-        )).filter(isVisible);
 
         questionContainers.forEach(questionContainer => {
             const questionText = (questionContainer.innerText || '').trim();
@@ -416,7 +409,7 @@ export async function fillVisibleSurveyQuestions(page) {
                 questionContainer.querySelectorAll('input[type="radio"]')
             );
 
-            if (radios.length > 0 && !radios.some(radio => radio.checked)) {
+            if (radios.length > 0) {
                 let preferredTexts = [];
 
                 if (questionText.includes('Are you currently or have you previously served in the military?')) {
@@ -432,7 +425,7 @@ export async function fillVisibleSurveyQuestions(page) {
                     preferredTexts = ['Never completed'];
                 }
 
-                if (clickChoiceByText(questionContainer, preferredTexts)) {
+                if (chooseInput(radios, preferredTexts)) {
                     answered += 1;
                 }
             }
@@ -441,20 +434,19 @@ export async function fillVisibleSurveyQuestions(page) {
                 questionContainer.querySelectorAll('input[type="checkbox"]')
             );
 
-            if (checkboxes.length > 0 && !checkboxes.some(checkbox => checkbox.checked)) {
+            if (checkboxes.length > 0) {
                 let preferredTexts = [];
 
                 if (questionText.includes('In which environments have you provided medical care during military service?')) {
                     preferredTexts = ['None'];
                 }
 
-                if (clickChoiceByText(questionContainer, preferredTexts)) {
+                if (chooseInput(checkboxes, preferredTexts)) {
                     answered += 1;
                 }
             }
         });
 
-        // Fill visible text inputs and textareas.
         Array.from(document.querySelectorAll(
             'textarea, input[type="text"], input[type="number"], input[type="email"]'
         ))
@@ -481,7 +473,6 @@ export async function fillVisibleSurveyQuestions(page) {
                 answered += 1;
             });
 
-        // Select the first real option in any visible native select.
         Array.from(document.querySelectorAll('select'))
             .filter(isVisible)
             .forEach(select => {
@@ -501,33 +492,31 @@ export async function fillSurveyValidationErrors(page) {
         const isVisible = element => {
             const style = window.getComputedStyle(element);
             const rect = element.getBoundingClientRect();
-            return !element.disabled &&
-                style.display !== 'none' &&
+            return style.display !== 'none' &&
                 style.visibility !== 'hidden' &&
                 rect.width > 0 &&
                 rect.height > 0;
         };
 
-        const errorMarkers = Array.from(document.querySelectorAll('*'))
-            .filter(element =>
-                isVisible(element) &&
-                (element.textContent || '').trim() === 'Response required.'
-            );
+        const getChoiceText = input => {
+            const label =
+                input.closest('label') ||
+                document.querySelector(`label[for="${input.id}"]`) ||
+                input.parentElement;
+
+            return (label?.innerText || label?.textContent || '').trim();
+        };
+
+        const questionContainers = Array.from(
+            document.querySelectorAll('.sd-question, .sv_qstn')
+        ).filter(container =>
+            isVisible(container) &&
+            (container.innerText || '').includes('Response required.')
+        );
 
         let repaired = 0;
 
-        errorMarkers.forEach(marker => {
-            const questionContainer =
-                marker.closest('.sd-question') ||
-                marker.closest('.sv_qstn') ||
-                marker.closest('[data-name]') ||
-                marker.parentElement?.parentElement ||
-                marker.parentElement;
-
-            if (!questionContainer) {
-                return;
-            }
-
+        questionContainers.forEach(questionContainer => {
             const questionText = (questionContainer.innerText || '').trim();
 
             const radios = Array.from(
@@ -535,31 +524,18 @@ export async function fillSurveyValidationErrors(page) {
             );
 
             if (radios.length > 0 && !radios.some(radio => radio.checked)) {
-                const labels = Array.from(
-                    questionContainer.querySelectorAll(
-                        'label, .sd-item, .sd-selectbase__label, .sv_q_radiogroup_label'
-                    )
-                ).filter(isVisible);
-
                 let preferred = null;
 
                 if (questionText.includes('Are you currently or have you previously served in the military?')) {
-                    preferred = labels.find(label =>
-                        (label.innerText || label.textContent || '').trim() === 'Never Served'
-                    );
+                    preferred = radios.find(radio => getChoiceText(radio) === 'Never Served');
                 }
                 else if (questionText.includes('Have you participated in mass casualty events?')) {
-                    preferred = labels.find(label =>
-                        (label.innerText || label.textContent || '').trim() === 'No'
-                    );
+                    preferred = radios.find(radio => getChoiceText(radio) === 'No');
                 }
 
-                const target = preferred || labels[0];
-                if (target) {
-                    target.click();
-                    repaired += 1;
-                    return;
-                }
+                (preferred || radios[0])?.click();
+                repaired += 1;
+                return;
             }
 
             const checkboxes = Array.from(
@@ -567,27 +543,18 @@ export async function fillSurveyValidationErrors(page) {
             );
 
             if (checkboxes.length > 0 && !checkboxes.some(checkbox => checkbox.checked)) {
-                const labels = Array.from(
-                    questionContainer.querySelectorAll(
-                        'label, .sd-item, .sd-selectbase__label, .sv_q_checkbox_label'
-                    )
-                ).filter(isVisible);
-
-                const target = labels[0];
-                if (target) {
-                    target.click();
-                    repaired += 1;
-                    return;
-                }
+                checkboxes[0].click();
+                repaired += 1;
+                return;
             }
 
             const textInput = Array.from(
                 questionContainer.querySelectorAll(
                     'textarea, input[type="text"], input[type="number"], input[type="email"]'
                 )
-            ).find(isVisible);
+            ).find(input => isVisible(input) && !input.value);
 
-            if (textInput && !textInput.value) {
+            if (textInput) {
                 const value = textInput.type === 'number' ? '1' : 'm';
                 const prototype = textInput.tagName === 'TEXTAREA'
                     ? window.HTMLTextAreaElement.prototype
@@ -608,21 +575,11 @@ export async function fillSurveyValidationErrors(page) {
 
             const nativeSelect = Array.from(
                 questionContainer.querySelectorAll('select')
-            ).find(isVisible);
+            ).find(select => isVisible(select) && !select.value);
 
-            if (nativeSelect && !nativeSelect.value && nativeSelect.options.length > 1) {
+            if (nativeSelect && nativeSelect.options.length > 1) {
                 nativeSelect.selectedIndex = 1;
                 nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                repaired += 1;
-                return;
-            }
-
-            const combo = Array.from(
-                questionContainer.querySelectorAll('[role="combobox"]')
-            ).find(isVisible);
-
-            if (combo) {
-                combo.click();
                 repaired += 1;
             }
         });
@@ -700,8 +657,10 @@ export async function completeCurrentPhase2Survey(page) {
                 }
 
                 const validationCount = await page.evaluate(() =>
-                    Array.from(document.querySelectorAll('*'))
-                        .filter(element => (element.textContent || '').trim() === 'Response required.')
+                    Array.from(document.querySelectorAll('.sd-question, .sv_qstn'))
+                        .filter(question =>
+                            (question.innerText || '').includes('Response required.')
+                        )
                         .length
                 );
 
