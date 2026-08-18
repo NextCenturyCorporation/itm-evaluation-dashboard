@@ -152,25 +152,86 @@ export async function loginBasicApprovedUser(page) {
     await page.waitForSelector('text/Welcome to the ITM Program!');
 }
 
-export async function checkRouteContent(page, route, expectedText, isPh1 = false) {
+export async function selectCurrentEvaluation(page) {
+    const pageText = await page.evaluate(() => document.body?.innerText || '');
+
+    // These tests target the current evaluation. If a stale Phase 1 selection
+    // is active, switch to the first available non-Phase-1 evaluation.
+    if (!pageText.includes('Phase 1 Evaluation')) {
+        return;
+    }
+
+    const opened = await page.evaluate(() => {
+        const candidates = Array.from(document.querySelectorAll(
+            '[role="combobox"], .nav-menu [role="button"]'
+        ));
+
+        const control = candidates.find(element =>
+            (element.textContent || '').includes('Phase 1 Evaluation')
+        );
+
+        if (!control) {
+            return false;
+        }
+
+        control.click();
+        return true;
+    });
+
+    if (!opened) {
+        return;
+    }
+
+    try {
+        await page.waitForSelector('[role="listbox"]', { timeout: 10000 });
+
+        const selectedEvaluation = await page.$$eval('[role="listbox"] > *', options => {
+            const normalized = Array.from(options).map(option => ({
+                option,
+                text: (option.textContent || '').trim()
+            }));
+
+            const nextOption =
+                normalized.find(({ text }) =>
+                    text &&
+                    !text.includes('Phase 1') &&
+                    /evaluation/i.test(text)
+                ) ||
+                normalized.find(({ text }) =>
+                    text &&
+                    !text.includes('Phase 1') &&
+                    !text.toLowerCase().includes('select')
+                );
+
+            if (!nextOption) {
+                return null;
+            }
+
+            nextOption.option.click();
+            return nextOption.text;
+        });
+
+        if (selectedEvaluation) {
+            console.log(`[TEST DEBUG] Switched evaluation from Phase 1 Evaluation to: ${selectedEvaluation}`);
+
+            await page.waitForFunction(
+                () => !document.body?.innerText?.includes('Phase 1 Evaluation'),
+                { timeout: 15000 }
+            ).catch(() => {});
+        }
+    }
+    catch (error) {
+        console.error('[TEST DEBUG] Unable to switch away from Phase 1 Evaluation:', error);
+    }
+}
+
+export async function checkRouteContent(page, route, expectedText) {
     try {
         await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
             timeout: TEST_WAIT_TIMEOUT
         });
         await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
-    if (isPh1) {
-        // click on Phase 1 in drop downs
-        if (route.includes('rq') || route.includes('exploratory') || route.includes('humanSimParticipant')) {
-            await page.click((route.includes('human') ? '.' : '.rq-') + 'selection-section [role="combobox"]');
-            await page.$$eval('[role="listbox"]>*', (buttons) => {
-                Array.from(buttons).find(btn => btn.textContent == 'Phase 1 Evaluation').click();
-            });
-        } else if (route.includes("/results")) {
-            await page.$$eval('.nav-menu [role="button"]', (buttons) => {
-                Array.from(buttons).find(btn => btn.innerText.includes("Phase 1 Evaluation")).click();
-            });
-        }
-    }
+        await selectCurrentEvaluation(page);
         for (const txt of expectedText) {
             await page.waitForSelector(`text/${txt}`, { timeout: TEST_WAIT_TIMEOUT });
         }
