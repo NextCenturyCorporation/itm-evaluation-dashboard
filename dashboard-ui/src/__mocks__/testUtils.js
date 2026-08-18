@@ -75,8 +75,10 @@ export async function login(page, username, password, createIfDNE = false) {
 
 export async function logout(page) {
     // make sure page navigates somewhere before logging out
-    await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-    await page.waitForSelector(FOOTER_TEXT);
+    await page.goto(`${process.env.REACT_APP_TEST_URL}/login`, {
+        timeout: TEST_WAIT_TIMEOUT
+    });
+    await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
     let currentUrl = page.url();
     if (currentUrl == `${process.env.REACT_APP_TEST_URL}/awaitingApproval`) {
         await page.$$eval('button', buttons => {
@@ -460,7 +462,7 @@ export async function fillSurveyValidationErrors(page) {
 
         let repaired = 0;
 
-        for (const marker of errorMarkers) {
+        errorMarkers.forEach(marker => {
             const questionContainer =
                 marker.closest('.sd-question') ||
                 marker.closest('.sv_qstn') ||
@@ -469,7 +471,7 @@ export async function fillSurveyValidationErrors(page) {
                 marker.parentElement;
 
             if (!questionContainer) {
-                continue;
+                return;
             }
 
             const radios = Array.from(
@@ -479,7 +481,7 @@ export async function fillSurveyValidationErrors(page) {
             if (radios.length > 0 && !radios.some(radio => radio.checked)) {
                 radios[0].click();
                 repaired += 1;
-                continue;
+                return;
             }
 
             const checkboxes = Array.from(
@@ -489,7 +491,7 @@ export async function fillSurveyValidationErrors(page) {
             if (checkboxes.length > 0 && !checkboxes.some(checkbox => checkbox.checked)) {
                 checkboxes[0].click();
                 repaired += 1;
-                continue;
+                return;
             }
 
             const textInput = Array.from(
@@ -514,7 +516,7 @@ export async function fillSurveyValidationErrors(page) {
                 textInput.dispatchEvent(new Event('input', { bubbles: true }));
                 textInput.dispatchEvent(new Event('change', { bubbles: true }));
                 repaired += 1;
-                continue;
+                return;
             }
 
             const nativeSelect = Array.from(
@@ -525,7 +527,7 @@ export async function fillSurveyValidationErrors(page) {
                 nativeSelect.selectedIndex = 1;
                 nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 repaired += 1;
-                continue;
+                return;
             }
 
             // SurveyJS dropdowns can be rendered as custom combobox controls.
@@ -537,7 +539,7 @@ export async function fillSurveyValidationErrors(page) {
                 combo.click();
                 repaired += 1;
             }
-        }
+        });
 
         return repaired;
     });
