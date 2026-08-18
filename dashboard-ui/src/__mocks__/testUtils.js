@@ -105,9 +105,9 @@ export async function testRouteRedirection(route, expectedRedirect = '/login') {
 
     try {
         await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
-            timeout: TEST_WAIT_TIMEOUT
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
         });
-        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 
         await page.waitForFunction(
             expectedUrl => window.location.href === expectedUrl,
@@ -360,90 +360,97 @@ export async function fillVisibleSurveyQuestions(page) {
                 rect.height > 0;
         };
 
-        const getQuestionText = element => {
-            const container =
-                element.closest('.sd-question') ||
-                element.closest('.sv_qstn') ||
-                element.closest('[data-name]') ||
-                element.parentElement?.parentElement ||
-                element.parentElement;
+        const getQuestionContainer = element =>
+            element.closest('.sd-question') ||
+            element.closest('.sv_qstn') ||
+            element.closest('[data-name]') ||
+            element.parentElement?.parentElement ||
+            element.parentElement;
 
-            return (container?.innerText || '').trim();
+        const getQuestionText = element =>
+            (getQuestionContainer(element)?.innerText || '').trim();
+
+        const clickChoiceByText = (questionContainer, preferredTexts = []) => {
+            if (!questionContainer) {
+                return false;
+            }
+
+            const candidates = Array.from(
+                questionContainer.querySelectorAll(
+                    'label, .sd-item, .sd-selectbase__label, .sv_q_radiogroup_label, .sv_q_checkbox_label'
+                )
+            ).filter(isVisible);
+
+            let target = null;
+
+            preferredTexts.forEach(preferredText => {
+                if (!target) {
+                    target = candidates.find(candidate =>
+                        (candidate.innerText || candidate.textContent || '').trim() === preferredText
+                    );
+                }
+            });
+
+            target = target || candidates[0];
+
+            if (!target) {
+                return false;
+            }
+
+            target.click();
+            return true;
         };
 
         let answered = 0;
 
-        // Answer one option in every visible radio group. For branching questions,
-        // prefer answers that avoid unnecessary follow-up questions.
-        const radioGroups = new Map();
-        Array.from(document.querySelectorAll('input[type="radio"]'))
-            .filter(isVisible)
-            .forEach(radio => {
-                const key = radio.name || `radio-${radio.id}`;
-                if (!radioGroups.has(key)) {
-                    radioGroups.set(key, []);
+        // Work at the question-container level so SurveyJS custom choice labels
+        // are handled even when the underlying radio/checkbox inputs are hidden.
+        const questionContainers = Array.from(document.querySelectorAll(
+            '.sd-question, .sv_qstn, [data-name]'
+        )).filter(isVisible);
+
+        questionContainers.forEach(questionContainer => {
+            const questionText = (questionContainer.innerText || '').trim();
+
+            const radios = Array.from(
+                questionContainer.querySelectorAll('input[type="radio"]')
+            );
+
+            if (radios.length > 0 && !radios.some(radio => radio.checked)) {
+                let preferredTexts = [];
+
+                if (questionText.includes('Are you currently or have you previously served in the military?')) {
+                    preferredTexts = ['Never Served'];
                 }
-                radioGroups.get(key).push(radio);
-            });
-
-        radioGroups.forEach(radios => {
-            if (radios.some(radio => radio.checked) || radios.length === 0) {
-                return;
-            }
-
-            const questionText = getQuestionText(radios[0]);
-            let preferred = null;
-
-            if (questionText.includes('Are you currently or have you previously served in the military?')) {
-                preferred = radios.find(radio =>
-                    (radio.parentElement?.innerText || '').includes('Never Served')
-                );
-            }
-            else if (questionText.includes('Have you participated in mass casualty events?')) {
-                preferred = radios.find(radio =>
-                    (radio.parentElement?.innerText || '').trim() === 'No'
-                );
-            }
-            else if (questionText.includes('Did you serve in a military medical role?')) {
-                preferred = radios.find(radio =>
-                    (radio.parentElement?.innerText || '').trim() === 'No'
-                );
-            }
-            else if (questionText.includes('When did you last complete TCCC training or recertification?')) {
-                preferred = radios.find(radio =>
-                    (radio.parentElement?.innerText || '').includes('Never completed')
-                );
-            }
-
-            (preferred || radios[0]).click();
-            answered += 1;
-        });
-
-        // Answer one option in every visible checkbox group when none is selected.
-        const checkboxGroups = new Map();
-        Array.from(document.querySelectorAll('input[type="checkbox"]'))
-            .filter(isVisible)
-            .forEach(checkbox => {
-                const key = checkbox.name || `checkbox-${checkbox.id}`;
-                if (!checkboxGroups.has(key)) {
-                    checkboxGroups.set(key, []);
+                else if (questionText.includes('Have you participated in mass casualty events?')) {
+                    preferredTexts = ['No'];
                 }
-                checkboxGroups.get(key).push(checkbox);
-            });
+                else if (questionText.includes('Did you serve in a military medical role?')) {
+                    preferredTexts = ['No'];
+                }
+                else if (questionText.includes('When did you last complete TCCC training or recertification?')) {
+                    preferredTexts = ['Never completed'];
+                }
 
-        checkboxGroups.forEach(checkboxes => {
-            if (!checkboxes.some(checkbox => checkbox.checked) && checkboxes.length > 0) {
-                const questionText = getQuestionText(checkboxes[0]);
-                let preferred = null;
+                if (clickChoiceByText(questionContainer, preferredTexts)) {
+                    answered += 1;
+                }
+            }
+
+            const checkboxes = Array.from(
+                questionContainer.querySelectorAll('input[type="checkbox"]')
+            );
+
+            if (checkboxes.length > 0 && !checkboxes.some(checkbox => checkbox.checked)) {
+                let preferredTexts = [];
 
                 if (questionText.includes('In which environments have you provided medical care during military service?')) {
-                    preferred = checkboxes.find(checkbox =>
-                        (checkbox.parentElement?.innerText || '').trim() === 'None'
-                    );
+                    preferredTexts = ['None'];
                 }
 
-                (preferred || checkboxes[0]).click();
-                answered += 1;
+                if (clickChoiceByText(questionContainer, preferredTexts)) {
+                    answered += 1;
+                }
             }
         });
 
@@ -521,24 +528,57 @@ export async function fillSurveyValidationErrors(page) {
                 return;
             }
 
+            const questionText = (questionContainer.innerText || '').trim();
+
             const radios = Array.from(
                 questionContainer.querySelectorAll('input[type="radio"]')
-            ).filter(isVisible);
+            );
 
             if (radios.length > 0 && !radios.some(radio => radio.checked)) {
-                radios[0].click();
-                repaired += 1;
-                return;
+                const labels = Array.from(
+                    questionContainer.querySelectorAll(
+                        'label, .sd-item, .sd-selectbase__label, .sv_q_radiogroup_label'
+                    )
+                ).filter(isVisible);
+
+                let preferred = null;
+
+                if (questionText.includes('Are you currently or have you previously served in the military?')) {
+                    preferred = labels.find(label =>
+                        (label.innerText || label.textContent || '').trim() === 'Never Served'
+                    );
+                }
+                else if (questionText.includes('Have you participated in mass casualty events?')) {
+                    preferred = labels.find(label =>
+                        (label.innerText || label.textContent || '').trim() === 'No'
+                    );
+                }
+
+                const target = preferred || labels[0];
+                if (target) {
+                    target.click();
+                    repaired += 1;
+                    return;
+                }
             }
 
             const checkboxes = Array.from(
                 questionContainer.querySelectorAll('input[type="checkbox"]')
-            ).filter(isVisible);
+            );
 
             if (checkboxes.length > 0 && !checkboxes.some(checkbox => checkbox.checked)) {
-                checkboxes[0].click();
-                repaired += 1;
-                return;
+                const labels = Array.from(
+                    questionContainer.querySelectorAll(
+                        'label, .sd-item, .sd-selectbase__label, .sv_q_checkbox_label'
+                    )
+                ).filter(isVisible);
+
+                const target = labels[0];
+                if (target) {
+                    target.click();
+                    repaired += 1;
+                    return;
+                }
             }
 
             const textInput = Array.from(
@@ -577,7 +617,6 @@ export async function fillSurveyValidationErrors(page) {
                 return;
             }
 
-            // SurveyJS dropdowns can be rendered as custom combobox controls.
             const combo = Array.from(
                 questionContainer.querySelectorAll('[role="combobox"]')
             ).find(isVisible);
